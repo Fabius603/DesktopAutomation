@@ -10,22 +10,26 @@ class Program
             TargetApplication = "brave" // Set your target application name here
         };
 
-        ScreenCapture screenCapture = new ScreenCapture(settings);
         int i = 0;
-        while (true)
+        using (ScreenCapture screenCapture = new ScreenCapture(settings))
         {
-            using (ScreenCaptureResult result = screenCapture.CaptureWindow())
+            while (true)
             {
-                using (var resizedFrame = new Mat())
+                i++;
+                using (ScreenCaptureResult result = screenCapture.CaptureWindow())
                 {
-                    Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
-                    Cv2.ImShow("Captured Image", resizedFrame);
+                    using (var resizedFrame = new Mat())
+                    {
+                        //Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
+                        //Cv2.ImShow("Captured Image", resizedFrame);
+                        //resizedFrame.Dispose();
+                    }
+                    //Console.Clear();
+                    //Console.WriteLine("FPS: " + result.Fps);
                 }
-                Console.Clear();
-                Console.WriteLine("FPS: " + result.Fps);
-            }
 
-            Cv2.WaitKey(1);
+                Cv2.WaitKey(1);
+            }
         }
     }
 }

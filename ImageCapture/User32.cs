@@ -40,8 +40,10 @@ namespace ImageCapture
             uint processId;
             GetWindowThreadProcessId(hWnd, out processId);
 
-            Process process = Process.GetProcessById((int)processId);
-            return process.ProcessName;
+            using (Process process = Process.GetProcessById((int)processId))
+            {
+                return process.ProcessName;
+            }
         }
     }
 }

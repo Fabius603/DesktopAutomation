@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenCvSharp;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
-using static System.Net.Mime.MediaTypeNames;
 using Device = SharpDX.Direct3D11.Device;
 
 namespace ImageCapture
@@ -17,30 +11,17 @@ namespace ImageCapture
     public class ScreenCapture : IDisposable
     {
         public ScreenCaptureSettings Settings { get; private set; }
-        public Mat LastCaptured {  get; private set; }
+        public Mat LastCaptured { get; private set; }
         public IntPtr TargetProcess { get; private set; }
-        private OutputDuplication _duplicatedOutput { get; set; }
-        public OutputDuplication DuplicatedOutput
-        {
-            get
-            {
-                EnsureDevice();
-                return _duplicatedOutput;
-            }
-        }
-        private int _currentOutputIndex = -1;
+
+        private Mat _buffer;
+
         private Factory1 _factory;
         private Adapter1 _adapter;
         private Output1 _outputInterface;
-        private Device _device { get; set; }
-        public Device Device
-        {
-            get
-            {
-                EnsureDevice();
-                return _device;
-            }
-        }
+        private OutputDuplication _duplicatedOutput;
+        private Device _device;
+
         private int _desktopIdx = 0;
         private int _adapterIdx = 0;
 
@@ -51,61 +32,63 @@ namespace ImageCapture
 
         public ScreenCapture(ScreenCaptureSettings settings)
         {
-            this.Settings = settings;
-
-            SetTargetProcess(Settings.TargetApplication);
-
-            _factory = new Factory1();
-            _adapter = _factory.GetAdapter1(0);
-            _device = new Device(_adapter, DeviceCreationFlags.BgraSupport);
-
-            _outputInterface = _adapter.GetOutput(0).QueryInterface<Output1>();
-            _duplicatedOutput = _outputInterface.DuplicateOutput(Device);
+            Settings = settings;
+            SetTargetProcess(settings.TargetApplication);
+            InitializeDeviceAndDuplication();
         }
 
         public ScreenCaptureResult CaptureWindow()
         {
             FpsCounter();
 
+            // Fensterrechteck ermitteln
             Rect windowRect;
             try
             {
                 windowRect = GetWindowRect(TargetProcess);
-
             }
             catch
             {
                 return new ScreenCaptureResult(false);
             }
 
-            Rect windowRectOnDesktop = ScreenHelper.ClampRectToCurrentMonitor(windowRect);
+            // Puffer initialisieren oder neu anpassen
+            var windowSize = new OpenCvSharp.Size(windowRect.Width, windowRect.Height);
+            if (_buffer == null || !_buffer.Size().Equals(windowSize))
+            {
+                _buffer?.Dispose();
+                _buffer = new Mat(windowSize, MatType.CV_8UC3);
+            }
+
+            var windowRectOnDesktop = ScreenHelper.ClampRectToCurrentMonitor(windowRect);
             var monitorBounds = ScreenHelper.GetMonitorBoundsForWindow(windowRectOnDesktop);
-            Rect lokalDesktopWindowRect = new Rect(
+            var lokalDesktopWindowRect = new Rect(
                 windowRectOnDesktop.X - monitorBounds.Left,
                 windowRectOnDesktop.Y - monitorBounds.Top,
                 windowRect.Width,
                 windowRect.Height);
 
-            string activeApplication = User32.GetActiveApplicationName();
+            var activeApp = User32.GetActiveApplicationName();
+            var newDesktop = ScreenHelper.FindOutputIndexForWindow(windowRectOnDesktop, _adapter);
+            var newAdapter = ScreenHelper.FindAdapterIndexForWindow(windowRectOnDesktop, _factory);
 
-            int newDesktopIdx = ScreenHelper.FindOutputIndexForWindow(windowRectOnDesktop, _adapter);
-            int newAdapterIdx = ScreenHelper.FindAdapterIndexForWindow(windowRectOnDesktop, _factory);
-
-            if (newDesktopIdx != _desktopIdx || newAdapterIdx != _adapterIdx)
+            if (newDesktop != _desktopIdx || newAdapter != _adapterIdx)
             {
-                _desktopIdx = newDesktopIdx;
-                _adapterIdx = newAdapterIdx;
+                _desktopIdx = newDesktop;
+                _adapterIdx = newAdapter;
                 CleanupDeviceAndDuplication();
                 InitializeDeviceAndDuplication();
             }
 
             EnsureDevice();
 
-            if (Settings.OnlyActiveWindow && activeApplication != Settings.TargetApplication)
+            // Nur aktives Fenster?
+            if (Settings.OnlyActiveWindow && activeApp != Settings.TargetApplication)
             {
-                return new ScreenCaptureResult()
+                _buffer.SetTo(Scalar.Black);
+                return new ScreenCaptureResult
                 {
-                    Image = new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black),
+                    Image = _buffer.Clone(),
                     Fps = _currentFps,
                     WindowRect = windowRect,
                     DesktopWindowRect = windowRectOnDesktop,
@@ -115,17 +98,21 @@ namespace ImageCapture
                 };
             }
 
-            using var windowTexture = GetWindowTexture(Device, windowRectOnDesktop);
+            using var windowTex = GetWindowTexture(_device, windowRectOnDesktop);
             var region = GetResourceRegion(lokalDesktopWindowRect);
+            var dupResult = _duplicatedOutput.TryAcquireNextFrame(1000, out _, out var desktopResource);
 
-            var duplicationResult = DuplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
-
-            if (!duplicationResult.Success || desktopResource == null)
+            if (!dupResult.Success || desktopResource == null)
             {
                 desktopResource?.Dispose();
-                return new ScreenCaptureResult()
+                if (LastCaptured != null)
+                    LastCaptured.CopyTo(_buffer);
+                else
+                    _buffer.SetTo(Scalar.Black);
+
+                return new ScreenCaptureResult
                 {
-                    Image = LastCaptured?.Clone() ?? new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black),
+                    Image = _buffer.Clone(),
                     Fps = _currentFps,
                     WindowRect = windowRect,
                     DesktopWindowRect = windowRectOnDesktop,
@@ -137,18 +124,11 @@ namespace ImageCapture
 
             try
             {
-                using var desktopTexture = desktopResource.QueryInterface<Texture2D>();
-                Device.ImmediateContext.CopySubresourceRegion(
-                    source: desktopTexture,
-                    sourceSubresource: 0,
-                    sourceRegion: region,
-                    destination: windowTexture,
-                    destinationSubResource: 0
-                );
+                using var desktopTex = desktopResource.QueryInterface<Texture2D>();
+                _device.ImmediateContext.CopySubresourceRegion(desktopTex, 0, region, windowTex, 0);
             }
             finally
             {
-                // Frame freigeben, damit die Duplication API weiterarbeitet
                 _duplicatedOutput.ReleaseFrame();
                 desktopResource.Dispose();
             }
@@ -156,40 +136,31 @@ namespace ImageCapture
             Mat newImage = null;
             try
             {
-                newImage = ImageConverter.ToMat(windowTexture, Device);
+                newImage = ImageConverter.ToMat(windowTex, _device);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Fehler beim ToMat: {ex.Message}");
             }
 
-
-            Mat result;
             if (newImage != null)
             {
-                // Neuer Frame erfolgreich
                 LastCaptured?.Dispose();
                 LastCaptured = newImage;
-                result = LastCaptured.Clone();
+                newImage.CopyTo(_buffer);
             }
             else if (LastCaptured != null)
             {
-                // Fallback auf letzten erfolgreichen Frame
-                result = LastCaptured.Clone();
+                LastCaptured.CopyTo(_buffer);
             }
             else
             {
-                // endgültiges Fallback: schwarzes Bild in Fenstergröße
-                var size = windowTexture.Description;
-                result = new Mat(
-                    new OpenCvSharp.Size(size.Width, size.Height),
-                    MatType.CV_8UC3,
-                    Scalar.Black);
+                _buffer.SetTo(Scalar.Black);
             }
 
-            return new ScreenCaptureResult()
+            return new ScreenCaptureResult
             {
-                Image = result,
+                Image = _buffer.Clone(),
                 Fps = _currentFps,
                 WindowRect = windowRect,
                 DesktopWindowRect = windowRectOnDesktop,
@@ -199,34 +170,16 @@ namespace ImageCapture
             };
         }
 
-        private Rect GetWindowRect(IntPtr process)
+        private Rect GetWindowRect(IntPtr hwnd)
         {
-            try
-            {
-                User32.GetWindowRect(process, out var rect);
-                return new OpenCvSharp.Rect(
-                    rect.Left,
-                    rect.Top,
-                    rect.Right - rect.Left,  
-                    rect.Bottom - rect.Top);
-            }
-            catch
-            {
-                throw new Exception("Failed to get window rect. Make sure the target application is running.");
-            }
+            if (!User32.GetWindowRect(hwnd, out var rect))
+                throw new Exception("Failed to get window rect.");
+            return new Rect(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
 
         private void EnsureDevice()
         {
-            // kein Device? gleich initialisieren
-            if (_device == null)
-            {
-                InitializeDeviceAndDuplication();
-                return;
-            }
-
-            // DeviceRemovedReason liefert HRESULT – bei Failure neu starten
-            if (_device.DeviceRemovedReason.Failure)
+            if (_device == null || _device.DeviceRemovedReason.Failure)
             {
                 CleanupDeviceAndDuplication();
                 InitializeDeviceAndDuplication();
@@ -238,48 +191,39 @@ namespace ImageCapture
             _factory = new Factory1();
             _adapter = _factory.GetAdapter1(_adapterIdx);
             _device = new Device(_adapter, DeviceCreationFlags.BgraSupport);
-
             _outputInterface = _adapter.GetOutput(_desktopIdx).QueryInterface<Output1>();
-            _duplicatedOutput = _outputInterface.DuplicateOutput(Device);
+            _duplicatedOutput = _outputInterface.DuplicateOutput(_device);
         }
 
         private void CleanupDeviceAndDuplication()
         {
-            if (LastCaptured != null)
-            {
-                LastCaptured.Dispose();
-                LastCaptured = null; 
-            }
-            _duplicatedOutput?.Dispose();
-            _outputInterface?.Dispose();
-            _device?.Dispose();
-            _duplicatedOutput = null;
-            _device = null;
+            LastCaptured?.Dispose(); LastCaptured = null;
+            _duplicatedOutput?.Dispose(); _duplicatedOutput = null;
+            _outputInterface?.Dispose(); _outputInterface = null;
+            _adapter?.Dispose(); _adapter = null;
+            _factory?.Dispose(); _factory = null;
+            _device?.Dispose(); _device = null;
         }
 
         private void SetTargetProcess(string processName)
         {
             IntPtr hWnd = IntPtr.Zero;
-            foreach (var process in System.Diagnostics.Process.GetProcessesByName(processName))
+            foreach (var proc in Process.GetProcessesByName(processName))
             {
-                hWnd = process.MainWindowHandle;
-                if (hWnd != IntPtr.Zero)
-                    break;
+                hWnd = proc.MainWindowHandle;
+                proc.Dispose();
+                if (hWnd != IntPtr.Zero) break;
             }
-
-            if (hWnd == IntPtr.Zero)
-            {
-                throw new Exception("Process couldn't be found!");
-            }
+            if (hWnd == IntPtr.Zero) throw new Exception("Process couldn't be found!");
             TargetProcess = hWnd;
         }
 
-        private Texture2D GetWindowTexture(Device device, Rect windowRect)
+        private Texture2D GetWindowTexture(Device device, Rect rect)
         {
             return new Texture2D(device, new Texture2DDescription
             {
-                Width = windowRect.Width,
-                Height = windowRect.Height,
+                Width = rect.Width,
+                Height = rect.Height,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = Format.B8G8R8A8_UNorm,
@@ -291,14 +235,14 @@ namespace ImageCapture
             });
         }
 
-        private ResourceRegion GetResourceRegion(Rect windowRect)
+        private ResourceRegion GetResourceRegion(Rect rect)
         {
             return new ResourceRegion
             {
-                Left = windowRect.X,
-                Top = windowRect.Y,
-                Right = windowRect.X + windowRect.Width,
-                Bottom = windowRect.Y + windowRect.Height,
+                Left = rect.X,
+                Top = rect.Y,
+                Right = rect.X + rect.Width,
+                Bottom = rect.Y + rect.Height,
                 Front = 0,
                 Back = 1
             };
@@ -307,7 +251,6 @@ namespace ImageCapture
         public void FpsCounter()
         {
             _frameCounter++;
-
             if (_fpsWatch.ElapsedMilliseconds >= 1000)
             {
                 _currentFps = _frameCounter;
@@ -315,9 +258,12 @@ namespace ImageCapture
                 _fpsWatch.Restart();
             }
         }
+
         public void Dispose()
         {
             CleanupDeviceAndDuplication();
+            _buffer?.Dispose();
+            _buffer = null;
         }
     }
 }

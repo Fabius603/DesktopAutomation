@@ -17,7 +17,8 @@ namespace ImageCapture
         public static Mat ToMat(Texture2D image, Device device)
         {
             using var bitmap = Texture2DToBitmap(image, device);
-            return OpenCvSharp.Extensions.BitmapConverter.ToMat(bitmap);
+            var mat = OpenCvSharp.Extensions.BitmapConverter.ToMat(bitmap);
+            return mat;
         }
 
         private static Bitmap Texture2DToBitmap(Texture2D texture, Device device)
