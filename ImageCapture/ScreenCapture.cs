@@ -12,14 +12,14 @@ using Device = SharpDX.Direct3D11.Device;
 
 namespace ImageCapture
 {
-    public class ImageCapture : IDisposable
+    public class ScreenCapture : IDisposable
     {
-        private ImageCaptureSettings _settings;
+        private ScreenCaptureSettings _settings;
         private IntPtr _targetProcess;
         private Device _device;
         private OutputDuplication _duplicatedOutput;
 
-        public ImageCapture(ImageCaptureSettings settings)
+        public ScreenCapture(ScreenCaptureSettings settings)
         {
             this._settings = settings;
 
@@ -35,6 +35,7 @@ namespace ImageCapture
 
         public Mat CaptureWindow()
         {
+
             Rect windowRect = GetWindowRect(_targetProcess);
             string activeApplication = User32.GetActiveApplicationName();
 
@@ -44,23 +45,36 @@ namespace ImageCapture
                 return new Mat(new OpenCvSharp.Size(windowRect.Width, windowRect.Height), MatType.CV_8UC3, Scalar.Black);
             }
 
-            Texture2D windowTexture = GetWindowTexture(_device, windowRect);
-            ResourceRegion resourceRegion = GetResourceRegion(windowRect);
+            using var windowTexture = GetWindowTexture(_device, windowRect);
+            var region = GetResourceRegion(windowRect);
 
+            var result = _duplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
 
-            _duplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
-            using var desktopTexture = desktopResource.QueryInterface<Texture2D>();
+            if (!result.Success || desktopResource == null)
+            {
+                desktopResource?.Dispose();
+                return new Mat(new OpenCvSharp.Size(windowRect.Width, windowRect.Height), MatType.CV_8UC3, Scalar.Black);
+            }
 
-            _device.ImmediateContext.CopySubresourceRegion(
-                source: desktopTexture,
-                sourceSubresource: 0,
-                sourceRegion: resourceRegion,
-                destination: windowTexture,
-                destinationSubResource: 0);
+            try
+            {
+                using var desktopTexture = desktopResource.QueryInterface<Texture2D>();
+                _device.ImmediateContext.CopySubresourceRegion(
+                    source: desktopTexture,
+                    sourceSubresource: 0,
+                    sourceRegion: region,
+                    destination: windowTexture,
+                    destinationSubResource: 0
+                );
+            }
+            finally
+            {
+                // Frame freigeben, damit die Duplication API weiterarbeitet
+                _duplicatedOutput.ReleaseFrame();
+                desktopResource.Dispose();
+            }
 
-            Mat image = ImageConverter.ToMat(windowTexture, _device);
-
-            return image;
+            return ImageConverter.ToMat(windowTexture, _device);
         }
 
         private Rect GetWindowRect(IntPtr process)
@@ -88,6 +102,11 @@ namespace ImageCapture
                 hWnd = process.MainWindowHandle;
                 if (hWnd != IntPtr.Zero)
                     break;
+            }
+
+            if (hWnd == IntPtr.Zero)
+            {
+                throw new Exception("Process couldn't be found!");
             }
             _targetProcess = hWnd;
         }
