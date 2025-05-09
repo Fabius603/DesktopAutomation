@@ -8,58 +8,98 @@ using OpenCvSharp;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using static System.Net.Mime.MediaTypeNames;
 using Device = SharpDX.Direct3D11.Device;
 
 namespace ImageCapture
 {
     public class ScreenCapture : IDisposable
     {
-        private ScreenCaptureSettings _settings;
-        private IntPtr _targetProcess;
-        private Device _device;
-        private OutputDuplication _duplicatedOutput;
+        public ScreenCaptureSettings Settings { get; private set; }
+        public Mat LastCaptured {  get; private set; }
+        public IntPtr TargetProcess { get; private set; }
+        private OutputDuplication _duplicatedOutput { get; set; }
+        public OutputDuplication DuplicatedOutput
+        {
+            get
+            {
+                EnsureDevice();
+                return _duplicatedOutput;
+            }
+        }
+        private int _currentOutputIndex = -1;
+        private Factory1 _factory;
+        private Adapter1 _adapter;
+        private Output1 _outputInterface;
+        private Device _device { get; set; }
+        public Device Device
+        {
+            get
+            {
+                EnsureDevice();
+                return _device;
+            }
+        }
+        private int _desktopIdx = 0;
+        private int _adapterIdx = 0;
 
         public ScreenCapture(ScreenCaptureSettings settings)
         {
-            this._settings = settings;
+            this.Settings = settings;
 
-            SetTargetProcess(_settings.TargetApplication);
+            SetTargetProcess(Settings.TargetApplication);
 
-            var factory = new Factory1();
-            var adapter = factory.GetAdapter1(0);
-            _device = new Device(adapter);
+            _factory = new Factory1();
+            _adapter = _factory.GetAdapter1(0);
+            _device = new Device(_adapter, DeviceCreationFlags.BgraSupport);
 
-            var output = adapter.GetOutput(0).QueryInterface<Output1>();
-            _duplicatedOutput = output.DuplicateOutput(_device);
+            _outputInterface = _adapter.GetOutput(0).QueryInterface<Output1>();
+            _duplicatedOutput = _outputInterface.DuplicateOutput(Device);
         }
 
         public Mat CaptureWindow()
         {
+            Rect windowRect = GetWindowRect(TargetProcess);
+            Rect windowRectOnDesktop = ScreenHelper.ClampRectToCurrentMonitor(windowRect);
+            var monitorBounds = ScreenHelper.GetMonitorBoundsForWindow(windowRectOnDesktop);
+            int localX = windowRectOnDesktop.X - monitorBounds.Left;
+            int localY = windowRectOnDesktop.Y - monitorBounds.Top;
 
-            Rect windowRect = GetWindowRect(_targetProcess);
             string activeApplication = User32.GetActiveApplicationName();
 
-            if (_settings.OnlyActiveWindow && activeApplication != _settings.TargetApplication)
+            int newDesktopIdx = ScreenHelper.FindOutputIndexForWindow(windowRectOnDesktop, _adapter);
+            int newAdapterIdx = ScreenHelper.FindAdapterIndexForWindow(windowRectOnDesktop, _factory);
+
+            if (newDesktopIdx != _desktopIdx || newAdapterIdx != _adapterIdx)
             {
-                // Gibt ein Schwarzes Mat in größe des Fensters zurück
-                return new Mat(new OpenCvSharp.Size(windowRect.Width, windowRect.Height), MatType.CV_8UC3, Scalar.Black);
+                _desktopIdx = newDesktopIdx;
+                _adapterIdx = newAdapterIdx;
+                CleanupDeviceAndDuplication();
+                InitializeDeviceAndDuplication();
             }
 
-            using var windowTexture = GetWindowTexture(_device, windowRect);
-            var region = GetResourceRegion(windowRect);
+            EnsureDevice();
 
-            var result = _duplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
+            if (Settings.OnlyActiveWindow && activeApplication != Settings.TargetApplication)
+            {
+                return new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black);
+            }
 
-            if (!result.Success || desktopResource == null)
+            using var windowTexture = GetWindowTexture(Device, windowRectOnDesktop);
+            var region = GetResourceRegion(windowRectOnDesktop, localX, localY);
+
+            var duplicationResult = DuplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
+
+            if (!duplicationResult.Success || desktopResource == null)
             {
                 desktopResource?.Dispose();
-                return new Mat(new OpenCvSharp.Size(windowRect.Width, windowRect.Height), MatType.CV_8UC3, Scalar.Black);
+                return LastCaptured?.Clone() ?? new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black);
             }
 
             try
             {
                 using var desktopTexture = desktopResource.QueryInterface<Texture2D>();
-                _device.ImmediateContext.CopySubresourceRegion(
+                Device.ImmediateContext.CopySubresourceRegion(
                     source: desktopTexture,
                     sourceSubresource: 0,
                     sourceRegion: region,
@@ -74,7 +114,41 @@ namespace ImageCapture
                 desktopResource.Dispose();
             }
 
-            return ImageConverter.ToMat(windowTexture, _device);
+            Mat newImage = null;
+            try
+            {
+                newImage = ImageConverter.ToMat(windowTexture, Device);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fehler beim ToMat: {ex.Message}");
+            }
+
+
+            Mat result;
+            if (newImage != null)
+            {
+                // Neuer Frame erfolgreich
+                LastCaptured?.Dispose();
+                LastCaptured = newImage;
+                result = LastCaptured.Clone();
+            }
+            else if (LastCaptured != null)
+            {
+                // Fallback auf letzten erfolgreichen Frame
+                result = LastCaptured.Clone();
+            }
+            else
+            {
+                // endgültiges Fallback: schwarzes Bild in Fenstergröße
+                var size = windowTexture.Description;
+                result = new Mat(
+                    new OpenCvSharp.Size(size.Width, size.Height),
+                    MatType.CV_8UC3,
+                    Scalar.Black);
+            }
+
+            return result;
         }
 
         private Rect GetWindowRect(IntPtr process)
@@ -94,6 +168,47 @@ namespace ImageCapture
             }
         }
 
+        private void EnsureDevice()
+        {
+            // kein Device? gleich initialisieren
+            if (_device == null)
+            {
+                InitializeDeviceAndDuplication();
+                return;
+            }
+
+            // DeviceRemovedReason liefert HRESULT – bei Failure neu starten
+            if (_device.DeviceRemovedReason.Failure)
+            {
+                CleanupDeviceAndDuplication();
+                InitializeDeviceAndDuplication();
+            }
+        }
+
+        private void InitializeDeviceAndDuplication()
+        {
+            _factory = new Factory1();
+            _adapter = _factory.GetAdapter1(_adapterIdx);
+            _device = new Device(_adapter, DeviceCreationFlags.BgraSupport);
+
+            _outputInterface = _adapter.GetOutput(_desktopIdx).QueryInterface<Output1>();
+            _duplicatedOutput = _outputInterface.DuplicateOutput(Device);
+        }
+
+        private void CleanupDeviceAndDuplication()
+        {
+            if (LastCaptured != null)
+            {
+                LastCaptured.Dispose();
+                LastCaptured = null; 
+            }
+            _duplicatedOutput?.Dispose();
+            _outputInterface?.Dispose();
+            _device?.Dispose();
+            _duplicatedOutput = null;
+            _device = null;
+        }
+
         private void SetTargetProcess(string processName)
         {
             IntPtr hWnd = IntPtr.Zero;
@@ -108,7 +223,7 @@ namespace ImageCapture
             {
                 throw new Exception("Process couldn't be found!");
             }
-            _targetProcess = hWnd;
+            TargetProcess = hWnd;
         }
 
         private Texture2D GetWindowTexture(Device device, Rect windowRect)
@@ -128,14 +243,14 @@ namespace ImageCapture
             });
         }
 
-        private ResourceRegion GetResourceRegion(Rect windowRect)
+        private ResourceRegion GetResourceRegion(Rect windowRect, int localX, int localY)
         {
             return new ResourceRegion
             {
-                Left = windowRect.X,
-                Top = windowRect.Y,
-                Right = windowRect.X + windowRect.Width,
-                Bottom = windowRect.Y + windowRect.Height,
+                Left = localX,
+                Top = localY,
+                Right = localX + windowRect.Width,
+                Bottom = localY + windowRect.Height,
                 Front = 0,
                 Back = 1
             };
@@ -143,8 +258,7 @@ namespace ImageCapture
 
         public void Dispose()
         {
-            _duplicatedOutput?.Dispose();
-            _device?.Dispose();
+            CleanupDeviceAndDuplication();
         }
     }
 }

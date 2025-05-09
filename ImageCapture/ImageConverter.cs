@@ -51,11 +51,25 @@ namespace ImageCapture
 
             unsafe
             {
-                System.Buffer.MemoryCopy(
-                    dataBox.DataPointer.ToPointer(),
-                    bitmapData.Scan0.ToPointer(),
-                    bitmapData.Height * bitmapData.Stride,
-                    dataBox.RowPitch * bitmapData.Height);
+                int bytesPerPixel = 4; // bei Format32bppArgb
+                int rowBytes = textureDesc.Width * bytesPerPixel;
+
+                byte* srcRow = (byte*)dataBox.DataPointer;
+                byte* dstRow = (byte*)bitmapData.Scan0;
+
+                for (int y = 0; y < bitmapData.Height; y++)
+                {
+                    // Quelle: dataBox.RowPitch Bytes breit, Ziel: rowBytes breit
+                    System.Buffer.MemoryCopy(
+                        srcRow,                   // Quellzeile
+                        dstRow,                   // Zielzeile
+                        bitmapData.Stride,        // max. Zielpuffer-Länge in Bytes
+                        rowBytes                  // Anzahl Bytes, die kopiert werden sollen
+                    );
+
+                    srcRow += dataBox.RowPitch;
+                    dstRow += bitmapData.Stride;
+                }
             }
 
             bitmap.UnlockBits(bitmapData);

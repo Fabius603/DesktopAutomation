@@ -11,11 +11,14 @@ class Program
         };
 
         ScreenCapture screenCapture = new ScreenCapture(settings);
+        int i = 0;
         while (true)
         {
+            Console.WriteLine(i++);
             // CaptureWindow() liefert ein Mat, das disposed werden muss
             using (var frame = screenCapture.CaptureWindow())
             {
+                if (frame == null) { continue; }
                 // Neues Mat für das Resizing
                 using (var resizedFrame = new Mat())
                 {
@@ -25,7 +28,7 @@ class Program
             }
 
             // 10 ms warten, damit OpenCV-Fenster aktualisiert wird
-            Cv2.WaitKey(10);
+            Cv2.WaitKey(1);
         }
     }
 }
