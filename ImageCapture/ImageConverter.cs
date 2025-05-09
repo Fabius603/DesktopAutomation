@@ -59,12 +59,11 @@ namespace ImageCapture
 
                 for (int y = 0; y < bitmapData.Height; y++)
                 {
-                    // Quelle: dataBox.RowPitch Bytes breit, Ziel: rowBytes breit
                     System.Buffer.MemoryCopy(
-                        srcRow,                   // Quellzeile
-                        dstRow,                   // Zielzeile
-                        bitmapData.Stride,        // max. Zielpuffer-Länge in Bytes
-                        rowBytes                  // Anzahl Bytes, die kopiert werden sollen
+                        srcRow,                   
+                        dstRow,                   
+                        bitmapData.Stride,        
+                        rowBytes                  
                     );
 
                     srcRow += dataBox.RowPitch;

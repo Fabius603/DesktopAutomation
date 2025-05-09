@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -43,6 +44,11 @@ namespace ImageCapture
         private int _desktopIdx = 0;
         private int _adapterIdx = 0;
 
+        // FPS
+        private readonly Stopwatch _fpsWatch = Stopwatch.StartNew();
+        private int _frameCounter = 0;
+        private int _currentFps = 0;
+
         public ScreenCapture(ScreenCaptureSettings settings)
         {
             this.Settings = settings;
@@ -57,13 +63,28 @@ namespace ImageCapture
             _duplicatedOutput = _outputInterface.DuplicateOutput(Device);
         }
 
-        public Mat CaptureWindow()
+        public ScreenCaptureResult CaptureWindow()
         {
-            Rect windowRect = GetWindowRect(TargetProcess);
+            FpsCounter();
+
+            Rect windowRect;
+            try
+            {
+                windowRect = GetWindowRect(TargetProcess);
+
+            }
+            catch
+            {
+                return new ScreenCaptureResult(false);
+            }
+
             Rect windowRectOnDesktop = ScreenHelper.ClampRectToCurrentMonitor(windowRect);
             var monitorBounds = ScreenHelper.GetMonitorBoundsForWindow(windowRectOnDesktop);
-            int localX = windowRectOnDesktop.X - monitorBounds.Left;
-            int localY = windowRectOnDesktop.Y - monitorBounds.Top;
+            Rect lokalDesktopWindowRect = new Rect(
+                windowRectOnDesktop.X - monitorBounds.Left,
+                windowRectOnDesktop.Y - monitorBounds.Top,
+                windowRect.Width,
+                windowRect.Height);
 
             string activeApplication = User32.GetActiveApplicationName();
 
@@ -82,18 +103,36 @@ namespace ImageCapture
 
             if (Settings.OnlyActiveWindow && activeApplication != Settings.TargetApplication)
             {
-                return new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black);
+                return new ScreenCaptureResult()
+                {
+                    Image = new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black),
+                    Fps = _currentFps,
+                    WindowRect = windowRect,
+                    DesktopWindowRect = windowRectOnDesktop,
+                    LokalDesktopWindowRect = lokalDesktopWindowRect,
+                    DesktopIdx = _desktopIdx,
+                    AdapterIdx = _adapterIdx
+                };
             }
 
             using var windowTexture = GetWindowTexture(Device, windowRectOnDesktop);
-            var region = GetResourceRegion(windowRectOnDesktop, localX, localY);
+            var region = GetResourceRegion(lokalDesktopWindowRect);
 
             var duplicationResult = DuplicatedOutput.TryAcquireNextFrame(1000, out var frameInfo, out var desktopResource);
 
             if (!duplicationResult.Success || desktopResource == null)
             {
                 desktopResource?.Dispose();
-                return LastCaptured?.Clone() ?? new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black);
+                return new ScreenCaptureResult()
+                {
+                    Image = LastCaptured?.Clone() ?? new Mat(windowRectOnDesktop.Size, MatType.CV_8UC3, Scalar.Black),
+                    Fps = _currentFps,
+                    WindowRect = windowRect,
+                    DesktopWindowRect = windowRectOnDesktop,
+                    LokalDesktopWindowRect = lokalDesktopWindowRect,
+                    DesktopIdx = _desktopIdx,
+                    AdapterIdx = _adapterIdx
+                };
             }
 
             try
@@ -148,7 +187,16 @@ namespace ImageCapture
                     Scalar.Black);
             }
 
-            return result;
+            return new ScreenCaptureResult()
+            {
+                Image = result,
+                Fps = _currentFps,
+                WindowRect = windowRect,
+                DesktopWindowRect = windowRectOnDesktop,
+                LokalDesktopWindowRect = lokalDesktopWindowRect,
+                DesktopIdx = _desktopIdx,
+                AdapterIdx = _adapterIdx
+            };
         }
 
         private Rect GetWindowRect(IntPtr process)
@@ -243,19 +291,30 @@ namespace ImageCapture
             });
         }
 
-        private ResourceRegion GetResourceRegion(Rect windowRect, int localX, int localY)
+        private ResourceRegion GetResourceRegion(Rect windowRect)
         {
             return new ResourceRegion
             {
-                Left = localX,
-                Top = localY,
-                Right = localX + windowRect.Width,
-                Bottom = localY + windowRect.Height,
+                Left = windowRect.X,
+                Top = windowRect.Y,
+                Right = windowRect.X + windowRect.Width,
+                Bottom = windowRect.Y + windowRect.Height,
                 Front = 0,
                 Back = 1
             };
         }
 
+        public void FpsCounter()
+        {
+            _frameCounter++;
+
+            if (_fpsWatch.ElapsedMilliseconds >= 1000)
+            {
+                _currentFps = _frameCounter;
+                _frameCounter = 0;
+                _fpsWatch.Restart();
+            }
+        }
         public void Dispose()
         {
             CleanupDeviceAndDuplication();

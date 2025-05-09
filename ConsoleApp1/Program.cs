@@ -14,20 +14,17 @@ class Program
         int i = 0;
         while (true)
         {
-            Console.WriteLine(i++);
-            // CaptureWindow() liefert ein Mat, das disposed werden muss
-            using (var frame = screenCapture.CaptureWindow())
+            using (ScreenCaptureResult result = screenCapture.CaptureWindow())
             {
-                if (frame == null) { continue; }
-                // Neues Mat für das Resizing
                 using (var resizedFrame = new Mat())
                 {
-                    Cv2.Resize(frame, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
+                    Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
                     Cv2.ImShow("Captured Image", resizedFrame);
                 }
+                Console.Clear();
+                Console.WriteLine("FPS: " + result.Fps);
             }
 
-            // 10 ms warten, damit OpenCV-Fenster aktualisiert wird
             Cv2.WaitKey(1);
         }
     }

@@ -3,6 +3,6 @@
     public class ScreenCaptureSettings
     {
         public string TargetApplication { get; set; }
-        public bool OnlyActiveWindow { get; set; } = true;
+        public bool OnlyActiveWindow { get; set; } = false;
     }
 }
