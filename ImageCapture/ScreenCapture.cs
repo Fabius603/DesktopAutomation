@@ -141,22 +141,17 @@ namespace ImageCapture
             catch (Exception ex)
             {
                 Console.WriteLine($"Fehler beim ToMat: {ex.Message}");
+                // Fallback: schwarzes Bild oder LastCaptured
+                if (LastCaptured != null)
+                    newImage = LastCaptured.Clone();
+                else
+                    newImage = new Mat(_buffer.Size(), MatType.CV_8UC3, Scalar.Black);
             }
 
-            if (newImage != null)
-            {
-                LastCaptured?.Dispose();
-                LastCaptured = newImage;
-                newImage.CopyTo(_buffer);
-            }
-            else if (LastCaptured != null)
-            {
-                LastCaptured.CopyTo(_buffer);
-            }
-            else
-            {
-                _buffer.SetTo(Scalar.Black);
-            }
+            LastCaptured?.Dispose();
+            LastCaptured = newImage;
+
+            newImage.CopyTo(_buffer);
 
             return new ScreenCaptureResult
             {

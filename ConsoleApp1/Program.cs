@@ -20,9 +20,9 @@ class Program
                 {
                     using (var resizedFrame = new Mat())
                     {
-                        //Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
-                        //Cv2.ImShow("Captured Image", resizedFrame);
-                        //resizedFrame.Dispose();
+                        Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
+                        Cv2.ImShow("Captured Image", resizedFrame);
+                        resizedFrame.Dispose();
                     }
                     //Console.Clear();
                     //Console.WriteLine("FPS: " + result.Fps);
