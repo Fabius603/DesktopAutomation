@@ -1,5 +1,6 @@
-﻿using ImageCapture;
+﻿using ImageCapture.DesktopDuplication;
 using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using SharpDX;
 using SharpDX.Diagnostics;
 using System.Runtime.ConstrainedExecution;
@@ -9,29 +10,18 @@ class Program
 {
     static void Main(string[] args)
     {
-        ScreenCaptureSettings settings = new ScreenCaptureSettings
+        DesktopDuplicator desktopDuplicator0 = new DesktopDuplicator(0);
+        DesktopDuplicator desktopDuplicator1 = new DesktopDuplicator(1);
+        DesktopFrame frame = null;
+
+        while (true)
         {
-            TargetApplication = "brave" // Set your target application name here
-        };
-
-        int i = 0;
-        using (ScreenCapture screenCapture = new ScreenCapture(settings))
-        {
-            while (true)
-            {
-                i++;
-                ScreenCaptureResult result = screenCapture.CaptureWindow();
-
-                var resizedFrame = new Mat();
-
-                //Cv2.Resize(result.Image, resizedFrame, new OpenCvSharp.Size(), 0.5, 0.5);
-                //Cv2.ImShow("Captured Image", resizedFrame);
-                //Console.Clear();
-                //Console.WriteLine("FPS: " + result.Fps);
-                resizedFrame.Dispose();
-                result.Dispose();
-                Cv2.WaitKey(1);
-            }
+            frame = desktopDuplicator0.GetLatestFrame();
+            frame = desktopDuplicator1.GetLatestFrame();
+            //Cv2.ImShow("test", frame.DesktopImage.ToMat());
+            //Cv2.WaitKey(1);
+            frame.Dispose();
+            GC.Collect();
         }
     }
 }
