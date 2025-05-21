@@ -15,10 +15,9 @@ namespace ImageCapture.ProcessDuplication
 {
     public class ProcessDuplicator : IDisposable
     {
-        private ProcessDuplicatorSettings settings { get; set; }
         private string processName { get; set; }
         private IntPtr targetProcess { get; set; } = IntPtr.Zero;
-
+        private bool OnlyActiveWindow { get; set; } = false;
         private Bitmap _latestSuccessfulImage { get; set; } = null; 
         private DesktopFrame _latestSuccessfulFrame { get; set; } = null;
 
@@ -32,8 +31,20 @@ namespace ImageCapture.ProcessDuplication
         private DxgiResources dxgiResources = new DxgiResources();
 
         private Dictionary<string, DesktopDuplicator> desktopDuplicators = new Dictionary<string, DesktopDuplicator>();
+        private int _aquireFrameTimeout = 0;
+        private int aquireFrameTimeout
+        {
+            get => _aquireFrameTimeout;
+            set
+            {
+                _aquireFrameTimeout = value;
+                foreach (var duplicator in desktopDuplicators)
+                {
+                    duplicator.Value.SetFrameTimeout(aquireFrameTimeout);
+                }
+            }
+        }
 
-        // Public properties with proper disposal handling
         public Bitmap latestSuccesfullImage
         {
             get => _latestSuccessfulImage;
@@ -60,11 +71,10 @@ namespace ImageCapture.ProcessDuplication
             }
         }
 
-        public ProcessDuplicator(ProcessDuplicatorSettings settings)
+        public ProcessDuplicator(string targetApplication)
         {
-            this.settings = settings;
-            this.processName = settings.TargetApplication;
-            SetTargetProcess(settings.TargetApplication);
+            this.processName = targetApplication;
+            SetTargetProcess(targetApplication);
             
             var adapterAndOutputs = GetAllAdapterAndOutputIndices();
             InitializeDesktopDuplicators(adapterAndOutputs);
@@ -100,8 +110,8 @@ namespace ImageCapture.ProcessDuplication
                     return CreateResult(false);
                 }
 
-                if (settings.OnlyActiveWindow &&
-                    User32.GetActiveApplicationName() != settings.TargetApplication)
+                if (OnlyActiveWindow &&
+                    User32.GetActiveApplicationName() != processName)
                 {
                     return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
                 }
@@ -155,6 +165,18 @@ namespace ImageCapture.ProcessDuplication
             }
         }
 
+        public void SetOnlyActiveWindow(bool onlyAktiveWindow)
+        {
+            OnlyActiveWindow = onlyAktiveWindow;
+        }
+
+        public void SetFrameTimeout(int timeout)
+        {
+            if (timeout < 0)
+                throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be non-negative.");
+            aquireFrameTimeout = timeout;
+        }
+
         private void InitializeAllDxgiResources()
         {
             dxgiResources.Factory = new Factory1();
@@ -195,7 +217,9 @@ namespace ImageCapture.ProcessDuplication
                 string key = $"{adapter},{output}";
                 if (!desktopDuplicators.ContainsKey(key))
                 {
-                    desktopDuplicators.Add(key, new DesktopDuplicator(adapter, output));
+                    var duplicator = new DesktopDuplicator(adapter, output);
+                    duplicator.SetFrameTimeout(aquireFrameTimeout); 
+                    desktopDuplicators.Add(key, duplicator);
                 }
             }
         }
@@ -294,7 +318,6 @@ namespace ImageCapture.ProcessDuplication
             };
         }
 
-        // IDisposable Implementation
         public void Dispose()
         {
             Dispose(true);

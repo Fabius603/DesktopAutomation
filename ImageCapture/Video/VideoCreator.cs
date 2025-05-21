@@ -19,10 +19,8 @@ namespace ImageCapture.Video
         }
         private readonly Task ffmpegInitTask;
         private readonly List<TimedFrame> frames = new();
-        private readonly List<Task> saveTasks = new();
         private readonly object lockObj = new();
         private readonly string frameFolder;
-        private Task cleanUpTask;
 
         public VideoCreator()
         {
@@ -74,13 +72,6 @@ namespace ImageCapture.Video
         public async Task SaveAsMp4Async(string outputPath, int fps)
         {
             await ffmpegInitTask;
-
-            Task[] tasksToWait;
-            lock (lockObj)
-            {
-                tasksToWait = saveTasks.ToArray();
-            }
-            await Task.WhenAll(tasksToWait);
 
             List<TimedFrame> copiedFrames;
             lock (lockObj)

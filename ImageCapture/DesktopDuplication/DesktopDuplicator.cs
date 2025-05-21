@@ -15,6 +15,7 @@ namespace ImageCapture.DesktopDuplication
 {
     public class DesktopDuplicator : IDisposable
     {
+        #region propertiers
         private Device mDevice;
         private Texture2DDescription mTextureDesc;
         private OutputDescription mOutputDesc;
@@ -31,7 +32,8 @@ namespace ImageCapture.DesktopDuplication
 
         private bool disposed = false;
         private readonly PointerInfo sharedPointerInfo = new PointerInfo();
-
+        private int aquireFrameTimeout { get; set; } = 0;
+        #endregion
 
         public DesktopDuplicator(int whichMonitor)
             : this(0, whichMonitor) { }
@@ -106,6 +108,15 @@ namespace ImageCapture.DesktopDuplication
             }
         }
 
+        #region public methods
+
+        public void SetFrameTimeout(int timeout)
+        {
+            if (timeout < 0)
+                throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be non-negative.");
+            aquireFrameTimeout = timeout;
+        }
+
         public DesktopFrame GetLatestFrame()
         {
             if (disposed)
@@ -177,6 +188,9 @@ namespace ImageCapture.DesktopDuplication
             }
         }
 
+        #endregion
+
+        #region private methods
         private bool RetrieveFrameInternal(out SharpDX.DXGI.Resource desktopResourceOut)
         {
             if (disposed)
@@ -207,14 +221,14 @@ namespace ImageCapture.DesktopDuplication
 
             try
             {
-                Result res = mDeskDupl.TryAcquireNextFrame(0, out frameInfo, out desktopResourceOut); // 500ms timeout
+                Result res = mDeskDupl.TryAcquireNextFrame(aquireFrameTimeout, out frameInfo, out desktopResourceOut); 
                 if (res.Code == SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code)
                 {
                     desktopResourceOut?.Dispose();
                     desktopResourceOut = null;
-                    return true; // Timed out (no new frame)
+                    return true; 
                 }
-                res.CheckError(); // Throws on other failures (e.g., DXGI_ERROR_DEVICE_REMOVED)
+                res.CheckError(); 
             }
             catch (SharpDXException ex)
             {
@@ -222,11 +236,10 @@ namespace ImageCapture.DesktopDuplication
                 desktopResourceOut = null;
                 if (ex.ResultCode.Failure)
                 {
-                    throw; // Re-throw to be handled by GetLatestFrame's main catch block
+                    throw; 
                 }
             }
 
-            // If a new desktop resource was acquired, copy it to our staging texture.
             if (desktopResourceOut != null)
             {
                 using (var tempTexture = desktopResourceOut.QueryInterface<Texture2D>())
@@ -234,7 +247,7 @@ namespace ImageCapture.DesktopDuplication
                     mDevice.ImmediateContext.CopyResource(tempTexture, desktopImageTexture);
                 }
             }
-            return false; // Did not time out, frame acquired or metadata updated
+            return false; 
         }
 
 
@@ -439,6 +452,9 @@ namespace ImageCapture.DesktopDuplication
             return new Rectangle(r.Left, r.Top, GetWidth(r), GetHeight(r));
         }
 
+        #endregion
+
+        #region dispose
         public void Dispose()
         {
             Dispose(true);
@@ -471,5 +487,6 @@ namespace ImageCapture.DesktopDuplication
         {
             Dispose(false);
         }
+        #endregion
     }
 }

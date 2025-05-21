@@ -12,17 +12,13 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        ProcessDuplicatorSettings settings = new ProcessDuplicatorSettings
-        {
-            TargetApplication = "brave",
-            OnlyActiveWindow = false
-        };
-        ProcessDuplicator processDuplicator = new ProcessDuplicator(settings);
+        string targetApplication = "discord";
+        ProcessDuplicator processDuplicator = new ProcessDuplicator(targetApplication);
 
         VideoCreator videoCreator = new VideoCreator();
         videoCreator.CleanUp();
         int i = 0;
-        while (i < 200)
+        while (true)
         {
             i++;
             var result = processDuplicator.CaptureProcess();
@@ -33,6 +29,13 @@ class Program
             Cv2.WaitKey(1);
             mat.Dispose();
             result.Dispose();
+
+            if (Console.KeyAvailable)
+            {
+                Console.WriteLine("Video wird gespeichert...");
+                Console.ReadKey(true);
+                break;
+            }
         }
         videoCreator.SaveAsMp4Async("C:\\Users\\fjsch\\Pictures\\trash\\output.mp4", 30).Wait();
         videoCreator.CleanUp();
