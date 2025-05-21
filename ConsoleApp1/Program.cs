@@ -11,6 +11,16 @@ class Program
 {
     static void Main(string[] args)
     {
+        //DesktopDuplicator desktopDuplicator = new DesktopDuplicator(1);
+        //while(true)
+        //{
+        //    var result = desktopDuplicator.GetLatestFrame();
+        //    Cv2.ImShow("test", result.DesktopImage.ToMat());
+        //    Cv2.WaitKey(1);
+        //    result.Dispose();
+        //    GC.Collect();
+        //}
+
         ProcessDuplicatorSettings settings = new ProcessDuplicatorSettings
         {
             TargetApplication = "brave",
@@ -18,7 +28,7 @@ class Program
         };
 
         ProcessDuplicator processDuplicator = new ProcessDuplicator(settings);
-        while(true)
+        while (true)
         {
             var result = processDuplicator.CaptureProcess();
             //Cv2.ImShow("test", result.ProcessImage.ToMat());

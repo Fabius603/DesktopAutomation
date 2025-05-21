@@ -68,7 +68,6 @@ namespace ImageCapture.ProcessDuplication
 
         public ProcessDuplicatorResult CaptureProcess()
         {
-            ProcessDuplicatorResult result = null;
             DesktopFrame currentFrame = null;
             Bitmap croppedImage = null;
 
@@ -115,8 +114,7 @@ namespace ImageCapture.ProcessDuplication
                     return CreateResult(false);
                 }
 
-                var activeDuplicator = desktopDuplicators[$"{currentAdapterIndex},{currentOutputIndex}"];
-                currentFrame = activeDuplicator.GetLatestFrame();
+                currentFrame = desktopDuplicators[$"{currentAdapterIndex},{currentOutputIndex}"].GetLatestFrame();
 
                 if (currentFrame == null)
                 {
@@ -131,7 +129,7 @@ namespace ImageCapture.ProcessDuplication
 
                 try
                 {
-                    croppedImage = (Bitmap)currentFrame.DesktopImage.Clone(clampedRect, currentFrame.DesktopImage.PixelFormat);
+                    //croppedImage = (Bitmap)currentFrame.DesktopImage.Clone(clampedRect, currentFrame.DesktopImage.PixelFormat);
                 }
                 catch (Exception ex)
                 {
@@ -140,14 +138,15 @@ namespace ImageCapture.ProcessDuplication
                 }
 
                 latestSuccesfullImage = croppedImage;
-                latestSuccesfullFrame = currentFrame.Clone(); 
+                latestSuccesfullFrame = currentFrame.Clone();
 
-                result = CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
-                return result;
+                return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
             }
             finally
             {
                 currentFrame?.Dispose();
+                croppedImage?.Dispose();
+
             }
         }
 

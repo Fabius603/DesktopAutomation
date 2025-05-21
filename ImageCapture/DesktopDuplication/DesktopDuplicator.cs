@@ -13,8 +13,6 @@ using SharpDX.Mathematics.Interop;
 
 namespace ImageCapture.DesktopDuplication
 {
-    
-
     public class DesktopDuplicator : IDisposable
     {
         private Device mDevice;
@@ -23,36 +21,13 @@ namespace ImageCapture.DesktopDuplication
         private OutputDuplication mDeskDupl;
 
         private Texture2D desktopImageTexture = null;
+
+        private Bitmap _currentCachedBitmap = null;
+        private int _currentCachedBitmapWidth = 0;
+        private int _currentCachedBitmapHeight = 0;
+
         private OutputDuplicateFrameInformation frameInfo = new OutputDuplicateFrameInformation();
         private int mWhichOutputDevice = -1;
-
-        private Bitmap finalImage1, finalImage2;
-        private bool isFinalImage1 = false;
-        private Bitmap FinalImage
-        {
-            get
-            {
-                return isFinalImage1 ? finalImage1 : finalImage2;
-            }
-            set
-            {
-                if (isFinalImage1)
-                {
-                    finalImage2?.Dispose();
-                    finalImage2 = value;
-                    finalImage1?.Dispose(); 
-                    finalImage1 = null;
-                }
-                else
-                {
-                    finalImage1?.Dispose();
-                    finalImage1 = value;
-                    finalImage2?.Dispose();
-                    finalImage2 = null;
-                }
-                isFinalImage1 = !isFinalImage1;
-            }
-        }
 
         private bool disposed = false;
         private readonly PointerInfo sharedPointerInfo = new PointerInfo();
@@ -89,14 +64,14 @@ namespace ImageCapture.DesktopDuplication
                 {
                     CpuAccessFlags = CpuAccessFlags.Read,
                     BindFlags = BindFlags.None,
-                    Format = Format.B8G8R8A8_UNorm,
+                    Format = Format.B8G8R8A8_UNorm, // Use UNorm for 8-bit per channel
                     Width = GetWidth(mOutputDesc.DesktopBounds),
                     Height = GetHeight(mOutputDesc.DesktopBounds),
                     OptionFlags = ResourceOptionFlags.None,
                     MipLevels = 1,
                     ArraySize = 1,
                     SampleDescription = { Count = 1, Quality = 0 },
-                    Usage = ResourceUsage.Staging
+                    Usage = ResourceUsage.Staging // Staging texture allows CPU read access
                 };
 
                 mDeskDupl = output1.DuplicateOutput(mDevice);
@@ -118,7 +93,6 @@ namespace ImageCapture.DesktopDuplication
             }
             finally
             {
-                // Dispose temporary COM objects used for initialization
                 output1?.Dispose();
                 output?.Dispose();
                 adapter?.Dispose();
@@ -137,46 +111,40 @@ namespace ImageCapture.DesktopDuplication
             if (disposed)
                 throw new ObjectDisposedException(nameof(DesktopDuplicator));
 
-            bool frameAcquired = false;
-            SharpDX.DXGI.Resource desktopResource = null; // Must be explicitly managed
+            SharpDX.DXGI.Resource desktopResource = null;
+            DesktopFrame frame = null;
+            bool frameSuccessfullyAcquiredFromDxgi = false;
 
             try
             {
                 bool retrievalTimedOut = RetrieveFrameInternal(out desktopResource);
 
-                if (retrievalTimedOut)
-                    return null; // Timeout means no frame acquired this attempt
+                frameSuccessfullyAcquiredFromDxgi = !retrievalTimedOut;
 
-                frameAcquired = true;
-
-                var frame = new DesktopFrame();
+                frame = new DesktopFrame();
                 RetrieveFrameMetadata(frame);
-                RetrieveCursorMetadata(frame); 
+                RetrieveCursorMetadata(frame);
 
-                // Only process the image if there was an actual desktop update
-                if (desktopResource != null || (frameInfo.LastPresentTime > 0 && frameInfo.AccumulatedFrames > 0)) // desktopResource non-null means new image.
-                                                                                                                   // AccumulatedFrames > 0 can also indicate changes even if desktopResource is null (e.g. metadata only)
+                bool frameWasUpdated = (desktopResource != null || frameInfo.LastPresentTime > 0 || frameInfo.AccumulatedFrames > 0);
+
+                if (frameWasUpdated)
                 {
-                    if (desktopImageTexture != null && (desktopResource != null || frame.UpdatedRegions.Length > 0 || frame.MovedRegions.Length > 0))
-                    {
-                        ProcessFrame(frame);
-                    }
-                    else if (FinalImage != null)
-                    { // If no new image but an old one exists
-                        frame.DesktopImage = FinalImage; // Return the last known good image
-                    }
-                }
-                else if (FinalImage != null) // No updates at all, but we have a previous image
-                {
-                    frame.DesktopImage = FinalImage;
+                    ProcessFrameIntoInternalBitmap();
                 }
 
+                if (_currentCachedBitmap != null)
+                {
+                    frame.DesktopImage = (Bitmap)_currentCachedBitmap.Clone();
+                }
+                else
+                {
+                    frame.DesktopImage = null;
+                }
 
                 return frame;
             }
             catch (SharpDXException ex)
             {
-                // Handle specific errors that might invalidate the duplicator
                 if (ex.ResultCode.Code == SharpDX.DXGI.ResultCode.AccessLost.Result.Code ||
                     ex.ResultCode.Code == SharpDX.DXGI.ResultCode.DeviceRemoved.Result.Code ||
                     ex.ResultCode.Code == SharpDX.DXGI.ResultCode.DeviceReset.Result.Code)
@@ -184,13 +152,15 @@ namespace ImageCapture.DesktopDuplication
                     Dispose();
                     throw new DesktopDuplicationException("Desktop Duplication session became invalid (Access Lost/Device Removed/Device Reset). Please recreate DesktopDuplicator.", ex);
                 }
+                frame?.DesktopImage?.Dispose();
+                frame?.Dispose();
                 throw new DesktopDuplicationException("Failed during frame processing or metadata retrieval.", ex);
             }
             finally
             {
-                desktopResource?.Dispose(); 
+                desktopResource?.Dispose();
 
-                if (frameAcquired)
+                if (frameSuccessfullyAcquiredFromDxgi)
                 {
                     try
                     {
@@ -214,17 +184,21 @@ namespace ImageCapture.DesktopDuplication
 
             desktopResourceOut = null;
 
-            if (desktopImageTexture == null)
+            // Ensure desktopImageTexture (the staging buffer) is correctly sized.
+            // This might change if screen resolution changes.
+            int currentOutputWidth = GetWidth(mOutputDesc.DesktopBounds);
+            int currentOutputHeight = GetHeight(mOutputDesc.DesktopBounds);
+
+            if (desktopImageTexture == null || mTextureDesc.Width != currentOutputWidth || mTextureDesc.Height != currentOutputHeight)
             {
-                // Ensure width/height are positive before creating texture
-                int width = GetWidth(mOutputDesc.DesktopBounds);
-                int height = GetHeight(mOutputDesc.DesktopBounds);
-                if (width <= 0 || height <= 0)
+                desktopImageTexture?.Dispose(); // Dispose old texture if size changed
+                mTextureDesc.Width = currentOutputWidth;
+                mTextureDesc.Height = currentOutputHeight;
+                // Handle invalid dimensions defensively
+                if (currentOutputWidth <= 0 || currentOutputHeight <= 0)
                 {
-                    throw new DesktopDuplicationException("Invalid dimensions for texture creation.");
+                    throw new DesktopDuplicationException($"Invalid output dimensions: Width={currentOutputWidth}, Height={currentOutputHeight}");
                 }
-                mTextureDesc.Width = width;
-                mTextureDesc.Height = height;
                 desktopImageTexture = new Texture2D(mDevice, mTextureDesc);
             }
 
@@ -233,26 +207,26 @@ namespace ImageCapture.DesktopDuplication
 
             try
             {
-                Result res = mDeskDupl.TryAcquireNextFrame(500, out frameInfo, out desktopResourceOut);
+                Result res = mDeskDupl.TryAcquireNextFrame(500, out frameInfo, out desktopResourceOut); // 500ms timeout
                 if (res.Code == SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code)
                 {
                     desktopResourceOut?.Dispose();
                     desktopResourceOut = null;
-                    return true; // Timed out
+                    return true; // Timed out (no new frame)
                 }
-                res.CheckError(); // Throws on other failures
+                res.CheckError(); // Throws on other failures (e.g., DXGI_ERROR_DEVICE_REMOVED)
             }
             catch (SharpDXException ex)
             {
                 desktopResourceOut?.Dispose();
                 desktopResourceOut = null;
-
                 if (ex.ResultCode.Failure)
                 {
-                    throw; // Rethrow to be handled by GetLatestFrame or signal failure
+                    throw; // Re-throw to be handled by GetLatestFrame's main catch block
                 }
             }
 
+            // If a new desktop resource was acquired, copy it to our staging texture.
             if (desktopResourceOut != null)
             {
                 using (var tempTexture = desktopResourceOut.QueryInterface<Texture2D>())
@@ -260,7 +234,7 @@ namespace ImageCapture.DesktopDuplication
                     mDevice.ImmediateContext.CopyResource(tempTexture, desktopImageTexture);
                 }
             }
-            return false; // Did not time out
+            return false; // Did not time out, frame acquired or metadata updated
         }
 
 
@@ -271,7 +245,7 @@ namespace ImageCapture.DesktopDuplication
             if (frameInfo.TotalMetadataBufferSize > 0)
             {
                 // Get moved regions
-                OutputDuplicateMoveRectangle[] movedRectangles = new OutputDuplicateMoveRectangle[frameInfo.TotalMetadataBufferSize / Marshal.SizeOf<OutputDuplicateMoveRectangle>() + 1]; // Ensure enough space
+                OutputDuplicateMoveRectangle[] movedRectangles = new OutputDuplicateMoveRectangle[frameInfo.TotalMetadataBufferSize / Marshal.SizeOf<OutputDuplicateMoveRectangle>() + 1];
                 mDeskDupl.GetFrameMoveRects(movedRectangles.Length * Marshal.SizeOf<OutputDuplicateMoveRectangle>(), movedRectangles, out int movedRegionsLengthInBytes);
 
                 int numMovedRects = movedRegionsLengthInBytes / Marshal.SizeOf<OutputDuplicateMoveRectangle>();
@@ -286,7 +260,7 @@ namespace ImageCapture.DesktopDuplication
                 }
 
                 // Get dirty regions
-                RawRectangle[] dirtyRectangles = new RawRectangle[frameInfo.TotalMetadataBufferSize / Marshal.SizeOf<RawRectangle>() + 1]; // Ensure enough space
+                RawRectangle[] dirtyRectangles = new RawRectangle[frameInfo.TotalMetadataBufferSize / Marshal.SizeOf<RawRectangle>() + 1];
                 mDeskDupl.GetFrameDirtyRects(dirtyRectangles.Length * Marshal.SizeOf<RawRectangle>(), dirtyRectangles, out int dirtyRegionsLengthInBytes);
 
                 int numDirtyRects = dirtyRegionsLengthInBytes / Marshal.SizeOf<RawRectangle>();
@@ -307,10 +281,8 @@ namespace ImageCapture.DesktopDuplication
         {
             if (disposed) throw new ObjectDisposedException(nameof(DesktopDuplicator));
 
-            // A non-zero mouse update timestamp indicates that there is a mouse position update and optionally a shape change
             if (frameInfo.LastMouseUpdateTime == 0 && frameInfo.PointerShapeBufferSize == 0 && sharedPointerInfo.LastTimeStamp > 0)
             {
-                // No new mouse update in this frame, but we have previous data
                 frame.CursorVisible = sharedPointerInfo.Visible;
                 frame.CursorLocation = new Point(sharedPointerInfo.Position.X, sharedPointerInfo.Position.Y);
                 return;
@@ -343,7 +315,7 @@ namespace ImageCapture.DesktopDuplication
             frame.CursorLocation = new Point(sharedPointerInfo.Position.X, sharedPointerInfo.Position.Y);
 
             if (frameInfo.PointerShapeBufferSize == 0)
-                return; // No new shape
+                return;
 
             if (frameInfo.PointerShapeBufferSize > sharedPointerInfo.BufferSize)
             {
@@ -360,8 +332,8 @@ namespace ImageCapture.DesktopDuplication
                         mDeskDupl.GetFramePointerShape(sharedPointerInfo.BufferSize, (IntPtr)ptrShapeBufferPtr, out int requiredBufferSize, out sharedPointerInfo.ShapeInfo);
                     }
                 }
-                // frame.CursorShape = sharedPointerInfo.PtrShapeBuffer;
-                // frame.CursorShapeInfo = sharedPointerInfo.ShapeInfo;
+                // frame.CursorShape = sharedPointerInfo.PtrShapeBuffer; // You had these commented out
+                // frame.CursorShapeInfo = sharedPointerInfo.ShapeInfo; // If needed, uncomment and manage data ownership
             }
             catch (SharpDXException ex)
             {
@@ -375,39 +347,65 @@ namespace ImageCapture.DesktopDuplication
         private int GetWidth(RawRectangle rect) => rect.Right - rect.Left;
         private int GetHeight(RawRectangle rect) => rect.Bottom - rect.Top;
 
-        private void ProcessFrame(DesktopFrame frame)
+        /// <summary>
+        /// Maps the desktopImageTexture (DXGI staging buffer) and copies its content into the
+        /// internal _currentCachedBitmap. Recreates _currentCachedBitmap if resolution changes.
+        /// </summary>
+        private void ProcessFrameIntoInternalBitmap()
         {
             if (disposed) throw new ObjectDisposedException(nameof(DesktopDuplicator));
-            if (desktopImageTexture == null) return;
+            if (desktopImageTexture == null) return; // Should not happen if AcquireNextFrame was successful
 
             bool mapped = false;
             DataBox mapSource = default;
 
+            int currentTextureWidth = mTextureDesc.Width;
+            int currentTextureHeight = mTextureDesc.Height;
+
+            if (currentTextureWidth <= 0 || currentTextureHeight <= 0) return; // Defensive check for invalid texture dimensions
+
+            // Check if the internal _currentCachedBitmap needs to be created or resized
+            if (_currentCachedBitmap == null || _currentCachedBitmap.Width != currentTextureWidth || _currentCachedBitmap.Height != currentTextureHeight)
+            {
+                _currentCachedBitmap?.Dispose(); // Dispose the old Bitmap if it exists and dimensions changed
+                try
+                {
+                    _currentCachedBitmap = new Bitmap(currentTextureWidth, currentTextureHeight, PixelFormat.Format32bppRgb); // Match DXGI's B8G8R8A8_UNorm
+                    _currentCachedBitmapWidth = currentTextureWidth;
+                    _currentCachedBitmapHeight = currentTextureHeight;
+                }
+                catch (OutOfMemoryException oomEx)
+                {
+                    Debug.WriteLine($"DesktopDuplicator: OutOfMemoryException when creating _currentCachedBitmap: {oomEx.Message}");
+                    _currentCachedBitmap = null; // Mark as null so GetLatestFrame returns null for image
+                    throw; // Re-throw to caller to indicate severe memory issue
+                }
+            }
+
+            // If _currentCachedBitmap is still null (e.g., OOM on creation), skip copy
+            if (_currentCachedBitmap == null) return;
+
+            // Now, copy the pixel data from the DXGI staging texture into _currentCachedBitmap
             try
             {
                 mapSource = mDevice.ImmediateContext.MapSubresource(desktopImageTexture, 0, MapMode.Read, MapFlags.None);
                 mapped = true;
 
-                int width = GetWidth(mOutputDesc.DesktopBounds);
-                int height = GetHeight(mOutputDesc.DesktopBounds);
-
-                if (width <= 0 || height <= 0) return; // Invalid dimensions
-
-                Bitmap currentFrameBitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
-                var boundsRect = new Rectangle(0, 0, width, height);
+                var boundsRect = new Rectangle(0, 0, _currentCachedBitmapWidth, _currentCachedBitmapHeight);
                 BitmapData mapDest = null;
 
                 try
                 {
-                    mapDest = currentFrameBitmap.LockBits(boundsRect, ImageLockMode.WriteOnly, currentFrameBitmap.PixelFormat);
+                    mapDest = _currentCachedBitmap.LockBits(boundsRect, ImageLockMode.WriteOnly, _currentCachedBitmap.PixelFormat);
                     IntPtr sourcePtr = mapSource.DataPointer;
                     IntPtr destPtr = mapDest.Scan0;
                     int sourceRowPitch = mapSource.RowPitch;
                     int destStride = mapDest.Stride;
-                    int bytesPerRowToCopy = width * 4; // Format is B8G8R8A8_UNorm (4 bytes per pixel)
+                    int bytesPerRowToCopy = _currentCachedBitmapWidth * 4; // B8G8R8A8_UNorm is 4 bytes per pixel
 
-                    for (int y = 0; y < height; y++)
+                    for (int y = 0; y < _currentCachedBitmapHeight; y++)
                     {
+                        // Utilities.CopyMemory is usually faster than Marshal.Copy
                         Utilities.CopyMemory(destPtr, sourcePtr, bytesPerRowToCopy);
                         sourcePtr = IntPtr.Add(sourcePtr, sourceRowPitch);
                         destPtr = IntPtr.Add(destPtr, destStride);
@@ -416,11 +414,16 @@ namespace ImageCapture.DesktopDuplication
                 finally
                 {
                     if (mapDest != null)
-                        currentFrameBitmap.UnlockBits(mapDest);
+                        _currentCachedBitmap.UnlockBits(mapDest);
                 }
-
-                FinalImage = currentFrameBitmap;
-                frame.DesktopImage = FinalImage;
+            }
+            catch (SharpDXException ex)
+            {
+                Debug.WriteLine($"DesktopDuplicator: Error mapping or copying resource to internal bitmap: {ex.Message}");
+                // In case of error, consider the cached bitmap invalid for this frame
+                _currentCachedBitmap?.Dispose();
+                _currentCachedBitmap = null;
+                // Optionally re-throw or handle as a non-fatal error for the frame.
             }
             finally
             {
@@ -434,21 +437,6 @@ namespace ImageCapture.DesktopDuplication
         private Rectangle ToRectangle(RawRectangle r)
         {
             return new Rectangle(r.Left, r.Top, GetWidth(r), GetHeight(r));
-        }
-
-        private void ReleaseDxgiFrame()
-        {
-            try
-            {
-                mDeskDupl.ReleaseFrame();
-            }
-            catch (SharpDXException ex)
-            {
-                if (ex.ResultCode.Failure)
-                {
-                    Debug.WriteLine($"DesktopDuplication: Error releasing DXGI frame: {ex.Message}");
-                }
-            }
         }
 
         public void Dispose()
@@ -467,13 +455,11 @@ namespace ImageCapture.DesktopDuplication
                 mDeskDupl?.Dispose();
                 mDeskDupl = null;
 
-                desktopImageTexture?.Dispose();
+                desktopImageTexture?.Dispose(); // Dispose the internal staging buffer
                 desktopImageTexture = null;
 
-                finalImage1?.Dispose();
-                finalImage1 = null;
-                finalImage2?.Dispose();
-                finalImage2 = null;
+                _currentCachedBitmap?.Dispose(); // Dispose the internally managed Bitmap
+                _currentCachedBitmap = null;
 
                 mDevice?.Dispose();
                 mDevice = null;
