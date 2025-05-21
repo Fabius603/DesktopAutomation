@@ -7,7 +7,7 @@ using SharpDX.DXGI;
 using OpenCvSharp;
 using Device = SharpDX.Direct3D11.Device;
 
-namespace ImageCapture
+namespace ImageCapture.ProcessDuplication
 {
     public static class ImageConverter
     {
@@ -86,7 +86,7 @@ namespace ImageCapture
             finally
             {
                 // Nur unmap wenn gemappt
-                if (dataBox.DataPointer != IntPtr.Zero)
+                if (dataBox.DataPointer != nint.Zero)
                     device.ImmediateContext.UnmapSubresource(stagingTex, 0);
             }
         }

@@ -5,22 +5,25 @@ using SharpDX;
 using SharpDX.Diagnostics;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using ImageCapture.ProcessDuplication;
 
 class Program
 {
     static void Main(string[] args)
     {
-        DesktopDuplicator desktopDuplicator0 = new DesktopDuplicator(0);
-        DesktopDuplicator desktopDuplicator1 = new DesktopDuplicator(1);
-        DesktopFrame frame = null;
-
-        while (true)
+        ProcessDuplicatorSettings settings = new ProcessDuplicatorSettings
         {
-            frame = desktopDuplicator0.GetLatestFrame();
-            frame = desktopDuplicator1.GetLatestFrame();
-            //Cv2.ImShow("test", frame.DesktopImage.ToMat());
+            TargetApplication = "brave",
+            OnlyActiveWindow = false
+        };
+
+        ProcessDuplicator processDuplicator = new ProcessDuplicator(settings);
+        while(true)
+        {
+            var result = processDuplicator.CaptureProcess();
+            //Cv2.ImShow("test", result.ProcessImage.ToMat());
             //Cv2.WaitKey(1);
-            frame.Dispose();
+            result.Dispose();
             GC.Collect();
         }
     }

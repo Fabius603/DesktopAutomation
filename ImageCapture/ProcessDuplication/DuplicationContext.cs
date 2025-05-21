@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Device = SharpDX.Direct3D11.Device;
 
 
-namespace ImageCapture
+namespace ImageCapture.ProcessDuplication
 {
     public class DuplicationContext : IDisposable
     {

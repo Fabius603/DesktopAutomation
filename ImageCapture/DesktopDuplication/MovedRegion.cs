@@ -15,14 +15,7 @@ namespace ImageCapture.DesktopDuplication
     /// </remarks>
     public struct MovedRegion
     {
-        /// <summary>
-        /// Gets the location from where the operating system copied the image region.
-        /// </summary>
-        public Point Source { get; internal set; }
-
-        /// <summary>
-        /// Gets the target region to where the operating system moved the image region.
-        /// </summary>
-        public Rectangle Destination { get; internal set; }
+        public Point Source;
+        public Rectangle Destination;
     }
 }

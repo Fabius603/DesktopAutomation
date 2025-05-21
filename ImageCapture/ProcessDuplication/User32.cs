@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using OpenCvSharp;
 using System.Diagnostics;
 
-namespace ImageCapture
+namespace ImageCapture.ProcessDuplication
 {
     public static class User32
     {
@@ -19,16 +19,16 @@ namespace ImageCapture
         }
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
+        public static extern nint GetForegroundWindow();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+        public static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);
 
         [DllImport("user32.dll")]
-        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        public static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
 
         [DllImport("user32.dll")]
-        public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+        public static extern bool GetWindowRect(nint hWnd, out RECT rect);
 
         [DllImport("user32.dll")]
         public static extern int GetSystemMetrics(int nIndex);
@@ -36,7 +36,7 @@ namespace ImageCapture
 
         public static string GetActiveApplicationName()
         {
-            IntPtr hWnd = GetForegroundWindow();
+            nint hWnd = GetForegroundWindow();
             uint processId;
             GetWindowThreadProcessId(hWnd, out processId);
 

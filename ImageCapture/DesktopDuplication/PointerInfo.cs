@@ -8,14 +8,14 @@ using SharpDX.Mathematics.Interop;
 
 namespace ImageCapture.DesktopDuplication
 {
-    internal class PointerInfo
+    public class PointerInfo
     {
         public byte[] PtrShapeBuffer;
+        public int BufferSize;
         public OutputDuplicatePointerShapeInformation ShapeInfo;
         public RawPoint Position;
         public bool Visible;
-        public int BufferSize;
-        public int WhoUpdatedPositionLast;
         public long LastTimeStamp;
+        public int WhoUpdatedPositionLast = -1; // To track which output updated the position last
     }
 }

@@ -8,7 +8,8 @@ namespace ImageCapture.DesktopDuplication
 {
     public class DesktopDuplicationException : Exception
     {
-        public DesktopDuplicationException(string message)
-            : base(message) { }
+        public DesktopDuplicationException() { }
+        public DesktopDuplicationException(string message) : base(message) { }
+        public DesktopDuplicationException(string message, Exception inner) : base(message, inner) { }
     }
 }
