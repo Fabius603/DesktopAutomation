@@ -18,6 +18,45 @@
     <PackageReference Include="SharpDX.Desktop" Version="4.2.0" />
     <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
     <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.5" />
+    <PackageReference Include="Xabe.FFmpeg" Version="6.0.1" />
+    <PackageReference Include="Xabe.FFmpeg.Downloader" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\fjsch\.nuget\packages\accord\3.8.0\build\Accord.dll.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avcodec-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avdevice-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avfilter-6.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avformat-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avutil-55.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\postproc-54.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swresample-2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swscale-4.dll" />
   </ItemGroup>
 
 </Project>

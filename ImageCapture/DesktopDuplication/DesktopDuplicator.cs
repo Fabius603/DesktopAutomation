@@ -207,7 +207,7 @@ namespace ImageCapture.DesktopDuplication
 
             try
             {
-                Result res = mDeskDupl.TryAcquireNextFrame(500, out frameInfo, out desktopResourceOut); // 500ms timeout
+                Result res = mDeskDupl.TryAcquireNextFrame(0, out frameInfo, out desktopResourceOut); // 500ms timeout
                 if (res.Code == SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code)
                 {
                     desktopResourceOut?.Dispose();
