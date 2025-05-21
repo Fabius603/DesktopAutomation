@@ -10,7 +10,7 @@ using Xabe.FFmpeg.Downloader;
 
 namespace ImageCapture.Video
 {
-    public class VideoCreator
+    public class VideoImageCreator
     {
         private class TimedFrame
         {
@@ -22,7 +22,7 @@ namespace ImageCapture.Video
         private readonly object lockObj = new();
         private readonly string frameFolder;
 
-        public VideoCreator()
+        public VideoImageCreator()
         {
             frameFolder = Path.Combine(Path.GetTempPath(), "ffmpeg_frames");
             Directory.CreateDirectory(frameFolder);
@@ -54,19 +54,6 @@ namespace ImageCapture.Video
             {
                 image.Dispose();
             }
-        }
-
-        private string GetUniqueFilePath(string basePath)
-        {
-            string filePath = basePath;
-            int counter = 1;
-            while (File.Exists(filePath))
-            {
-                filePath = Path.Combine(Path.GetDirectoryName(basePath) ?? string.Empty,
-                    $"{Path.GetFileNameWithoutExtension(basePath)}_{counter}{Path.GetExtension(basePath)}");
-                counter++;
-            }
-            return filePath;
         }
 
         public async Task SaveAsMp4Async(string outputPath, int fps)
@@ -111,7 +98,7 @@ namespace ImageCapture.Video
                 File.Copy(selectedFiles[i], Path.Combine(frameFolder, $"ffmpeg_{i:D5}.png"), overwrite: true);
             }
 
-            string uniquePath = GetUniqueFilePath(outputPath);
+            string uniquePath = VideoHelper.GetUniqueFilePath(outputPath);
             var conversion = FFmpeg.Conversions.New()
                 .AddParameter($"-framerate {fps} -i \"{frameFolder}/ffmpeg_%05d.png\" -c:v libx264 -pix_fmt yuv420p \"{uniquePath}\"", ParameterPosition.PreInput);
 
