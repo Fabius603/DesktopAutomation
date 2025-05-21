@@ -26,15 +26,16 @@ class Program
             TargetApplication = "brave",
             OnlyActiveWindow = false
         };
-
+        int i = 0;
         ProcessDuplicator processDuplicator = new ProcessDuplicator(settings);
         while (true)
         {
             var result = processDuplicator.CaptureProcess();
-            //Cv2.ImShow("test", result.ProcessImage.ToMat());
-            //Cv2.WaitKey(1);
+            var mat = result.ProcessImage.ToMat();
+            Cv2.ImShow("test", mat);
+            Cv2.WaitKey(1);
+            mat.Dispose();
             result.Dispose();
-            GC.Collect();
         }
     }
 }

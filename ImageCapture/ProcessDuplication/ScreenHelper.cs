@@ -183,67 +183,42 @@ namespace ImageCapture.ProcessDuplication
             }
         }
 
-        /// <summary>
-        /// Ermittelt den Output-Index (Monitor) für das gegebene Fenster-Rectangle.
-        /// Liefert -1, wenn kein Monitor trifft.
-        /// </summary>
-        public static int FindOutputIndexForWindow(Rectangle windowRect, Adapter1 adapter)
-        {
-            for (int i = 0; ; i++)
-            {
-                try
-                {
-                    using var output = adapter.GetOutput(i).QueryInterface<Output1>();
-                    var d = output.Description;
-                    var bounds = new Rectangle(
-                        d.DesktopBounds.Left,
-                        d.DesktopBounds.Top,
-                        d.DesktopBounds.Right - d.DesktopBounds.Left,
-                        d.DesktopBounds.Bottom - d.DesktopBounds.Top);
 
-                    if (bounds.IntersectsWith(windowRect))
-                        return i;
-                }
-                catch (SharpDX.SharpDXException)
-                {
-                    break;
-                }
+        public static int FindOutputIndexForWindow(Rectangle windowRect, int adapterIdx, DxgiResources dxgi)
+        {
+            foreach (var kvp in dxgi.Outputs)
+            {
+                if (kvp.Key.adapterIdx != adapterIdx)
+                    continue;
+
+                var outputDesc = kvp.Value.Description;
+                var bounds = new Rectangle(
+                    outputDesc.DesktopBounds.Left,
+                    outputDesc.DesktopBounds.Top,
+                    outputDesc.DesktopBounds.Right - outputDesc.DesktopBounds.Left,
+                    outputDesc.DesktopBounds.Bottom - outputDesc.DesktopBounds.Top);
+
+                if (bounds.IntersectsWith(windowRect))
+                    return kvp.Key.outputIdx;
             }
+
             return -1;
         }
 
-        /// <summary>
-        /// Findet den Index des DXGI-Adapters (GPU), auf dem das Fenster liegt.
-        /// Gibt 0 zurück, wenn kein passender Adapter gefunden wird.
-        /// </summary>
-        public static int FindAdapterIndexForWindow(Rectangle windowRect, Factory1 factory)
+        public static int FindAdapterIndexForWindow(Rectangle windowRect, DxgiResources dxgi)
         {
-            for (int a = 0; ; a++)
+            foreach (var adapter in dxgi.Adapters)
             {
-                Adapter1 adapter;
-                try
-                {
-                    adapter = factory.GetAdapter1(a);
-                }
-                catch (SharpDX.SharpDXException)
-                {
-                    break;
-                }
-
-                using (adapter)
-                {
-                    int outputIndex = FindOutputIndexForWindow(windowRect, adapter);
-                    if (outputIndex >= 0)
-                        return a;
-                }
+                int outputIdx = FindOutputIndexForWindow(windowRect, adapter.Key, dxgi);
+                if (outputIdx >= 0)
+                    return adapter.Key;
             }
-            return 0;
+            return -1; // Rückgabe -1 statt 0 zur klaren Fehlererkennung
         }
 
-        /// <summary>
-        /// Ermittelt Adapter- und Output-Index für ein Fenster-Handle.
-        /// </summary>
-        public static (int adapterIdx, int outputIdx) GetAdapterAndOutputForWindowHandle(IntPtr hWnd)
+        public static (int adapterIdx, int outputIdx) GetAdapterAndOutputForWindowHandle(
+            IntPtr hWnd,
+            DxgiResources dxgi)
         {
             if (!GetWindowRect(hWnd, out RECT rect))
                 throw new InvalidOperationException("GetWindowRect fehlgeschlagen");
@@ -253,25 +228,15 @@ namespace ImageCapture.ProcessDuplication
                 rect.Right - rect.Left,
                 rect.Bottom - rect.Top);
 
-            using var factory = new Factory1();
-            int adapterIdx = FindAdapterIndexForWindow(windowRect, factory);
-            using var adapter = factory.GetAdapter1(adapterIdx);
-            int outputIdx = FindOutputIndexForWindow(windowRect, adapter);
+            int adapterIdx = FindAdapterIndexForWindow(windowRect, dxgi);
+            if (!dxgi.Adapters.ContainsKey(adapterIdx))
+                throw new InvalidOperationException($"Adapter {adapterIdx} wurde nicht gefunden.");
+
+            int outputIdx = FindOutputIndexForWindow(windowRect, adapterIdx, dxgi);
+            if (!dxgi.Outputs.ContainsKey((adapterIdx, outputIdx)))
+                throw new InvalidOperationException($"Output {outputIdx} für Adapter {adapterIdx} wurde nicht gefunden.");
+
             return (adapterIdx, outputIdx);
-        }
-
-        /// <summary>
-        /// Ermittelt Adapter- und Output-Index für einen Process-Handle.
-        /// </summary>
-        public static (int adapterIdx, int outputIdx) GetAdapterAndOutputForProcessHandle(IntPtr processHandle)
-        {
-            int pid = processHandle.ToInt32();
-            var process = Process.GetProcessById(pid);
-            var hWnd = process.MainWindowHandle;
-            if (hWnd == IntPtr.Zero)
-                throw new InvalidOperationException("Hauptfenster des Prozesses nicht gefunden.");
-
-            return GetAdapterAndOutputForWindowHandle(hWnd);
         }
     }
 }

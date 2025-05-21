@@ -29,6 +29,8 @@ namespace ImageCapture.ProcessDuplication
         private Rectangle clampedRect { get; set; } = Rectangle.Empty;
         private Rectangle globalRect { get; set; } = Rectangle.Empty;
 
+        private DxgiResources dxgiResources = new DxgiResources();
+
         private Dictionary<string, DesktopDuplicator> desktopDuplicators = new Dictionary<string, DesktopDuplicator>();
 
         // Public properties with proper disposal handling
@@ -63,14 +65,16 @@ namespace ImageCapture.ProcessDuplication
             this.settings = settings;
             this.processName = settings.TargetApplication;
             SetTargetProcess(settings.TargetApplication);
-            InitializeDesktopDuplicators();
+            
+            var adapterAndOutputs = GetAllAdapterAndOutputIndices();
+            InitializeDesktopDuplicators(adapterAndOutputs);
+            InitializeAllDxgiResources();
         }
 
         public ProcessDuplicatorResult CaptureProcess()
         {
             DesktopFrame currentFrame = null;
             Bitmap croppedImage = null;
-
             try
             {
                 if (!User32.GetWindowRect(targetProcess, out var r))
@@ -102,7 +106,7 @@ namespace ImageCapture.ProcessDuplication
                     return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
                 }
 
-                (int aIdx, int oIdx) = ScreenHelper.GetAdapterAndOutputForWindowHandle(targetProcess);
+                (int aIdx, int oIdx) = ScreenHelper.GetAdapterAndOutputForWindowHandle(targetProcess, dxgiResources);
                 if (aIdx != currentAdapterIndex || oIdx != currentOutputIndex)
                 {
                     currentAdapterIndex = aIdx;
@@ -129,7 +133,7 @@ namespace ImageCapture.ProcessDuplication
 
                 try
                 {
-                    //croppedImage = (Bitmap)currentFrame.DesktopImage.Clone(clampedRect, currentFrame.DesktopImage.PixelFormat);
+                    croppedImage = currentFrame.DesktopImage.Clone(clampedRect, currentFrame.DesktopImage.PixelFormat);
                 }
                 catch (Exception ex)
                 {
@@ -137,7 +141,7 @@ namespace ImageCapture.ProcessDuplication
                     return CreateResult(false);
                 }
 
-                latestSuccesfullImage = croppedImage;
+                latestSuccesfullImage = croppedImage.Clone() as Bitmap;
                 latestSuccesfullFrame = currentFrame.Clone();
 
                 return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
@@ -146,13 +150,46 @@ namespace ImageCapture.ProcessDuplication
             {
                 currentFrame?.Dispose();
                 croppedImage?.Dispose();
-
+                currentFrame = null;
+                croppedImage = null;
             }
         }
 
-        private void InitializeDesktopDuplicators()
+        private void InitializeAllDxgiResources()
         {
-            var adapterAndOutputs = GetAllAdapterAndOutputIndices();
+            dxgiResources.Factory = new Factory1();
+
+            for (int adapterIdx = 0; ; adapterIdx++)
+            {
+                Adapter1 adapter;
+                try
+                {
+                    adapter = dxgiResources.Factory.GetAdapter1(adapterIdx);
+                }
+                catch (SharpDX.SharpDXException)
+                {
+                    break;
+                }
+
+                dxgiResources.Adapters.Add(adapterIdx, adapter);
+
+                for (int outputIdx = 0; ; outputIdx++)
+                {
+                    try
+                    {
+                        var output = adapter.GetOutput(outputIdx).QueryInterface<Output1>();
+                        dxgiResources.Outputs.Add((adapterIdx, outputIdx), output);
+                    }
+                    catch (SharpDX.SharpDXException)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void InitializeDesktopDuplicators(List<(int, int)> adapterAndOutputs)
+        {
             foreach ((int adapter, int output) in adapterAndOutputs)
             {
                 string key = $"{adapter},{output}";
