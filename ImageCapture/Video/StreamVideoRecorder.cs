@@ -1,43 +1,49 @@
 ﻿using ImageCapture.Video;
-using OpenCvSharp.Extensions;
 using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg.Downloader;
 
-public class StreamedVideoRecorder : IDisposable
+public class StreamVideoRecorder : IDisposable
 {
-    private Process ffmpegProcess;
-    private Stream ffmpegInput;
-    private bool isStarted = false;
+    // interner PST‐Frame
+    private struct TimedFrame
+    {
+        public long TimestampMs;
+        public byte[] RawFrame;
+    }
 
-    private readonly int width;
-    private readonly int height;
-    private readonly int fps;
-    private readonly string outputPath;
-    private readonly string ffmpegPath;
-
+    private readonly int width, height, fps;
+    private readonly string outputPath, ffmpegPath;
     private readonly Task ffmpegInitTask;
 
-    public StreamedVideoRecorder(int width, int height, int fps, string outputPath, string ffmpegPath = "ffmpeg")
+    private readonly List<TimedFrame> buffer = new();
+    private readonly object bufLock = new();
+
+    private Process ffmpegProcess;
+    private Stream ffmpegInput;
+    private Stopwatch stopwatch;
+    private CancellationTokenSource cts;
+    private Task writerTask;
+
+    public StreamVideoRecorder(int width, int height, int fps, string outputPath, string ffmpegPath = "ffmpeg")
     {
         this.width = width;
         this.height = height;
         this.fps = fps;
         this.outputPath = VideoHelper.GetUniqueFilePath(outputPath);
         this.ffmpegPath = ffmpegPath;
-        this.ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
+        ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
     }
 
-    public async Task Start()
+    public async Task StartAsync()
     {
-        if (isStarted) throw new InvalidOperationException("Recorder already started.");
-
         await ffmpegInitTask;
 
         var psi = new ProcessStartInfo
@@ -46,79 +52,119 @@ public class StreamedVideoRecorder : IDisposable
             Arguments = $"-y -f rawvideo -pix_fmt bgr24 -s {width}x{height} -r {fps} -i - -c:v libx264 -preset ultrafast -pix_fmt yuv420p \"{outputPath}\"",
             UseShellExecute = false,
             RedirectStandardInput = true,
-            RedirectStandardError = true,
             CreateNoWindow = true
         };
-
-        ffmpegProcess = new Process();
-        ffmpegProcess.StartInfo = psi;
-        ffmpegProcess.Start();
-
+        ffmpegProcess = Process.Start(psi);
         ffmpegInput = ffmpegProcess.StandardInput.BaseStream;
-        isStarted = true;
 
-        // Optional: Fehlerausgabe überwachen
-        _ = Task.Run(() => {
-            string error = ffmpegProcess.StandardError.ReadToEnd();
-            if (!string.IsNullOrWhiteSpace(error))
-                Console.WriteLine("[ffmpeg stderr] " + error);
-        });
+        // Start timebase
+        stopwatch = Stopwatch.StartNew();
+        cts = new CancellationTokenSource();
+        writerTask = Task.Run(() => WriterLoopAsync(cts.Token));
     }
 
-    public void AddFrame(Bitmap bitmap)
+    /// <summary>
+    /// Pusht einen neuen Frame (Bitmap wird als BGR24 sofort konvertiert).
+    /// </summary>
+    public void AddFrame(Bitmap bmp)
     {
-        if (!isStarted || ffmpegInput == null || ffmpegProcess?.HasExited == true)
-            return;
-
-        using var mat = BitmapConverter.ToMat(bitmap); // Schnell, kein GDI+
-        Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height)); // Wenn nötig
-
-        if (mat.Type() != MatType.CV_8UC3)
-            throw new ArgumentException("Bitmap must be BGR24 compatible");
-
-        // Direktes Schreiben der rohen Daten
+        using var mat = BitmapConverter.ToMat(bmp);
+        Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height));
         byte[] rawFrame = new byte[mat.Total() * mat.ElemSize()];
         Marshal.Copy(mat.Data, rawFrame, 0, rawFrame.Length);
 
-        ffmpegInput.Write(rawFrame, 0, rawFrame.Length);
+        lock (bufLock)
+        {
+            buffer.Add(new TimedFrame
+            {
+                TimestampMs = stopwatch.ElapsedMilliseconds,
+                RawFrame = rawFrame
+            });
+            // Puffergröße begrenzen
+            //if (buffer.Count > fps * 5)
+            //    buffer.RemoveRange(0, buffer.Count - fps * 5);
+        }
     }
 
-    public async Task StopAndSaveAsync()
+
+    private async Task WriterLoopAsync(CancellationToken token)
     {
-        if (!isStarted || ffmpegProcess == null)
-            return;
+        long frameDuration = 1000L / fps;
+        long nextTargetTime = 0;
+        byte[] lastFrame = null;
 
         try
         {
-            await ffmpegInput.FlushAsync();
-            ffmpegInput.Close();
-            await ffmpegProcess.WaitForExitAsync();
+            while (!token.IsCancellationRequested)
+            {
+                long now = stopwatch.ElapsedMilliseconds;
+                if (now < nextTargetTime)
+                {
+                    int delay = (int)(nextTargetTime - now);
+                    if (delay > 1)
+                        await Task.Delay(delay - 1, token);
+                    while (stopwatch.ElapsedMilliseconds < nextTargetTime) { /* busy wait */ }
+                }
+
+                TimedFrame? selected = null;
+                lock (bufLock)
+                {
+                    int index = buffer.FindIndex(f => f.TimestampMs >= nextTargetTime);
+                    if (index >= 0)
+                    {
+                        selected = buffer[index];
+                        buffer.RemoveRange(0, index + 1);
+                    }
+                    else if (buffer.Count > 0)
+                    {
+                        selected = buffer[^1]; // letzter Frame
+                        buffer.Clear();
+                    }
+                }
+
+                var currentFrame = selected?.RawFrame ?? lastFrame;
+                if (currentFrame != null)
+                {
+                    ffmpegInput.Write(currentFrame, 0, currentFrame.Length);
+                    lastFrame = currentFrame;
+                }
+
+                nextTargetTime += frameDuration;
+            }
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            Console.WriteLine($"Fehler beim Stoppen des Recorders: {ex.Message}");
+            // normaler Abbruch
         }
         finally
         {
-            ffmpegInput = null;
-            ffmpegProcess?.Dispose();
-            ffmpegProcess = null;
-            isStarted = false;
+            try
+            {
+                ffmpegInput.Flush();
+                ffmpegInput.Close();
+                await ffmpegProcess.WaitForExitAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Recorder] Fehler beim Beenden von ffmpeg: {ex.Message}");
+            }
         }
     }
 
 
+    /// <summary>
+    /// Stoppt Capture und speichert Video (non-blocking).
+    /// </summary>
+    public async Task StopAndSave()
+    {
+        cts.Cancel();
+        await writerTask;
+    }
+
     public void Dispose()
     {
-        if (ffmpegInput != null)
-        {
-            ffmpegInput.Dispose();
-            ffmpegInput = null;
-        }
-        if (ffmpegProcess != null)
-        {
-            ffmpegProcess.Dispose();
-            ffmpegProcess = null;
-        }
+        StopAndSave();
+        writerTask?.Wait();
+        ffmpegProcess?.Dispose();
     }
 }
