@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageCapture", "ImageCapture\ImageCapture.csproj", "{82B02BF4-17B2-4EA3-AC6E-F106820D6D7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{BCF41BE6-0ED7-4479-80E0-642D130CEB4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDetection", "ImageDetection\ImageDetection.csproj", "{A3B1A710-D089-472A-8F68-DEABBD7CF052}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,15 @@ Global
 		{BCF41BE6-0ED7-4479-80E0-642D130CEB4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCF41BE6-0ED7-4479-80E0-642D130CEB4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCF41BE6-0ED7-4479-80E0-642D130CEB4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3B1A710-D089-472A-8F68-DEABBD7CF052}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3B1A710-D089-472A-8F68-DEABBD7CF052}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3B1A710-D089-472A-8F68-DEABBD7CF052}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3B1A710-D089-472A-8F68-DEABBD7CF052}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ADE55109-C678-4B74-B0EF-F5E235243560}
 	EndGlobalSection
 EndGlobal

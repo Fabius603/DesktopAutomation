@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
+    <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
   </ItemGroup>
 
 </Project>
