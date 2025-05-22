@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Xabe.FFmpeg.Downloader;
 
 public class StreamedVideoRecorder : IDisposable
 {
@@ -19,6 +20,8 @@ public class StreamedVideoRecorder : IDisposable
     private readonly string outputPath;
     private readonly string ffmpegPath;
 
+    private readonly Task ffmpegInitTask;
+
     public StreamedVideoRecorder(int width, int height, int fps, string outputPath, string ffmpegPath = "ffmpeg")
     {
         this.width = width;
@@ -26,11 +29,15 @@ public class StreamedVideoRecorder : IDisposable
         this.fps = fps;
         this.outputPath = VideoHelper.GetUniqueFilePath(outputPath);
         this.ffmpegPath = ffmpegPath;
+        this.ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
     }
 
-    public void Start()
+    public async Task Start()
     {
         if (isStarted) throw new InvalidOperationException("Recorder already started.");
+
+        await ffmpegInitTask;
+
         var psi = new ProcessStartInfo
         {
             FileName = ffmpegPath,
@@ -58,7 +65,8 @@ public class StreamedVideoRecorder : IDisposable
 
     public void AddFrame(Bitmap bitmap)
     {
-        if (!isStarted) throw new InvalidOperationException("Recorder not started.");
+        if (!isStarted || ffmpegInput == null || ffmpegProcess?.HasExited == true)
+            return;
 
         bitmap = ResizeBitmap(bitmap);
 
@@ -69,32 +77,30 @@ public class StreamedVideoRecorder : IDisposable
         ffmpegInput.Write(rawFrame, 0, rawFrame.Length);
     }
 
-    public void StopAndSaveAsync()
+    public async Task StopAndSaveAsync()
     {
-        _ = Task.Run(async () =>
-        {
-            if (!isStarted || ffmpegProcess == null)
-                return;
+        if (!isStarted || ffmpegProcess == null)
+            return;
 
-            try
-            {
-                await ffmpegInput.FlushAsync();
-                ffmpegInput.Close();
-                await ffmpegProcess.WaitForExitAsync();
-                ffmpegProcess.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Fehler beim Stoppen des Recorders: {ex.Message}");
-            }
-            finally
-            {
-                ffmpegInput = null;
-                ffmpegProcess = null;
-                isStarted = false;
-            }
-        });
+        try
+        {
+            await ffmpegInput.FlushAsync();
+            ffmpegInput.Close();
+            await ffmpegProcess.WaitForExitAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Fehler beim Stoppen des Recorders: {ex.Message}");
+        }
+        finally
+        {
+            ffmpegInput = null;
+            ffmpegProcess?.Dispose();
+            ffmpegProcess = null;
+            isStarted = false;
+        }
     }
+
 
 
     private Bitmap ResizeBitmap(Bitmap source)

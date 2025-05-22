@@ -18,25 +18,25 @@ class Program
         ProcessDuplicator processDuplicator = new ProcessDuplicator(targetApplication);
 
         //Recorder
-        var recorder = new StreamedVideoRecorder(1920, 1080, 60, "C:\\Users\\fjsch\\Pictures\\trash\\output.mp4");
-        recorder.Start();
+        var recorder = new StreamedVideoRecorder(1920, 1080, 60, "C:\\Users\\schlieper\\OneDrive - Otto Künnecke GmbH\\Pictures\\trash\\output.mp4");
+        await recorder.Start();
 
         //VideoImageCreator videoCreator = new VideoImageCreator();
         //videoCreator.CleanUp();
 
-        var fpsManager = new FPSManager(30);
-        fpsManager.Start();
-
+        //var fpsManager = new FPSManager(30);
+        //fpsManager.Start();
         while (true)
         {
             using (var result = processDuplicator.CaptureProcess())
             {
+
                 recorder.AddFrame(result.ProcessImage);
                 //videoCreator.AddFrame(result.ProcessImage);
-                ShowImage(result.ProcessImage);
+                //ShowImage(result.ProcessImage);
             }
 
-            fpsManager.WaitForNextFrameProperly();
+            //fpsManager.WaitForNextFrameProperly();
 
             if (Console.KeyAvailable)
             {
@@ -44,9 +44,10 @@ class Program
                 Console.ReadKey(true);
                 break;
             }
-
-            fpsManager.WaitForNextFrame();
+            //fpsManager.WaitForNextFrame();
         }
+        await recorder.StopAndSaveAsync();
+
         processDuplicator.Dispose();
         recorder.Dispose();
         Cv2.DestroyAllWindows();
