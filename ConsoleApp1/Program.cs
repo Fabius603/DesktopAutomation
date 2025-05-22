@@ -18,7 +18,7 @@ class Program
         ProcessDuplicator processDuplicator = new ProcessDuplicator(targetApplication);
 
         //Recorder
-        var recorder = new StreamedVideoRecorder(1920, 1080, 60, "C:\\Users\\schlieper\\OneDrive - Otto Künnecke GmbH\\Pictures\\trash\\output.mp4");
+        var recorder = new StreamedVideoRecorder(1920, 1080, 30, "C:\\Users\\schlieper\\OneDrive - Otto Künnecke GmbH\\Pictures\\trash\\output.mp4");
         await recorder.Start();
 
         //VideoImageCreator videoCreator = new VideoImageCreator();

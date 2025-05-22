@@ -1,4 +1,6 @@
 ﻿using ImageCapture.Video;
+using OpenCvSharp.Extensions;
+using OpenCvSharp;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -68,12 +70,16 @@ public class StreamedVideoRecorder : IDisposable
         if (!isStarted || ffmpegInput == null || ffmpegProcess?.HasExited == true)
             return;
 
-        bitmap = ResizeBitmap(bitmap);
+        using var mat = BitmapConverter.ToMat(bitmap); // Schnell, kein GDI+
+        Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height)); // Wenn nötig
 
-        if (bitmap.Width != width || bitmap.Height != height)
-            throw new ArgumentException("Bitmap size does not match initialized resolution.");
+        if (mat.Type() != MatType.CV_8UC3)
+            throw new ArgumentException("Bitmap must be BGR24 compatible");
 
-        byte[] rawFrame = BitmapToBgr24(bitmap);
+        // Direktes Schreiben der rohen Daten
+        byte[] rawFrame = new byte[mat.Total() * mat.ElemSize()];
+        Marshal.Copy(mat.Data, rawFrame, 0, rawFrame.Length);
+
         ffmpegInput.Write(rawFrame, 0, rawFrame.Length);
     }
 
@@ -101,27 +107,6 @@ public class StreamedVideoRecorder : IDisposable
         }
     }
 
-
-
-    private Bitmap ResizeBitmap(Bitmap source)
-    {
-        var resized = new Bitmap(width, height);
-        using var g = Graphics.FromImage(resized);
-        g.DrawImage(source, 0, 0, width, height);
-        return resized;
-    }
-
-    private static byte[] BitmapToBgr24(Bitmap bmp)
-    {
-        var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
-        var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
-
-        int byteCount = data.Stride * data.Height;
-        byte[] buffer = new byte[byteCount];
-        Marshal.Copy(data.Scan0, buffer, 0, byteCount);
-        bmp.UnlockBits(data);
-        return buffer;
-    }
 
     public void Dispose()
     {
