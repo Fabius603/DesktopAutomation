@@ -20,36 +20,44 @@ public class StreamVideoRecorder : IDisposable
     }
 
     private readonly int width, height, fps;
-    private readonly string outputPath, ffmpegPath;
     private readonly Task ffmpegInitTask;
 
     private readonly List<TimedFrame> buffer = new();
     private readonly object bufLock = new();
 
+    private string outputPath, fileName, ffmpegPath;
     private Process ffmpegProcess;
     private Stream ffmpegInput;
     private Stopwatch stopwatch;
     private CancellationTokenSource cts;
     private Task writerTask;
 
-    public StreamVideoRecorder(int width, int height, int fps, string outputPath, string ffmpegPath = "ffmpeg")
+    public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg")
     {
         this.width = width;
         this.height = height;
         this.fps = fps;
-        this.outputPath = VideoHelper.GetUniqueFilePath(outputPath);
         this.ffmpegPath = ffmpegPath;
         ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
+        string bilderPfad = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        this.outputPath = bilderPfad + "\\ImageDetection";
+        this.fileName = "output.mp4";
+        if (!Directory.Exists(outputPath))
+        {
+            Directory.CreateDirectory(outputPath);
+        }
     }
 
     public async Task StartAsync()
     {
         await ffmpegInitTask;
 
+        string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(outputPath, fileName));
+
         var psi = new ProcessStartInfo
         {
             FileName = ffmpegPath,
-            Arguments = $"-y -f rawvideo -pix_fmt bgr24 -s {width}x{height} -r {fps} -i - -c:v libx264 -preset ultrafast -pix_fmt yuv420p \"{outputPath}\"",
+            Arguments = $"-y -f rawvideo -pix_fmt bgr24 -s {width}x{height} -r {fps} -i - -c:v libx264 -preset ultrafast -pix_fmt yuv420p \"{outputFile}\"",
             UseShellExecute = false,
             RedirectStandardInput = true,
             CreateNoWindow = true
@@ -68,24 +76,44 @@ public class StreamVideoRecorder : IDisposable
     /// </summary>
     public void AddFrame(Bitmap bmp)
     {
-        using var mat = BitmapConverter.ToMat(bmp);
-        Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height));
-        byte[] rawFrame = new byte[mat.Total() * mat.ElemSize()];
-        Marshal.Copy(mat.Data, rawFrame, 0, rawFrame.Length);
-
-        lock (bufLock)
+        Task.Run(() =>
         {
-            buffer.Add(new TimedFrame
+            // Konvertieren & resizen ohne Lock
+            using var mat = BitmapConverter.ToMat(bmp);
+            Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height));
+            byte[] rawFrame = new byte[mat.Total() * mat.ElemSize()];
+            Marshal.Copy(mat.Data, rawFrame, 0, rawFrame.Length);
+
+            var frame = new TimedFrame
             {
                 TimestampMs = stopwatch.ElapsedMilliseconds,
                 RawFrame = rawFrame
-            });
-            // Puffergröße begrenzen
-            //if (buffer.Count > fps * 5)
-            //    buffer.RemoveRange(0, buffer.Count - fps * 5);
-        }
+            };
+
+            lock (bufLock)
+            {
+                buffer.Add(frame);
+            }
+        });
     }
 
+    public void SetOutputPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            throw new ArgumentException("Output path cannot be null or empty.", nameof(path));
+        if (!Directory.Exists(outputPath))
+        {
+            Directory.CreateDirectory(outputPath);
+        }
+        outputPath = VideoHelper.GetUniqueFilePath(path);
+    }
+
+    public void SetFileName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException("File name cannot be null or empty.", nameof(name));
+        fileName = name;
+    }
 
     private async Task WriterLoopAsync(CancellationToken token)
     {

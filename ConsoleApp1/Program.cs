@@ -40,36 +40,37 @@ class Program
         string targetApplication = "brave";
         ProcessDuplicator processDuplicator = new ProcessDuplicator(targetApplication);
 
-        Mat template = new Mat("C:\\Users\\fjsch\\Pictures\\Screenshots\\Screenshot 2025-05-22 202830.png");
+        //Mat template = new Mat("C:\\Users\\fjsch\\Pictures\\Screenshots\\Screenshot 2025-05-22 202830.png");
 
         //Recorder
-        var recorder = new StreamVideoRecorder(1920, 1080, 60, "C:\\Users\\fjsch\\Pictures\\trash\\output.mp4");
+        var recorder = new StreamVideoRecorder(1920, 1080, 60);
         await recorder.StartAsync();
 
-        TemplateMatching templateMatching = new TemplateMatching(TemplateMatchModes.CCoeffNormed);
-        templateMatching.SetTemplate(template);
-        templateMatching.SetMultiplePoints(true);
+        //TemplateMatching templateMatching = new TemplateMatching(TemplateMatchModes.CCoeffNormed);
+        //templateMatching.SetTemplate(template);
+        //templateMatching.SetMultiplePoints(true);
+
         //VideoImageCreator videoCreator = new VideoImageCreator();
         //videoCreator.CleanUp();
         Stopwatch stopwatch = new Stopwatch();
         while (true)
         {
-            stopwatch.Restart();
             using (var result = processDuplicator.CaptureProcess())
             {
-                //recorder.AddFrame(result.ProcessImage);
+                stopwatch.Restart();
+                recorder.AddFrame(result.ProcessImage.Clone() as Bitmap);
+                stopwatch.Stop();
 
-                var matchingResult = templateMatching.Detect(result.ProcessImage.ToMat());
-                var resultImage = DrawResult.DrawTemplateMatchingResult(result.ProcessImage.ToMat(), matchingResult, template.Size());
+                //var matchingResult = templateMatching.Detect(result.ProcessImage.ToMat());
+                //var resultImage = DrawResult.DrawTemplateMatchingResult(result.ProcessImage.ToMat(), matchingResult, template.Size());
 
                 //videoCreator.AddFrame(result.ProcessImage);
-                //ShowImage(result.ProcessImage);
-                ShowImage(resultImage);
+                ShowImage(result.ProcessImage);
+                //ShowImage(resultImage);
 
-                matchingResult.Dispose();
-                resultImage.Dispose();
+                //matchingResult.Dispose();
+                //resultImage.Dispose();
             }
-            stopwatch.Stop();
             Console.WriteLine($"Frame took {stopwatch.ElapsedMilliseconds} ms");
 
             if (Console.KeyAvailable)
