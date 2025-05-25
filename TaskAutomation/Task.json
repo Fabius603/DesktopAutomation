@@ -1,0 +1,37 @@
+{
+  "name": "Test",
+  "repeating": true,
+  "steps": [
+    {
+      "type": "process_duplication",
+      "settings": {
+        "process_name": "brave"
+      }
+    },
+    {
+      "type": "template_matching",
+      "settings": {
+        "template_path": "C:\\Users\\fjsch\\Pictures\\Screenshots\\Screenshot 2025-05-22 202830.png",
+        "template_match_mode": "SqDiffNormed",
+        "multiple_points": true,
+        "confidence_threshold": 0.98,
+        "roi": {
+          "x": 0,
+          "y": 300,
+          "width": 400,
+          "height": 400
+        },
+        "enable_roi": true,
+        "draw_results": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": true,
+        "show_processed_image": false
+      }
+    }
+  ]
+}

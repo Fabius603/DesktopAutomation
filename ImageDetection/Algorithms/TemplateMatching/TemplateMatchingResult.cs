@@ -14,6 +14,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
         public Point CenterPoint { get; set; } = new Point(0, 0);
         public List<Point> Points { get; set; } = new List<Point>();
         public bool MultiplePoints { get; set; } = false;
+        public Size TemplateSize { get; set; } = new Size(0, 0);
 
         public void Dispose()
         {

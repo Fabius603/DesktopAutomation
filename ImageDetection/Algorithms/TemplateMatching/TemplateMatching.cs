@@ -7,75 +7,147 @@ using System.Threading.Tasks;
 
 namespace ImageDetection.Algorithms.TemplateMatching
 {
-    public class TemplateMatching
+    public class TemplateMatching : IDisposable
     {
-        private readonly TemplateMatchModes _templateMatchMode;
-        private Mat _template { get; set; }
+        private TemplateMatchModes _templateMatchMode;
+        private Mat _template;
+        private Size _templateSize;
+        private string _templatePath = string.Empty;
         private bool _multiplePoints = false;
-        private double _threshold = 0.9;
+        private double _confidenceThreshold = 0.9;
         private int _suppressionRadius = 10;
+        private Rect _roi;
+        private bool _useROI = false;
+
+        private readonly List<TemplateMatchModes> _allowedMatchModes = new List<TemplateMatchModes>
+        {
+            TemplateMatchModes.CCoeffNormed,
+            TemplateMatchModes.CCorrNormed,
+            TemplateMatchModes.SqDiffNormed
+        };
 
         public TemplateMatching(TemplateMatchModes templateMatchMode)
         {
-            _templateMatchMode = templateMatchMode;
+            if (_allowedMatchModes.Contains(templateMatchMode))
+            {
+                _templateMatchMode = templateMatchMode;
+            }
+            else
+            {
+                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", _allowedMatchModes), nameof(templateMatchMode));
+            }
         }
 
         public TemplateMatchingResult Detect(Mat rawSource)
         {
-            using var sourceMat = NormalizeImage(rawSource);
-            using var resultMat = new Mat();
+            if (_template == null)
+            {
+                throw new InvalidOperationException("Template not set or is empty. Call SetTemplate first.");
+            }
+            if (rawSource == null) // Check for null rawSource before normalization
+            {
+                return new TemplateMatchingResult { Success = false, Confidence = 0 };
+            }
+            var sourceMat = NormalizeImage(rawSource);
 
-            Cv2.MatchTemplate(sourceMat, _template, resultMat, _templateMatchMode);
+            var resultMat = new Mat();
+            Mat subRegion = null;
+            Point currentRoiOffset = new Point(0, 0);
+            Mat imageForMatching = sourceMat;
 
-            return !_multiplePoints
-                ? DetectSinglePoint(resultMat)
-                : DetectMultiplePoints(resultMat);
+            try
+            {
+
+                bool useValidatedROI = _useROI && _roi != null && _roi.Width > 0 && _roi.Height > 0 &&
+                                       _roi.X >= 0 && _roi.Y >= 0 &&
+                                       _roi.X + _roi.Width <= sourceMat.Cols &&
+                                       _roi.Y + _roi.Height <= sourceMat.Rows;
+
+                if (useValidatedROI)
+                {
+                    try
+                    {
+                        subRegion = new Mat(sourceMat, _roi);
+                        imageForMatching = subRegion;
+                        currentRoiOffset = _roi.Location;
+                    }
+                    catch (OpenCVException)
+                    {
+                        imageForMatching = sourceMat;
+                        currentRoiOffset = new Point(0, 0);
+                        // subRegion remains null, no specific disposal needed here for it
+                    }
+                }
+
+                if (imageForMatching.Width < _template.Width || imageForMatching.Height < _template.Height)
+                {
+                    return new TemplateMatchingResult { Success = false, Confidence = 0 };
+                }
+
+                Cv2.MatchTemplate(imageForMatching, _template, resultMat, _templateMatchMode);
+
+
+                return !_multiplePoints
+                    ? DetectSinglePoint(resultMat, currentRoiOffset)
+                    : DetectMultiplePoints(resultMat, currentRoiOffset);
+            }
+            finally
+            {
+                imageForMatching?.Dispose();
+                sourceMat?.Dispose();
+                resultMat?.Dispose();
+                subRegion?.Dispose();
+            }
         }
 
-        private TemplateMatchingResult DetectSinglePoint(Mat resultMat)
+        private TemplateMatchingResult DetectSinglePoint(Mat resultMat, Point roiOffset)
         {
+            if (resultMat == null)
+                return new TemplateMatchingResult { Success = false };
             try
             {
                 Cv2.MinMaxLoc(resultMat, out double minVal, out double maxVal, out Point minLoc, out Point maxLoc);
 
-                var x = 0;
-                var y = 0;
+                double actualScore = _templateMatchMode == TemplateMatchModes.SqDiffNormed ? minVal : maxVal;
+                Point matchLoc = _templateMatchMode == TemplateMatchModes.SqDiffNormed ? minLoc : maxLoc;
 
-                // Extract pattern location 
-                if (_templateMatchMode == TemplateMatchModes.SqDiff ||
-                    _templateMatchMode == TemplateMatchModes.SqDiffNormed)
+                int pointX = matchLoc.X + _template.Width / 2 + roiOffset.X;
+                int pointY = matchLoc.Y + _template.Height / 2 + roiOffset.Y;
+
+                bool success;
+                double confidencePercent;
+
+                if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
                 {
-                    x = minLoc.X;
-                    y = minLoc.Y;
+                    success = actualScore <= (1.0 - _confidenceThreshold);
+                    confidencePercent = (1.0 - actualScore) * 100.0;
                 }
-                else
+                else // CcoeffNormed or CCorrNormed (guaranteed by constructor)
                 {
-                    x = maxLoc.X;
-                    y = maxLoc.Y;
+                    success = actualScore >= _confidenceThreshold;
+                    confidencePercent = actualScore * 100.0;
                 }
 
-                int pointX = (int)(x + Convert.ToDouble(_template.Width) / 2);
-                int pointY = (int)(y + Convert.ToDouble(_template.Height) / 2);
+                confidencePercent = Math.Max(0.0, Math.Min(100.0, confidencePercent));
 
                 return new TemplateMatchingResult
                 {
-                    Success = maxVal >= _threshold,
+                    Success = success,
                     CenterPoint = new Point(pointX, pointY),
-                    Confidence = maxVal * 100,
+                    Confidence = confidencePercent
                 };
             }
-            catch (Exception ex)
+            catch (OpenCVException)
             {
-                Console.WriteLine(ex);
-                return new TemplateMatchingResult
-                {
-                    Success = false
-                };
+                return new TemplateMatchingResult { Success = false };
             }
         }
 
-        private TemplateMatchingResult DetectMultiplePoints(Mat resultMat)
+        private TemplateMatchingResult DetectMultiplePoints(Mat resultMat, Point roiOffset)
         {
+            if (resultMat == null)
+                return new TemplateMatchingResult { Success = false, Points = new List<Point>() };
+
             var candidates = new List<(Point pt, float score)>();
 
             for (int y = 0; y < resultMat.Rows; y++)
@@ -83,34 +155,108 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 for (int x = 0; x < resultMat.Cols; x++)
                 {
                     float value = resultMat.At<float>(y, x);
-                    if (value >= _threshold)
+                    bool isMatch;
+
+                    if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
+                    {
+                        isMatch = value <= (1.0 - _confidenceThreshold);
+                    }
+                    else // CcoeffNormed or CCorrNormed
+                    {
+                        isMatch = value >= _confidenceThreshold;
+                    }
+
+                    if (isMatch)
                         candidates.Add((new Point(x, y), value));
                 }
             }
 
-            var finalMatches = new List<Point>();
+            var finalMatchCenters = new List<Point>();
+            var scoresOfFinalMatches = new List<float>();
 
-            foreach (var (pt, _) in candidates.OrderByDescending(c => c.score))
+            var orderedCandidates = _templateMatchMode == TemplateMatchModes.SqDiffNormed
+                ? candidates.OrderBy(c => c.score)
+                : candidates.OrderByDescending(c => c.score);
+
+            foreach (var (candidateTopLeft, candidateScore) in orderedCandidates)
             {
-                bool suppressed = finalMatches.Any(existing =>
-                    Math.Abs(existing.X - pt.X) <= _suppressionRadius &&
-                    Math.Abs(existing.Y - pt.Y) <= _suppressionRadius);
-
-                var centerPoint = new Point(
-                    pt.X + _template.Width / 2,
-                    pt.Y + _template.Height / 2
+                var currentMatchCenter = new Point(
+                    candidateTopLeft.X + _template.Width / 2 + roiOffset.X,
+                    candidateTopLeft.Y + _template.Height / 2 + roiOffset.Y
                 );
-                finalMatches.Add(centerPoint);
+
+                bool isSuppressed = false;
+                foreach (Point existingMatchCenter in finalMatchCenters)
+                {
+                    if (Math.Abs(existingMatchCenter.X - currentMatchCenter.X) <= _suppressionRadius &&
+                        Math.Abs(existingMatchCenter.Y - currentMatchCenter.Y) <= _suppressionRadius)
+                    {
+                        isSuppressed = true;
+                        break;
+                    }
+                }
+
+                if (!isSuppressed)
+                {
+                    finalMatchCenters.Add(currentMatchCenter);
+                    scoresOfFinalMatches.Add(candidateScore);
+                }
+            }
+
+            double overallConfidence = 0;
+            if (scoresOfFinalMatches.Any())
+            {
+                double bestFinalScore = _templateMatchMode == TemplateMatchModes.SqDiffNormed
+                    ? scoresOfFinalMatches.Min()
+                    : scoresOfFinalMatches.Max();
+
+                if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
+                {
+                    overallConfidence = (1.0 - bestFinalScore) * 100.0;
+                }
+                else // CcoeffNormed or CCorrNormed
+                {
+                    overallConfidence = bestFinalScore * 100.0;
+                }
+                overallConfidence = Math.Max(0.0, Math.Min(100.0, overallConfidence));
             }
 
             return new TemplateMatchingResult
             {
-                Success = finalMatches.Count > 0,
-                CenterPoint = finalMatches.Count > 0 ? new Point(finalMatches[0].X, finalMatches[0].Y) : new Point(0, 0),
-                Points = finalMatches,
+                Success = finalMatchCenters.Count > 0,
+                CenterPoint = finalMatchCenters.Count > 0 ? finalMatchCenters[0] : new Point(0, 0),
+                Points = finalMatchCenters,
                 MultiplePoints = true,
-                Confidence = (finalMatches.Count > 0 ? candidates.Max(c => c.score) : 0) * 100,
+                Confidence = overallConfidence,
+                TemplateSize = _templateSize
             };
+        }
+
+        public void SetROI(Rect roi)
+        {
+            _roi = roi;
+        }
+
+        public void EnableROI()
+        {
+            _useROI = true;
+        }
+
+        public void DisableROI()
+        {
+            _useROI = false;
+        }
+
+        public void SetTemplateMatchMode(TemplateMatchModes templateMatchMode)
+        {
+            if (_allowedMatchModes.Contains(templateMatchMode))
+            {
+                _templateMatchMode = templateMatchMode;
+            }
+            else
+            {
+                throw new ArgumentException("Invalid template match mode. Allowed modes are: " + string.Join(", ", _allowedMatchModes), nameof(templateMatchMode));
+            }
         }
 
         public void SetThreshold(double threshold)
@@ -119,42 +265,103 @@ namespace ImageDetection.Algorithms.TemplateMatching
             {
                 throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
             }
-            this._threshold = threshold;
+            _confidenceThreshold = threshold;
         }
 
-        public void SetMultiplePoints(bool multiplePoints)
+        public void SetSuppressionRadius(int radius)
         {
-            this._multiplePoints = multiplePoints;
+            if (radius < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(radius), "Suppression radius cannot be negative.");
+            }
+            _suppressionRadius = radius;
         }
 
-        public void SetTemplate(Mat template)
+        public void EnableMultiplePoints()
         {
+            _multiplePoints = true;
+        }
+
+        public void DisableMultiplePoints()
+        {
+            _multiplePoints = false;
+        }
+
+        public void SetTemplate(string templatePath)
+        {
+            if(templatePath == _templatePath)
+            {
+                return; // No need to set the same template again.
+            }
+
+            Mat template = new Mat(templatePath);
             _template?.Dispose();
-
             _template = NormalizeImage(template);
+            template.Dispose();
+            _templatePath = templatePath;
+            _templateSize = _template.Size();
         }
-
 
         private Mat NormalizeImage(Mat input)
         {
-            Mat intermediate = input;
-
-            if (input.Depth() != MatType.CV_8U)
+            if (input == null)
             {
-                intermediate = new Mat();
-                input.ConvertTo(intermediate, MatType.CV_8U);
+                return new Mat(); // Return a new, empty Mat.
             }
 
-            if (intermediate.Channels() > 1)
-            {
-                var gray = new Mat();
-                Cv2.CvtColor(intermediate, gray, ColorConversionCodes.BGR2GRAY);
-                if (intermediate != input)
-                    intermediate.Dispose();
-                return gray;
-            }
+            Mat matToProcess = input;
+            Mat tempMat1 = null; // For depth conversion
+            Mat tempMat2 = null; // For color conversion
 
-            return intermediate != input ? intermediate : input.Clone();
+            try
+            {
+                if (input.Depth() != MatType.CV_8U)
+                {
+                    tempMat1 = new Mat();
+                    input.ConvertTo(tempMat1, MatType.CV_8U);
+                    matToProcess = tempMat1;
+                }
+
+                if (matToProcess.Channels() > 1)
+                {
+                    tempMat2 = new Mat();
+                    Cv2.CvtColor(matToProcess, tempMat2, ColorConversionCodes.BGR2GRAY);
+                    tempMat1?.Dispose(); // Dispose intermediate depth conversion if it happened
+                    return tempMat2;     // Ownership of tempMat2 transferred
+                }
+
+                if (tempMat1 != null) // Depth conversion happened, no color conversion needed
+                {
+                    return tempMat1; // Ownership of tempMat1 transferred
+                }
+
+                // No depth or color conversion was needed, input was already 8U and single channel.
+                // Return a clone as the method contract is to return a new Mat that the caller (or class) owns.
+                return input.Clone();
+            }
+            catch (OpenCVException) // Catch OpenCV specific exceptions during conversion
+            {
+                tempMat1?.Dispose();
+                tempMat2?.Dispose();
+                // Optionally log the exception here
+                return new Mat(); // Return an empty Mat on conversion failure
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+             _template?.Dispose();
+        }
+
+        ~TemplateMatching()
+        {
+            Dispose(false);
         }
     }
 }
