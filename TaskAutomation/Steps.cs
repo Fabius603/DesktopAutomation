@@ -64,13 +64,6 @@ namespace TaskAutomation
         [JsonPropertyName("file_name")]
         public string FileName { get; set; } = "output.mp4";
 
-        [JsonPropertyName("frame_rate")]
-        public int FrameRate { get; set; } = 60;
-
-        [JsonPropertyName("video_size")]
-        [JsonConverter(typeof(OpenCvSizeJsonConverter))] // Auch hier, falls benötigt
-        public Size VideoSize { get; set; } = new Size(1920, 1080);
-
         [JsonPropertyName("use_raw_image")]
         public bool ShowRawImage { get; set; } = true;
 

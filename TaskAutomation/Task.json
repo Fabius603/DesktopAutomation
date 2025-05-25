@@ -32,6 +32,13 @@
         "show_raw_image": true,
         "show_processed_image": false
       }
+    },
+    {
+      "type": "video_creation",
+      "settings": {
+        "use_raw_image": true,
+        "use_processed_image": false
+      }
     }
   ]
 }

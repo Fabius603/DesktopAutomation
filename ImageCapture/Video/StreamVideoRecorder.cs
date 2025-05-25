@@ -179,6 +179,11 @@ public class StreamVideoRecorder : IDisposable
         }
     }
 
+    public string GetOutputPath()
+    {
+        return outputPath;
+    }
+
 
     /// <summary>
     /// Stoppt Capture und speichert Video (non-blocking).

@@ -40,8 +40,9 @@ namespace TaskAutomation
 
             if(job.Steps.OfType<VideoCreationStep>().Any())
             {
-                var recorder = new StreamVideoRecorder(1920, 1080, 60);
-                await recorder.StartAsync();
+                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60);
+                await _videoRecorder.StartAsync();
+                Console.WriteLine("    VideoRecorder wurde gestartet.");
             }
 
             bool continueJob = true;
@@ -94,6 +95,7 @@ namespace TaskAutomation
             if (job.Steps.OfType<VideoCreationStep>().Any())
             {
                 _videoRecorder.StopAndSave();
+                Console.WriteLine($"    Video wird unter {_videoRecorder.GetOutputPath()} gespeichert");
             }
 
             // Finale Aufräumarbeiten für den Job
@@ -284,17 +286,25 @@ namespace TaskAutomation
                 Console.WriteLine("    FEHLER: VideoRecorder ist null");
                 return false;
             }
+            if(step.SavePath != string.Empty && step.SavePath != null)
+            {
+                _videoRecorder.SetOutputPath(step.SavePath);
+            }
+            if(step.FileName != string.Empty && step.FileName != null)
+            {
+                _videoRecorder.SetFileName(step.FileName);
+            }
 
-            // Nur ein Bild wird gespeichert
-            if(step.ShowRawImage)
+
+            if (step.ShowRawImage)
             {
                 _videoRecorder.AddFrame(_currentImage.Clone() as Bitmap);
-                Console.WriteLine("    INFO: Bild wird in Video eingefügt!");
+                Console.WriteLine("    Bild wird in Video eingefügt!");
             }
             else if(step.ShowProcessedImage)
             {
                 _videoRecorder.AddFrame(_currentImageWithResult.ToBitmap().Clone() as Bitmap);
-                Console.WriteLine("    INFO: Bild wird in Video eingefügt!");
+                Console.WriteLine("    Bild wird in Video eingefügt!");
             }
 
             return true;
