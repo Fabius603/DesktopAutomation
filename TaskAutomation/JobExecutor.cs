@@ -232,13 +232,12 @@ namespace TaskAutomation
 
             if (_templateMatchingResult.Success)
             {
-                _currentImageWithResult?.Dispose();
                 if (step.DrawResults)
                 {
                     _currentImageWithResult = DrawResult.DrawTemplateMatchingResult(_imageToProcess, _templateMatchingResult, _templateMatchingResult.TemplateSize);
+                    Console.WriteLine("    Ergebnis wurde auf das Bild gemalt");
                 }
             }
-            _imageToProcess.Dispose();
             return true;
         }
 
@@ -258,10 +257,9 @@ namespace TaskAutomation
 
             void ShowMatImage(Mat mat, string name)
             {
-                Cv2.Resize(mat, mat, new OpenCvSharp.Size(), 0.7, 0.7);
+                Cv2.Resize(mat, mat, new OpenCvSharp.Size(), 0.5, 0.5);
                 Cv2.ImShow(name, mat);
                 Cv2.WaitKey(1);
-                mat?.Dispose();
             }
 
             if(step.ShowRawImage)
@@ -270,11 +268,21 @@ namespace TaskAutomation
                 Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
                 ShowBitmapImage(_currentImage, windowName);
             }
-            if(step.ShowProcessedImage && _currentImageWithResult != null)
+            if(step.ShowProcessedImage)
             {
                 string windowName = $"{step.WindowName} - Processed Image";
                 Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
-                ShowMatImage(_currentImageWithResult, windowName);
+                if(_currentImageWithResult != null && !_currentImageWithResult.IsDisposed && _currentImageWithResult.Height >= 10 && _currentImageWithResult.Width >= 10)
+                {
+                    ShowMatImage(_currentImageWithResult, windowName);
+                }
+                else
+                {
+                    if(_currentImage != null)
+                    {
+                        ShowBitmapImage(_currentImage, windowName);
+                    }
+                }
             }
             return true;
         }
@@ -303,7 +311,14 @@ namespace TaskAutomation
             }
             else if(step.ShowProcessedImage)
             {
-                _videoRecorder.AddFrame(_currentImageWithResult.ToBitmap().Clone() as Bitmap);
+                if(_currentImageWithResult != null && !_currentImageWithResult.IsDisposed)
+                {
+                    _videoRecorder.AddFrame(_currentImageWithResult.ToBitmap().Clone() as Bitmap);
+                }
+                else
+                {
+                    _videoRecorder.AddFrame(_currentImage.Clone() as Bitmap);
+                }
                 Console.WriteLine("    Bild wird in Video eingefügt!");
             }
 

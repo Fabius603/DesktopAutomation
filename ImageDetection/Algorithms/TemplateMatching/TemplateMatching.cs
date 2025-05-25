@@ -134,7 +134,8 @@ namespace ImageDetection.Algorithms.TemplateMatching
                 {
                     Success = success,
                     CenterPoint = new Point(pointX, pointY),
-                    Confidence = confidencePercent
+                    Confidence = confidencePercent,
+                    TemplateSize = _templateSize
                 };
             }
             catch (OpenCVException)

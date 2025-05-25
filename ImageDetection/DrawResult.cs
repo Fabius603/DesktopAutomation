@@ -15,7 +15,7 @@ namespace ImageDetection
             if (!result.Success)
                 return mat;
 
-            Scalar color = result.MultiplePoints ? Scalar.LimeGreen : Scalar.Red;
+            Scalar color = Scalar.LimeGreen;
             int thickness = 2;
 
             if (result.MultiplePoints && result.Points != null)
