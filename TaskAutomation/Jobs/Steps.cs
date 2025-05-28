@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using OpenCvSharp; // Für Rect und TemplateMatchModes
+using OpenCvSharp;
 
-namespace TaskAutomation
+namespace TaskAutomation.Jobs
 {
     public class TemplateMatchingStep
     {
@@ -69,5 +69,11 @@ namespace TaskAutomation
 
         [JsonPropertyName("use_processed_image")]
         public bool ShowProcessedImage { get; set; } = true;
+    }
+
+    public class MakroExecutionStep
+    {
+        [JsonPropertyName("makro_name")]
+        public string MakroName { get; set; } = string.Empty;
     }
 }

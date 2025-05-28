@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenCvSharp;
 
-namespace TaskAutomation
+namespace TaskAutomation.Jobs
 {
     public class OpenCvRectJsonConverter : JsonConverter<Rect>
     {

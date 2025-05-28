@@ -11,8 +11,12 @@ using OpenCvSharp.Extensions;
 using ImageDetection;
 using SharpDX;
 using System.Text;
+using Point = OpenCvSharp.Point;
+using ImageHelperMethods;
+using TaskAutomation.Makro;
+using System.Linq;
 
-namespace TaskAutomation
+namespace TaskAutomation.Jobs
 {
     public class JobExecutor : IDisposable
     {
@@ -27,7 +31,13 @@ namespace TaskAutomation
         private TemplateMatching _templateMatcher;
         private TemplateMatchingResult _templateMatchingResult;
         private Mat _imageToProcess;
-
+        private Point _currentOffset = new Point(0, 0);
+        private int _currentDesktop = 0;
+        private int _currentAdapter = 0;
+        private Dictionary<string, MakroList> _makros;
+        private DxgiResources dxgiResources { get; } = DxgiResources.Instance;
+        private MakroExecutor makroExecutor;
+        private string makroFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
         public async void ExecuteJob(Job job)
         {
             if (job == null)
@@ -43,6 +53,18 @@ namespace TaskAutomation
                 _videoRecorder = new StreamVideoRecorder(1920, 1080, 60);
                 await _videoRecorder.StartAsync();
                 Console.WriteLine("    VideoRecorder wurde gestartet.");
+            }
+
+            if(job.Steps.OfType<MakroExecutionStep>().Any())
+            {
+                makroExecutor = new MakroExecutor();
+
+                _makros = new Dictionary<string, MakroList>();
+                foreach (var step in job.Steps.OfType<MakroExecutionStep>())
+                {
+                    string makroFilePath = Path.Combine(makroFolderPath, step.MakroName + ".json");
+                    _makros[step.MakroName] = MakroReader.LadeMakroDatei(makroFilePath);
+                }
             }
 
             bool continueJob = true;
@@ -129,6 +151,8 @@ namespace TaskAutomation
                     return HandleShowImageStep(siStep);
                 case VideoCreationStep vcStep:
                     return HandleVideoCreationStep(vcStep);
+                case MakroExecutionStep miStep:
+                    return HandleMakroExecutionStep(miStep);
                 default:
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine($"    WARNUNG: Unbekannter Step-Typ: {step.GetType().Name}");
@@ -138,6 +162,24 @@ namespace TaskAutomation
         }
 
         // --- Handler-Methoden für jeden Step-Typ ---
+
+        private bool HandleMakroExecutionStep(MakroExecutionStep step)
+        {
+            if(_currentAdapter == null)
+            {
+                Console.WriteLine("    FEHLER: Kein aktueller Adapter gesetzt (_currentAdapter ist null). Step wird übersprungen.");
+                return true; // Oder false, wenn der Job abbrechen soll
+            }
+            if (_currentDesktop == null)
+            {
+                Console.WriteLine("    FEHLER: Kein aktueller Desktop gesetzt (_currentDesktop ist null). Step wird übersprungen.");
+                return true; // Oder false, wenn der Job abbrechen soll
+            }
+
+            makroExecutor.ExecuteMakro(_makros[step.MakroName], _currentAdapter, _currentDesktop, dxgiResources);
+            Console.WriteLine($"    Makro '{step.MakroName}' wurde ausgeführt auf Adapter {_currentAdapter} und Desktop {_currentDesktop}.");
+            return true;
+        }
 
         private bool HandleProcessDuplicationStep(ProcessDuplicationStep step)
         {
@@ -156,7 +198,11 @@ namespace TaskAutomation
                 return true; // Oder false, wenn der Job abbrechen soll
             }
             Console.WriteLine($"    Prozessfenster aufgenommen!");
+
+            _currentDesktop = _processDuplicationResult.DesktopIdx;
+            _currentAdapter = _processDuplicationResult.AdapterIdx;
             _currentImage = _processDuplicationResult.ProcessImage.Clone() as Bitmap;
+            _currentOffset = _processDuplicationResult.WindowOffsetOnDesktop;
             return true;
         }
 
@@ -172,6 +218,8 @@ namespace TaskAutomation
             try
             {
                 _currentDesktopFrame = _desktopDuplicator.GetLatestFrame();
+                _currentDesktop = step.OutputDevice;
+                _currentAdapter = step.GraphicsCardAdapter;
                 _currentImage = _currentDesktopFrame?.DesktopImage?.Clone() as Bitmap;
             }
             catch
@@ -226,7 +274,7 @@ namespace TaskAutomation
             _templateMatcher.SetThreshold(step.ConfidenceThreshold);
 
             _imageToProcess = _currentImage.ToMat();
-            _templateMatchingResult = _templateMatcher.Detect(_imageToProcess);
+            _templateMatchingResult = _templateMatcher.Detect(_imageToProcess, _currentOffset);
 
             Console.WriteLine($"    Ergebnis: Erfolg={_templateMatchingResult.Success}, Konfidenz={_templateMatchingResult.Confidence:F2}%");
 
@@ -241,6 +289,18 @@ namespace TaskAutomation
             return true;
         }
 
+        public void SetMakroFilePath(string filePath)
+        {
+            if (Directory.Exists(filePath))
+            {
+                makroFolderPath = filePath;
+                Console.WriteLine($"    Makro-Ordnerpfad gesetzt: {makroFolderPath}");
+            }
+            else
+            {
+                Console.WriteLine($"    FEHLER: Makro-Dateipfad '{filePath}' existiert nicht.");
+            }
+        }
         private bool HandleShowImageStep(ShowImageStep step)
         {
             if (_currentImage == null)

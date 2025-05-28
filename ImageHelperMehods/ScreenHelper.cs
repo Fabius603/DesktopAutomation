@@ -6,8 +6,9 @@ using OpenCvSharp;
 using SharpDX.DXGI;
 using SharpDX.Direct3D11;
 using Device = SharpDX.Direct3D11.Device;
+using ImageHelperMethods;
 
-namespace ImageCapture.ProcessDuplication
+namespace ImageHelperMethods
 {
     public static class ScreenHelper
     {
@@ -56,6 +57,43 @@ namespace ImageCapture.ProcessDuplication
                 this.cbSize = Marshal.SizeOf(typeof(MONITORINFOEX));
             }
         }
+
+        public static double BerechneAbsoluteX(int pixelX, int adapterIdx, int outputIdx, DxgiResources dxgi)
+        {
+            if (!dxgi.Outputs.TryGetValue((adapterIdx, outputIdx), out var output))
+                throw new ArgumentException($"Ungültiger Adapter/Output: ({adapterIdx},{outputIdx})");
+
+            var bounds = output.Description.DesktopBounds;
+            int virtualX = bounds.Left + pixelX; // globaler Pixelwert
+            int totalWidth = GetVirtualDesktopWidth(dxgi);
+
+            return Math.Clamp((virtualX * 65535.0) / totalWidth, 0, 65535);
+        }
+
+        public static double BerechneAbsoluteY(int pixelY, int adapterIdx, int outputIdx, DxgiResources dxgi)
+        {
+            if (!dxgi.Outputs.TryGetValue((adapterIdx, outputIdx), out var output))
+                throw new ArgumentException($"Ungültiger Adapter/Output: ({adapterIdx},{outputIdx})");
+
+            var bounds = output.Description.DesktopBounds;
+            int virtualY = bounds.Top + pixelY;
+            int totalHeight = GetVirtualDesktopHeight(dxgi);
+
+            return Math.Clamp((virtualY * 65535.0) / totalHeight, 0, 65535);
+        }
+
+        private static int GetVirtualDesktopWidth(DxgiResources dxgi)
+        {
+            return dxgi.Outputs.Values.Max(o => o.Description.DesktopBounds.Right) -
+                   dxgi.Outputs.Values.Min(o => o.Description.DesktopBounds.Left);
+        }
+
+        private static int GetVirtualDesktopHeight(DxgiResources dxgi)
+        {
+            return dxgi.Outputs.Values.Max(o => o.Description.DesktopBounds.Bottom) -
+                   dxgi.Outputs.Values.Min(o => o.Description.DesktopBounds.Top);
+        }
+
 
         /// <summary>
         /// Ermittelt das Rechteck (Position und Größe) eines Fensters relativ zum oberen linken Rand des Bildschirms,
@@ -140,6 +178,20 @@ namespace ImageCapture.ProcessDuplication
             int clampedHeight = intersection.Height;
 
             return new Rectangle(clampedX, clampedY, clampedWidth, clampedHeight);
+        }
+
+        public static OpenCvSharp.Point BerechneWindowOffsetAufMonitor(IntPtr windowHandle)
+        {
+            Rectangle monitorBounds = ScreenHelper.GetMonitorBoundsForWindow(windowHandle);
+            Rectangle globalRect = ScreenHelper.GetWindowGlobalRectangle(windowHandle);
+
+            if (monitorBounds.IsEmpty || globalRect.IsEmpty)
+                return new OpenCvSharp.Point(0, 0);
+
+            int offsetX = globalRect.X - monitorBounds.X;
+            int offsetY = globalRect.Y - monitorBounds.Y;
+
+            return new OpenCvSharp.Point(offsetX, offsetY);
         }
 
         /// <summary>

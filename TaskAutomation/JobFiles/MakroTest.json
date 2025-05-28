@@ -1,0 +1,12 @@
+{
+  "name": "Test",
+  "repeating": false,
+  "steps": [
+    {
+      "type": "makro_execution",
+      "settings": {
+        "makro_name": "TestMakro"
+      }
+    }
+  ]
+}

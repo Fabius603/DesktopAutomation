@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Drawing;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection;
-using TaskAutomation;
+using TaskAutomation.Jobs;
 
 class Program
 {
@@ -38,9 +38,57 @@ class Program
 
     static async Task Main(string[] args)
     {
-        var job = JobReader.ReadSteps("C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\Task.json");
+        string jobFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\JobFiles";
+        string makroFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
+        while(true)
+        {
+            Console.WriteLine("Wähle eine Job-Datei\n");
+            string filePath = WaehleDateiAusVerzeichnis(jobFolderPath);
+            var job = JobReader.ReadSteps(filePath);
 
-        JobExecutor jobExecutor = new JobExecutor();
-        jobExecutor.ExecuteJob(job);     
+            JobExecutor jobExecutor = new JobExecutor();
+            jobExecutor.SetMakroFilePath(makroFolderPath);
+            jobExecutor.ExecuteJob(job);     
+        }
+    }
+
+    public static string WaehleDateiAusVerzeichnis(string verzeichnisPfad)
+    {
+        if (!Directory.Exists(verzeichnisPfad))
+        {
+            Console.WriteLine("Das Verzeichnis existiert nicht.");
+            return null;
+        }
+
+        string[] dateien = Directory.GetFiles(verzeichnisPfad);
+        if (dateien.Length == 0)
+        {
+            Console.WriteLine("Keine Dateien im Verzeichnis gefunden.");
+            return null;
+        }
+        Console.WriteLine("----------------------------------------------");
+        // Dateien mit Nummer anzeigen
+        for (int i = 0; i < dateien.Length; i++)
+        {
+            Console.WriteLine($"{i + 1}: {Path.GetFileName(dateien[i])}");
+        }
+        Console.WriteLine("----------------------------------------------");
+
+        int auswahl = -1;
+        while (true)
+        {
+            Console.Write("Bitte die Nummer der gewünschten Datei eingeben: ");
+            string eingabe = Console.ReadLine();
+
+            if (int.TryParse(eingabe, out auswahl) &&
+                auswahl >= 1 && auswahl <= dateien.Length)
+            {
+                break;
+            }
+
+            Console.WriteLine("\nUngültige Eingabe. Bitte eine gültige Nummer eingeben.");
+        }
+
+        return dateien[auswahl - 1];
     }
 }

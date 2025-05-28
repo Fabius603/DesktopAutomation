@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO; // Für File
 using System.Collections.Generic; // Für List
-using System.Text.Json; // Für JsonDocument, JsonSerializer
+using System.Text.Json;
 // using OpenCvSharp; // Nicht direkt hier benötigt, aber in den Step-Klassen
 
-namespace TaskAutomation
+namespace TaskAutomation.Jobs
 {
     public class JobReader
     {
@@ -33,6 +33,7 @@ namespace TaskAutomation
                     "desktop_duplication" => JsonSerializer.Deserialize<DesktopDuplicationStep>(settingsElement.GetRawText()),
                     "show_image" => JsonSerializer.Deserialize<ShowImageStep>(settingsElement.GetRawText()),
                     "video_creation" => JsonSerializer.Deserialize<VideoCreationStep>(settingsElement.GetRawText()),
+                    "makro_execution" => JsonSerializer.Deserialize<MakroExecutionStep>(settingsElement.GetRawText()),
                     _ => throw new NotSupportedException($"Unbekannter Step-Typ: {type}")
                 };
                 job.Steps.Add(step);

@@ -1,0 +1,156 @@
+{
+  "static_desktop": true,
+  "desktop_index": 0,
+  "adapter_index": 0,
+  "commands": [
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 480,
+      "y": 0
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 960,
+      "y": 0
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1440,
+      "y": 0
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1919,
+      "y": 0
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1919,
+      "y": 270
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1919,
+      "y": 540
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1919,
+      "y": 810
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1919,
+      "y": 1079
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 1440,
+      "y": 1079
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 960,
+      "y": 1079
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 480,
+      "y": 1079
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 1079
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 810
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 540
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 270
+    },
+    {
+      "type": "timeout",
+      "duration": 100
+    },
+    {
+      "type": "mouseMove",
+      "x": 0,
+      "y": 0
+    }
+  ]
+}

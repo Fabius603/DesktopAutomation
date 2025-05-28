@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using OpenCvSharp;
 
-namespace TaskAutomation
+namespace TaskAutomation.Jobs
 {
     public class Job
     {

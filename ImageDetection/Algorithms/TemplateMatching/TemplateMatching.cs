@@ -40,6 +40,11 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
         public TemplateMatchingResult Detect(Mat rawSource)
         {
+            return Detect(rawSource, new Point(0, 0));
+        }
+
+        public TemplateMatchingResult Detect(Mat rawSource, Point offset)
+        {
             if (_template == null)
             {
                 throw new InvalidOperationException("Template not set or is empty. Call SetTemplate first.");
@@ -86,10 +91,13 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
                 Cv2.MatchTemplate(imageForMatching, _template, resultMat, _templateMatchMode);
 
-
-                return !_multiplePoints
+                TemplateMatchingResult result = !_multiplePoints
                     ? DetectSinglePoint(resultMat, currentRoiOffset)
                     : DetectMultiplePoints(resultMat, currentRoiOffset);
+
+                CalcPointsOnDesktop(result, offset);
+
+                return result;
             }
             finally
             {
@@ -349,6 +357,28 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
+        private void CalcPointsOnDesktop(TemplateMatchingResult result, Point offset)
+        {
+            if (result == null)
+                throw new ArgumentNullException(nameof(result));
+
+            // Einzelpunkt
+            result.CenterPointOnDesktop = new Point(
+                result.CenterPoint.X + offset.X,
+                result.CenterPoint.Y + offset.Y);
+
+            // Mehrere Punkte
+            if (result.Points != null && result.Points.Count > 0)
+            {
+                result.PointsOnDesktop = result.Points
+                    .Select(p => new Point(p.X + offset.X, p.Y + offset.Y))
+                    .ToList();
+            }
+            else
+            {
+                result.PointsOnDesktop.Clear();
+            }
+        }
         public void Dispose()
         {
             Dispose(true);

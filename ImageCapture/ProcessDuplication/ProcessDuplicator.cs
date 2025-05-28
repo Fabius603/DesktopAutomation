@@ -10,6 +10,7 @@ using OpenCvSharp;
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using ImageHelperMethods;
 
 namespace ImageCapture.ProcessDuplication
 {
@@ -28,7 +29,9 @@ namespace ImageCapture.ProcessDuplication
         private Rectangle clampedRect { get; set; } = Rectangle.Empty;
         private Rectangle globalRect { get; set; } = Rectangle.Empty;
 
-        private DxgiResources dxgiResources = new DxgiResources();
+        private DxgiResources dxgiResources { get; } = DxgiResources.Instance;
+
+        private OpenCvSharp.Point offsetOnDesktop { get; set; } = new OpenCvSharp.Point(0, 0);
 
         private Dictionary<string, DesktopDuplicator> desktopDuplicators = new Dictionary<string, DesktopDuplicator>();
         private int _aquireFrameTimeout = 0;
@@ -78,7 +81,6 @@ namespace ImageCapture.ProcessDuplication
             
             var adapterAndOutputs = GetAllAdapterAndOutputIndices();
             InitializeDesktopDuplicators(adapterAndOutputs);
-            InitializeAllDxgiResources();
         }
 
         public ProcessDuplicatorResult CaptureProcess()
@@ -113,7 +115,7 @@ namespace ImageCapture.ProcessDuplication
                 if (OnlyActiveWindow &&
                     User32.GetActiveApplicationName() != processName)
                 {
-                    return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
+                    return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame, offsetOnDesktop);
                 }
 
                 (int aIdx, int oIdx) = ScreenHelper.GetAdapterAndOutputForWindowHandle(targetProcess, dxgiResources);
@@ -154,7 +156,9 @@ namespace ImageCapture.ProcessDuplication
                 latestSuccesfullImage = croppedImage.Clone() as Bitmap;
                 latestSuccesfullFrame = currentFrame.Clone();
 
-                return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame);
+                offsetOnDesktop = ScreenHelper.BerechneWindowOffsetAufMonitor(targetProcess);
+
+                return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame, offsetOnDesktop);
             }
             finally
             {
@@ -175,39 +179,6 @@ namespace ImageCapture.ProcessDuplication
             if (timeout < 0)
                 throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be non-negative.");
             aquireFrameTimeout = timeout;
-        }
-
-        private void InitializeAllDxgiResources()
-        {
-            dxgiResources.Factory = new Factory1();
-
-            for (int adapterIdx = 0; ; adapterIdx++)
-            {
-                Adapter1 adapter;
-                try
-                {
-                    adapter = dxgiResources.Factory.GetAdapter1(adapterIdx);
-                }
-                catch (SharpDX.SharpDXException)
-                {
-                    break;
-                }
-
-                dxgiResources.Adapters.Add(adapterIdx, adapter);
-
-                for (int outputIdx = 0; ; outputIdx++)
-                {
-                    try
-                    {
-                        var output = adapter.GetOutput(outputIdx).QueryInterface<Output1>();
-                        dxgiResources.Outputs.Add((adapterIdx, outputIdx), output);
-                    }
-                    catch (SharpDX.SharpDXException)
-                    {
-                        break;
-                    }
-                }
-            }
         }
 
         private void InitializeDesktopDuplicators(List<(int, int)> adapterAndOutputs)
@@ -303,7 +274,7 @@ namespace ImageCapture.ProcessDuplication
             };
         }
 
-        private ProcessDuplicatorResult CreateResult(Bitmap image, Rectangle win, Rectangle withoutClamp, Rectangle global, DesktopFrame frame)
+        private ProcessDuplicatorResult CreateResult(Bitmap image, Rectangle win, Rectangle withoutClamp, Rectangle global, DesktopFrame frame, OpenCvSharp.Point offset)
         {
             return new ProcessDuplicatorResult(true)
             {
@@ -314,7 +285,8 @@ namespace ImageCapture.ProcessDuplication
                 ClampedWindowRect = win,
                 GlobalWindowRect = global,
                 AdapterIdx = currentAdapterIndex,
-                DesktopIdx = currentOutputIndex
+                DesktopIdx = currentOutputIndex,
+                WindowOffsetOnDesktop = offset
             };
         }
 

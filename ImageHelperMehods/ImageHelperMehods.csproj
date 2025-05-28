@@ -7,19 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="InputSimulator" Version="1.0.4" />
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
-    <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
-    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="MakroFiles\" />
+    <PackageReference Include="SharpDX.Desktop" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
   </ItemGroup>
 
 </Project>

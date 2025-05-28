@@ -15,14 +15,17 @@ namespace ImageDetection.Algorithms.TemplateMatching
         public List<Point> Points { get; set; } = new List<Point>();
         public bool MultiplePoints { get; set; } = false;
         public Size TemplateSize { get; set; } = new Size(0, 0);
+        public Point CenterPointOnDesktop { get; set; } = new Point(0, 0);
+        public List<Point> PointsOnDesktop { get; set; } = new List<Point>();
 
         public void Dispose()
         {
             Points?.Clear();
-            Points = null;
             CenterPoint = new Point(0, 0);
             Success = false;
             Confidence = 0;
+            CenterPointOnDesktop = new Point(0, 0);
+            PointsOnDesktop.Clear();
         }
     }
 }

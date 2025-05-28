@@ -59,4 +59,8 @@
     <None Remove="C:\Users\fjsch\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swscale-4.dll" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />
+  </ItemGroup>
+
 </Project>

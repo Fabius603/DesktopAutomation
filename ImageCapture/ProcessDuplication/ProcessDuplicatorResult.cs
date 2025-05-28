@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ImageCapture.DesktopDuplication;
 using OpenCvSharp;
+using Point = OpenCvSharp.Point;
 
 namespace ImageCapture.ProcessDuplication
 {
@@ -20,6 +21,7 @@ namespace ImageCapture.ProcessDuplication
         public int DesktopIdx { get; set; }
         public int AdapterIdx { get; set; }
         public bool ProcessFound { get; set; } = true;
+        public Point WindowOffsetOnDesktop { get; set; }
 
         public ProcessDuplicatorResult() { }
         public ProcessDuplicatorResult(bool processFound)
