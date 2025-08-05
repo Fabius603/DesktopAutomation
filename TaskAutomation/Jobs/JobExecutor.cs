@@ -37,7 +37,106 @@ namespace TaskAutomation.Jobs
         private Dictionary<string, MakroList> _makros;
         private DxgiResources dxgiResources { get; } = DxgiResources.Instance;
         private MakroExecutor makroExecutor;
-        private string makroFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
+        private string makroFolderPath = Path.Combine(AppContext.BaseDirectory, "MakroFiles");
+
+        // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
+        public ProcessDuplicatorResult ProcessDuplicationResult
+        {
+            get => _processDuplicationResult;
+            set => _processDuplicationResult = value;
+        }
+
+        public DesktopFrame CurrentDesktopFrame
+        {
+            get => _currentDesktopFrame;
+            set => _currentDesktopFrame = value;
+        }
+
+        public Bitmap CurrentImage
+        {
+            get => _currentImage;
+            set => _currentImage = value;
+        }
+
+        public Mat CurrentImageWithResult
+        {
+            get => _currentImageWithResult;
+            set => _currentImageWithResult = value;
+        }
+
+        public StreamVideoRecorder VideoRecorder
+        {
+            get => _videoRecorder;
+            set => _videoRecorder = value;
+        }
+
+        public ProcessDuplicator ProcessDuplicator
+        {
+            get => _processDuplicator;
+            set => _processDuplicator = value;
+        }
+
+        public DesktopDuplicator DesktopDuplicator
+        {
+            get => _desktopDuplicator;
+            set => _desktopDuplicator = value;
+        }
+
+        public TemplateMatching TemplateMatcher
+        {
+            get => _templateMatcher;
+            set => _templateMatcher = value;
+        }
+
+        public TemplateMatchingResult TemplateMatchingResult
+        {
+            get => _templateMatchingResult;
+            set => _templateMatchingResult = value;
+        }
+
+        public Mat ImageToProcess
+        {
+            get => _imageToProcess;
+            set => _imageToProcess = value;
+        }
+
+        public Point CurrentOffset
+        {
+            get => _currentOffset;
+            set => _currentOffset = value;
+        }
+
+        public int CurrentDesktop
+        {
+            get => _currentDesktop;
+            set => _currentDesktop = value;
+        }
+
+        public int CurrentAdapter
+        {
+            get => _currentAdapter;
+            set => _currentAdapter = value;
+        }
+
+        public Dictionary<string, MakroList> Makros
+        {
+            get => _makros;
+            set => _makros = value;
+        }
+
+        public DxgiResources DxgiResources => dxgiResources;
+
+        public MakroExecutor MakroExecutor
+        {
+            get => makroExecutor;
+            set => makroExecutor = value;
+        }
+
+        public string MakroFolderPath
+        {
+            get => makroFolderPath;
+            set => makroFolderPath = value;
+        }
         public async void ExecuteJob(Job job)
         {
             if (job == null)
