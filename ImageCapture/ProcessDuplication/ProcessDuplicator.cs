@@ -29,7 +29,7 @@ namespace ImageCapture.ProcessDuplication
         private Rectangle clampedRect { get; set; } = Rectangle.Empty;
         private Rectangle globalRect { get; set; } = Rectangle.Empty;
 
-        private DxgiResources dxgiResources { get; } = DxgiResources.Instance;
+        private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
 
         private OpenCvSharp.Point offsetOnDesktop { get; set; } = new OpenCvSharp.Point(0, 0);
 
@@ -118,7 +118,7 @@ namespace ImageCapture.ProcessDuplication
                     return CreateResult(latestSuccesfullImage, winRect, clampedRect, globalRect, latestSuccesfullFrame, offsetOnDesktop);
                 }
 
-                (int aIdx, int oIdx) = ScreenHelper.GetAdapterAndOutputForWindowHandle(targetProcess, dxgiResources);
+                (int aIdx, int oIdx) = ScreenHelper.GetAdapterAndOutputForWindowHandle(targetProcess, _dxgiResources);
                 if (aIdx != currentAdapterIndex || oIdx != currentOutputIndex)
                 {
                     currentAdapterIndex = aIdx;

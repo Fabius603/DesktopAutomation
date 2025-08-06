@@ -1,5 +1,5 @@
 {
-  "static_desktop": true,
+  "name": "TestMakro",
   "desktop_index": 0,
   "adapter_index": 0,
   "commands": [

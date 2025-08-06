@@ -1,12 +1,47 @@
-﻿using System;
+﻿using ImageCapture.ProcessDuplication;
+using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
-    internal class ProcessDuplicationStepHandler
+    public class ProcessDuplicationStepHandler : IJobStepHandler
     {
+        public bool Execute(object step, Job jobContext, JobExecutor executor)
+        {
+            var pdStep = step as ProcessDuplicationStep;
+            if (pdStep == null)
+            {
+                Console.WriteLine("FEHLER: Step ist kein ProcessDuplicationStep.");
+                return false;
+            }
+
+            executor.ProcessDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
+            executor.CurrentImage?.Dispose(); // Vorheriges Desktop-Bild freigeben
+
+            if (executor.ProcessDuplicator == null)
+            {
+                executor.ProcessDuplicator = new ProcessDuplicator(pdStep.ProcessName);
+                Console.WriteLine($"    Prozessfenster-Aufnahme gestartet für: '{pdStep.ProcessName}'");
+            }
+
+            executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();
+            if (!executor.ProcessDuplicationResult.ProcessFound)
+            {
+                Console.WriteLine($"    FEHLER: Prozess {pdStep.ProcessName} konnte nicht gefunden werden.");
+                return true; // Oder false, wenn der Job abbrechen soll
+            }
+            Console.WriteLine($"    Prozessfenster aufgenommen!");
+
+            executor.CurrentDesktop = executor.ProcessDuplicationResult.DesktopIdx;
+            executor.CurrentAdapter = executor.ProcessDuplicationResult.AdapterIdx;
+            executor.CurrentImage = executor.ProcessDuplicationResult.ProcessImage.Clone() as Bitmap;
+            executor.CurrentOffset = executor.ProcessDuplicationResult.WindowOffsetOnDesktop;
+            return true;
+        }
     }
 }

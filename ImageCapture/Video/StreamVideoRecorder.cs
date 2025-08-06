@@ -25,12 +25,39 @@ public class StreamVideoRecorder : IDisposable
     private readonly List<TimedFrame> buffer = new();
     private readonly object bufLock = new();
 
-    private string outputPath, fileName, ffmpegPath;
+    private string _outputDirectory, _fileName, ffmpegPath;
     private Process ffmpegProcess;
     private Stream ffmpegInput;
     private Stopwatch stopwatch;
     private CancellationTokenSource cts;
     private Task writerTask;
+
+    public string OutputDirectory
+    {
+        get => _outputDirectory;
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+                throw new ArgumentException("Output directory cannot be null or empty.", nameof(value));
+            if (!Directory.Exists(value))
+            {
+                Directory.CreateDirectory(value);
+            }
+            _outputDirectory = value;
+        }
+    }
+
+    public string FileName
+    {
+        get => _fileName;
+        set
+        {
+            if (string.IsNullOrEmpty(value))
+                throw new ArgumentException("File name cannot be null or empty.", nameof(value));
+
+            _fileName = value;
+        }
+    }
 
     public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg")
     {
@@ -40,19 +67,15 @@ public class StreamVideoRecorder : IDisposable
         this.ffmpegPath = ffmpegPath;
         ffmpegInitTask = FFmpegDownloader.GetLatestVersion(FFmpegVersion.Official);
         string bilderPfad = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-        this.outputPath = bilderPfad + "\\ImageDetection";
-        this.fileName = "output.mp4";
-        if (!Directory.Exists(outputPath))
-        {
-            Directory.CreateDirectory(outputPath);
-        }
+        this.OutputDirectory = bilderPfad + "\\ImageCapture";
+        this.FileName = "output.mp4";
     }
 
     public async Task StartAsync()
     {
         await ffmpegInitTask;
 
-        string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(outputPath, fileName));
+        string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(OutputDirectory, FileName));
 
         var psi = new ProcessStartInfo
         {
@@ -95,24 +118,6 @@ public class StreamVideoRecorder : IDisposable
                 buffer.Add(frame);
             }
         });
-    }
-
-    public void SetOutputPath(string path)
-    {
-        if (string.IsNullOrEmpty(path))
-            throw new ArgumentException("Output path cannot be null or empty.", nameof(path));
-        if (!Directory.Exists(outputPath))
-        {
-            Directory.CreateDirectory(outputPath);
-        }
-        outputPath = VideoHelper.GetUniqueFilePath(path);
-    }
-
-    public void SetFileName(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            throw new ArgumentException("File name cannot be null or empty.", nameof(name));
-        fileName = name;
     }
 
     private async Task WriterLoopAsync(CancellationToken token)
@@ -178,12 +183,6 @@ public class StreamVideoRecorder : IDisposable
             }
         }
     }
-
-    public string GetOutputPath()
-    {
-        return outputPath;
-    }
-
 
     /// <summary>
     /// Stoppt Capture und speichert Video (non-blocking).

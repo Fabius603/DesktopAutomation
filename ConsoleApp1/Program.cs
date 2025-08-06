@@ -38,39 +38,30 @@ class Program
 
     static async Task Main(string[] args)
     {
-        string jobFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\JobFiles";
-        string makroFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
+        string jobFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\JobFiles";
+        string _makroFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
         while(true)
         {
             Console.WriteLine("Wähle eine Job-Datei\n");
-            string filePath = WaehleDateiAusVerzeichnis(jobFolderPath);
-            var job = JobReader.ReadSteps(filePath);
 
             JobExecutor jobExecutor = new JobExecutor();
-            jobExecutor.SetMakroFilePath(makroFolderPath);
+
+            Job job = WaehleDateiAusVerzeichnis(jobExecutor);
+
+            jobExecutor.SetMakroFilePath(_makroFolderPath);
             jobExecutor.ExecuteJob(job);     
         }
     }
 
-    public static string WaehleDateiAusVerzeichnis(string verzeichnisPfad)
+    public static Job WaehleDateiAusVerzeichnis(JobExecutor executor)
     {
-        if (!Directory.Exists(verzeichnisPfad))
-        {
-            Console.WriteLine("Das Verzeichnis existiert nicht.");
-            return null;
-        }
-
-        string[] dateien = Directory.GetFiles(verzeichnisPfad);
-        if (dateien.Length == 0)
-        {
-            Console.WriteLine("Keine Dateien im Verzeichnis gefunden.");
-            return null;
-        }
         Console.WriteLine("----------------------------------------------");
         // Dateien mit Nummer anzeigen
-        for (int i = 0; i < dateien.Length; i++)
+        int i = 0;
+        foreach (var job in executor.AllJobs.Values)
         {
-            Console.WriteLine($"{i + 1}: {Path.GetFileName(dateien[i])}");
+            Console.WriteLine($"{i + 1}: {job.Name}");
+            i++;
         }
         Console.WriteLine("----------------------------------------------");
 
@@ -81,7 +72,7 @@ class Program
             string eingabe = Console.ReadLine();
 
             if (int.TryParse(eingabe, out auswahl) &&
-                auswahl >= 1 && auswahl <= dateien.Length)
+                auswahl >= 1 && auswahl <= executor.AllJobs.Count)
             {
                 break;
             }
@@ -89,6 +80,6 @@ class Program
             Console.WriteLine("\nUngültige Eingabe. Bitte eine gültige Nummer eingeben.");
         }
 
-        return dateien[auswahl - 1];
+        return executor.AllJobs.ElementAt(auswahl - 1).Value;
     }
 }

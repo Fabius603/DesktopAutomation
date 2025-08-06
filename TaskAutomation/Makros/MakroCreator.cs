@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaskAutomation.Makro
+namespace TaskAutomation.Makros
 {
     internal class MakroCreator
     {

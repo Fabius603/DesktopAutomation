@@ -5,7 +5,7 @@ using WindowsInput;
 using WindowsInput.Native;
 using ImageHelperMethods;
 
-namespace TaskAutomation.Makro
+namespace TaskAutomation.Makros
 {
     public class MakroExecutor
     {
@@ -16,56 +16,29 @@ namespace TaskAutomation.Makro
             _sim = new InputSimulator();
         }
 
-        public void ExecuteMakro(MakroList makro, int adapterIdx, int desktopIdx, DxgiResources dxgi)
+        public void ExecuteMakro(Makro makro, int adapterIdx, int desktopIdx, DxgiResources dxgi)
         {
             foreach (var befehl in makro.Befehle)
             {
                 switch (befehl)
                 {
                     case MouseMoveBefehl m:
-                        if(makro.StaticDesktop)
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
-                        }
-                        else
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, adapterIdx, desktopIdx, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, adapterIdx, desktopIdx, dxgi));
-                        }
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
+                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
+                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
                         break;
 
                     case MouseDownBefehl m:
-                        if (makro.StaticDesktop)
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
-                        }
-                        else
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, adapterIdx, desktopIdx, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, adapterIdx, desktopIdx, dxgi));
-                        }
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
+                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
+                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
                         PressMouse(m.Button, down: true);
                         break;
 
                     case MouseUpBefehl m:
-                        if (makro.StaticDesktop)
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
-                        }
-                        else
-                        {
-                            _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                                ScreenHelper.BerechneAbsoluteX(m.X, adapterIdx, desktopIdx, dxgi),
-                                ScreenHelper.BerechneAbsoluteY(m.Y, adapterIdx, desktopIdx, dxgi));
-                        }
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
+                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
+                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
                         PressMouse(m.Button, down: false);
                         break;
 

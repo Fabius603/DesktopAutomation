@@ -5,13 +5,12 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace TaskAutomation.Makro
+namespace TaskAutomation.Makros
 {
-    public class MakroList
+    public class Makro
     {
-
-        [JsonPropertyName("static_desktop")]
-        public bool StaticDesktop { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
 
         [JsonPropertyName("desktop_index")]
         public int DesktopIndex { get; set; }
