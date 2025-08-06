@@ -16,11 +16,15 @@ using ImageHelperMethods;
 using TaskAutomation.Makros;
 using System.Linq;
 using TaskAutomation.Steps;
+using Microsoft.Extensions.Logging;
+using Common.Logging;
 
 namespace TaskAutomation.Jobs
 {
     public class JobExecutor : IDisposable
     {
+        private readonly ILogger<JobExecutor> _logger;
+
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
         private Bitmap _currentImage;
@@ -163,21 +167,23 @@ namespace TaskAutomation.Jobs
 
         public JobExecutor()
         {
+            _logger = Log.Create<JobExecutor>();
             SetAllJobs();
             SetAllMakros();
+            _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Verfügbare Makros: {MakroCount}", _allJobs.Count, _allMakros.Count);
         }
 
         private void SetAllJobs()
         {
             if (!Directory.Exists(JobFolderPath))
             {
-                Console.WriteLine($"Das {JobFolderPath} Verzeichnis existiert nicht.");
+                _logger.LogWarning("Das Job-Verzeichnis '{JobFolderPath}' existiert nicht.", JobFolderPath);
             }
 
             string[] files = Directory.GetFiles(JobFolderPath);
             if (files.Length == 0)
             {
-                Console.WriteLine("Keine Dateien im Verzeichnis gefunden.");
+                _logger.LogWarning("Keine Job-Dateien im Verzeichnis '{JobFolderPath}' gefunden.", JobFolderPath);
             }
 
             _allJobs = new Dictionary<string, Job>();
@@ -189,13 +195,13 @@ namespace TaskAutomation.Jobs
                     Job job = JobReader.ReadSteps(file);
                     if (_allJobs.ContainsKey(job.Name))
                     {
-                        Console.WriteLine($"Warnung: Ein Job mit dem Namen '{job.Name}' existiert bereits. Der Job wird überschrieben.");
+                        _logger.LogWarning("Ein Job mit dem Namen '{JobName}' existiert bereits. Der Job wird überschrieben.", job.Name);
                     }
                     _allJobs[job.Name] = job;
                 }
                 catch
                 {
-                    Console.WriteLine($"Fehler beim Laden der Job-Datei: {file}. Bitte überprüfen Sie die Datei auf Korrektheit.");
+                    _logger.LogError("Fehler beim Laden der Job-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
                 }
             }
         }
@@ -204,13 +210,13 @@ namespace TaskAutomation.Jobs
         {
             if (!Directory.Exists(MakroFolderPath))
             {
-                Console.WriteLine($"Das {MakroFolderPath} Verzeichnis existiert nicht.");
+                _logger.LogWarning("Das Makro-Verzeichnis '{MakroFolderPath}' existiert nicht.", MakroFolderPath);
             }
 
             string[] files = Directory.GetFiles(MakroFolderPath);
             if (files.Length == 0)
             {
-                Console.WriteLine("Keine Dateien im Verzeichnis gefunden.");
+                _logger.LogInformation("Keine Makro-Dateien im Verzeichnis '{MakroFolderPath}' gefunden.", MakroFolderPath);
             }
 
             foreach (string file in files)
@@ -222,7 +228,7 @@ namespace TaskAutomation.Jobs
                 }
                 catch
                 {
-                    Console.WriteLine($"Fehler beim Laden der Makro-Datei: {file}. Bitte überprüfen Sie die Datei auf Korrektheit.");
+                    _logger.LogError("Fehler beim Laden der Makro-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
                 }
             }
         }
@@ -231,11 +237,11 @@ namespace TaskAutomation.Jobs
         {
             if (job == null)
             {
-                Console.WriteLine("Error: Job ist null.");
+                _logger.LogError("Job ist null. Bitte stellen Sie sicher, dass ein gültiger Job übergeben wird.");
                 return;
             }
 
-            Console.WriteLine($"--- Job '{job.Name}' wird gestartet ---");
+            _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             if (videoStep != null)
@@ -244,7 +250,7 @@ namespace TaskAutomation.Jobs
                 _videoRecorder.OutputDirectory = videoStep.SavePath;
                 _videoRecorder.FileName = videoStep.FileName;
                 await _videoRecorder.StartAsync();
-                Console.WriteLine($"    VideoRecorder wurde gestartet");
+                _logger.LogInformation("VideoRecorder gestartet mit Pfad: {OutputDirectory}, Dateiname: {FileName}", _videoRecorder.OutputDirectory, _videoRecorder.FileName);
             }
 
             if (job.Steps.OfType<MakroExecutionStep>().Any())
@@ -267,28 +273,22 @@ namespace TaskAutomation.Jobs
 
                 foreach (var step_object in job.Steps)
                 {
-                    Console.WriteLine($"--> Step: {step_object.GetType().Name}");
                     try
                     {
                         if (!ExecuteStep(step_object, job)) // ExecuteStep gibt false zurück, falls der Job abgebrochen werden soll
                         {
                             continueJob = false;
-                            Console.WriteLine($"Job '{job.Name}' wurde durch einen Step vorzeitig beendet.");
+                            _logger.LogWarning("Job '{JobName}' wurde durch Step '{StepType}' vorzeitig beendet.", job.Name, step_object.GetType().Name);
                             break; // Inneren Loop (Steps) verlassen
                         }
                     }
                     catch (NotImplementedException nie)
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"    WARNUNG: Schritt '{step_object.GetType().Name}' ist nicht vollständig implementiert: {nie.Message}");
-                        Console.ResetColor();
+                        _logger.LogWarning("Schritt '{StepType}' ist nicht vollständig implementiert: {Message}", step_object.GetType().Name, nie.Message);
                     }
                     catch (Exception ex)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"    FEHLER beim Ausführen von Step '{step_object.GetType().Name}': {ex.Message}");
-                        Console.WriteLine($"    StackTrace: {ex.StackTrace}");
-                        Console.ResetColor();
+                        _logger.LogError(ex, "FEHLER beim Ausführen von Step '{StepType}': {Message}", step_object.GetType().Name, ex.Message);
                         continueJob = false; 
                         break;
                     }
@@ -309,7 +309,7 @@ namespace TaskAutomation.Jobs
             if (job.Steps.OfType<VideoCreationStep>().Any())
             {
                 _videoRecorder.StopAndSave();
-                Console.WriteLine($"    Video wird unter {_videoRecorder.OutputDirectory} gespeichert");
+                _logger.LogInformation("VideoRecorder gestoppt und gespeichert. Video-Datei: {OutputDirectory}", _videoRecorder.OutputDirectory);
             }
 
             // Finale Aufräumarbeiten für den Job
@@ -320,7 +320,7 @@ namespace TaskAutomation.Jobs
             _videoRecorder = null;
 
             Cv2.DestroyAllWindows();
-            Console.WriteLine($"--- Job '{job.Name}' beendet ---");
+            _logger.LogInformation("Job '{JobName}' abgeschlossen.", job.Name);
         }
 
         /// <summary>
@@ -339,9 +339,7 @@ namespace TaskAutomation.Jobs
                 return handler.Execute(step, jobContext, this);
             }
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"    WARNUNG: Unbekannter Step-Typ: {step.GetType().Name}");
-            Console.ResetColor();
+            _logger.LogWarning("Unbekannter Step-Typ: {StepType}. Bitte implementieren Sie einen Handler für diesen Typ.", step.GetType().Name);
             return true;
         }
 
@@ -350,11 +348,10 @@ namespace TaskAutomation.Jobs
             if (Directory.Exists(filePath))
             {
                 _makroFolderPath = filePath;
-                Console.WriteLine($"    Makro-Ordnerpfad gesetzt: {_makroFolderPath}");
             }
             else
             {
-                Console.WriteLine($"    FEHLER: Makro-Dateipfad '{filePath}' existiert nicht.");
+                _logger.LogError("Makro-Dateipfad '{FilePath}' existiert nicht.", filePath);
             }
         }
 

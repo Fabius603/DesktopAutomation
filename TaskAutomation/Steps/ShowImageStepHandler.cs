@@ -17,13 +17,11 @@ namespace TaskAutomation.Steps
             var siStep = step as ShowImageStep;
             if (siStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein ShowImageStep.");
                 return false;
             }
 
             if (executor.CurrentImage == null)
             {
-                Console.WriteLine("    FEHLER: Kein Bild zum Anzeigen vorhanden (CurrentImage ist leer). Step wird übersprungen.");
                 return true;
             }
 
@@ -43,13 +41,11 @@ namespace TaskAutomation.Steps
             if (siStep.ShowRawImage)
             {
                 string windowName = $"{siStep.WindowName} - Raw Image";
-                Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
                 ShowBitmapImage(executor.CurrentImage, windowName);
             }
             if (siStep.ShowProcessedImage)
             {
                 string windowName = $"{siStep.WindowName} - Processed Image";
-                Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
                 if (executor.CurrentImageWithResult != null &&
                     !executor.CurrentImageWithResult.IsDisposed &&
                     executor.CurrentImageWithResult.Height >= 10 &&

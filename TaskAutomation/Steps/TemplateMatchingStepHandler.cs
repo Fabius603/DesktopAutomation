@@ -17,7 +17,6 @@ namespace TaskAutomation.Steps
             var tmStep = step as TemplateMatchingStep;
             if (tmStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein TemplateMatchingStep.");
                 return false;
             }
 
@@ -26,12 +25,10 @@ namespace TaskAutomation.Steps
             if (executor.TemplateMatcher == null)
             {
                 executor.TemplateMatcher = new TemplateMatching(tmStep.TemplateMatchMode);
-                Console.WriteLine($"    Template Matching gestartet mit Modus: {tmStep.TemplateMatchMode}");
             }
 
             if (executor.CurrentImage == null)
             {
-                Console.WriteLine("    FEHLER: Kein Bild für Template Matching vorhanden (CurrentImage ist leer). Step wird übersprungen.");
                 return true;
             }
 
@@ -52,7 +49,6 @@ namespace TaskAutomation.Steps
             executor.ImageToProcess = executor.CurrentImage.ToMat();
             executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
 
-            Console.WriteLine($"    Ergebnis: Erfolg={executor.TemplateMatchingResult.Success}, Konfidenz={executor.TemplateMatchingResult.Confidence:F2}%");
 
             if (executor.TemplateMatchingResult.Success && tmStep.DrawResults)
             {
@@ -60,7 +56,6 @@ namespace TaskAutomation.Steps
                     executor.ImageToProcess,
                     executor.TemplateMatchingResult,
                     executor.TemplateMatchingResult.TemplateSize);
-                Console.WriteLine("    Ergebnis wurde auf das Bild gemalt");
             }
 
             return true;

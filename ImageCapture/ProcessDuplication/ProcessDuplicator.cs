@@ -149,7 +149,6 @@ namespace ImageCapture.ProcessDuplication
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error cropping image: {ex.Message}");
                     return CreateResult(false);
                 }
 

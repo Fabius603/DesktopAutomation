@@ -16,7 +16,6 @@ namespace TaskAutomation.Steps
             var ddStep = step as DesktopDuplicationStep;
             if (ddStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein DesktopDuplicationStep.");
                 return false;
             }
 
@@ -26,7 +25,6 @@ namespace TaskAutomation.Steps
             if (executor.DesktopDuplicator == null)
             {
                 executor.DesktopDuplicator = new DesktopDuplicator(ddStep.GraphicsCardAdapter, ddStep.OutputDevice);
-                Console.WriteLine($"    Desktop-Aufnahme gestartet für: Adapter {ddStep.GraphicsCardAdapter}, Output {ddStep.OutputDevice}");
             }
             try
             {
@@ -37,7 +35,6 @@ namespace TaskAutomation.Steps
             }
             catch
             {
-                Console.WriteLine("    FEHLER: Desktop konnte nicht erfasst werden.");
                 return true;
             }
 

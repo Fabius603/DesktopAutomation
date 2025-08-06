@@ -12,6 +12,8 @@ using System.Drawing;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection;
 using TaskAutomation.Jobs;
+using Microsoft.Extensions.Logging;
+using Common.Logging;
 
 class Program
 {
@@ -45,7 +47,6 @@ class Program
             Console.WriteLine("Wähle eine Job-Datei\n");
 
             JobExecutor jobExecutor = new JobExecutor();
-
             Job job = WaehleDateiAusVerzeichnis(jobExecutor);
 
             jobExecutor.SetMakroFilePath(_makroFolderPath);

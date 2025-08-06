@@ -30,11 +30,13 @@
 
   <ItemGroup>
     <PackageReference Include="InputSimulator" Version="1.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
     <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
     <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />

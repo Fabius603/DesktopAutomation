@@ -16,13 +16,11 @@ namespace TaskAutomation.Steps
             var vcStep = step as VideoCreationStep;
             if (vcStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein VideoCreationStep.");
                 return false;
             }
 
             if (executor.VideoRecorder == null)
             {
-                Console.WriteLine("    FEHLER: VideoRecorder ist null");
                 return false;
             }
             if (!string.IsNullOrEmpty(vcStep.SavePath))
@@ -37,7 +35,6 @@ namespace TaskAutomation.Steps
             if (vcStep.ShowRawImage)
             {
                 executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
-                Console.WriteLine("    Bild wird in Video eingefügt!");
             }
             else if (vcStep.ShowProcessedImage)
             {
@@ -49,7 +46,6 @@ namespace TaskAutomation.Steps
                 {
                     executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
                 }
-                Console.WriteLine("    Bild wird in Video eingefügt!");
             }
 
             return true;

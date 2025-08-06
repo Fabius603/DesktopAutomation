@@ -14,18 +14,15 @@ namespace TaskAutomation.Steps
             var miStep = step as MakroExecutionStep;
             if (miStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein MakroExecutionStep.");
                 return false;
             }
 
             if (executor.CurrentAdapter == null)
             {
-                Console.WriteLine("    FEHLER: Kein aktueller Adapter gesetzt (CurrentAdapter ist null). Step wird übersprungen.");
                 return true;
             }
             if (executor.CurrentDesktop == null)
             {
-                Console.WriteLine("    FEHLER: Kein aktueller Desktop gesetzt (CurrentDesktop ist null). Step wird übersprungen.");
                 return true;
             }
 
@@ -35,7 +32,6 @@ namespace TaskAutomation.Steps
                 executor.CurrentDesktop,
                 executor.DxgiResources);
 
-            Console.WriteLine($"    Makro '{miStep.MakroName}' wurde ausgeführt auf Adapter {executor.CurrentAdapter} und Desktop {executor.CurrentDesktop}.");
             return true;
         }
     }

@@ -4,15 +4,19 @@ using System.Threading;
 using WindowsInput;
 using WindowsInput.Native;
 using ImageHelperMethods;
+using Common.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Makros
 {
     public class MakroExecutor
     {
         private readonly InputSimulator _sim;
+        private readonly ILogger<MakroExecutor> _logger;
 
         public MakroExecutor()
         {
+            _logger = Log.Create<MakroExecutor>();
             _sim = new InputSimulator();
         }
 
@@ -57,7 +61,7 @@ namespace TaskAutomation.Makros
                         break;
 
                     default:
-                        Console.WriteLine($"Unbekannter Befehlstyp: {befehl.Typ}");
+                        _logger.LogError("Unbekannter Befehlstyp: {Typ}", befehl.GetType().Name);
                         break;
                 }
             }
@@ -80,7 +84,7 @@ namespace TaskAutomation.Makros
                     else _sim.Mouse.XButtonUp(2);
                     break;
                 default:
-                    Console.WriteLine($"Unbekannte Maustaste: {button}");
+                    _logger.LogError("Unbekannter Maustaste: {Button}", button);
                     break;
             }
         }
@@ -99,7 +103,7 @@ namespace TaskAutomation.Makros
             }
 
             if (!Enum.TryParse(typeof(VirtualKeyCode), key, ignoreCase: true, out var result))
-                throw new ArgumentException($"'{key}' ist kein gültiger VirtualKeyCode.");
+                _logger.LogError("Unbekannter Key: {Key}", key);
 
             code = (VirtualKeyCode)result;
             return true;

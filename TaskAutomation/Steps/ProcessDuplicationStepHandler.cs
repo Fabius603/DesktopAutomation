@@ -16,7 +16,6 @@ namespace TaskAutomation.Steps
             var pdStep = step as ProcessDuplicationStep;
             if (pdStep == null)
             {
-                Console.WriteLine("FEHLER: Step ist kein ProcessDuplicationStep.");
                 return false;
             }
 
@@ -26,16 +25,13 @@ namespace TaskAutomation.Steps
             if (executor.ProcessDuplicator == null)
             {
                 executor.ProcessDuplicator = new ProcessDuplicator(pdStep.ProcessName);
-                Console.WriteLine($"    Prozessfenster-Aufnahme gestartet für: '{pdStep.ProcessName}'");
             }
 
             executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();
             if (!executor.ProcessDuplicationResult.ProcessFound)
             {
-                Console.WriteLine($"    FEHLER: Prozess {pdStep.ProcessName} konnte nicht gefunden werden.");
                 return true; // Oder false, wenn der Job abbrechen soll
             }
-            Console.WriteLine($"    Prozessfenster aufgenommen!");
 
             executor.CurrentDesktop = executor.ProcessDuplicationResult.DesktopIdx;
             executor.CurrentAdapter = executor.ProcessDuplicationResult.AdapterIdx;
