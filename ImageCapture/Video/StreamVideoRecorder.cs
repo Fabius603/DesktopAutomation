@@ -22,8 +22,8 @@ public class StreamVideoRecorder : IDisposable
     private readonly int width, height, fps;
     private readonly Task ffmpegInitTask;
 
-    private readonly List<TimedFrame> buffer = new();
-    private readonly object bufLock = new();
+    private TimedFrame? _latestFrame = null;
+    private readonly object _frameLock = new();
 
     private string _outputDirectory, _fileName, ffmpegPath;
     private Process ffmpegProcess;
@@ -99,31 +99,45 @@ public class StreamVideoRecorder : IDisposable
     /// </summary>
     public void AddFrame(Bitmap bmp)
     {
-        Task.Run(() =>
+        if (bmp == null || bmp.Width == 0 || bmp.Height == 0)
+            return;
+
+        try
         {
-            // Konvertieren & resizen ohne Lock
             using var mat = BitmapConverter.ToMat(bmp);
+            if (mat.Empty() || mat.Data == IntPtr.Zero)
+                return;
+
             Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height));
-            byte[] rawFrame = new byte[mat.Total() * mat.ElemSize()];
-            Marshal.Copy(mat.Data, rawFrame, 0, rawFrame.Length);
+
+            int length = (int)(mat.Total() * mat.ElemSize());
+            if (length <= 0)
+                return;
+
+            byte[] raw = new byte[length];
+            Marshal.Copy(mat.Data, raw, 0, length);
 
             var frame = new TimedFrame
             {
                 TimestampMs = stopwatch.ElapsedMilliseconds,
-                RawFrame = rawFrame
+                RawFrame = raw
             };
 
-            lock (bufLock)
+            lock (_frameLock)
             {
-                buffer.Add(frame);
+                _latestFrame = frame;
             }
-        });
+        }
+        catch
+        {
+            // bei Fehlern einfach überspringen
+        }
     }
 
     private async Task WriterLoopAsync(CancellationToken token)
     {
         long frameDuration = 1000L / fps;
-        long nextTargetTime = 0;
+        long nextTargetTime = stopwatch.ElapsedMilliseconds;
         byte[] lastFrame = null;
 
         try
@@ -131,35 +145,23 @@ public class StreamVideoRecorder : IDisposable
             while (!token.IsCancellationRequested)
             {
                 long now = stopwatch.ElapsedMilliseconds;
-                if (now < nextTargetTime)
+                long wait = nextTargetTime - now;
+                if (wait > 2)
+                    await Task.Delay((int)(wait - 2), token);
+                while (stopwatch.ElapsedMilliseconds < nextTargetTime) {}
+
+                TimedFrame? slotFrame;
+                lock (_frameLock)
                 {
-                    int delay = (int)(nextTargetTime - now);
-                    if (delay > 1)
-                        await Task.Delay(delay - 1, token);
-                    while (stopwatch.ElapsedMilliseconds < nextTargetTime) { /* busy wait */ }
+                    slotFrame = _latestFrame;
+                    _latestFrame = null;      
                 }
 
-                TimedFrame? selected = null;
-                lock (bufLock)
+                var toWrite = slotFrame?.RawFrame ?? lastFrame;
+                if (toWrite != null)
                 {
-                    int index = buffer.FindIndex(f => f.TimestampMs >= nextTargetTime);
-                    if (index >= 0)
-                    {
-                        selected = buffer[index];
-                        buffer.RemoveRange(0, index + 1);
-                    }
-                    else if (buffer.Count > 0)
-                    {
-                        selected = buffer[^1]; // letzter Frame
-                        buffer.Clear();
-                    }
-                }
-
-                var currentFrame = selected?.RawFrame ?? lastFrame;
-                if (currentFrame != null)
-                {
-                    ffmpegInput.Write(currentFrame, 0, currentFrame.Length);
-                    lastFrame = currentFrame;
+                    ffmpegInput.Write(toWrite, 0, toWrite.Length);
+                    lastFrame = toWrite;
                 }
 
                 nextTargetTime += frameDuration;
@@ -167,7 +169,7 @@ public class StreamVideoRecorder : IDisposable
         }
         catch (OperationCanceledException)
         {
-            // normaler Abbruch
+            // normaler Stopp
         }
         finally
         {

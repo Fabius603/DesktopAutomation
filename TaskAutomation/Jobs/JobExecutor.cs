@@ -237,14 +237,17 @@ namespace TaskAutomation.Jobs
 
             Console.WriteLine($"--- Job '{job.Name}' wird gestartet ---");
 
-            if(job.Steps.OfType<VideoCreationStep>().Any())
+            var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
+            if (videoStep != null)
             {
                 _videoRecorder = new StreamVideoRecorder(1920, 1080, 60);
+                _videoRecorder.OutputDirectory = videoStep.SavePath;
+                _videoRecorder.FileName = videoStep.FileName;
                 await _videoRecorder.StartAsync();
-                Console.WriteLine("    VideoRecorder wurde gestartet.");
+                Console.WriteLine($"    VideoRecorder wurde gestartet");
             }
 
-            if(job.Steps.OfType<MakroExecutionStep>().Any())
+            if (job.Steps.OfType<MakroExecutionStep>().Any())
             {
                 _makroExecutor = new MakroExecutor();
 
