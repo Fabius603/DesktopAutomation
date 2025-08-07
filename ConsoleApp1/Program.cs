@@ -14,6 +14,8 @@ using ImageDetection;
 using TaskAutomation.Jobs;
 using Microsoft.Extensions.Logging;
 using Common.Logging;
+using TaskAutomation.Hotkeys;
+using TaskAutomation.Orchestration;
 
 class Program
 {
@@ -40,18 +42,20 @@ class Program
 
     static async Task Main(string[] args)
     {
-        string jobFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\JobFiles";
-        string _makroFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
-        while(true)
-        {
-            Console.WriteLine("Wähle eine Job-Datei\n");
+        string jobFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\Configs\\Job";
+        string makroFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\Configs\\Makro";
+        string hotkeyFolderPath = "C:\\Users\\schlieper\\source\\repos\\ImageCapture\\TaskAutomation\\Configs\\Hotkey";
 
-            JobExecutor jobExecutor = new JobExecutor();
-            Job job = WaehleDateiAusVerzeichnis(jobExecutor);
+        Console.WriteLine("Starte TaskAutomation...");
 
-            jobExecutor.SetMakroFilePath(_makroFolderPath);
-            jobExecutor.ExecuteJob(job);     
-        }
+        JobExecutor jobExecutor = new JobExecutor();
+        GlobalHotkeyService globalHotkeyService = GlobalHotkeyService.Instance;
+        JobDispatcher jobDispatcher = new JobDispatcher(globalHotkeyService, jobExecutor);
+
+        Console.WriteLine("Deine Hotkeys sind jetzt aktiv");
+
+        Console.WriteLine("Hotkeys aktiv. Drücke eine beliebige Taste, um das Programm zu beenden.");
+        Console.ReadKey();
     }
 
     public static Job WaehleDateiAusVerzeichnis(JobExecutor executor)

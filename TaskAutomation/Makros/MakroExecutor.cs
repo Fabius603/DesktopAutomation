@@ -20,10 +20,12 @@ namespace TaskAutomation.Makros
             _sim = new InputSimulator();
         }
 
-        public void ExecuteMakro(Makro makro, int adapterIdx, int desktopIdx, DxgiResources dxgi)
+        public async Task ExecuteMakro(Makro makro, DxgiResources dxgi, CancellationToken ct)
         {
             foreach (var befehl in makro.Befehle)
             {
+                ct.ThrowIfCancellationRequested();
+
                 switch (befehl)
                 {
                     case MouseMoveBefehl m:
@@ -57,7 +59,7 @@ namespace TaskAutomation.Makros
                         break;
 
                     case TimeoutBefehl t:
-                        Thread.Sleep(t.Duration);
+                        await Task.Delay(t.Duration, ct).ConfigureAwait(false);
                         break;
 
                     default:

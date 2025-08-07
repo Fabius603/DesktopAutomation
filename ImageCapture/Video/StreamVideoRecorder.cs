@@ -71,9 +71,13 @@ public class StreamVideoRecorder : IDisposable
         this.FileName = "output.mp4";
     }
 
-    public async Task StartAsync()
+    /// <summary>
+    /// Startet die Aufnahme und WriterLoop im Hintergrund.
+    /// </summary>
+    public async Task StartAsync(CancellationToken token)
     {
-        await ffmpegInitTask;
+        // Warte auf ffmpeg-Pfad
+        await ffmpegInitTask.ConfigureAwait(false);
 
         string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(OutputDirectory, FileName));
 
@@ -88,10 +92,10 @@ public class StreamVideoRecorder : IDisposable
         ffmpegProcess = Process.Start(psi);
         ffmpegInput = ffmpegProcess.StandardInput.BaseStream;
 
-        // Start timebase
+        // Starte Timebase + CTS + WriterLoop
         stopwatch = Stopwatch.StartNew();
-        cts = new CancellationTokenSource();
-        writerTask = Task.Run(() => WriterLoopAsync(cts.Token));
+        cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        writerTask = Task.Run(() => WriterLoopAsync(cts.Token), CancellationToken.None);
     }
 
     /// <summary>

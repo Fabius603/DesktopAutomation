@@ -11,7 +11,7 @@ namespace TaskAutomation.Steps
 {
     public class ProcessDuplicationStepHandler : IJobStepHandler
     {
-        public bool Execute(object step, Job jobContext, JobExecutor executor)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
         {
             var pdStep = step as ProcessDuplicationStep;
             if (pdStep == null)

@@ -9,30 +9,21 @@ namespace TaskAutomation.Steps
 {
     public class MakroExecutionStepHandler : IJobStepHandler
     {
-        public bool Execute(object step, Job jobContext, JobExecutor executor)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
         {
             var miStep = step as MakroExecutionStep;
             if (miStep == null)
             {
                 return false;
-            }
+            } 
 
-            if (executor.CurrentAdapter == null)
-            {
-                return true;
-            }
-            if (executor.CurrentDesktop == null)
-            {
-                return true;
-            }
-
-            executor.MakroExecutor.ExecuteMakro(
+            await executor.MakroExecutor.ExecuteMakro(
                 executor.AllMakros[miStep.MakroName],
-                executor.CurrentAdapter,
-                executor.CurrentDesktop,
-                executor.DxgiResources);
+                executor.DxgiResources,
+                ct);
 
             return true;
         }
     }
 }
+      

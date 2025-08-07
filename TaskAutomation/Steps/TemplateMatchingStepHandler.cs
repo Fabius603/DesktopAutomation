@@ -12,7 +12,7 @@ namespace TaskAutomation.Steps
 {
     public class TemplateMatchingStepHandler : IJobStepHandler
     {
-        public bool Execute(object step, Job jobContext, JobExecutor executor)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
         {
             var tmStep = step as TemplateMatchingStep;
             if (tmStep == null)

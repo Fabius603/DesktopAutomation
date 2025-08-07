@@ -21,7 +21,7 @@ using Common.Logging;
 
 namespace TaskAutomation.Jobs
 {
-    public class JobExecutor : IDisposable
+    public class JobExecutor : IJobExecutor, IDisposable
     {
         private readonly ILogger<JobExecutor> _logger;
 
@@ -42,8 +42,8 @@ namespace TaskAutomation.Jobs
         private Dictionary<string, Makro> _makros;
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
         private MakroExecutor _makroExecutor;
-        private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "MakroFiles");
-        private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "JobFiles");
+        private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Makro");
+        private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Job");
         private Dictionary<string, Job> _allJobs = new Dictionary<string, Job>();
         private Dictionary<string, Makro> _allMakros = new Dictionary<string, Makro>();
 
@@ -170,6 +170,7 @@ namespace TaskAutomation.Jobs
             _logger = Log.Create<JobExecutor>();
             SetAllJobs();
             SetAllMakros();
+            CreateMacroExecutor();
             _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Verfügbare Makros: {MakroCount}", _allJobs.Count, _allMakros.Count);
         }
 
@@ -177,10 +178,11 @@ namespace TaskAutomation.Jobs
         {
             if (!Directory.Exists(JobFolderPath))
             {
-                _logger.LogWarning("Das Job-Verzeichnis '{JobFolderPath}' existiert nicht.", JobFolderPath);
+                _logger.LogError("Das Job-Verzeichnis '{JobFolderPath}' existiert nicht.", JobFolderPath);
+                return;
             }
 
-            string[] files = Directory.GetFiles(JobFolderPath);
+            string[] files = Directory.GetFiles(JobFolderPath, "*.json");
             if (files.Length == 0)
             {
                 _logger.LogWarning("Keine Job-Dateien im Verzeichnis '{JobFolderPath}' gefunden.", JobFolderPath);
@@ -213,10 +215,10 @@ namespace TaskAutomation.Jobs
                 _logger.LogWarning("Das Makro-Verzeichnis '{MakroFolderPath}' existiert nicht.", MakroFolderPath);
             }
 
-            string[] files = Directory.GetFiles(MakroFolderPath);
+            string[] files = Directory.GetFiles(MakroFolderPath, "*.json");
             if (files.Length == 0)
             {
-                _logger.LogInformation("Keine Makro-Dateien im Verzeichnis '{MakroFolderPath}' gefunden.", MakroFolderPath);
+                _logger.LogWarning("Keine Makro-Dateien im Verzeichnis '{MakroFolderPath}' gefunden.", MakroFolderPath);
             }
 
             foreach (string file in files)
@@ -233,93 +235,108 @@ namespace TaskAutomation.Jobs
             }
         }
 
-        public async void ExecuteJob(Job job)
+        public void CreateMacroExecutor()
+        {
+            _makroExecutor = new MakroExecutor();
+        }
+
+        public Task ExecuteJob(string actionName, CancellationToken ct)
+                => ExecuteJobAsync(actionName, ct);
+
+        private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(jobName) || !_allJobs.ContainsKey(jobName))
+            {
+                _logger.LogError("Job '{JobName}' existiert nicht.", jobName);
+                return;
+            }
+
+            await ExecuteJobAsync(_allJobs[jobName], ct).ConfigureAwait(false);
+        }
+
+        private async Task ExecuteJobAsync(Job job, CancellationToken ct)
         {
             if (job == null)
             {
-                _logger.LogError("Job ist null. Bitte stellen Sie sicher, dass ein gültiger Job übergeben wird.");
+                _logger.LogError("Job ist null.");
                 return;
             }
 
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
+            ct.ThrowIfCancellationRequested();
 
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             if (videoStep != null)
             {
-                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60);
-                _videoRecorder.OutputDirectory = videoStep.SavePath;
-                _videoRecorder.FileName = videoStep.FileName;
-                await _videoRecorder.StartAsync();
-                _logger.LogInformation("VideoRecorder gestartet mit Pfad: {OutputDirectory}, Dateiname: {FileName}", _videoRecorder.OutputDirectory, _videoRecorder.FileName);
-            }
-
-            if (job.Steps.OfType<MakroExecutionStep>().Any())
-            {
-                _makroExecutor = new MakroExecutor();
-
-                _makros = new Dictionary<string, Makro>();
-                foreach (var step in job.Steps.OfType<MakroExecutionStep>())
+                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
                 {
-                    string makroFilePath = Path.Combine(_makroFolderPath, step.MakroName + ".json");
-                    _makros[step.MakroName] = MakroReader.LadeMakroDatei(makroFilePath);
-                }
+                    OutputDirectory = videoStep.SavePath,
+                    FileName = videoStep.FileName
+                };
+                await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
+                _logger.LogInformation("VideoRecorder gestartet …");
             }
+
+            // Makros initialisieren …
 
             bool continueJob = true;
             do
             {
-                _processDuplicationResult?.Dispose(); // Aufräumen vom vorherigen Durchlauf (falls repeating)
+                _processDuplicationResult?.Dispose();
                 _processDuplicationResult = null;
 
-                foreach (var step_object in job.Steps)
+                foreach (var step in job.Steps)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     try
                     {
-                        if (!ExecuteStep(step_object, job)) // ExecuteStep gibt false zurück, falls der Job abgebrochen werden soll
+                        // Wenn ExecuteStep asynchron wäre:
+                        // continueJob = await ExecuteStepAsync(step, job, ct);
+                        // Sonst synchron aufrufen:
+                        if (!await ExecuteStepAsync(step, job, ct).ConfigureAwait(false))
                         {
                             continueJob = false;
-                            _logger.LogWarning("Job '{JobName}' wurde durch Step '{StepType}' vorzeitig beendet.", job.Name, step_object.GetType().Name);
-                            break; // Inneren Loop (Steps) verlassen
+                            _logger.LogWarning("Job '{JobName}' vorzeitig beendet durch Step '{StepType}'.",
+                                job.Name, step.GetType().Name);
+                            break;
                         }
                     }
-                    catch (NotImplementedException nie)
+                    catch (OperationCanceledException)
                     {
-                        _logger.LogWarning("Schritt '{StepType}' ist nicht vollständig implementiert: {Message}", step_object.GetType().Name, nie.Message);
+                        _logger.LogInformation("Schritt '{StepType}' abgebrochen.", step.GetType().Name);
+                        throw;
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "FEHLER beim Ausführen von Step '{StepType}': {Message}", step_object.GetType().Name, ex.Message);
-                        continueJob = false; 
+                        _logger.LogError(ex, "Fehler in Schritt '{StepType}': {Message}",
+                            step.GetType().Name, ex.Message);
+                        continueJob = false;
                         break;
                     }
                 }
 
-                if (!continueJob) break; // Äußeren Loop (repeating) verlassen
+                if (!continueJob) break;
 
-                if (job.Repeating)
+                if (job.Repeating && Console.KeyAvailable)
                 {
-                    if(Console.KeyAvailable)
-                    {
-                        job.Repeating = false; // Stoppt die Wiederholung
-                    }
+                    job.Repeating = false;
+                    _logger.LogInformation("Job-Wiederholung gestoppt per Tastendruck.");
                 }
+            }
+            while (job.Repeating && continueJob);
 
-            } while (job.Repeating && continueJob);
-
-            if (job.Steps.OfType<VideoCreationStep>().Any())
+            if (videoStep != null)
             {
                 _videoRecorder.StopAndSave();
-                _logger.LogInformation("VideoRecorder gestoppt und gespeichert. Video-Datei: {OutputDirectory}", _videoRecorder.OutputDirectory);
+                _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
             }
 
-            // Finale Aufräumarbeiten für den Job
+            // Aufräumen
             _processDuplicationResult?.Dispose();
-            _processDuplicationResult = null;
-
-            _videoRecorder?.Dispose(); // VideoWriter schließen, falls er geöffnet war
-            _videoRecorder = null;
-
+            _videoRecorder?.Dispose();
             Cv2.DestroyAllWindows();
+
             _logger.LogInformation("Job '{JobName}' abgeschlossen.", job.Name);
         }
 
@@ -329,14 +346,16 @@ namespace TaskAutomation.Jobs
         /// <param name="step">Das Schrittobjekt.</param>
         /// <param name="jobContext">Der aktuelle Job-Kontext (für übergreifende Infos wie Repeating).</param>
         /// <returns>True, wenn der Job fortgesetzt werden soll, false bei Abbruch.</returns>
-        private bool ExecuteStep(object step, Job jobContext)
+        private async Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             if (step == null)
                 return false;
 
             if (_stepHandlers.TryGetValue(step.GetType(), out var handler))
             {
-                return handler.Execute(step, jobContext, this);
+                return await handler.ExecuteAsync(step, jobContext, this, ct);
             }
 
             _logger.LogWarning("Unbekannter Step-Typ: {StepType}. Bitte implementieren Sie einen Handler für diesen Typ.", step.GetType().Name);

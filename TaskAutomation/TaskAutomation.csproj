@@ -7,28 +7,33 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="JobFiles\DesktopVideo.json" />
-    <None Remove="JobFiles\MakroTest.json" />
-    <None Remove="JobFiles\Task.json" />
-    <None Remove="MakroFiles\TestMakro.json" />
+    <None Remove="Configs\Hotkey\Hotkeys.json" />
+    <None Remove="Configs\Job\DesktopVideo.json" />
+    <None Remove="Configs\Job\MakroTest.json" />
+    <None Remove="Configs\Job\Task.json" />
+    <None Remove="Configs\Makro\TestMakro.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="JobFiles\DesktopVideo.json">
+    <Content Include="Configs\Hotkey\Hotkeys.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="JobFiles\MakroTest.json">
+    <Content Include="Configs\Job\DesktopVideo.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="JobFiles\Task.json">
+    <Content Include="Configs\Job\MakroTest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="MakroFiles\TestMakro.json">
+    <Content Include="Configs\Job\Task.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Configs\Makro\TestMakro.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="HotkeyListener" Version="1.9.0" />
     <PackageReference Include="InputSimulator" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
