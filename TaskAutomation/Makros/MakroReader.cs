@@ -5,11 +5,11 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace TaskAutomation.Makro
+namespace TaskAutomation.Makros
 {
     public class MakroReader
     {
-        public static MakroList LadeMakroDatei(string pfad)
+        public static Makro LadeMakroDatei(string pfad)
         {
             if (!File.Exists(pfad))
                 throw new FileNotFoundException("Datei nicht gefunden", pfad);
@@ -21,7 +21,7 @@ namespace TaskAutomation.Makro
                 Converters = { new MakroBefehlConverter() },
                 PropertyNameCaseInsensitive = true
             };
-            return JsonSerializer.Deserialize<MakroList>(json, options);
+            return JsonSerializer.Deserialize<Makro>(json, options);
         }
     }
 }

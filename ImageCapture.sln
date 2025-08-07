@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskAutomation", "TaskAutom
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageHelperMehods", "ImageHelperMehods\ImageHelperMehods.csproj", "{D70286CC-C6F4-4910-92C2-A43C67A0A891}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Logging", "Common.Logging\Common.Logging.csproj", "{AF635858-0C45-480C-BECA-06B33C38410F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{D70286CC-C6F4-4910-92C2-A43C67A0A891}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D70286CC-C6F4-4910-92C2-A43C67A0A891}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D70286CC-C6F4-4910-92C2-A43C67A0A891}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF635858-0C45-480C-BECA-06B33C38410F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF635858-0C45-480C-BECA-06B33C38410F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF635858-0C45-480C-BECA-06B33C38410F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF635858-0C45-480C-BECA-06B33C38410F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

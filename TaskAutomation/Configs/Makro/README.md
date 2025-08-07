@@ -10,7 +10,6 @@ Die Makro-Datei ist ein JSON-Objekt mit globalen Einstellungen und einem Array v
 
 ```json
 {
-  "static_desktop": true,
   "desktop_index": 0,
   "adapter_index": 0,
   "commands": [
@@ -33,9 +32,8 @@ Diese Einstellungen definieren das Verhalten des Makros in Bezug auf die Bildsch
 
 | Feld | Typ  | Beschreibung      |
 |------|------|-------------------|
-| static_desktop       | boolean    | Wenn true, werden die Werte von desktop_index und adapter_index verwendet. Das Makro wird dann auf dem spezifisch angegebenen Desktop und Adapter ausgeführt. Wenn false, werden desktop_index und adapter_index ignoriert, und die Zielinformationen müssen extern bereitgestellt werden.      |
-| desktop_index        | int        | Der Index des Desktops (beginnend bei 0), auf dem das Makro ausgeführt werden soll. Wird nur verwendet, wenn static_desktop true ist.      |
-| adapter_index        | int        | Der Index des Display-Adapters (beginnend bei 0), der für die Ausführung des Makros verwendet werden soll. Wird nur verwendet, wenn static_desktop true ist.|
+| desktop_index        | int        | Der Index des Desktops (beginnend bei 0), auf dem das Makro ausgeführt werden soll.      |
+| adapter_index        | int        | Der Index des Display-Adapters (beginnend bei 0), der für die Ausführung des Makros verwendet werden soll. |
 | commands             | array      | Ein Array von Befehlsobjekten (siehe unten).|
 
 ---

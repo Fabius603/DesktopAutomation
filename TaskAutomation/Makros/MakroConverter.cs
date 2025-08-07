@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace TaskAutomation.Makro
+namespace TaskAutomation.Makros
 {
     public class MakroBefehlListConverter : JsonConverter<List<MakroBefehl>>
     {

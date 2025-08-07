@@ -1,0 +1,20 @@
+[
+  {
+    "Name": "TestHotkeyStart",
+    "Modifiers": 0,
+    "VirtualKeyCode": 160,
+    "Action": {
+      "Name": "MakroTest",
+      "Command": "Start"
+    }
+  },
+  {
+    "Name": "TestHotkeyToggle",
+    "Modifiers": 0,
+    "VirtualKeyCode": 32,
+    "Action": {
+      "Name": "MakroTest",
+      "Command": "Toggle"
+    }
+  }
+]

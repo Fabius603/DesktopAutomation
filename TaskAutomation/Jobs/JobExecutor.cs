@@ -13,13 +13,18 @@ using SharpDX;
 using System.Text;
 using Point = OpenCvSharp.Point;
 using ImageHelperMethods;
-using TaskAutomation.Makro;
+using TaskAutomation.Makros;
 using System.Linq;
+using TaskAutomation.Steps;
+using Microsoft.Extensions.Logging;
+using Common.Logging;
 
 namespace TaskAutomation.Jobs
 {
-    public class JobExecutor : IDisposable
+    public class JobExecutor : IJobExecutor, IDisposable
     {
+        private readonly ILogger<JobExecutor> _logger;
+
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
         private Bitmap _currentImage;
@@ -34,101 +39,305 @@ namespace TaskAutomation.Jobs
         private Point _currentOffset = new Point(0, 0);
         private int _currentDesktop = 0;
         private int _currentAdapter = 0;
-        private Dictionary<string, MakroList> _makros;
-        private DxgiResources dxgiResources { get; } = DxgiResources.Instance;
-        private MakroExecutor makroExecutor;
-        private string makroFolderPath = "C:\\Users\\fjsch\\source\\repos\\ImageCapture\\TaskAutomation\\MakroFiles";
-        public async void ExecuteJob(Job job)
+        private Dictionary<string, Makro> _makros;
+        private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
+        private MakroExecutor _makroExecutor;
+        private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Makro");
+        private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Job");
+        private Dictionary<string, Job> _allJobs = new Dictionary<string, Job>();
+        private Dictionary<string, Makro> _allMakros = new Dictionary<string, Makro>();
+
+
+        private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
         {
-            if (job == null)
+            { typeof(ProcessDuplicationStep), new ProcessDuplicationStepHandler() },
+            { typeof(DesktopDuplicationStep), new DesktopDuplicationStepHandler() },
+            { typeof(TemplateMatchingStep), new TemplateMatchingStepHandler() },
+            { typeof(ShowImageStep), new ShowImageStepHandler() },
+            { typeof(VideoCreationStep), new VideoCreationStepHandler() },
+            { typeof(MakroExecutionStep), new MakroExecutionStepHandler() }
+        };
+
+        // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
+        public ProcessDuplicatorResult ProcessDuplicationResult
+        {
+            get => _processDuplicationResult;
+            set => _processDuplicationResult = value;
+        }
+
+        public DesktopFrame CurrentDesktopFrame
+        {
+            get => _currentDesktopFrame;
+            set => _currentDesktopFrame = value;
+        }
+
+        public Bitmap CurrentImage
+        {
+            get => _currentImage;
+            set => _currentImage = value;
+        }
+
+        public Mat CurrentImageWithResult
+        {
+            get => _currentImageWithResult;
+            set => _currentImageWithResult = value;
+        }
+
+        public StreamVideoRecorder VideoRecorder
+        {
+            get => _videoRecorder;
+            set => _videoRecorder = value;
+        }
+
+        public ProcessDuplicator ProcessDuplicator
+        {
+            get => _processDuplicator;
+            set => _processDuplicator = value;
+        }
+
+        public DesktopDuplicator DesktopDuplicator
+        {
+            get => _desktopDuplicator;
+            set => _desktopDuplicator = value;
+        }
+
+        public TemplateMatching TemplateMatcher
+        {
+            get => _templateMatcher;
+            set => _templateMatcher = value;
+        }
+
+        public TemplateMatchingResult TemplateMatchingResult
+        {
+            get => _templateMatchingResult;
+            set => _templateMatchingResult = value;
+        }
+
+        public Mat ImageToProcess
+        {
+            get => _imageToProcess;
+            set => _imageToProcess = value;
+        }
+
+        public Point CurrentOffset
+        {
+            get => _currentOffset;
+            set => _currentOffset = value;
+        }
+
+        public int CurrentDesktop
+        {
+            get => _currentDesktop;
+            set => _currentDesktop = value;
+        }
+
+        public int CurrentAdapter
+        {
+            get => _currentAdapter;
+            set => _currentAdapter = value;
+        }
+
+        public DxgiResources DxgiResources => _dxgiResources;
+
+        public MakroExecutor MakroExecutor
+        {
+            get => _makroExecutor;
+            set => _makroExecutor = value;
+        }
+
+        public string MakroFolderPath
+        {
+            get => _makroFolderPath;
+        }
+
+        public string JobFolderPath
+        {
+            get => _jobFolderPath;
+        }
+
+        public Dictionary<string, Job> AllJobs
+        {
+            get => _allJobs;
+        }
+
+        public Dictionary<string, Makro> AllMakros
+        {
+            get => _allMakros;
+        }
+
+        public JobExecutor()
+        {
+            _logger = Log.Create<JobExecutor>();
+            SetAllJobs();
+            SetAllMakros();
+            CreateMacroExecutor();
+            _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Verfügbare Makros: {MakroCount}", _allJobs.Count, _allMakros.Count);
+        }
+
+        private void SetAllJobs()
+        {
+            if (!Directory.Exists(JobFolderPath))
             {
-                Console.WriteLine("Error: Job ist null.");
+                _logger.LogError("Das Job-Verzeichnis '{JobFolderPath}' existiert nicht.", JobFolderPath);
                 return;
             }
 
-            Console.WriteLine($"--- Job '{job.Name}' wird gestartet ---");
-
-            if(job.Steps.OfType<VideoCreationStep>().Any())
+            string[] files = Directory.GetFiles(JobFolderPath, "*.json");
+            if (files.Length == 0)
             {
-                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60);
-                await _videoRecorder.StartAsync();
-                Console.WriteLine("    VideoRecorder wurde gestartet.");
+                _logger.LogWarning("Keine Job-Dateien im Verzeichnis '{JobFolderPath}' gefunden.", JobFolderPath);
             }
 
-            if(job.Steps.OfType<MakroExecutionStep>().Any())
-            {
-                makroExecutor = new MakroExecutor();
+            _allJobs = new Dictionary<string, Job>();
 
-                _makros = new Dictionary<string, MakroList>();
-                foreach (var step in job.Steps.OfType<MakroExecutionStep>())
+            foreach (string file in files)
+            {
+                try
                 {
-                    string makroFilePath = Path.Combine(makroFolderPath, step.MakroName + ".json");
-                    _makros[step.MakroName] = MakroReader.LadeMakroDatei(makroFilePath);
+                    Job job = JobReader.ReadSteps(file);
+                    if (_allJobs.ContainsKey(job.Name))
+                    {
+                        _logger.LogWarning("Ein Job mit dem Namen '{JobName}' existiert bereits. Der Job wird überschrieben.", job.Name);
+                    }
+                    _allJobs[job.Name] = job;
+                }
+                catch
+                {
+                    _logger.LogError("Fehler beim Laden der Job-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
                 }
             }
+        }
+
+        private void SetAllMakros()
+        {
+            if (!Directory.Exists(MakroFolderPath))
+            {
+                _logger.LogWarning("Das Makro-Verzeichnis '{MakroFolderPath}' existiert nicht.", MakroFolderPath);
+            }
+
+            string[] files = Directory.GetFiles(MakroFolderPath, "*.json");
+            if (files.Length == 0)
+            {
+                _logger.LogWarning("Keine Makro-Dateien im Verzeichnis '{MakroFolderPath}' gefunden.", MakroFolderPath);
+            }
+
+            foreach (string file in files)
+            {
+                try
+                {
+                    Makro makro = MakroReader.LadeMakroDatei(file);
+                    _allMakros[makro.Name] = makro;
+                }
+                catch
+                {
+                    _logger.LogError("Fehler beim Laden der Makro-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
+                }
+            }
+        }
+
+        public void CreateMacroExecutor()
+        {
+            _makroExecutor = new MakroExecutor();
+        }
+
+        public Task ExecuteJob(string actionName, CancellationToken ct)
+                => ExecuteJobAsync(actionName, ct);
+
+        private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(jobName) || !_allJobs.ContainsKey(jobName))
+            {
+                _logger.LogError("Job '{JobName}' existiert nicht.", jobName);
+                return;
+            }
+
+            await ExecuteJobAsync(_allJobs[jobName], ct).ConfigureAwait(false);
+        }
+
+        private async Task ExecuteJobAsync(Job job, CancellationToken ct)
+        {
+            if (job == null)
+            {
+                _logger.LogError("Job ist null.");
+                return;
+            }
+
+            _logger.LogInformation("Starte Job: {JobName}", job.Name);
+            ct.ThrowIfCancellationRequested();
+
+            var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
+            if (videoStep != null)
+            {
+                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
+                {
+                    OutputDirectory = videoStep.SavePath,
+                    FileName = videoStep.FileName
+                };
+                await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
+                _logger.LogInformation("VideoRecorder gestartet …");
+            }
+
+            // Makros initialisieren …
 
             bool continueJob = true;
             do
             {
-                _processDuplicationResult?.Dispose(); // Aufräumen vom vorherigen Durchlauf (falls repeating)
+                _processDuplicationResult?.Dispose();
                 _processDuplicationResult = null;
 
-                foreach (var step_object in job.Steps)
+                foreach (var step in job.Steps)
                 {
-                    Console.WriteLine($"--> Step: {step_object.GetType().Name}");
+                    ct.ThrowIfCancellationRequested();
+
                     try
                     {
-                        if (!ExecuteStep(step_object, job)) // ExecuteStep gibt false zurück, falls der Job abgebrochen werden soll
+                        // Wenn ExecuteStep asynchron wäre:
+                        // continueJob = await ExecuteStepAsync(step, job, ct);
+                        // Sonst synchron aufrufen:
+                        if (!await ExecuteStepAsync(step, job, ct).ConfigureAwait(false))
                         {
                             continueJob = false;
-                            Console.WriteLine($"Job '{job.Name}' wurde durch einen Step vorzeitig beendet.");
-                            break; // Inneren Loop (Steps) verlassen
+                            _logger.LogWarning("Job '{JobName}' vorzeitig beendet durch Step '{StepType}'.",
+                                job.Name, step.GetType().Name);
+                            break;
                         }
                     }
-                    catch (NotImplementedException nie)
+                    catch (OperationCanceledException)
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"    WARNUNG: Schritt '{step_object.GetType().Name}' ist nicht vollständig implementiert: {nie.Message}");
-                        Console.ResetColor();
+                        _logger.LogInformation("Schritt '{StepType}' abgebrochen.", step.GetType().Name);
+                        throw;
                     }
                     catch (Exception ex)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"    FEHLER beim Ausführen von Step '{step_object.GetType().Name}': {ex.Message}");
-                        Console.WriteLine($"    StackTrace: {ex.StackTrace}");
-                        Console.ResetColor();
-                        continueJob = false; 
+                        _logger.LogError(ex, "Fehler in Schritt '{StepType}': {Message}",
+                            step.GetType().Name, ex.Message);
+                        continueJob = false;
                         break;
                     }
                 }
 
-                if (!continueJob) break; // Äußeren Loop (repeating) verlassen
+                if (!continueJob) break;
 
-                if (job.Repeating)
+                if (job.Repeating && Console.KeyAvailable)
                 {
-                    if(Console.KeyAvailable)
-                    {
-                        job.Repeating = false; // Stoppt die Wiederholung
-                    }
+                    job.Repeating = false;
+                    _logger.LogInformation("Job-Wiederholung gestoppt per Tastendruck.");
                 }
+            }
+            while (job.Repeating && continueJob);
 
-            } while (job.Repeating && continueJob);
-
-            if (job.Steps.OfType<VideoCreationStep>().Any())
+            if (videoStep != null)
             {
                 _videoRecorder.StopAndSave();
-                Console.WriteLine($"    Video wird unter {_videoRecorder.GetOutputPath()} gespeichert");
+                _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
             }
 
-            // Finale Aufräumarbeiten für den Job
+            // Aufräumen
             _processDuplicationResult?.Dispose();
-            _processDuplicationResult = null;
-
-            _videoRecorder?.Dispose(); // VideoWriter schließen, falls er geöffnet war
-            _videoRecorder = null;
-
+            _videoRecorder?.Dispose();
             Cv2.DestroyAllWindows();
-            Console.WriteLine($"--- Job '{job.Name}' beendet ---");
+
+            _logger.LogInformation("Job '{JobName}' abgeschlossen.", job.Name);
         }
 
         /// <summary>
@@ -137,155 +346,19 @@ namespace TaskAutomation.Jobs
         /// <param name="step">Das Schrittobjekt.</param>
         /// <param name="jobContext">Der aktuelle Job-Kontext (für übergreifende Infos wie Repeating).</param>
         /// <returns>True, wenn der Job fortgesetzt werden soll, false bei Abbruch.</returns>
-        private bool ExecuteStep(object step, Job jobContext)
+        private async Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
         {
-            switch (step)
-            {
-                case ProcessDuplicationStep pdStep:
-                    return HandleProcessDuplicationStep(pdStep);
-                case DesktopDuplicationStep ddStep:
-                    return HandleDesktopDuplicationStep(ddStep);
-                case TemplateMatchingStep tmStep:
-                    return HandleTemplateMatchingStep(tmStep);
-                case ShowImageStep siStep:
-                    return HandleShowImageStep(siStep);
-                case VideoCreationStep vcStep:
-                    return HandleVideoCreationStep(vcStep);
-                case MakroExecutionStep miStep:
-                    return HandleMakroExecutionStep(miStep);
-                default:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"    WARNUNG: Unbekannter Step-Typ: {step.GetType().Name}");
-                    Console.ResetColor();
-                    return true; // Unbekannte Steps ignorieren und weitermachen
-            }
-        }
+            ct.ThrowIfCancellationRequested();
 
-        // --- Handler-Methoden für jeden Step-Typ ---
+            if (step == null)
+                return false;
 
-        private bool HandleMakroExecutionStep(MakroExecutionStep step)
-        {
-            if(_currentAdapter == null)
+            if (_stepHandlers.TryGetValue(step.GetType(), out var handler))
             {
-                Console.WriteLine("    FEHLER: Kein aktueller Adapter gesetzt (_currentAdapter ist null). Step wird übersprungen.");
-                return true; // Oder false, wenn der Job abbrechen soll
-            }
-            if (_currentDesktop == null)
-            {
-                Console.WriteLine("    FEHLER: Kein aktueller Desktop gesetzt (_currentDesktop ist null). Step wird übersprungen.");
-                return true; // Oder false, wenn der Job abbrechen soll
+                return await handler.ExecuteAsync(step, jobContext, this, ct);
             }
 
-            makroExecutor.ExecuteMakro(_makros[step.MakroName], _currentAdapter, _currentDesktop, dxgiResources);
-            Console.WriteLine($"    Makro '{step.MakroName}' wurde ausgeführt auf Adapter {_currentAdapter} und Desktop {_currentDesktop}.");
-            return true;
-        }
-
-        private bool HandleProcessDuplicationStep(ProcessDuplicationStep step)
-        {
-            _processDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
-            _currentImage?.Dispose(); // Vorheriges Desktop-Bild freigeben
-            if(_processDuplicator == null)
-            {
-                _processDuplicator = new ProcessDuplicator(step.ProcessName);
-                Console.WriteLine($"    Prozessfenster-Aufnahme gestartet für: '{step.ProcessName}'");
-            }
-            
-            _processDuplicationResult = _processDuplicator.CaptureProcess(); 
-            if (!_processDuplicationResult.ProcessFound)
-            {
-                Console.WriteLine($"    FEHLER: Prozess {step.ProcessName} konnte nicht gefunden werden.");
-                return true; // Oder false, wenn der Job abbrechen soll
-            }
-            Console.WriteLine($"    Prozessfenster aufgenommen!");
-
-            _currentDesktop = _processDuplicationResult.DesktopIdx;
-            _currentAdapter = _processDuplicationResult.AdapterIdx;
-            _currentImage = _processDuplicationResult.ProcessImage.Clone() as Bitmap;
-            _currentOffset = _processDuplicationResult.WindowOffsetOnDesktop;
-            return true;
-        }
-
-        private bool HandleDesktopDuplicationStep(DesktopDuplicationStep step)
-        {
-            _currentImage?.Dispose();
-            _currentDesktopFrame?.Dispose();
-            if (_desktopDuplicator == null)
-            {
-                _desktopDuplicator = new DesktopDuplicator(step.GraphicsCardAdapter, step.OutputDevice);
-                Console.WriteLine($"    Desktop-Aufnahme gestartet für: Adapter {step.GraphicsCardAdapter}, Output {step.OutputDevice}");
-            }
-            try
-            {
-                _currentDesktopFrame = _desktopDuplicator.GetLatestFrame();
-                _currentDesktop = step.OutputDevice;
-                _currentAdapter = step.GraphicsCardAdapter;
-                _currentImage = _currentDesktopFrame?.DesktopImage?.Clone() as Bitmap;
-            }
-            catch
-            {
-                Console.WriteLine($"    FEHLER: Desktop konnte nicht erfasst werden.");
-                return true;
-            }
-
-            return true;
-        }
-
-        private bool HandleTemplateMatchingStep(TemplateMatchingStep step)
-        {
-            _templateMatchingResult?.Dispose();
-
-            if (_templateMatcher == null)
-            {
-                _templateMatcher = new TemplateMatching(step.TemplateMatchMode);
-                Console.WriteLine($"    Template Matching gestartet mit Modus: {step.TemplateMatchMode}");
-            }
-
-            if (_currentImage == null)
-            {
-                Console.WriteLine("    FEHLER: Kein Bild für Template Matching vorhanden (_currentFrame ist leer). Step wird übersprungen.");
-                return true;
-            }
-            // ROI
-            _templateMatcher.SetROI(step.ROI);
-            if(step.EnableROI)
-            {
-                _templateMatcher.EnableROI();
-            }
-            else
-            {
-                _templateMatcher.DisableROI();
-            }
-
-            // Multiple Points
-            if (step.MultiplePoints)
-            {
-                _templateMatcher.EnableMultiplePoints();
-            }
-            else
-            {
-                _templateMatcher.DisableMultiplePoints();
-            }
-
-            // Template
-            _templateMatcher.SetTemplate(step.TemplatePath);
-
-            // Threshold
-            _templateMatcher.SetThreshold(step.ConfidenceThreshold);
-
-            _imageToProcess = _currentImage.ToMat();
-            _templateMatchingResult = _templateMatcher.Detect(_imageToProcess, _currentOffset);
-
-            Console.WriteLine($"    Ergebnis: Erfolg={_templateMatchingResult.Success}, Konfidenz={_templateMatchingResult.Confidence:F2}%");
-
-            if (_templateMatchingResult.Success)
-            {
-                if (step.DrawResults)
-                {
-                    _currentImageWithResult = DrawResult.DrawTemplateMatchingResult(_imageToProcess, _templateMatchingResult, _templateMatchingResult.TemplateSize);
-                    Console.WriteLine("    Ergebnis wurde auf das Bild gemalt");
-                }
-            }
+            _logger.LogWarning("Unbekannter Step-Typ: {StepType}. Bitte implementieren Sie einen Handler für diesen Typ.", step.GetType().Name);
             return true;
         }
 
@@ -293,96 +366,12 @@ namespace TaskAutomation.Jobs
         {
             if (Directory.Exists(filePath))
             {
-                makroFolderPath = filePath;
-                Console.WriteLine($"    Makro-Ordnerpfad gesetzt: {makroFolderPath}");
+                _makroFolderPath = filePath;
             }
             else
             {
-                Console.WriteLine($"    FEHLER: Makro-Dateipfad '{filePath}' existiert nicht.");
+                _logger.LogError("Makro-Dateipfad '{FilePath}' existiert nicht.", filePath);
             }
-        }
-        private bool HandleShowImageStep(ShowImageStep step)
-        {
-            if (_currentImage == null)
-            {
-                Console.WriteLine("    FEHLER: Kein Bild zum Anzeigen vorhanden (_currentFrame ist leer). Step wird übersprungen.");
-                return true;
-            }
-
-            void ShowBitmapImage(Bitmap bitmap, string name)
-            {
-                var mat = bitmap.ToMat();
-                ShowMatImage(mat, name);
-            }
-
-            void ShowMatImage(Mat mat, string name)
-            {
-                Cv2.Resize(mat, mat, new OpenCvSharp.Size(), 0.5, 0.5);
-                Cv2.ImShow(name, mat);
-                Cv2.WaitKey(1);
-            }
-
-            if(step.ShowRawImage)
-            {
-                string windowName = $"{step.WindowName} - Raw Image";
-                Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
-                ShowBitmapImage(_currentImage, windowName);
-            }
-            if(step.ShowProcessedImage)
-            {
-                string windowName = $"{step.WindowName} - Processed Image";
-                Console.WriteLine($"    Bild anzeigen: Fenster='{windowName}'");
-                if(_currentImageWithResult != null && !_currentImageWithResult.IsDisposed && _currentImageWithResult.Height >= 10 && _currentImageWithResult.Width >= 10)
-                {
-                    ShowMatImage(_currentImageWithResult, windowName);
-                }
-                else
-                {
-                    if(_currentImage != null)
-                    {
-                        ShowBitmapImage(_currentImage, windowName);
-                    }
-                }
-            }
-            return true;
-        }
-
-        private bool HandleVideoCreationStep(VideoCreationStep step)
-        {
-            if(_videoRecorder == null)
-            {
-                Console.WriteLine("    FEHLER: VideoRecorder ist null");
-                return false;
-            }
-            if(step.SavePath != string.Empty && step.SavePath != null)
-            {
-                _videoRecorder.SetOutputPath(step.SavePath);
-            }
-            if(step.FileName != string.Empty && step.FileName != null)
-            {
-                _videoRecorder.SetFileName(step.FileName);
-            }
-
-
-            if (step.ShowRawImage)
-            {
-                _videoRecorder.AddFrame(_currentImage.Clone() as Bitmap);
-                Console.WriteLine("    Bild wird in Video eingefügt!");
-            }
-            else if(step.ShowProcessedImage)
-            {
-                if(_currentImageWithResult != null && !_currentImageWithResult.IsDisposed)
-                {
-                    _videoRecorder.AddFrame(_currentImageWithResult.ToBitmap().Clone() as Bitmap);
-                }
-                else
-                {
-                    _videoRecorder.AddFrame(_currentImage.Clone() as Bitmap);
-                }
-                Console.WriteLine("    Bild wird in Video eingefügt!");
-            }
-
-            return true;
         }
 
         public void Dispose()
