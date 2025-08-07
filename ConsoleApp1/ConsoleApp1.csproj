@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
+    <ProjectReference Include="..\DesktopOverlay\DesktopOverlay.csproj" />
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
     <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
     <ProjectReference Include="..\TaskAutomation\TaskAutomation.csproj" />
