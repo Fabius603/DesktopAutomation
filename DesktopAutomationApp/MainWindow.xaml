@@ -1,0 +1,33 @@
+﻿<!-- MainWindow.xaml -->
+<mah:MetroWindow x:Class="DesktopAutomationApp.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 Title="DesktopAutomation"
+                 MinWidth="900" MinHeight="600"
+                 WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <StackPanel Margin="16" Background="{DynamicResource MahApps.Brushes.Theme.Background}">
+            <TextBlock Text="Navigation" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
+            <Button Content="View A" Command="{Binding ShowViewA}" Margin="0,0,0,8"/>
+            <Button Content="View B" Command="{Binding ShowViewB}" Margin="0,0,0,16"/>
+
+            <TextBlock Text="Theme" FontWeight="Bold" Margin="0,16,0,8"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Content="Dunkel Orange" Margin="0,0,8,0" Command="{Binding SetDarkOrangeTheme}"/>
+                <Button Content="Schwarz-Weiß"  Margin="0,0,8,0" Command="{Binding SetMonochromeTheme}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Content rechts -->
+        <Border Grid.Column="1" Padding="16">
+            <ContentControl Content="{Binding CurrentContent}"/>
+        </Border>
+    </Grid>
+</mah:MetroWindow>

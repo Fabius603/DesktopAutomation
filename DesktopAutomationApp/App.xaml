@@ -1,0 +1,36 @@
+﻿<Application x:Class="DesktopAutomationApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:DesktopAutomationApp.Views"
+             xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
+             mc:Ignorable="d"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Steel.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Optional: leichter Card-Style für den Content-Bereich -->
+            <Style x:Key="CardBorderStyle" TargetType="Border">
+                <Setter Property="CornerRadius" Value="12"/>
+                <Setter Property="BorderBrush" Value="#22000000"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Background" Value="#FFFFFFFF"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="12"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+            </Style>
+
+            <!-- Automatisches Mapping: ViewModel -> View -->
+            <DataTemplate DataType="{x:Type vm:ViewAViewModel}">
+                <views:ViewAView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ViewBViewModel}">
+                <views:ViewBView/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

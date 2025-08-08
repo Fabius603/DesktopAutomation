@@ -1,0 +1,17 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!-- Akzentfarben neutralisieren -->
+	<SolidColorBrush x:Key="MahApps.Brushes.Accent"     Color="#FF000000"/>
+	<SolidColorBrush x:Key="MahApps.Brushes.Accent2"    Color="#FF222222"/>
+	<SolidColorBrush x:Key="MahApps.Brushes.Accent3"    Color="#FF444444"/>
+	<SolidColorBrush x:Key="MahApps.Brushes.Accent4"    Color="#FF666666"/>
+
+	<!-- Rahmen & Highlights dezenter Grau -->
+	<SolidColorBrush x:Key="MahApps.Brushes.Highlight"  Color="#FF000000"/>
+	<SolidColorBrush x:Key="MahApps.Brushes.Border"     Color="#22000000"/>
+
+	<!-- Controls leicht grau statt farbig -->
+	<SolidColorBrush x:Key="MahApps.Brushes.Control.Background" Color="#FFFFFFFF"/>
+	<SolidColorBrush x:Key="MahApps.Brushes.Control.Foreground" Color="#FF111111"/>
+</ResourceDictionary>

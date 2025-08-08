@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Logging", "Common.Lo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesktopOverlay", "DesktopOverlay\DesktopOverlay.csproj", "{D4CD50D4-BF95-49BC-9A6B-4F9C847616AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesktopAutomationApp", "DesktopAutomationApp\DesktopAutomationApp.csproj", "{75C9840D-2B43-4EE0-A5CA-7D012E28F2E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{D4CD50D4-BF95-49BC-9A6B-4F9C847616AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4CD50D4-BF95-49BC-9A6B-4F9C847616AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4CD50D4-BF95-49BC-9A6B-4F9C847616AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75C9840D-2B43-4EE0-A5CA-7D012E28F2E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75C9840D-2B43-4EE0-A5CA-7D012E28F2E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75C9840D-2B43-4EE0-A5CA-7D012E28F2E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75C9840D-2B43-4EE0-A5CA-7D012E28F2E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
