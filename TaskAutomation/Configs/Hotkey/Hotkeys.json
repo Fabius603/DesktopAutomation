@@ -13,7 +13,7 @@
     "Modifiers": 0,
     "VirtualKeyCode": 32,
     "Action": {
-      "Name": "MakroTest",
+      "Name": "DesktopVideo",
       "Command": "Toggle"
     }
   }

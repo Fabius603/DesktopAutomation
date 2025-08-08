@@ -28,6 +28,7 @@ namespace TaskAutomation.Steps
             }
             try
             {
+                ct.ThrowIfCancellationRequested();
                 executor.CurrentDesktopFrame = executor.DesktopDuplicator.GetLatestFrame();
                 executor.CurrentDesktop = ddStep.OutputDevice;
                 executor.CurrentAdapter = ddStep.GraphicsCardAdapter;

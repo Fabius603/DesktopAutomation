@@ -13,6 +13,8 @@ namespace TaskAutomation.Steps
     {
         public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
+
             var vcStep = step as VideoCreationStep;
             if (vcStep == null)
             {
@@ -32,18 +34,26 @@ namespace TaskAutomation.Steps
                 executor.VideoRecorder.FileName = vcStep.FileName;
             }
 
+            if (executor.CurrentImage == null || executor.CurrentImage.Width == 0 && executor.CurrentImage.Height == 0)
+            {
+                return false;
+            }
+
             if (vcStep.ShowRawImage)
             {
+                ct.ThrowIfCancellationRequested();
                 executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
             }
             else if (vcStep.ShowProcessedImage)
             {
                 if (executor.CurrentImageWithResult != null && !executor.CurrentImageWithResult.IsDisposed)
                 {
+                    ct.ThrowIfCancellationRequested();
                     executor.VideoRecorder.AddFrame(executor.CurrentImageWithResult.ToBitmap().Clone() as Bitmap);
                 }
                 else
                 {
+                    ct.ThrowIfCancellationRequested();
                     executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
                 }
             }

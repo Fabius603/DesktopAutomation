@@ -121,6 +121,11 @@ public class StreamVideoRecorder : IDisposable
             byte[] raw = new byte[length];
             Marshal.Copy(mat.Data, raw, 0, length);
 
+            if (stopwatch == null || raw == null)
+            {
+                return;
+            }
+
             var frame = new TimedFrame
             {
                 TimestampMs = stopwatch.ElapsedMilliseconds,
