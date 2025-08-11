@@ -15,8 +15,11 @@ using System.Windows.Shapes;
 
 namespace DesktopAutomationApp.Views
 {
-    public partial class ViewBView : UserControl
+    /// <summary>
+    /// Interaktionslogik für StartView.xaml
+    /// </summary>
+    public partial class StartView : UserControl
     {
-        public ViewBView() => InitializeComponent();
+        public StartView() => InitializeComponent();
     }
 }

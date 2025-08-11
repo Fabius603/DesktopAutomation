@@ -15,8 +15,11 @@ using System.Windows.Shapes;
 
 namespace DesktopAutomationApp.Views
 {
-    public partial class ViewAView : UserControl
+    /// <summary>
+    /// Interaktionslogik für ListMakroView.xaml
+    /// </summary>
+    public partial class ListMakrosView : UserControl
     {
-        public ViewAView() => InitializeComponent();
+        public ListMakrosView() => InitializeComponent();
     }
 }

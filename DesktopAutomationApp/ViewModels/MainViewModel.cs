@@ -1,5 +1,4 @@
-﻿using DesktopAutomationApp.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,12 +9,12 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class MainViewModel : ViewModelBase
     {
         private object? _currentContent;
-        private string _currentContentName = string.Empty;
+        private string _currentContentName = "—";
 
-        private readonly IThemeService _themeService;
-
-        public RelayCommand SetDarkOrangeTheme { get; }
-        public RelayCommand SetMonochromeTheme { get; }
+        private readonly StartViewModel _start = new();
+        private readonly ListMakrosViewModel _listMakros = new();
+        private readonly ListJobsViewModel _listJobs = new();
+        private readonly ListHotkeysViewModel _listHotkeys = new();
 
         public object? CurrentContent
         {
@@ -33,18 +32,16 @@ namespace DesktopAutomationApp.ViewModels
             private set => SetProperty(ref _currentContentName, value);
         }
 
-        public RelayCommand ShowViewA { get; }
-        public RelayCommand ShowViewB { get; }
+        public RelayCommand ShowStart => new(() => CurrentContent = _start);
+        public RelayCommand ShowListMakros => new(() => CurrentContent = _listMakros);
+        public RelayCommand ShowListJobs => new(() => CurrentContent = _listJobs);
+        public RelayCommand ShowListHotkeys => new(() => CurrentContent = _listHotkeys);
+
 
         public MainViewModel()
         {
-            _themeService = new ThemeService();
-
-            SetDarkOrangeTheme = new RelayCommand(() => _themeService.UseDarkOrange());
-            SetMonochromeTheme = new RelayCommand(() => _themeService.UseMonochrome());
-
             // Startcontent
-            CurrentContent = new ViewAViewModel();
+            CurrentContent = _start;
         }
     }
 }

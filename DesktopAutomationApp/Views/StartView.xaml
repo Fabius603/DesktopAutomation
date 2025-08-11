@@ -1,0 +1,21 @@
+﻿<!-- Views/ListMakrosView.xaml -->
+<UserControl x:Class="DesktopAutomationApp.Views.StartView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Style="{StaticResource ContentViewBase}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" />
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
+            <TextBlock Text="{Binding Description}"/>
+        </Border>
+    </Grid>
+</UserControl>

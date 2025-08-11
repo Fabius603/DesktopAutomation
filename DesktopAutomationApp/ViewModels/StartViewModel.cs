@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace DesktopAutomationApp.ViewModels
 {
-    public sealed class ViewBViewModel : ViewModelBase
+    public sealed class StartViewModel: ViewModelBase
     {
-        public string Title => "View B";
+        public string Title => "Start";
+        public string Description => "Hier steht was über die App";
     }
 }
