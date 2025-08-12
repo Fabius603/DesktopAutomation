@@ -1,14 +1,17 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using DesktopAutomationApp.Models;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
+using TaskAutomation.Jobs;
 using TaskAutomation.Persistence;
 
 namespace DesktopAutomationApp.ViewModels
@@ -18,8 +21,10 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJsonRepository<HotkeyDefinition> _repo;
         private readonly IGlobalHotkeyService _capture;
         private readonly ILogger<ListHotkeysViewModel> _log;
+        private readonly IJobExecutor _executor;
 
         public ObservableCollection<EditableHotkey> Items { get; } = new();
+        public ObservableCollection<Job> Jobs { get; } = new();
 
         private EditableHotkey? _selected;
         public EditableHotkey? Selected
@@ -79,18 +84,20 @@ namespace DesktopAutomationApp.ViewModels
         public ListHotkeysViewModel(
             IJsonRepository<HotkeyDefinition> repo,
             IGlobalHotkeyService capture,
+            IJobExecutor executor,
             ILogger<ListHotkeysViewModel> log)
         {
             _repo = repo;
             _capture = capture;
             _log = log;
+            _executor = executor;
 
             // Demo-Actions – später aus Jobs/Makros aggregieren
-            AvailableActions.Add("Job:Screenshot");
-            AvailableActions.Add("Job:NightlyRun");
-            AvailableActions.Add("Makro:OpenMail");
-            AvailableActions.Add("Makro:Build");
-            AvailableActions.Add("Service:ToggleOverlay");
+            AvailableActions.Add("Action 1");
+            AvailableActions.Add("Action 2");
+            AvailableActions.Add("Action 3");
+            AvailableActions.Add("Action 4");
+            AvailableActions.Add("Action 5");
             foreach (var c in Enum.GetValues(typeof(ActionCommand)).Cast<ActionCommand>()) AvailableCommands.Add(c);
 
             ActionsView = CollectionViewSource.GetDefaultView(AvailableActions);
@@ -114,6 +121,8 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task LoadAsync()
         {
+            Jobs.Clear();
+            LoadJobs();
             var list = await _repo.LoadAllAsync();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
@@ -130,7 +139,8 @@ namespace DesktopAutomationApp.ViewModels
                 Name = "Neuer Hotkey",
                 Modifiers = KeyModifiers.None,
                 VirtualKeyCode = 0,
-                Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Start }
+                Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Start },
+                Active = true
             };
             Items.Add(e);
             Selected = e;
@@ -206,6 +216,7 @@ namespace DesktopAutomationApp.ViewModels
                     EditedHotkey.VirtualKeyCode = _snapshot.VirtualKeyCode;
                     EditedHotkey.Action.Name = _snapshot.Action.Name;
                     EditedHotkey.Action.Command = _snapshot.Action.Command;
+                    EditedHotkey.Active = _snapshot.Active;
                 }
             }
             IsEditing = false; IsCapturing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
@@ -214,11 +225,23 @@ namespace DesktopAutomationApp.ViewModels
         private async Task DeleteSelectedAsync()
         {
             if (Selected == null) return;
+
+            var result = MessageBox.Show(
+                $"Möchten Sie den Hotkey „{Selected.Name}“ wirklich löschen?",
+                "Löschen bestätigen",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
             var name = Selected.Name;
             var idx = Items.IndexOf(Selected);
             Items.Remove(Selected);
             Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
             await _repo.DeleteAsync(name);
+
+            _log.LogInformation("Hotkey gelöscht: {Name}", name);
         }
 
         private async Task SaveAllAsync()
@@ -228,6 +251,27 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Hotkeys gespeichert: {Count}", domain.Count);
 
             await _capture.ReloadFromRepositoryAsync();
+        }
+
+        private void UpdateAvailableActionsFromJobs()
+        {
+            AvailableActions.Clear();
+            foreach (var job in Jobs.OrderBy(j => j.Name))
+            {
+                AvailableActions.Add(job.Name);
+            }
+        }
+
+        private async void LoadJobs()
+        {
+            await _executor.ReloadJobsAsync();
+
+            Jobs.Clear();
+            foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
+                Jobs.Add(j);
+
+            _log.LogInformation("Jobs geladen: {Count}", Items.Count);
+            UpdateAvailableActionsFromJobs();
         }
 
         private static string? ValidateEdited(EditableHotkey hk)

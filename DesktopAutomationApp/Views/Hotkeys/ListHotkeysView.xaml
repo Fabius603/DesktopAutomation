@@ -13,6 +13,11 @@
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter"/>
+        <Style x:Key="AutoOpenComboStyle" TargetType="ComboBox"
+           BasedOn="{StaticResource {x:Type ComboBox}}">
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ComboBox_PreviewMouseLeftButtonDown"/>
+            <EventSetter Event="GotKeyboardFocus" Handler="ComboBox_GotKeyboardFocus"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -21,15 +26,29 @@
             <!-- Toolbar -->
             <RowDefinition Height="2*"/>
             <!-- Liste -->
-            <RowDefinition Height="3*"/>
+            <RowDefinition Height="Auto"/>
             <!-- Editor -->
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <Button Content="Neu" Command="{Binding NewCommand}" Margin="0,0,8,0"/>
+            <Button Content="Aktualisieren"
+            Command="{Binding RefreshCommand}"
+            Margin="0,0,8,0"
+            ToolTip="Hotkeys und Jobs neu laden" />
+
+            <Button Content="Neu"
+            Command="{Binding NewCommand}"
+            Margin="0,0,8,0"
+            ToolTip="Neuen Hotkey anlegen" />
+
+            <Button Content="Löschen"
+            Command="{Binding DeleteCommand}"
+            Margin="0,0,8,0"
+            ToolTip="Ausgewählten Hotkey löschen" />
+
             <TextBlock Text="{Binding Items.Count, StringFormat='  ({0} Hotkeys)'}"
-                       Margin="12,0,0,0" VerticalAlignment="Center"/>
+               Margin="12,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
         <!-- Liste -->
@@ -39,13 +58,23 @@
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
-                      IsReadOnly="True">
+                      IsReadOnly="False"
+                      ScrollViewer.CanContentScroll="False">
+
+                <DataGrid.InputBindings>
+                    <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
+                </DataGrid.InputBindings>
+
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*"/>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
                     <!-- Trigger direkt aus EditableHotkey.DisplayTrigger -->
-                    <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" Width="2*"/>
-                    <DataGridTextColumn Header="Action" Binding="{Binding Action.Name}" Width="2*"/>
-                    <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" Width="*"/>
+                    <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Action" Binding="{Binding Action.Name}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" IsReadOnly="True" Width="2*"/>
+                    <DataGridCheckBoxColumn Header="Aktiv"
+                                Binding="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Width="Auto"
+                                IsThreeState="False"/>
                     <DataGridTemplateColumn Header="" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -60,7 +89,10 @@
         </Border>
 
         <!-- Editor -->
-        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+        <Border Grid.Row="2"
+                Style="{StaticResource CardBorderStyle}"
+                Margin="0,8,0,0"
+                Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid Margin="12"
                   Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.RowDefinitions>
@@ -85,13 +117,11 @@
                 <!-- Action (durchsuchbar) -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Action" VerticalAlignment="Center" Margin="0,8,0,0"/>
                 <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
-                    <TextBox Width="200" Margin="0,0,8,0"
-                             ToolTip="Suche"
-                             Text="{Binding ActionFilter, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox ItemsSource="{Binding ActionsView}"
+                              Style="{StaticResource AutoOpenComboStyle}"
                               IsEditable="True"
                               StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="False"
+                              IsTextSearchEnabled="True"
                               SelectedItem="{Binding EditedHotkey.Action.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               MinWidth="280"/>
                 </DockPanel>
@@ -99,13 +129,11 @@
                 <!-- Command (durchsuchbar) -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,8,0,0"/>
                 <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,8,0,0">
-                    <TextBox Width="200" Margin="0,0,8,0"
-                             ToolTip="Suche"
-                             Text="{Binding CommandFilter, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox ItemsSource="{Binding CommandsView}"
+                              Style="{StaticResource AutoOpenComboStyle}"
                               IsEditable="True"
                               StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="False"
+                              IsTextSearchEnabled="True"
                               SelectedItem="{Binding EditedHotkey.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               MinWidth="200"/>
                 </DockPanel>
@@ -113,15 +141,14 @@
                 <!--Aktiv-->
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,8,0,0"/>
                 <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,8,0,0">
-                    <TextBox Width="200" Margin="0,0,8,0"
-                         ToolTip="Suche"
-                         Text="{Binding ActionFilter, UpdateSourceTrigger=PropertyChanged}" />
-                    <ComboBox ItemsSource="{Binding ActionsView}"
-                          IsEditable="True"
-                          StaysOpenOnEdit="True"
-                          IsTextSearchEnabled="False"
-                          SelectedItem="{Binding EditedHotkey.Action.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          MinWidth="280"/>
+                    <CheckBox DockPanel.Dock="Left"
+                          Content=""
+                          Margin="0,0,8,0"
+                          VerticalAlignment="Center"
+                          IsThreeState="False"
+                          IsEnabled="{Binding IsEditing}"
+                          IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Hotkey ist aktiv/inaktiv"/>
                 </DockPanel>
                 
                 <!-- Trigger -->

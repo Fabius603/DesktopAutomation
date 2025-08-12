@@ -21,5 +21,23 @@ namespace DesktopAutomationApp.Views
     public partial class ListHotkeysView : UserControl
     {
         public ListHotkeysView() => InitializeComponent();
+
+        private void ComboBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ComboBox cb && !cb.IsDropDownOpen)
+            {
+                cb.Focus();
+                cb.IsDropDownOpen = true;
+                e.Handled = true; // Klick nicht noch zusätzlich verarbeiten
+            }
+        }
+
+        private void ComboBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is ComboBox cb && !cb.IsDropDownOpen)
+            {
+                cb.IsDropDownOpen = true;
+            }
+        }
     }
 }

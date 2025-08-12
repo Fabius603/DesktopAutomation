@@ -47,7 +47,8 @@ namespace DesktopAutomationApp.Models
             Name = Name,
             Modifiers = Modifiers,
             VirtualKeyCode = VirtualKeyCode,
-            Action = new EditableActionDefinition { Name = Action.Name, Command = Action.Command }
+            Action = new EditableActionDefinition { Name = Action.Name, Command = Action.Command },
+            Active = Active
         };
 
         public HotkeyDefinition ToDomain() => new()
@@ -55,7 +56,8 @@ namespace DesktopAutomationApp.Models
             Name = Name,
             Modifiers = Modifiers,
             VirtualKeyCode = VirtualKeyCode,
-            Action = Action.ToDomain()
+            Action = Action.ToDomain(),
+            Active = Active
         };
 
         public static EditableHotkey FromDomain(HotkeyDefinition d) => new()
@@ -63,7 +65,8 @@ namespace DesktopAutomationApp.Models
             Name = d.Name,
             Modifiers = d.Modifiers,
             VirtualKeyCode = d.VirtualKeyCode,
-            Action = EditableActionDefinition.FromDomain(d.Action)
+            Action = EditableActionDefinition.FromDomain(d.Action),
+            Active = d.Active
         };
 
         // Formatierung – analog zu deinem bisherigen Converter
