@@ -1,22 +1,24 @@
-{
-  "name": "DesktopVideo",
-  "repeating": true,
-  "steps": [
-    {
-      "type": "desktop_duplication",
-      "settings": {
-        "output_device": 0,
-        "graphics_card_adapter": 0
+[
+  {
+    "name": "DesktopVideo",
+    "repeating": true,
+    "steps": [
+      {
+        "type": "desktop_duplication",
+        "settings": {
+          "output_device": 0,
+          "graphics_card_adapter": 0
+        }
+      },
+      {
+        "type": "video_creation",
+        "settings": {
+          "save_path": "C:\\Users\\schlieper\\OneDrive - Otto Künnecke GmbH\\Pictures\\trash",
+          "file_name": "test.mp4",
+          "use_raw_image": false,
+          "use_processed_image": true
+        }
       }
-    },
-    {
-      "type": "video_creation",
-      "settings": {
-        "save_path": "C:\\Users\\schlieper\\OneDrive - Otto Künnecke GmbH\\Pictures\\trash",
-        "file_name": "test.mp4",
-        "use_raw_image": false,
-        "use_processed_image": true
-      }
-    }
-  ]
-}
+    ]
+  }
+]

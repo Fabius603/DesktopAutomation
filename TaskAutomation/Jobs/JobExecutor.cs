@@ -18,15 +18,20 @@ using System.Linq;
 using TaskAutomation.Steps;
 using Microsoft.Extensions.Logging;
 using Common.Logging;
+using TaskAutomation.Persistence;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace TaskAutomation.Jobs
 {
-    public class JobExecutor : IJobExecutor, IDisposable
+    public class JobExecutor : IJobExecutor, IJobExecutionContext, IDisposable
     {
         private readonly ILogger<JobExecutor> _logger;
+        private readonly IJsonRepository<Job> _jobRepository;
+        private readonly IJsonRepository<Makro> _makroRepository;
 
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
+        private IMakroExecutor _makroExecutor;
         private Bitmap _currentImage;
         private Mat _currentImageWithResult;
         private bool _disposed = false;
@@ -39,13 +44,14 @@ namespace TaskAutomation.Jobs
         private Point _currentOffset = new Point(0, 0);
         private int _currentDesktop = 0;
         private int _currentAdapter = 0;
-        private Dictionary<string, Makro> _makros;
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
-        private MakroExecutor _makroExecutor;
         private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Makro");
         private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Job");
-        private Dictionary<string, Job> _allJobs = new Dictionary<string, Job>();
-        private Dictionary<string, Makro> _allMakros = new Dictionary<string, Makro>();
+        private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
+        public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
+        public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
+
 
 
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
@@ -139,7 +145,7 @@ namespace TaskAutomation.Jobs
 
         public DxgiResources DxgiResources => _dxgiResources;
 
-        public MakroExecutor MakroExecutor
+        public IMakroExecutor MakroExecutor
         {
             get => _makroExecutor;
             set => _makroExecutor = value;
@@ -155,103 +161,74 @@ namespace TaskAutomation.Jobs
             get => _jobFolderPath;
         }
 
-        public Dictionary<string, Job> AllJobs
+        public JobExecutor(
+            ILogger<JobExecutor> logger,
+            IJsonRepository<Job> jobRepo,
+            IJsonRepository<Makro> makroRepo,
+            IMakroExecutor makroExecutor)
         {
-            get => _allJobs;
+            _logger = logger;
+            _jobRepository = jobRepo;
+            _makroRepository = makroRepo;
+            _makroExecutor = makroExecutor;
+
+            _ = ReloadJobsAsync();
+            _ = ReloadMakrosAsync();
+
+            _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Makros: {MakroCount}",
+                AllJobs.Count, AllMakros.Count);
         }
 
-        public Dictionary<string, Makro> AllMakros
+        public async Task ReloadJobsAsync()
         {
-            get => _allMakros;
-        }
+            var snapshot = await _jobRepository.LoadAllAsync().ConfigureAwait(false);
 
-        public JobExecutor()
-        {
-            _logger = Log.Create<JobExecutor>();
-            SetAllJobs();
-            SetAllMakros();
-            CreateMacroExecutor();
-            _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Verfügbare Makros: {MakroCount}", _allJobs.Count, _allMakros.Count);
-        }
-
-        private void SetAllJobs()
-        {
-            if (!Directory.Exists(JobFolderPath))
+            _allJobs.Clear();
+            int added = 0;
+            foreach (var j in snapshot)
             {
-                _logger.LogError("Das Job-Verzeichnis '{JobFolderPath}' existiert nicht.", JobFolderPath);
-                return;
-            }
-
-            string[] files = Directory.GetFiles(JobFolderPath, "*.json");
-            if (files.Length == 0)
-            {
-                _logger.LogWarning("Keine Job-Dateien im Verzeichnis '{JobFolderPath}' gefunden.", JobFolderPath);
-            }
-
-            _allJobs = new Dictionary<string, Job>();
-
-            foreach (string file in files)
-            {
-                try
+                if (j == null || string.IsNullOrWhiteSpace(j.Name))
                 {
-                    Job job = JobReader.ReadSteps(file);
-                    if (_allJobs.ContainsKey(job.Name))
-                    {
-                        _logger.LogWarning("Ein Job mit dem Namen '{JobName}' existiert bereits. Der Job wird überschrieben.", job.Name);
-                    }
-                    _allJobs[job.Name] = job;
+                    _logger.LogWarning("Job ohne gültigen Namen ignoriert.");
+                    continue;
                 }
-                catch
-                {
-                    _logger.LogError("Fehler beim Laden der Job-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
-                }
+                _allJobs[j.Name] = j;
+                added++;
             }
+            _logger.LogInformation("Jobs geladen: {Count}", added);
         }
 
-        private void SetAllMakros()
+        public async Task ReloadMakrosAsync()
         {
-            if (!Directory.Exists(MakroFolderPath))
-            {
-                _logger.LogWarning("Das Makro-Verzeichnis '{MakroFolderPath}' existiert nicht.", MakroFolderPath);
-            }
+            var snapshot = await _makroRepository.LoadAllAsync().ConfigureAwait(false);
 
-            string[] files = Directory.GetFiles(MakroFolderPath, "*.json");
-            if (files.Length == 0)
+            _allMakros.Clear();
+            int added = 0;
+            foreach (var m in snapshot)
             {
-                _logger.LogWarning("Keine Makro-Dateien im Verzeichnis '{MakroFolderPath}' gefunden.", MakroFolderPath);
-            }
-
-            foreach (string file in files)
-            {
-                try
+                if (m == null || string.IsNullOrWhiteSpace(m.Name))
                 {
-                    Makro makro = MakroReader.LadeMakroDatei(file);
-                    _allMakros[makro.Name] = makro;
+                    _logger.LogWarning("Makro ohne gültigen Namen ignoriert.");
+                    continue;
                 }
-                catch
-                {
-                    _logger.LogError("Fehler beim Laden der Makro-Datei: {File}. Bitte überprüfen Sie die Datei auf Korrektheit.", file);
-                }
+                _allMakros[m.Name] = m;
+                added++;
             }
+            _logger.LogInformation("Makros geladen: {Count}", added);
         }
 
-        public void CreateMacroExecutor()
-        {
-            _makroExecutor = new MakroExecutor();
-        }
 
-        public Task ExecuteJob(string actionName, CancellationToken ct)
-                => ExecuteJobAsync(actionName, ct);
+        public Task ExecuteJob(string jobName, CancellationToken ct = default)
+            => ExecuteJobAsync(jobName, ct);
 
         private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(jobName) || !_allJobs.ContainsKey(jobName))
+            if (string.IsNullOrWhiteSpace(jobName) || !AllJobs.TryGetValue(jobName, out var job))
             {
                 _logger.LogError("Job '{JobName}' existiert nicht.", jobName);
                 return;
             }
-
-            await ExecuteJobAsync(_allJobs[jobName], ct).ConfigureAwait(false);
+            await ExecuteJobAsync(job, ct).ConfigureAwait(false);
         }
 
         private async Task ExecuteJobAsync(Job job, CancellationToken ct)
@@ -270,8 +247,8 @@ namespace TaskAutomation.Jobs
             {
                 _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
                 {
-                    OutputDirectory = videoStep.SavePath,
-                    FileName = videoStep.FileName
+                    OutputDirectory = videoStep.Settings.SavePath,
+                    FileName = videoStep.Settings.FileName
                 };
                 await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
                 _logger.LogInformation("VideoRecorder gestartet …");
@@ -285,7 +262,7 @@ namespace TaskAutomation.Jobs
                 _processDuplicationResult?.Dispose();
                 _processDuplicationResult = null;
 
-                foreach (var step in job.Steps)
+                foreach (JobStep step in job.Steps)
                 {
                     ct.ThrowIfCancellationRequested();
 
@@ -346,20 +323,13 @@ namespace TaskAutomation.Jobs
         /// <param name="step">Das Schrittobjekt.</param>
         /// <param name="jobContext">Der aktuelle Job-Kontext (für übergreifende Infos wie Repeating).</param>
         /// <returns>True, wenn der Job fortgesetzt werden soll, false bei Abbruch.</returns>
-        private async Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
+        private Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
-
-            if (step == null)
-                return false;
-
             if (_stepHandlers.TryGetValue(step.GetType(), out var handler))
-            {
-                return await handler.ExecuteAsync(step, jobContext, this, ct);
-            }
+                return handler.ExecuteAsync(step, jobContext, (IJobExecutionContext)this, ct);
 
-            _logger.LogWarning("Unbekannter Step-Typ: {StepType}. Bitte implementieren Sie einen Handler für diesen Typ.", step.GetType().Name);
-            return true;
+            _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
+            return Task.FromResult(true);
         }
 
         public void SetMakroFilePath(string filePath)

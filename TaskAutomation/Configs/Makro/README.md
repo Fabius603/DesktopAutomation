@@ -14,7 +14,7 @@ Die Makro-Datei ist ein JSON-Objekt mit globalen Einstellungen und einem Array v
   "adapter_index": 0,
   "commands": [
     {
-      "type": "mouseMove",
+      "type": "mouse_m_ove",
       "x": 100,
       "y": 200
     }
@@ -44,7 +44,7 @@ Bewegt die Maus an eine bestimmte Position.
 
 ```json
 {
-  "type": "mouseMove",
+  "type": "mouse_m_ove",
   "x": 100,
   "y": 200
 }
@@ -63,7 +63,7 @@ Drückt eine Maustaste an einer Position.
 
 ```json
 {
-  "type": "mouseDown",
+  "type": "mouse_down",
   "button": "left",
   "x": 150,
   "y": 250
@@ -84,7 +84,7 @@ Lässt eine Maustaste los.
 
 ```json
 {
-  "type": "mouseUp",
+  "type": "mouse_up",
   "button": "left",
   "x": 150,
   "y": 250
@@ -105,7 +105,7 @@ Drückt eine Taste auf der Tastatur.
 
 ```json
 {
-  "type": "keyDown",
+  "type": "key_down",
   "key": "A"
 }
 ```
@@ -122,7 +122,7 @@ Lässt eine Taste auf der Tastatur los.
 
 ```json
 {
-  "type": "keyUp",
+  "type": "key_up",
   "key": "A"
 }
 ```
@@ -154,12 +154,12 @@ Wartet eine definierte Zeit in Millisekunden.
 
 ```json
 [
-  { "type": "mouseMove", "x": 300, "y": 400 },
-  { "type": "mouseDown", "button": "left", "x": 300, "y": 400 },
-  { "type": "mouseUp", "button": "left", "x": 300, "y": 400 },
+  { "type": "mouse_move", "x": 300, "y": 400 },
+  { "type": "mouse_down", "button": "left", "x": 300, "y": 400 },
+  { "type": "mouse_up", "button": "left", "x": 300, "y": 400 },
   { "type": "timeout", "duration": 1000 },
-  { "type": "keyDown", "key": "A" },
-  { "type": "keyUp", "key": "A" }
+  { "type": "key_down", "key": "A" },
+  { "type": "key_up", "key": "A" }
 ]
 ```
 

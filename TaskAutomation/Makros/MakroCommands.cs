@@ -19,48 +19,51 @@ namespace TaskAutomation.Makros
         public int AdapterIndex { get; set; }
 
         [JsonPropertyName("commands")]
-        [JsonConverter(typeof(MakroBefehlListConverter))]
         public List<MakroBefehl> Befehle { get; set; }
     }
 
-    public abstract class MakroBefehl
+
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(MouseMoveBefehl), "mouse_move")]
+    [JsonDerivedType(typeof(MouseDownBefehl), "mouse_down")]
+    [JsonDerivedType(typeof(MouseUpBefehl), "mouse_up")]
+    [JsonDerivedType(typeof(KeyDownBefehl), "key_down")]
+    [JsonDerivedType(typeof(KeyUpBefehl), "key_up")]
+    [JsonDerivedType(typeof(TimeoutBefehl), "timeout")]
+    public abstract class MakroBefehl { }
+
+    public sealed class MouseMoveBefehl : MakroBefehl
     {
-        [JsonPropertyName("type")]
-        public string Typ { get; set; }
+        [JsonPropertyName("x")] public int X { get; set; }
+        [JsonPropertyName("y")] public int Y { get; set; }
     }
 
-    public class MouseMoveBefehl : MakroBefehl
+    public sealed class MouseDownBefehl : MakroBefehl
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        [JsonPropertyName("button")] public string Button { get; set; } = string.Empty;
+        [JsonPropertyName("x")] public int X { get; set; }
+        [JsonPropertyName("y")] public int Y { get; set; }
     }
 
-    public class MouseDownBefehl : MakroBefehl
+    public sealed class MouseUpBefehl : MakroBefehl
     {
-        public string Button { get; set; }
-        public int X { get; set; }
-        public int Y { get; set; }
+        [JsonPropertyName("button")] public string Button { get; set; } = string.Empty;
+        [JsonPropertyName("x")] public int X { get; set; }
+        [JsonPropertyName("y")] public int Y { get; set; }
     }
 
-    public class MouseUpBefehl : MakroBefehl
+    public sealed class KeyDownBefehl : MakroBefehl
     {
-        public string Button { get; set; }
-        public int X { get; set; }
-        public int Y { get; set; }
+        [JsonPropertyName("key")] public string Key { get; set; } = string.Empty;
     }
 
-    public class KeyDownBefehl : MakroBefehl
+    public sealed class KeyUpBefehl : MakroBefehl
     {
-        public string Key { get; set; }
+        [JsonPropertyName("key")] public string Key { get; set; } = string.Empty;
     }
 
-    public class KeyUpBefehl : MakroBefehl
+    public sealed class TimeoutBefehl : MakroBefehl
     {
-        public string Key { get; set; }
-    }
-
-    public class TimeoutBefehl : MakroBefehl
-    {
-        public int Duration { get; set; }
+        [JsonPropertyName("duration")] public int Duration { get; set; }
     }
 }

@@ -6,7 +6,8 @@
     "Action": {
       "Name": "MakroTest",
       "Command": "Start"
-    }
+    },
+    "Active": true
   },
   {
     "Name": "TestHotkeyToggle",
@@ -15,6 +16,7 @@
     "Action": {
       "Name": "DesktopVideo",
       "Command": "Toggle"
-    }
+    },
+    "Active": true
   }
 ]

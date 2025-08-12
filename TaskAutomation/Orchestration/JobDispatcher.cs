@@ -14,11 +14,11 @@ namespace TaskAutomation.Orchestration
     /// <summary>
     /// Dispatcher, der auf Hotkey-Events hört und Jobs über einen IJobExecutor startet.
     /// </summary>
-    public sealed class JobDispatcher : IDisposable
+    public sealed class JobDispatcher : IJobDispatcher, IDisposable
     {
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
-        private readonly GlobalHotkeyService _hotkeyService;
+        private readonly IGlobalHotkeyService _hotkeyService;
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _jobTokens;
 
         /// <summary>
@@ -27,13 +27,12 @@ namespace TaskAutomation.Orchestration
         /// <param name="hotkeyService">Instanz des GlobalHotkeyService</param>
         /// <param name="executor">Executor, der Jobs per Name ausführt</param>
         /// <param name="logger">Logger für JobDispatcher</param>
-        public JobDispatcher(
-            GlobalHotkeyService hotkeyService,
-            IJobExecutor executor)
+        public JobDispatcher(IGlobalHotkeyService hotkeyService, IJobExecutor executor, ILogger<JobDispatcher> logger)
         {
+            _logger = logger;
+
             _hotkeyService = hotkeyService ?? throw new ArgumentNullException(nameof(hotkeyService));
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-            _logger = Log.Create<JobDispatcher>();
 
             _jobTokens = new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.OrdinalIgnoreCase);
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;

@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Input;
+using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
+using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -11,10 +10,12 @@ namespace DesktopAutomationApp.ViewModels
         private object? _currentContent;
         private string _currentContentName = "—";
 
-        private readonly StartViewModel _start = new();
-        private readonly ListMakrosViewModel _listMakros = new();
-        private readonly ListJobsViewModel _listJobs = new();
-        private readonly ListHotkeysViewModel _listHotkeys = new();
+        private readonly IServiceProvider _services;
+
+        private readonly StartViewModel _start;
+        private readonly ListMakrosViewModel _listMakros;
+        private readonly ListJobsViewModel _listJobs;
+        private readonly ListHotkeysViewModel _listHotkeys;
 
         public object? CurrentContent
         {
@@ -32,16 +33,45 @@ namespace DesktopAutomationApp.ViewModels
             private set => SetProperty(ref _currentContentName, value);
         }
 
-        public RelayCommand ShowStart => new(() => CurrentContent = _start);
-        public RelayCommand ShowListMakros => new(() => CurrentContent = _listMakros);
-        public RelayCommand ShowListJobs => new(() => CurrentContent = _listJobs);
-        public RelayCommand ShowListHotkeys => new(() => CurrentContent = _listHotkeys);
+        public ICommand ShowStart { get; }
+        public ICommand ShowListMakros { get; }
+        public ICommand ShowListJobs { get; }
+        public ICommand ShowListHotkeys { get; }
 
-
-        public MainViewModel()
+        public MainViewModel(
+            IServiceProvider services,
+            StartViewModel startViewModel,
+            ListMakrosViewModel listMakrosViewModel,
+            ListJobsViewModel listJobsViewModel,
+            ListHotkeysViewModel listHotkeysViewModel)
         {
-            // Startcontent
+            _services = services;
+            _start = startViewModel;
+            _listMakros = listMakrosViewModel;
+            _listJobs = listJobsViewModel;
+            _listHotkeys = listHotkeysViewModel;
+
+            // Navigation aus der Jobliste in die Details:
+            _listJobs.RequestOpenJob += OpenJobDetails;
+
+            ShowStart = new RelayCommand(() => CurrentContent = _start);
+            ShowListMakros = new RelayCommand(() => CurrentContent = _listMakros);
+            ShowListJobs = new RelayCommand(() => CurrentContent = _listJobs);
+            ShowListHotkeys = new RelayCommand(() => CurrentContent = _listHotkeys);
+
+            // Startseite
             CurrentContent = _start;
+        }
+
+        private void OpenJobDetails(Job job)
+        {
+            // ViewModel mit Laufzeit-Argument 'job' aus DI erstellen
+            var detailsVm = ActivatorUtilities.CreateInstance<JobStepsViewModel>(_services, job);
+
+            // Rücknavigation: zurück zur Jobliste
+            detailsVm.RequestBack += () => CurrentContent = _listJobs;
+
+            CurrentContent = detailsVm;
         }
     }
 }

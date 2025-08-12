@@ -3,10 +3,26 @@ using OpenCvSharp;
 
 namespace TaskAutomation.Jobs
 {
-    public class TemplateMatchingStep
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+    [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
+    [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
+    [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
+    [JsonDerivedType(typeof(ShowImageStep), "show_image")]
+    [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
+    [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
+    public abstract class JobStep { }
+
+    // ---- TemplateMatching ----
+    public sealed class TemplateMatchingStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public TemplateMatchingSettings Settings { get; set; } = new();
+    }
+
+    public sealed class TemplateMatchingSettings
     {
         [JsonPropertyName("template_path")]
-        public string TemplatePath { get; set; }
+        public string TemplatePath { get; set; } = string.Empty;
 
         [JsonPropertyName("template_match_mode")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -29,7 +45,14 @@ namespace TaskAutomation.Jobs
         public bool DrawResults { get; set; } = true;
     }
 
-    public class DesktopDuplicationStep
+    // ---- DesktopDuplication ----
+    public sealed class DesktopDuplicationStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public DesktopDuplicationSettings Settings { get; set; } = new();
+    }
+
+    public sealed class DesktopDuplicationSettings
     {
         [JsonPropertyName("output_device")]
         public int OutputDevice { get; set; } = 0;
@@ -38,13 +61,27 @@ namespace TaskAutomation.Jobs
         public int GraphicsCardAdapter { get; set; } = 0;
     }
 
-    public class ProcessDuplicationStep
+    // ---- ProcessDuplication ----
+    public sealed class ProcessDuplicationStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ProcessDuplicationSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ProcessDuplicationSettings
     {
         [JsonPropertyName("process_name")]
         public string ProcessName { get; set; } = string.Empty;
     }
 
-    public class ShowImageStep
+    // ---- ShowImage ----
+    public sealed class ShowImageStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ShowImageSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ShowImageSettings
     {
         [JsonPropertyName("window_name")]
         public string WindowName { get; set; } = "MyWindow";
@@ -56,7 +93,14 @@ namespace TaskAutomation.Jobs
         public bool ShowProcessedImage { get; set; } = true;
     }
 
-    public class VideoCreationStep
+    // ---- VideoCreation ----
+    public sealed class VideoCreationStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public VideoCreationSettings Settings { get; set; } = new();
+    }
+
+    public sealed class VideoCreationSettings
     {
         [JsonPropertyName("save_path")]
         public string SavePath { get; set; } = string.Empty;
@@ -65,13 +109,20 @@ namespace TaskAutomation.Jobs
         public string FileName { get; set; } = "output.mp4";
 
         [JsonPropertyName("use_raw_image")]
-        public bool ShowRawImage { get; set; } = true;
+        public bool UseRawImage { get; set; } = true;
 
         [JsonPropertyName("use_processed_image")]
-        public bool ShowProcessedImage { get; set; } = true;
+        public bool UseProcessedImage { get; set; } = true;
     }
 
-    public class MakroExecutionStep
+    // ---- MakroExecution ----
+    public sealed class MakroExecutionStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public MakroExecutionSettings Settings { get; set; } = new();
+    }
+
+    public sealed class MakroExecutionSettings
     {
         [JsonPropertyName("makro_name")]
         public string MakroName { get; set; } = string.Empty;

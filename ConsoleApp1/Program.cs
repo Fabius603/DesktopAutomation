@@ -57,9 +57,9 @@ class Program
 
         Console.WriteLine("Starte TaskAutomation...");
 
-        JobExecutor jobExecutor = new JobExecutor();
-        GlobalHotkeyService globalHotkeyService = GlobalHotkeyService.Instance;
-        JobDispatcher jobDispatcher = new JobDispatcher(globalHotkeyService, jobExecutor);
+        //JobExecutor jobExecutor = new JobExecutor();
+        //GlobalHotkeyService globalHotkeyService = GlobalHotkeyService.Instance;
+        //JobDispatcher jobDispatcher = new JobDispatcher(globalHotkeyService, jobExecutor);
 
         Console.WriteLine("Deine Hotkeys sind jetzt aktiv");
 

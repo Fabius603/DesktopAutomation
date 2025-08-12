@@ -1,21 +1,274 @@
-﻿<!-- Views/ListMakrosView.xaml -->
-<UserControl x:Class="DesktopAutomationApp.Views.ListMakrosView"
+﻿<UserControl x:Class="DesktopAutomationApp.Views.ListMakrosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
+             xmlns:views="clr-namespace:DesktopAutomationApp.Views"
+             xmlns:mak="clr-namespace:TaskAutomation.Makros;assembly=TaskAutomation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
+
+    <UserControl.Resources>
+        <!-- Typ-Label links -->
+        <Style x:Key="TypeLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Margin" Value="0,0,0,0"/>
+        </Style>
+
+        <!-- Label (licksbündig, gemeinsame Breite) -->
+        <Style x:Key="ParamLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="TextAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            <Setter Property="LineHeight" Value="18"/>
+        </Style>
+
+        <!-- Wert (linksbündig) -->
+        <Style x:Key="ParamValue" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            <Setter Property="LineHeight" Value="18"/>
+        </Style>
+
+        <!-- ========== EINHEITLICHE DETAIL-TEMPLATES ========== -->
+        <!-- Muster: OuterGrid: [TypeCol(shared)] [16px] [DetailsGrid] -->
+        <!-- DetailsGrid: [ParamLabelCol(shared)] [12px] [ValueCol] mit expliziten RowDefinitions -->
+
+        <!-- MouseMove -->
+        <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="MouseMove" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- MouseDown -->
+        <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="MouseDown" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- MouseUp -->
+        <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="MouseUp" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- KeyDown -->
+        <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="KeyDown" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Key:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- KeyUp -->
+        <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="KeyUp" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Key:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Timeout -->
+        <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Timeout" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Duration (ms):" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Duration}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="2*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" />
+        <!-- Kopfzeile -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" />
+        </StackPanel>
+
+        <!-- Liste der Makros -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <ListBox ItemsSource="{Binding Items}" />
+            <DataGrid ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding Selected}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*"/>
+                    <DataGridTextColumn Header="Desktop" Binding="{Binding DesktopIndex}" Width="*"/>
+                    <DataGridTextColumn Header="Adapter" Binding="{Binding AdapterIndex}" Width="*"/>
+                    <DataGridTextColumn Header="# Befehle" Binding="{Binding Befehle.Count}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Details: Befehle des ausgewählten Makros -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+            <!-- Gemeinsame Breiten aktivieren -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Selected.Befehle}"
+                              Grid.IsSharedSizeScope="True">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Padding="12"
+                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                                    BorderThickness="1" CornerRadius="8">
+                                <ContentPresenter Content="{Binding}"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>

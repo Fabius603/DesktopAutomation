@@ -1,5 +1,4 @@
-﻿<!-- Views/ListJobsView.xaml -->
-<UserControl x:Class="DesktopAutomationApp.Views.ListJobsView"
+﻿<UserControl x:Class="DesktopAutomationApp.Views.ListJobsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
@@ -13,9 +12,39 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" />
+        <!-- Toolbar -->
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Jobs" Style="{StaticResource Heading1}"/>
+            <Button Content="Reload" Command="{Binding RefreshCommand}" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <!-- Tabelle -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <ListBox ItemsSource="{Binding Items}" />
+            <DataGrid ItemsSource="{Binding Items}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                HeadersVisibility="Column"
+                GridLinesVisibility="None"
+                RowHeaderWidth="0"
+                SelectionMode="Single"
+                MouseDoubleClick="DataGrid_MouseDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="3*"/>
+                    <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" Width="*"/>
+                    <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"   Width="*"/>
+                    <DataGridTemplateColumn Header="" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Öffnen"
+                        Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
     </Grid>
 </UserControl>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DesktopAutomationApp.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,11 +16,17 @@ using System.Windows.Shapes;
 
 namespace DesktopAutomationApp.Views
 {
-    /// <summary>
-    /// Interaktionslogik für ListJobView.xaml
-    /// </summary>
     public partial class ListJobsView : UserControl
     {
         public ListJobsView() => InitializeComponent();
+
+        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is DataGrid dg && dg.SelectedItem is TaskAutomation.Jobs.Job job
+                && dg.DataContext is ListJobsViewModel vm)
+            {
+                vm.OpenJobCommand.Execute(job);
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace TaskAutomation.Steps
 {
     public class ProcessDuplicationStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
         {
             var pdStep = step as ProcessDuplicationStep;
             if (pdStep == null)
@@ -24,7 +24,7 @@ namespace TaskAutomation.Steps
 
             if (executor.ProcessDuplicator == null)
             {
-                executor.ProcessDuplicator = new ProcessDuplicator(pdStep.ProcessName);
+                executor.ProcessDuplicator = new ProcessDuplicator(pdStep.Settings.ProcessName);
             }
 
             executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();

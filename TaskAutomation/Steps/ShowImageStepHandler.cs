@@ -12,7 +12,7 @@ namespace TaskAutomation.Steps
 {
     public class ShowImageStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
         {
             var siStep = step as ShowImageStep;
             if (siStep == null)
@@ -38,14 +38,14 @@ namespace TaskAutomation.Steps
                 Cv2.WaitKey(1);
             }
 
-            if (siStep.ShowRawImage)
+            if (siStep.Settings.ShowRawImage)
             {
-                string windowName = $"{siStep.WindowName} - Raw Image";
+                string windowName = $"{siStep.Settings.WindowName} - Raw Image";
                 ShowBitmapImage(executor.CurrentImage, windowName);
             }
-            if (siStep.ShowProcessedImage)
+            if (siStep.Settings.ShowProcessedImage)
             {
-                string windowName = $"{siStep.WindowName} - Processed Image";
+                string windowName = $"{siStep.Settings.WindowName} - Processed Image";
                 if (executor.CurrentImageWithResult != null &&
                     !executor.CurrentImageWithResult.IsDisposed &&
                     executor.CurrentImageWithResult.Height >= 10 &&

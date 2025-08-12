@@ -11,7 +11,7 @@ namespace TaskAutomation.Steps
 {
     public class DesktopDuplicationStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
         {
             var ddStep = step as DesktopDuplicationStep;
             if (ddStep == null)
@@ -24,14 +24,14 @@ namespace TaskAutomation.Steps
 
             if (executor.DesktopDuplicator == null)
             {
-                executor.DesktopDuplicator = new DesktopDuplicator(ddStep.GraphicsCardAdapter, ddStep.OutputDevice);
+                executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.GraphicsCardAdapter, ddStep.Settings.OutputDevice);
             }
             try
             {
                 ct.ThrowIfCancellationRequested();
                 executor.CurrentDesktopFrame = executor.DesktopDuplicator.GetLatestFrame();
-                executor.CurrentDesktop = ddStep.OutputDevice;
-                executor.CurrentAdapter = ddStep.GraphicsCardAdapter;
+                executor.CurrentDesktop = ddStep.Settings.OutputDevice;
+                executor.CurrentAdapter = ddStep.Settings.GraphicsCardAdapter;
                 executor.CurrentImage = executor.CurrentDesktopFrame?.DesktopImage?.Clone() as Bitmap;
             }
             catch

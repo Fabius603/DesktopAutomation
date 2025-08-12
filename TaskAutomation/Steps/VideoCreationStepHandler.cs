@@ -11,7 +11,7 @@ namespace TaskAutomation.Steps
 {
     public class VideoCreationStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -25,13 +25,13 @@ namespace TaskAutomation.Steps
             {
                 return false;
             }
-            if (!string.IsNullOrEmpty(vcStep.SavePath))
+            if (!string.IsNullOrEmpty(vcStep.Settings.SavePath))
             {
-                executor.VideoRecorder.OutputDirectory = vcStep.SavePath;
+                executor.VideoRecorder.OutputDirectory = vcStep.Settings.SavePath;
             }
-            if (!string.IsNullOrEmpty(vcStep.FileName))
+            if (!string.IsNullOrEmpty(vcStep.Settings.FileName))
             {
-                executor.VideoRecorder.FileName = vcStep.FileName;
+                executor.VideoRecorder.FileName = vcStep.Settings.FileName;
             }
 
             if (executor.CurrentImage == null || executor.CurrentImage.Width == 0 && executor.CurrentImage.Height == 0)
@@ -39,12 +39,12 @@ namespace TaskAutomation.Steps
                 return false;
             }
 
-            if (vcStep.ShowRawImage)
+            if (vcStep.Settings.UseRawImage)
             {
                 ct.ThrowIfCancellationRequested();
                 executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
             }
-            else if (vcStep.ShowProcessedImage)
+            else if (vcStep.Settings.UseProcessedImage)
             {
                 if (executor.CurrentImageWithResult != null && !executor.CurrentImageWithResult.IsDisposed)
                 {

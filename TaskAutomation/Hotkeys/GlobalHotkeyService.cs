@@ -10,14 +10,18 @@ using Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskAutomation.Jobs;
+using TaskAutomation.Persistence;
 
 namespace TaskAutomation.Hotkeys
 {
     /// <summary>
     /// Service zum globalen Abhören von Hotkeys per WinAPI und Ausführung über Thread-Pool.
     /// </summary>
-    public class GlobalHotkeyService : IDisposable
+    public class GlobalHotkeyService : IGlobalHotkeyService, IDisposable
     {
+        private volatile bool _isCapturing;
+        private TaskCompletionSource<(KeyModifiers mods, uint vk)>? _captureTcs;
+
         // WinAPI-Konstanten
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
@@ -53,9 +57,14 @@ namespace TaskAutomation.Hotkeys
         private static extern IntPtr DispatchMessage([In] ref MSG lpMsg);
         #endregion
 
-        // Logger
+        // DI
         private readonly ILogger<GlobalHotkeyService> _logger;
-        
+        private readonly IJsonRepository<HotkeyDefinition> _repository;
+
+
+        // Maximale Anzahl an Worker-Threads
+        private const int _maxWorkerThreads = 4;
+
         // Datenstrukturen
         private readonly Dictionary<string, HotkeyDefinition> _definitions;
         private readonly BlockingCollection<Action> _workQueue = new();
@@ -68,31 +77,25 @@ namespace TaskAutomation.Hotkeys
         // Config path
         private string _hotkeyFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Hotkey");
 
-        // Lazy-instantiated Singleton
-        private static readonly Lazy<GlobalHotkeyService> _lazy =
-            new(() => new GlobalHotkeyService());
-
-        /// <summary>
-        /// Globale Instanz des GlobalHotkeyService
-        /// </summary>
-        public static GlobalHotkeyService Instance => _lazy.Value;
-
         public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
+
+        public IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys { get => _definitions; }
 
         /// <summary>
         /// Initialisiert den Service mit einer bestimmten Anzahl Worker-Threads.
         /// </summary>
-        private GlobalHotkeyService(int workerCount = 4)
+        public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger, IJsonRepository<HotkeyDefinition> repo)
         {
-            _logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<GlobalHotkeyService>();
+            _logger = logger;
+            _repository = repo;
             _definitions = new(StringComparer.OrdinalIgnoreCase);
             _workQueue = new BlockingCollection<Action>();
             _hookCallback = HookCallback;
             _hookId = IntPtr.Zero;
-            _workers = new Thread[workerCount];
+            _workers = new Thread[_maxWorkerThreads];
 
             // Worker-Threads starten
-            for (int i = 0; i < workerCount; i++)
+            for (int i = 0; i < _maxWorkerThreads; i++)
             {
                 _workers[i] = new Thread(WorkLoop)
                 {
@@ -104,11 +107,36 @@ namespace TaskAutomation.Hotkeys
 
             // Message Loop starten
             StartWithMessageLoop();
-           
-            // Hotkey-Definitionen laden
-            LoadFromJson(_hotkeyFolderPath);
 
-            _logger.LogInformation("GlobalHotkeyService initialisiert mit {WorkerCount} Worker-Threads.", workerCount);
+            _ = ReloadFromRepositoryAsync();
+
+            _logger.LogInformation("GlobalHotkeyService initialisiert mit {WorkerCount} Worker-Threads.", _maxWorkerThreads);
+        }
+
+        /// <summary>
+        /// Liefert die nächste Tastenkombination (Modifiers + VirtualKey). Währenddessen
+        /// wird das normale Hotkey-Matching/Dispatching ausgesetzt.
+        /// </summary>
+        public Task<(KeyModifiers Modifiers, uint VirtualKeyCode)> CaptureNextAsync(CancellationToken ct = default)
+        {
+            if (_isCapturing)
+                throw new InvalidOperationException("Capture ist bereits aktiv.");
+
+            _isCapturing = true;
+            _captureTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            if (ct.CanBeCanceled)
+            {
+                ct.Register(() =>
+                {
+                    var tcs = _captureTcs;
+                    _isCapturing = false;
+                    _captureTcs = null;
+                    tcs?.TrySetCanceled(ct);
+                });
+            }
+
+            return _captureTcs.Task;
         }
 
         /// <summary>
@@ -141,38 +169,25 @@ namespace TaskAutomation.Hotkeys
             _logger.LogInformation("Alle Hotkeys entfernt.");
         }
 
-        /// <summary>
-        /// Lädt Hotkey-Definitionen aus JSON und registriert sie.
-        /// JSON-Felder: Name, Modifiers, VirtualKeyCode, ActionName.
-        /// </summary>
-        public void LoadFromJson(string path)
+        public async Task ReloadFromRepositoryAsync()
         {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            options.Converters.Add(new JsonStringEnumConverter());
-            var entries = new List<HotkeyDefinition>();
-
-            if (Directory.Exists(path))
+            try
             {
-                // Verzeichnis: alle JSON-Dateien einlesen
-                 foreach (var file in Directory.GetFiles(path, "*.json"))
+                var entries = await _repository.LoadAllAsync().ConfigureAwait(false);
+
+                UnregisterAllHotkeys();
+                foreach (var e in entries)
                 {
-                    try
+                    if (e.Active)
                     {
-                        var json = File.ReadAllText(file);
-                        var list = JsonSerializer.Deserialize<List<HotkeyDefinition>>(json, options);
-                        if (list != null)
-                            entries.AddRange(list);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Konnte Hotkeys nicht aus Datei '{File}' laden.", file);
+                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action);
                     }
                 }
             }
-
-            UnregisterAllHotkeys();
-            foreach (var e in entries)
-                RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler beim Laden der Hotkeys aus dem Repository.");
+            }
         }
 
         /// <summary>
@@ -222,18 +237,30 @@ namespace TaskAutomation.Hotkeys
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
              if (nCode >= 0 && (wParam.ToInt32() == WM_KEYDOWN || wParam.ToInt32() == WM_SYSKEYDOWN))
-            {
-                uint vk = (uint)Marshal.ReadInt32(lParam);
-                KeyModifiers mods = GetCurrentModifiers();
-                ProcessKey(vk, mods);
-            }
-            return CallNextHookEx(_hookId, nCode, wParam, lParam);
+             {
+                 uint vk = (uint)Marshal.ReadInt32(lParam);
+                 KeyModifiers mods = GetCurrentModifiers();
+                 ProcessKey(vk, mods);
+             }
+             return CallNextHookEx(_hookId, nCode, wParam, lParam);
         }
 
         private void ProcessKey(uint vkCode, KeyModifiers mods)
         {
+            if (_isCapturing)
+            {
+                var tcs = _captureTcs;
+                _isCapturing = false;
+                _captureTcs = null;
+                tcs?.TrySetResult((mods, vkCode));
+                return;
+            }
+
             foreach (var def in _definitions.Values)
             {
+                if (def.Active == false)
+                    continue; // Hotkey ist deaktiviert
+
                 if (def.VirtualKeyCode != vkCode)
                     continue;
 

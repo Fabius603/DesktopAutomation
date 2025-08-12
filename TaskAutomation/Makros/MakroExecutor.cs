@@ -9,14 +9,14 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Makros
 {
-    public class MakroExecutor
+    public class MakroExecutor : IMakroExecutor
     {
         private readonly InputSimulator _sim;
         private readonly ILogger<MakroExecutor> _logger;
 
-        public MakroExecutor()
+        public MakroExecutor(ILogger<MakroExecutor> logger)
         {
-            _logger = Log.Create<MakroExecutor>();
+            _logger = logger;
             _sim = new InputSimulator();
         }
 

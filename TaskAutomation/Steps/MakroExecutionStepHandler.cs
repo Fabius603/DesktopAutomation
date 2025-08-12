@@ -9,7 +9,7 @@ namespace TaskAutomation.Steps
 {
     public class MakroExecutionStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, JobExecutor executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
         {
             var miStep = step as MakroExecutionStep;
             if (miStep == null)
@@ -18,7 +18,7 @@ namespace TaskAutomation.Steps
             } 
 
             await executor.MakroExecutor.ExecuteMakro(
-                executor.AllMakros[miStep.MakroName],
+                executor.AllMakros[miStep.Settings.MakroName],
                 executor.DxgiResources,
                 ct);
 

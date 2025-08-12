@@ -34,6 +34,126 @@
       }
     },
     {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
+      "type": "show_image",
+      "settings": {
+        "window_name": "Test",
+        "show_raw_image": false,
+        "show_processed_image": true
+      }
+    },
+    {
       "type": "video_creation",
       "settings": {
         "use_raw_image": false,
