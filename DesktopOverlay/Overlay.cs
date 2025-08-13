@@ -8,7 +8,9 @@ using GameOverlay.Drawing;
 using Vortice.Mathematics;
 using Graphics = GameOverlay.Drawing.Graphics;
 using SolidBrush = GameOverlay.Drawing.SolidBrush;
+using Rectangle = System.Drawing.Rectangle;
 using System.Runtime.InteropServices;
+using DesktopOverlay.OverlayItems;
 
 namespace DesktopOverlay
 {
@@ -24,6 +26,11 @@ namespace DesktopOverlay
         public IntPtr WindowHandle => _window.Handle;
         private GameOverlay.Drawing.Graphics _gfxContext;
 
+        private readonly System.Diagnostics.Stopwatch _clock = new();
+        private double _lastSeconds;
+        private double _playbackTime; // Sekunden
+        private bool _playbackRunning;
+        public double PlaybackSpeed { get; set; } = 1.0;
         public Overlay(int x, int y, int width, int height, int desktopId = 1, Graphics gfxSettings = null)
         {
             _desktopId = desktopId;
@@ -52,8 +59,7 @@ namespace DesktopOverlay
             get => _desktopId;
             set
             {
-                if (value < 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), "Desktop ID must be non-negative.");
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(value));
                 _desktopId = value;
                 MoveToMonitor(_desktopId);
             }
@@ -80,6 +86,30 @@ namespace DesktopOverlay
             return false;
         }
 
+        public void ClearItems()
+        {
+            foreach (var i in _items.Values) i.Dispose();
+            _items.Clear();
+        }
+
+        public void AddItems(IEnumerable<IOverlayItem> items)
+        {
+            foreach (var it in items) AddItem(it);
+        }
+
+        public void StartPlayback(double startSeconds = 0)
+        {
+            _playbackTime = startSeconds;
+            _lastSeconds = 0;
+            _clock.Restart();
+            _playbackRunning = true;
+        }
+
+
+        public void PausePlayback() => _playbackRunning = false;
+        public void ResumePlayback() { _lastSeconds = _clock.Elapsed.TotalSeconds; _playbackRunning = true; }
+        public void StopPlayback() { _playbackRunning = false; _playbackTime = 0; }
+
         private void OnSetup(object sender, SetupGraphicsEventArgs e)
         {
             _gfxContext = e.Graphics;
@@ -100,6 +130,18 @@ namespace DesktopOverlay
             var gfx = e.Graphics;
             // transparente Szene
             gfx.ClearScene(_backgroundBrush);
+
+            if (_playbackRunning)
+            {
+                double now = _clock.Elapsed.TotalSeconds;
+                double dt = now - _lastSeconds;
+                _lastSeconds = now;
+                _playbackTime += dt * System.Math.Max(0.0, PlaybackSpeed);
+
+                foreach (var item in _items.Values)
+                    if (item is ITimedOverlayItem timed)
+                        timed.Update(_playbackTime);
+            }
 
             // Alle Items zeichnen
             foreach (var item in _items.Values)
@@ -139,26 +181,23 @@ namespace DesktopOverlay
             uint uFlags);
         #endregion
 
-        /// <summary>
-        /// Verschiebt das Overlay auf den 0-basierten Monitor-Index.
-        /// </summary>
-        /// <param name="monitorIndex">Index von 0 bis Screen.AllScreens.Length−1</param>
         public void MoveToMonitor(int monitorIndex)
         {
-            var screens = Screen.AllScreens;
+            var screens = System.Windows.Forms.Screen.AllScreens;
             if (monitorIndex < 0 || monitorIndex >= screens.Length)
-                throw new ArgumentOutOfRangeException(nameof(monitorIndex),
-                    $"Monitore nur von 0 bis {screens.Length - 1}.");
+                throw new ArgumentOutOfRangeException(nameof(monitorIndex));
 
-            var bounds = screens[monitorIndex].Bounds;
-            SetWindowPos(
-                _window.Handle,
-                IntPtr.Zero,
-                bounds.X,
-                bounds.Y,
-                0, 0,
-                SWP_NOSIZE | SWP_NOZORDER
-            );
+            var b = screens[monitorIndex].Bounds;
+            SetWindowPos(_window.Handle, IntPtr.Zero, b.X, b.Y, b.Width, b.Height, SWP_NOZORDER);
+        }
+
+        public void MoveToVirtualDesktop()
+        {
+            Rectangle virtualBounds = System.Windows.Forms.SystemInformation.VirtualScreen;
+
+            // Wichtig: KEIN SWP_NOSIZE
+            const uint SWP_NOZORDER = 0x0004;
+            SetWindowPos(_window.Handle, IntPtr.Zero, virtualBounds.Left, virtualBounds.Top, virtualBounds.Width, virtualBounds.Height, SWP_NOZORDER);
         }
 
         public void RunInNewThread()
@@ -172,7 +211,7 @@ namespace DesktopOverlay
         public void Run()
         {
             CreateWindow();
-            MoveToMonitor(_desktopId);
+            MoveToVirtualDesktop();
             JoinWindow();
         }
 

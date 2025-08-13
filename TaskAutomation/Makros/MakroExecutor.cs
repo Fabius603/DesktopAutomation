@@ -25,26 +25,23 @@ namespace TaskAutomation.Makros
             foreach (var befehl in makro.Befehle)
             {
                 ct.ThrowIfCancellationRequested();
-
+                (double, double) XY = (0, 0);
                 switch (befehl)
                 {
                     case MouseMoveBefehl m:
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
+                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
                         break;
 
                     case MouseDownBefehl m:
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
+                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
                         PressMouse(m.Button, down: true);
                         break;
 
                     case MouseUpBefehl m:
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(
-                            ScreenHelper.BerechneAbsoluteX(m.X, makro.AdapterIndex, makro.DesktopIndex, dxgi),
-                            ScreenHelper.BerechneAbsoluteY(m.Y, makro.AdapterIndex, makro.DesktopIndex, dxgi));
+                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
                         PressMouse(m.Button, down: false);
                         break;
 

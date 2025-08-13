@@ -12,12 +12,6 @@ namespace TaskAutomation.Makros
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("desktop_index")]
-        public int DesktopIndex { get; set; }
-
-        [JsonPropertyName("adapter_index")]
-        public int AdapterIndex { get; set; }
-
         [JsonPropertyName("commands")]
         public List<MakroBefehl> Befehle { get; set; }
     }

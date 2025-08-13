@@ -17,6 +17,7 @@ using TaskAutomation.Persistence;
 using System.IO;
 using Serilog;
 using Serilog.Events;
+using DesktopAutomationApp.Services.Preview;
 
 namespace DesktopAutomationApp
 {
@@ -60,6 +61,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
                     services.AddSingleton<IJobDispatcher, JobDispatcher>();
+                    services.AddSingleton<IMacroPreviewService, MacroPreviewService>();
 
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();

@@ -10,11 +10,9 @@ Die Makro-Datei ist ein JSON-Objekt mit globalen Einstellungen und einem Array v
 
 ```json
 {
-  "desktop_index": 0,
-  "adapter_index": 0,
   "commands": [
     {
-      "type": "mouse_m_ove",
+      "type": "mouse_move",
       "x": 100,
       "y": 200
     }
@@ -32,8 +30,6 @@ Diese Einstellungen definieren das Verhalten des Makros in Bezug auf die Bildsch
 
 | Feld | Typ  | Beschreibung      |
 |------|------|-------------------|
-| desktop_index        | int        | Der Index des Desktops (beginnend bei 0), auf dem das Makro ausgeführt werden soll.      |
-| adapter_index        | int        | Der Index des Display-Adapters (beginnend bei 0), der für die Ausführung des Makros verwendet werden soll. |
 | commands             | array      | Ein Array von Befehlsobjekten (siehe unten).|
 
 ---

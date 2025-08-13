@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using GameOverlay.Drawing;
 using Graphics = GameOverlay.Drawing.Graphics;
 
-namespace DesktopOverlay
+namespace DesktopOverlay.OverlayItems
 {
     /// <summary>
     /// Interface für Overlay-Items mit Lebenszyklus-Hooks.

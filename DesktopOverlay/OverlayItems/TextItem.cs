@@ -5,39 +5,32 @@ using Graphics = GameOverlay.Drawing.Graphics;
 using Color = GameOverlay.Drawing.Color;
 
 
-namespace DesktopOverlay
+namespace DesktopOverlay.OverlayItems
 {
-    public class TextItem : OverlayItemBase
+    public sealed class TextItem : OverlayItemBase
     {
         private readonly string _fontName;
         private readonly float _fontSize;
         private readonly string _text;
-        private readonly Color _color;
+
+        private readonly float _gx, _gy; // globaler Anker (linke obere Ecke)
 
         private Font _font;
         private SolidBrush _brush;
+        private readonly Color _color;
 
-        public float X { get; set; }
-        public float Y { get; set; }
-
-        public TextItem(string id, string fontName, float fontSize, string text, Color color, float x, float y)
+        public TextItem(string id, string fontName, float fontSize, string text, Color color,
+                        float globalX, float globalY)
             : base(id)
         {
-            _fontName = fontName;
-            _fontSize = fontSize;
-            _text = text;
-            _color = color;
-            X = x;
-            Y = y;
+            _fontName = fontName; _fontSize = fontSize;
+            _text = text; _color = color;
+            _gx = globalX; _gy = globalY;
         }
 
         public override void Setup(Graphics gfx, bool recreate)
         {
-            if (recreate)
-            {
-                _font?.Dispose();
-                _brush?.Dispose();
-            }
+            if (recreate) { _font?.Dispose(); _brush?.Dispose(); }
             _font = gfx.CreateFont(_fontName, _fontSize);
             _brush = gfx.CreateSolidBrush(_color.R, _color.G, _color.B, _color.A);
         }
@@ -45,14 +38,14 @@ namespace DesktopOverlay
         public override void Draw(Graphics gfx)
         {
             if (!Visible) return;
-            gfx.DrawText(_font, _brush, X, Y, _text);
+
+            var p = Map(_gx, _gy); // global → lokal
+            gfx.DrawText(_font, _brush, p.x, p.y, _text);
         }
 
         public override void Dispose()
         {
-            _font?.Dispose();
-            _brush?.Dispose();
+            _font?.Dispose(); _brush?.Dispose();
         }
     }
-
 }

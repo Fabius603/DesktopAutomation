@@ -1,22 +1,22 @@
 [
   {
-    "Name": "TestHotkeyStart",
-    "Modifiers": 0,
-    "VirtualKeyCode": 160,
-    "Action": {
-      "Name": "MakroTest",
-      "Command": "Start"
+    "name": "TestHotkeyStart",
+    "modifiers": "None",
+    "virtual_key_code": 105,
+    "action": {
+      "name": "MakroTest",
+      "command": "Toggle"
     },
-    "Active": true
+    "active": true
   },
   {
-    "Name": "TestHotkeyToggle",
-    "Modifiers": 0,
-    "VirtualKeyCode": 32,
-    "Action": {
-      "Name": "DesktopVideo",
-      "Command": "Toggle"
+    "name": "TestHotkeyToggle",
+    "modifiers": "None",
+    "virtual_key_code": 44,
+    "action": {
+      "name": "DesktopVideo",
+      "command": "Toggle"
     },
-    "Active": true
+    "active": false
   }
 ]

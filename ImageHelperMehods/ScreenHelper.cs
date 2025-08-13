@@ -7,6 +7,7 @@ using SharpDX.DXGI;
 using SharpDX.Direct3D11;
 using Device = SharpDX.Direct3D11.Device;
 using ImageHelperMethods;
+using System.Windows.Forms;
 
 namespace ImageHelperMethods
 {
@@ -80,6 +81,31 @@ namespace ImageHelperMethods
             int totalHeight = GetVirtualDesktopHeight(dxgi);
 
             return Math.Clamp((virtualY * 65535.0) / totalHeight, 0, 65535);
+        }
+
+        public static (double absX, double absY) ToAbsoluteVirtual(int pixelX, int pixelY)
+        {
+            Rectangle virtualBounds = GetVirtualDesktopBounds();
+            // (width-1)/(height-1) damit Randpixel erreichbar sind
+            double absX = Math.Clamp(((pixelX - virtualBounds.Left) * 65535.0) / Math.Max(1, virtualBounds.Width - 1), 0, 65535);
+            double absY = Math.Clamp(((pixelY - virtualBounds.Top) * 65535.0) / Math.Max(1, virtualBounds.Height - 1), 0, 65535);
+            return (absX, absY);
+        }
+
+        public static Rectangle GetVirtualDesktopBounds()
+        {
+            var screens = Screen.AllScreens;
+            int left = int.MaxValue, top = int.MaxValue, right = int.MinValue, bottom = int.MinValue;
+            foreach (var s in screens)
+            {
+                left = Math.Min(left, s.Bounds.Left);
+                top = Math.Min(top, s.Bounds.Top);
+                right = Math.Max(right, s.Bounds.Right);
+                bottom = Math.Max(bottom, s.Bounds.Bottom);
+            }
+            int width = right - left;
+            int height = bottom - top;
+            return new Rectangle(left, top, width, height);
         }
 
         private static int GetVirtualDesktopWidth(DxgiResources dxgi)
