@@ -294,12 +294,6 @@ namespace TaskAutomation.Jobs
                 }
 
                 if (!continueJob) break;
-
-                if (job.Repeating && Console.KeyAvailable)
-                {
-                    job.Repeating = false;
-                    _logger.LogInformation("Job-Wiederholung gestoppt per Tastendruck.");
-                }
             }
             while (job.Repeating && continueJob);
 

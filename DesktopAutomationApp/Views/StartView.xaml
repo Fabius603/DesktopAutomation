@@ -1,8 +1,6 @@
-﻿<!-- Views/ListMakrosView.xaml -->
-<UserControl x:Class="DesktopAutomationApp.Views.StartView"
+﻿<UserControl x:Class="DesktopAutomationApp.Views.StartView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -13,9 +11,129 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" />
-        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <TextBlock Text="{Binding Description}"/>
-        </Border>
+        <!-- Titel -->
+        <TextBlock Text="DesktopAutomation"
+                   Style="{StaticResource Heading1}" />
+
+        <!-- Inhalt -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Kurze Einführung -->
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <StackPanel Margin="12">
+                        <TextBlock Style="{StaticResource Heading2}"
+                                   Text="Was ist diese Anwendung?" 
+                                   Margin="0,0,0,8"/>
+                        <TextBlock TextWrapping="Wrap">
+                            DesktopAutomation automatisiert wiederkehrende Desktop-Aktionen.
+                            Über globale Hotkeys starten Sie Jobs, die aus einzelnen Steps bestehen
+                            (z. B. Bildschirmaufnahme, Template-Matching, Videoexport) und optional
+                            Makros ausführen (Maus/Tastatur). Ziel ist ein stabiler, erweiterbarer
+                            Automations-Workflow – direkt auf dem Windows-Desktop.
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- Funktionsblöcke: 3 Spalten, gleiche Breiten/Höhen -->
+<Grid Margin="0,8,0,0">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <!-- Hotkeys -->
+    <Border Grid.Column="0" Style="{StaticResource CardBox}">
+        <StackPanel Margin="12">
+            <TextBlock Style="{StaticResource Heading3}" Text="Hotkeys" Margin="0,0,0,6"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                Globale Tastenkombinationen, die Aktionen auslösen.
+            </TextBlock>
+            <ItemsControl>
+                <ItemsControl.Items>
+                    <TextBlock Text="• Start / Stop / Toggle eines Jobs" />
+                    <TextBlock Text="• Erfassung von Modifiers + VK (Capture)" />
+                    <TextBlock Text="• Aktiv/Inaktiv je Hotkey" />
+                </ItemsControl.Items>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+
+    <!-- Jobs -->
+    <Border Grid.Column="1" Style="{StaticResource CardBox}">
+        <StackPanel Margin="12">
+            <TextBlock Style="{StaticResource Heading3}" Text="Jobs" Margin="0,0,0,6"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                Abfolge von Steps, wiederholbar und kombinierbar.
+            </TextBlock>
+            <ItemsControl>
+                <ItemsControl.Items>
+                    <TextBlock Text="• Process/Desktop-Duplication" />
+                    <TextBlock Text="• Template Matching (OpenCV)" />
+                    <TextBlock Text="• Makro-Ausführung &amp; Videoexport" />
+                </ItemsControl.Items>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+
+    <!-- Makros -->
+    <Border Grid.Column="2" Style="{StaticResource CardBox}">
+        <StackPanel Margin="12">
+            <TextBlock Style="{StaticResource Heading3}" Text="Makros" Margin="0,0,0,6"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
+                Sequenzen aus Maus- und Tastaturbefehlen.
+            </TextBlock>
+            <ItemsControl>
+                <ItemsControl.Items>
+                    <TextBlock Text="• MouseMove / Down / Up, KeyDown / Up, Timeout" />
+                    <TextBlock Text="• Vorschau als Overlay (Pfad, Klick-Pulse)" />
+                    <TextBlock Text="• Koordinaten im virtuellen Desktopraum" />
+                </ItemsControl.Items>
+            </ItemsControl>
+        </StackPanel>
+    </Border>
+</Grid>
+
+                <!-- Beispiele -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+                    <StackPanel Margin="12">
+                        <TextBlock Style="{StaticResource Heading2}" Text="Beispiele" Margin="0,0,0,6"/>
+                        <ItemsControl>
+                            <ItemsControl.Items>
+                                <TextBlock TextWrapping="Wrap"
+                                           Text="• STRG+ALT+M startet den Job „OpenMail“, der ein Makro ausführt und den Posteingang öffnet." />
+                                <TextBlock TextWrapping="Wrap"
+                                           Text="• STRG+SHIFT+S startet eine Erkennung per Template-Matching und speichert ein kurzes Video." />
+                                <TextBlock TextWrapping="Wrap"
+                                           Text="• In der Makro-Liste ein Makro auswählen → Vorschau (Übersicht/Ablauf) einblenden." />
+                            </ItemsControl.Items>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Status / Roadmap -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+                    <StackPanel Margin="12">
+                        <TextBlock Style="{StaticResource Heading2}" Text="Status &amp; Roadmap" Margin="0,0,0,6"/>
+                        <TextBlock TextWrapping="Wrap">
+                            Hotkeys, Jobs und Makros sind bereits funktionsfähig und werden schrittweise in der UI editierbar.
+                            Einige Einstellungen (z. B. komplexe Job-Steps) sind derzeit noch im JSON (Configs\*) zu pflegen.
+                            Die Vorschau für Makros ist integriert; erweiterte Editierdialoge folgen.
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- Hinweis -->
+                <TextBlock Foreground="{DynamicResource MahApps.Brushes.Gray4}"
+                           FontStyle="Italic"
+                           TextWrapping="Wrap"
+                           Margin="0,8,0,0">
+                    Hinweis: Konfigurationen werden als JSON-Dateien geladen (Jobs, Makros, Hotkeys).
+                    Backups werden automatisch erstellt; Änderungen in der UI überschreiben die Zieldateien.
+                </TextBlock>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

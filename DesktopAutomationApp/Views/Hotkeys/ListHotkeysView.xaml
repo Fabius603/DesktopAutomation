@@ -143,13 +143,13 @@
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,8,0,0"/>
                 <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,8,0,0">
                     <CheckBox DockPanel.Dock="Left"
-                          Content=""
-                          Margin="0,0,8,0"
-                          VerticalAlignment="Center"
-                          IsThreeState="False"
-                          IsEnabled="{Binding IsEditing}"
-                          IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          ToolTip="Hotkey ist aktiv/inaktiv"/>
+                              Margin="0,0,8,0"
+                              VerticalAlignment="Center"
+                              IsThreeState="False"
+                              IsEnabled="True"
+                              IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ToolTip="Hotkey ist aktiv/inaktiv">
+                    </CheckBox>
                 </DockPanel>
                 
                 <!-- Trigger -->

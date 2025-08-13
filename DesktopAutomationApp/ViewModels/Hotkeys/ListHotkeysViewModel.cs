@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Persistence;
+using Xabe.FFmpeg.Downloader;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -80,6 +81,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CancelEditCommand { get; }
         public ICommand StartCaptureCommand { get; }
         public ICommand CancelCaptureCommand { get; }
+        public ICommand ToggleActiveCommand { get; }
 
         public ListHotkeysViewModel(
             IJsonRepository<HotkeyDefinition> repo,
@@ -106,15 +108,15 @@ namespace DesktopAutomationApp.ViewModels
             CommandsView = CollectionViewSource.GetDefaultView(AvailableCommands);
             CommandsView.Filter = o => o is ActionCommand c && (string.IsNullOrWhiteSpace(CommandFilter) || c.ToString().Contains(CommandFilter, StringComparison.OrdinalIgnoreCase));
 
-            RefreshCommand       = new RelayCommand(async () => await LoadAsync());
-            NewCommand           = new RelayCommand(NewHotkey, () => IsBrowse);
-            EditCommand          = new RelayCommand<object?>(_ => EditHotkey(), _ => IsBrowse && Selected != null);
-            DeleteCommand        = new RelayCommand(async () => await DeleteSelectedAsync(), () => IsBrowse && Selected != null);
-            SaveAllCommand       = new RelayCommand(async () => await SaveAllAsync(), () => IsEditing && EditedHotkey != null);
-            SaveEditCommand      = new RelayCommand(SaveEdit, () => IsEditing && EditedHotkey != null);
-            CancelEditCommand    = new RelayCommand(CancelEdit, () => IsEditing);
-            StartCaptureCommand  = new RelayCommand(async () => await CaptureAsync(), () => IsEditing && !IsCapturing && EditedHotkey != null);
-            CancelCaptureCommand = new RelayCommand(() => _captureCts?.Cancel(), () => IsEditing && IsCapturing);
+            RefreshCommand          = new RelayCommand(async () => await LoadAsync());
+            NewCommand              = new RelayCommand(NewHotkey, () => IsBrowse);
+            EditCommand             = new RelayCommand<object?>(_ => EditHotkey(), _ => IsBrowse && Selected != null);
+            DeleteCommand           = new RelayCommand(async () => await DeleteSelectedAsync(), () => IsBrowse && Selected != null);
+            SaveAllCommand          = new RelayCommand(async () => await SaveAllAsync(), () => IsEditing && EditedHotkey != null);
+            SaveEditCommand         = new RelayCommand(SaveEdit, () => IsEditing && EditedHotkey != null);
+            CancelEditCommand       = new RelayCommand(CancelEdit, () => IsEditing);
+            StartCaptureCommand     = new RelayCommand(async () => await CaptureAsync(), () => IsEditing && !IsCapturing && EditedHotkey != null);
+            CancelCaptureCommand    = new RelayCommand(() => _captureCts?.Cancel(), () => IsEditing && IsCapturing);
 
             _ = LoadAsync();
         }
@@ -126,7 +128,11 @@ namespace DesktopAutomationApp.ViewModels
             var list = await _repo.LoadAllAsync();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
-                Items.Add(EditableHotkey.FromDomain(hk));
+            {
+                var ehk = EditableHotkey.FromDomain(hk);
+                Items.Add(ehk);
+                ehk.PropertyChanged += SaveActiveNoEditor;
+            }
             Selected = Items.FirstOrDefault();
             IsEditing = false; IsCapturing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
             _log.LogInformation("Hotkeys geladen: {Count}", Items.Count);
@@ -250,6 +256,24 @@ namespace DesktopAutomationApp.ViewModels
             await _repo.SaveAllAsync(domain);
             _log.LogInformation("Hotkeys gespeichert: {Count}", domain.Count);
 
+            await _capture.ReloadFromRepositoryAsync();
+        }
+
+        private void SaveActiveNoEditor(object? sender, PropertyChangedEventArgs e)
+        {
+            SaveActiveNoEditor();
+        }
+
+        private async Task SaveActiveNoEditor()
+        {
+            if(Selected == null) { return; }
+            if(IsEditing == true) { return; }
+
+            var error = ValidateEdited(Selected);
+            if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
+
+            await _repo.SaveAsync(Selected.ToDomain());
+            _log.LogInformation("Hotkey gespeichert");
             await _capture.ReloadFromRepositoryAsync();
         }
 
