@@ -31,6 +31,12 @@ namespace DesktopOverlay
         private double _playbackTime; // Sekunden
         private bool _playbackRunning;
         public double PlaybackSpeed { get; set; } = 1.0;
+
+        const uint WDA_EXCLUDEFROMCAPTURE = 0x11; // verhindert Aufnahme/PrintScreen
+
+        [DllImport("user32.dll")]
+        static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
+
         public Overlay(int x, int y, int width, int height, int desktopId = 1, Graphics gfxSettings = null)
         {
             _desktopId = desktopId;
@@ -109,6 +115,11 @@ namespace DesktopOverlay
         public void PausePlayback() => _playbackRunning = false;
         public void ResumePlayback() { _lastSeconds = _clock.Elapsed.TotalSeconds; _playbackRunning = true; }
         public void StopPlayback() { _playbackRunning = false; _playbackTime = 0; }
+
+        public void ExcludeFromCapture()
+        {
+            SetWindowDisplayAffinity(_window.Handle, WDA_EXCLUDEFROMCAPTURE);
+        }
 
         private void OnSetup(object sender, SetupGraphicsEventArgs e)
         {
@@ -211,6 +222,7 @@ namespace DesktopOverlay
         public void Run()
         {
             CreateWindow();
+            ExcludeFromCapture();
             MoveToVirtualDesktop();
             JoinWindow();
         }
