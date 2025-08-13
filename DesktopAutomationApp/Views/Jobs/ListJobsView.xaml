@@ -14,8 +14,8 @@
 
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Jobs" Style="{StaticResource Heading1}"/>
-            <Button Content="Reload" Command="{Binding RefreshCommand}" Margin="12,0,0,0" />
+            <TextBlock Text="Jobs" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
         </StackPanel>
 
         <!-- Tabelle -->

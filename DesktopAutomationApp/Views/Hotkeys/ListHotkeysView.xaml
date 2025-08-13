@@ -32,23 +32,24 @@
 
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Hotkeys" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
             <Button Content="Aktualisieren"
             Command="{Binding RefreshCommand}"
-            Margin="0,0,8,0"
+            Margin="8,0,0,0"
             ToolTip="Hotkeys und Jobs neu laden" />
 
             <Button Content="Neu"
             Command="{Binding NewCommand}"
-            Margin="0,0,8,0"
+            Margin="8,0,0,0"
             ToolTip="Neuen Hotkey anlegen" />
 
             <Button Content="Löschen"
             Command="{Binding DeleteCommand}"
-            Margin="0,0,8,0"
+            Margin="8,0,0,0"
             ToolTip="Ausgewählten Hotkey löschen" />
 
             <TextBlock Text="{Binding Items.Count, StringFormat='  ({0} Hotkeys)'}"
-               Margin="12,0,0,0" VerticalAlignment="Center"/>
+               Margin="8,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
         <!-- Liste -->
