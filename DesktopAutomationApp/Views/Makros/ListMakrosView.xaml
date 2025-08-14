@@ -6,6 +6,8 @@
              xmlns:mak="clr-namespace:TaskAutomation.Makros;assembly=TaskAutomation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
+             xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
@@ -35,6 +37,9 @@
             <Setter Property="LineHeight" Value="18"/>
         </Style>
 
+        <conv:TypeNameConverter x:Key="TypeNameConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        
         <!-- ========== EINHEITLICHE DETAIL-TEMPLATES ========== -->
         <!-- Muster: OuterGrid: [TypeCol(shared)] [16px] [DetailsGrid] -->
         <!-- DetailsGrid: [ParamLabelCol(shared)] [12px] [ValueCol] mit expliziten RowDefinitions -->
@@ -233,17 +238,14 @@
             <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
             <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" />
 
-            <!-- Vorschau -->
             <Separator Width="16"/>
-            <Button Content="Vorschau (Übersicht)"
-            Command="{Binding PreviewOverviewCommand}"
-            Margin="8,0,0,0"/>
-            <Button Content="Vorschau (Ablauf)"
-            Command="{Binding PreviewPlaybackCommand}"
-            Margin="8,0,0,0"/>
-            <Button Content="Vorschau beenden"
-            Command="{Binding PreviewStopCommand}"
-            Margin="8,0,0,0"/>
+            <Button Content="Neu" Command="{Binding NewMakroCommand}" />
+            <Button Content="Löschen" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0"/>
+
+            <Separator Width="16"/>
+            <Button Content="Vorschau (Übersicht)" Command="{Binding PreviewOverviewCommand}" Margin="8,0,0,0"/>
+            <Button Content="Vorschau (Ablauf)" Command="{Binding PreviewPlaybackCommand}" Margin="8,0,0,0"/>
+            <Button Content="Vorschau beenden" Command="{Binding PreviewStopCommand}" Margin="8,0,0,0"/>
         </StackPanel>
 
         <!-- Liste der Makros -->
@@ -261,23 +263,210 @@
             </DataGrid>
         </Border>
 
-        <!-- Details: Befehle des ausgewählten Makros -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
-            <!-- Gemeinsame Breiten aktivieren -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Selected.Befehle}"
-                              Grid.IsSharedSizeScope="True">
-                    <ItemsControl.ItemTemplate>
+            <DockPanel>
+                <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme / Speichern -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0">
+                    <ToggleButton Content="Bearbeiten" IsChecked="{Binding IsEditMode}"/>
+                    <Button Content="Neuen Step hinzufügen" Command="{Binding AddStepCommand}" IsEnabled="{Binding Selected}" Margin="8,0,0,0"/>
+                    <Button Content="Aufnahme starten (Platzhalter)" Command="{Binding RecordStepsCommand}" Margin="8,0,0,0"/>
+                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding Selected.Befehle}"
+         SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+         ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="VerticalContentAlignment"   Value="Stretch"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <!-- wichtig für Hover-HitTests -->
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <!-- eine neutrale Hülle, die Hover-Ereignisse bekommt -->
+                                        <Border Background="{TemplateBinding Background}">
+                                            <!-- Das ist der sichtbare Rahmen deiner „Karte“ -->
+                                            <Border x:Name="Card"
+                                                Margin="12,8,12,0"
+                                                Padding="12"
+                                                Background="Transparent"
+                                                BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                                                BorderThickness="1"
+                                                CornerRadius="8">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </Border>
+
+                                        <ControlTemplate.Triggers>
+                                            <!-- HOVER: nur der Rahmen -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <!-- Teste bei Bedarf erst mit fester Farbe z. B. #FF0078D4 -->
+                                                <Setter TargetName="Card" Property="BorderBrush"
+                                                    Value="{DynamicResource MahApps.Brushes.Highlight}"/>
+                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
+                                                
+                                            </Trigger>
+
+                                            <!-- SELECTED -->
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Card" Property="BorderBrush"
+                                                    Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                <Setter TargetName="Card" Property="Background"
+                                                    Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <!-- DEIN ItemTemplate (mit ergänztem Background & Triggern) -->
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,0,0,8" Padding="12"
-                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
-                                    BorderThickness="1" CornerRadius="8">
-                                <ContentPresenter Content="{Binding}"/>
-                            </Border>
+                            <!-- Zwei Spalten: links Inhalt, rechts Pfeile (▲ links von ▼) -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Inhalt -->
+                                    <StackPanel Grid.Column="0">
+                                        <!-- ANZEIGE: nutzt implizite DataTemplates -->
+                                        <ContentPresenter Content="{Binding}"/>
+
+                                        <!-- EDITOR: nur im Edit-Mode sichtbar -->
+                                        <ContentControl>
+                                            <ContentControl.Style>
+                                                <Style TargetType="ContentControl">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Value="True"
+                                                     Binding="{Binding DataContext.IsEditMode,
+                                                               RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="ContentTemplate">
+                                                                <Setter.Value>
+                                                                    <DataTemplate>
+                                                                        <Grid>
+                                                                            <Grid.Resources>
+                                                                                <!-- Editor-Templates pro Typ -->
+                                                                                <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
+                                                                                    <UniformGrid Columns="4">
+                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding X}"/>
+                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Y}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+
+                                                                                <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
+                                                                                    <UniformGrid Columns="6">
+                                                                                        <TextBlock Text="Button:" VerticalAlignment="Center"/>
+                                                                                        <ComboBox SelectedValuePath="Content"
+                                                                                  SelectedValue="{Binding Button}">
+                                                                                            <ComboBoxItem Content="Left"/>
+                                                                                            <ComboBoxItem Content="Right"/>
+                                                                                            <ComboBoxItem Content="Middle"/>
+                                                                                        </ComboBox>
+                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding X}"/>
+                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Y}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+
+                                                                                <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
+                                                                                    <UniformGrid Columns="6">
+                                                                                        <TextBlock Text="Button:" VerticalAlignment="Center"/>
+                                                                                        <ComboBox SelectedValuePath="Content"
+                                                                                  SelectedValue="{Binding Button}">
+                                                                                            <ComboBoxItem Content="Left"/>
+                                                                                            <ComboBoxItem Content="Right"/>
+                                                                                            <ComboBoxItem Content="Middle"/>
+                                                                                        </ComboBox>
+                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding X}"/>
+                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Y}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+
+                                                                                <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
+                                                                                    <UniformGrid Columns="2">
+                                                                                        <TextBlock Text="Key:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Key}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+
+                                                                                <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
+                                                                                    <UniformGrid Columns="2">
+                                                                                        <TextBlock Text="Key:" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Key}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+
+                                                                                <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
+                                                                                    <UniformGrid Columns="2">
+                                                                                        <TextBlock Text="Duration (ms):" VerticalAlignment="Center"/>
+                                                                                        <TextBox Text="{Binding Duration}"/>
+                                                                                    </UniformGrid>
+                                                                                </DataTemplate>
+                                                                            </Grid.Resources>
+
+                                                                            <!-- Rendert automatisch den passenden Editor -->
+                                                                            <ContentPresenter Content="{Binding}"/>
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ContentControl.Style>
+                                        </ContentControl>
+                                    </StackPanel>
+
+                                    <!-- Aktionen rechts: ▲ (links) vor ▼ (rechts); nur im Edit-Mode sichtbar -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="8,0,0,0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True"
+                                                 Binding="{Binding DataContext.IsEditMode,
+                                                           RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+
+                                        <!-- ▲ nach oben -->
+                                        <Button Content="▲" Width="28" Height="28" Margin="0,0,4,0"
+                                ToolTip="Schritt nach oben"
+                                Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"/>
+
+                                        <!-- ▼ nach unten -->
+                                        <Button Content="▼" Width="28" Height="28"
+                                ToolTip="Schritt nach unten"
+                                Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Grid>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

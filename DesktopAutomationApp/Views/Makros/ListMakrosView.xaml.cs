@@ -21,5 +21,11 @@ namespace DesktopAutomationApp.Views
     public partial class ListMakrosView : UserControl
     {
         public ListMakrosView() => InitializeComponent();
+
+        private void StepsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox lb && lb.SelectedItem != null)
+                lb.Dispatcher.BeginInvoke(() => lb.ScrollIntoView(lb.SelectedItem));
+        }
     }
 }

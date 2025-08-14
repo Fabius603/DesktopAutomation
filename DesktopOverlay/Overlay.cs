@@ -11,6 +11,7 @@ using SolidBrush = GameOverlay.Drawing.SolidBrush;
 using Rectangle = System.Drawing.Rectangle;
 using System.Runtime.InteropServices;
 using DesktopOverlay.OverlayItems;
+using ImageHelperMethods;
 
 namespace DesktopOverlay
 {
@@ -22,7 +23,6 @@ namespace DesktopOverlay
         private readonly GraphicsWindow _window;
         private readonly ConcurrentDictionary<string, IOverlayItem> _items = new();
         private SolidBrush _backgroundBrush;
-        private int _desktopId;
         public IntPtr WindowHandle => _window.Handle;
         private GameOverlay.Drawing.Graphics _gfxContext;
 
@@ -37,9 +37,8 @@ namespace DesktopOverlay
         [DllImport("user32.dll")]
         static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint dwAffinity);
 
-        public Overlay(int x, int y, int width, int height, int desktopId = 1, Graphics gfxSettings = null)
+        public Overlay(int x, int y, int width, int height, Graphics gfxSettings = null)
         {
-            _desktopId = desktopId;
 
             var gfx = gfxSettings ?? new Graphics
             {
@@ -58,17 +57,6 @@ namespace DesktopOverlay
             _window.SetupGraphics += OnSetup;
             _window.DrawGraphics += OnDraw;
             _window.DestroyGraphics += OnDestroy;
-        }
-
-        public int DesktopID
-        {
-            get => _desktopId;
-            set
-            {
-                if (value < 0) throw new ArgumentOutOfRangeException(nameof(value));
-                _desktopId = value;
-                MoveToMonitor(_desktopId);
-            }
         }
 
         public void AddItem(IOverlayItem item)
@@ -194,7 +182,7 @@ namespace DesktopOverlay
 
         public void MoveToMonitor(int monitorIndex)
         {
-            var screens = System.Windows.Forms.Screen.AllScreens;
+            var screens = ScreenHelper.GetScreens();
             if (monitorIndex < 0 || monitorIndex >= screens.Length)
                 throw new ArgumentOutOfRangeException(nameof(monitorIndex));
 

@@ -13,14 +13,14 @@ namespace ImageCapture.DesktopDuplication
     {
         public static Screen GetScreenByMousePos(Point p)
         {
-            Screen screen = Screen.AllScreens.FirstOrDefault(s => s.Bounds.Contains(p))
+            Screen screen = ScreenHelper.GetScreens().FirstOrDefault(s => s.Bounds.Contains(p))
                      ?? Screen.PrimaryScreen;
 
             return screen;
         }
 
         public static int GetGlobalMonitorIndex(Screen screen)
-            => Array.IndexOf(Screen.AllScreens, screen);
+            => Array.IndexOf(ScreenHelper.GetScreens(), screen);
 
 
         public static bool TryResolveAdapterOutput(Screen screen, out int adapterIndex, out int outputIndex)

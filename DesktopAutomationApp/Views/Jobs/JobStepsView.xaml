@@ -5,10 +5,13 @@
              xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
     <UserControl.Resources>
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -36,25 +39,25 @@
                 <!-- Rechts: Parameter untereinander -->
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="TemplatePath: "/><Run Text="{Binding TemplatePath}"/>
+                        <Run Text="TemplatePath: "/><Run Text="{Binding Settings.TemplatePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MatchMode: "/><Run Text="{Binding TemplateMatchMode}"/>
+                        <Run Text="MatchMode: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MultiplePoints: "/><Run Text="{Binding MultiplePoints}"/>
+                        <Run Text="MultiplePoints: "/><Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding ConfidenceThreshold}"/>
+                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="EnableROI: "/><Run Text="{Binding EnableROI}"/>
+                        <Run Text="EnableROI: "/><Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ROI: "/><Run Text="{Binding ROI}"/>
+                        <Run Text="ROI: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="DrawResults: "/><Run Text="{Binding DrawResults}"/>
+                        <Run Text="DrawResults: "/><Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -76,10 +79,7 @@
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="OutputDevice: "/><Run Text="{Binding OutputDevice}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="GraphicsCardAdapter: "/><Run Text="{Binding GraphicsCardAdapter}"/>
+                        <Run Text="Desktop Index: "/><Run Text="{Binding Settings.DesktopIdx}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -101,7 +101,7 @@
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ProcessName: "/><Run Text="{Binding ProcessName}"/>
+                        <Run Text="ProcessName: "/><Run Text="{Binding Settings.ProcessName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -123,13 +123,13 @@
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="WindowName: "/><Run Text="{Binding WindowName}"/>
+                        <Run Text="WindowName: "/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ShowRawImage: "/><Run Text="{Binding ShowRawImage}"/>
+                        <Run Text="ShowRawImage: "/><Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}}" />
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ShowProcessedImage: "/><Run Text="{Binding ShowProcessedImage}"/>
+                        <Run Text="ShowProcessedImage: "/><Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -151,16 +151,16 @@
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="SavePath: "/><Run Text="{Binding SavePath}"/>
+                        <Run Text="SavePath: "/><Run Text="{Binding Settings.SavePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="FileName: "/><Run Text="{Binding FileName}"/>
+                        <Run Text="FileName: "/><Run Text="{Binding Settings.FileName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="UseRawImage: "/><Run Text="{Binding ShowRawImage}"/>
+                        <Run Text="UseRawImage: "/><Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="UseProcessedImage: "/><Run Text="{Binding ShowProcessedImage}"/>
+                        <Run Text="UseProcessedImage: "/><Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -182,7 +182,7 @@
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MakroName: "/><Run Text="{Binding MakroName}"/>
+                        <Run Text="MakroName: "/><Run Text="{Binding Settings.MakroName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

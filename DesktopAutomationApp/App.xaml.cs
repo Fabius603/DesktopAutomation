@@ -18,6 +18,7 @@ using System.IO;
 using Serilog;
 using Serilog.Events;
 using DesktopAutomationApp.Services.Preview;
+using ImageCapture.DesktopDuplication.RecordingIndicator;
 
 namespace DesktopAutomationApp
 {
@@ -62,6 +63,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
                     services.AddSingleton<IJobDispatcher, JobDispatcher>();
                     services.AddSingleton<IMacroPreviewService, MacroPreviewService>();
+                    services.AddSingleton<IRecordingIndicatorOverlay, RecordingIndicatorOverlay>();
 
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();

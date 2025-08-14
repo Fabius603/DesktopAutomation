@@ -19,7 +19,8 @@ using TaskAutomation.Steps;
 using Microsoft.Extensions.Logging;
 using Common.Logging;
 using TaskAutomation.Persistence;
-using static System.Reflection.Metadata.BlobBuilder;
+using ImageCapture.DesktopDuplication.RecordingIndicator;
+using System.CodeDom.Compiler;
 
 namespace TaskAutomation.Jobs
 {
@@ -28,6 +29,7 @@ namespace TaskAutomation.Jobs
         private readonly ILogger<JobExecutor> _logger;
         private readonly IJsonRepository<Job> _jobRepository;
         private readonly IJsonRepository<Makro> _makroRepository;
+        private readonly IRecordingIndicatorOverlay _recordingOverlay;
 
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
@@ -42,8 +44,6 @@ namespace TaskAutomation.Jobs
         private TemplateMatchingResult _templateMatchingResult;
         private Mat _imageToProcess;
         private Point _currentOffset = new Point(0, 0);
-        private int _currentDesktop = 0;
-        private int _currentAdapter = 0;
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
         private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Makro");
         private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Job");
@@ -131,18 +131,6 @@ namespace TaskAutomation.Jobs
             set => _currentOffset = value;
         }
 
-        public int CurrentDesktop
-        {
-            get => _currentDesktop;
-            set => _currentDesktop = value;
-        }
-
-        public int CurrentAdapter
-        {
-            get => _currentAdapter;
-            set => _currentAdapter = value;
-        }
-
         public DxgiResources DxgiResources => _dxgiResources;
 
         public IMakroExecutor MakroExecutor
@@ -165,12 +153,14 @@ namespace TaskAutomation.Jobs
             ILogger<JobExecutor> logger,
             IJsonRepository<Job> jobRepo,
             IJsonRepository<Makro> makroRepo,
-            IMakroExecutor makroExecutor)
+            IMakroExecutor makroExecutor,
+            IRecordingIndicatorOverlay recordingOverlay)
         {
             _logger = logger;
             _jobRepository = jobRepo;
             _makroRepository = makroRepo;
             _makroExecutor = makroExecutor;
+            _recordingOverlay = recordingOverlay;
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -196,6 +186,17 @@ namespace TaskAutomation.Jobs
                 added++;
             }
             _logger.LogInformation("Jobs geladen: {Count}", added);
+        }
+
+        public void StartRecordingOverlay(RecordingIndicatorOptions? options = null)
+        {
+            _recordingOverlay.Start(options);
+        }
+
+        public void StopRecordingOverlay()
+        {
+            _recordingOverlay.Stop();
+            _recordingOverlay.Dispose();
         }
 
         public async Task ReloadMakrosAsync()
@@ -240,75 +241,140 @@ namespace TaskAutomation.Jobs
             }
 
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
-            ct.ThrowIfCancellationRequested();
 
+            // Schritte, die optional aktiv sind
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
-            if (videoStep != null)
+            var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
+
+            bool recorderStarted = false;
+            bool cancelled = false;
+
+            try
             {
-                _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
+                ct.ThrowIfCancellationRequested();
+
+                // Videoaufnahme vorbereiten/optional starten
+                if (videoStep != null)
                 {
-                    OutputDirectory = videoStep.Settings.SavePath,
-                    FileName = videoStep.Settings.FileName
-                };
-                await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
-                _logger.LogInformation("VideoRecorder gestartet …");
-            }
-
-            // Makros initialisieren …
-
-            bool continueJob = true;
-            do
-            {
-                _processDuplicationResult?.Dispose();
-                _processDuplicationResult = null;
-
-                foreach (JobStep step in job.Steps)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    try
+                    _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
                     {
-                        // Wenn ExecuteStep asynchron wäre:
-                        // continueJob = await ExecuteStepAsync(step, job, ct);
-                        // Sonst synchron aufrufen:
-                        if (!await ExecuteStepAsync(step, job, ct).ConfigureAwait(false))
+                        OutputDirectory = videoStep.Settings.SavePath,
+                        FileName = videoStep.Settings.FileName
+                    };
+
+                    // Kann selbst abgebrochen werden -> Flag erst NACH erfolgreichem Start setzen
+                    await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
+                    recorderStarted = true;
+                    _logger.LogInformation("VideoRecorder gestartet …");
+                }
+
+                if (desktopDuplicationStep != null && !_recordingOverlay.IsRunning)
+                {
+                    StartRecordingOverlay(
+                        options: new RecordingIndicatorOptions
                         {
+                            MonitorIndex = desktopDuplicationStep.Settings.DesktopIdx,
+                            Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
+                            BorderThickness = 2f,
+                            Mode = RecordingIndicatorMode.CornerBadge,
+                            BadgeCorner = Corner.TopRight,
+                            Label = "REC"
+                        });
+                }
+
+                bool continueJob = true;
+                do
+                {
+                    // Vor jeder Runde alte Prozess-Duplizierung freigeben
+                    _processDuplicationResult?.Dispose();
+                    _processDuplicationResult = null;
+
+                    foreach (JobStep step in job.Steps)
+                    {
+                        ct.ThrowIfCancellationRequested();
+
+                        try
+                        {
+                            // Schritt ausführen; false => Job beenden
+                            if (!await ExecuteStepAsync(step, job, ct).ConfigureAwait(false))
+                            {
+                                continueJob = false;
+                                _logger.LogWarning("Job '{JobName}' vorzeitig beendet durch Step '{StepType}'.",
+                                    job.Name, step.GetType().Name);
+                                break;
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            _logger.LogInformation("Schritt '{StepType}' abgebrochen.", step.GetType().Name);
+                            throw;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Fehler in Schritt '{StepType}': {Message}",
+                                step.GetType().Name, ex.Message);
                             continueJob = false;
-                            _logger.LogWarning("Job '{JobName}' vorzeitig beendet durch Step '{StepType}'.",
-                                job.Name, step.GetType().Name);
                             break;
                         }
                     }
-                    catch (OperationCanceledException)
+
+                    if (!continueJob) break;
+                }
+                while (job.Repeating && continueJob);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                // NICHT erneut throwen – das Aufräumen erfolgt im finally; Ausnahme kann ggf. außerhalb erneut behandelt werden.
+                throw;
+            }
+            finally
+            {
+                // Stop/Speichern VideoRecorder nur, wenn tatsächlich gestartet
+                if (recorderStarted && _videoRecorder != null)
+                {
+                    try
                     {
-                        _logger.LogInformation("Schritt '{StepType}' abgebrochen.", step.GetType().Name);
-                        throw;
+                        _videoRecorder.StopAndSave();
+                        _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Fehler in Schritt '{StepType}': {Message}",
-                            step.GetType().Name, ex.Message);
-                        continueJob = false;
-                        break;
+                        _logger.LogError(ex, "Fehler beim Stoppen/Speichern des VideoRecorders.");
                     }
                 }
 
-                if (!continueJob) break;
+                // Desktop-Duplizierung/Overlay nur, wenn der Step existierte (und ggf. initialisiert wurde)
+                if (desktopDuplicationStep != null)
+                {
+                    try
+                    {
+                        _desktopDuplicator?.Dispose();
+                        _desktopDuplicator = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Fehler beim Dispose des DesktopDuplicators.");
+                    }
+
+                    try
+                    {
+                        StopRecordingOverlay();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Fehler beim StopRecordingOverlay.");
+                    }
+                }
+
+                // Generelles Aufräumen (idempotent)
+                try { _processDuplicationResult?.Dispose(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Dispose von _processDuplicationResult."); }
+                try { _videoRecorder?.Dispose(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Dispose des VideoRecorders."); }
+                try { Cv2.DestroyAllWindows(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Schließen von OpenCV-Fenstern."); }
+
+                // Abschluss-Log (Status abhängig von Abbruch)
+                _logger.LogInformation("Job '{JobName}' {Status}.", job.Name, "beendet");
             }
-            while (job.Repeating && continueJob);
-
-            if (videoStep != null)
-            {
-                _videoRecorder.StopAndSave();
-                _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
-            }
-
-            // Aufräumen
-            _processDuplicationResult?.Dispose();
-            _videoRecorder?.Dispose();
-            Cv2.DestroyAllWindows();
-
-            _logger.LogInformation("Job '{JobName}' abgeschlossen.", job.Name);
         }
 
         /// <summary>

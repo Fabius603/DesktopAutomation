@@ -6,8 +6,7 @@
       {
         "type": "desktop_duplication",
         "settings": {
-          "output_device": 0,
-          "graphics_card_adapter": 0
+          "desktop_idx": 0
         }
       },
       {

@@ -2,58 +2,115 @@
 using DesktopOverlay;
 using Microsoft.Extensions.Logging;
 using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using ImageHelperMethods;
+using TaskAutomation.Persistence; // <— für IJsonRepository<Makro>
 
 namespace DesktopAutomationApp.ViewModels
 {
-    public sealed class ListMakrosViewModel : ViewModelBase
+    public sealed class ListMakrosViewModel : ViewModelBase, IDisposable
     {
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IMacroPreviewService _preview;
-        private Overlay _overlay; // Lebenszyklus gehört hier der VM
+        private readonly IJsonRepository<Makro> _makroRepo;  // <— Neu: Speichern/Laden
+        private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
 
         public string Title => "Makros";
         public string Description => "Verfügbare Makros";
 
         public ObservableCollection<Makro> Items { get; } = new();
+
         private Makro? _selected;
         public Makro? Selected
         {
             get => _selected;
-            set { _selected = value; OnPropertyChanged(); }
+            set { _selected = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedSteps)); }
         }
 
+        public MakroBefehl? SelectedStep
+        {
+            get => _selectedStep;
+            set { _selectedStep = value; OnPropertyChanged(); }
+        }
+        private MakroBefehl? _selectedStep;
+
+        public ObservableCollection<MakroBefehl>? SelectedSteps =>
+            Selected?.Befehle != null ? new ObservableCollection<MakroBefehl>(Selected.Befehle) : null;
+
+        // --- Edit-Mode (global) ---
+        private bool _isEditMode;
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set { _isEditMode = value; OnPropertyChanged(); }
+        }
+
+        // Commands: Laden / Speichern / Editieren
         public ICommand RefreshCommand { get; }
+        public ICommand SaveAllCommand { get; }
+        public ICommand ToggleEditModeCommand { get; }
+
+        // Makro-CRUD
+        public ICommand NewMakroCommand { get; }
+        public ICommand DeleteMakroCommand { get; }
+
+        // Steps: DnD/Manipulation
+        public ICommand MoveStepCommand { get; }         // (int fromIdx, int toIdx)
+        public ICommand DeleteStepCommand { get; }       // (MakroBefehl step)
+        public ICommand DuplicateStepCommand { get; }    // (MakroBefehl step)
+        public ICommand AddStepCommand { get; }          // öffnet Dialog
+        public ICommand MoveStepUpCommand { get; }
+        public ICommand MoveStepDownCommand { get; }
+
+        // Aufnahme (vorerst ohne Funktion)
+        public ICommand RecordStepsCommand { get; }
+
+        // Vorschau
         public ICommand CopyNameCommand { get; }
         public ICommand PreviewOverviewCommand { get; }
         public ICommand PreviewPlaybackCommand { get; }
         public ICommand PreviewStopCommand { get; }
 
-
-        public ListMakrosViewModel(IJobExecutor executor, ILogger<ListMakrosViewModel> log, IMacroPreviewService preview)
+        public ListMakrosViewModel(
+            IJobExecutor executor,
+            ILogger<ListMakrosViewModel> log,
+            IMacroPreviewService preview,
+            IJsonRepository<Makro> makroRepo)   // <— über DI registrieren
         {
             _executor = executor;
             _log = log;
             _preview = preview;
+            _makroRepo = makroRepo;
 
             RefreshCommand = new RelayCommand(LoadMakros);
+            SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
+            ToggleEditModeCommand = new RelayCommand(() => IsEditMode = !IsEditMode);
+
+            NewMakroCommand = new RelayCommand(CreateNewMakro);
+            DeleteMakroCommand = new RelayCommand(DeleteSelectedMakro, () => Selected != null);
+
+            MoveStepCommand = new RelayCommand<(int from, int to)>(MoveStep);
+            DeleteStepCommand = new RelayCommand<MakroBefehl?>(DeleteStep, s => Selected != null && s != null);
+            DuplicateStepCommand = new RelayCommand<MakroBefehl?>(DuplicateStep, s => Selected != null && s != null);
+            AddStepCommand = new RelayCommand(OpenAddStepDialog, () => Selected != null);
+            MoveStepUpCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
+            MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
+
+            RecordStepsCommand = new RelayCommand(() => { /* absichtlich leer (Platzhalter) */ });
+
             CopyNameCommand = new RelayCommand<Makro?>(m =>
             {
-                if (m?.Name is { Length: > 0 })
-                    System.Windows.Clipboard.SetText(m.Name);
+                if (m?.Name is { Length: > 0 }) System.Windows.Clipboard.SetText(m.Name);
             }, m => m != null);
+
             PreviewOverviewCommand = new RelayCommand(ShowOverview, CanPreview);
             PreviewPlaybackCommand = new RelayCommand(() => ShowPlayback(), CanPreview);
             PreviewStopCommand = new RelayCommand(StopPreview, () => _overlay != null);
@@ -66,40 +123,33 @@ namespace DesktopAutomationApp.ViewModels
         private void EnsureOverlay()
         {
             if (_overlay != null) return;
-
             var v = ScreenHelper.GetVirtualDesktopBounds();
-            _overlay = new Overlay(v.Left, v.Top, v.Width, v.Height, desktopId: 0);
-            _overlay.RunInNewThread(); // eigenes STA-Threading wie von dir vorgesehen
+            _overlay = new Overlay(v.Left, v.Top, v.Width, v.Height);
+            _overlay.RunInNewThread();
         }
-
-        private Makro ToDomain(Makro m) => m;
 
         private void BuildPreview()
         {
             var v = ScreenHelper.GetVirtualDesktopBounds();
-            _lastPreview = _preview.Build(ToDomain(Selected), v, v);
+            _lastPreview = _preview.Build(Selected!, v, v);
         }
 
         private void ShowOverview()
         {
             EnsureOverlay();
             BuildPreview();
-
             _overlay.StopPlayback();
             _overlay.ClearItems();
             _overlay.AddItems(_lastPreview.StaticItems);
-                                                         
         }
 
         private void ShowPlayback(double speed = 1.0)
         {
             EnsureOverlay();
             BuildPreview();
-
             _overlay.ClearItems();
             _overlay.AddItems(_lastPreview.StaticItems);
             _overlay.AddItems(_lastPreview.TimedItems);
-
             _overlay.PlaybackSpeed = speed;
             _overlay.StartPlayback(0.0);
         }
@@ -111,6 +161,32 @@ namespace DesktopAutomationApp.ViewModels
             _overlay.ClearItems();
         }
 
+        private bool CanMoveRelative(MakroBefehl? step, int delta)
+        {
+            if (Selected?.Befehle == null || step == null) return false;
+            var list = Selected.Befehle; // ideal: ObservableCollection<MakroBefehl>
+            var idx = list.IndexOf(step);
+            if (idx < 0) return false;
+            var newIdx = idx + delta;
+            return newIdx >= 0 && newIdx < list.Count;
+        }
+
+        private void MoveRelative(MakroBefehl? step, int delta)
+        {
+            if (Selected?.Befehle == null || step == null) return;
+            var list = Selected.Befehle;
+            var idx = list.IndexOf(step);
+            if (idx < 0) return;
+            var newIdx = idx + delta;
+            if (newIdx < 0 || newIdx >= list.Count) return;
+
+            // Element umsetzen
+            list.RemoveAt(idx);
+            list.Insert(newIdx, step);
+
+            SelectedStep = step;
+        }
+
         private async void LoadMakros()
         {
             await _executor.ReloadMakrosAsync();
@@ -120,7 +196,96 @@ namespace DesktopAutomationApp.ViewModels
                 Items.Add(m);
 
             Selected = Items.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedSteps));
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
+        }
+
+        private async Task SaveAllAsync()
+        {
+            // Persistiert alle Makros gesammelt
+            await _makroRepo.SaveAllAsync(Items);
+            _log.LogInformation("Makros gespeichert: {Count}", Items.Count);
+            // Nach dem Speichern ggf. erneut in Executor laden:
+            await _executor.ReloadMakrosAsync();
+        }
+
+        private void CreateNewMakro()
+        {
+            var name = UniqueName("NeuesMakro");
+            var m = new Makro { Name = name, Befehle = new() };
+            Items.Add(m);
+            Selected = m;
+            IsEditMode = true;
+        }
+
+        private void DeleteSelectedMakro()
+        {
+            if (Selected == null) return;
+            var toRemove = Selected;
+            Selected = null;
+            Items.Remove(toRemove);
+        }
+
+        private string UniqueName(string baseName)
+        {
+            var i = 1;
+            var n = baseName;
+            while (Items.Any(x => string.Equals(x.Name, n, StringComparison.OrdinalIgnoreCase)))
+                n = $"{baseName}_{i++}";
+            return n;
+        }
+
+        // --- Step-Manipulation ---
+        private void MoveStep((int from, int to) args)
+        {
+            if (Selected?.Befehle == null) return;
+            var list = Selected.Befehle;
+            if (args.from < 0 || args.from >= list.Count || args.to < 0 || args.to >= list.Count) return;
+            var item = list[args.from];
+            list.RemoveAt(args.from);
+            list.Insert(args.to, item);
+            OnPropertyChanged(nameof(SelectedSteps));
+        }
+
+        private void DeleteStep(MakroBefehl? step)
+        {
+            if (Selected?.Befehle == null || step == null) return;
+            Selected.Befehle.Remove(step);
+            OnPropertyChanged(nameof(SelectedSteps));
+        }
+
+        private void DuplicateStep(MakroBefehl? step)
+        {
+            if (Selected?.Befehle == null || step == null) return;
+            var clone = CloneStep(step);
+            Selected.Befehle.Add(clone);
+            OnPropertyChanged(nameof(SelectedSteps));
+        }
+
+        private MakroBefehl CloneStep(MakroBefehl s)
+        {
+            // einfache, robuste Variante über STJ-Serialize/Deserialize (nutzt Ihre Polymorphie-Optionen)
+            var json = System.Text.Json.JsonSerializer.Serialize(s, JsonOptions.Default);
+            return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
+        }
+
+        private void OpenAddStepDialog()
+        {
+            if (Selected == null) return;
+
+            // Variante A (ohne MahApps): eigenes Dialogfenster (siehe Abschnitt 2)
+            var vm = new AddStepDialogViewModel();
+            var dlg = new Views.AddStepDialog { DataContext = vm };
+            var result = dlg.ShowDialog(); // bool?
+
+            if (result == true && vm.CreatedStep != null)
+            {
+                Selected.Befehle ??= new();
+                Selected.Befehle.Add(vm.CreatedStep);
+                OnPropertyChanged(nameof(SelectedSteps));
+            }
+
+            // Variante B (MahApps DialogHost) wäre ebenso möglich.
         }
 
         public void Dispose()
@@ -129,5 +294,17 @@ namespace DesktopAutomationApp.ViewModels
             _overlay?.Dispose();
             _overlay = null;
         }
+    }
+
+    // Gemeinsame JsonOptions für CloneStep (nutzt vorhandene Konverter)
+    internal static class JsonOptions
+    {
+        public static readonly System.Text.Json.JsonSerializerOptions Default = new()
+        {
+            WriteIndented = false,
+            ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
     }
 }

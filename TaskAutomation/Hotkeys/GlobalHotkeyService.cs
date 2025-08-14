@@ -25,7 +25,17 @@ namespace TaskAutomation.Hotkeys
         // WinAPI-Konstanten
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
+        private const int WM_KEYUP = 0x0101;
         private const int WM_SYSKEYDOWN = 0x0104;
+        private const int WM_SYSKEYUP = 0x0105;
+
+        private static bool IsModifierVk(uint vk) =>
+            vk is
+                0x10 /* VK_SHIFT   */ or 0x11 /* VK_CONTROL */ or 0x12 /* VK_MENU/ALT */ or
+                0xA0 /* VK_LSHIFT  */ or 0xA1 /* VK_RSHIFT  */ or
+                0xA2 /* VK_LCONTROL*/ or 0xA3 /* VK_RCONTROL*/ or
+                0xA4 /* VK_LMENU   */ or 0xA5 /* VK_RMENU   */ or
+                0x5B /* VK_LWIN    */ or 0x5C /* VK_RWIN    */;
 
         // Native Methoden
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -61,7 +71,6 @@ namespace TaskAutomation.Hotkeys
         private readonly ILogger<GlobalHotkeyService> _logger;
         private readonly IJsonRepository<HotkeyDefinition> _repository;
 
-
         // Maximale Anzahl an Worker-Threads
         private const int _maxWorkerThreads = 4;
 
@@ -74,24 +83,19 @@ namespace TaskAutomation.Hotkeys
         private readonly LowLevelKeyboardProc _hookCallback;
         private IntPtr _hookId = IntPtr.Zero;
 
-        // Config path
-        private string _hotkeyFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Hotkey");
-
         public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
 
-        public IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys { get => _definitions; }
+        // Edge-Only: welche VKs sind aktuell gedrückt (um Auto-Repeat zu ignorieren)
+        private readonly HashSet<uint> _downKeys = new();
 
-        /// <summary>
-        /// Initialisiert den Service mit einer bestimmten Anzahl Worker-Threads.
-        /// </summary>
+        public IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys => _definitions;
+
         public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger, IJsonRepository<HotkeyDefinition> repo)
         {
             _logger = logger;
             _repository = repo;
             _definitions = new(StringComparer.OrdinalIgnoreCase);
-            _workQueue = new BlockingCollection<Action>();
             _hookCallback = HookCallback;
-            _hookId = IntPtr.Zero;
             _workers = new Thread[_maxWorkerThreads];
 
             // Worker-Threads starten
@@ -107,7 +111,6 @@ namespace TaskAutomation.Hotkeys
 
             // Message Loop starten
             StartWithMessageLoop();
-
             _ = ReloadFromRepositoryAsync();
 
             _logger.LogInformation("GlobalHotkeyService initialisiert mit {WorkerCount} Worker-Threads.", _maxWorkerThreads);
@@ -136,7 +139,7 @@ namespace TaskAutomation.Hotkeys
                 });
             }
 
-            return _captureTcs.Task;
+            return _captureTcs!.Task;
         }
 
         /// <summary>
@@ -149,14 +152,15 @@ namespace TaskAutomation.Hotkeys
             if (string.IsNullOrWhiteSpace(action.Name))
                 throw new ArgumentException("ActionName darf nicht leer sein.", nameof(action.Name));
 
+            if (IsModifierVk(virtualKeyCode) && modifiers == KeyModifiers.None)
+                throw new ArgumentException("Ein Modifier darf nicht allein als Hotkey registriert werden.", nameof(virtualKeyCode));
+
             var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, action);
             _definitions[name] = def;
-            _logger.LogInformation("Hotkey registriert: {Name} => Action '{ActionName}', Command '{ActionCommand}", name, action.Name, action.Command);
+            _logger.LogInformation("Hotkey registriert: {Name} => Action '{ActionName}', Command '{ActionCommand}",
+                name, action.Name, action.Command);
         }
 
-        /// <summary>
-        /// Entfernt einen registrierten Hotkey.
-        /// </summary>
         public void UnregisterHotkey(string name)
         {
             _definitions.Remove(name);
@@ -177,12 +181,8 @@ namespace TaskAutomation.Hotkeys
 
                 UnregisterAllHotkeys();
                 foreach (var e in entries)
-                {
                     if (e.Active)
-                    {
                         RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action);
-                    }
-                }
             }
             catch (Exception ex)
             {
@@ -198,11 +198,9 @@ namespace TaskAutomation.Hotkeys
         {
             var thread = new Thread(() =>
             {
-                // 1) Hook installieren (falls noch nicht geschehen)
                 if (_hookId == IntPtr.Zero)
                     SetupHook();
 
-                // 2) Message-Loop starten
                 MSG msg;
                 while (GetMessage(out msg, IntPtr.Zero, 0, 0))
                 {
@@ -218,9 +216,6 @@ namespace TaskAutomation.Hotkeys
             thread.Start();
         }
 
-        /// <summary>
-        /// Setzt den Low-Level-Keyboard-Hook.
-        /// </summary>
         private void SetupHook()
         {
             using var proc = Process.GetCurrentProcess();
@@ -231,55 +226,70 @@ namespace TaskAutomation.Hotkeys
             _logger.LogInformation("Keyboard-Hook gesetzt.");
         }
 
-        /// <summary>
-        /// Callback für Hook-Nachrichten. Liest den Virtual-Key-Code aus und verarbeitet ihn.
-        /// </summary>
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-             if (nCode >= 0 && (wParam.ToInt32() == WM_KEYDOWN || wParam.ToInt32() == WM_SYSKEYDOWN))
-             {
-                 uint vk = (uint)Marshal.ReadInt32(lParam);
-                 KeyModifiers mods = GetCurrentModifiers();
-                 ProcessKey(vk, mods);
-             }
-             return CallNextHookEx(_hookId, nCode, wParam, lParam);
+            if (nCode >= 0)
+            {
+                int msg = wParam.ToInt32();
+                uint vk = (uint)Marshal.ReadInt32(lParam);
+
+                switch (msg)
+                {
+                    case WM_KEYDOWN:
+                    case WM_SYSKEYDOWN:
+                        if (_downKeys.Add(vk)) // erste Down-Flanke (kein Auto-Repeat)
+                        {
+                            if (IsModifierVk(vk))
+                                break;
+
+                            // ----- CAPTURE: nur Nicht-Modifier starten die Aufnahme -----
+                            if (_isCapturing)
+                            {
+                                var mods = GetCurrentModifiers(); // aktuell gehaltene Modifier
+                                var tcs = _captureTcs;
+                                _isCapturing = false;
+                                _captureTcs = null;
+                                tcs?.TrySetResult((mods, vk));   // (Modifier, Haupttaste)
+                                break; // Capturing beendet, keine weitere Verarbeitung
+                            }
+
+                            // ----- NORMALBETRIEB: nur Nicht-Modifier lösen aus -----
+                            var currentMods = GetCurrentModifiers();
+                            // zuerst Kombi versuchen, sonst Single
+                            if (!TryExec(vk, currentMods) && currentMods == KeyModifiers.None)
+                                TryExec(vk, KeyModifiers.None);
+                        }
+                        break;
+
+                    case WM_KEYUP:
+                    case WM_SYSKEYUP:
+                        _downKeys.Remove(vk); // nur Zustand pflegen
+                        break;
+                }
+            }
+            return CallNextHookEx(_hookId, nCode, wParam, lParam);
         }
 
-        private void ProcessKey(uint vkCode, KeyModifiers mods)
+        private bool TryExec(uint vk, KeyModifiers mods)
         {
-            if (_isCapturing)
-            {
-                var tcs = _captureTcs;
-                _isCapturing = false;
-                _captureTcs = null;
-                tcs?.TrySetResult((mods, vkCode));
-                return;
-            }
-
             foreach (var def in _definitions.Values)
             {
-                if (def.Active == false)
-                    continue; // Hotkey ist deaktiviert
+                if (!def.Active) continue;
+                if (def.VirtualKeyCode != vk) continue;
 
-                if (def.VirtualKeyCode != vkCode)
-                    continue;
-
-                if (def.Modifiers != KeyModifiers.None)
+                // exakte Mod-Kongruenz
+                if (def.Modifiers == mods)
                 {
-                    if (def.Modifiers != mods)
-                        continue;
-                }
+                    _workQueue.Add(() =>
+                        HotkeyPressed?.Invoke(this, new HotkeyPressedEventArgs(def.Action))
+                    );
 
-                _workQueue.Add(() =>
-                    HotkeyPressed?.Invoke(
-                        this,
-                        new HotkeyPressedEventArgs(def.Action)
-                    )
-                );
-                    
-                _logger.LogDebug("Hotkey erkannt: {Name} (Action: {ActionName}, Command: {Command})", def.Name, def.Action.Name, def.Action.Command);
-                break;
+                    _logger.LogDebug("Hotkey erkannt: {Name} (Action: {ActionName}, Command: {Command})",
+                        def.Name, def.Action.Name, def.Action.Command);
+                    return true;
+                }
             }
+            return false;
         }
 
         /// <summary>
@@ -312,15 +322,8 @@ namespace TaskAutomation.Hotkeys
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct POINT
-        {
-            public int x;
-            public int y;
-        }
+        private struct POINT { public int x; public int y; }
 
-        /// <summary>
-        /// Worker-Schleife: Führt Callbacks aus der BlockingCollection aus.
-        /// </summary>
         private void WorkLoop()
         {
             foreach (var action in _workQueue.GetConsumingEnumerable())
@@ -330,9 +333,6 @@ namespace TaskAutomation.Hotkeys
             }
         }
 
-        /// <summary>
-        /// Entfernt den Hook und stoppt die Worker-Threads.
-        /// </summary>
         public void Dispose()
         {
             if (_hookId != IntPtr.Zero)

@@ -187,9 +187,9 @@ namespace ImageCapture.ProcessDuplication
                 string key = $"{adapter},{output}";
                 if (!desktopDuplicators.ContainsKey(key))
                 {
-                    var duplicator = new DesktopDuplicator(adapter, output);
-                    duplicator.SetFrameTimeout(aquireFrameTimeout); 
-                    desktopDuplicators.Add(key, duplicator);
+                    //var duplicator = new DesktopDuplicator(adapter, output);
+                    //duplicator.SetFrameTimeout(aquireFrameTimeout); 
+                    //desktopDuplicators.Add(key, duplicator);
                 }
             }
         }

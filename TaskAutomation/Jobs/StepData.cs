@@ -54,11 +54,8 @@ namespace TaskAutomation.Jobs
 
     public sealed class DesktopDuplicationSettings
     {
-        [JsonPropertyName("output_device")]
-        public int OutputDevice { get; set; } = 0;
-
-        [JsonPropertyName("graphics_card_adapter")]
-        public int GraphicsCardAdapter { get; set; } = 0;
+        [JsonPropertyName("desktop_idx")]
+        public int DesktopIdx { get; set; } = 0;
     }
 
     // ---- ProcessDuplication ----

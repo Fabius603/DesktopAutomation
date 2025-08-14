@@ -25,6 +25,7 @@
                 <Setter Property="TextElement.Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}" />
                 <!-- Optional: Standard-Margin für den View-Inhalt -->
                 <Setter Property="Margin" Value="0" />
+                <Setter Property="TextElement.FontSize" Value="16" />
             </Style>
 
             <!-- Karten-/Panel-Style für Boxen innerhalb der View -->
@@ -49,17 +50,17 @@
 
             <!-- Optional: Überschrift-Style -->
             <Style x:Key="Heading1" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="20"/>
+                <Setter Property="FontSize" Value="28"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Margin" Value="0,0,0,8"/>
             </Style>
             <Style x:Key="Heading2" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="18"/>
+                <Setter Property="FontSize" Value="24"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Margin" Value="0,0,0,8"/>
             </Style>
             <Style x:Key="Heading3" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="FontSize" Value="20"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Margin" Value="0,0,0,6"/>
             </Style>

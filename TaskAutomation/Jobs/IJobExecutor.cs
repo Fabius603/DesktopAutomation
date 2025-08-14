@@ -1,4 +1,5 @@
 ﻿using ImageCapture.DesktopDuplication;
+using ImageCapture.DesktopDuplication.RecordingIndicator;
 using ImageCapture.ProcessDuplication;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageHelperMethods;
@@ -44,10 +45,11 @@ namespace TaskAutomation.Jobs
 
         // Kontext-Parameter
         OpenCvSharp.Point CurrentOffset { get; set; }
-        int CurrentDesktop { get; set; }
-        int CurrentAdapter { get; set; }
 
         // Aktionen
         TaskAutomation.Makros.IMakroExecutor MakroExecutor { get; }
+
+        void StartRecordingOverlay(RecordingIndicatorOptions? options = null);
+        void StopRecordingOverlay();
     }
 }

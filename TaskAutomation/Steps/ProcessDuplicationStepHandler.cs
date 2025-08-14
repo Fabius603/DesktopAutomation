@@ -33,8 +33,6 @@ namespace TaskAutomation.Steps
                 return true; // Oder false, wenn der Job abbrechen soll
             }
 
-            executor.CurrentDesktop = executor.ProcessDuplicationResult.DesktopIdx;
-            executor.CurrentAdapter = executor.ProcessDuplicationResult.AdapterIdx;
             executor.CurrentImage = executor.ProcessDuplicationResult.ProcessImage.Clone() as Bitmap;
             executor.CurrentOffset = executor.ProcessDuplicationResult.WindowOffsetOnDesktop;
             return true;

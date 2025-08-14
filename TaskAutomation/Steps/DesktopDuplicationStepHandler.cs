@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using ImageCapture.DesktopDuplication.RecordingIndicator;
 
 namespace TaskAutomation.Steps
 {
@@ -24,14 +25,12 @@ namespace TaskAutomation.Steps
 
             if (executor.DesktopDuplicator == null)
             {
-                executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.GraphicsCardAdapter, ddStep.Settings.OutputDevice);
+                executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.DesktopIdx);
             }
             try
             {
                 ct.ThrowIfCancellationRequested();
                 executor.CurrentDesktopFrame = executor.DesktopDuplicator.GetLatestFrame();
-                executor.CurrentDesktop = ddStep.Settings.OutputDevice;
-                executor.CurrentAdapter = ddStep.Settings.GraphicsCardAdapter;
                 executor.CurrentImage = executor.CurrentDesktopFrame?.DesktopImage?.Clone() as Bitmap;
             }
             catch

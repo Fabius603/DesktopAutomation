@@ -94,7 +94,7 @@ namespace ImageHelperMethods
 
         public static Rectangle GetVirtualDesktopBounds()
         {
-            var screens = Screen.AllScreens;
+            var screens = GetScreens();
             int left = int.MaxValue, top = int.MaxValue, right = int.MinValue, bottom = int.MinValue;
             foreach (var s in screens)
             {
@@ -106,6 +106,47 @@ namespace ImageHelperMethods
             int width = right - left;
             int height = bottom - top;
             return new Rectangle(left, top, width, height);
+        }
+
+        public static Rectangle GetDesktopBounds(int idx)
+        {
+            var screens = GetScreens();
+            return screens.Length > idx ? screens[idx].Bounds : Rectangle.Empty;
+        }
+
+        public static Screen[] GetScreens()
+        {
+            return Screen.AllScreens
+                             .OrderBy(s => s.Bounds.X)          // X aufsteigend
+                             .ThenByDescending(s => s.Bounds.Y) // Y absteigend
+                             .ToArray();
+        }
+
+        public static (int adapterIdx, int outputIdx)? GetAdapterAndOutputIndex(Screen screen)
+        {
+            using (var factory = new Factory1())
+            {
+                for (int adapterIdx = 0; adapterIdx < factory.GetAdapterCount1(); adapterIdx++)
+                {
+                    using (var adapter = factory.GetAdapter1(adapterIdx))
+                    {
+                        for (int outputIdx = 0; outputIdx < adapter.GetOutputCount(); outputIdx++)
+                        {
+                            using (var output = adapter.GetOutput(outputIdx))
+                            {
+                                var desc = output.Description;
+
+                                // Vergleich über den DeviceName
+                                if (string.Equals(desc.DeviceName, screen.DeviceName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return (adapterIdx, outputIdx);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null; // nichts gefunden
         }
 
         private static int GetVirtualDesktopWidth(DxgiResources dxgi)

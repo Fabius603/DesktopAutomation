@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using SharpDX.Mathematics.Interop;
+using ImageHelperMethods;
 
 namespace ImageCapture.DesktopDuplication
 {
@@ -35,27 +36,31 @@ namespace ImageCapture.DesktopDuplication
         private int aquireFrameTimeout { get; set; } = 0;
         #endregion
 
-        public DesktopDuplicator(int whichMonitor)
-            : this(0, whichMonitor) { }
-
-        public DesktopDuplicator(int whichGraphicsCardAdapter, int whichOutputDevice)
+        public DesktopDuplicator(int screenIdx)
         {
-            mWhichOutputDevice = whichOutputDevice;
             Factory1 factory = null;
             Adapter1 adapter = null;
             Output output = null;
             Output1 output1 = null;
             bool success = false;
 
+            var screens = ScreenHelper.GetScreens();
+            var idx = ScreenHelper.GetAdapterAndOutputIndex(screens[screenIdx]);
+            if (idx == null)
+            {
+                throw new DesktopDuplicationException($"Could not find the specified graphics card adapter or output device for screen index {screenIdx}.");
+            }
+            mWhichOutputDevice = idx.Value.outputIdx;
+
             try
             {
                 factory = new Factory1();
-                adapter = factory.GetAdapter1(whichGraphicsCardAdapter);
+                adapter = factory.GetAdapter1(idx.Value.adapterIdx);
                 if (adapter == null) throw new DesktopDuplicationException("Could not find the specified graphics card adapter (null).");
 
                 mDevice = new Device(adapter, DeviceCreationFlags.None);
 
-                output = adapter.GetOutput(whichOutputDevice);
+                output = adapter.GetOutput(idx.Value.outputIdx);
                 if (output == null) throw new DesktopDuplicationException("Could not find the specified output device (null).");
 
                 output1 = output.QueryInterface<Output1>();

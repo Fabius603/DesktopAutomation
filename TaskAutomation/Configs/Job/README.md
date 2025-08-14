@@ -56,16 +56,14 @@ Erfasst einen Monitorbereich per DirectX-Bildschirmduplikation.
 {
   "type": "desktop_duplication",
   "settings": {
-    "output_device": 0,
-    "graphics_card_adapter": 0
+    "desktop_idx": 0
   }
 }
 ```
 
 | Feld                   | Typ   | Beschreibung                     |
 |------------------------|-------|----------------------------------|
-| output_device          | int   | Index des Monitors               |
-| graphics_card_adapter  | int   | Index des Grafikadapters         |
+| desktop_idx          | int   | Index des Monitors               |
 
 ---
 

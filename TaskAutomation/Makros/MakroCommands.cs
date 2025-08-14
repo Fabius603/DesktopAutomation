@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -13,7 +14,7 @@ namespace TaskAutomation.Makros
         public string Name { get; set; }
 
         [JsonPropertyName("commands")]
-        public List<MakroBefehl> Befehle { get; set; }
+        public ObservableCollection<MakroBefehl> Befehle { get; set; } = new();
     }
 
 

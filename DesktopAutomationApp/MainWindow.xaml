@@ -14,11 +14,11 @@
 
         <!-- Sidebar -->
         <StackPanel Margin="16" Background="{DynamicResource MahApps.Brushes.Theme.Background}">
-            <TextBlock Text="Navigation" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
-            <Button Content="Start" Command="{Binding ShowStart}" Margin="0,0,0,8"/>
-            <Button Content="Hotkeys" Command="{Binding ShowListHotkeys}" Margin="0,0,0,8"/>
-            <Button Content="Makros"  Command="{Binding ShowListMakros}"  Margin="0,0,0,8"/>
-            <Button Content="Jobs"    Command="{Binding ShowListJobs}"    Margin="0,0,0,16"/>
+            <TextBlock Text="Navigation" FontWeight="Bold" Style="{StaticResource Heading2}" Margin="0,0,0,12"/>
+            <Button Content="Start" Command="{Binding ShowStart}"         Margin="0,0,0,8"  FontSize="14"/>
+            <Button Content="Hotkeys" Command="{Binding ShowListHotkeys}" Margin="0,0,0,8"  FontSize="14"/>
+            <Button Content="Makros"  Command="{Binding ShowListMakros}"  Margin="0,0,0,8"  FontSize="14"/>
+            <Button Content="Jobs"    Command="{Binding ShowListJobs}"    Margin="0,0,0,16" FontSize="14"/>
         </StackPanel>
 
         <!-- Content rechts -->
