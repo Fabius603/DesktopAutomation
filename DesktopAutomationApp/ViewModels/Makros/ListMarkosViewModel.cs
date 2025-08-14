@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
@@ -44,14 +45,6 @@ namespace DesktopAutomationApp.ViewModels
 
         public ObservableCollection<MakroBefehl>? SelectedSteps =>
             Selected?.Befehle != null ? new ObservableCollection<MakroBefehl>(Selected.Befehle) : null;
-
-        // --- Edit-Mode (global) ---
-        private bool _isEditMode;
-        public bool IsEditMode
-        {
-            get => _isEditMode;
-            set { _isEditMode = value; OnPropertyChanged(); }
-        }
 
         // Commands: Laden / Speichern / Editieren
         public ICommand RefreshCommand { get; }
@@ -92,10 +85,9 @@ namespace DesktopAutomationApp.ViewModels
 
             RefreshCommand = new RelayCommand(LoadMakros);
             SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
-            ToggleEditModeCommand = new RelayCommand(() => IsEditMode = !IsEditMode);
 
             NewMakroCommand = new RelayCommand(CreateNewMakro);
-            DeleteMakroCommand = new RelayCommand(DeleteSelectedMakro, () => Selected != null);
+            DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => Selected != null);
 
             MoveStepCommand = new RelayCommand<(int from, int to)>(MoveStep);
             DeleteStepCommand = new RelayCommand<MakroBefehl?>(DeleteStep, s => Selected != null && s != null);
@@ -215,15 +207,6 @@ namespace DesktopAutomationApp.ViewModels
             var m = new Makro { Name = name, Befehle = new() };
             Items.Add(m);
             Selected = m;
-            IsEditMode = true;
-        }
-
-        private void DeleteSelectedMakro()
-        {
-            if (Selected == null) return;
-            var toRemove = Selected;
-            Selected = null;
-            Items.Remove(toRemove);
         }
 
         private string UniqueName(string baseName)
@@ -254,6 +237,28 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(SelectedSteps));
         }
 
+        private async Task DeleteSelectedAsync()
+        {
+            if (Selected == null) return;
+
+            var result = MessageBox.Show(
+                $"Möchten Sie den Makro „{Selected.Name}“ wirklich löschen?",
+                "Löschen bestätigen",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            var name = Selected.Name;
+            var idx = Items.IndexOf(Selected);
+            Items.Remove(Selected);
+            Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
+            await _makroRepo.DeleteAsync(name);
+
+            _log.LogInformation("Hotkey gelöscht: {Name}", name);
+        }
+
         private void DuplicateStep(MakroBefehl? step)
         {
             if (Selected?.Befehle == null || step == null) return;
@@ -273,19 +278,27 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (Selected == null) return;
 
-            // Variante A (ohne MahApps): eigenes Dialogfenster (siehe Abschnitt 2)
-            var vm = new AddStepDialogViewModel();
-            var dlg = new Views.AddStepDialog { DataContext = vm };
-            var result = dlg.ShowDialog(); // bool?
-
-            if (result == true && vm.CreatedStep != null)
+            var dlgVm = new AddStepDialogViewModel(); // Standardwerte sind im VM gesetzt
+            var dlg = new Views.AddStepDialog
             {
-                Selected.Befehle ??= new();
-                Selected.Befehle.Add(vm.CreatedStep);
-                OnPropertyChanged(nameof(SelectedSteps));
-            }
+                Owner = System.Windows.Application.Current.MainWindow, // über dem Hauptfenster
+                DataContext = dlgVm
+            };
 
-            // Variante B (MahApps DialogHost) wäre ebenso möglich.
+            var result = dlg.ShowDialog();
+            if (result == true && dlgVm.CreatedStep != null)
+            {
+                Selected.Befehle ??= new(); // ObservableCollection<MakroBefehl> empfohlen
+
+                int insertIndex = SelectedStep != null
+                    ? Math.Min(Selected.Befehle.Count, Selected.Befehle.IndexOf(SelectedStep) + 1)
+                    : Selected.Befehle.Count;
+
+                Selected.Befehle.Insert(insertIndex, dlgVm.CreatedStep);
+
+                // neu eingefügten Step auswählen
+                SelectedStep = dlgVm.CreatedStep;
+            }
         }
 
         public void Dispose()

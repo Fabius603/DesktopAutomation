@@ -36,17 +36,20 @@
             <Button Content="Aktualisieren"
             Command="{Binding RefreshCommand}"
             Margin="8,0,0,0"
-            ToolTip="Hotkeys und Jobs neu laden" />
+            ToolTip="Hotkeys und Jobs neu laden" 
+            FontSize="14"/>
 
             <Button Content="Neu"
             Command="{Binding NewCommand}"
             Margin="8,0,0,0"
-            ToolTip="Neuen Hotkey anlegen" />
+            ToolTip="Neuen Hotkey anlegen" 
+            FontSize="14"/>
 
             <Button Content="Löschen"
             Command="{Binding DeleteCommand}"
             Margin="8,0,0,0"
-            ToolTip="Ausgewählten Hotkey löschen" />
+            ToolTip="Ausgewählten Hotkey löschen" 
+            FontSize="14"/>
 
             <TextBlock Text="{Binding Items.Count, StringFormat='  ({0} Hotkeys)'}"
                Margin="8,0,0,0" VerticalAlignment="Center"/>
@@ -79,9 +82,10 @@
                     <DataGridTemplateColumn Header="" Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Bearbeiten"
+                                <Button Content="Edit"
                                         Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        CommandParameter="{Binding}"/>
+                                        CommandParameter="{Binding}"
+                                        FontSize="14"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

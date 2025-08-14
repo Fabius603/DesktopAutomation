@@ -236,16 +236,19 @@
 
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" />
 
-            <Separator Width="16"/>
-            <Button Content="Neu" Command="{Binding NewMakroCommand}" />
-            <Button Content="Löschen" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0"/>
+            <Button Content="Neus Makro" Command="{Binding NewMakroCommand}" FontSize="13"/>
+            <Button Content="Makro Löschen" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0" FontSize="13"/>
 
-            <Separator Width="16"/>
-            <Button Content="Vorschau (Übersicht)" Command="{Binding PreviewOverviewCommand}" Margin="8,0,0,0"/>
-            <Button Content="Vorschau (Ablauf)" Command="{Binding PreviewPlaybackCommand}" Margin="8,0,0,0"/>
-            <Button Content="Vorschau beenden" Command="{Binding PreviewStopCommand}" Margin="8,0,0,0"/>
+            <Separator Width="16" Margin="8,0,8,0"/>
+            
+            <Button Content="Vorschau (Übersicht)" Command="{Binding PreviewOverviewCommand}" Margin="0,0,8,0" FontSize="13"/>
+            <Button Content="Vorschau (Ablauf)" Command="{Binding PreviewPlaybackCommand}" Margin="0,0,8,0" FontSize="13"/>
+            <Button Content="Vorschau beenden" Command="{Binding PreviewStopCommand}" Margin="0,0,0,0" FontSize="13"/>
+            
+            <Separator Width="16" Margin="8,0,8,0"/>
+            
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" FontSize="13"/>
         </StackPanel>
 
         <!-- Liste der Makros -->
@@ -266,11 +269,10 @@
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
             <DockPanel>
                 <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme / Speichern -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0">
-                    <ToggleButton Content="Bearbeiten" IsChecked="{Binding IsEditMode}"/>
-                    <Button Content="Neuen Step hinzufügen" Command="{Binding AddStepCommand}" IsEnabled="{Binding Selected}" Margin="8,0,0,0"/>
-                    <Button Content="Aufnahme starten (Platzhalter)" Command="{Binding RecordStepsCommand}" Margin="8,0,0,0"/>
-                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
+                    <Button Content="Neuen Step hinzufügen" Command="{Binding AddStepCommand}" IsEnabled="{Binding Selected}" Margin="0,0,0,0" FontSize="13"/>
+                    <Button Content="Aufnahme starten (Platzhalter)" Command="{Binding RecordStepsCommand}" Margin="8,0,0,0" FontSize="13"/>
+                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0" FontSize="13"/>
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding Selected.Befehle}"
@@ -339,127 +341,91 @@
                                     <StackPanel Grid.Column="0">
                                         <!-- ANZEIGE: nutzt implizite DataTemplates -->
                                         <ContentPresenter Content="{Binding}"/>
+                                            <Grid>
+                                                <Grid.Resources>
+                                                    <!-- Editor-Templates pro Typ -->
+                                                    <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
+                                                        <UniformGrid Columns="4">
+                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding X}"/>
+                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Y}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
 
-                                        <!-- EDITOR: nur im Edit-Mode sichtbar -->
-                                        <ContentControl>
-                                            <ContentControl.Style>
-                                                <Style TargetType="ContentControl">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Value="True"
-                                                     Binding="{Binding DataContext.IsEditMode,
-                                                               RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                            <Setter Property="ContentTemplate">
-                                                                <Setter.Value>
-                                                                    <DataTemplate>
-                                                                        <Grid>
-                                                                            <Grid.Resources>
-                                                                                <!-- Editor-Templates pro Typ -->
-                                                                                <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
-                                                                                    <UniformGrid Columns="4">
-                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding X}"/>
-                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Y}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
+                                                    <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
+                                                        <UniformGrid Columns="6">
+                                                            <TextBlock Text="Button:" VerticalAlignment="Center"/>
+                                                            <ComboBox SelectedValuePath="Content"
+                                                                                      SelectedValue="{Binding Button}">
+                                                                <ComboBoxItem Content="Left"/>
+                                                                <ComboBoxItem Content="Right"/>
+                                                                <ComboBoxItem Content="Middle"/>
+                                                            </ComboBox>
+                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding X}"/>
+                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Y}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
 
-                                                                                <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
-                                                                                    <UniformGrid Columns="6">
-                                                                                        <TextBlock Text="Button:" VerticalAlignment="Center"/>
-                                                                                        <ComboBox SelectedValuePath="Content"
-                                                                                  SelectedValue="{Binding Button}">
-                                                                                            <ComboBoxItem Content="Left"/>
-                                                                                            <ComboBoxItem Content="Right"/>
-                                                                                            <ComboBoxItem Content="Middle"/>
-                                                                                        </ComboBox>
-                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding X}"/>
-                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Y}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
+                                                    <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
+                                                        <UniformGrid Columns="6">
+                                                            <TextBlock Text="Button:" VerticalAlignment="Center"/>
+                                                            <ComboBox SelectedValuePath="Content"
+                                                                                      SelectedValue="{Binding Button}">
+                                                                <ComboBoxItem Content="Left"/>
+                                                                <ComboBoxItem Content="Right"/>
+                                                                <ComboBoxItem Content="Middle"/>
+                                                            </ComboBox>
+                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding X}"/>
+                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Y}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
 
-                                                                                <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
-                                                                                    <UniformGrid Columns="6">
-                                                                                        <TextBlock Text="Button:" VerticalAlignment="Center"/>
-                                                                                        <ComboBox SelectedValuePath="Content"
-                                                                                  SelectedValue="{Binding Button}">
-                                                                                            <ComboBoxItem Content="Left"/>
-                                                                                            <ComboBoxItem Content="Right"/>
-                                                                                            <ComboBoxItem Content="Middle"/>
-                                                                                        </ComboBox>
-                                                                                        <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding X}"/>
-                                                                                        <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Y}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
+                                                    <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
+                                                        <UniformGrid Columns="2">
+                                                            <TextBlock Text="Key:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Key}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
 
-                                                                                <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
-                                                                                    <UniformGrid Columns="2">
-                                                                                        <TextBlock Text="Key:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Key}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
+                                                    <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
+                                                        <UniformGrid Columns="2">
+                                                            <TextBlock Text="Key:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Key}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
 
-                                                                                <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
-                                                                                    <UniformGrid Columns="2">
-                                                                                        <TextBlock Text="Key:" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Key}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
-
-                                                                                <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
-                                                                                    <UniformGrid Columns="2">
-                                                                                        <TextBlock Text="Duration (ms):" VerticalAlignment="Center"/>
-                                                                                        <TextBox Text="{Binding Duration}"/>
-                                                                                    </UniformGrid>
-                                                                                </DataTemplate>
-                                                                            </Grid.Resources>
-
-                                                                            <!-- Rendert automatisch den passenden Editor -->
-                                                                            <ContentPresenter Content="{Binding}"/>
-                                                                        </Grid>
-                                                                    </DataTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </ContentControl.Style>
-                                        </ContentControl>
+                                                    <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
+                                                        <UniformGrid Columns="2">
+                                                            <TextBlock Text="Duration (ms):" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding Duration}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
+                                                </Grid.Resources>
+                                            </Grid>
                                     </StackPanel>
 
                                     <!-- Aktionen rechts: ▲ (links) vor ▼ (rechts); nur im Edit-Mode sichtbar -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Margin="8,0,0,0">
-                                        <StackPanel.Style>
-                                            <Style TargetType="StackPanel">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Value="True"
-                                                 Binding="{Binding DataContext.IsEditMode,
-                                                           RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </StackPanel.Style>
-
-                                        <!-- ▲ nach oben -->
-                                        <Button Content="▲" Width="28" Height="28" Margin="0,0,4,0"
-                                ToolTip="Schritt nach oben"
-                                Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}"/>
-
-                                        <!-- ▼ nach unten -->
-                                        <Button Content="▼" Width="28" Height="28"
-                                ToolTip="Schritt nach unten"
-                                Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}"/>
+                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Margin="8,0,0,0">   
+                                    <!-- ▲ nach oben -->
+                                    <Button Content="▲" Width="28" Height="28" Margin="0,0,4,0"
+                                        ToolTip="Schritt nach oben"
+                                        Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                    <!-- ▼ nach unten -->
+                                    <Button Content="▼" Width="28" Height="28"
+                                        ToolTip="Schritt nach unten"
+                                        Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                                    <Button Content="Delete" Width="60" Margin="40,0,0,0"
+                                        Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
                                     </StackPanel>
                                 </Grid>
                         </DataTemplate>

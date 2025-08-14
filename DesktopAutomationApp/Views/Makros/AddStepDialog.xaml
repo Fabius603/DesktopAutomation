@@ -2,15 +2,15 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-                 Title="Neuen Step hinzufügen"
-                 Height="260" Width="420"
+                 Title="Neuen Step hinzufügen" Height="260" Width="420"
                  WindowStartupLocation="CenterOwner"
-                 ResizeMode="NoResize"
-                 ShowInTaskbar="False">
+                 ResizeMode="NoResize" ShowInTaskbar="False">
+    <mah:MetroWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </mah:MetroWindow.Resources>
+
     <Grid Margin="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -20,61 +20,52 @@
         <!-- Typauswahl -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="Typ:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <ComboBox Width="180"
-                      ItemsSource="{Binding StepTypes}"
-                      SelectedItem="{Binding SelectedType}"/>
+            <ComboBox Width="180" ItemsSource="{Binding StepTypes}" SelectedItem="{Binding SelectedType}"/>
         </StackPanel>
 
-        <!-- Mausparameter -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="X:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBox Width="60" Text="{Binding X}"/>
-            <TextBlock Text="  Y:" VerticalAlignment="Center" Margin="8,0,4,0"/>
-            <TextBox Width="60" Text="{Binding Y}"/>
+        <!-- Dynamische Felder -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+            <!-- Maus: X/Y -->
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ShowMouseXY, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="X:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Width="60" Text="{Binding X}"/>
+                <TextBlock Text="  Y:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                <TextBox Width="60" Text="{Binding Y}"/>
+            </StackPanel>
 
-            <TextBlock Text="  Button:" VerticalAlignment="Center" Margin="12,0,4,0"/>
-            <!-- Variante A: feste Items, SelectedValue = string -->
-            <ComboBox Width="90"
-                      SelectedValuePath="Content"
-                      SelectedValue="{Binding MouseButton}">
-                <ComboBoxItem Content="Left"/>
-                <ComboBoxItem Content="Right"/>
-                <ComboBoxItem Content="Middle"/>
-            </ComboBox>
+            <!-- Maus: Button -->
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding ShowMouseButton, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Button:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ComboBox Width="100" SelectedValuePath="Content" SelectedValue="{Binding MouseButton}">
+                    <ComboBoxItem Content="Left"/>
+                    <ComboBoxItem Content="Right"/>
+                    <ComboBoxItem Content="Middle"/>
+                </ComboBox>
+            </StackPanel>
 
-            <!-- Alternative Variante B (stattdessen):
-            <ComboBox Width="90"
-                      ItemsSource="{Binding MouseButtons}"   // ObservableCollection<string>
-                      SelectedItem="{Binding MouseButton}"/>
-            -->
+            <!-- Key -->
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding ShowKey, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Key:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Width="120" Text="{Binding Key}"/>
+            </StackPanel>
+
+            <!-- Timeout -->
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding ShowDuration, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Duration (ms):" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Width="80" Text="{Binding Duration}"/>
+            </StackPanel>
         </StackPanel>
 
-        <!-- Keyboard -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="Key:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBox Width="120" Text="{Binding Key}"/>
-        </StackPanel>
-
-        <!-- Timeout -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="Duration (ms):" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBox Width="80" Text="{Binding Duration}"/>
-        </StackPanel>
-
-        <TextBlock Grid.Row="4"
-                   Text="Hinweis: Nur die zum gewählten Typ passenden Felder werden verwendet."
+        <!-- Hinweis -->
+        <TextBlock Grid.Row="2"
+                   Text="Es werden nur die zum gewählten Typ passenden Felder angezeigt."
                    Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                   Opacity="0.7"
-                   TextWrapping="Wrap" />
+                   Opacity="0.7" TextWrapping="Wrap"/>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Abbrechen"
-                    IsCancel="True"
-                    Margin="0,0,8,0"
-                    Click="Cancel_Click"/>
-            <Button Content="Hinzufügen"
-                    IsDefault="True"
-                    Click="Ok_Click"/>
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Abbrechen" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Content="Hinzufügen" IsDefault="True" Click="Ok_Click"/>
         </StackPanel>
     </Grid>
 </mah:MetroWindow>

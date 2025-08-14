@@ -4,7 +4,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                  Title="DesktopAutomation"
-                 MinWidth="900" MinHeight="600"
+                 MinWidth="1300" MinHeight="600"
                  WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>

@@ -15,7 +15,7 @@
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Jobs" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="8,0,0,0" FontSize="14"/>
         </StackPanel>
 
         <!-- Tabelle -->
@@ -34,12 +34,13 @@
                     <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="3*"/>
                     <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" Width="*"/>
                     <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"   Width="*"/>
-                    <DataGridTemplateColumn Header="" Width="Auto">
+                    <DataGridTemplateColumn Header="" Width="75">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Öffnen"
-                        Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                        CommandParameter="{Binding}"/>
+                                    Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    FontSize="14"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
