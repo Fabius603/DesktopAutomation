@@ -2,7 +2,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-                 Title="Neuen Step hinzufügen" Height="260" Width="420"
+                 Title="{Binding DialogTitle}" Height="260" Width="420"
                  WindowStartupLocation="CenterOwner"
                  ResizeMode="NoResize" ShowInTaskbar="False">
     <mah:MetroWindow.Resources>
@@ -65,7 +65,7 @@
         <!-- Buttons -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Abbrechen" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Content="Hinzufügen" IsDefault="True" Click="Ok_Click"/>
+            <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Click="Ok_Click"/>
         </StackPanel>
     </Grid>
 </mah:MetroWindow>

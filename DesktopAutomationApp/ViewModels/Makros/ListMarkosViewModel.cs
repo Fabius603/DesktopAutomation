@@ -11,7 +11,8 @@ using System.Windows.Input;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using ImageHelperMethods;
-using TaskAutomation.Persistence; // <— für IJsonRepository<Makro>
+using TaskAutomation.Persistence;
+using DesktopAutomationApp.Views;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -62,6 +63,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand AddStepCommand { get; }          // öffnet Dialog
         public ICommand MoveStepUpCommand { get; }
         public ICommand MoveStepDownCommand { get; }
+        public ICommand EditStepCommand { get; }
 
         // Aufnahme (vorerst ohne Funktion)
         public ICommand RecordStepsCommand { get; }
@@ -95,6 +97,7 @@ namespace DesktopAutomationApp.ViewModels
             AddStepCommand = new RelayCommand(OpenAddStepDialog, () => Selected != null);
             MoveStepUpCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
+            EditStepCommand = new RelayCommand<MakroBefehl?>(EditStep, s => Selected != null && s != null);
 
             RecordStepsCommand = new RelayCommand(() => { /* absichtlich leer (Platzhalter) */ });
 
@@ -179,6 +182,38 @@ namespace DesktopAutomationApp.ViewModels
             SelectedStep = step;
         }
 
+        private void EditStep(MakroBefehl? step)
+        {
+            if (Selected?.Befehle == null || step == null) return;
+
+            var list = Selected.Befehle; // ObservableCollection<MakroBefehl> empfohlen
+            var index = list.IndexOf(step);
+            if (index < 0) return;
+
+            // Dialog-VM vorbereiten und mit aktuellen Werten füllen
+            var vm = new AddStepDialogViewModel() { Mode = StepDialogMode.Edit };
+            Prefill(vm, step);
+
+            // Dialog über dem Hauptfenster öffnen
+            var dlg = new AddStepDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = vm,
+            };
+
+            var ok = dlg.ShowDialog() == true;
+            if (!ok || vm.CreatedStep == null) return;
+
+            // Ersetzen am selben Index
+            list[index] = vm.CreatedStep;
+
+            // Auswahl halten
+            SelectedStep = vm.CreatedStep;
+
+            // optional: Commands requeryn (Up/Down-Buttons an den Rändern)
+            CommandManager.InvalidateRequerySuggested();
+        }
+
         private async void LoadMakros()
         {
             await _executor.ReloadMakrosAsync();
@@ -190,6 +225,44 @@ namespace DesktopAutomationApp.ViewModels
             Selected = Items.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedSteps));
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
+        }
+
+        private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)
+        {
+            switch (step)
+            {
+                case MouseMoveBefehl mm:
+                    vm.SelectedType = "MouseMove";
+                    vm.X = mm.X; vm.Y = mm.Y;
+                    break;
+
+                case MouseDownBefehl md:
+                    vm.SelectedType = "MouseDown";
+                    vm.MouseButton = md.Button;
+                    vm.X = md.X; vm.Y = md.Y;
+                    break;
+
+                case MouseUpBefehl mu:
+                    vm.SelectedType = "MouseUp";
+                    vm.MouseButton = mu.Button;
+                    vm.X = mu.X; vm.Y = mu.Y;
+                    break;
+
+                case KeyDownBefehl kd:
+                    vm.SelectedType = "KeyDown";
+                    vm.Key = kd.Key;
+                    break;
+
+                case KeyUpBefehl ku:
+                    vm.SelectedType = "KeyUp";
+                    vm.Key = ku.Key;
+                    break;
+
+                case TimeoutBefehl to:
+                    vm.SelectedType = "Timeout";
+                    vm.Duration = to.Duration;
+                    break;
+            }
         }
 
         private async Task SaveAllAsync()
@@ -278,7 +351,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (Selected == null) return;
 
-            var dlgVm = new AddStepDialogViewModel(); // Standardwerte sind im VM gesetzt
+            var dlgVm = new AddStepDialogViewModel() { Mode = StepDialogMode.Add}; // Standardwerte sind im VM gesetzt
             var dlg = new Views.AddStepDialog
             {
                 Owner = System.Windows.Application.Current.MainWindow, // über dem Hauptfenster

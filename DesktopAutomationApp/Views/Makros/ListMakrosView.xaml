@@ -409,25 +409,36 @@
                                             </Grid>
                                     </StackPanel>
 
-                                    <!-- Aktionen rechts: ▲ (links) vor ▼ (rechts); nur im Edit-Mode sichtbar -->
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top"
-                                        Margin="8,0,0,0">   
+                                <!-- Aktionen rechts: ✎ , ▲ , ▼ , 🗑 -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Margin="8,0,0,0">
+
+                                    <!-- Bearbeiten -->
+                                    <Button Content="Edit" Width="50" Height="35" Margin="0,0,30,0" FontSize="13"
+                                        ToolTip="Step bearbeiten"
+                                        Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+
                                     <!-- ▲ nach oben -->
-                                    <Button Content="▲" Width="28" Height="28" Margin="0,0,4,0"
+                                    <Button Content="▲" Width="35" Height="35" Margin="0,0,4,0"
                                         ToolTip="Schritt nach oben"
                                         Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"/>
+
                                     <!-- ▼ nach unten -->
-                                    <Button Content="▼" Width="28" Height="28"
+                                    <Button Content="▼" Width="35" Height="35" Margin="0,0,4,0"
                                         ToolTip="Schritt nach unten"
                                         Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"/>
-                                    <Button Content="Delete" Width="60" Margin="40,0,0,0"
+
+                                    <!-- Löschen (falls noch nicht vorhanden) -->
+                                    <Button Content="Delete" Width="60" Height="35" Margin="80,0,0,0" FontSize="13"
+                                        ToolTip="Step löschen"
                                         Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </Grid>
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

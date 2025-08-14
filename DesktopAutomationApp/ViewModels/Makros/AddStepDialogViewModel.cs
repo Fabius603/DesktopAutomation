@@ -19,6 +19,16 @@ namespace DesktopAutomationApp.ViewModels
             set { _selectedType = value; OnChange(); OnChange(nameof(ShowMouseXY)); OnChange(nameof(ShowMouseButton)); OnChange(nameof(ShowKey)); OnChange(nameof(ShowDuration)); }
         }
 
+        private StepDialogMode _mode = StepDialogMode.Add;
+        public StepDialogMode Mode
+        {
+            get => _mode;
+            set { _mode = value; OnChange(); OnChange(nameof(DialogTitle)); OnChange(nameof(ConfirmButtonText)); }
+        }
+
+        public string DialogTitle => Mode == StepDialogMode.Edit ? "Step anpassen" : "Neuen Step hinzufügen";
+        public string ConfirmButtonText => Mode == StepDialogMode.Edit ? "Anpassen" : "Hinzufügen";
+
         // Sichtbarkeiten
         public bool ShowMouseXY => SelectedType is "MouseMove" or "MouseDown" or "MouseUp";
         public bool ShowMouseButton => SelectedType is "MouseDown" or "MouseUp";
