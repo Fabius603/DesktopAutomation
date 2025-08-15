@@ -250,6 +250,30 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
         }
 
+        public void EnsureUniqueNameFor(Makro? m)
+        {
+            if (m == null) return;
+
+            var proposed = m.Name?.Trim() ?? "";
+            if (string.IsNullOrEmpty(proposed))
+            {
+                m.Name = UniqueName("Makro");
+                return;
+            }
+
+            // bereits eindeutig?
+            bool collision = Items.Any(x =>
+                !ReferenceEquals(x, m) &&
+                string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
+
+            if (!collision) return;
+
+            // Kollision -> automatisch eindeutigen Namen erzeugen
+            m.Name = UniqueName(proposed);
+            SaveAllAsync();
+            _log.LogInformation("Makro-Name kollidierte, automatisch umbenannt in: {Name}", m.Name);
+        }
+
         private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)
         {
             switch (step)
@@ -288,7 +312,7 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        private async Task SaveAllAsync()
+        public async Task SaveAllAsync()
         {
             // Persistiert alle Makros gesammelt
             await _makroRepo.SaveAllAsync(Items);

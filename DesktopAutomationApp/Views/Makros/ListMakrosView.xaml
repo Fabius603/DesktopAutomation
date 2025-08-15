@@ -253,15 +253,21 @@
 
         <!-- Liste der Makros -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <DataGrid ItemsSource="{Binding Items}"
-                      SelectedItem="{Binding Selected}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      IsReadOnly="True">
+            <DataGrid x:Name="MakroGrid"
+          ItemsSource="{Binding Items}"
+          SelectedItem="{Binding Selected}"
+          AutoGenerateColumns="False"
+          CanUserAddRows="False"
+          CanUserDeleteRows="False"
+          IsReadOnly="False"
+          RowEditEnding="MakroGrid_RowEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*"/>
-                    <DataGridTextColumn Header="# Befehle" Binding="{Binding Befehle.Count}" Width="*"/>
+                    <DataGridTextColumn Header="Name"
+                        Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                        Width="2*" />
+                    <DataGridTextColumn Header="# Befehle"
+                        Binding="{Binding Befehle.Count}"
+                        IsReadOnly="True" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
