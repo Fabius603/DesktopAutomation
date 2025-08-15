@@ -4,10 +4,10 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Collections.Generic;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using ImageHelperMethods;
@@ -22,10 +22,11 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IMacroPreviewService _preview;
-        private readonly IJsonRepository<Makro> _makroRepo; 
+        private readonly IJsonRepository<Makro> _makroRepo;
         private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
         private readonly IGlobalHotkeyService _hotkeys;
+
         public string Title => "Makros";
         public string Description => "Verfügbare Makros";
 
@@ -35,15 +36,30 @@ namespace DesktopAutomationApp.ViewModels
         public Makro? Selected
         {
             get => _selected;
-            set { _selected = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedSteps)); }
+            set { _selected = value; OnPropertyChanged(); OnPropertyChanged(nameof(SelectedSteps)); CommandManager.InvalidateRequerySuggested(); }
         }
 
+        private MakroBefehl? _selectedStep;
         public MakroBefehl? SelectedStep
         {
             get => _selectedStep;
             set { _selectedStep = value; OnPropertyChanged(); }
         }
-        private MakroBefehl? _selectedStep;
+
+        public bool IsRecording
+        {
+            get => _isRecording;
+            private set
+            {
+                if (_isRecording == value) return;
+                _isRecording = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RecordButtonText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string RecordButtonText => IsRecording ? "Aufnahme stoppen" : "Aufnahme starten";
 
         public ObservableCollection<MakroBefehl>? SelectedSteps =>
             Selected?.Befehle != null ? new ObservableCollection<MakroBefehl>(Selected.Befehle) : null;
@@ -66,7 +82,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveStepDownCommand { get; }
         public ICommand EditStepCommand { get; }
 
-        // Aufnahme (vorerst ohne Funktion)
+        // Aufnahme (jetzt aktiv)
         public ICommand RecordStepsCommand { get; }
 
         // Vorschau
@@ -75,12 +91,15 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand PreviewPlaybackCommand { get; }
         public ICommand PreviewStopCommand { get; }
 
+        // Aufnahme-Status
+        private bool _isRecording;
+
         public ListMakrosViewModel(
             IJobExecutor executor,
             ILogger<ListMakrosViewModel> log,
             IMacroPreviewService preview,
             IJsonRepository<Makro> makroRepo,
-            IGlobalHotkeyService hotkeys)   
+            IGlobalHotkeyService hotkeys)
         {
             _executor = executor;
             _log = log;
@@ -102,7 +121,8 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
             EditStepCommand = new RelayCommand<MakroBefehl?>(EditStep, s => Selected != null && s != null);
 
-            RecordStepsCommand = new RelayCommand(() => { /* absichtlich leer (Platzhalter) */ });
+            // Aufnahme-Button: Toggle Start/Stop
+            RecordStepsCommand = new RelayCommand(async () => await ToggleRecordAsync(), () => Selected != null);
 
             CopyNameCommand = new RelayCommand<Makro?>(m =>
             {
@@ -208,7 +228,7 @@ namespace DesktopAutomationApp.ViewModels
             if (!ok || vm.CreatedStep == null) return;
 
             // Ersetzen am selben Index
-            list[index] = vm.CreatedStep;
+            Selected.Befehle[index] = vm.CreatedStep;
 
             // Auswahl halten
             SelectedStep = vm.CreatedStep;
@@ -345,7 +365,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private MakroBefehl CloneStep(MakroBefehl s)
         {
-            // einfache, robuste Variante über STJ-Serialize/Deserialize (nutzt Ihre Polymorphie-Optionen)
+            // einfache, robuste Variante über STJ-Serialize/Deserialize (nutzt deine Polymorphie-Optionen)
             var json = System.Text.Json.JsonSerializer.Serialize(s, JsonOptions.Default);
             return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
         }
@@ -354,7 +374,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (Selected == null) return;
 
-            var dlgVm = new AddStepDialogViewModel(_hotkeys) { Mode = StepDialogMode.Add}; // Standardwerte sind im VM gesetzt
+            var dlgVm = new AddStepDialogViewModel(_hotkeys) { Mode = StepDialogMode.Add }; // Standardwerte sind im VM gesetzt
             var dlg = new AddStepDialog
             {
                 Owner = Application.Current.MainWindow, // über dem Hauptfenster
@@ -375,6 +395,97 @@ namespace DesktopAutomationApp.ViewModels
                 // neu eingefügten Step auswählen
                 SelectedStep = dlgVm.CreatedStep;
             }
+        }
+
+        // ============================
+        // Aufnahme-Implementierung (VM)
+        // ============================
+        private async Task ToggleRecordAsync()
+        {
+            if (Selected == null) return;
+
+            try
+            {
+                if (!IsRecording)
+                {
+                    _hotkeys.StartRecordHotkeys();
+                    IsRecording = true;
+                    _log.LogInformation("Makro-Aufnahme gestartet.");
+                }
+                else
+                {
+                    var events = _hotkeys.StopRecordHotkeys();
+                    IsRecording = false;
+                    _log.LogInformation("Makro-Aufnahme gestoppt. Events: {Count}", events?.Count ?? 0);
+
+                    if (events == null || events.Count == 0)
+                        return;
+
+                    var mapped = MapCapturedEventsToSteps(events);
+
+                    Selected.Befehle ??= new();
+                    int insertIndex = SelectedStep != null
+                        ? Math.Min(Selected.Befehle.Count, Selected.Befehle.IndexOf(SelectedStep) + 1)
+                        : Selected.Befehle.Count;
+
+                    foreach (var step in mapped)
+                        Selected.Befehle.Insert(insertIndex++, step);
+
+                    if (mapped.Count > 0)
+                        SelectedStep = mapped.Last();
+
+                    OnPropertyChanged(nameof(SelectedSteps));
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler bei der Makro-Aufnahme.");
+                IsRecording = false;
+            }
+        }
+
+        private List<MakroBefehl> MapCapturedEventsToSteps(IReadOnlyList<CapturedInputEvent> events)
+        {
+            var list = new List<MakroBefehl>(events.Count);
+
+            foreach (var ev in events)
+            {
+                switch (ev)
+                {
+                    case TimeoutEvent t:
+                        if (t.Milliseconds > 0)
+                            list.Add(new TimeoutBefehl { Duration = t.Milliseconds });
+                        break;
+
+                    case KeyDownCaptured kd:
+                        list.Add(new KeyDownBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, kd.VirtualKey) });
+                        break;
+
+                    case KeyUpCaptured ku:
+                        list.Add(new KeyUpBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, ku.VirtualKey) });
+                        break;
+
+                    case MouseDownCaptured md:
+                        list.Add(new MouseDownBefehl
+                        {
+                            Button = _hotkeys.FormatMouseButton(md.Button),
+                            X = md.X,
+                            Y = md.Y
+                        });
+                        break;
+
+                    case MouseUpCaptured mu:
+                        list.Add(new MouseUpBefehl
+                        {
+                            Button = _hotkeys.FormatMouseButton(mu.Button),
+                            X = mu.X,
+                            Y = mu.Y
+                        });
+                        break;
+                }
+            }
+
+            return list;
         }
 
         public void Dispose()

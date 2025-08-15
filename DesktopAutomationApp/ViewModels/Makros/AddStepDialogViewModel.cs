@@ -107,7 +107,7 @@ namespace DesktopAutomationApp.ViewModels
             try
             {
                 var (mods, vk) = await _capture.CaptureNextAsync(_captureCts.Token);
-                Key = FormatKey(mods, vk);
+                Key = _capture.FormatKey(mods, vk);
             }
             catch (OperationCanceledException)
             {
@@ -119,21 +119,6 @@ namespace DesktopAutomationApp.ViewModels
                 _captureCts = null;
                 IsCapturing = false;
             }
-        }
-
-        private static string FormatKey(KeyModifiers mods, uint vk)
-        {
-            var parts = new List<string>(4);
-            if (mods.HasFlag(KeyModifiers.Control)) parts.Add("Ctrl");
-            if (mods.HasFlag(KeyModifiers.Shift)) parts.Add("Shift");
-            if (mods.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
-            if (mods.HasFlag(KeyModifiers.Windows)) parts.Add("Win");
-
-            // VK → WPF Key-Name
-            var key = System.Windows.Input.KeyInterop.KeyFromVirtualKey(unchecked((int)vk));
-            parts.Add(key.ToString());
-
-            return string.Join("+", parts);
         }
     }
 }

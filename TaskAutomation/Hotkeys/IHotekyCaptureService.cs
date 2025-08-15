@@ -52,5 +52,12 @@ namespace TaskAutomation.Hotkeys
         /// </summary>
         void StartWithMessageLoop();
 
+        void StartRecordHotkeys();
+
+        IReadOnlyList<CapturedInputEvent> StopRecordHotkeys();
+
+        string FormatKey(KeyModifiers mods, uint vk);
+
+        string FormatMouseButton(MouseButtons button);
     }
 }

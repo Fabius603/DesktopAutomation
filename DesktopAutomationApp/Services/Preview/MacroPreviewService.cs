@@ -1,23 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskAutomation.Makros;
-using DesktopOverlay.OverlayItems;
 using System.Drawing;
-using Font = GameOverlay.Drawing.Font;
-using SolidBrush = GameOverlay.Drawing.SolidBrush;
-using Graphics = GameOverlay.Drawing.Graphics;
-using Color = GameOverlay.Drawing.Color;
+using System.Linq;
 using DesktopOverlay;
+using DesktopOverlay.OverlayItems;
+using TaskAutomation.Makros;
+using Color = GameOverlay.Drawing.Color;
 
 namespace DesktopAutomationApp.Services.Preview
 {
     public sealed class MacroPreviewService : IMacroPreviewService
     {
-        private const double MoveMs = 120;  // nur für Playback-Visualisierung
-        private const double ClickMs = 180;
+        // -------------------------
+        // Anzeige-Tuning
+        // -------------------------
+
+        // Key-Badges
+        private const double KeyMinVisibleSeconds = 1.0;   // Mindestdauer pro Key-Badge
+        private const float KeyBadgeScale = 1.6f;  // größer & lesbarer
+        private const float KeyLaneLineHeightPx = 30f;   // Abstand der Badge-Zeilen (Overlay-LOCAL)
+        private const int KeyLaneMax = 8;     // max. Zeilen
+        private const float KeySlotSpacingLocal = 220f; // horizontaler Abstand zwischen Badges
+        private const float KeyBottomOffsetLocal = 130f;  // Abstand vom unteren Rand
+
+        // Klick-Pulse
+        private const double ClickSeconds = 0.35;
+
+        // Segmente ohne Zeitdifferenz bekommen eine minimale Dauer,
+        // damit der Playhead sichtbar „zuckt“ statt zu teleportieren.
+        private const double MinSegmentSeconds = 0.02;
 
         public sealed record PreviewResult(
             IEnumerable<IOverlayItem> StaticItems,
@@ -25,22 +36,33 @@ namespace DesktopAutomationApp.Services.Preview
             double TotalSeconds);
 
         /// <summary>
-        /// Baut die Items für Overlay. virtualBounds = gesamter virtueller Desktop (Pixel), overlayBounds = Overlay-Fenster-Bounds.
+        /// Baut die Overlay-Items. Zeitskala wird ausschließlich aus TimeoutBefehl aufgebaut,
+        /// alle anderen Befehle sind zeitstempelgenau an diese Skala gebunden.
         /// </summary>
         public PreviewResult Build(Makro makro, Rectangle virtualBounds, Rectangle overlayBounds)
         {
             var overlayLocal = new Rectangle(0, 0, overlayBounds.Width, overlayBounds.Height);
             var tr = OverlayTransform.FromVirtualToOverlayLocal(virtualBounds, overlayLocal);
 
-            var ptsGlobal = new List<(float x, float y)>();
-            var segments = new List<PlayheadItem.SegmentGlobal>();
-            var timed = new List<IOverlayItem>();
             var stat = new List<IOverlayItem>();
-            var keyDown = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            var timed = new List<IOverlayItem>();
 
+            // Zeitachse: nur Timeout erhöht t.
             double t = 0.0;
+
+            // Mauspositionsliste mit Zeitstempel t_i
+            var mousePositions = new List<((float x, float y) p, double t)>();
+
+            // Für Click-Visualisierung merken wir Down/Up-Positionen (bei t)
+            // (Wir erzeugen Pulse direkt während des Durchlaufs.)
+
+            // Key-Intervalle: sammeln wir erst und rendern sie später lane-basiert
+            var keyDownAt = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            var keyIntervals = new List<(string key, double start, double end)>(); // end wird später gefüllt
+
+            // Letzter Mauspunkt (nur zur Node/Segment-Bildung hilfreich)
+            (float x, float y)? lastPos = null;
             int nodeIdx = 0;
-            (float x, float y)? lastGlobal = null;
 
             foreach (var cmd in makro.Befehle)
             {
@@ -48,119 +70,261 @@ namespace DesktopAutomationApp.Services.Preview
                 {
                     case MouseMoveBefehl m:
                         {
-                            var p = ((float)m.X, (float)m.Y); // globale (virtuelle) Pixel
-                            if (lastGlobal is { } prev)
-                                segments.Add(new PlayheadItem.SegmentGlobal(prev, p, t, t + MoveMs / 1000.0));
-
-                            ptsGlobal.Add(p);
+                            var p = ((float)m.X, (float)m.Y);
+                            mousePositions.Add((p, t));
                             nodeIdx++;
 
-                            var node = new NodeItem($"node_{nodeIdx}",
-                                                    p.Item1, p.Item2, 6f, nodeIdx.ToString(),
-                                                    new Color(20, 130, 255, 160),
-                                                    new Color(20, 130, 255, 220),
-                                                    2f,
-                                                    new Color(255, 255, 255, 255))
-                            { Transform = tr };
-                            stat.Add(node);
+                            // Node als Orientierungspunkt (statisch)
+                            stat.Add(new NodeItem(
+                                id: $"node_{nodeIdx}",
+                                globalX: p.Item1, globalY: p.Item2,
+                                radius: 6f,
+                                label: nodeIdx.ToString(),
+                                fill: new Color(20, 130, 255, 160),
+                                stroke: new Color(20, 130, 255, 220),
+                                strokeWidth: 2f,
+                                text: new Color(255, 255, 255, 255)
+                            )
+                            { Transform = tr });
 
-                            t += MoveMs / 1000.0;
-                            lastGlobal = p;
+                            // (kein t++ hier – Zeit steigt nur bei Timeout)
+                            lastPos = p;
                             break;
                         }
 
                     case MouseDownBefehl d:
                         {
                             var p = ((float)d.X, (float)d.Y);
-                            var pulse = new ClickPulseItem($"down_{t:F3}", p.Item1, p.Item2, true, t, ClickMs / 1000.0,
-                                                           new Color(255, 80, 80, 220))
-                            { Transform = tr };
-                            timed.Add(pulse);
-                            lastGlobal = p;
+                            mousePositions.Add((p, t)); // Down definiert auch eine relevante Position
+
+                            // Puls (timed)
+                            timed.Add(new ClickPulseItem(
+                                id: $"md_{t:F3}",
+                                globalX: p.Item1, globalY: p.Item2,
+                                isDown: true,
+                                startSeconds: t,
+                                durationSeconds: ClickSeconds,
+                                color: new Color(255, 80, 80, 220)
+                            )
+                            { Transform = tr });
+
+                            // Node ↓ (statisch)
+                            stat.Add(new NodeItem(
+                                id: $"node_md_{nodeIdx++}",
+                                globalX: p.Item1, globalY: p.Item2,
+                                radius: 7f, label: "↓",
+                                fill: new Color(255, 80, 80, 140),
+                                stroke: new Color(255, 80, 80, 220),
+                                strokeWidth: 2f,
+                                text: new Color(255, 255, 255, 255)
+                            )
+                            { Transform = tr });
+
+                            lastPos = p;
                             break;
                         }
 
                     case MouseUpBefehl u:
                         {
                             var p = ((float)u.X, (float)u.Y);
-                            var pulse = new ClickPulseItem($"up_{t:F3}", p.Item1, p.Item2, false, t, ClickMs / 1000.0,
-                                                           new Color(255, 180, 80, 220))
-                            { Transform = tr };
-                            timed.Add(pulse);
-                            lastGlobal = p;
+                            mousePositions.Add((p, t));
+
+                            timed.Add(new ClickPulseItem(
+                                id: $"mu_{t:F3}",
+                                globalX: p.Item1, globalY: p.Item2,
+                                isDown: false,
+                                startSeconds: t,
+                                durationSeconds: ClickSeconds,
+                                color: new Color(255, 180, 80, 220)
+                            )
+                            { Transform = tr });
+
+                            stat.Add(new NodeItem(
+                                id: $"node_mu_{nodeIdx++}",
+                                globalX: p.Item1, globalY: p.Item2,
+                                radius: 7f, label: "↑",
+                                fill: new Color(255, 180, 80, 140),
+                                stroke: new Color(255, 180, 80, 220),
+                                strokeWidth: 2f,
+                                text: new Color(255, 255, 255, 255)
+                            )
+                            { Transform = tr });
+
+                            lastPos = p;
                             break;
                         }
 
                     case KeyDownBefehl kd:
-                        keyDown[kd.Key ?? ""] = t;
+                        if (!keyDownAt.ContainsKey(kd.Key ?? "")) keyDownAt[kd.Key ?? ""] = t;
                         break;
 
                     case KeyUpBefehl ku:
+                        if (keyDownAt.TryGetValue(ku.Key ?? "", out var t0))
                         {
-                            var key = ku.Key ?? "";
-                            if (keyDown.TryGetValue(key, out var t0))
-                            {
-                                // Badge in der Nähe des letzten globalen Punkts platzieren.
-                                // Falls es noch keinen gibt: eine feste Ecke des virtuellen Desktops,
-                                // dabei 12px/24px in LOCAL entsprechen 12/Sx bzw. 24/Sy in GLOBAL.
-                                float bx, by;
-                                if (ptsGlobal.Count > 0)
-                                {
-                                    var anchor = ptsGlobal.Last();
-                                    bx = anchor.x;
-                                    by = anchor.y;
-                                }
-                                else
-                                {
-                                    bx = virtualBounds.Left + (12f / tr.Sx);
-                                    by = virtualBounds.Top + (12f / tr.Sy);
-                                }
-                                // Zeilen-Offset
-                                by += (float)((24.0 / tr.Sy) * (keyDown.Count % 10));
-
-                                var badge = new KeyBadgeItem($"key_{key}_{t0:F3}", key, bx, by, t0, t)
-                                { Transform = tr };
-                                timed.Add(badge);
-
-                                keyDown.Remove(key);
-                            }
-                            break;
+                            keyIntervals.Add((ku.Key ?? "", t0, t));
+                            keyDownAt.Remove(ku.Key ?? "");
                         }
+                        break;
 
                     case TimeoutBefehl to:
                         {
-                            if (lastGlobal is { } lp && to.Duration > 0)
+                            var ms = Math.Max(0, to.Duration);
+                            if (ms > 0 && lastPos is { } lp)
                             {
-                                var badge = new TimeoutBadgeItem($"timeout_{t:F3}", lp.x, lp.y, t, to.Duration)
-                                { Transform = tr };
-                                timed.Add(badge);
-                                t += to.Duration / 1000.0;
+                                // Timeout-Badge an letztem Punkt anzeigen
+                                timed.Add(new TimeoutBadgeItem(
+                                    id: $"to_{t:F3}",
+                                    globalX: lp.Item1, globalY: lp.Item2,
+                                    startSeconds: t,
+                                    durationMs: ms
+                                )
+                                { Transform = tr });
                             }
+                            t += ms / 1000.0;
                             break;
                         }
                 }
             }
 
-            if (ptsGlobal.Count >= 2)
+            // Keys, die bis zum Ende gehalten wurden, abschließen
+            if (keyDownAt.Count > 0)
             {
-                var full = new PolylineItem("path_full", ptsGlobal, 2f, new Color(0, 180, 255, 130))
-                { Transform = tr };
-                var play = new PolylineItem("path_play", ptsGlobal, 4f, new Color(0, 220, 120, 220))
-                { Transform = tr, Progress = 0f };
-
-                stat.Add(full);
-                stat.Add(play);
+                var end = t;
+                foreach (var kv in keyDownAt)
+                    keyIntervals.Add((kv.Key, kv.Value, end));
+                keyDownAt.Clear();
             }
 
-            if (segments.Count > 0)
+            // ------------------------------------------------------
+            // Pfad (statisch) + Playhead-Segmente (timed) bauen
+            // ------------------------------------------------------
+            if (mousePositions.Count >= 2)
             {
-                var head = new PlayheadItem("playhead", segments, 5f, new Color(255, 255, 255, 255))
-                { Transform = tr };
-                timed.Add(head);
+                // kompletter Pfad als dünne Linie
+                stat.Add(new PolylineItem(
+                    id: "path_full",
+                    globalPoints: mousePositions.Select(mp => (mp.p.Item1, mp.p.Item2)).ToList(),
+                    thickness: 2f,
+                    color: new Color(0, 180, 255, 130)
+                )
+                { Transform = tr });
+
+                // optional: „Playback“-Pfad (Progress wird vom Overlay ggf. animiert)
+                stat.Add(new PolylineItem(
+                    id: "path_play",
+                    globalPoints: mousePositions.Select(mp => (mp.p.Item1, mp.p.Item2)).ToList(),
+                    thickness: 4f,
+                    color: new Color(0, 220, 120, 220)
+                )
+                { Transform = tr, Progress = 0f });
+
+                // Playhead-Segmente: zeitlich genau zwischen den Positionen
+                var segments = new List<PlayheadItem.SegmentGlobal>(mousePositions.Count - 1);
+                for (int i = 0; i < mousePositions.Count - 1; i++)
+                {
+                    var a = mousePositions[i];
+                    var b = mousePositions[i + 1];
+                    double start = a.t;
+                    double end = b.t;
+                    if (end <= start)
+                        end = start + MinSegmentSeconds; // minimale Sichtbarkeit
+
+                    segments.Add(new PlayheadItem.SegmentGlobal(a.p, b.p, start, end));
+                }
+
+                if (segments.Count > 0)
+                {
+                    timed.Add(new PlayheadItem(
+                        id: "playhead",
+                        segments: segments,
+                        radius: 6f,
+                        color: new Color(255, 255, 255, 255)
+                    )
+                    { Transform = tr });
+                }
+
+                // TotalSeconds: Ende des letzten Segments ODER letzte t-Position,
+                // plus evtl. Key-Mindestdauer abgedeckt
+                t = Math.Max(t, segments[^1].End);
+            }
+            else
+            {
+                // Kein Pfad – TotalSeconds ist aktuelles t
             }
 
-            double total = segments.Count > 0 ? segments[^1].End : t;
-            return new PreviewResult(stat, timed, total);
+            // ------------------------------------------------------
+            // Keys lane-basiert rendern (keine Überlappung in einer Zeile)
+            // ------------------------------------------------------
+            if (keyIntervals.Count > 0)
+            {
+                // ----------------------------------------------
+                // Lane-Zuordnung (nebeneinander) per Sweep-Line
+                // ----------------------------------------------
+                keyIntervals.Sort((a, b) => a.start.CompareTo(b.start));
+
+                // Für jede Lane merken wir, bis wann sie belegt ist
+                var laneEnd = new List<double>();         // Index = Lane-Id
+                var laneOf = new int[keyIntervals.Count]; // laneOf[i] → zugewiesene Lane
+
+                for (int i = 0; i < keyIntervals.Count; i++)
+                {
+                    var (key, start, end) = keyIntervals[i];
+                    int lane = 0;
+                    for (; lane < laneEnd.Count; lane++)
+                        if (laneEnd[lane] <= start) break;
+
+                    if (lane == laneEnd.Count) laneEnd.Add(end); else laneEnd[lane] = end;
+                    laneOf[i] = lane;
+                }
+
+                int lanesUsed = laneEnd.Count;
+
+                // ----------------------------------------------
+                // Positionen unten mittig berechnen (LOCAL)
+                // ----------------------------------------------
+                float centerXLocal = overlayLocal.Width * 0.5f;
+                float baseXLocal = centerXLocal - ((lanesUsed - 1) * KeySlotSpacingLocal) * 0.5f;
+                float yLocal = overlayLocal.Height - KeyBottomOffsetLocal;
+
+                // LOCAL → GLOBAL umrechnen
+                // gx = virt.Left + localX / tr.Sx ;  gy = virt.Top + localY / tr.Sy
+                float gxOf(float localX) => virtualBounds.Left + localX / (float)tr.Sx;
+                float gyOf(float localY) => virtualBounds.Top + localY / (float)tr.Sy;
+
+                // ----------------------------------------------
+                // Badges anlegen: pro Intervall genau ein Item
+                // ----------------------------------------------
+                for (int i = 0; i < keyIntervals.Count; i++)
+                {
+                    var (key, start, end) = keyIntervals[i];
+                    int lane = laneOf[i];
+
+                    float xLocal = baseXLocal + lane * KeySlotSpacingLocal;
+                    float gx = gxOf(xLocal);
+                    float gy = gyOf(yLocal);
+
+                    var badge = new KeyItem(
+                        id: $"key_{key}_{start:F3}",
+                        label: key,
+                        globalX: gx,
+                        globalY: gy,
+                        startSeconds: start,
+                        endSeconds: end
+                    )
+                    { Transform = tr };
+
+                    // optional: wenn dein KeyBadgeItem eine Scale/FontSize unterstützt
+                    // badge.Scale = KeyBadgeFontScaleHint;
+
+                    timed.Add(badge);
+                }
+            }
+            var totalSeconds = Math.Max(
+            t,
+            mousePositions.Count > 0 ? mousePositions[^1].t : 0.0
+            );
+
+            return new PreviewResult(stat, timed, totalSeconds);
         }
     }
 }

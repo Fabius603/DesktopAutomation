@@ -10,8 +10,8 @@
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
-
     <UserControl.Resources>
+
         <!-- Typ-Label links -->
         <Style x:Key="TypeLabel" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="Bold"/>
@@ -237,7 +237,7 @@
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
             <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
 
-            <Button Content="Neus Makro" Command="{Binding NewMakroCommand}" FontSize="13"/>
+            <Button Content="Neues Makro" Command="{Binding NewMakroCommand}" FontSize="13"/>
             <Button Content="Makro Löschen" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0" FontSize="13"/>
 
             <Separator Width="16" Margin="8,0,8,0"/>
@@ -270,9 +270,52 @@
             <DockPanel>
                 <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme / Speichern -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
-                    <Button Content="Neuen Step hinzufügen" Command="{Binding AddStepCommand}" IsEnabled="{Binding Selected}" Margin="0,0,0,0" FontSize="13"/>
-                    <Button Content="Aufnahme starten (Platzhalter)" Command="{Binding RecordStepsCommand}" Margin="8,0,0,0" FontSize="13"/>
-                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0" FontSize="13"/>
+                    <Button Content="Neuen Step hinzufügen"
+                        Command="{Binding AddStepCommand}" Margin="0,0,0,0" FontSize="13">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="IsEnabled" Value="{Binding Selected}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding RecordStepsCommand}"
+                        Content="{Binding RecordButtonText}"
+                        Margin="8,0,0,0"
+                        FontSize="13"
+                        Focusable="False"
+                        IsTabStop="False"
+                        IsDefault="False"
+                        IsCancel="False"
+                        ClickMode="Release">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0" FontSize="13">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding Selected.Befehle}"

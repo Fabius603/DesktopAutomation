@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Windows.Forms;
 using Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,12 +23,23 @@ namespace TaskAutomation.Hotkeys
         private volatile bool _isCapturing;
         private TaskCompletionSource<(KeyModifiers mods, uint vk)>? _captureTcs;
 
-        // WinAPI-Konstanten
+        // WinAPI-Konstanten – Keyboard
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_KEYUP = 0x0101;
         private const int WM_SYSKEYDOWN = 0x0104;
         private const int WM_SYSKEYUP = 0x0105;
+
+        // WinAPI-Konstanten – Mouse (nur Klicks, kein Move)
+        private const int WH_MOUSE_LL = 14;
+        private const int WM_LBUTTONDOWN = 0x0201;
+        private const int WM_LBUTTONUP = 0x0202;
+        private const int WM_RBUTTONDOWN = 0x0204;
+        private const int WM_RBUTTONUP = 0x0205;
+        private const int WM_MBUTTONDOWN = 0x0207;
+        private const int WM_MBUTTONUP = 0x0208;
+        private const int WM_XBUTTONDOWN = 0x020B;
+        private const int WM_XBUTTONUP = 0x020C;
 
         private static bool IsModifierVk(uint vk) =>
             vk is
@@ -39,9 +51,13 @@ namespace TaskAutomation.Hotkeys
 
         // Native Methoden
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        private delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -79,9 +95,12 @@ namespace TaskAutomation.Hotkeys
         private readonly BlockingCollection<Action> _workQueue = new();
         private readonly Thread[] _workers;
 
-        // Hook-Handle
+        // Hook-Handles
         private readonly LowLevelKeyboardProc _hookCallback;
         private IntPtr _hookId = IntPtr.Zero;
+
+        private readonly LowLevelMouseProc _mouseHookCallback;
+        private IntPtr _mouseHookId = IntPtr.Zero;
 
         public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
 
@@ -90,12 +109,20 @@ namespace TaskAutomation.Hotkeys
 
         public IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys => _definitions;
 
+        // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
+        private volatile bool _isHotkeyRecording;
+        private readonly object _recordLock = new();
+        private List<CapturedInputEvent>? _recordBuffer;
+        private Stopwatch? _recordSw;
+        private TimeSpan _lastAt;
+
         public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger, IJsonRepository<HotkeyDefinition> repo)
         {
             _logger = logger;
             _repository = repo;
             _definitions = new(StringComparer.OrdinalIgnoreCase);
             _hookCallback = HookCallback;
+            _mouseHookCallback = MouseHookCallback;
             _workers = new Thread[_maxWorkerThreads];
 
             // Worker-Threads starten
@@ -157,7 +184,7 @@ namespace TaskAutomation.Hotkeys
 
             var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, action);
             _definitions[name] = def;
-            _logger.LogInformation("Hotkey registriert: {Name} => Action '{ActionName}', Command '{ActionCommand}",
+            _logger.LogInformation("Hotkey registriert: {Name} => Action '{ActionName}', Command '{ActionCommand}'",
                 name, action.Name, action.Command);
         }
 
@@ -191,15 +218,18 @@ namespace TaskAutomation.Hotkeys
         }
 
         /// <summary>
-        /// Startet den Keyboard-Hook in einem eigenen STA-Thread inklusive Message-Loop,
-        /// damit HookCallback auch ohne GUI-Framework zuverlässig aufgerufen wird.
+        /// Startet den Keyboard- und Mouse-Hook in einem eigenen STA-Thread inklusive Message-Loop,
+        /// damit HookCallbacks auch ohne GUI-Framework zuverlässig aufgerufen werden.
         /// </summary>
         public void StartWithMessageLoop()
         {
             var thread = new Thread(() =>
             {
                 if (_hookId == IntPtr.Zero)
-                    SetupHook();
+                    SetupKeyboardHook();
+
+                if (_mouseHookId == IntPtr.Zero)
+                    SetupMouseHook();
 
                 MSG msg;
                 while (GetMessage(out msg, IntPtr.Zero, 0, 0))
@@ -216,7 +246,7 @@ namespace TaskAutomation.Hotkeys
             thread.Start();
         }
 
-        private void SetupHook()
+        private void SetupKeyboardHook()
         {
             using var proc = Process.GetCurrentProcess();
             using var mod = proc.MainModule!;
@@ -224,6 +254,16 @@ namespace TaskAutomation.Hotkeys
             if (_hookId == IntPtr.Zero)
                 throw new InvalidOperationException("Keyboard-Hook konnte nicht gesetzt werden.");
             _logger.LogInformation("Keyboard-Hook gesetzt.");
+        }
+
+        private void SetupMouseHook()
+        {
+            using var proc = Process.GetCurrentProcess();
+            using var mod = proc.MainModule!;
+            _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseHookCallback, GetModuleHandle(mod.ModuleName), 0);
+            if (_mouseHookId == IntPtr.Zero)
+                throw new InvalidOperationException("Mouse-Hook konnte nicht gesetzt werden.");
+            _logger.LogInformation("Mouse-Hook gesetzt.");
         }
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -239,10 +279,10 @@ namespace TaskAutomation.Hotkeys
                     case WM_SYSKEYDOWN:
                         if (_downKeys.Add(vk)) // erste Down-Flanke (kein Auto-Repeat)
                         {
-                            if (IsModifierVk(vk))
+                            if (IsModifierVk(vk) && !_isHotkeyRecording)
                                 break;
 
-                            // ----- CAPTURE: nur Nicht-Modifier starten die Aufnahme -----
+                            // ----- CAPTURE einer einzelnen Kombi -----
                             if (_isCapturing)
                             {
                                 var mods = GetCurrentModifiers(); // aktuell gehaltene Modifier
@@ -253,21 +293,66 @@ namespace TaskAutomation.Hotkeys
                                 break; // Capturing beendet, keine weitere Verarbeitung
                             }
 
+                            // ----- RECORDING: KeyDown protokollieren, kein Matching -----
+                            if (_isHotkeyRecording)
+                            {
+                                AddWithTimeout(new KeyDownCaptured(vk));
+                                break;
+                            }
+
                             // ----- NORMALBETRIEB: nur Nicht-Modifier lösen aus -----
-                            var currentMods = GetCurrentModifiers();
-                            // zuerst Kombi versuchen, sonst Single
-                            if (!TryExec(vk, currentMods) && currentMods == KeyModifiers.None)
-                                TryExec(vk, KeyModifiers.None);
+                            if (!IsModifierVk(vk))
+                            {
+                                var currentMods = GetCurrentModifiers();
+                                // zuerst Kombi versuchen, sonst Single
+                                if (!TryExec(vk, currentMods) && currentMods == KeyModifiers.None)
+                                    TryExec(vk, KeyModifiers.None);
+                            }
                         }
                         break;
 
                     case WM_KEYUP:
                     case WM_SYSKEYUP:
-                        _downKeys.Remove(vk); // nur Zustand pflegen
+                        _downKeys.Remove(vk);
+
+                        // RECORDING: KeyUp protokollieren, kein Matching
+                        if (_isHotkeyRecording)
+                        {
+                            AddWithTimeout(new KeyUpCaptured(vk));
+                            break;
+                        }
                         break;
                 }
             }
             return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0 && _isHotkeyRecording)
+            {
+                int msg = wParam.ToInt32();
+                var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                int x = data.pt.x, y = data.pt.y;
+
+                switch (msg)
+                {
+                    case WM_LBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Left, x, y)); break;
+                    case WM_LBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Left, x, y)); break;
+                    case WM_RBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Right, x, y)); break;
+                    case WM_RBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Right, x, y)); break;
+                    case WM_MBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Middle, x, y)); break;
+                    case WM_MBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Middle, x, y)); break;
+                    case WM_XBUTTONDOWN:
+                        AddWithTimeout(new MouseDownCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        break;
+                    case WM_XBUTTONUP:
+                        AddWithTimeout(new MouseUpCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        break;
+                }
+            }
+
+            return CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
         }
 
         private bool TryExec(uint vk, KeyModifiers mods)
@@ -324,6 +409,16 @@ namespace TaskAutomation.Hotkeys
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT { public int x; public int y; }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MSLLHOOKSTRUCT
+        {
+            public POINT pt;
+            public uint mouseData;
+            public uint flags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
         private void WorkLoop()
         {
             foreach (var action in _workQueue.GetConsumingEnumerable())
@@ -333,10 +428,104 @@ namespace TaskAutomation.Hotkeys
             }
         }
 
+        // -----------------------------
+        // Recording-API (ohne MouseMove)
+        // -----------------------------
+
+        /// <summary>
+        /// Beginnt die Aufzeichnung von KeyDown/KeyUp und MouseDown/MouseUp.
+        /// Während der Aufzeichnung werden keine Hotkeys gematcht.
+        /// </summary>
+        public void StartRecordHotkeys()
+        {
+            lock (_recordLock)
+            {
+                if (_isHotkeyRecording) return;
+                _recordBuffer = new List<CapturedInputEvent>(256);
+                _recordSw = Stopwatch.StartNew();
+                _lastAt = TimeSpan.Zero;
+                _isHotkeyRecording = true;
+                _logger.LogInformation("Hotkey-Aufnahme gestartet.");
+            }
+        }
+
+        /// <summary>
+        /// Beendet die Aufzeichnung und liefert die Ereignisliste (inkl. Timeout-Events).
+        /// </summary>
+        public IReadOnlyList<CapturedInputEvent> StopRecordHotkeys()
+        {
+            lock (_recordLock)
+            {
+                if (!_isHotkeyRecording)
+                    return Array.Empty<CapturedInputEvent>();
+
+                _isHotkeyRecording = false;
+                _recordSw?.Stop();
+                var result = _recordBuffer ?? new List<CapturedInputEvent>(0);
+                _recordBuffer = null;
+                _recordSw = null;
+                _logger.LogInformation("Hotkey-Aufnahme gestoppt. Events: {Count}", result.Count);
+                return result.AsReadOnly();
+            }
+        }
+
+        private void AddWithTimeout(CapturedInputEvent ev)
+        {
+            lock (_recordLock)
+            {
+                if (!_isHotkeyRecording || _recordBuffer is null || _recordSw is null)
+                    return;
+
+                var now = _recordSw.Elapsed;
+                var delta = now - _lastAt;
+
+                // minimale Schwelle gegen Jitter (0ms/1ms Events)
+                if (delta.TotalMilliseconds > 0.5)
+                {
+                    _recordBuffer.Add(new TimeoutEvent((int)Math.Round(delta.TotalMilliseconds)));
+                }
+
+                _recordBuffer.Add(ev);
+                _lastAt = now;
+            }
+        }
+
+        public string FormatKey(KeyModifiers mods, uint vk)
+        {
+            var parts = new List<string>(4);
+            if (mods.HasFlag(KeyModifiers.Control)) parts.Add("Ctrl");
+            if (mods.HasFlag(KeyModifiers.Shift)) parts.Add("Shift");
+            if (mods.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
+            if (mods.HasFlag(KeyModifiers.Windows)) parts.Add("Win");
+
+            // VK → WPF Key-Name
+            var key = System.Windows.Input.KeyInterop.KeyFromVirtualKey(unchecked((int)vk));
+            parts.Add(key.ToString());
+
+            return string.Join("+", parts);
+        }
+
+
+        public string FormatMouseButton(MouseButtons button)
+        {
+            return button switch
+            {
+                MouseButtons.Left => "Left",
+                MouseButtons.Right => "Right",
+                MouseButtons.Middle => "Middle",
+                MouseButtons.X1 => "X1",
+                MouseButtons.X2 => "X2",
+                _ => button.ToString()
+            };
+        }
+
         public void Dispose()
         {
             if (_hookId != IntPtr.Zero)
                 UnhookWindowsHookEx(_hookId);
+            if (_mouseHookId != IntPtr.Zero)
+                UnhookWindowsHookEx(_mouseHookId);
+
             _workQueue.CompleteAdding();
             foreach (var t in _workers) t.Join();
             _logger.LogInformation("GlobalHotkeyService disposed.");
