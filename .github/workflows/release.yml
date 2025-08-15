@@ -3,10 +3,11 @@ name: Release (Windows self-contained)
 on:
   push:
     tags:
-      - 'v*'     # läuft automatisch, wenn ein Tag wie v1.0.0 gepusht wird
+      - 'v*'                # läuft automatisch bei Tag-Push (z. B. v1.0.0)
+  workflow_dispatch:        # manuell im Actions-Tab startbar
 
 jobs:
-  build:
+  build-win:
     runs-on: windows-latest
 
     steps:
@@ -18,23 +19,46 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore
 
+      # NUR das Startprojekt publishen (nicht die .sln)
       - name: Publish self-contained (win-x64)
         run: >
-          dotnet publish -c Release -r win-x64 --self-contained true
-          /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
-          /p:PublishTrimmed=false
+          dotnet publish ./DesktopAutomation/DesktopAutomationApp/DesktopAutomationApp.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:PublishTrimmed=false
+          -p:IncludeNativeLibrariesForSelfExtract=true
           -o out/win-x64
 
-      - name: Archive
+      - name: Archive ZIP
         run: |
-          powershell Compress-Archive -Path out/win-x64\* -DestinationPath MeineApp-${{ github.ref_name }}-win-x64.zip
+          powershell Compress-Archive -Path out/win-x64\* -DestinationPath DesktopAutomation-${{ github.ref_name || 'manual' }}-win-x64.zip
 
+      # Bei Tag: ZIP direkt als Release-Asset anhängen
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: MeineApp-${{ github.ref_name }}-win-x64.zip
+          files: DesktopAutomation-${{ github.ref_name }}-win-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Bei manuellem Lauf/ohne Tag: ZIP als Build-Artifact hochladen
+      - name: Upload artifact (manual/debug)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopAutomation-win-x64
+          path: DesktopAutomation-${{ github.ref_name || 'manual' }}-win-x64.zip
