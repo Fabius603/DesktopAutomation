@@ -233,7 +233,6 @@ namespace DesktopAutomationApp.ViewModels
             // Auswahl halten
             SelectedStep = vm.CreatedStep;
 
-            // optional: Commands requeryn (Up/Down-Buttons an den Rändern)
             CommandManager.InvalidateRequerySuggested();
         }
 
