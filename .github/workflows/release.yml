@@ -1,0 +1,40 @@
+name: Release (Windows self-contained)
+
+on:
+  push:
+    tags:
+      - 'v*'     # läuft automatisch, wenn ein Tag wie v1.0.0 gepusht wird
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish self-contained (win-x64)
+        run: >
+          dotnet publish -c Release -r win-x64 --self-contained true
+          /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true
+          /p:PublishTrimmed=false
+          -o out/win-x64
+
+      - name: Archive
+        run: |
+          powershell Compress-Archive -Path out/win-x64\* -DestinationPath MeineApp-${{ github.ref_name }}-win-x64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MeineApp-${{ github.ref_name }}-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
