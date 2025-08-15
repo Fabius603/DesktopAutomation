@@ -34,7 +34,7 @@ jobs:
       # NUR das Startprojekt publishen (nicht die .sln)
       - name: Publish self-contained (win-x64)
         run: >
-          dotnet publish ./DesktopAutomation/DesktopAutomationApp/DesktopAutomationApp.csproj
+          dotnet publish ./DesktopAutomationApp/DesktopAutomationApp.csproj
           -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true
           -p:EnableCompressionInSingleFile=true
