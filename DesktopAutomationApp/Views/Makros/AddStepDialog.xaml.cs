@@ -20,8 +20,15 @@ namespace DesktopAutomationApp.Views
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
+            if (DataContext is AddStepDialogViewModel vm) vm.CancelCapture();
             DialogResult = false;
             Close();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DataContext is AddStepDialogViewModel vm) vm.CancelCapture();
+            base.OnClosed(e);
         }
     }
 }

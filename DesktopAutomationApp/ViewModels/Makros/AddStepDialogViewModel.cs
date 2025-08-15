@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
+using TaskAutomation.Hotkeys;
 using TaskAutomation.Makros;
 
 namespace DesktopAutomationApp.ViewModels
@@ -10,13 +12,34 @@ namespace DesktopAutomationApp.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnChange([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
+        private readonly IGlobalHotkeyService _capture;
+        private CancellationTokenSource? _captureCts;
+
+        public AddStepDialogViewModel(IGlobalHotkeyService capture)
+        {
+            _capture = capture;
+            CaptureKeyCommand = new RelayCommand(async () => await CaptureKeyAsync(), () => ShowKey && !IsCapturing);
+        }
+
+        public ICommand CaptureKeyCommand { get; }
+
         public string[] StepTypes { get; } = { "MouseMove", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
 
         private string _selectedType = "MouseMove";
         public string SelectedType
         {
             get => _selectedType;
-            set { _selectedType = value; OnChange(); OnChange(nameof(ShowMouseXY)); OnChange(nameof(ShowMouseButton)); OnChange(nameof(ShowKey)); OnChange(nameof(ShowDuration)); }
+            set
+            {
+                _selectedType = value;
+                OnChange();
+                OnChange(nameof(ShowMouseXY));
+                OnChange(nameof(ShowMouseButton));
+                OnChange(nameof(ShowKey));
+                OnChange(nameof(ShowDuration));
+                // Command-Enable für CaptureButton neu bewerten
+                (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
         private StepDialogMode _mode = StepDialogMode.Add;
@@ -36,13 +59,30 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowDuration => SelectedType is "Timeout";
 
         // Eingabefelder
-        public int X { get; set; }
-        public int Y { get; set; }
-        public string MouseButton { get; set; } = "Left";
-        public string Key { get; set; } = "A";
-        public int Duration { get; set; } = 100;
+        private int _x;
+        public int X { get => _x; set { _x = value; OnChange(); } }
+
+        private int _y;
+        public int Y { get => _y; set { _y = value; OnChange(); } }
+
+        private string _mouseButton = "Left";
+        public string MouseButton { get => _mouseButton; set { _mouseButton = value; OnChange(); } }
+
+        private string _key = string.Empty; // Anzeige, z. B. "Ctrl+Alt+M"
+        public string Key { get => _key; set { _key = value; OnChange(); } }
+
+        private int _duration = 100;
+        public int Duration { get => _duration; set { _duration = value; OnChange(); } }
+
+        private bool _isCapturing;
+        public bool IsCapturing { get => _isCapturing; private set { _isCapturing = value; OnChange(); (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         public MakroBefehl? CreatedStep { get; private set; }
+
+        public void CancelCapture()
+        {
+            try { _captureCts?.Cancel(); } catch { /* ignore */ }
+        }
 
         public void CreateStep()
         {
@@ -56,6 +96,44 @@ namespace DesktopAutomationApp.ViewModels
                 "Timeout" => new TimeoutBefehl { Duration = Duration },
                 _ => null
             };
+        }
+
+        private async System.Threading.Tasks.Task CaptureKeyAsync()
+        {
+            if (!ShowKey || IsCapturing) return;
+
+            IsCapturing = true;
+            _captureCts = new CancellationTokenSource();
+            try
+            {
+                var (mods, vk) = await _capture.CaptureNextAsync(_captureCts.Token);
+                Key = FormatKey(mods, vk);
+            }
+            catch (OperationCanceledException)
+            {
+                // Aufnahme abgebrochen → nichts tun
+            }
+            finally
+            {
+                _captureCts.Dispose();
+                _captureCts = null;
+                IsCapturing = false;
+            }
+        }
+
+        private static string FormatKey(KeyModifiers mods, uint vk)
+        {
+            var parts = new List<string>(4);
+            if (mods.HasFlag(KeyModifiers.Control)) parts.Add("Ctrl");
+            if (mods.HasFlag(KeyModifiers.Shift)) parts.Add("Shift");
+            if (mods.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
+            if (mods.HasFlag(KeyModifiers.Windows)) parts.Add("Win");
+
+            // VK → WPF Key-Name
+            var key = System.Windows.Input.KeyInterop.KeyFromVirtualKey(unchecked((int)vk));
+            parts.Add(key.ToString());
+
+            return string.Join("+", parts);
         }
     }
 }

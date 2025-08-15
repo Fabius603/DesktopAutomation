@@ -44,9 +44,25 @@
             </StackPanel>
 
             <!-- Key -->
-            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding ShowKey, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Key:" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBox Width="120" Text="{Binding Key}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
+            Visibility="{Binding ShowKey, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Key:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Width="160" VerticalAlignment="Center"
+               Text="{Binding Key}" />
+                <Button Command="{Binding CaptureKeyCommand}" Margin="8,0,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Content" Value="Aufnehmen"/>
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCapturing}" Value="True">
+                                    <Setter Property="Content" Value="Aufnahme läuft…"/>
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
 
             <!-- Timeout -->

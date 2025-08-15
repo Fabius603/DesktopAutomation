@@ -13,6 +13,7 @@ using TaskAutomation.Makros;
 using ImageHelperMethods;
 using TaskAutomation.Persistence;
 using DesktopAutomationApp.Views;
+using TaskAutomation.Hotkeys;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -21,10 +22,10 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IMacroPreviewService _preview;
-        private readonly IJsonRepository<Makro> _makroRepo;  // <— Neu: Speichern/Laden
+        private readonly IJsonRepository<Makro> _makroRepo; 
         private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
-
+        private readonly IGlobalHotkeyService _hotkeys;
         public string Title => "Makros";
         public string Description => "Verfügbare Makros";
 
@@ -78,12 +79,14 @@ namespace DesktopAutomationApp.ViewModels
             IJobExecutor executor,
             ILogger<ListMakrosViewModel> log,
             IMacroPreviewService preview,
-            IJsonRepository<Makro> makroRepo)   // <— über DI registrieren
+            IJsonRepository<Makro> makroRepo,
+            IGlobalHotkeyService hotkeys)   
         {
             _executor = executor;
             _log = log;
             _preview = preview;
             _makroRepo = makroRepo;
+            _hotkeys = hotkeys;
 
             RefreshCommand = new RelayCommand(LoadMakros);
             SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
@@ -191,7 +194,7 @@ namespace DesktopAutomationApp.ViewModels
             if (index < 0) return;
 
             // Dialog-VM vorbereiten und mit aktuellen Werten füllen
-            var vm = new AddStepDialogViewModel() { Mode = StepDialogMode.Edit };
+            var vm = new AddStepDialogViewModel(_hotkeys) { Mode = StepDialogMode.Edit };
             Prefill(vm, step);
 
             // Dialog über dem Hauptfenster öffnen
@@ -351,10 +354,10 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (Selected == null) return;
 
-            var dlgVm = new AddStepDialogViewModel() { Mode = StepDialogMode.Add}; // Standardwerte sind im VM gesetzt
-            var dlg = new Views.AddStepDialog
+            var dlgVm = new AddStepDialogViewModel(_hotkeys) { Mode = StepDialogMode.Add}; // Standardwerte sind im VM gesetzt
+            var dlg = new AddStepDialog
             {
-                Owner = System.Windows.Application.Current.MainWindow, // über dem Hauptfenster
+                Owner = Application.Current.MainWindow, // über dem Hauptfenster
                 DataContext = dlgVm
             };
 
