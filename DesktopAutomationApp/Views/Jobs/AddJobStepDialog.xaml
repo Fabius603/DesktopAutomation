@@ -1,0 +1,142 @@
+﻿<mah:MetroWindow x:Class="DesktopAutomationApp.Views.AddJobStepDialog"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 WindowStartupLocation="CenterOwner"
+                 SizeToContent="WidthAndHeight"
+                 Title="{Binding DialogTitle}" MinHeight="260" MinWidth="420"
+                 ResizeMode="CanResize" ShowInTaskbar="False">
+
+    <mah:MetroWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </mah:MetroWindow.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Typauswahl -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Typ:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox Width="180" ItemsSource="{Binding StepTypes}" SelectedItem="{Binding SelectedType}"/>
+        </StackPanel>
+
+        <!-- Dynamische Felder -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+
+            <!-- Template Matching -->
+            <StackPanel Visibility="{Binding ShowTemplateMatching, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Template-Pfad:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="…" Width="28" Height="24" Margin="8,0,0,0"
+                            Command="{Binding BrowseTemplatePathCommand}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Match Mode:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="200"
+                              ItemsSource="{Binding TemplateMatchModesAll}"
+                              SelectedItem="{Binding TemplateMatchMode}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Mehrere Punkte finden" IsChecked="{Binding MultiplePoints}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Confidence (0..1):" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="ROI aktivieren" IsChecked="{Binding EnableROI}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="ROI:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding RoiX}"/>
+                    <TextBlock Text="  Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding RoiY}"/>
+                    <TextBlock Text="  B" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding RoiW}"/>
+                    <TextBlock Text="  H" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding RoiH}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding DrawResults}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Desktop Duplication -->
+            <StackPanel Visibility="{Binding ShowDesktopDuplication, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Desktop Index:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding DesktopIdx}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Process Duplication -->
+            <StackPanel Visibility="{Binding ShowProcessDuplication, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Prozessname:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Show Image -->
+            <StackPanel Visibility="{Binding ShowShowImage, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Fenstername:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding WindowName, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Rohbild anzeigen" IsChecked="{Binding ShowRawImage}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Verarbeitetes Bild anzeigen" IsChecked="{Binding ShowProcessedImage}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Video Creation -->
+            <StackPanel Visibility="{Binding ShowVideoCreation, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Speicherpfad:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding SavePath}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Dateiname:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Rohbild verwenden" IsChecked="{Binding UseRawImage}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Verarbeitetes Bild verwenden" IsChecked="{Binding UseProcessedImage}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Makro Execution -->
+            <StackPanel Visibility="{Binding ShowMakroExecution, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Makro-Name:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="200"
+                          ItemsSource="{Binding MakroNames}"
+                          SelectedItem="{Binding SelectedMakroName}"/>
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Abbrechen" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Click="Ok_Click"/>
+        </StackPanel>
+    </Grid>
+</mah:MetroWindow>

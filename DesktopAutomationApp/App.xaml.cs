@@ -58,7 +58,10 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<Makro>("Configs/Makro", "makros.json", options, m => m.Name);
                     services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", "hotkeys.json", options, hk => hk.Name);
 
-                    services.AddSingleton<IJobExecutor, JobExecutor>();
+                    services.AddSingleton<JobExecutor>();
+
+                    services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
+                    services.AddSingleton<IJobExecutionContext>(sp => sp.GetRequiredService<JobExecutor>());
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
                     services.AddSingleton<IJobDispatcher, JobDispatcher>();
