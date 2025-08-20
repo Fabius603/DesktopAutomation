@@ -187,6 +187,15 @@ namespace DesktopAutomationApp.ViewModels
             var target = step ?? SelectedStep;
             if (target == null) return;
 
+            var result = MessageBox.Show(
+                $"Möchten Sie den Makro „{target}“ wirklich löschen?",
+                "Löschen bestätigen",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
 

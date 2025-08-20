@@ -58,13 +58,13 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                     <TextBlock Text="ROI:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="X:" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     <TextBox Width="60" Text="{Binding RoiX}"/>
-                    <TextBlock Text="  Y" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBlock Text="Y:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                     <TextBox Width="60" Text="{Binding RoiY}"/>
-                    <TextBlock Text="  B" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBlock Text="Breite:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                     <TextBox Width="60" Text="{Binding RoiW}"/>
-                    <TextBlock Text="  H" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBlock Text="Höhe:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                     <TextBox Width="60" Text="{Binding RoiH}"/>
                 </StackPanel>
 

@@ -61,15 +61,23 @@ namespace TaskAutomation.Persistence
             try
             {
                 var list = new List<T>();
+                var target = Path.Combine(_opt.FolderPath, _opt.SaveFileName);
+
+                // Wenn die konsolidierte Datei existiert, ist sie die einzige Quelle der Wahrheit
+                if (File.Exists(target))
+                {
+                    var only = await ReadFileFlexibleAsync(target).ConfigureAwait(false);
+                    return only ?? [];
+                }
+
+                // Fallback (Legacy): alle passenden Dateien einsammeln und mergen
                 foreach (var file in Directory.EnumerateFiles(_opt.FolderPath, _opt.SearchPattern, SearchOption.TopDirectoryOnly))
                 {
-                    // Die konsolidierte Datei gehört auch dazu – ist okay (wir mergen einfach).
                     var fileItems = await ReadFileFlexibleAsync(file).ConfigureAwait(false);
-                    if (fileItems != null && fileItems.Count > 0)
+                    if (fileItems is { Count: > 0 })
                         list.AddRange(fileItems);
                 }
 
-                // Duplikate (gleicher Key) zuletzt gewinnt: nach Key gruppieren
                 var merged = list
                     .GroupBy(_keySelector, StringComparer.OrdinalIgnoreCase)
                     .Select(g => g.Last())

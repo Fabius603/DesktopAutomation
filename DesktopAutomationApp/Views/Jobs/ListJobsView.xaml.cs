@@ -19,14 +19,5 @@ namespace DesktopAutomationApp.Views
     public partial class ListJobsView : UserControl
     {
         public ListJobsView() => InitializeComponent();
-
-        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is DataGrid dg && dg.SelectedItem is TaskAutomation.Jobs.Job job
-                && dg.DataContext is ListJobsViewModel vm)
-            {
-                vm.OpenJobCommand.Execute(job);
-            }
-        }
     }
 }

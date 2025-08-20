@@ -15,7 +15,12 @@
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Jobs" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="8,0,0,0" FontSize="14"/>
+            <Button Content="Neuer Job" Command="{Binding CreateNewJobCommand}" Margin="8,0,0,0" FontSize="14"/>
+            <Button Content="Job löschen" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0" FontSize="14"/>
+
+            <Separator Width="16" Margin="8,0,8,0"/>
+
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="0,0,0,0" FontSize="14"/>
         </StackPanel>
 
         <!-- Tabelle -->
@@ -29,7 +34,7 @@
                 GridLinesVisibility="None"
                 RowHeaderWidth="0"
                 SelectionMode="Single"
-                MouseDoubleClick="DataGrid_MouseDoubleClick">
+                SelectedItem="{Binding SelectedJob, Mode=TwoWay}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="3*"/>
                     <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" Width="*"/>
