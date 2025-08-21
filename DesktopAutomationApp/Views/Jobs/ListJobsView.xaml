@@ -27,19 +27,20 @@
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <DataGrid ItemsSource="{Binding Items}"
                 AutoGenerateColumns="False"
-                IsReadOnly="True"
+                IsReadOnly="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
                 HeadersVisibility="Column"
                 GridLinesVisibility="None"
                 RowHeaderWidth="0"
                 SelectionMode="Single"
-                SelectedItem="{Binding SelectedJob, Mode=TwoWay}">
+                SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
+                RowEditEnding="JobGrid_RowEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="3*"/>
-                    <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" Width="*"/>
-                    <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"   Width="*"/>
-                    <DataGridTemplateColumn Header="" Width="75">
+                    <DataGridTextColumn Header="Name"      Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"      Width="3*"/>
+                    <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" IsReadOnly="True" Width="*"/>
+                    <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"  IsReadOnly="True"  Width="*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="75">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Öffnen"

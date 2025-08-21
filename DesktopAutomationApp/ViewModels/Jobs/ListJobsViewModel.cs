@@ -115,5 +115,28 @@ namespace DesktopAutomationApp.ViewModels
                 n = $"{baseName}_{i++}";
             return n;
         }
+
+        public void EnsureUniqueNameFor(Job? j)
+        {
+            if (j == null) return;
+
+            var proposed = j.Name?.Trim() ?? "";
+            if (string.IsNullOrEmpty(proposed))
+            {
+                j.Name = UniqueName("Job");
+                return;
+            }
+
+            // bereits eindeutig?
+            bool collision = Items.Any(x =>
+                !ReferenceEquals(x, j) &&
+                string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
+
+            if (!collision) return;
+
+            // Kollision -> automatisch eindeutigen Namen erzeugen
+            j.Name = UniqueName(proposed);
+            _log.LogInformation("Makro-Name kollidierte, automatisch umbenannt in: {Name}", j.Name);
+        }
     }
 }
