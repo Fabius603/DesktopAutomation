@@ -12,7 +12,6 @@
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -72,14 +71,8 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Hinweis -->
-        <TextBlock Grid.Row="2"
-                   Text="Es werden nur die zum gewählten Typ passenden Felder angezeigt."
-                   Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                   Opacity="0.7" TextWrapping="Wrap"/>
-
         <!-- Buttons -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Abbrechen" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Click="Ok_Click"/>
         </StackPanel>

@@ -19,6 +19,7 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- === Deine Step-DataTemplates (unverändert) === -->
         <!-- TemplateMatchingStep -->
         <DataTemplate DataType="{x:Type jobs:TemplateMatchingStep}">
             <Grid>
@@ -28,15 +29,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Links: Name -->
-                <TextBlock Text="Template Matching"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
-
-                <!-- Abstandsspalte -->
+                <TextBlock Text="Template Matching" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
-                <!-- Rechts: Parameter untereinander -->
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="TemplatePath: "/><Run Text="{Binding Settings.TemplatePath}"/>
@@ -45,19 +39,22 @@
                         <Run Text="MatchMode: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MultiplePoints: "/><Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="MultiplePoints: "/>
+                        <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="EnableROI: "/><Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="EnableROI: "/>
+                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ROI: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="DrawResults: "/><Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="DrawResults: "/>
+                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -72,11 +69,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Desktop Duplication"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
+                <TextBlock Text="Desktop Duplication" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Desktop Index: "/><Run Text="{Binding Settings.DesktopIdx}"/>
@@ -94,11 +88,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Process Duplication"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
+                <TextBlock Text="Process Duplication" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ProcessName: "/><Run Text="{Binding Settings.ProcessName}"/>
@@ -116,20 +107,19 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Show Image"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
+                <TextBlock Text="Show Image" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="WindowName: "/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ShowRawImage: "/><Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}}" />
+                        <Run Text="ShowRawImage: "/>
+                        <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ShowProcessedImage: "/><Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="ShowProcessedImage: "/>
+                        <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -144,11 +134,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Video Creation"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
+                <TextBlock Text="Video Creation" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="SavePath: "/><Run Text="{Binding Settings.SavePath}"/>
@@ -157,10 +144,12 @@
                         <Run Text="FileName: "/><Run Text="{Binding Settings.FileName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="UseRawImage: "/><Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="UseRawImage: "/>
+                        <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="UseProcessedImage: "/><Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="UseProcessedImage: "/>
+                        <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -175,11 +164,8 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Makro Execution"
-                           FontWeight="Bold"
-                           VerticalAlignment="Top"/>
+                <TextBlock Text="Makro Execution" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
-
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="MakroName: "/><Run Text="{Binding Settings.MakroName}"/>
@@ -196,26 +182,127 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- Header: Zurück + Speichern + Titel -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <Button Content="⟵ Zurück" Command="{Binding BackCommand}" Margin="0,0,12,0"/>
+            <Button Content="⟵ Zurück"
+                    Command="{Binding BackCommand}"
+                    Margin="0,0,12,0"
+                    FontSize="14"/>
+            <Button Content="Speichern"
+                    Command="{Binding SaveCommand}"
+                    Margin="0,0,12,0"
+                    FontSize="14"/>
             <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}"/>
         </StackPanel>
 
+        <!-- Unterer Bereich: wie Makro-Ansicht (DockPanel + ListBox mit Hover/Selected) -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Steps}">
-                    <ItemsControl.ItemTemplate>
+            <DockPanel>
+
+                <!-- Optionaler Kopfbereich im Panel (nur Layout, Logik folgt später) -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
+                    <Button Content="Neuen Step hinzufügen"
+                            Command="{Binding AddStepCommand}"
+                            FontSize="13"/>
+                    <!-- Platz für weitere Controls bei Bedarf -->
+                </StackPanel>
+
+                <!-- ListBox mit Hover-/Selected-Rahmen wie im Makro -->
+                <ListBox ItemsSource="{Binding Steps}"
+                         SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="VerticalContentAlignment"   Value="Stretch"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <Border x:Name="Card"
+                                                    Margin="12,8,12,0"
+                                                    Padding="12"
+                                                    Background="Transparent"
+                                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="8">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <!-- Hover -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Card" Property="BorderBrush"
+                                                        Value="{DynamicResource MahApps.Brushes.Highlight}"/>
+                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
+                                            </Trigger>
+                                            <!-- Selected -->
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Card" Property="BorderBrush"
+                                                        Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                <Setter TargetName="Card" Property="Background"
+                                                        Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <!-- Inhalt + Aktionsleiste rechts (Edit/Hoch/Runter/Delete exakt wie Makro) -->
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,0,0,8" Padding="12"
-                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
-                                    BorderThickness="1" CornerRadius="8">
-                                <ContentPresenter Content="{Binding}"/>
-                            </Border>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Links: Step-Details via implizite DataTemplates -->
+                                <ContentPresenter Grid.Column="0" Content="{Binding}"/>
+
+                                <!-- Rechts: Buttons identisch zur Makro-Ansicht -->
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Margin="8,0,0,0">
+                                    <!-- Bearbeiten -->
+                                    <Button Content="Edit"
+                                            Width="50" Height="35" Margin="0,0,30,0" FontSize="13"
+                                            ToolTip="Step bearbeiten"
+                                            Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                    <!-- ▲ nach oben -->
+                                    <Button Content="▲"
+                                            Width="35" Height="35" Margin="0,0,4,0"
+                                            ToolTip="Schritt nach oben"
+                                            Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                    <!-- ▼ nach unten -->
+                                    <Button Content="▼"
+                                            Width="35" Height="35" Margin="0,0,4,0"
+                                            ToolTip="Schritt nach unten"
+                                            Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                    <!-- Löschen -->
+                                    <Button Content="Delete"
+                                            Width="60" Height="35" Margin="80,0,0,0" FontSize="13"
+                                            ToolTip="Step löschen"
+                                            Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+                            </Grid>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

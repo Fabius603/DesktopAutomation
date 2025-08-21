@@ -326,6 +326,8 @@ namespace DesktopAutomationApp.ViewModels
             var m = new Makro { Name = name, Befehle = new() };
             Items.Add(m);
             Selected = m;
+
+            SaveAllAsync();
         }
 
         private string UniqueName(string baseName)

@@ -15,26 +15,51 @@
         <!-- Toolbar -->
         <StackPanel Orientation="Horizontal">
             <TextBlock Text="Jobs" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="8,0,0,0" FontSize="14"/>
+            <Button Content="Neuer Job" Command="{Binding CreateNewJobCommand}" Margin="8,0,0,0" FontSize="14"/>
+            <Button Content="Job löschen" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0" FontSize="14"/>
+
+            <Separator Width="16" Margin="8,0,8,0"/>
+
+            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="0,0,0,0" FontSize="14"/>
         </StackPanel>
 
         <!-- Tabelle -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <DataGrid ItemsSource="{Binding Items}"
                 AutoGenerateColumns="False"
-                IsReadOnly="True"
+                IsReadOnly="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
                 HeadersVisibility="Column"
                 GridLinesVisibility="None"
                 RowHeaderWidth="0"
                 SelectionMode="Single"
-                MouseDoubleClick="DataGrid_MouseDoubleClick">
+                SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
+                RowEditEnding="JobGrid_RowEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"      Binding="{Binding Name}"      Width="3*"/>
-                    <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" Width="*"/>
-                    <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"   Width="*"/>
-                    <DataGridTemplateColumn Header="" Width="75">
+                    <DataGridTextColumn 
+                        Header="Name"      
+                        Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"      
+                        Width="3*"/>
+                    <DataGridTemplateColumn Header="Wiederholend" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    IsChecked="{Binding Repeating, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Command="{Binding DataContext.SaveAllCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn 
+                        Header="#Steps"    
+                        Binding="{Binding Steps.Count}"  
+                        IsReadOnly="True"  
+                        Width="*"/>
+                    <DataGridTemplateColumn 
+                        Header="" 
+                        IsReadOnly="True" 
+                        Width="75">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Öffnen"

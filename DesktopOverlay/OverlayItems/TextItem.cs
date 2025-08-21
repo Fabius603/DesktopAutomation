@@ -38,6 +38,7 @@ namespace DesktopOverlay.OverlayItems
         public override void Draw(Graphics gfx)
         {
             if (!Visible) return;
+            if (_font == null || _brush == null) return;
 
             var p = Map(_gx, _gy); // global → lokal
             gfx.DrawText(_font, _brush, p.x, p.y, _text);

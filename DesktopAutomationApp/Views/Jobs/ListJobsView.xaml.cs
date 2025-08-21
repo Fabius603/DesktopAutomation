@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Views
 {
@@ -20,13 +21,26 @@ namespace DesktopAutomationApp.Views
     {
         public ListJobsView() => InitializeComponent();
 
-        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void JobGrid_RowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
         {
-            if (sender is DataGrid dg && dg.SelectedItem is TaskAutomation.Jobs.Job job
-                && dg.DataContext is ListJobsViewModel vm)
+            if (e.EditAction != DataGridEditAction.Commit) return;
+
+            Dispatcher.BeginInvoke(new Action(async () =>
             {
-                vm.OpenJobCommand.Execute(job);
-            }
+                if (DataContext is ListJobsViewModel vm && e.Row?.Item is Job j)
+                {
+                    // Name eindeutig machen
+                    vm.EnsureUniqueNameFor(j);
+
+                    // Sicherstellen, dass Items den aktuellen Stand hat
+                    var index = vm.Items.IndexOf(j);
+                    if (index >= 0)
+                        vm.Items[index] = j;
+
+                    // Änderungen abspeichern
+                    await vm.SaveAllAsync();
+                }
+            }), System.Windows.Threading.DispatcherPriority.Background);
         }
     }
 }
