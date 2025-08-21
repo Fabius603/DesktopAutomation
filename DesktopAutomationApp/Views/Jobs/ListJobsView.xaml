@@ -37,10 +37,29 @@
                 SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
                 RowEditEnding="JobGrid_RowEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"      Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"      Width="3*"/>
-                    <DataGridTextColumn Header="Repeating" Binding="{Binding Repeating}" IsReadOnly="True" Width="*"/>
-                    <DataGridTextColumn Header="#Steps"    Binding="{Binding Steps.Count}"  IsReadOnly="True"  Width="*"/>
-                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="75">
+                    <DataGridTextColumn 
+                        Header="Name"      
+                        Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"      
+                        Width="3*"/>
+                    <DataGridTemplateColumn Header="Wiederholend" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    IsChecked="{Binding Repeating, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Command="{Binding DataContext.SaveAllCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn 
+                        Header="#Steps"    
+                        Binding="{Binding Steps.Count}"  
+                        IsReadOnly="True"  
+                        Width="*"/>
+                    <DataGridTemplateColumn 
+                        Header="" 
+                        IsReadOnly="True" 
+                        Width="75">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Öffnen"

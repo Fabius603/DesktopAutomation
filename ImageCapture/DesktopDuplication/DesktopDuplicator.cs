@@ -45,6 +45,12 @@ namespace ImageCapture.DesktopDuplication
             bool success = false;
 
             var screens = ScreenHelper.GetScreens();
+
+            if (screens == null || screenIdx < 0 || screenIdx >= screens.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(screenIdx), "Invalid screen index specified.");
+            }
+
             var idx = ScreenHelper.GetAdapterAndOutputIndex(screens[screenIdx]);
             if (idx == null)
             {

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Xml.Linq;
+using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 using SharpDX.Direct3D11;
 using TaskAutomation.Jobs;
@@ -30,6 +32,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenJobCommand { get; } // Parameter: Job
         public ICommand DeleteJobCommand { get; }
         public ICommand CreateNewJobCommand { get; }
+        public ICommand SaveAllCommand { get; }
+        public ICommand SaveWithoutEditorCommand { get; }
 
         public event Action<Job>? RequestOpenJob; // Signal an Host (MainViewModel)
 
@@ -38,6 +42,13 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _selectedJob;
             set { _selectedJob = value; OnPropertyChanged(); }
+        }
+
+        private bool _editing;
+        public bool Editing
+        {
+            get => _editing;
+            set => _editing = value;
         }
 
         public ListJobsViewModel(IJobExecutor executor, ILogger<ListJobsViewModel> log, IJsonRepository<Job> jobRepo)
@@ -53,6 +64,8 @@ namespace DesktopAutomationApp.ViewModels
             }, job => job != null);
             DeleteJobCommand = new RelayCommand(async () => await DeleteJobAsync());
             CreateNewJobCommand = new RelayCommand(CreateNewJob);
+            SaveAllCommand = new RelayCommand(async () => await SaveAllAsync());
+            SaveWithoutEditorCommand = new RelayCommand(async () => await SaveWithoutEditorAsync());
             LoadJobs();
         }
 
@@ -69,10 +82,18 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Jobs geladen: {Count}", Items.Count);
         }
 
+
+
         public async Task SaveAllAsync()
         {
             await _jobRepo.SaveAllAsync(Items);
             await _executor.ReloadJobsAsync();
+        }
+
+        public async Task SaveWithoutEditorAsync()
+        {
+            if (Editing) return;
+            await SaveAllAsync();
         }
 
         public async Task DeleteJobAsync()
