@@ -17,21 +17,24 @@ namespace TaskAutomation.Persistence
             where T : class
         {
             // 1) Kombinieren + Normalisieren
-            var baseDir = AppContext.BaseDirectory;
-            var combined = Path.Combine(baseDir, relativeFolderPath);
-            var folderPath = Path.GetFullPath(combined)
-                                 .Replace('/', Path.DirectorySeparatorChar)
-                                 .TrimEnd(Path.DirectorySeparatorChar);
+            //var baseDir = AppContext.BaseDirectory;
+            //var combined = Path.Combine(baseDir, relativeFolderPath);
+            //var folderPath = Path.GetFullPath(combined)
+            //                     .Replace('/', Path.DirectorySeparatorChar)
+            //                     .TrimEnd(Path.DirectorySeparatorChar);
+
+            var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var configRoot = Path.Combine(baseDir, "DesktopAutomation", relativeFolderPath);
 
             // 2) Ordner sicherstellen
-            Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory(configRoot);
 
             // 3) Registrierung
             services.AddSingleton<IJsonRepository<T>>(_ =>
                 new FileJsonRepository<T>(
                     new FolderJsonRepositoryOptions
                     {
-                        FolderPath = folderPath,
+                        FolderPath = configRoot,
                         SearchPattern = "*.json",
                         SaveFileName = saveFileName,
                         JsonOptions = jsonOptions,

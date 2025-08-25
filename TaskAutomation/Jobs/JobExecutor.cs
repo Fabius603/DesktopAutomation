@@ -45,13 +45,10 @@ namespace TaskAutomation.Jobs
         private Mat _imageToProcess;
         private Point _currentOffset = new Point(0, 0);
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
-        private string _makroFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Makro");
-        private string _jobFolderPath = Path.Combine(AppContext.BaseDirectory, "Configs\\Job");
         private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
         public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
-
 
 
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
@@ -139,16 +136,6 @@ namespace TaskAutomation.Jobs
             set => _makroExecutor = value;
         }
 
-        public string MakroFolderPath
-        {
-            get => _makroFolderPath;
-        }
-
-        public string JobFolderPath
-        {
-            get => _jobFolderPath;
-        }
-
         public JobExecutor(
             ILogger<JobExecutor> logger,
             IJsonRepository<Job> jobRepo,
@@ -161,6 +148,7 @@ namespace TaskAutomation.Jobs
             _makroRepository = makroRepo;
             _makroExecutor = makroExecutor;
             _recordingOverlay = recordingOverlay;
+            
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -245,6 +233,7 @@ namespace TaskAutomation.Jobs
             // Schritte, die optional aktiv sind
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
+            var showImageStep = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             bool recorderStarted = false;
             bool cancelled = false;
@@ -330,12 +319,17 @@ namespace TaskAutomation.Jobs
             }
             finally
             {
+                if (showImageStep != null)
+                {
+                    Cv2.DestroyAllWindows();
+                }
+
                 // Stop/Speichern VideoRecorder nur, wenn tatsächlich gestartet
                 if (recorderStarted && _videoRecorder != null)
                 {
                     try
                     {
-                        _videoRecorder.StopAndSave();
+                        await _videoRecorder.StopAndSave();
                         _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
                     }
                     catch (Exception ex)
@@ -390,18 +384,6 @@ namespace TaskAutomation.Jobs
 
             _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
             return Task.FromResult(true);
-        }
-
-        public void SetMakroFilePath(string filePath)
-        {
-            if (Directory.Exists(filePath))
-            {
-                _makroFolderPath = filePath;
-            }
-            else
-            {
-                _logger.LogError("Makro-Dateipfad '{FilePath}' existiert nicht.", filePath);
-            }
         }
 
         public void Dispose()

@@ -294,7 +294,6 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
                 Jobs.Add(j);
 
-            _log.LogInformation("Jobs geladen: {Count}", Items.Count);
             UpdateAvailableActionsFromJobs();
         }
 

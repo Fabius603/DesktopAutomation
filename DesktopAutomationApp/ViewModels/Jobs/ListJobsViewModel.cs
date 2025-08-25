@@ -78,8 +78,6 @@ namespace DesktopAutomationApp.ViewModels
                 Items.Add(j);
 
             SelectedJob = Items.FirstOrDefault();
-
-            _log.LogInformation("Jobs geladen: {Count}", Items.Count);
         }
 
 
