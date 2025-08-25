@@ -51,7 +51,6 @@ namespace TaskAutomation.Jobs
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
 
 
-
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
         {
             { typeof(ProcessDuplicationStep), new ProcessDuplicationStepHandler() },
@@ -149,6 +148,7 @@ namespace TaskAutomation.Jobs
             _makroRepository = makroRepo;
             _makroExecutor = makroExecutor;
             _recordingOverlay = recordingOverlay;
+            
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -233,6 +233,7 @@ namespace TaskAutomation.Jobs
             // Schritte, die optional aktiv sind
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
+            var showImageStep = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             bool recorderStarted = false;
             bool cancelled = false;
@@ -318,12 +319,17 @@ namespace TaskAutomation.Jobs
             }
             finally
             {
+                if (showImageStep != null)
+                {
+                    Cv2.DestroyAllWindows();
+                }
+
                 // Stop/Speichern VideoRecorder nur, wenn tatsächlich gestartet
                 if (recorderStarted && _videoRecorder != null)
                 {
                     try
                     {
-                        _videoRecorder.StopAndSave();
+                        await _videoRecorder.StopAndSave();
                         _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
                     }
                     catch (Exception ex)
