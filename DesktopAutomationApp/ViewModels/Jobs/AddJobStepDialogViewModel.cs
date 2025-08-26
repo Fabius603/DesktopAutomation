@@ -145,7 +145,17 @@ namespace DesktopAutomationApp.ViewModels
 
         private string _scriptPath = string.Empty;
         private bool _fireAndForget = false;
-        public string ScriptPath { get => _scriptPath; set { _scriptPath = value; OnChange(); } }
+        public string ScriptPath
+        {
+            get => _scriptPath;
+            set
+            {
+                if (_scriptPath == value) return;
+                _scriptPath = value;
+                OnChange();
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); // << wichtig
+            }
+        }
         public bool FireAndForget { get => _fireAndForget; set { _fireAndForget = value; OnChange(); } }
 
         // Datei-Auswahl (in VM gewünscht)
@@ -284,8 +294,8 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new ScriptExecutionSettings
                     {
-                        ScriptPath = string.Empty,
-                        FireAndForget = false
+                        ScriptPath = ScriptPath,
+                        FireAndForget = FireAndForget
                     }
                 },
                 _ => null

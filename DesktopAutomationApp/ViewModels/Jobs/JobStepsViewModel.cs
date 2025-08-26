@@ -6,6 +6,8 @@ using System.Collections.ObjectModel;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
 using DesktopAutomationApp.Views;
+using System.CodeDom.Compiler;
+using TaskAutomation.Persistence;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -13,6 +15,8 @@ namespace DesktopAutomationApp.ViewModels
     {
         private readonly IJobExecutionContext _jobExecutionContext;
         private readonly ObservableCollection<JobStep> _steps;
+        private readonly IJsonRepository<Job> _jobRepo;
+        private readonly IJobExecutor _executor;
 
         public Job Job { get; }
         public string Title => Job.Name;
@@ -36,40 +40,40 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutionContext jobExecutionContext)
+        public JobStepsViewModel(Job job, IJobExecutionContext jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
+            _executor = executor;
+            _jobRepo = repo;
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand = new RelayCommand(Save, () => true);
+            SaveCommand = new RelayCommand(async () => await Save(), () => true);
 
             AddStepCommand = new RelayCommand(AddStep);
             EditStepCommand = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             DeleteStepCommand = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
+            _executor = executor;
         }
 
-        private void Save()
+        private async Task Save()
         {
             Job.Steps = _steps.ToList();
-            // Persistenz folgt später (Repo etc.)
+            await _jobRepo.SaveAsync(Job);
+            await _executor.ReloadJobsAsync();
         }
 
         private void AddStep()
         {
             var vm = new AddJobStepDialogViewModel(_jobExecutionContext) { Mode = StepDialogMode.Add };
 
-            var dlg = new AddJobStepDialog
-            {
-                Owner = Application.Current.MainWindow,
-                DataContext = vm
-            };
+            bool? result;
+            ShowDialogWithVm(vm, out result);
 
-            var result = dlg.ShowDialog();
             if (result == true && vm.CreatedStep != null)
             {
                 int insertIndex = SelectedStep != null
@@ -79,6 +83,17 @@ namespace DesktopAutomationApp.ViewModels
                 _steps.Insert(insertIndex, vm.CreatedStep);
                 SelectedStep = vm.CreatedStep;
             }
+        }
+
+        private static bool ShowDialogWithVm(AddJobStepDialogViewModel vm, out bool? dialogResult)
+        {
+            var dlg = new AddJobStepDialog { Owner = Application.Current.MainWindow, DataContext = vm };
+            void OnRequestClose(bool ok) => dlg.DialogResult = ok;
+            vm.RequestClose += OnRequestClose;
+            var res = dlg.ShowDialog();
+            vm.RequestClose -= OnRequestClose;
+            dialogResult = res;
+            return res == true;
         }
 
         private void EditStep(JobStep? step = null)
@@ -91,14 +106,10 @@ namespace DesktopAutomationApp.ViewModels
             // <<<<<< Prefill hier im ViewModel >>>>>>
             Prefill(vm, target);
 
-            var dlg = new AddJobStepDialog
-            {
-                Owner = Application.Current.MainWindow,
-                DataContext = vm
-            };
+            bool? result;
+            ShowDialogWithVm(vm, out result);
 
-            var ok = dlg.ShowDialog() == true;
-            if (!ok || vm.CreatedStep == null) return;
+            if (result != true || vm.CreatedStep == null) return;
 
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
