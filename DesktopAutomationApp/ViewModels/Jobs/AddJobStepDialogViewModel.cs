@@ -25,6 +25,7 @@ namespace DesktopAutomationApp.ViewModels
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
+            BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
         }
 
         // ----- Dialog-Interop -----
@@ -44,6 +45,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ConfirmCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand BrowseTemplatePathCommand { get; }
+        public ICommand BrowseScriptPathCommand { get; }
 
         private void Confirm()
         {
@@ -56,11 +58,12 @@ namespace DesktopAutomationApp.ViewModels
             return SelectedType switch
             {
                 "TemplateMatching" => !string.IsNullOrWhiteSpace(TemplatePath) && ConfidenceThreshold is >= 0 and <= 1,
-                "ProcessDuplication" => !string.IsNullOrWhiteSpace(ProcessName),
+                //"ProcessDuplication" => !string.IsNullOrWhiteSpace(ProcessName),
                 "ShowImage" => !string.IsNullOrWhiteSpace(WindowName),
                 "VideoCreation" => !string.IsNullOrWhiteSpace(FileName),
                 "MakroExecution" => !string.IsNullOrWhiteSpace(SelectedMakroName),
                 "DesktopDuplication" => true,
+                "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptPath),
                 _ => false
             };
         }
@@ -70,10 +73,11 @@ namespace DesktopAutomationApp.ViewModels
         {
             "TemplateMatching",
             "DesktopDuplication",
-            "ProcessDuplication",
+            //"ProcessDuplication",
             "ShowImage",
             "VideoCreation",
-            "MakroExecution"
+            "MakroExecution",
+            "ScriptExecution"
         };
 
         private string _selectedType = "TemplateMatching";
@@ -87,20 +91,22 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange();
                 OnChange(nameof(ShowTemplateMatching));
                 OnChange(nameof(ShowDesktopDuplication));
-                OnChange(nameof(ShowProcessDuplication));
+                //OnChange(nameof(ShowProcessDuplication));
                 OnChange(nameof(ShowShowImage));
                 OnChange(nameof(ShowVideoCreation));
                 OnChange(nameof(ShowMakroExecution));
+                OnChange(nameof(ShowScriptExecution));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
         public bool ShowTemplateMatching => SelectedType == "TemplateMatching";
         public bool ShowDesktopDuplication => SelectedType == "DesktopDuplication";
-        public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
+        //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
         public bool ShowVideoCreation => SelectedType == "VideoCreation";
         public bool ShowMakroExecution => SelectedType == "MakroExecution";
+        public bool ShowScriptExecution => SelectedType == "ScriptExecution";
 
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }
@@ -137,6 +143,11 @@ namespace DesktopAutomationApp.ViewModels
         private bool _drawResults = true;
         public bool DrawResults { get => _drawResults; set { _drawResults = value; OnChange(); } }
 
+        private string _scriptPath = string.Empty;
+        private bool _fireAndForget = false;
+        public string ScriptPath { get => _scriptPath; set { _scriptPath = value; OnChange(); } }
+        public bool FireAndForget { get => _fireAndForget; set { _fireAndForget = value; OnChange(); } }
+
         // Datei-Auswahl (in VM gewünscht)
         private void BrowseTemplatePath()
         {
@@ -153,13 +164,31 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private void BrowseScriptPath()
+        {
+            var ofd = new OpenFileDialog
+            {
+                Title = "Script-Datei auswählen",
+                Filter =
+                    "Skripte (*.ps1;*.bat;*.cmd;*.sh;*.py;*.js;*.vbs;*.wsf;*.exe)|*.ps1;*.bat;*.cmd;*.sh;*.py;*.js;*.vbs;*.wsf;*.exe|" +
+                    "Alle Dateien (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                ScriptPath = ofd.FileName;
+            }
+        }
+
         // ===== DesktopDuplication Felder =====
         private int _desktopIdx;
         public int DesktopIdx { get => _desktopIdx; set { _desktopIdx = value; OnChange(); } }
 
         // ===== ProcessDuplication Felder =====
-        private string _processName = string.Empty;
-        public string ProcessName { get => _processName; set { _processName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        //private string _processName = string.Empty;
+        //public string ProcessName { get => _processName; set { _processName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         // ===== ShowImage Felder =====
         private string _windowName = "MyWindow";
@@ -168,7 +197,7 @@ namespace DesktopAutomationApp.ViewModels
         private bool _showRawImage = true;
         public bool ShowRawImage { get => _showRawImage; set { _showRawImage = value; OnChange(); } }
 
-        private bool _showProcessedImage = true;
+        private bool _showProcessedImage = false;
         public bool ShowProcessedImage { get => _showProcessedImage; set { _showProcessedImage = value; OnChange(); } }
 
         // ===== VideoCreation Felder =====
@@ -218,13 +247,13 @@ namespace DesktopAutomationApp.ViewModels
                         DesktopIdx = DesktopIdx
                     }
                 },
-                "ProcessDuplication" => new ProcessDuplicationStep
-                {
-                    Settings = new ProcessDuplicationSettings
-                    {
-                        ProcessName = ProcessName
-                    }
-                },
+                //"ProcessDuplication" => new ProcessDuplicationStep
+                //{
+                //    Settings = new ProcessDuplicationSettings
+                //    {
+                //        ProcessName = ProcessName
+                //    }
+                //},
                 "ShowImage" => new ShowImageStep
                 {
                     Settings = new ShowImageSettings
@@ -249,6 +278,14 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new MakroExecutionSettings
                     {
                         MakroName = SelectedMakroName ?? MakroNames.FirstOrDefault(string.Empty)
+                    }
+                },
+                "ScriptExecution" => new ScriptExecutionStep
+                {
+                    Settings = new ScriptExecutionSettings
+                    {
+                        ScriptPath = string.Empty,
+                        FireAndForget = false
                     }
                 },
                 _ => null

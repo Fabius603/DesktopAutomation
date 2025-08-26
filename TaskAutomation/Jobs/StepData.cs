@@ -10,6 +10,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
+    [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     public abstract class JobStep { }
 
     // ---- TemplateMatching ----
@@ -123,5 +124,19 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("makro_name")]
         public string MakroName { get; set; } = string.Empty;
+    }
+
+    public sealed class ScriptExecutionStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ScriptExecutionSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ScriptExecutionSettings
+    {
+        [JsonPropertyName("script_path")]
+        public string ScriptPath { get; set; } = string.Empty;
+        [JsonPropertyName("fire_and_forget")]
+        public bool FireAndForget { get; set; } = false;
     }
 }

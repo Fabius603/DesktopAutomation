@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Makros;
+using TaskAutomation.Scripts;
 
 namespace TaskAutomation.Jobs
 {
@@ -48,6 +49,7 @@ namespace TaskAutomation.Jobs
 
         // Aktionen
         TaskAutomation.Makros.IMakroExecutor MakroExecutor { get; }
+        IScriptExecutor ScriptExecutor { get; }
 
         void StartRecordingOverlay(RecordingIndicatorOptions? options = null);
         void StopRecordingOverlay();

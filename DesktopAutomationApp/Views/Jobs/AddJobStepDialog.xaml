@@ -81,13 +81,13 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Process Duplication -->
+            <!-- Process Duplication --><!--
             <StackPanel Visibility="{Binding ShowProcessDuplication, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Prozessname:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Width="220" Text="{Binding ProcessName, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
-            </StackPanel>
+            </StackPanel>-->
 
             <!-- Show Image -->
             <StackPanel Visibility="{Binding ShowShowImage, Converter={StaticResource BoolToVis}}">
@@ -131,12 +131,24 @@
                 </StackPanel>
             </StackPanel>
 
+            <StackPanel Visibility="{Binding ShowScriptExecution, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Script-Pfad:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="220" Text="{Binding ScriptPath, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="…" Width="28" Height="24" Margin="8,0,0,0"
+                            Command="{Binding BrowseScriptPathCommand}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Fire and Forget" IsChecked="{Binding FireAndForget}"/>
+                </StackPanel>
+            </StackPanel>
+
         </StackPanel>
 
         <!-- Buttons -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Abbrechen" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Click="Ok_Click"/>
+            <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Command="{Binding ConfirmCommand}"/>
         </StackPanel>
     </Grid>
 </mah:MetroWindow>

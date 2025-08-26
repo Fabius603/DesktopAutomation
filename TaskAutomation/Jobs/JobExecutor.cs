@@ -21,6 +21,7 @@ using Common.Logging;
 using TaskAutomation.Persistence;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using System.CodeDom.Compiler;
+using TaskAutomation.Scripts;
 
 namespace TaskAutomation.Jobs
 {
@@ -34,6 +35,7 @@ namespace TaskAutomation.Jobs
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
         private IMakroExecutor _makroExecutor;
+        private IScriptExecutor _scriptExecutor;
         private Bitmap _currentImage;
         private Mat _currentImageWithResult;
         private bool _disposed = false;
@@ -58,7 +60,8 @@ namespace TaskAutomation.Jobs
             { typeof(TemplateMatchingStep), new TemplateMatchingStepHandler() },
             { typeof(ShowImageStep), new ShowImageStepHandler() },
             { typeof(VideoCreationStep), new VideoCreationStepHandler() },
-            { typeof(MakroExecutionStep), new MakroExecutionStepHandler() }
+            { typeof(MakroExecutionStep), new MakroExecutionStepHandler() },
+            { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() }
         };
 
         // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
@@ -135,12 +138,18 @@ namespace TaskAutomation.Jobs
             get => _makroExecutor;
             set => _makroExecutor = value;
         }
+        public IScriptExecutor ScriptExecutor
+        {
+            get => _scriptExecutor;
+            set => _scriptExecutor = value;
+        }
 
         public JobExecutor(
             ILogger<JobExecutor> logger,
             IJsonRepository<Job> jobRepo,
             IJsonRepository<Makro> makroRepo,
             IMakroExecutor makroExecutor,
+            IScriptExecutor scriptExecutor,
             IRecordingIndicatorOverlay recordingOverlay)
         {
             _logger = logger;
@@ -148,7 +157,8 @@ namespace TaskAutomation.Jobs
             _makroRepository = makroRepo;
             _makroExecutor = makroExecutor;
             _recordingOverlay = recordingOverlay;
-            
+            _scriptExecutor = scriptExecutor;
+
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -265,7 +275,7 @@ namespace TaskAutomation.Jobs
                             MonitorIndex = desktopDuplicationStep.Settings.DesktopIdx,
                             Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
                             BorderThickness = 2f,
-                            Mode = RecordingIndicatorMode.CornerBadge,
+                            Mode = RecordingIndicatorMode.RedBorder,
                             BadgeCorner = Corner.TopRight,
                             Label = "REC"
                         });

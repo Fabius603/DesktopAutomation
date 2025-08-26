@@ -19,6 +19,7 @@ using Serilog;
 using Serilog.Events;
 using DesktopAutomationApp.Services.Preview;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
+using TaskAutomation.Scripts;
 
 namespace DesktopAutomationApp
 {
@@ -63,6 +64,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
                     services.AddSingleton<IJobExecutionContext>(sp => sp.GetRequiredService<JobExecutor>());
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
+                    services.AddSingleton<IScriptExecutor, ScriptExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
                     services.AddSingleton<IJobDispatcher, JobDispatcher>();
                     services.AddSingleton<IMacroPreviewService, MacroPreviewService>();

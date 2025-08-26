@@ -131,10 +131,10 @@ namespace DesktopAutomationApp.ViewModels
                     vm.DesktopIdx = d.Settings.DesktopIdx;
                     break;
 
-                case ProcessDuplicationStep p:
-                    vm.SelectedType = "ProcessDuplication";
-                    vm.ProcessName = p.Settings.ProcessName;
-                    break;
+                //case ProcessDuplicationStep p:
+                //    vm.SelectedType = "ProcessDuplication";
+                //    vm.ProcessName = p.Settings.ProcessName;
+                //    break;
 
                 case ShowImageStep si:
                     vm.SelectedType = "ShowImage";
@@ -154,6 +154,12 @@ namespace DesktopAutomationApp.ViewModels
                 case MakroExecutionStep me:
                     vm.SelectedType = "MakroExecution";
                     vm.SelectedMakroName = me.Settings.MakroName;
+                    break;
+
+                case ScriptExecutionStep se:
+                    vm.SelectedType = "ScriptExecution";
+                    vm.ScriptPath = se.Settings.ScriptPath;
+                    vm.FireAndForget = se.Settings.FireAndForget;
                     break;
             }
         }
