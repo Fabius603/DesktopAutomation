@@ -10,41 +10,34 @@ namespace TaskAutomation.Persistence
     {
         public static IServiceCollection AddJsonRepository<T>(
             this IServiceCollection services,
-            string relativeFolderPath,     // z.B. "Configs/Jobs" ODER "Configs\\Jobs"
+            string relativeFolderPath,     // z.B. "Configs/Jobs"
             string saveFileName,           // z.B. "jobs.json"
             JsonSerializerOptions jsonOptions,
             Func<T, string> keySelector)
             where T : class
         {
-            // 1) Kombinieren + Normalisieren
-            //var baseDir = AppContext.BaseDirectory;
-            //var combined = Path.Combine(baseDir, relativeFolderPath);
-            //var folderPath = Path.GetFullPath(combined)
-            //                     .Replace('/', Path.DirectorySeparatorChar)
-            //                     .TrimEnd(Path.DirectorySeparatorChar);
-
             var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var configRoot = Path.Combine(baseDir, "DesktopAutomation", relativeFolderPath);
+            var configDir = Path.Combine(baseDir, "DesktopAutomation", relativeFolderPath);
+            Directory.CreateDirectory(configDir);
 
-            // 2) Ordner sicherstellen
-            Directory.CreateDirectory(configRoot);
+            // NEU: eine Zieldatei statt Ordner+Pattern
+            var filePath = Path.Combine(configDir, saveFileName);
 
-            // 3) Registrierung
             services.AddSingleton<IJsonRepository<T>>(_ =>
-                new FileJsonRepository<T>(
-                    new FolderJsonRepositoryOptions
+                new JsonRepository<T>(
+                    new JsonRepositoryOptions
                     {
-                        FolderPath = configRoot,
-                        SearchPattern = "*.json",
-                        SaveFileName = saveFileName,
+                        FilePath = filePath,
                         JsonOptions = jsonOptions,
-                        CreateBackup = true
+                        CreateBackup = true,                // optional
+                                                            // BackupSuffixFormat = "yyyyMMddHHmmssfff"
                     },
-                    keySelector: keySelector
+                    keySelector
                 )
             );
 
             return services;
         }
     }
+
 }

@@ -13,23 +13,24 @@ namespace TaskAutomation.Persistence
     /// Liest alle *.json aus einem Ordner (je Datei: Objekt ODER Liste von Objekten).
     /// Speichert atomar in EINE konsolidierte Datei (z. B. "hotkeys.json") im selben Ordner.
     /// </summary>
-    public sealed class FileJsonRepository<T> : IJsonRepository<T>, IDisposable
+    public sealed class JsonRepository<T> : IJsonRepository<T>, IDisposable
     {
-        private readonly FolderJsonRepositoryOptions _opt;
+        private readonly JsonRepositoryOptions _opt;
         private readonly Func<T, string> _keySelector;
         private readonly SemaphoreSlim _gate = new(1, 1);
         private readonly FileSystemWatcher? _watcher;
 
-        public FileJsonRepository(FolderJsonRepositoryOptions options, Func<T, string> keySelector, bool enableWatcher = false)
+        public JsonRepository(JsonRepositoryOptions options, Func<T, string> keySelector, bool enableWatcher = false)
         {
             _opt = options ?? throw new ArgumentNullException(nameof(options));
             _keySelector = keySelector ?? throw new ArgumentNullException(nameof(keySelector));
 
-            Directory.CreateDirectory(_opt.FolderPath);
+            var dir = Path.GetDirectoryName(_opt.FilePath)!;
+            Directory.CreateDirectory(dir);
 
             if (enableWatcher)
             {
-                _watcher = new FileSystemWatcher(_opt.FolderPath, _opt.SearchPattern)
+                _watcher = new FileSystemWatcher(dir, Path.GetFileName(_opt.FilePath))
                 {
                     IncludeSubdirectories = false,
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size
@@ -60,111 +61,62 @@ namespace TaskAutomation.Persistence
             await _gate.WaitAsync().ConfigureAwait(false);
             try
             {
-                var list = new List<T>();
-                var target = Path.Combine(_opt.FolderPath, _opt.SaveFileName);
+                var target = _opt.FilePath;
+                if (!File.Exists(target)) return [];
 
-                // Wenn die konsolidierte Datei existiert, ist sie die einzige Quelle der Wahrheit
-                if (File.Exists(target))
-                {
-                    var only = await ReadFileFlexibleAsync(target).ConfigureAwait(false);
-                    return only ?? [];
-                }
-
-                // Fallback (Legacy): alle passenden Dateien einsammeln und mergen
-                foreach (var file in Directory.EnumerateFiles(_opt.FolderPath, _opt.SearchPattern, SearchOption.TopDirectoryOnly))
-                {
-                    var fileItems = await ReadFileFlexibleAsync(file).ConfigureAwait(false);
-                    if (fileItems is { Count: > 0 })
-                        list.AddRange(fileItems);
-                }
-
-                var merged = list
-                    .GroupBy(_keySelector, StringComparer.OrdinalIgnoreCase)
-                    .Select(g => g.Last())
-                    .ToList();
-
-                return merged;
+                var only = await ReadFileFlexibleAsync(target).ConfigureAwait(false);
+                return only ?? [];
             }
-            finally
-            {
-                _gate.Release();
-            }
+            finally { _gate.Release(); }
         }
 
         public async Task SaveAllAsync(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
 
-            var target = Path.Combine(_opt.FolderPath, _opt.SaveFileName);
+            var target = _opt.FilePath;
             var temp = target + ".tmp";
 
             await _gate.WaitAsync().ConfigureAwait(false);
             try
             {
-                // JSON schreiben
                 await using (var fs = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     await JsonSerializer.SerializeAsync(fs, items, _opt.JsonOptions).ConfigureAwait(false);
                     await fs.FlushAsync().ConfigureAwait(false);
                 }
 
-                // Backup der Ziel-Datei (optional)
                 if (_opt.CreateBackup && File.Exists(target))
                 {
-                    // 1) Backup-Ordner anlegen (Unterordner "Backup" neben der Zieldatei)
                     var targetDir = Path.GetDirectoryName(target)!;
                     var backupDir = Path.Combine(targetDir, "Backup");
                     Directory.CreateDirectory(backupDir);
 
-                    // 2) Backup-Dateiname mit Zeitstempel (YYYYMMDDHHMMSSfff empfohlen)
                     var baseName = Path.GetFileName(target);
                     var timestamp = DateTime.UtcNow.ToString(_opt.BackupSuffixFormat);
                     var bak = Path.Combine(backupDir, $"{baseName}.{timestamp}.bak");
 
-                    // 3) Kollisionen sicher vermeiden (falls zwei Backups im selben Takt)
-                    int counter = 1;
-                    while (File.Exists(bak))
-                    {
-                        bak = Path.Combine(backupDir, $"{baseName}.{timestamp}_{counter++}.bak");
-                    }
-
+                    int i = 1;
+                    while (File.Exists(bak)) bak = Path.Combine(backupDir, $"{baseName}.{timestamp}_{i++}.bak");
                     File.Copy(target, bak, overwrite: false);
 
-                    // 4) Retention: maximal 5 Backups pro Basisdatei behalten
                     const int MAX_BACKUPS = 5;
-
-                    // Alle Backups für diese Basisdatei einsammeln
-                    var allBackups = Directory.GetFiles(backupDir, $"{baseName}.*.bak");
-
-                    // Sortierung: neueste zuerst.
-                    // Hinweis: Wenn _opt.BackupSuffixFormat = "yyyyMMddHHmmssfff" ist,
-                    // ist die Dateiname-Sortierung bereits chronologisch korrekt.
-                    var ordered = allBackups
-                        .OrderByDescending(f => f, StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-
-                    if (ordered.Count > MAX_BACKUPS)
-                    {
-                        foreach (var old in ordered.Skip(MAX_BACKUPS))
-                        {
-                            try { File.Delete(old); } catch { /* absichtlich ignoriert */ }
-                        }
-                    }
+                    var allBackups = Directory.GetFiles(backupDir, $"{baseName}.*.bak")
+                                              .OrderByDescending(f => f, StringComparer.OrdinalIgnoreCase)
+                                              .ToList();
+                    foreach (var old in allBackups.Skip(MAX_BACKUPS))
+                        try { File.Delete(old); } catch { }
                 }
 
-                // Atomar ersetzen
                 File.Move(temp, target, overwrite: true);
             }
             finally
             {
-                // Temp aufräumen, falls Move fehlgeschlagen
-                if (File.Exists(temp))
-                {
-                    try { File.Delete(temp); } catch { /* ignore */ }
-                }
+                if (File.Exists(temp)) { try { File.Delete(temp); } catch { } }
                 _gate.Release();
             }
         }
+
 
         public async Task<T?> LoadAsync(string key)
         {
