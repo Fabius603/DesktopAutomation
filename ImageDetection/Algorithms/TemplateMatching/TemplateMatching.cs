@@ -43,7 +43,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
             return Detect(rawSource, new Point(0, 0));
         }
 
-        public TemplateMatchingResult Detect(Mat rawSource, Point offset)
+        public TemplateMatchingResult Detect(Mat rawSource, Point globalOffset)
         {
             if (_template == null)
             {
@@ -95,7 +95,8 @@ namespace ImageDetection.Algorithms.TemplateMatching
                     ? DetectSinglePoint(resultMat, currentRoiOffset)
                     : DetectMultiplePoints(resultMat, currentRoiOffset);
 
-                CalcPointsOnDesktop(result, offset);
+                // Convert to global desktop coordinates using the same coordinate system as ScreenHelper.GetScreens()
+                ConvertToGlobalDesktopCoordinates(result, globalOffset);
 
                 return result;
             }
@@ -357,21 +358,22 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
-        private void CalcPointsOnDesktop(TemplateMatchingResult result, Point offset)
+        private void ConvertToGlobalDesktopCoordinates(TemplateMatchingResult result, Point globalOffset)
         {
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
-            // Einzelpunkt
+            // Convert local image coordinates to global desktop coordinates
+            // This ensures compatibility with ScreenHelper.GetScreens() coordinate system
             result.CenterPointOnDesktop = new Point(
-                result.CenterPoint.X + offset.X,
-                result.CenterPoint.Y + offset.Y);
+                result.CenterPoint.X + globalOffset.X,
+                result.CenterPoint.Y + globalOffset.Y);
 
-            // Mehrere Punkte
+            // Handle multiple points
             if (result.Points != null && result.Points.Count > 0)
             {
                 result.PointsOnDesktop = result.Points
-                    .Select(p => new Point(p.X + offset.X, p.Y + offset.Y))
+                    .Select(p => new Point(p.X + globalOffset.X, p.Y + globalOffset.Y))
                     .ToList();
             }
             else

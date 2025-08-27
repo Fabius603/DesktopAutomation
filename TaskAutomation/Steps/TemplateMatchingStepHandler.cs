@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using OpenCvSharp.Extensions;
+using ImageHelperMethods;
+using System.Drawing;
 
 namespace TaskAutomation.Steps
 {
@@ -45,6 +47,8 @@ namespace TaskAutomation.Steps
             executor.TemplateMatcher.SetThreshold(tmStep.Settings.ConfidenceThreshold);
 
             executor.ImageToProcess = executor.CurrentImage.ToMat();
+
+            // Use the current offset directly for template matching
             executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
 
             if(executor.TemplateMatchingResult.Success)

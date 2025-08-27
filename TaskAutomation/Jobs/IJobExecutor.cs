@@ -49,6 +49,9 @@ namespace TaskAutomation.Jobs
 
         OpenCvSharp.Point? LatestCalculatedPoint { get; set; }
 
+        // Timeout-Tracking für Steps
+        Dictionary<string, DateTime> StepTimeouts { get; }
+
         // Aktionen
         TaskAutomation.Makros.IMakroExecutor MakroExecutor { get; }
         IScriptExecutor ScriptExecutor { get; }

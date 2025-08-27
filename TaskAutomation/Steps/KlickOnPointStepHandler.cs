@@ -25,6 +25,23 @@ namespace TaskAutomation.Steps
                 return true; // Continue execution but no click performed - point not set
             }
 
+            // Use the step's unique ID as dictionary key
+            var stepKey = $"KlickOnPoint_{klickStep.Id}";
+            
+            // Check if timeout is still active
+            if (executor.StepTimeouts.TryGetValue(stepKey, out var lastExecution))
+            {
+                var timeSinceLastExecution = DateTime.Now - lastExecution;
+                if (timeSinceLastExecution.TotalMilliseconds < klickStep.Settings.TimeoutMs)
+                {
+                    // Timeout not yet elapsed, skip execution
+                    return true;
+                }
+            }
+
+            // Update timeout tracker
+            executor.StepTimeouts[stepKey] = DateTime.Now;
+
             // Create temporary macro for click execution
             var macro = CreateClickMacro(klickStep.Settings, executor.LatestCalculatedPoint.Value);
             

@@ -28,7 +28,7 @@ namespace ImageCapture.DesktopDuplication
         {
             return new DesktopFrame
             {
-                DesktopImage = DesktopImage,
+                DesktopImage = DesktopImage != null ? new Bitmap(DesktopImage) : null, // Create a proper copy
                 MovedRegions = MovedRegions != null ? (MovedRegion[])MovedRegions.Clone() : null,
                 UpdatedRegions = UpdatedRegions != null ? (Rectangle[])UpdatedRegions.Clone() : null,
                 CursorVisible = CursorVisible,

@@ -52,6 +52,7 @@ namespace TaskAutomation.Jobs
         public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
         private Point? _latestCalculatedPoint;
+        private readonly Dictionary<string, DateTime> _stepTimeouts = new(StringComparer.OrdinalIgnoreCase);
 
 
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
@@ -151,6 +152,8 @@ namespace TaskAutomation.Jobs
             get => _latestCalculatedPoint;
             set => _latestCalculatedPoint = value;
         }
+
+        public Dictionary<string, DateTime> StepTimeouts => _stepTimeouts;
 
         public JobExecutor(
             ILogger<JobExecutor> logger,
@@ -254,7 +257,6 @@ namespace TaskAutomation.Jobs
             var showImageStep = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             bool recorderStarted = false;
-            bool cancelled = false;
 
             try
             {
@@ -313,8 +315,7 @@ namespace TaskAutomation.Jobs
                         }
                         catch (OperationCanceledException)
                         {
-                            _logger.LogInformation("Schritt '{StepType}' abgebrochen.", step.GetType().Name);
-                            throw;
+                            _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
                         }
                         catch (Exception ex)
                         {
@@ -331,9 +332,7 @@ namespace TaskAutomation.Jobs
             }
             catch (OperationCanceledException)
             {
-                cancelled = true;
-                // NICHT erneut throwen – das Aufräumen erfolgt im finally; Ausnahme kann ggf. außerhalb erneut behandelt werden.
-                throw;
+                _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
             }
             finally
             {

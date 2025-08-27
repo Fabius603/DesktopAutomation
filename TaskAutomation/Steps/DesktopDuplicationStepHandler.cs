@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
+using ImageHelperMethods;
 
 namespace TaskAutomation.Steps
 {
@@ -20,22 +21,44 @@ namespace TaskAutomation.Steps
                 return false;
             }
 
+            // Dispose previous resources to prevent memory leaks
             executor.CurrentImage?.Dispose();
+            executor.CurrentImage = null;
             executor.CurrentDesktopFrame?.Dispose();
+            executor.CurrentDesktopFrame = null;
 
             if (executor.DesktopDuplicator == null)
             {
                 executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.DesktopIdx);
             }
+            
             try
             {
                 ct.ThrowIfCancellationRequested();
                 executor.CurrentDesktopFrame = executor.DesktopDuplicator.GetLatestFrame();
-                executor.CurrentImage = executor.CurrentDesktopFrame?.DesktopImage?.Clone() as Bitmap;
+                
+                // Clone the bitmap to avoid sharing references
+                if (executor.CurrentDesktopFrame?.DesktopImage != null)
+                {
+                    executor.CurrentImage = new Bitmap(executor.CurrentDesktopFrame.DesktopImage);
+                    
+                    // Set the current offset to the screen bounds for this desktop index
+                    var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(ddStep.Settings.DesktopIdx);
+                    executor.CurrentOffset = new OpenCvSharp.Point(screenBounds.Left, screenBounds.Top);
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return true;
+                // Log the exception for debugging
+                System.Diagnostics.Debug.WriteLine($"DesktopDuplication error: {ex.Message}");
+                
+                // Clean up on error
+                executor.CurrentImage?.Dispose();
+                executor.CurrentImage = null;
+                executor.CurrentDesktopFrame?.Dispose();
+                executor.CurrentDesktopFrame = null;
+                
+                return true; // Continue execution
             }
 
             return true;

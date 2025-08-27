@@ -12,7 +12,11 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
-    public abstract class JobStep { }
+    public abstract class JobStep 
+    { 
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+    }
 
     // ---- TemplateMatching ----
     public sealed class TemplateMatchingStep : JobStep

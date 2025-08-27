@@ -8,6 +8,7 @@ using SharpDX.Direct3D11;
 using Device = SharpDX.Direct3D11.Device;
 using ImageHelperMethods;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace ImageHelperMethods
 {
@@ -95,14 +96,14 @@ namespace ImageHelperMethods
         public static Rectangle GetVirtualDesktopBounds()
         {
             var screens = GetScreens();
-            int left = int.MaxValue, top = int.MaxValue, right = int.MinValue, bottom = int.MinValue;
-            foreach (var s in screens)
-            {
-                left = Math.Min(left, s.Bounds.Left);
-                top = Math.Min(top, s.Bounds.Top);
-                right = Math.Max(right, s.Bounds.Right);
-                bottom = Math.Max(bottom, s.Bounds.Bottom);
-            }
+            if (screens.Length == 0)
+                return Rectangle.Empty;
+
+            int left = screens.Min(s => s.Bounds.Left);
+            int top = screens.Min(s => s.Bounds.Top);
+            int right = screens.Max(s => s.Bounds.Right);
+            int bottom = screens.Max(s => s.Bounds.Bottom);
+            
             int width = right - left;
             int height = bottom - top;
             return new Rectangle(left, top, width, height);
@@ -117,8 +118,8 @@ namespace ImageHelperMethods
         public static Screen[] GetScreens()
         {
             return Screen.AllScreens
-                             .OrderBy(s => s.Bounds.X)          // X aufsteigend
-                             .ThenByDescending(s => s.Bounds.Y) // Y absteigend
+                             .OrderBy(s => s.Bounds.Left)       // Links nach rechts
+                             .ThenBy(s => s.Bounds.Top)         // Oben nach unten
                              .ToArray();
         }
 
