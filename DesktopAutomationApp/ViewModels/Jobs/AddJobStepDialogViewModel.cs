@@ -28,6 +28,7 @@ namespace DesktopAutomationApp.ViewModels
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
+            ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
         }
 
         // ----- Dialog-Interop -----
@@ -48,6 +49,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand BrowseTemplatePathCommand { get; }
         public ICommand BrowseScriptPathCommand { get; }
+        public ICommand ChooseMonitorCommand { get; }
 
         private void Confirm()
         {
@@ -202,6 +204,120 @@ namespace DesktopAutomationApp.ViewModels
             if (ofd.ShowDialog() == true)
             {
                 ScriptExecutionStep_ScriptPath = ofd.FileName;
+            }
+        }
+
+        private void ChooseMonitor()
+        {
+            try
+            {
+                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
+                if (selectedMonitorIndex >= 0)
+                {
+                    DesktopDuplicationStep_DesktopIdx = selectedMonitorIndex;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private int ShowMonitorSelectionOverlay()
+        {
+            var screens = ImageHelperMethods.ScreenHelper.GetScreens();
+            var overlays = new List<System.Windows.Window>();
+            int selectedIndex = -1;
+            bool selectionMade = false;
+
+            try
+            {
+                // Create overlay windows for each monitor
+                for (int i = 0; i < screens.Length; i++)
+                {
+                    var screen = screens[i];
+                    int monitorIndex = i; // Capture loop variable
+
+                    var overlay = new System.Windows.Window
+                    {
+                        WindowStyle = System.Windows.WindowStyle.None,
+                        AllowsTransparency = true,
+                        Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(128, 0, 100, 200)),
+                        Topmost = true,
+                        Left = screen.Bounds.Left,
+                        Top = screen.Bounds.Top,
+                        Width = screen.Bounds.Width,
+                        Height = screen.Bounds.Height,
+                        Cursor = System.Windows.Input.Cursors.Hand
+                    };
+
+                    // Add text to show monitor index
+                    var textBlock = new System.Windows.Controls.TextBlock
+                    {
+                        Text = $"Monitor {i}",
+                        FontSize = 48,
+                        Foreground = System.Windows.Media.Brushes.White,
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                        FontWeight = System.Windows.FontWeights.Bold
+                    };
+                    overlay.Content = textBlock;
+
+                    // Handle click
+                    overlay.MouseLeftButtonDown += (s, e) =>
+                    {
+                        if (!selectionMade)
+                        {
+                            selectedIndex = monitorIndex;
+                            selectionMade = true;
+                            
+                            // Close all overlays
+                            foreach (var o in overlays)
+                            {
+                                o.Close();
+                            }
+                        }
+                    };
+
+                    // Handle Escape key to cancel
+                    overlay.KeyDown += (s, e) =>
+                    {
+                        if (e.Key == System.Windows.Input.Key.Escape && !selectionMade)
+                        {
+                            selectionMade = true;
+                            foreach (var o in overlays)
+                            {
+                                o.Close();
+                            }
+                        }
+                    };
+
+                    overlays.Add(overlay);
+                    overlay.Show();
+                    overlay.Focus();
+                }
+
+                // Wait for selection or timeout
+                var timeout = DateTime.Now.AddSeconds(30);
+                while (!selectionMade && DateTime.Now < timeout)
+                {
+                    System.Windows.Forms.Application.DoEvents();
+                    System.Threading.Thread.Sleep(50);
+                }
+
+                return selectedIndex;
+            }
+            finally
+            {
+                // Ensure all overlays are closed
+                foreach (var overlay in overlays)
+                {
+                    if (overlay.IsVisible)
+                    {
+                        overlay.Close();
+                    }
+                }
             }
         }
 

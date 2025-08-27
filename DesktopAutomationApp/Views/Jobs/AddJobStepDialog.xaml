@@ -74,7 +74,9 @@
             <StackPanel Visibility="{Binding ShowDesktopDuplication, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Desktop Index:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBox Width="80" Text="{Binding DesktopDuplicationStep_DesktopIdx}"/>
+                    <TextBox Width="80" IsReadOnly="True" Text="{Binding DesktopDuplicationStep_DesktopIdx}"/>
+                    <Button Content="Choose Monitor" Margin="8,0,0,0" Padding="8,4" 
+                            Command="{Binding ChooseMonitorCommand}"/>
                 </StackPanel>
             </StackPanel>
 
