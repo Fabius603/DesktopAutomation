@@ -112,14 +112,43 @@ public class StreamVideoRecorder : IDisposable
             if (mat.Empty() || mat.Data == IntPtr.Zero)
                 return;
 
-            Cv2.Resize(mat, mat, new OpenCvSharp.Size(width, height));
+            // Ensure BGR format for FFmpeg
+            Mat bgrMat = new Mat();
+            if (mat.Channels() == 4) // BGRA or RGBA
+            {
+                Cv2.CvtColor(mat, bgrMat, ColorConversionCodes.BGRA2BGR);
+            }
+            else if (mat.Channels() == 1) // Grayscale
+            {
+                Cv2.CvtColor(mat, bgrMat, ColorConversionCodes.GRAY2BGR);
+            }
+            else if (mat.Channels() == 3) // Already BGR or RGB
+            {
+                // Assume it's already BGR since most Windows bitmaps are
+                mat.CopyTo(bgrMat);
+            }
+            else
+            {
+                // Fallback: try to convert to BGR
+                mat.CopyTo(bgrMat);
+            }
 
-            int length = (int)(mat.Total() * mat.ElemSize());
+            // Only resize if dimensions don't match
+            if (bgrMat.Width != width || bgrMat.Height != height)
+            {
+                Cv2.Resize(bgrMat, bgrMat, new OpenCvSharp.Size(width, height));
+            }
+
+            int length = (int)(bgrMat.Total() * bgrMat.ElemSize());
             if (length <= 0)
+            {
+                bgrMat.Dispose();
                 return;
+            }
 
             byte[] raw = new byte[length];
-            Marshal.Copy(mat.Data, raw, 0, length);
+            Marshal.Copy(bgrMat.Data, raw, 0, length);
+            bgrMat.Dispose();
 
             if (stopwatch == null || raw == null)
             {

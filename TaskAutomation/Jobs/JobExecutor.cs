@@ -265,7 +265,21 @@ namespace TaskAutomation.Jobs
                 // Videoaufnahme vorbereiten/optional starten
                 if (videoStep != null)
                 {
-                    _videoRecorder = new StreamVideoRecorder(1920, 1080, 60)
+                    // Determine video resolution based on the desktop duplication step
+                    int videoWidth = 1920;
+                    int videoHeight = 1080;
+                    
+                    if (desktopDuplicationStep != null)
+                    {
+                        var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
+                        if (!screenBounds.IsEmpty)
+                        {
+                            videoWidth = screenBounds.Width;
+                            videoHeight = screenBounds.Height;
+                        }
+                    }
+                    
+                    _videoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
                     {
                         OutputDirectory = videoStep.Settings.SavePath,
                         FileName = videoStep.Settings.FileName
