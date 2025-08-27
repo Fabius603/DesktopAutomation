@@ -39,22 +39,18 @@
                         <Run Text="MatchMode: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MultiplePoints: "/>
-                        <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="EnableROI: "/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ROI: "/><Run Text="Muss noch hinzugefügt werden!!"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="DrawResults: "/>
-                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -115,11 +111,11 @@
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ShowRawImage: "/>
-                        <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ShowProcessedImage: "/>
-                        <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -145,11 +141,11 @@
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="UseRawImage: "/>
-                        <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="UseProcessedImage: "/>
-                        <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}}"/>
+                        <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -169,6 +165,53 @@
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="MakroName: "/><Run Text="{Binding Settings.MakroName}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type jobs:KlickOnPointStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Klick auf Punkt" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Doppelklick: "/>
+                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Klick-Typ: "/><Run Text="{Binding Settings.ClickType}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.TimeoutMs}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type jobs:ScriptExecutionStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Script Ausführung" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Script-Pfad: "/><Run Text="{Binding Settings.ScriptPath}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Fire and Forget: "/>
+                        <Run Text="{Binding Settings.FireAndForget, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

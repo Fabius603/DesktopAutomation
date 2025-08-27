@@ -38,10 +38,8 @@ namespace TaskAutomation.Steps
             else
                 executor.TemplateMatcher.DisableROI();
 
-            if (tmStep.Settings.MultiplePoints)
-                executor.TemplateMatcher.EnableMultiplePoints();
-            else
-                executor.TemplateMatcher.DisableMultiplePoints();
+            // Always use single point detection (MultiplePoints = false)
+            executor.TemplateMatcher.DisableMultiplePoints();
 
             executor.TemplateMatcher.SetTemplate(tmStep.Settings.TemplatePath);
             executor.TemplateMatcher.SetThreshold(tmStep.Settings.ConfidenceThreshold);
@@ -49,15 +47,22 @@ namespace TaskAutomation.Steps
             executor.ImageToProcess = executor.CurrentImage.ToMat();
             executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
 
-
-            if (executor.TemplateMatchingResult.Success && tmStep.Settings.DrawResults)
+            if(executor.TemplateMatchingResult.Success)
             {
-                executor.CurrentImageWithResult = DrawResult.DrawTemplateMatchingResult(
+                executor.LatestCalculatedPoint = executor.TemplateMatchingResult.CenterPointOnDesktop;
+                if (tmStep.Settings.DrawResults)
+                {
+                    executor.CurrentImageWithResult = DrawResult.DrawTemplateMatchingResult(
                     executor.ImageToProcess,
                     executor.TemplateMatchingResult,
                     executor.TemplateMatchingResult.TemplateSize);
+                }
             }
-
+            else
+            {
+                // If template matching failed, reset the point
+                executor.LatestCalculatedPoint = null;
+            }
             return true;
         }
     }

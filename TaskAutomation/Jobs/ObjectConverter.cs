@@ -72,6 +72,60 @@ namespace TaskAutomation.Jobs
         }
     }
 
+    public class OpenCvPointJsonConverter : JsonConverter<Point>
+    {
+        public override Point Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType != JsonTokenType.StartObject)
+            {
+                throw new JsonException("Expected StartObject token for Point.");
+            }
+
+            int x = 0, y = 0;
+            bool xSet = false, ySet = false;
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndObject)
+                {
+                    if (xSet && ySet)
+                    {
+                        return new Point(x, y);
+                    }
+                    throw new JsonException("Incomplete Point object.");
+                }
+
+                if (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    string propertyName = reader.GetString();
+                    reader.Read(); // Move to the value token
+
+                    if (string.Equals(propertyName, "x", StringComparison.OrdinalIgnoreCase))
+                    {
+                        x = reader.GetInt32();
+                        xSet = true;
+                    }
+                    else if (string.Equals(propertyName, "y", StringComparison.OrdinalIgnoreCase))
+                    {
+                        y = reader.GetInt32();
+                        ySet = true;
+                    }
+                    // Optional: ignorieren oder Exception für unerwartete Properties
+                }
+            }
+
+            throw new JsonException("Error reading Point JSON: EndObject token not found.");
+        }
+
+        public override void Write(Utf8JsonWriter writer, Point value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("x", value.X);
+            writer.WriteNumber("y", value.Y);
+            writer.WriteEndObject();
+        }
+    }
+
     // Falls du auch OpenCvSharp.Size deserialisieren musst (z.B. für VideoCreationStep)
     public class OpenCvSizeJsonConverter : JsonConverter<Size>
     {

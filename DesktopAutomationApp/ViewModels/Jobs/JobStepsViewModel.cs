@@ -125,21 +125,20 @@ namespace DesktopAutomationApp.ViewModels
             {
                 case TemplateMatchingStep t:
                     vm.SelectedType = "TemplateMatching";
-                    vm.TemplatePath = t.Settings.TemplatePath;
-                    vm.TemplateMatchMode = t.Settings.TemplateMatchMode;
-                    vm.MultiplePoints = t.Settings.MultiplePoints;
-                    vm.ConfidenceThreshold = t.Settings.ConfidenceThreshold;
-                    vm.EnableROI = t.Settings.EnableROI;
-                    vm.RoiX = t.Settings.ROI.X;
-                    vm.RoiY = t.Settings.ROI.Y;
-                    vm.RoiW = t.Settings.ROI.Width;
-                    vm.RoiH = t.Settings.ROI.Height;
-                    vm.DrawResults = t.Settings.DrawResults;
+                    vm.TemplateMatchingStep_TemplatePath = t.Settings.TemplatePath;
+                    vm.TemplateMatchingStep_TemplateMatchMode = t.Settings.TemplateMatchMode;
+                    vm.TemplateMatchingStep_ConfidenceThreshold = t.Settings.ConfidenceThreshold;
+                    vm.TemplateMatchingStep_EnableROI = t.Settings.EnableROI;
+                    vm.TemplateMatchingStep_RoiX = t.Settings.ROI.X;
+                    vm.TemplateMatchingStep_RoiY = t.Settings.ROI.Y;
+                    vm.TemplateMatchingStep_RoiW = t.Settings.ROI.Width;
+                    vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
+                    vm.TemplateMatchingStep_DrawResults = t.Settings.DrawResults;
                     break;
 
                 case DesktopDuplicationStep d:
                     vm.SelectedType = "DesktopDuplication";
-                    vm.DesktopIdx = d.Settings.DesktopIdx;
+                    vm.DesktopDuplicationStep_DesktopIdx = d.Settings.DesktopIdx;
                     break;
 
                 //case ProcessDuplicationStep p:
@@ -149,28 +148,35 @@ namespace DesktopAutomationApp.ViewModels
 
                 case ShowImageStep si:
                     vm.SelectedType = "ShowImage";
-                    vm.WindowName = si.Settings.WindowName;
-                    vm.ShowRawImage = si.Settings.ShowRawImage;
-                    vm.ShowProcessedImage = si.Settings.ShowProcessedImage;
+                    vm.ShowImageStep_WindowName = si.Settings.WindowName;
+                    vm.ShowImageStep_ShowRawImage = si.Settings.ShowRawImage;
+                    vm.ShowImageStep_ShowProcessedImage = si.Settings.ShowProcessedImage;
                     break;
 
                 case VideoCreationStep v:
                     vm.SelectedType = "VideoCreation";
-                    vm.SavePath = v.Settings.SavePath;
-                    vm.FileName = v.Settings.FileName;
-                    vm.UseRawImage = v.Settings.UseRawImage;
-                    vm.UseProcessedImage = v.Settings.UseProcessedImage;
+                    vm.VideoCreationStep_SavePath = v.Settings.SavePath;
+                    vm.VideoCreationStep_FileName = v.Settings.FileName;
+                    vm.VideoCreationStep_UseRawImage = v.Settings.UseRawImage;
+                    vm.VideoCreationStep_UseProcessedImage = v.Settings.UseProcessedImage;
                     break;
 
                 case MakroExecutionStep me:
                     vm.SelectedType = "MakroExecution";
-                    vm.SelectedMakroName = me.Settings.MakroName;
+                    vm.MakroExecutionStep_SelectedMakroName = me.Settings.MakroName;
                     break;
 
                 case ScriptExecutionStep se:
                     vm.SelectedType = "ScriptExecution";
-                    vm.ScriptPath = se.Settings.ScriptPath;
-                    vm.FireAndForget = se.Settings.FireAndForget;
+                    vm.ScriptExecutionStep_ScriptPath = se.Settings.ScriptPath;
+                    vm.ScriptExecutionStep_FireAndForget = se.Settings.FireAndForget;
+                    break;
+
+                case KlickOnPointStep kp:
+                    vm.SelectedType = "KlickOnPoint";
+                    vm.KlickOnPointStep_ClickType = kp.Settings.ClickType;
+                    vm.KlickOnPointStep_DoubleClick = kp.Settings.DoubleClick;
+                    vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
                     break;
             }
         }

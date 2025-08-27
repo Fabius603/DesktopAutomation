@@ -51,6 +51,7 @@ namespace TaskAutomation.Jobs
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
         public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
+        private Point? _latestCalculatedPoint;
 
 
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
@@ -61,7 +62,8 @@ namespace TaskAutomation.Jobs
             { typeof(ShowImageStep), new ShowImageStepHandler() },
             { typeof(VideoCreationStep), new VideoCreationStepHandler() },
             { typeof(MakroExecutionStep), new MakroExecutionStepHandler() },
-            { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() }
+            { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
+            { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
         };
 
         // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
@@ -142,6 +144,12 @@ namespace TaskAutomation.Jobs
         {
             get => _scriptExecutor;
             set => _scriptExecutor = value;
+        }
+
+        public Point? LatestCalculatedPoint
+        {
+            get => _latestCalculatedPoint;
+            set => _latestCalculatedPoint = value;
         }
 
         public JobExecutor(

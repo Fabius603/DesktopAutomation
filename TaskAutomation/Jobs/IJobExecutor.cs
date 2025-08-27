@@ -47,6 +47,8 @@ namespace TaskAutomation.Jobs
         // Kontext-Parameter
         OpenCvSharp.Point CurrentOffset { get; set; }
 
+        OpenCvSharp.Point? LatestCalculatedPoint { get; set; }
+
         // Aktionen
         TaskAutomation.Makros.IMakroExecutor MakroExecutor { get; }
         IScriptExecutor ScriptExecutor { get; }

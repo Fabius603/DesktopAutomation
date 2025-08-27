@@ -11,6 +11,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
+    [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
     public abstract class JobStep { }
 
     // ---- TemplateMatching ----
@@ -138,5 +139,21 @@ namespace TaskAutomation.Jobs
         public string ScriptPath { get; set; } = string.Empty;
         [JsonPropertyName("fire_and_forget")]
         public bool FireAndForget { get; set; } = false;
+    }
+
+    public sealed class KlickOnPointStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public KlickOnPointSettings Settings { get; set; } = new();
+    }
+
+    public sealed class KlickOnPointSettings
+    {
+        [JsonPropertyName("double_click")]
+        public bool DoubleClick { get; set; } = false;
+        [JsonPropertyName("click_type")]
+        public string ClickType { get; set; } = "left";
+        [JsonPropertyName("timeout_ms")]
+        public int TimeoutMs { get; set; } = 1000;
     }
 }
