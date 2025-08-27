@@ -89,7 +89,6 @@ namespace TaskAutomation.Scripts
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Ausführung von {Script} abgebrochen.", scriptPath);
-                throw;
             }
 
             sw.Stop();
