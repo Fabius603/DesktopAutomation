@@ -3,6 +3,7 @@ using ImageCapture.DesktopDuplication.RecordingIndicator;
 using ImageCapture.ProcessDuplication;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageHelperMethods;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,19 +17,19 @@ namespace TaskAutomation.Jobs
 {
     public interface IJobExecutor
     {
+        // Original IJobExecutor members
         IReadOnlyDictionary<string, Job> AllJobs { get; }
         IReadOnlyDictionary<string, Makro> AllMakros { get; }
-
         Task ExecuteJob(string jobName, CancellationToken ct = default);
         Task ReloadJobsAsync();
         Task ReloadMakrosAsync();
-    }
 
-    public interface IJobExecutionContext
-    {
-        IReadOnlyDictionary<string, Makro> AllMakros { get; }
-
+        // Original IJobExecutor members
+        Job? CurrentJob { get; }
         DxgiResources DxgiResources { get; }
+
+        // Logger für Step Handlers
+        ILogger Logger { get; }
 
         // Laufzeit-Zustände (mutierbar)
         ProcessDuplicatorResult ProcessDuplicationResult { get; set; }
@@ -46,7 +47,6 @@ namespace TaskAutomation.Jobs
 
         // Kontext-Parameter
         OpenCvSharp.Point CurrentOffset { get; set; }
-
         OpenCvSharp.Point? LatestCalculatedPoint { get; set; }
 
         // Timeout-Tracking für Steps

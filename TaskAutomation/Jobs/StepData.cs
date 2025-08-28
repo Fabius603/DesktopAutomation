@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using OpenCvSharp;
 
 namespace TaskAutomation.Jobs
@@ -12,6 +12,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
+    [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
     public abstract class JobStep 
     { 
         [JsonPropertyName("id")]
@@ -159,5 +160,19 @@ namespace TaskAutomation.Jobs
         public string ClickType { get; set; } = "left";
         [JsonPropertyName("timeout_ms")]
         public int TimeoutMs { get; set; } = 1000;
+    }
+
+    public sealed class JobExecutionStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public JobExecutionStepSettings Settings { get; set; } = new();
+    }
+
+    public sealed class JobExecutionStepSettings
+    {
+        [JsonPropertyName("job_name")]
+        public string JobName { get; set; } = string.Empty;
+        [JsonPropertyName("wait_for_completion")]
+        public bool WaitForCompletion { get; set; } = true;
     }
 }

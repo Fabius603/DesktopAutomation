@@ -8,60 +8,81 @@ using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using ImageHelperMethods;
+using Microsoft.Extensions.Logging;
+
 
 namespace TaskAutomation.Steps
 {
     public class DesktopDuplicationStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
         {
-            var ddStep = step as DesktopDuplicationStep;
-            if (ddStep == null)
+            var logger = executor.Logger;
+
+            if (step is not DesktopDuplicationStep ddStep)
             {
+                logger.LogError("DesktopDuplicationStepHandler: Invalid step type - expected DesktopDuplicationStep, got {StepType}", step?.GetType().Name ?? "null");
                 return false;
             }
 
-            // Dispose previous resources to prevent memory leaks
-            executor.CurrentImage?.Dispose();
-            executor.CurrentImage = null;
-            executor.CurrentDesktopFrame?.Dispose();
-            executor.CurrentDesktopFrame = null;
+            logger.LogDebug("DesktopDuplicationStepHandler: Processing desktop duplication for monitor index {MonitorIndex}", ddStep.Settings.DesktopIdx);
 
-            if (executor.DesktopDuplicator == null)
-            {
-                executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.DesktopIdx);
-            }
-            
             try
             {
+                // Dispose previous resources to prevent memory leaks
+                executor.CurrentImage?.Dispose();
+                executor.CurrentImage = null;
+                executor.CurrentDesktopFrame?.Dispose();
+                executor.CurrentDesktopFrame = null;
+
+                if (executor.DesktopDuplicator == null)
+                {
+                    executor.DesktopDuplicator = new DesktopDuplicator(ddStep.Settings.DesktopIdx);
+                    logger.LogDebug("DesktopDuplicationStepHandler: Created new DesktopDuplicator for monitor index {MonitorIndex}", ddStep.Settings.DesktopIdx);
+                }
+
                 ct.ThrowIfCancellationRequested();
+
+                logger.LogInformation("DesktopDuplicationStepHandler: Capturing desktop frame from monitor {MonitorIndex}", ddStep.Settings.DesktopIdx);
                 executor.CurrentDesktopFrame = executor.DesktopDuplicator.GetLatestFrame();
-                
+
                 // Clone the bitmap to avoid sharing references
                 if (executor.CurrentDesktopFrame?.DesktopImage != null)
                 {
                     executor.CurrentImage = new Bitmap(executor.CurrentDesktopFrame.DesktopImage);
-                    
+
                     // Set the current offset to the screen bounds for this desktop index
                     var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(ddStep.Settings.DesktopIdx);
                     executor.CurrentOffset = new OpenCvSharp.Point(screenBounds.Left, screenBounds.Top);
+
+                    logger.LogInformation("DesktopDuplicationStepHandler: Successfully captured desktop frame ({Width}x{Height}) at offset ({X}, {Y})",
+                        executor.CurrentImage.Width, executor.CurrentImage.Height, executor.CurrentOffset.X, executor.CurrentOffset.Y);
                 }
+                else
+                {
+                    logger.LogWarning("DesktopDuplicationStepHandler: No desktop image captured");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                logger.LogInformation("DesktopDuplicationStepHandler: Desktop duplication was cancelled");
+                return false;
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
-                System.Diagnostics.Debug.WriteLine($"DesktopDuplication error: {ex.Message}");
-                
+                logger.LogError(ex, "DesktopDuplicationStepHandler: Failed to capture desktop: {ErrorMessage}", ex.Message);
+
                 // Clean up on error
                 executor.CurrentImage?.Dispose();
                 executor.CurrentImage = null;
                 executor.CurrentDesktopFrame?.Dispose();
                 executor.CurrentDesktopFrame = null;
-                
-                return true; // Continue execution
-            }
 
-            return true;
+                return false;
+            }
         }
     }
 }

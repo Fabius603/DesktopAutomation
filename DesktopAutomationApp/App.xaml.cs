@@ -62,7 +62,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<JobExecutor>();
 
                     services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
-                    services.AddSingleton<IJobExecutionContext>(sp => sp.GetRequiredService<JobExecutor>());
+                    services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IScriptExecutor, ScriptExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();

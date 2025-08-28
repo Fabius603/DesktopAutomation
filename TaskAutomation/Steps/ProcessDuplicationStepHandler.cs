@@ -6,36 +6,68 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
     public class ProcessDuplicationStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
         {
-            var pdStep = step as ProcessDuplicationStep;
-            if (pdStep == null)
+            var logger = executor.Logger;
+            
+            if (step is not ProcessDuplicationStep pdStep)
             {
+                logger.LogError("ProcessDuplicationStepHandler: Invalid step type - expected ProcessDuplicationStep, got {StepType}", step?.GetType().Name ?? "null");
                 return false;
             }
 
-            executor.ProcessDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
-            executor.CurrentImage?.Dispose(); // Vorheriges Desktop-Bild freigeben
+            logger.LogDebug("ProcessDuplicationStepHandler: Processing process duplication for process '{ProcessName}'", pdStep.Settings.ProcessName);
 
-            if (executor.ProcessDuplicator == null)
+            try
             {
-                executor.ProcessDuplicator = new ProcessDuplicator(pdStep.Settings.ProcessName);
-            }
+                if (string.IsNullOrWhiteSpace(pdStep.Settings.ProcessName))
+                {
+                    logger.LogWarning("ProcessDuplicationStepHandler: No process name specified");
+                    return false;
+                }
 
-            executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();
-            if (!executor.ProcessDuplicationResult.ProcessFound)
+                executor.ProcessDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
+                executor.CurrentImage?.Dispose(); // Vorheriges Desktop-Bild freigeben
+
+                if (executor.ProcessDuplicator == null)
+                {
+                    executor.ProcessDuplicator = new ProcessDuplicator(pdStep.Settings.ProcessName);
+                    logger.LogDebug("ProcessDuplicationStepHandler: Created new ProcessDuplicator for process '{ProcessName}'", pdStep.Settings.ProcessName);
+                }
+
+                logger.LogInformation("ProcessDuplicationStepHandler: Capturing process '{ProcessName}'", pdStep.Settings.ProcessName);
+                executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();
+                
+                if (!executor.ProcessDuplicationResult.ProcessFound)
+                {
+                    logger.LogWarning("ProcessDuplicationStepHandler: Process '{ProcessName}' not found", pdStep.Settings.ProcessName);
+                    return true; // Continue with next step
+                }
+
+                executor.CurrentImage = executor.ProcessDuplicationResult.ProcessImage.Clone() as Bitmap;
+                executor.CurrentOffset = executor.ProcessDuplicationResult.WindowOffsetOnDesktop;
+                
+                logger.LogInformation("ProcessDuplicationStepHandler: Successfully captured process '{ProcessName}' at offset ({X}, {Y})", 
+                    pdStep.Settings.ProcessName, executor.CurrentOffset.X, executor.CurrentOffset.Y);
+                
+                return true;
+            }
+            catch (OperationCanceledException)
             {
-                return true; // Oder false, wenn der Job abbrechen soll
+                logger.LogInformation("ProcessDuplicationStepHandler: Process duplication was cancelled");
+                return false;
             }
-
-            executor.CurrentImage = executor.ProcessDuplicationResult.ProcessImage.Clone() as Bitmap;
-            executor.CurrentOffset = executor.ProcessDuplicationResult.WindowOffsetOnDesktop;
-            return true;
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "ProcessDuplicationStepHandler: Failed to capture process '{ProcessName}': {ErrorMessage}", pdStep.Settings.ProcessName, ex.Message);
+                return false;
+            }
         }
     }
 }

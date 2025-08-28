@@ -20,10 +20,13 @@ namespace DesktopAutomationApp.ViewModels
         private void OnChange([CallerMemberName] string? p = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
-        private readonly IJobExecutionContext _ctx;
-        public AddJobStepDialogViewModel(IJobExecutionContext ctx)
+        private readonly IJobExecutor _ctx;
+        private readonly Job? _currentJobBeingEdited;
+
+        public AddJobStepDialogViewModel(IJobExecutor ctx, Job? currentJobBeingEdited = null)
         {
             _ctx = ctx;
+            _currentJobBeingEdited = currentJobBeingEdited;
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
@@ -66,6 +69,7 @@ namespace DesktopAutomationApp.ViewModels
                 "ShowImage" => !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
                 "VideoCreation" => !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
                 "MakroExecution" => !string.IsNullOrWhiteSpace(MakroExecutionStep_SelectedMakroName),
+                "JobExecution" => !string.IsNullOrWhiteSpace(JobExecutionStep_SelectedJobName),
                 "DesktopDuplication" => true,
                 "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
                 "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
@@ -82,6 +86,7 @@ namespace DesktopAutomationApp.ViewModels
             "ShowImage",
             "VideoCreation",
             "MakroExecution",
+            "JobExecution",
             "ScriptExecution",
             "KlickOnPoint"
         };
@@ -101,6 +106,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowShowImage));
                 OnChange(nameof(ShowVideoCreation));
                 OnChange(nameof(ShowMakroExecution));
+                OnChange(nameof(ShowJobExecution));
                 OnChange(nameof(ShowScriptExecution));
                 OnChange(nameof(ShowKlickOnPoint));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -113,6 +119,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowShowImage => SelectedType == "ShowImage";
         public bool ShowVideoCreation => SelectedType == "VideoCreation";
         public bool ShowMakroExecution => SelectedType == "MakroExecution";
+        public bool ShowJobExecution => SelectedType == "JobExecution";
         public bool ShowScriptExecution => SelectedType == "ScriptExecution";
         public bool ShowKlickOnPoint => SelectedType == "KlickOnPoint";
 
@@ -352,6 +359,31 @@ namespace DesktopAutomationApp.ViewModels
         private bool _videoCreationStep_UseProcessedImage = true;
         public bool VideoCreationStep_UseProcessedImage { get => _videoCreationStep_UseProcessedImage; set { _videoCreationStep_UseProcessedImage = value; OnChange(); } }
 
+        // ===== JobExecution Felder =====
+        public ObservableCollection<string> AvailableJobNames
+        {
+            get
+            {
+                var allJobs = _ctx.AllJobs?.Values?.Where(j => j != null) ?? Enumerable.Empty<Job>();
+                var availableJobs = allJobs
+                    .Where(j => !j.Repeating && 
+                               j.Name != _currentJobBeingEdited?.Name)
+                    .Select(j => j.Name)
+                    .OrderBy(n => n);
+                return new ObservableCollection<string>(availableJobs);
+            }
+        }
+
+        private string? _jobExecutionStep_SelectedJobName;
+        public string? JobExecutionStep_SelectedJobName
+        {
+            get => _jobExecutionStep_SelectedJobName;
+            set { _jobExecutionStep_SelectedJobName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private bool _jobExecutionStep_WaitForCompletion = true;
+        public bool JobExecutionStep_WaitForCompletion { get => _jobExecutionStep_WaitForCompletion; set { _jobExecutionStep_WaitForCompletion = value; OnChange(); } }
+
         // ===== MakroExecution Felder =====
         public ObservableCollection<string> MakroNames => new ObservableCollection<string>(_ctx.AllMakros?.Keys?.OrderBy(n => n) ?? Enumerable.Empty<string>());
         private string? _makroExecutionStep_SelectedMakroName;
@@ -418,6 +450,14 @@ namespace DesktopAutomationApp.ViewModels
                         MakroName = MakroExecutionStep_SelectedMakroName ?? MakroNames.FirstOrDefault(string.Empty)
                     }
                 },
+                "JobExecution" => new JobExecutionStep
+                {
+                    Settings = new JobExecutionStepSettings
+                    {
+                        JobName = JobExecutionStep_SelectedJobName ?? AvailableJobNames.FirstOrDefault(string.Empty),
+                        WaitForCompletion = JobExecutionStep_WaitForCompletion
+                    }
+                },
                 "ScriptExecution" => new ScriptExecutionStep
                 {
                     Settings = new ScriptExecutionSettings
@@ -440,3 +480,4 @@ namespace DesktopAutomationApp.ViewModels
         }
     }
 }
+

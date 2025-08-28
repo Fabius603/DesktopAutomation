@@ -13,7 +13,7 @@ namespace DesktopAutomationApp.ViewModels
 {
     public sealed class JobStepsViewModel : ViewModelBase
     {
-        private readonly IJobExecutionContext _jobExecutionContext;
+        private readonly IJobExecutor _jobExecutionContext;
         private readonly ObservableCollection<JobStep> _steps;
         private readonly IJsonRepository<Job> _jobRepo;
         private readonly IJobExecutor _executor;
@@ -40,7 +40,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutionContext jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo)
+        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
@@ -69,7 +69,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void AddStep()
         {
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext) { Mode = StepDialogMode.Add };
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Add };
 
             bool? result;
             ShowDialogWithVm(vm, out result);
@@ -101,7 +101,7 @@ namespace DesktopAutomationApp.ViewModels
             var target = step ?? SelectedStep;
             if (target == null) return;
 
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext) { Mode = StepDialogMode.Edit };
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Edit };
 
             // <<<<<< Prefill hier im ViewModel >>>>>>
             Prefill(vm, target);
@@ -177,6 +177,12 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPointStep_ClickType = kp.Settings.ClickType;
                     vm.KlickOnPointStep_DoubleClick = kp.Settings.DoubleClick;
                     vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
+                    break;
+
+                case JobExecutionStep je:
+                    vm.SelectedType = "JobExecution";
+                    vm.JobExecutionStep_SelectedJobName = je.Settings.JobName;
+                    vm.JobExecutionStep_WaitForCompletion = je.Settings.WaitForCompletion;
                     break;
             }
         }

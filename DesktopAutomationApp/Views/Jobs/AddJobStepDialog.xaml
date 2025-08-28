@@ -130,6 +130,19 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- Job Execution -->
+            <StackPanel Visibility="{Binding ShowJobExecution, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Job-Name:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="200"
+                          ItemsSource="{Binding AvailableJobNames}"
+                          SelectedItem="{Binding JobExecutionStep_SelectedJobName}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Auf Beendigung warten" IsChecked="{Binding JobExecutionStep_WaitForCompletion}"/>
+                </StackPanel>
+            </StackPanel>
+
             <StackPanel Visibility="{Binding ShowScriptExecution, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Script-Pfad:" VerticalAlignment="Center" Margin="0,0,8,0"/>

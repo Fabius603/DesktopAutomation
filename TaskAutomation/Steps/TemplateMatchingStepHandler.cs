@@ -9,65 +9,112 @@ using TaskAutomation.Jobs;
 using OpenCvSharp.Extensions;
 using ImageHelperMethods;
 using System.Drawing;
+using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
     public class TemplateMatchingStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
         {
-            var tmStep = step as TemplateMatchingStep;
-            if (tmStep == null)
+            var logger = executor.Logger;
+            
+            if (step is not TemplateMatchingStep tmStep)
             {
+                logger.LogError("TemplateMatchingStepHandler: Invalid step type - expected TemplateMatchingStep, got {StepType}", step?.GetType().Name ?? "null");
                 return false;
             }
 
-            executor.TemplateMatchingResult?.Dispose();
+            logger.LogDebug("TemplateMatchingStepHandler: Processing template matching with template '{TemplatePath}'", tmStep.Settings.TemplatePath);
 
-            if (executor.TemplateMatcher == null)
+            try
             {
-                executor.TemplateMatcher = new TemplateMatching(tmStep.Settings.TemplateMatchMode);
-            }
+                // Validation
+                if (string.IsNullOrWhiteSpace(tmStep.Settings.TemplatePath))
+                {
+                    logger.LogWarning("TemplateMatchingStepHandler: No template path specified");
+                    return false;
+                }
 
-            if (executor.CurrentImage == null)
-            {
+                if (!File.Exists(tmStep.Settings.TemplatePath))
+                {
+                    logger.LogError("TemplateMatchingStepHandler: Template file not found: '{TemplatePath}'", tmStep.Settings.TemplatePath);
+                    return false;
+                }
+
+                if (executor.CurrentImage == null)
+                {
+                    logger.LogWarning("TemplateMatchingStepHandler: No current image available for template matching");
+                    return false;
+                }
+
+                executor.TemplateMatchingResult?.Dispose();
+
+                if (executor.TemplateMatcher == null)
+                {
+                    executor.TemplateMatcher = new TemplateMatching(tmStep.Settings.TemplateMatchMode);
+                    logger.LogDebug("TemplateMatchingStepHandler: Created new TemplateMatcher with mode {MatchMode}", tmStep.Settings.TemplateMatchMode);
+                }
+
+                executor.TemplateMatcher.SetROI(tmStep.Settings.ROI);
+                if (tmStep.Settings.EnableROI)
+                {
+                    executor.TemplateMatcher.EnableROI();
+                    logger.LogDebug("TemplateMatchingStepHandler: ROI enabled with bounds {ROI}", tmStep.Settings.ROI);
+                }
+                else
+                {
+                    executor.TemplateMatcher.DisableROI();
+                }
+
+                // Always use single point detection (MultiplePoints = false)
+                executor.TemplateMatcher.DisableMultiplePoints();
+
+                executor.TemplateMatcher.SetTemplate(tmStep.Settings.TemplatePath);
+                executor.TemplateMatcher.SetThreshold(tmStep.Settings.ConfidenceThreshold);
+
+                logger.LogInformation("TemplateMatchingStepHandler: Starting template matching with confidence threshold {Threshold}", tmStep.Settings.ConfidenceThreshold);
+
+                executor.ImageToProcess = executor.CurrentImage.ToMat();
+
+                // Use the current offset directly for template matching
+                executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
+
+                if (executor.TemplateMatchingResult.Success)
+                {
+                    executor.LatestCalculatedPoint = executor.TemplateMatchingResult.CenterPointOnDesktop;
+                    logger.LogInformation("TemplateMatchingStepHandler: Template matching successful at point ({X}, {Y}) with confidence {Confidence:F3}", 
+                        executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, executor.TemplateMatchingResult.Confidence);
+                    
+                    if (tmStep.Settings.DrawResults)
+                    {
+                        executor.CurrentImageWithResult = DrawResult.DrawTemplateMatchingResult(
+                            executor.ImageToProcess,
+                            executor.TemplateMatchingResult,
+                            executor.TemplateMatchingResult.TemplateSize);
+                        logger.LogDebug("TemplateMatchingStepHandler: Results drawn on image");
+                    }
+                }
+                else
+                {
+                    // If template matching failed, reset the point
+                    executor.LatestCalculatedPoint = null;
+                    logger.LogInformation("TemplateMatchingStepHandler: Template matching failed - no match found above threshold");
+                }
+
                 return true;
             }
-
-            executor.TemplateMatcher.SetROI(tmStep.Settings.ROI);
-            if (tmStep.Settings.EnableROI)
-                executor.TemplateMatcher.EnableROI();
-            else
-                executor.TemplateMatcher.DisableROI();
-
-            // Always use single point detection (MultiplePoints = false)
-            executor.TemplateMatcher.DisableMultiplePoints();
-
-            executor.TemplateMatcher.SetTemplate(tmStep.Settings.TemplatePath);
-            executor.TemplateMatcher.SetThreshold(tmStep.Settings.ConfidenceThreshold);
-
-            executor.ImageToProcess = executor.CurrentImage.ToMat();
-
-            // Use the current offset directly for template matching
-            executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
-
-            if(executor.TemplateMatchingResult.Success)
+            catch (OperationCanceledException)
             {
-                executor.LatestCalculatedPoint = executor.TemplateMatchingResult.CenterPointOnDesktop;
-                if (tmStep.Settings.DrawResults)
-                {
-                    executor.CurrentImageWithResult = DrawResult.DrawTemplateMatchingResult(
-                    executor.ImageToProcess,
-                    executor.TemplateMatchingResult,
-                    executor.TemplateMatchingResult.TemplateSize);
-                }
+                logger.LogInformation("TemplateMatchingStepHandler: Template matching was cancelled");
+                return false;
             }
-            else
+            catch (Exception ex)
             {
-                // If template matching failed, reset the point
-                executor.LatestCalculatedPoint = null;
+                logger.LogError(ex, "TemplateMatchingStepHandler: Failed to execute template matching: {ErrorMessage}", ex.Message);
+                return false;
             }
-            return true;
         }
     }
 }

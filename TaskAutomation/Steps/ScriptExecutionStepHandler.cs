@@ -5,57 +5,75 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
     public class ScriptExecutionStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
         {
-            var scStep = step as ScriptExecutionStep;
-            if (scStep == null)
+            var logger = executor.Logger;
+            
+            if (step is not ScriptExecutionStep scStep)
             {
+                logger.LogError("ScriptExecutionStepHandler: Invalid step type - expected ScriptExecutionStep, got {StepType}", step?.GetType().Name ?? "null");
                 return false;
             }
 
-            var isFile = File.Exists(scStep.Settings.ScriptPath);
-            if (!isFile)
-            {
-                throw new FileNotFoundException($"Script file not found: {scStep.Settings.ScriptPath}");
-            }
+            logger.LogDebug("ScriptExecutionStepHandler: Processing script execution for '{ScriptPath}'", scStep.Settings.ScriptPath);
 
-            if (scStep.Settings.FireAndForget)
+            try
             {
-                _ = Task.Run(async () =>
+                if (string.IsNullOrWhiteSpace(scStep.Settings.ScriptPath))
                 {
-                    try
+                    logger.LogWarning("ScriptExecutionStepHandler: No script path specified");
+                    return false;
+                }
+
+                var isFile = File.Exists(scStep.Settings.ScriptPath);
+                if (!isFile)
+                {
+                    logger.LogError("ScriptExecutionStepHandler: Script file not found: '{ScriptPath}'", scStep.Settings.ScriptPath);
+                    return false;
+                }
+
+                if (scStep.Settings.FireAndForget)
+                {
+                    logger.LogInformation("ScriptExecutionStepHandler: Starting script '{ScriptPath}' in fire-and-forget mode", scStep.Settings.ScriptPath);
+                    _ = Task.Run(async () =>
                     {
-                        await executor.ScriptExecutor.ExecuteScriptFile(
-                            scStep.Settings.ScriptPath,
-                            ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log the exception or handle it as needed
-                        Console.WriteLine($"Error executing script: {ex.Message}");
-                    }
-                });
+                        try
+                        {
+                            await executor.ScriptExecutor.ExecuteScriptFile(scStep.Settings.ScriptPath, CancellationToken.None);
+                            logger.LogDebug("ScriptExecutionStepHandler: Fire-and-forget script '{ScriptPath}' completed successfully", scStep.Settings.ScriptPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script '{ScriptPath}' failed", scStep.Settings.ScriptPath);
+                        }
+                    });
+                    return true;
+                }
+                else
+                {
+                    logger.LogInformation("ScriptExecutionStepHandler: Executing script '{ScriptPath}' and waiting for completion", scStep.Settings.ScriptPath);
+                    await executor.ScriptExecutor.ExecuteScriptFile(scStep.Settings.ScriptPath, ct);
+                    logger.LogInformation("ScriptExecutionStepHandler: Script '{ScriptPath}' executed successfully", scStep.Settings.ScriptPath);
+                }
+
                 return true;
             }
-            else
+            catch (OperationCanceledException)
             {
-                try
-                {
-                    await executor.ScriptExecutor.ExecuteScriptFile(
-                    scStep.Settings.ScriptPath,
-                    ct);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error executing script: {ex.Message}");
-                }
+                logger.LogInformation("ScriptExecutionStepHandler: Script execution was cancelled");
+                return false;
             }
-            return true;
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "ScriptExecutionStepHandler: Failed to execute script '{ScriptPath}': {ErrorMessage}", scStep.Settings.ScriptPath, ex.Message);
+                return false;
+            }
         }
     }
 }

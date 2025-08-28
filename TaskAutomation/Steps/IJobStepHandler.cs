@@ -9,6 +9,6 @@ namespace TaskAutomation.Steps
 {
     public interface IJobStepHandler
     {
-        Task<bool> ExecuteAsync(object step, Job job, IJobExecutionContext ctx, CancellationToken ct);
+        Task<bool> ExecuteAsync(object step, Job job, IJobExecutor ctx, CancellationToken ct);
     }
 }

@@ -6,52 +6,79 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
     public class KlickOnPointStepHandler : IJobStepHandler
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutionContext executor, CancellationToken ct)
+        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor jobExecutor, CancellationToken ct)
         {
-            var klickStep = step as KlickOnPointStep;
-            if (klickStep == null)
+            var logger = jobExecutor.Logger;
+
+            if (step is not KlickOnPointStep klickStep)
             {
+                logger.LogError("KlickOnPointStepHandler: Invalid step type - expected KlickOnPointStep, got {StepType}", step?.GetType().Name ?? "null");
                 return false;
             }
 
-            // Check if we have a valid point
-            if (executor.LatestCalculatedPoint == null)
-            {
-                return true; // Continue execution but no click performed - point not set
-            }
+            logger.LogDebug("KlickOnPointStepHandler: Processing click on point step with click type '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms",
+                klickStep.Settings.ClickType, klickStep.Settings.DoubleClick, klickStep.Settings.TimeoutMs);
 
-            // Use the step's unique ID as dictionary key
-            var stepKey = $"KlickOnPoint_{klickStep.Id}";
-            
-            // Check if timeout is still active
-            if (executor.StepTimeouts.TryGetValue(stepKey, out var lastExecution))
+            try
             {
-                var timeSinceLastExecution = DateTime.Now - lastExecution;
-                if (timeSinceLastExecution.TotalMilliseconds < klickStep.Settings.TimeoutMs)
+                // Check if we have a valid point
+                if (jobExecutor.LatestCalculatedPoint == null)
                 {
-                    // Timeout not yet elapsed, skip execution
-                    return true;
+                    logger.LogWarning("KlickOnPointStepHandler: No valid point available for clicking - point not set by previous steps");
+                    return false;
                 }
+
+                // Use the step's unique ID as dictionary key
+                var stepKey = $"KlickOnPoint_{klickStep.Id}";
+
+                // Check if timeout is still active
+                if (jobExecutor.StepTimeouts.TryGetValue(stepKey, out var lastExecution))
+                {
+                    var timeSinceLastExecution = DateTime.Now - lastExecution;
+                    if (timeSinceLastExecution.TotalMilliseconds < klickStep.Settings.TimeoutMs)
+                    {
+                        // Timeout not yet elapsed, skip execution
+                        logger.LogDebug("KlickOnPointStepHandler: Skipping click - timeout not yet elapsed ({TimeRemaining}ms remaining)",
+                            klickStep.Settings.TimeoutMs - timeSinceLastExecution.TotalMilliseconds);
+                        return true;
+                    }
+                }
+
+                // Update timeout tracker
+                jobExecutor.StepTimeouts[stepKey] = DateTime.Now;
+
+                var point = jobExecutor.LatestCalculatedPoint.Value;
+                logger.LogInformation("KlickOnPointStepHandler: Executing {ClickType} click at point ({X}, {Y})",
+                    klickStep.Settings.DoubleClick ? "double" : "single", point.X, point.Y);
+
+                // Create temporary macro for click execution
+                var macro = CreateClickMacro(klickStep.Settings, point);
+
+                // Execute the macro
+                await jobExecutor.MakroExecutor.ExecuteMakro(macro, jobExecutor.DxgiResources, ct);
+
+                // Reset the point after click
+                jobExecutor.LatestCalculatedPoint = null;
+                logger.LogDebug("KlickOnPointStepHandler: Click executed successfully, point reset");
+
+                return true;
             }
-
-            // Update timeout tracker
-            executor.StepTimeouts[stepKey] = DateTime.Now;
-
-            // Create temporary macro for click execution
-            var macro = CreateClickMacro(klickStep.Settings, executor.LatestCalculatedPoint.Value);
-            
-            // Execute the macro
-            await executor.MakroExecutor.ExecuteMakro(macro, executor.DxgiResources, ct);
-
-            // Reset the point after click
-            executor.LatestCalculatedPoint = null;
-
-            return true;
+            catch (OperationCanceledException)
+            {
+                logger.LogInformation("KlickOnPointStepHandler: Click on point was cancelled");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "KlickOnPointStepHandler: Failed to execute click: {ErrorMessage}", ex.Message);
+                return false;
+            }
         }
 
         private static Makro CreateClickMacro(KlickOnPointSettings settings, OpenCvSharp.Point point)
@@ -78,7 +105,7 @@ namespace TaskAutomation.Steps
                     X = point.X,
                     Y = point.Y
                 });
-                
+
                 commands.Add(new MouseUpBefehl
                 {
                     Button = settings.ClickType,
@@ -95,7 +122,7 @@ namespace TaskAutomation.Steps
                     X = point.X,
                     Y = point.Y
                 });
-                
+
                 commands.Add(new MouseUpBefehl
                 {
                     Button = settings.ClickType,
@@ -112,7 +139,7 @@ namespace TaskAutomation.Steps
                     X = point.X,
                     Y = point.Y
                 });
-                
+
                 commands.Add(new MouseUpBefehl
                 {
                     Button = settings.ClickType,

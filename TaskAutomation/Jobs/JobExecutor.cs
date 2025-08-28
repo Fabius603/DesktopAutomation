@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using OpenCvSharp;
@@ -25,7 +25,7 @@ using TaskAutomation.Scripts;
 
 namespace TaskAutomation.Jobs
 {
-    public class JobExecutor : IJobExecutor, IJobExecutionContext, IDisposable
+    public class JobExecutor : IJobExecutor, IDisposable
     {
         private readonly ILogger<JobExecutor> _logger;
         private readonly IJsonRepository<Job> _jobRepository;
@@ -49,8 +49,16 @@ namespace TaskAutomation.Jobs
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
         private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
+        private Job? _currentJob;
+        
         public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
+        public Job? CurrentJob 
+        {
+            get => _currentJob;
+            private set => _currentJob = value;
+        }
+
         private Point? _latestCalculatedPoint;
         private readonly Dictionary<string, DateTime> _stepTimeouts = new(StringComparer.OrdinalIgnoreCase);
 
@@ -65,6 +73,7 @@ namespace TaskAutomation.Jobs
             { typeof(MakroExecutionStep), new MakroExecutionStepHandler() },
             { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
             { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
+            { typeof(JobExecutionStep), new JobExecutionStepHandler() },
         };
 
         // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
@@ -154,6 +163,8 @@ namespace TaskAutomation.Jobs
         }
 
         public Dictionary<string, DateTime> StepTimeouts => _stepTimeouts;
+
+        public ILogger Logger => _logger;
 
         public JobExecutor(
             ILogger<JobExecutor> logger,
@@ -249,6 +260,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
+            CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
             // Schritte, die optional aktiv sind
@@ -318,14 +330,9 @@ namespace TaskAutomation.Jobs
 
                         try
                         {
-                            // Schritt ausführen; false => Job beenden
-                            if (!await ExecuteStepAsync(step, job, ct).ConfigureAwait(false))
-                            {
-                                continueJob = false;
-                                _logger.LogWarning("Job '{JobName}' vorzeitig beendet durch Step '{StepType}'.",
-                                    job.Name, step.GetType().Name);
-                                break;
-                            }
+                            bool success = await ExecuteStepAsync(step, job, ct).ConfigureAwait(false);
+                            _logger.LogWarning("Job '{JobName}' Schritt '{StepType}' {Status}.",
+                                job.Name, step.GetType().Name, success ? "erfolgreich" : "fehlgeschlagen");
                         }
                         catch (OperationCanceledException)
                         {
@@ -350,6 +357,7 @@ namespace TaskAutomation.Jobs
             }
             finally
             {
+                CurrentJob = null;
                 if (showImageStep != null)
                 {
                     Cv2.DestroyAllWindows();
@@ -411,7 +419,7 @@ namespace TaskAutomation.Jobs
         private Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
         {
             if (_stepHandlers.TryGetValue(step.GetType(), out var handler))
-                return handler.ExecuteAsync(step, jobContext, (IJobExecutionContext)this, ct);
+                return handler.ExecuteAsync(step, jobContext, this, ct);
 
             _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
             return Task.FromResult(true);
