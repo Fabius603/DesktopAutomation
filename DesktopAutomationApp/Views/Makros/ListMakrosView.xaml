@@ -277,18 +277,7 @@
                 <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme / Speichern -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
                     <Button Content="Neuen Step hinzufügen"
-                        Command="{Binding AddStepCommand}" Margin="0,0,0,0" FontSize="13">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="{Binding Selected}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                        Command="{Binding AddStepCommand}" Margin="0,0,0,0" FontSize="13"/>
                     <Button Command="{Binding RecordStepsCommand}"
                         Content="{Binding RecordButtonText}"
                         Margin="8,0,0,0"

@@ -20,6 +20,7 @@ using Serilog.Events;
 using DesktopAutomationApp.Services.Preview;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using TaskAutomation.Scripts;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp
 {
@@ -58,6 +59,9 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<Job>("Configs/Job", "jobs.json", options, j => j.Name);
                     services.AddJsonRepository<Makro>("Configs/Makro", "makros.json", options, m => m.Name);
                     services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", "hotkeys.json", options, hk => hk.Name);
+
+                    // Repository-Service registrieren
+                    services.AddSingleton<IRepositoryService, RepositoryService>();
 
                     services.AddSingleton<JobExecutor>();
 

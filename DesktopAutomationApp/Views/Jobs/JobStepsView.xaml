@@ -12,6 +12,8 @@
     <UserControl.Resources>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter"/>
+        <conv:RectToStringConverter x:Key="RectToStringConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -36,17 +38,18 @@
                         <Run Text="TemplatePath: "/><Run Text="{Binding Settings.TemplatePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="MatchMode: "/><Run Text="Muss noch hinzugefügt werden!!"/>
+                        <Run Text="MatchMode: "/><Run Text="{Binding Settings.TemplateMatchMode}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold}"/>
+                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="EnableROI: "/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="ROI: "/><Run Text="Muss noch hinzugefügt werden!!"/>
+                        <Run Text="ROI (X,Y,Breite,Höhe): "/>
+                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="DrawResults: "/>

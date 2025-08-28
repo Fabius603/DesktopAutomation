@@ -14,6 +14,7 @@ using SharpDX.Direct3D11;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Persistence;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -21,7 +22,7 @@ namespace DesktopAutomationApp.ViewModels
     {
         private readonly ILogger<ListJobsViewModel> _log;
         private readonly IJobExecutor _executor;
-        private readonly IJsonRepository<Job> _jobRepo;
+        private readonly IRepositoryService _repositoryService;
 
         public string Title => "Jobs";
         public string Description => "Verfügbare Jobs";
@@ -51,11 +52,11 @@ namespace DesktopAutomationApp.ViewModels
             set => _editing = value;
         }
 
-        public ListJobsViewModel(IJobExecutor executor, ILogger<ListJobsViewModel> log, IJsonRepository<Job> jobRepo)
+        public ListJobsViewModel(IJobExecutor executor, ILogger<ListJobsViewModel> log, IRepositoryService repositoryService)
         {
             _executor = executor;
             _log = log;
-            _jobRepo = jobRepo;
+            _repositoryService = repositoryService;
 
             RefreshCommand = new RelayCommand(LoadJobs);
             OpenJobCommand = new RelayCommand<Job?>(job =>
@@ -84,7 +85,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public async Task SaveAllAsync()
         {
-            await _jobRepo.SaveAllAsync(Items);
+            await _repositoryService.SaveAllAsync(Items);
             await _executor.ReloadJobsAsync();
         }
 
@@ -111,51 +112,47 @@ namespace DesktopAutomationApp.ViewModels
             var idx = Items.IndexOf(SelectedJob);
             Items.Remove(SelectedJob);
             SelectedJob = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
-            await _jobRepo.DeleteAsync(name);
+            await _repositoryService.DeleteAsync<Job>(name);
 
             _log.LogInformation("Job gelöscht: {Name}", name);
         }
 
-        public void CreateNewJob()
+        public async void CreateNewJob()
         {
-            var name = UniqueName("NeuerJob");
-            var m = new Job { Name = name, Repeating = false, Steps = new() };
-            Items.Add(m);
-            SelectedJob = m;
-
-            SaveAllAsync();
+            try
+            {
+                var newJob = await _repositoryService.CreateNewAsync<Job>(
+                    "NeuerJob", 
+                    name => new Job { Name = name, Repeating = false, Steps = new() },
+                    job => job.Name);
+                
+                Items.Add(newJob);
+                SelectedJob = newJob;
+                await _executor.ReloadJobsAsync();
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler beim Erstellen eines neuen Jobs");
+            }
         }
 
-        private string UniqueName(string baseName)
-        {
-            var i = 1;
-            var n = baseName;
-            while (Items.Any(x => string.Equals(x.Name, n, StringComparison.OrdinalIgnoreCase)))
-                n = $"{baseName}_{i++}";
-            return n;
-        }
-
-        public void EnsureUniqueNameFor(Job? j)
+        public async void EnsureUniqueNameFor(Job? j)
         {
             if (j == null) return;
 
-            var proposed = j.Name?.Trim() ?? "";
-            if (string.IsNullOrEmpty(proposed))
+            try
             {
-                j.Name = UniqueName("Job");
-                return;
+                await _repositoryService.EnsureUniqueNameAsync(
+                    j, 
+                    job => job.Name ?? "", 
+                    (job, name) => job.Name = name,
+                    job => job.Name);
+                await _executor.ReloadJobsAsync();
             }
-
-            // bereits eindeutig?
-            bool collision = Items.Any(x =>
-                !ReferenceEquals(x, j) &&
-                string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
-
-            if (!collision) return;
-
-            // Kollision -> automatisch eindeutigen Namen erzeugen
-            j.Name = UniqueName(proposed);
-            _log.LogInformation("Makro-Name kollidierte, automatisch umbenannt in: {Name}", j.Name);
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler beim Eindeutig-Machen des Job-Namens");
+            }
         }
     }
 }

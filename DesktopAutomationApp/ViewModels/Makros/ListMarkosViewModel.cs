@@ -14,6 +14,7 @@ using ImageHelperMethods;
 using TaskAutomation.Persistence;
 using DesktopAutomationApp.Views;
 using TaskAutomation.Hotkeys;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -22,7 +23,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IMacroPreviewService _preview;
-        private readonly IJsonRepository<Makro> _makroRepo;
+        private readonly IRepositoryService _repositoryService;
         private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
         private readonly IGlobalHotkeyService _hotkeys;
@@ -98,13 +99,13 @@ namespace DesktopAutomationApp.ViewModels
             IJobExecutor executor,
             ILogger<ListMakrosViewModel> log,
             IMacroPreviewService preview,
-            IJsonRepository<Makro> makroRepo,
+            IRepositoryService repositoryService,
             IGlobalHotkeyService hotkeys)
         {
             _executor = executor;
             _log = log;
             _preview = preview;
-            _makroRepo = makroRepo;
+            _repositoryService = repositoryService;
             _hotkeys = hotkeys;
 
             RefreshCommand = new RelayCommand(LoadMakros);
@@ -249,28 +250,23 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
         }
 
-        public void EnsureUniqueNameFor(Makro? m)
+        public async void EnsureUniqueNameFor(Makro? m)
         {
             if (m == null) return;
 
-            var proposed = m.Name?.Trim() ?? "";
-            if (string.IsNullOrEmpty(proposed))
+            try
             {
-                m.Name = UniqueName("Makro");
-                return;
+                await _repositoryService.EnsureUniqueNameAsync(
+                    m,
+                    makro => makro.Name ?? "",
+                    (makro, name) => makro.Name = name,
+                    makro => makro.Name);
+                await _executor.ReloadMakrosAsync();
             }
-
-            // bereits eindeutig?
-            bool collision = Items.Any(x =>
-                !ReferenceEquals(x, m) &&
-                string.Equals(x.Name, proposed, StringComparison.OrdinalIgnoreCase));
-
-            if (!collision) return;
-
-            // Kollision -> automatisch eindeutigen Namen erzeugen
-            m.Name = UniqueName(proposed);
-            SaveAllAsync();
-            _log.LogInformation("Makro-Name kollidierte, automatisch umbenannt in: {Name}", m.Name);
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler beim Eindeutig-Machen des Makro-Namens");
+            }
         }
 
         private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)
@@ -314,29 +310,29 @@ namespace DesktopAutomationApp.ViewModels
         public async Task SaveAllAsync()
         {
             // Persistiert alle Makros gesammelt
-            await _makroRepo.SaveAllAsync(Items);
+            await _repositoryService.SaveAllAsync(Items);
             _log.LogInformation("Makros gespeichert: {Count}", Items.Count);
             // Nach dem Speichern ggf. erneut in Executor laden:
             await _executor.ReloadMakrosAsync();
         }
 
-        private void CreateNewMakro()
+        private async void CreateNewMakro()
         {
-            var name = UniqueName("NeuesMakro");
-            var m = new Makro { Name = name, Befehle = new() };
-            Items.Add(m);
-            Selected = m;
+            try
+            {
+                var newMakro = await _repositoryService.CreateNewAsync<Makro>(
+                    "NeuesMakro",
+                    name => new Makro { Name = name, Befehle = new() },
+                    makro => makro.Name);
 
-            SaveAllAsync();
-        }
-
-        private string UniqueName(string baseName)
-        {
-            var i = 1;
-            var n = baseName;
-            while (Items.Any(x => string.Equals(x.Name, n, StringComparison.OrdinalIgnoreCase)))
-                n = $"{baseName}_{i++}";
-            return n;
+                Items.Add(newMakro);
+                Selected = newMakro;
+                await _executor.ReloadMakrosAsync();
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler beim Erstellen eines neuen Makros");
+            }
         }
 
         // --- Step-Manipulation ---
@@ -375,9 +371,9 @@ namespace DesktopAutomationApp.ViewModels
             var idx = Items.IndexOf(Selected);
             Items.Remove(Selected);
             Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
-            await _makroRepo.DeleteAsync(name);
+            await _repositoryService.DeleteAsync<Makro>(name);
 
-            _log.LogInformation("Hotkey gelöscht: {Name}", name);
+            _log.LogInformation("Makro gelöscht: {Name}", name);
         }
 
         private void DuplicateStep(MakroBefehl? step)

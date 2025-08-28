@@ -14,12 +14,13 @@ using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Persistence;
 using Xabe.FFmpeg.Downloader;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
 {
     public sealed class ListHotkeysViewModel : ViewModelBase
     {
-        private readonly IJsonRepository<HotkeyDefinition> _repo;
+        private readonly IRepositoryService _repositoryService;
         private readonly IGlobalHotkeyService _capture;
         private readonly ILogger<ListHotkeysViewModel> _log;
         private readonly IJobExecutor _executor;
@@ -84,12 +85,12 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ToggleActiveCommand { get; }
 
         public ListHotkeysViewModel(
-            IJsonRepository<HotkeyDefinition> repo,
+            IRepositoryService repositoryService,
             IGlobalHotkeyService capture,
             IJobExecutor executor,
             ILogger<ListHotkeysViewModel> log)
         {
-            _repo = repo;
+            _repositoryService = repositoryService;
             _capture = capture;
             _log = log;
             _executor = executor;
@@ -125,7 +126,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             Jobs.Clear();
             LoadJobs();
-            var list = await _repo.LoadAllAsync();
+            var list = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
             {
@@ -138,11 +139,14 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Hotkeys geladen: {Count}", Items.Count);
         }
 
-        private void NewHotkey()
+        private async void NewHotkey()
         {
+            // Eindeutigen Namen generieren
+            var uniqueName = await GenerateUniqueHotkeyNameAsync("Neuer Hotkey");
+            
             var e = new EditableHotkey
             {
-                Name = "Neuer Hotkey",
+                Name = uniqueName,
                 Modifiers = KeyModifiers.None,
                 VirtualKeyCode = 0,
                 Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Start },
@@ -198,13 +202,17 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        private void SaveEdit()
+        private async void SaveEdit()
         {
             if (EditedHotkey == null) return;
             var error = ValidateEdited(EditedHotkey);
             if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
+            
+            // Namen eindeutig machen, falls nötig
+            await EnsureUniqueNameForEditedHotkeyAsync();
+            
             IsEditing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
-            SaveAllAsync();
+            await SaveAllAsync();
         }
 
         private void CancelEdit()
@@ -245,7 +253,7 @@ namespace DesktopAutomationApp.ViewModels
             var idx = Items.IndexOf(Selected);
             Items.Remove(Selected);
             Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
-            await _repo.DeleteAsync(name);
+            await _repositoryService.DeleteAsync<HotkeyDefinition>(name);
 
             _log.LogInformation("Hotkey gelöscht: {Name}", name);
         }
@@ -253,7 +261,7 @@ namespace DesktopAutomationApp.ViewModels
         private async Task SaveAllAsync()
         {
             var domain = Items.Select(i => i.ToDomain()).ToList();
-            await _repo.SaveAllAsync(domain);
+            await _repositoryService.SaveAllAsync(domain);
             _log.LogInformation("Hotkeys gespeichert: {Count}", domain.Count);
 
             await _capture.ReloadFromRepositoryAsync();
@@ -272,7 +280,7 @@ namespace DesktopAutomationApp.ViewModels
             var error = ValidateEdited(Selected);
             if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
 
-            await _repo.SaveAsync(Selected.ToDomain());
+            await _repositoryService.SaveAsync(Selected.ToDomain());
             _log.LogInformation("Hotkey gespeichert");
             await _capture.ReloadFromRepositoryAsync();
         }
@@ -303,6 +311,50 @@ namespace DesktopAutomationApp.ViewModels
             if (string.IsNullOrWhiteSpace(hk.Action?.Name)) return "Action ist erforderlich.";
             if (hk.VirtualKeyCode == 0) return "Bitte eine Tastenkombination erfassen.";
             return null;
+        }
+
+        private async Task<string> GenerateUniqueHotkeyNameAsync(string baseName)
+        {
+            var existingHotkeys = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
+            var existingNames = existingHotkeys.Select(h => h.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var uniqueName = baseName;
+            var counter = 1;
+
+            while (existingNames.Contains(uniqueName))
+            {
+                uniqueName = $"{baseName} ({counter})";
+                counter++;
+            }
+
+            return uniqueName;
+        }
+
+        private async Task EnsureUniqueNameForEditedHotkeyAsync()
+        {
+            if (EditedHotkey == null) return;
+
+            var existingHotkeys = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
+            var existingNames = existingHotkeys
+                .Where(h => !ReferenceEquals(h, EditedHotkey)) // Aktuell bearbeiteten ausschließen
+                .Select(h => h.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var originalName = EditedHotkey.Name;
+            var uniqueName = originalName;
+            var counter = 1;
+
+            while (existingNames.Contains(uniqueName))
+            {
+                uniqueName = $"{originalName} ({counter})";
+                counter++;
+            }
+
+            if (uniqueName != originalName)
+            {
+                EditedHotkey.Name = uniqueName;
+                _log.LogInformation("Hotkey-Name wurde eindeutig gemacht: '{OriginalName}' -> '{UniqueName}'", originalName, uniqueName);
+            }
         }
     }
 }
