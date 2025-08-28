@@ -250,14 +250,10 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header: Zurück + Speichern + Titel -->
+        <!-- Header: Zurück + Titel -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
             <Button Content="⟵ Zurück"
                     Command="{Binding BackCommand}"
-                    Margin="0,0,12,0"
-                    FontSize="14"/>
-            <Button Content="Speichern"
-                    Command="{Binding SaveCommand}"
                     Margin="0,0,12,0"
                     FontSize="14"/>
             <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}"/>

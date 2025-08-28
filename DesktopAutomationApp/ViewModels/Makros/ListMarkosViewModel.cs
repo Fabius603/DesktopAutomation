@@ -117,7 +117,7 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepCommand = new RelayCommand<(int from, int to)>(MoveStep);
             DeleteStepCommand = new RelayCommand<MakroBefehl?>(DeleteStep, s => Selected != null && s != null);
             DuplicateStepCommand = new RelayCommand<MakroBefehl?>(DuplicateStep, s => Selected != null && s != null);
-            AddStepCommand = new RelayCommand(OpenAddStepDialog, () => Selected != null);
+            AddStepCommand = new RelayCommand(async () => await OpenAddStepDialog(), () => Selected != null);
             MoveStepUpCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
             EditStepCommand = new RelayCommand<MakroBefehl?>(EditStep, s => Selected != null && s != null);
@@ -391,7 +391,7 @@ namespace DesktopAutomationApp.ViewModels
             return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
         }
 
-        private void OpenAddStepDialog()
+        private async Task OpenAddStepDialog()
         {
             if (Selected == null) return;
 
@@ -415,6 +415,9 @@ namespace DesktopAutomationApp.ViewModels
 
                 // neu eingefügten Step auswählen
                 SelectedStep = dlgVm.CreatedStep;
+                
+                // Automatisch speichern nach Hinzufügen eines neuen Steps
+                await SaveAllAsync();
             }
         }
 

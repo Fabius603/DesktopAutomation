@@ -274,7 +274,7 @@
 
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
             <DockPanel>
-                <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme / Speichern -->
+                <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
                     <Button Content="Neuen Step hinzufügen"
                         Command="{Binding AddStepCommand}" Margin="0,0,0,0" FontSize="13"/>
@@ -294,18 +294,6 @@
                                     <DataTrigger Binding="{Binding IsRecording}" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
                                         <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button Content="Speichern" Command="{Binding SaveAllCommand}" Margin="8,0,0,0" FontSize="13">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="True"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

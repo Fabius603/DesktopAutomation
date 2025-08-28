@@ -52,7 +52,7 @@ namespace DesktopAutomationApp.ViewModels
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand = new RelayCommand(async () => await Save(), () => true);
 
-            AddStepCommand = new RelayCommand(AddStep);
+            AddStepCommand = new RelayCommand(async () => await AddStep());
             EditStepCommand = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
@@ -67,7 +67,7 @@ namespace DesktopAutomationApp.ViewModels
             await _executor.ReloadJobsAsync();
         }
 
-        private void AddStep()
+        private async Task AddStep()
         {
             var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Add };
 
@@ -82,6 +82,9 @@ namespace DesktopAutomationApp.ViewModels
 
                 _steps.Insert(insertIndex, vm.CreatedStep);
                 SelectedStep = vm.CreatedStep;
+                
+                // Automatisch speichern nach Hinzufügen eines neuen Steps
+                await Save();
             }
         }
 
