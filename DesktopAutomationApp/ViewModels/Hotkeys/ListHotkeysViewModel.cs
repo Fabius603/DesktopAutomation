@@ -251,11 +251,15 @@ namespace DesktopAutomationApp.ViewModels
 
             var name = Selected.Name;
             var idx = Items.IndexOf(Selected);
+            
+            // Hotkey-Registrierung aufheben falls vorhanden
+            _capture.UnregisterHotkey(name);
+            
             Items.Remove(Selected);
             Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
             await _repositoryService.DeleteAsync<HotkeyDefinition>(name);
 
-            _log.LogInformation("Hotkey gelöscht: {Name}", name);
+            _log.LogInformation("Hotkey gelöscht und Registrierung aufgehoben: {Name}", name);
         }
 
         private async Task SaveAllAsync()
