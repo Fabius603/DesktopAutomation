@@ -149,7 +149,7 @@ namespace DesktopAutomationApp.ViewModels
                 Name = uniqueName,
                 Modifiers = KeyModifiers.None,
                 VirtualKeyCode = 0,
-                Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Start },
+                Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Toggle },
                 Active = true
             };
             Items.Add(e);
