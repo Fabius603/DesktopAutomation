@@ -19,8 +19,9 @@ namespace TaskAutomation.Steps
             
             if (step is not ShowImageStep siStep)
             {
-                logger.LogError("ShowImageStepHandler: Invalid step type - expected ShowImageStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected ShowImageStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("ShowImageStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("ShowImageStepHandler: Processing show image step with window name '{WindowName}'", siStep.Settings.WindowName);
@@ -29,8 +30,9 @@ namespace TaskAutomation.Steps
             {
                 if (executor.CurrentImage == null)
                 {
-                    logger.LogWarning("ShowImageStepHandler: No current image available to display");
-                    return false;
+                    var errorMessage = "No current image available to display";
+                    logger.LogWarning("ShowImageStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 void ShowBitmapImage(Bitmap bitmap, string name)
@@ -85,7 +87,7 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 logger.LogError(ex, "ShowImageStepHandler: Failed to display images: {ErrorMessage}", ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

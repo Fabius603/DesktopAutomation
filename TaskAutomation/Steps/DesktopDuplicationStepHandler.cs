@@ -21,8 +21,9 @@ namespace TaskAutomation.Steps
 
             if (step is not DesktopDuplicationStep ddStep)
             {
-                logger.LogError("DesktopDuplicationStepHandler: Invalid step type - expected DesktopDuplicationStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected DesktopDuplicationStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("DesktopDuplicationStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("DesktopDuplicationStepHandler: Processing desktop duplication for monitor index {MonitorIndex}", ddStep.Settings.DesktopIdx);
@@ -60,8 +61,9 @@ namespace TaskAutomation.Steps
                 }
                 else
                 {
-                    logger.LogWarning("DesktopDuplicationStepHandler: No desktop image captured");
-                    return false;
+                    var errorMessage = "No desktop image captured";
+                    logger.LogWarning("DesktopDuplicationStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 return true;
@@ -81,7 +83,7 @@ namespace TaskAutomation.Steps
                 executor.CurrentDesktopFrame?.Dispose();
                 executor.CurrentDesktopFrame = null;
 
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

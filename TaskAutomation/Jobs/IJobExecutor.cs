@@ -11,12 +11,19 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Makros;
+using TaskAutomation.Orchestration;
 using TaskAutomation.Scripts;
 
 namespace TaskAutomation.Jobs
 {
     public interface IJobExecutor
     {
+        // Event für allgemeine Job Fehler
+        event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
+        
+        // Event für Job Step Fehler
+        event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
+
         // Original IJobExecutor members
         IReadOnlyDictionary<string, Job> AllJobs { get; }
         IReadOnlyDictionary<string, Makro> AllMakros { get; }
@@ -58,5 +65,8 @@ namespace TaskAutomation.Jobs
 
         void StartRecordingOverlay(RecordingIndicatorOptions? options = null);
         void StopRecordingOverlay();
+
+        // Methode für Step-Handler um Fehler zu melden
+        void ReportStepError(string stepType, Exception exception);
     }
 }

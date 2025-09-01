@@ -18,8 +18,9 @@ namespace TaskAutomation.Steps
 
             if (step is not KlickOnPointStep klickStep)
             {
-                logger.LogError("KlickOnPointStepHandler: Invalid step type - expected KlickOnPointStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected KlickOnPointStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("KlickOnPointStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("KlickOnPointStepHandler: Processing click on point step with click type '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms",
@@ -30,8 +31,9 @@ namespace TaskAutomation.Steps
                 // Check if we have a valid point
                 if (jobExecutor.LatestCalculatedPoint == null)
                 {
-                    logger.LogWarning("KlickOnPointStepHandler: No valid point available for clicking - point not set by previous steps");
-                    return false;
+                    var errorMessage = "No valid point available for clicking - point not set by previous steps";
+                    logger.LogWarning("KlickOnPointStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 // Use the step's unique ID as dictionary key
@@ -72,12 +74,12 @@ namespace TaskAutomation.Steps
             catch (OperationCanceledException)
             {
                 logger.LogInformation("KlickOnPointStepHandler: Click on point was cancelled");
-                return false;
+                return false; // Return false for cancellation, don't treat as error
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "KlickOnPointStepHandler: Failed to execute click: {ErrorMessage}", ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
 

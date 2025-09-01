@@ -16,8 +16,9 @@ namespace TaskAutomation.Steps
             
             if (step is not MakroExecutionStep miStep)
             {
-                logger.LogError("MakroExecutionStepHandler: Invalid step type - expected MakroExecutionStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected MakroExecutionStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("MakroExecutionStepHandler: Processing makro execution for makro '{MakroName}'", miStep.Settings.MakroName);
@@ -26,14 +27,16 @@ namespace TaskAutomation.Steps
             {
                 if (string.IsNullOrWhiteSpace(miStep.Settings.MakroName))
                 {
-                    logger.LogWarning("MakroExecutionStepHandler: No makro name specified");
-                    return false;
+                    var errorMessage = "No makro name specified";
+                    logger.LogWarning("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 if (!executor.AllMakros.TryGetValue(miStep.Settings.MakroName, out var makro))
                 {
-                    logger.LogError("MakroExecutionStepHandler: Makro '{MakroName}' not found", miStep.Settings.MakroName);
-                    return false;
+                    var errorMessage = $"Makro '{miStep.Settings.MakroName}' not found";
+                    logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 logger.LogInformation("MakroExecutionStepHandler: Executing makro '{MakroName}'", miStep.Settings.MakroName);
@@ -45,12 +48,12 @@ namespace TaskAutomation.Steps
             catch (OperationCanceledException)
             {
                 logger.LogInformation("MakroExecutionStepHandler: Makro execution was cancelled");
-                return false;
+                return false; // Return false for cancellation, don't treat as error
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "MakroExecutionStepHandler: Failed to execute makro '{MakroName}': {ErrorMessage}", miStep.Settings.MakroName, ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

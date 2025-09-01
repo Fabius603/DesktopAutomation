@@ -17,8 +17,9 @@ namespace TaskAutomation.Steps
             
             if (step is not ScriptExecutionStep scStep)
             {
-                logger.LogError("ScriptExecutionStepHandler: Invalid step type - expected ScriptExecutionStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected ScriptExecutionStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("ScriptExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("ScriptExecutionStepHandler: Processing script execution for '{ScriptPath}'", scStep.Settings.ScriptPath);
@@ -27,15 +28,17 @@ namespace TaskAutomation.Steps
             {
                 if (string.IsNullOrWhiteSpace(scStep.Settings.ScriptPath))
                 {
-                    logger.LogWarning("ScriptExecutionStepHandler: No script path specified");
-                    return false;
+                    var errorMessage = "No script path specified";
+                    logger.LogWarning("ScriptExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 var isFile = File.Exists(scStep.Settings.ScriptPath);
                 if (!isFile)
                 {
-                    logger.LogError("ScriptExecutionStepHandler: Script file not found: '{ScriptPath}'", scStep.Settings.ScriptPath);
-                    return false;
+                    var errorMessage = $"Script file not found: '{scStep.Settings.ScriptPath}'";
+                    logger.LogError("ScriptExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new FileNotFoundException(errorMessage);
                 }
 
                 if (scStep.Settings.FireAndForget)
@@ -72,7 +75,7 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 logger.LogError(ex, "ScriptExecutionStepHandler: Failed to execute script '{ScriptPath}': {ErrorMessage}", scStep.Settings.ScriptPath, ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

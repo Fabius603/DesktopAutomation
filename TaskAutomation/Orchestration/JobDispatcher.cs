@@ -22,6 +22,16 @@ namespace TaskAutomation.Orchestration
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _jobTokens;
 
         /// <summary>
+        /// Wird ausgelöst, wenn bei der Ausführung eines Jobs ein Fehler auftritt.
+        /// </summary>
+        public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn bei der Ausführung eines Job-Steps ein Fehler auftritt.
+        /// </summary>
+        public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
+
+        /// <summary>
         /// Erstellt einen neuen Dispatcher mit dem gegebenen JobExecutor.
         /// </summary>
         /// <param name="hotkeyService">Instanz des GlobalHotkeyService</param>
@@ -36,6 +46,8 @@ namespace TaskAutomation.Orchestration
 
             _jobTokens = new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.OrdinalIgnoreCase);
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+            _executor.JobErrorOccurred += OnJobErrorOccurred;
+            _executor.JobStepErrorOccurred += OnJobStepErrorOccurred;
             _logger.LogInformation("JobDispatcher initialisiert.");
         }
 
@@ -99,6 +111,18 @@ namespace TaskAutomation.Orchestration
             });
         }
 
+        private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)
+        {
+            // Event an UI weiterleiten
+            JobErrorOccurred?.Invoke(this, e);
+        }
+
+        private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
+        {
+            // Event an UI weiterleiten
+            JobStepErrorOccurred?.Invoke(this, e);
+        }
+
         /// <summary>
         /// Fordert den Abbruch eines laufenden Jobs an.
         /// </summary>
@@ -122,6 +146,8 @@ namespace TaskAutomation.Orchestration
         public void Dispose()
         {
             _hotkeyService.HotkeyPressed -= OnHotkeyPressed;
+            _executor.JobErrorOccurred -= OnJobErrorOccurred;
+            _executor.JobStepErrorOccurred -= OnJobStepErrorOccurred;
         }
     }
 }

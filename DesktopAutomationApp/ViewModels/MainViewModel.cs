@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
 using TaskAutomation.Jobs;
+using TaskAutomation.Orchestration;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -11,6 +13,7 @@ namespace DesktopAutomationApp.ViewModels
         private string _currentContentName = "—";
 
         private readonly IServiceProvider _services;
+        private readonly IJobDispatcher _jobDispatcher;
 
         private readonly StartViewModel _start;
         private readonly ListMakrosViewModel _listMakros;
@@ -40,16 +43,22 @@ namespace DesktopAutomationApp.ViewModels
 
         public MainViewModel(
             IServiceProvider services,
+            IJobDispatcher jobDispatcher,
             StartViewModel startViewModel,
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
             ListHotkeysViewModel listHotkeysViewModel)
         {
             _services = services;
+            _jobDispatcher = jobDispatcher;
             _start = startViewModel;
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
+
+            // Events für Job-Fehler abonnieren
+            _jobDispatcher.JobErrorOccurred += OnJobErrorOccurred;
+            _jobDispatcher.JobStepErrorOccurred += OnJobStepErrorOccurred;
 
             // Navigation aus der Jobliste in die Details:
             _listJobs.RequestOpenJob += OpenJobDetails;
@@ -72,6 +81,33 @@ namespace DesktopAutomationApp.ViewModels
             detailsVm.RequestBack += () => CurrentContent = _listJobs;
 
             CurrentContent = detailsVm;
+        }
+
+        private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)
+        {
+            // Auf dem UI-Thread ausführen, da wir ein MessageBox anzeigen
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
+                var title = "Job-Ausführungsfehler";
+                
+                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            });
+        }
+
+        private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
+        {
+            // Auf dem UI-Thread ausführen, da wir ein MessageBox anzeigen
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                var message = $"Fehler beim Ausführen des Job-Steps:\n\n" +
+                             $"Job: {e.JobName}\n" +
+                             $"Step: {e.StepType}\n\n" +
+                             $"Fehlermeldung:\n{e.ErrorMessage}";
+                var title = "Job-Step-Ausführungsfehler";
+                
+                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+            });
         }
     }
 }

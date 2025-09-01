@@ -22,6 +22,7 @@ using TaskAutomation.Persistence;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using System.CodeDom.Compiler;
 using TaskAutomation.Scripts;
+using TaskAutomation.Orchestration;
 
 namespace TaskAutomation.Jobs
 {
@@ -31,6 +32,12 @@ namespace TaskAutomation.Jobs
         private readonly IJsonRepository<Job> _jobRepository;
         private readonly IJsonRepository<Makro> _makroRepository;
         private readonly IRecordingIndicatorOverlay _recordingOverlay;
+
+        // Event für allgemeine Job Fehler
+        public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
+        
+        // Event für Job Step Fehler
+        public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
@@ -246,7 +253,12 @@ namespace TaskAutomation.Jobs
         {
             if (string.IsNullOrWhiteSpace(jobName) || !AllJobs.TryGetValue(jobName, out var job))
             {
-                _logger.LogError("Job '{JobName}' existiert nicht.", jobName);
+                var errorMessage = $"Job '{jobName}' existiert nicht.";
+                _logger.LogError(errorMessage);
+                
+                // Event für allgemeine Job-Fehler auslösen
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobName ?? "Unknown", 
+                    new ArgumentException(errorMessage)));
                 return;
             }
             await ExecuteJobAsync(job, ct).ConfigureAwait(false);
@@ -256,7 +268,12 @@ namespace TaskAutomation.Jobs
         {
             if (job == null)
             {
-                _logger.LogError("Job ist null.");
+                var errorMessage = "Job ist null.";
+                _logger.LogError(errorMessage);
+                
+                // Event für allgemeine Job-Fehler auslösen  
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs("Unknown", 
+                    new ArgumentNullException(nameof(job), errorMessage)));
                 return;
             }
 
@@ -277,44 +294,60 @@ namespace TaskAutomation.Jobs
                 // Videoaufnahme vorbereiten/optional starten
                 if (videoStep != null)
                 {
-                    // Determine video resolution based on the desktop duplication step
-                    int videoWidth = 1920;
-                    int videoHeight = 1080;
-                    
-                    if (desktopDuplicationStep != null)
+                    try
                     {
-                        var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
-                        if (!screenBounds.IsEmpty)
-                        {
-                            videoWidth = screenBounds.Width;
-                            videoHeight = screenBounds.Height;
-                        }
-                    }
-                    
-                    _videoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
-                    {
-                        OutputDirectory = videoStep.Settings.SavePath,
-                        FileName = videoStep.Settings.FileName
-                    };
+                        // Determine video resolution based on the desktop duplication step
+                        int videoWidth = 1920;
+                        int videoHeight = 1080;
 
-                    // Kann selbst abgebrochen werden -> Flag erst NACH erfolgreichem Start setzen
-                    await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
-                    recorderStarted = true;
-                    _logger.LogInformation("VideoRecorder gestartet …");
+                        if (desktopDuplicationStep != null)
+                        {
+                            var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
+                            if (!screenBounds.IsEmpty)
+                            {
+                                videoWidth = screenBounds.Width;
+                                videoHeight = screenBounds.Height;
+                            }
+                        }
+
+                        _videoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
+                        {
+                            OutputDirectory = videoStep.Settings.SavePath,
+                            FileName = videoStep.Settings.FileName
+                        };
+
+                        // Kann selbst abgebrochen werden -> Flag erst NACH erfolgreichem Start setzen
+                        await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
+                        recorderStarted = true;
+                        _logger.LogInformation("VideoRecorder gestartet …");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Fehler beim Starten des VideoRecorders: {Message}", ex.Message);
+                        throw;
+                    }
                 }
 
                 if (desktopDuplicationStep != null && !_recordingOverlay.IsRunning)
                 {
-                    StartRecordingOverlay(
-                        options: new RecordingIndicatorOptions
-                        {
-                            MonitorIndex = desktopDuplicationStep.Settings.DesktopIdx,
-                            Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
-                            BorderThickness = 2f,
-                            Mode = RecordingIndicatorMode.RedBorder,
-                            BadgeCorner = Corner.TopRight,
-                            Label = "REC"
-                        });
+                    try
+                    {
+                        StartRecordingOverlay(
+                            options: new RecordingIndicatorOptions
+                            {
+                                MonitorIndex = desktopDuplicationStep.Settings.DesktopIdx,
+                                Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
+                                BorderThickness = 2f,
+                                Mode = RecordingIndicatorMode.RedBorder,
+                                BadgeCorner = Corner.TopRight,
+                                Label = "REC"
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Fehler beim Starten des Aufnahme-Overlays: {Message}", ex.Message);
+                        throw; // Job abbrechen
+                    }
                 }
 
                 bool continueJob = true;
@@ -331,12 +364,22 @@ namespace TaskAutomation.Jobs
                         try
                         {
                             bool success = await ExecuteStepAsync(step, job, ct).ConfigureAwait(false);
-                            _logger.LogWarning("Job '{JobName}' Schritt '{StepType}' {Status}.",
-                                job.Name, step.GetType().Name, success ? "erfolgreich" : "fehlgeschlagen");
+                            if (success)
+                            {
+                                _logger.LogDebug("Job '{JobName}' Schritt '{StepType}' erfolgreich.", job.Name, step.GetType().Name);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Job '{JobName}' Schritt '{StepType}' fehlgeschlagen - Job wird beendet.", job.Name, step.GetType().Name);
+                                continueJob = false;
+                                break; // Job bei Fehler sofort beenden
+                            }
                         }
                         catch (OperationCanceledException)
                         {
                             _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
+                            continueJob = false;
+                            break;
                         }
                         catch (Exception ex)
                         {
@@ -354,6 +397,13 @@ namespace TaskAutomation.Jobs
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unerwarteter Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
+                
+                // Event für allgemeine Job-Fehler auslösen
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
             }
             finally
             {
@@ -416,13 +466,43 @@ namespace TaskAutomation.Jobs
         /// <param name="step">Das Schrittobjekt.</param>
         /// <param name="jobContext">Der aktuelle Job-Kontext (für übergreifende Infos wie Repeating).</param>
         /// <returns>True, wenn der Job fortgesetzt werden soll, false bei Abbruch.</returns>
-        private Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
+        private async Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
         {
-            if (_stepHandlers.TryGetValue(step.GetType(), out var handler))
-                return handler.ExecuteAsync(step, jobContext, this, ct);
+            if (!_stepHandlers.TryGetValue(step.GetType(), out var handler))
+            {
+                _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
+                return true;
+            }
 
-            _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
-            return Task.FromResult(true);
+            try
+            {
+                return await handler.ExecuteAsync(step, jobContext, this, ct);
+            }
+            catch (Exception ex)
+            {
+                var stepTypeName = step.GetType().Name;
+                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", stepTypeName, ex.Message);
+                
+                // Event für UI-Fehlerbehandlung auslösen
+                JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(
+                    jobContext.Name, 
+                    stepTypeName, 
+                    ex));
+                
+                return false; // Job stoppen bei Fehler
+            }
+        }
+
+        /// <summary>
+        /// Methode für Step-Handler um Fehler zu melden
+        /// </summary>
+        public void ReportStepError(string stepType, Exception exception)
+        {
+            var jobName = CurrentJob?.Name ?? "Unknown";
+            _logger.LogError(exception, "Step-Fehler gemeldet: {StepType} in Job {JobName}: {Message}", 
+                stepType, jobName, exception.Message);
+            
+            JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(jobName, stepType, exception));
         }
 
         public void Dispose()

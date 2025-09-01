@@ -41,7 +41,7 @@ public class StreamVideoRecorder : IDisposable
                 throw new ArgumentException("Output directory cannot be null or empty.", nameof(value));
             if (!Directory.Exists(value))
             {
-                Directory.CreateDirectory(value);
+                throw new DirectoryNotFoundException($"The directory '{value}' does not exist.");
             }
             _outputDirectory = value;
         }

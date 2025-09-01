@@ -18,8 +18,9 @@ namespace TaskAutomation.Steps
             
             if (step is not ProcessDuplicationStep pdStep)
             {
-                logger.LogError("ProcessDuplicationStepHandler: Invalid step type - expected ProcessDuplicationStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected ProcessDuplicationStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("ProcessDuplicationStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("ProcessDuplicationStepHandler: Processing process duplication for process '{ProcessName}'", pdStep.Settings.ProcessName);
@@ -28,8 +29,9 @@ namespace TaskAutomation.Steps
             {
                 if (string.IsNullOrWhiteSpace(pdStep.Settings.ProcessName))
                 {
-                    logger.LogWarning("ProcessDuplicationStepHandler: No process name specified");
-                    return false;
+                    var errorMessage = "No process name specified";
+                    logger.LogWarning("ProcessDuplicationStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 executor.ProcessDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
@@ -66,7 +68,7 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 logger.LogError(ex, "ProcessDuplicationStepHandler: Failed to capture process '{ProcessName}': {ErrorMessage}", pdStep.Settings.ProcessName, ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

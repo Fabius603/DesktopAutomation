@@ -18,8 +18,9 @@ namespace TaskAutomation.Steps
 
             if (step is not VideoCreationStep vcStep)
             {
-                logger.LogError("VideoCreationStepHandler: Invalid step type - expected VideoCreationStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected VideoCreationStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("VideoCreationStepHandler: Processing video creation step");
@@ -30,28 +31,28 @@ namespace TaskAutomation.Steps
 
                 if (executor.VideoRecorder == null)
                 {
-                    logger.LogWarning("VideoCreationStepHandler: VideoRecorder is not initialized");
-                    return false;
+                    var errorMessage = "VideoRecorder is not initialized";
+                    logger.LogWarning("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 if (!string.IsNullOrEmpty(vcStep.Settings.SavePath))
                 {
                     executor.VideoRecorder.OutputDirectory = vcStep.Settings.SavePath;
                     logger.LogDebug("VideoCreationStepHandler: Set output directory to '{SavePath}'", vcStep.Settings.SavePath);
-                    return false;
                 }
 
                 if (!string.IsNullOrEmpty(vcStep.Settings.FileName))
                 {
                     executor.VideoRecorder.FileName = vcStep.Settings.FileName;
                     logger.LogDebug("VideoCreationStepHandler: Set filename to '{FileName}'", vcStep.Settings.FileName);
-                    return false;
                 }
 
                 if (executor.CurrentImage == null || executor.CurrentImage.Width == 0 && executor.CurrentImage.Height == 0)
                 {
-                    logger.LogWarning("VideoCreationStepHandler: No valid image available for video recording");
-                    return false;
+                    var errorMessage = "No valid image available for video recording";
+                    logger.LogWarning("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 if (vcStep.Settings.UseRawImage)
@@ -87,7 +88,7 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 logger.LogError(ex, "VideoCreationStepHandler: Failed to add video frame: {ErrorMessage}", ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
             
         }

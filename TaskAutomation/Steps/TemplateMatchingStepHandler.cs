@@ -22,8 +22,9 @@ namespace TaskAutomation.Steps
             
             if (step is not TemplateMatchingStep tmStep)
             {
-                logger.LogError("TemplateMatchingStepHandler: Invalid step type - expected TemplateMatchingStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected TemplateMatchingStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("TemplateMatchingStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             logger.LogDebug("TemplateMatchingStepHandler: Processing template matching with template '{TemplatePath}'", tmStep.Settings.TemplatePath);
@@ -33,20 +34,23 @@ namespace TaskAutomation.Steps
                 // Validation
                 if (string.IsNullOrWhiteSpace(tmStep.Settings.TemplatePath))
                 {
-                    logger.LogWarning("TemplateMatchingStepHandler: No template path specified");
-                    return false;
+                    var errorMessage = "No template path specified";
+                    logger.LogWarning("TemplateMatchingStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 if (!File.Exists(tmStep.Settings.TemplatePath))
                 {
-                    logger.LogError("TemplateMatchingStepHandler: Template file not found: '{TemplatePath}'", tmStep.Settings.TemplatePath);
-                    return false;
+                    var errorMessage = $"Template file not found: '{tmStep.Settings.TemplatePath}'";
+                    logger.LogError("TemplateMatchingStepHandler: {ErrorMessage}", errorMessage);
+                    throw new FileNotFoundException(errorMessage);
                 }
 
                 if (executor.CurrentImage == null)
                 {
-                    logger.LogWarning("TemplateMatchingStepHandler: No current image available for template matching");
-                    return false;
+                    var errorMessage = "No current image available for template matching";
+                    logger.LogWarning("TemplateMatchingStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 executor.TemplateMatchingResult?.Dispose();
@@ -108,12 +112,12 @@ namespace TaskAutomation.Steps
             catch (OperationCanceledException)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: Template matching was cancelled");
-                return false;
+                return false; // Return false for cancellation, don't treat as error
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "TemplateMatchingStepHandler: Failed to execute template matching: {ErrorMessage}", ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }

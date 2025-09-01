@@ -16,8 +16,9 @@ namespace TaskAutomation.Steps
             
             if (step is not JobExecutionStep jobExecutionStep)
             {
-                logger.LogError("JobExecutionStepHandler: Invalid step type - expected JobExecutionStep, got {StepType}", step?.GetType().Name ?? "null");
-                return false;
+                var errorMessage = $"Invalid step type - expected JobExecutionStep, got {step?.GetType().Name ?? "null"}";
+                logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             var settings = jobExecutionStep.Settings;
@@ -28,29 +29,33 @@ namespace TaskAutomation.Steps
             // Validation: Check if target job name is empty
             if (string.IsNullOrWhiteSpace(targetJobName))
             {
-                logger.LogWarning("JobExecutionStepHandler: No job name specified in JobExecutionStep");
-                return false;
+                var errorMessage = "No job name specified in JobExecutionStep";
+                logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             // Validation: Check if trying to execute the same job (prevent infinite recursion)
             if (string.Equals(targetJobName, job.Name, StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogWarning("JobExecutionStepHandler: Cannot execute the same job '{JobName}' that is currently running - preventing infinite recursion", job.Name);
-                return false;
+                var errorMessage = $"Cannot execute the same job '{job.Name}' that is currently running - preventing infinite recursion";
+                logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             // Validation: Check if target job exists
             if (!ctx.AllJobs.TryGetValue(targetJobName, out var targetJob))
             {
-                logger.LogError("JobExecutionStepHandler: Target job '{TargetJobName}' not found", targetJobName);
-                return false;
+                var errorMessage = $"Target job '{targetJobName}' not found";
+                logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             // Validation: Check if target job is repeating (not allowed)
             if (targetJob.Repeating)
             {
-                logger.LogWarning("JobExecutionStepHandler: Cannot execute repeating job '{TargetJobName}' from within another job", targetJobName);
-                return false;
+                var errorMessage = $"Cannot execute repeating job '{targetJobName}' from within another job";
+                logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage);
             }
 
             try
@@ -90,7 +95,7 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 logger.LogError(ex, "JobExecutionStepHandler: Failed to execute job '{TargetJobName}': {ErrorMessage}", targetJobName, ex.Message);
-                return false;
+                throw; // Re-throw all other exceptions
             }
         }
     }
