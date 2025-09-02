@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +11,7 @@ using Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskAutomation.Jobs;
-using TaskAutomation.Persistence;
+using Common.JsonRepository;
 
 namespace TaskAutomation.Hotkeys
 {

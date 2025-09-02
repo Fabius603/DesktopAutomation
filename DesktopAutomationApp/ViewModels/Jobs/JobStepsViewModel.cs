@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -7,7 +7,7 @@ using OpenCvSharp;
 using TaskAutomation.Jobs;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
-using TaskAutomation.Persistence;
+using Common.JsonRepository;
 
 namespace DesktopAutomationApp.ViewModels
 {

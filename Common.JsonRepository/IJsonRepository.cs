@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace TaskAutomation.Persistence
+namespace Common.JsonRepository
 {
     public interface IJsonRepository<T>
     {

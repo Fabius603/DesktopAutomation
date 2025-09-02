@@ -1,4 +1,4 @@
-﻿using System.Configuration;
+using System.Configuration;
 using System.Data;
 using System.Windows;
 using ControlzEx.Theming;
@@ -13,7 +13,7 @@ using TaskAutomation.Orchestration;
 using TaskAutomation.Makros;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using TaskAutomation.Persistence;
+using Common.JsonRepository;
 using System.IO;
 using Serilog;
 using Serilog.Events;

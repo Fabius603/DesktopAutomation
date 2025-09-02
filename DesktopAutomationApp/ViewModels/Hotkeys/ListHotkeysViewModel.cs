@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,7 +12,7 @@ using DesktopAutomationApp.Models;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
-using TaskAutomation.Persistence;
+using Common.JsonRepository;
 using Xabe.FFmpeg.Downloader;
 using DesktopAutomationApp.Services;
 

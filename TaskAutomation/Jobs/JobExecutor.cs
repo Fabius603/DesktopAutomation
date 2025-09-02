@@ -18,11 +18,11 @@ using System.Linq;
 using TaskAutomation.Steps;
 using Microsoft.Extensions.Logging;
 using Common.Logging;
-using TaskAutomation.Persistence;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using System.CodeDom.Compiler;
 using TaskAutomation.Scripts;
 using TaskAutomation.Orchestration;
+using Common.JsonRepository;
 
 namespace TaskAutomation.Jobs
 {

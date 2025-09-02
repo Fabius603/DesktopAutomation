@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using TaskAutomation.Hotkeys;
 
-namespace TaskAutomation.Persistence
+namespace Common.JsonRepository
 {
     public sealed class JsonRepositoryOptions
     {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -13,7 +13,7 @@ using Microsoft.Extensions.Logging;
 using SharpDX.Direct3D11;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
-using TaskAutomation.Persistence;
+using Common.JsonRepository;
 using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels

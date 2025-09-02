@@ -1,4 +1,4 @@
-﻿using DesktopAutomationApp.Services.Preview;
+using DesktopAutomationApp.Services.Preview;
 using DesktopOverlay;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using ImageHelperMethods;
-using TaskAutomation.Persistence;
 using DesktopAutomationApp.Views;
 using TaskAutomation.Hotkeys;
 using DesktopAutomationApp.Services;

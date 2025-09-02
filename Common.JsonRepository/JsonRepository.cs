@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 
-namespace TaskAutomation.Persistence
+namespace Common.JsonRepository
 {
     /// <summary>
     /// Liest alle *.json aus einem Ordner (je Datei: Objekt ODER Liste von Objekten).

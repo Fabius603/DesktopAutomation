@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Common.JsonRepository\Common.JsonRepository.csproj" />
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
     <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />

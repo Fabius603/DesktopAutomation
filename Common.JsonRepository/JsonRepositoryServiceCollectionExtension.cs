@@ -1,10 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Text.Json;
-using TaskAutomation.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace TaskAutomation.Persistence
+namespace Common.JsonRepository
 {
     public static class JsonRepositoryServiceCollectionExtensions
     {
@@ -20,7 +19,6 @@ namespace TaskAutomation.Persistence
             var configDir = Path.Combine(baseDir, "DesktopAutomation", relativeFolderPath);
             Directory.CreateDirectory(configDir);
 
-            // NEU: eine Zieldatei statt Ordner+Pattern
             var filePath = Path.Combine(configDir, saveFileName);
 
             services.AddSingleton<IJsonRepository<T>>(_ =>
