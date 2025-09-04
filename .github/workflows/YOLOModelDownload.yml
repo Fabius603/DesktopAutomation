@@ -1,0 +1,103 @@
+name: Build YOLO ONNX
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_url:
+        description: "PT-Download-URL (z. B. https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt)"
+        required: true
+      model_key:
+        description: "Schlüssel im Manifest (z. B. yolov8n)"
+        required: true
+      imgsz:
+        description: "Bildgröße (z. B. 640)"
+        required: false
+        default: "640"
+      opset:
+        description: "ONNX-OpSet-Version"
+        required: false
+        default: "12"
+
+jobs:
+  export-onnx:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # für Release & Commit
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install deps (CPU-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install ultralytics onnx onnxsim
+
+      - name: Download .pt
+        run: |
+          curl -L "${{ github.event.inputs.model_url }}" -o model.pt
+
+      - name: Export to ONNX
+        env:
+          IMGSZ: ${{ github.event.inputs.imgsz }}
+          OPSET: ${{ github.event.inputs.opset }}
+        run: |
+          python - << 'PY'
+          import os
+          from ultralytics import YOLO
+          imgsz = int(os.environ.get("IMGSZ","640"))
+          opset = int(os.environ.get("OPSET","12"))
+          m = YOLO("model.pt")
+          m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
+          PY
+
+      - name: Find ONNX and compute SHA256
+        id: meta
+        run: |
+          ONNX=$(find runs/export -name "*.onnx" -type f | head -n1)
+          test -f "$ONNX"
+          KEY="${{ github.event.inputs.model_key }}"
+          TARGET="${KEY}.onnx"
+          cp "$ONNX" "$TARGET"
+          SIZE=$(stat -c%s "$TARGET")
+          SHA=$(sha256sum "$TARGET" | cut -d ' ' -f1)
+          echo "file=$TARGET" >> $GITHUB_OUTPUT
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Create/Update Release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: models-${{ github.run_number }}
+          name: "YOLO Models build #${{ github.run_number }}"
+          draft: false
+          prerelease: false
+          files: ${{ steps.meta.outputs.file }}
+
+      - name: Update manifest (yolo-models.json)
+        env:
+          KEY: ${{ github.event.inputs.model_key }}
+          SIZE: ${{ steps.meta.outputs.size }}
+          SHA: ${{ steps.meta.outputs.sha256 }}
+          REPO: ${{ github.repository }}
+          RUNNUM: ${{ github.run_number }}
+        run: |
+          URL="https://github.com/${REPO}/releases/download/models-${RUNNUM}/${KEY}.onnx"
+          tmp=$(mktemp)
+          if [ ! -f yolo-models.json ]; then echo "{}" > yolo-models.json; fi
+          cat yolo-models.json | jq --arg key "$KEY" --arg url "$URL" --arg sha "$SHA" --argjson size "$SIZE" \
+            '.[$key] = {url: $url, sha256: $sha, size: $size}' > "$tmp"
+          mv "$tmp" yolo-models.json
+
+      - name: Commit manifest
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add yolo-models.json
+          git commit -m "Update manifest for ${{ github.event.inputs.model_key }}"
+          git push
