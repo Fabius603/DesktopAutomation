@@ -1,21 +1,18 @@
 name: Build YOLO ONNX
-
 on:
   workflow_dispatch:
     inputs:
       model_url:
-        description: "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt"
+        description: "PT Download-URL"
         required: true
       model_key:
-        description: "yolov8n"
+        description: "Kurzname fürs Manifest (z.B. yolov8n)"
         required: true
       imgsz:
-        description: "640"
-        required: false
+        description: "Inputgröße (default 640)"
         default: "640"
       opset:
-        description: "ONNX-OpSet-Version"
-        required: false
+        description: "ONNX Opset (default 12)"
         default: "12"
 
 jobs:
