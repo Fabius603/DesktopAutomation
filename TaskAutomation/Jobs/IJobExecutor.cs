@@ -14,6 +14,7 @@ using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Scripts;
 using ImageDetection.Model;
+using ImageDetection.YOLO;
 
 namespace TaskAutomation.Jobs
 {
@@ -50,6 +51,7 @@ namespace TaskAutomation.Jobs
         ProcessDuplicator ProcessDuplicator { get; set; }
         DesktopDuplicator DesktopDuplicator { get; set; }
         TemplateMatching TemplateMatcher { get; set; }
+        IYoloManager YoloManager { get; set; }
         IDetectionResult DetectionResult { get; set; }
         OpenCvSharp.Mat ImageToProcess { get; set; }
 

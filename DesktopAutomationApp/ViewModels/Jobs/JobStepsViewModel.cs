@@ -187,6 +187,19 @@ namespace DesktopAutomationApp.ViewModels
                     vm.JobExecutionStep_SelectedJobName = je.Settings.JobName;
                     vm.JobExecutionStep_WaitForCompletion = je.Settings.WaitForCompletion;
                     break;
+
+                case YOLODetectionStep yd:
+                    vm.SelectedType = "YOLODetection";
+                    vm.YoloDetectionStep_Model = yd.Settings.Model;
+                    vm.YoloDetectionStep_ConfidenceThreshold = yd.Settings.ConfidenceThreshold;
+                    vm.YoloDetectionStep_ClassName = yd.Settings.ClassName;
+                    vm.YoloDetectionStep_DrawResults = yd.Settings.DrawResults;
+                    vm.YoloDetectionStep_EnableROI = yd.Settings.EnableROI;
+                    vm.YoloDetectionStep_RoiX = yd.Settings.ROI.X;
+                    vm.YoloDetectionStep_RoiY = yd.Settings.ROI.Y;
+                    vm.YoloDetectionStep_RoiW = yd.Settings.ROI.Width;
+                    vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
+                    break;
             }
         }
 

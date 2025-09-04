@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -179,6 +179,23 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _klickOnPointStep_TimeoutMs = 5000;
         public int KlickOnPointStep_TimeoutMs { get => _klickOnPointStep_TimeoutMs; set { _klickOnPointStep_TimeoutMs = value; OnChange(); } }
+
+        // ===== YOLODetectionStep Felder =====
+        private string _yoloDetectionStep_Model = string.Empty;
+        public string YoloDetectionStep_Model { get => _yoloDetectionStep_Model; set { _yoloDetectionStep_Model = value; OnChange(); } }
+        private float _yoloDetectionStep_ConfidenceThreshold = 0.5f;
+        public float YoloDetectionStep_ConfidenceThreshold { get => _yoloDetectionStep_ConfidenceThreshold; set { _yoloDetectionStep_ConfidenceThreshold = value; OnChange(); } }
+        private string _yoloDetectionSteo_ClassName = string.Empty;
+        public string YoloDetectionStep_ClassName { get => _yoloDetectionSteo_ClassName; set { _yoloDetectionSteo_ClassName = value; OnChange(); } }
+        private bool _yoloDetectionStep_DrawResults = false;
+        public bool YoloDetectionStep_DrawResults { get => _yoloDetectionStep_DrawResults; set { _yoloDetectionStep_DrawResults = value; OnChange(); } }
+        private bool _yoloDetectionStep_EnableROI = false;
+        public bool YoloDetectionStep_EnableROI { get => _yoloDetectionStep_EnableROI; set { _yoloDetectionStep_EnableROI = value; OnChange(); } }
+        private int _yoloDetectionStep_RoiX, _yoloDetectionStep_RoiY, _yoloDetectionStep_RoiW, _yoloDetectionStep_RoiH;
+        public int YoloDetectionStep_RoiX { get => _yoloDetectionStep_RoiX; set { _yoloDetectionStep_RoiX = value; OnChange(); } }
+        public int YoloDetectionStep_RoiY { get => _yoloDetectionStep_RoiY; set { _yoloDetectionStep_RoiY = value; OnChange(); } }
+        public int YoloDetectionStep_RoiW { get => _yoloDetectionStep_RoiW; set { _yoloDetectionStep_RoiW = value; OnChange(); } }
+        public int YoloDetectionStep_RoiH { get => _yoloDetectionStep_RoiH; set { _yoloDetectionStep_RoiH = value; OnChange(); } }
 
         // Datei-Auswahl (in VM gewünscht)
         private void BrowseTemplatePath()
@@ -473,6 +490,18 @@ namespace DesktopAutomationApp.ViewModels
                         DoubleClick = KlickOnPointStep_DoubleClick,
                         ClickType = KlickOnPointStep_ClickType,
                         TimeoutMs = KlickOnPointStep_TimeoutMs
+                    }
+                },
+                "YoloDetection" => new YOLODetectionStep
+                {
+                    Settings = new YOLODetectionStepSettings
+                    {
+                        Model = YoloDetectionStep_Model,
+                        ConfidenceThreshold = YoloDetectionStep_ConfidenceThreshold,
+                        ClassName = YoloDetectionStep_ClassName,
+                        DrawResults = YoloDetectionStep_DrawResults,
+                        EnableROI = YoloDetectionStep_EnableROI,
+                        ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH)
                     }
                 },
                 _ => null

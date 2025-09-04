@@ -79,6 +79,45 @@ namespace ImageDetection.YOLO
             return false;
         }
 
+        public List<string> GetAvailableModels()
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // 1) Bereits bekannte Keys aus dem Cache
+            foreach (var key in _cache.Keys)
+                set.Add(key);
+
+            // 2) Aus den Verzeichnissen geladener Modelle alle *.onnx ergänzen
+            foreach (var kv in _cache)
+            {
+                var lazy = kv.Value;
+                if (!lazy.IsValueCreated) continue;
+
+                var task = lazy.Value;
+                if (!task.IsCompletedSuccessfully) continue;
+
+                var onnxPath = task.Result.model.OnnxPath;
+                var dir = Path.GetDirectoryName(onnxPath);
+                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
+
+                foreach (var file in Directory.EnumerateFiles(dir, "*.onnx"))
+                {
+                    var key = Path.GetFileNameWithoutExtension(file);
+                    set.Add(key);
+                }
+            }
+
+            return set.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        public List<string> GetClassesForModel(string modelKey)
+        {
+            // Sicherstellen (lädt bei Bedarf); synchron warten ist hier ok
+            var t = GetOrCreateAsync(modelKey, CancellationToken.None);
+            var (_, _, labels) = t.GetAwaiter().GetResult();
+            return labels.ToList();
+        }
+
         private Task<InferenceSession> CreateSessionAsync(YOLOModel model, CancellationToken ct)
         {
             return Task.Run(() =>

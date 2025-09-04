@@ -13,8 +13,9 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
     [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
-    public abstract class JobStep 
-    { 
+    [JsonDerivedType(typeof(YOLODetectionStep), "yolo_detection")]
+    public abstract class JobStep
+    {
         [JsonPropertyName("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
     }
@@ -174,5 +175,30 @@ namespace TaskAutomation.Jobs
         public string JobName { get; set; } = string.Empty;
         [JsonPropertyName("wait_for_completion")]
         public bool WaitForCompletion { get; set; } = true;
+    }
+
+    public sealed class YOLODetectionStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public YOLODetectionStepSettings Settings { get; set; } = new();
+    }
+
+    public sealed class YOLODetectionStepSettings
+    {
+        [JsonPropertyName("model")]
+        public string Model { get; set; } = string.Empty;
+        [JsonPropertyName("confidence_threshold")]
+        public float ConfidenceThreshold { get; set; } = 0.5f;
+        [JsonPropertyName("class_name")]
+        public string ClassName { get; set; } = string.Empty;
+        [JsonPropertyName("roi")]
+        [JsonConverter(typeof(OpenCvRectJsonConverter))]
+        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+
+        [JsonPropertyName("enable_roi")]
+        public bool EnableROI { get; set; } = false;
+
+        [JsonPropertyName("draw_results")]
+        public bool DrawResults { get; set; } = true;
     }
 }

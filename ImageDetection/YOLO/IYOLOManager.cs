@@ -18,6 +18,9 @@ namespace ImageDetection.YOLO
         /// <summary> Prüft, ob für das Modell bereits eine Session existiert. </summary>
         bool HasSession(string modelKey);
 
+        List<string> GetAvailableModels();
+        List<string> GetClassesForModel(string modelKey);
+
         /// <summary>
         /// Sucht das gegebene Objekt im Bitmap. Optional ROI (in Bildpixeln), Confidence-Threshold (0..1).
         /// </summary>

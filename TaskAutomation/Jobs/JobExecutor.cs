@@ -24,6 +24,7 @@ using TaskAutomation.Scripts;
 using TaskAutomation.Orchestration;
 using Common.JsonRepository;
 using ImageDetection.Model;
+using ImageDetection.YOLO;
 
 namespace TaskAutomation.Jobs
 {
@@ -50,6 +51,7 @@ namespace TaskAutomation.Jobs
         private StreamVideoRecorder _videoRecorder;
         private ProcessDuplicator _processDuplicator;
         private DesktopDuplicator _desktopDuplicator;
+        private IYoloManager _yoloManager;
         private TemplateMatching _templateMatcher;
         private IDetectionResult _detectionResult;
         private Mat _imageToProcess;
@@ -82,6 +84,7 @@ namespace TaskAutomation.Jobs
             { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
             { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
             { typeof(JobExecutionStep), new JobExecutionStepHandler() },
+            { typeof(YOLOStepHandler), new YOLOStepHandler() },
         };
 
         // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
@@ -125,6 +128,12 @@ namespace TaskAutomation.Jobs
         {
             get => _desktopDuplicator;
             set => _desktopDuplicator = value;
+        }
+
+        public IYoloManager YoloManager
+        {
+            get => _yoloManager;
+            set => _yoloManager = value;
         }
 
         public TemplateMatching TemplateMatcher
