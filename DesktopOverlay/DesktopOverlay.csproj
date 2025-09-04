@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
-    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />
+    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMethods.csproj" />
   </ItemGroup>
 
 </Project>

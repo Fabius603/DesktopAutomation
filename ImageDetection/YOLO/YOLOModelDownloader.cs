@@ -5,14 +5,17 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageDetection.Model;
 using Microsoft.Extensions.Logging;
+using Microsoft.ML.OnnxRuntime;
 
 namespace ImageDetection.YOLO
 {
-    public class YOLOModelDownloader
+    public class YOLOModelDownloader : IYOLOModelDownloader
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<YOLOModelDownloader> _logger;
@@ -73,7 +76,7 @@ namespace ImageDetection.YOLO
 
                 Report(modelKey, ModelDownloadStatus.Completed, 100);
 
-                return new YOLOModel
+                var model = new YOLOModel
                 {
                     Id = modelKey,
                     Name = modelKey,
@@ -81,6 +84,10 @@ namespace ImageDetection.YOLO
                     OnnxSizeBytes = new FileInfo(onnxPath).Length,
                     CreatedUtc = DateTime.UtcNow
                 };
+
+                await EnsureLabelsSidecarAsync(modelKey, model.OnnxPath, ct);
+
+                return model;
             }
             finally
             {
@@ -167,6 +174,191 @@ namespace ImageDetection.YOLO
 
             // garantiert 100% melden, falls Content-Length unbekannt war
             progress?.Report(100);
+        }
+
+        private async Task EnsureLabelsSidecarAsync(string modelKey, string onnxPath, CancellationToken ct)
+        {
+            var dir = Path.GetDirectoryName(onnxPath)!;
+            var sidecar = Path.Combine(dir, $"{modelKey}.labels.txt");
+
+            if (File.Exists(sidecar))
+            {
+                _logger.LogDebug("Labels-Sidecar existiert bereits: {sidecar}", sidecar);
+                return;
+            }
+
+            try
+            {
+                if (TryReadLabelsFromOnnx(onnxPath, out var labels) && labels.Length > 0)
+                {
+                    Directory.CreateDirectory(dir);
+                    await File.WriteAllLinesAsync(sidecar, labels, ct);
+                    _logger.LogInformation("Labels aus ONNX-Metadaten extrahiert ({count}) und geschrieben: {sidecar}",
+                        labels.Length, sidecar);
+                }
+                else
+                {
+                    _logger.LogWarning("Keine Labels im ONNX gefunden. Bitte Labels separat bereitstellen. Modell: {modelKey}", modelKey);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Labels konnten nicht aus dem ONNX gelesen werden. Modell: {modelKey}", modelKey);
+            }
+        }
+
+        private static bool TryReadLabelsFromOnnx(string onnxPath, out string[] labels)
+        {
+            labels = Array.Empty<string>();
+
+            using var so = new SessionOptions(); // CPU reicht zum Lesen der Metadaten
+            using var session = new InferenceSession(onnxPath, so);
+
+            var meta = session.ModelMetadata?.CustomMetadataMap;
+            if (meta is null || meta.Count == 0)
+                return false;
+
+            // Mögliche Schlüssel (Ultralytics nutzt i. d. R. "names")
+            var candidateKeys = new[] { "names", "labels", "classes" };
+            string? raw = null;
+            string? keyFound = null;
+
+            foreach (var k in candidateKeys)
+            {
+                if (meta.TryGetValue(k, out raw) && !string.IsNullOrWhiteSpace(raw))
+                {
+                    keyFound = k;
+                    break;
+                }
+            }
+
+            if (raw is null)
+            {
+                // Seltener: keys wie names0=..., names1=... etc.
+                var indexed = meta
+                    .Where(kv => Regex.IsMatch(kv.Key, @"^names?\d+$"))
+                    .OrderBy(kv =>
+                    {
+                        var m = Regex.Match(kv.Key, @"\d+");
+                        return m.Success ? int.Parse(m.Value) : int.MaxValue;
+                    })
+                    .Select(kv => kv.Value?.Trim())
+                    .Where(v => !string.IsNullOrWhiteSpace(v))
+                    .ToArray();
+
+                if (indexed.Length > 0)
+                {
+                    labels = indexed!;
+                    return true;
+                }
+
+                return false;
+            }
+
+            // 1) JSON-Object {"0":"person",...}
+            if (TryParseJsonDict(raw, out var dictObj))
+            {
+                labels = dictObj
+                    .OrderBy(kv => TryInt(kv.Key))
+                    .Select(kv => kv.Value.Trim())
+                    .Where(v => v.Length > 0)
+                    .ToArray();
+                return labels.Length > 0;
+            }
+
+            // 2) JSON-Array ["person",...]
+            if (TryParseJsonArray(raw, out var arr))
+            {
+                labels = arr
+                    .Select(s => s.Trim())
+                    .Where(s => s.Length > 0)
+                    .ToArray();
+                return labels.Length > 0;
+            }
+
+            // 3) Fallback: Komma- oder Zeilen-getrennt
+            var split = raw.Replace("\r", "")
+                           .Split(new[] { '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(s => s.Trim())
+                           .Where(s => s.Length > 0)
+                           .ToArray();
+            if (split.Length > 0)
+            {
+                labels = split;
+                return true;
+            }
+
+            return false;
+
+            // --- lokale Helfer ---
+            static bool TryParseJsonDict(string s, out Dictionary<string, string> dict)
+            {
+                dict = new Dictionary<string, string>();
+
+                // single quotes -> double quotes, keys ohne quotes -> quote keys
+                var normalized = NormalizeToJsonObject(s);
+                try
+                {
+                    var tmp = JsonSerializer.Deserialize<Dictionary<string, string>>(normalized);
+                    if (tmp is null || tmp.Count == 0) return false;
+                    dict = tmp;
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            static bool TryParseJsonArray(string s, out string[] arr)
+            {
+                arr = Array.Empty<string>();
+
+                var normalized = NormalizeToJsonArray(s);
+                try
+                {
+                    var tmp = JsonSerializer.Deserialize<string[]>(normalized);
+                    if (tmp is null || tmp.Length == 0) return false;
+                    arr = tmp;
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            static int TryInt(string k) => int.TryParse(k, out var i) ? i : int.MaxValue;
+
+            // macht aus {0:'person',1:'bicycle'} → {"0":"person","1":"bicycle"}
+            static string NormalizeToJsonObject(string s)
+            {
+                var t = s.Trim();
+
+                // fehlende geschweifte Klammern ergänzen
+                if (!t.StartsWith("{")) t = "{" + t;
+                if (!t.EndsWith("}")) t = t + "}";
+
+                // single quotes -> double quotes
+                t = t.Replace('\'', '"');
+
+                // unquoted keys (0: "x") → "0": "x"
+                t = Regex.Replace(t, @"(?<pre>[\{\s,])(?<key>\d+)\s*:", "${pre}\"${key}\":");
+
+                return t;
+            }
+
+            // macht aus ['person','bicycle'] → ["person","bicycle"]
+            static string NormalizeToJsonArray(string s)
+            {
+                var t = s.Trim();
+
+                if (!t.StartsWith("[")) t = "[" + t;
+                if (!t.EndsWith("]")) t = t + "]";
+
+                t = t.Replace('\'', '"');
+                return t;
+            }
         }
 
         private void Report(string modelName, ModelDownloadStatus status, int progressPercent, string? message = null)

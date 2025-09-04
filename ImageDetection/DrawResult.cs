@@ -1,45 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ImageDetection.Algorithms.TemplateMatching;
+using ImageDetection.Model;
 using OpenCvSharp;
 
 namespace ImageDetection
 {
     public static class DrawResult
     {
-        public static Mat DrawTemplateMatchingResult(Mat mat, TemplateMatchingResult result, Size templateSize)
+        /// <summary>
+        /// Zeichnet ein DetectionResult (BoundingBox oder Rechteck um den CenterPoint).
+        /// </summary>
+        public static Mat DrawDetectionResult(Mat mat, IDetectionResult result)
         {
-            if (!result.Success)
+            if (result == null || !result.Success)
                 return mat;
 
             Scalar color = Scalar.LimeGreen;
             int thickness = 2;
 
-            if (result.MultiplePoints && result.Points != null)
+            if (result.BoundingBox.HasValue)
             {
-                foreach (var center in result.Points)
-                {
-                    var rect = GetRectFromCenter(center, templateSize);
-                    Cv2.Rectangle(mat, rect, color, thickness);
-                }
-            }
-            else
-            {
-                var rect = GetRectFromCenter(result.CenterPoint, templateSize);
+                // BoundingBox liegt schon vor → direkt zeichnen
+                var bb = result.BoundingBox.Value;
+                var rect = new Rect(bb.X, bb.Y, bb.Width, bb.Height);
                 Cv2.Rectangle(mat, rect, color, thickness);
             }
 
             return mat;
-        }
-
-        private static Rect GetRectFromCenter(Point center, Size size)
-        {
-            int x = center.X - size.Width / 2;
-            int y = center.Y - size.Height / 2;
-            return new Rect(x, y, size.Width, size.Height);
         }
     }
 }

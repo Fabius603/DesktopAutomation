@@ -1,4 +1,4 @@
-﻿using ImageCapture.DesktopDuplication;
+using ImageCapture.DesktopDuplication;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using ImageCapture.ProcessDuplication;
 using ImageDetection.Algorithms.TemplateMatching;
@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Scripts;
+using ImageDetection.Model;
 
 namespace TaskAutomation.Jobs
 {
@@ -49,7 +50,7 @@ namespace TaskAutomation.Jobs
         ProcessDuplicator ProcessDuplicator { get; set; }
         DesktopDuplicator DesktopDuplicator { get; set; }
         TemplateMatching TemplateMatcher { get; set; }
-        TemplateMatchingResult TemplateMatchingResult { get; set; }
+        IDetectionResult DetectionResult { get; set; }
         OpenCvSharp.Mat ImageToProcess { get; set; }
 
         // Kontext-Parameter

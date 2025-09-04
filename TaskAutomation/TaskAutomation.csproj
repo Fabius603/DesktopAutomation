@@ -25,7 +25,7 @@
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
     <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
-    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />
+    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMethods.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageDetection", "ImageDete
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskAutomation", "TaskAutomation\TaskAutomation.csproj", "{487775B2-73BC-4C72-912F-2AC8AC3585E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageHelperMehods", "ImageHelperMehods\ImageHelperMehods.csproj", "{D70286CC-C6F4-4910-92C2-A43C67A0A891}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageHelperMethods", "ImageHelperMehods\ImageHelperMethods.csproj", "{D70286CC-C6F4-4910-92C2-A43C67A0A891}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Logging", "Common.Logging\Common.Logging.csproj", "{AF635858-0C45-480C-BECA-06B33C38410F}"
 EndProject

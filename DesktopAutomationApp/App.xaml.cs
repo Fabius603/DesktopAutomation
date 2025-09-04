@@ -21,6 +21,7 @@ using DesktopAutomationApp.Services.Preview;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using TaskAutomation.Scripts;
 using DesktopAutomationApp.Services;
+using ImageDetection.YOLO;
 
 namespace DesktopAutomationApp
 {
@@ -73,6 +74,8 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IJobDispatcher, JobDispatcher>();
                     services.AddSingleton<IMacroPreviewService, MacroPreviewService>();
                     services.AddSingleton<IRecordingIndicatorOverlay, RecordingIndicatorOverlay>();
+                    services.AddSingleton<IYOLOModelDownloader, YOLOModelDownloader>();
+                    services.AddSingleton<IYoloManager, YoloManager>();
 
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();

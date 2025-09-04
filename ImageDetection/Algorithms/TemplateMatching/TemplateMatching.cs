@@ -1,9 +1,12 @@
-﻿using OpenCvSharp;
+using ImageDetection.Model;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ImageHelperMethods;
 
 namespace ImageDetection.Algorithms.TemplateMatching
 {
@@ -11,7 +14,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
     {
         private TemplateMatchModes _templateMatchMode;
         private Mat _template;
-        private Size _templateSize;
+        private OpenCvSharp.Size _templateSize;
         private string _templatePath = string.Empty;
         private bool _multiplePoints = false;
         private double _confidenceThreshold = 0.9;
@@ -38,12 +41,7 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
-        public TemplateMatchingResult Detect(Mat rawSource)
-        {
-            return Detect(rawSource, new Point(0, 0));
-        }
-
-        public TemplateMatchingResult Detect(Mat rawSource, Point globalOffset)
+        public IDetectionResult Detect(Mat rawSource)
         {
             if (_template == null)
             {
@@ -51,13 +49,13 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
             if (rawSource == null) // Check for null rawSource before normalization
             {
-                return new TemplateMatchingResult { Success = false, Confidence = 0 };
+                return new DetectionResult { Success = false, Confidence = 0 };
             }
             var sourceMat = NormalizeImage(rawSource);
 
             var resultMat = new Mat();
             Mat subRegion = null;
-            Point currentRoiOffset = new Point(0, 0);
+            OpenCvSharp.Point currentRoiOffset = new OpenCvSharp.Point(0, 0);
             Mat imageForMatching = sourceMat;
 
             try
@@ -79,24 +77,22 @@ namespace ImageDetection.Algorithms.TemplateMatching
                     catch (OpenCVException)
                     {
                         imageForMatching = sourceMat;
-                        currentRoiOffset = new Point(0, 0);
+                        currentRoiOffset = new OpenCvSharp.Point(0, 0);
                         // subRegion remains null, no specific disposal needed here for it
                     }
                 }
 
                 if (imageForMatching.Width < _template.Width || imageForMatching.Height < _template.Height)
                 {
-                    return new TemplateMatchingResult { Success = false, Confidence = 0 };
+                    return new DetectionResult { Success = false, Confidence = 0 };
                 }
 
                 Cv2.MatchTemplate(imageForMatching, _template, resultMat, _templateMatchMode);
 
-                TemplateMatchingResult result = !_multiplePoints
-                    ? DetectSinglePoint(resultMat, currentRoiOffset)
-                    : DetectMultiplePoints(resultMat, currentRoiOffset);
+                IDetectionResult result = DetectSinglePoint(resultMat, currentRoiOffset);
 
                 // Convert to global desktop coordinates using the same coordinate system as ScreenHelper.GetScreens()
-                ConvertToGlobalDesktopCoordinates(result, globalOffset);
+                //ConvertToGlobalDesktopCoordinates(result, globalOffset);
 
                 return result;
             }
@@ -109,16 +105,16 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
-        private TemplateMatchingResult DetectSinglePoint(Mat resultMat, Point roiOffset)
+        private IDetectionResult DetectSinglePoint(Mat resultMat, OpenCvSharp.Point roiOffset)
         {
             if (resultMat == null)
-                return new TemplateMatchingResult { Success = false };
+                return new DetectionResult { Success = false };
             try
             {
-                Cv2.MinMaxLoc(resultMat, out double minVal, out double maxVal, out Point minLoc, out Point maxLoc);
+                Cv2.MinMaxLoc(resultMat, out double minVal, out double maxVal, out OpenCvSharp.Point minLoc, out OpenCvSharp.Point maxLoc);
 
                 double actualScore = _templateMatchMode == TemplateMatchModes.SqDiffNormed ? minVal : maxVal;
-                Point matchLoc = _templateMatchMode == TemplateMatchModes.SqDiffNormed ? minLoc : maxLoc;
+                OpenCvSharp.Point matchLoc = _templateMatchMode == TemplateMatchModes.SqDiffNormed ? minLoc : maxLoc;
 
                 int pointX = matchLoc.X + _template.Width / 2 + roiOffset.X;
                 int pointY = matchLoc.Y + _template.Height / 2 + roiOffset.Y;
@@ -139,108 +135,115 @@ namespace ImageDetection.Algorithms.TemplateMatching
 
                 confidencePercent = Math.Max(0.0, Math.Min(100.0, confidencePercent));
 
-                return new TemplateMatchingResult
+                return new DetectionResult
                 {
                     Success = success,
-                    CenterPoint = new Point(pointX, pointY),
-                    Confidence = confidencePercent,
-                    TemplateSize = _templateSize
+                    CenterPoint = new System.Drawing.Point(pointX, pointY),
+                    Confidence = (float)confidencePercent,
+                    BoundingBox = ToRect(new System.Drawing.Point(pointX, pointY), ClassConverter.ToDrawing(_templateSize)),
                 };
             }
             catch (OpenCVException)
             {
-                return new TemplateMatchingResult { Success = false };
+                return new DetectionResult { Success = false };
             }
         }
 
-        private TemplateMatchingResult DetectMultiplePoints(Mat resultMat, Point roiOffset)
+        Rectangle ToRect(System.Drawing.Point center, System.Drawing.Size size)
         {
-            if (resultMat == null)
-                return new TemplateMatchingResult { Success = false, Points = new List<Point>() };
-
-            var candidates = new List<(Point pt, float score)>();
-
-            for (int y = 0; y < resultMat.Rows; y++)
-            {
-                for (int x = 0; x < resultMat.Cols; x++)
-                {
-                    float value = resultMat.At<float>(y, x);
-                    bool isMatch;
-
-                    if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
-                    {
-                        isMatch = value <= (1.0 - _confidenceThreshold);
-                    }
-                    else // CcoeffNormed or CCorrNormed
-                    {
-                        isMatch = value >= _confidenceThreshold;
-                    }
-
-                    if (isMatch)
-                        candidates.Add((new Point(x, y), value));
-                }
-            }
-
-            var finalMatchCenters = new List<Point>();
-            var scoresOfFinalMatches = new List<float>();
-
-            var orderedCandidates = _templateMatchMode == TemplateMatchModes.SqDiffNormed
-                ? candidates.OrderBy(c => c.score)
-                : candidates.OrderByDescending(c => c.score);
-
-            foreach (var (candidateTopLeft, candidateScore) in orderedCandidates)
-            {
-                var currentMatchCenter = new Point(
-                    candidateTopLeft.X + _template.Width / 2 + roiOffset.X,
-                    candidateTopLeft.Y + _template.Height / 2 + roiOffset.Y
-                );
-
-                bool isSuppressed = false;
-                foreach (Point existingMatchCenter in finalMatchCenters)
-                {
-                    if (Math.Abs(existingMatchCenter.X - currentMatchCenter.X) <= _suppressionRadius &&
-                        Math.Abs(existingMatchCenter.Y - currentMatchCenter.Y) <= _suppressionRadius)
-                    {
-                        isSuppressed = true;
-                        break;
-                    }
-                }
-
-                if (!isSuppressed)
-                {
-                    finalMatchCenters.Add(currentMatchCenter);
-                    scoresOfFinalMatches.Add(candidateScore);
-                }
-            }
-
-            double overallConfidence = 0;
-            if (scoresOfFinalMatches.Any())
-            {
-                double bestFinalScore = _templateMatchMode == TemplateMatchModes.SqDiffNormed
-                    ? scoresOfFinalMatches.Min()
-                    : scoresOfFinalMatches.Max();
-
-                if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
-                {
-                    overallConfidence = (1.0 - bestFinalScore) * 100.0;
-                }
-                else // CcoeffNormed or CCorrNormed
-                {
-                    overallConfidence = bestFinalScore * 100.0;
-                }
-                overallConfidence = Math.Max(0.0, Math.Min(100.0, overallConfidence));
-            }
-
-            return new TemplateMatchingResult
-            {
-                Success = finalMatchCenters.Count > 0,
-                CenterPoint = finalMatchCenters.Count > 0 ? finalMatchCenters[0] : new Point(0, 0),
-                Points = finalMatchCenters,
-                MultiplePoints = true,
-                Confidence = overallConfidence,
-                TemplateSize = _templateSize
-            };
+            int x = center.X - size.Width / 2;
+            int y = center.Y - size.Height / 2;
+            return new System.Drawing.Rectangle(x, y, size.Width, size.Height);
         }
+
+        //private TemplateMatchingResult DetectMultiplePoints(Mat resultMat, Point roiOffset)
+        //{
+        //    if (resultMat == null)
+        //        return new TemplateMatchingResult { Success = false, Points = new List<Point>() };
+
+        //    var candidates = new List<(Point pt, float score)>();
+
+        //    for (int y = 0; y < resultMat.Rows; y++)
+        //    {
+        //        for (int x = 0; x < resultMat.Cols; x++)
+        //        {
+        //            float value = resultMat.At<float>(y, x);
+        //            bool isMatch;
+
+        //            if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
+        //            {
+        //                isMatch = value <= (1.0 - _confidenceThreshold);
+        //            }
+        //            else // CcoeffNormed or CCorrNormed
+        //            {
+        //                isMatch = value >= _confidenceThreshold;
+        //            }
+
+        //            if (isMatch)
+        //                candidates.Add((new Point(x, y), value));
+        //        }
+        //    }
+
+        //    var finalMatchCenters = new List<Point>();
+        //    var scoresOfFinalMatches = new List<float>();
+
+        //    var orderedCandidates = _templateMatchMode == TemplateMatchModes.SqDiffNormed
+        //        ? candidates.OrderBy(c => c.score)
+        //        : candidates.OrderByDescending(c => c.score);
+
+        //    foreach (var (candidateTopLeft, candidateScore) in orderedCandidates)
+        //    {
+        //        var currentMatchCenter = new Point(
+        //            candidateTopLeft.X + _template.Width / 2 + roiOffset.X,
+        //            candidateTopLeft.Y + _template.Height / 2 + roiOffset.Y
+        //        );
+
+        //        bool isSuppressed = false;
+        //        foreach (Point existingMatchCenter in finalMatchCenters)
+        //        {
+        //            if (Math.Abs(existingMatchCenter.X - currentMatchCenter.X) <= _suppressionRadius &&
+        //                Math.Abs(existingMatchCenter.Y - currentMatchCenter.Y) <= _suppressionRadius)
+        //            {
+        //                isSuppressed = true;
+        //                break;
+        //            }
+        //        }
+
+        //        if (!isSuppressed)
+        //        {
+        //            finalMatchCenters.Add(currentMatchCenter);
+        //            scoresOfFinalMatches.Add(candidateScore);
+        //        }
+        //    }
+
+        //    double overallConfidence = 0;
+        //    if (scoresOfFinalMatches.Any())
+        //    {
+        //        double bestFinalScore = _templateMatchMode == TemplateMatchModes.SqDiffNormed
+        //            ? scoresOfFinalMatches.Min()
+        //            : scoresOfFinalMatches.Max();
+
+        //        if (_templateMatchMode == TemplateMatchModes.SqDiffNormed)
+        //        {
+        //            overallConfidence = (1.0 - bestFinalScore) * 100.0;
+        //        }
+        //        else // CcoeffNormed or CCorrNormed
+        //        {
+        //            overallConfidence = bestFinalScore * 100.0;
+        //        }
+        //        overallConfidence = Math.Max(0.0, Math.Min(100.0, overallConfidence));
+        //    }
+
+        //    return new TemplateMatchingResult
+        //    {
+        //        Success = finalMatchCenters.Count > 0,
+        //        CenterPoint = finalMatchCenters.Count > 0 ? finalMatchCenters[0] : new Point(0, 0),
+        //        Points = finalMatchCenters,
+        //        MultiplePoints = true,
+        //        Confidence = overallConfidence,
+        //        TemplateSize = _templateSize
+        //    };
+        //}
 
         public void SetROI(Rect roi)
         {
@@ -358,29 +361,6 @@ namespace ImageDetection.Algorithms.TemplateMatching
             }
         }
 
-        private void ConvertToGlobalDesktopCoordinates(TemplateMatchingResult result, Point globalOffset)
-        {
-            if (result == null)
-                throw new ArgumentNullException(nameof(result));
-
-            // Convert local image coordinates to global desktop coordinates
-            // This ensures compatibility with ScreenHelper.GetScreens() coordinate system
-            result.CenterPointOnDesktop = new Point(
-                result.CenterPoint.X + globalOffset.X,
-                result.CenterPoint.Y + globalOffset.Y);
-
-            // Handle multiple points
-            if (result.Points != null && result.Points.Count > 0)
-            {
-                result.PointsOnDesktop = result.Points
-                    .Select(p => new Point(p.X + globalOffset.X, p.Y + globalOffset.Y))
-                    .ToList();
-            }
-            else
-            {
-                result.PointsOnDesktop.Clear();
-            }
-        }
         public void Dispose()
         {
             Dispose(true);

@@ -10,8 +10,7 @@ namespace ImageDetection.Model
     public interface IDetectionResult
     {
         bool Success { get; set; }
-        Point CenterPointInImage { get; set; }
-        Point CenterPointOnDesktop { get; set; }
+        Point CenterPoint { get; set; }
         Rectangle? BoundingBox { get; set; }
         float Confidence { get; set; }
     }

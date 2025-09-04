@@ -23,6 +23,7 @@ using System.CodeDom.Compiler;
 using TaskAutomation.Scripts;
 using TaskAutomation.Orchestration;
 using Common.JsonRepository;
+using ImageDetection.Model;
 
 namespace TaskAutomation.Jobs
 {
@@ -50,7 +51,7 @@ namespace TaskAutomation.Jobs
         private ProcessDuplicator _processDuplicator;
         private DesktopDuplicator _desktopDuplicator;
         private TemplateMatching _templateMatcher;
-        private TemplateMatchingResult _templateMatchingResult;
+        private IDetectionResult _detectionResult;
         private Mat _imageToProcess;
         private Point _currentOffset = new Point(0, 0);
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
@@ -132,10 +133,10 @@ namespace TaskAutomation.Jobs
             set => _templateMatcher = value;
         }
 
-        public TemplateMatchingResult TemplateMatchingResult
+        public IDetectionResult DetectionResult
         {
-            get => _templateMatchingResult;
-            set => _templateMatchingResult = value;
+            get => _detectionResult;
+            set => _detectionResult = value;
         }
 
         public Mat ImageToProcess
@@ -525,7 +526,6 @@ namespace TaskAutomation.Jobs
                     _processDuplicator?.Dispose();
                     _desktopDuplicator?.Dispose();
                     _templateMatcher?.Dispose();
-                    _templateMatchingResult?.Dispose();
                     _imageToProcess?.Dispose();
                 }
                 _disposed = true;

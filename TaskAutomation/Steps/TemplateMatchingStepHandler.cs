@@ -1,4 +1,4 @@
-﻿using ImageDetection.Algorithms.TemplateMatching;
+using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection;
 using System;
 using System.Collections.Generic;
@@ -53,8 +53,6 @@ namespace TaskAutomation.Steps
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                executor.TemplateMatchingResult?.Dispose();
-
                 if (executor.TemplateMatcher == null)
                 {
                     executor.TemplateMatcher = new TemplateMatching(tmStep.Settings.TemplateMatchMode);
@@ -83,20 +81,24 @@ namespace TaskAutomation.Steps
                 executor.ImageToProcess = executor.CurrentImage.ToMat();
 
                 // Use the current offset directly for template matching
-                executor.TemplateMatchingResult = executor.TemplateMatcher.Detect(executor.ImageToProcess, executor.CurrentOffset);
+                executor.DetectionResult = executor.TemplateMatcher.Detect(executor.ImageToProcess);
 
-                if (executor.TemplateMatchingResult.Success)
+                if (executor.DetectionResult.Success)
                 {
-                    executor.LatestCalculatedPoint = executor.TemplateMatchingResult.CenterPointOnDesktop;
+                    executor.LatestCalculatedPoint = ClassConverter.ToCv(
+                        ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
+                            executor.DetectionResult.CenterPoint,
+                            ClassConverter.ToDrawing(executor.CurrentOffset)
+                            )
+                        );
                     logger.LogInformation("TemplateMatchingStepHandler: Template matching successful at point ({X}, {Y}) with confidence {Confidence:F3}", 
-                        executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, executor.TemplateMatchingResult.Confidence);
+                        executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, executor.DetectionResult.Confidence);
                     
                     if (tmStep.Settings.DrawResults)
                     {
-                        executor.CurrentImageWithResult = DrawResult.DrawTemplateMatchingResult(
+                        executor.CurrentImageWithResult = DrawResult.DrawDetectionResult(
                             executor.ImageToProcess,
-                            executor.TemplateMatchingResult,
-                            executor.TemplateMatchingResult.TemplateSize);
+                            executor.DetectionResult);
                         logger.LogDebug("TemplateMatchingStepHandler: Results drawn on image");
                     }
                 }

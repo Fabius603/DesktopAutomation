@@ -42,6 +42,7 @@ namespace ImageDetection.YOLO
         private readonly YoloManagerOptions _opt;
         private readonly ILabelProvider _labels;
 
+
         private readonly ConcurrentDictionary<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>> _cache
             = new();
 
@@ -66,6 +67,16 @@ namespace ImageDetection.YOLO
         public async Task EnsureModelAsync(string modelKey, CancellationToken ct = default)
         {
             await GetOrCreateAsync(modelKey, ct).ConfigureAwait(false);
+        }
+
+        public bool HasSession(string modelKey)
+        {
+            if (_cache.TryGetValue(modelKey, out var lazy) && lazy.IsValueCreated)
+            {
+                var task = lazy.Value;
+                return task.IsCompletedSuccessfully && task.Result.session != null;
+            }
+            return false;
         }
 
         private Task<InferenceSession> CreateSessionAsync(YOLOModel model, CancellationToken ct)
@@ -123,12 +134,12 @@ namespace ImageDetection.YOLO
             // Input-Name ermitteln (zur Sicherheit)
             var inputName = session.InputMetadata.Keys.First(); // meist "images"
             var classId = IndexOfLabel(labels, objectName);
-            if (classId < 0) return new YoloDetectionResult { Success = false };
+            if (classId < 0) return new DetectionResult { Success = false };
 
             // ROI clampen + Crop
             var full = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var useRoi = roi.HasValue ? Rectangle.Intersect(roi.Value, full) : full;
-            if (useRoi.Width <= 0 || useRoi.Height <= 0) return new YoloDetectionResult { Success = false };
+            if (useRoi.Width <= 0 || useRoi.Height <= 0) return new DetectionResult { Success = false };
             using var crop = bitmap.Clone(useRoi, bitmap.PixelFormat);
 
             // Preprocessing
@@ -150,19 +161,17 @@ namespace ImageDetection.YOLO
                 roiOffsetInImage: useRoi.Location,
                 requiredClassId: classId);
 
-            if (dets.Count == 0) return new YoloDetectionResult { Success = false };
+            if (dets.Count == 0) return new DetectionResult { Success = false };
 
             var best = dets.OrderByDescending(d => d.Confidence).First();
             // Desktop-Koordinate: ohne globalen Offset == identisch zur Bildkoordinate
             // (falls du den globalen Offset kennst, addierst du ihn hier drauf)
-            return new YoloDetectionResult
+            return new DetectionResult
             {
                 Success = true,
-                Label = labels[classId],
                 Confidence = best.Confidence,
                 BoundingBox = Rectangle.Round(best.BoundingBox!.Value),
-                CenterPointInImage = best.CenterPointInImage,
-                CenterPointOnDesktop = best.CenterPointInImage
+                CenterPoint = best.CenterPoint,
             };
         }
 
@@ -270,7 +279,7 @@ namespace ImageDetection.YOLO
             return (chw, num, attrs);
         }
 
-        private List<YoloDetectionResult> DecodeDetections(
+        private List<IDetectionResult> DecodeDetections(
             Tensor<float> oTensor,
             bool isCHW,
             int num,              // Anzahl Kandidaten
@@ -341,21 +350,19 @@ namespace ImageDetection.YOLO
             var kept = Nms(raw, _opt.NmsIou);
 
             // Map auf IDetectionResult
-            var list = new List<YoloDetectionResult>(kept.Count);
+            var list = new List<IDetectionResult>(kept.Count);
             foreach (var d in kept)
             {
                 var center = new Point(
                     (int)Math.Round(d.box.X + d.box.Width / 2f),
                     (int)Math.Round(d.box.Y + d.box.Height / 2f));
 
-                list.Add(new YoloDetectionResult
+                list.Add(new DetectionResult
                 {
                     Success = true,
-                    Label = requiredClassId.ToString(), // kannst du außerhalb durch echten Namen ersetzen
                     Confidence = d.conf,
                     BoundingBox = Rectangle.Round(d.box),
-                    CenterPointInImage = center,
-                    CenterPointOnDesktop = center
+                    CenterPoint = center,
                 });
             }
             return list;
@@ -426,6 +433,27 @@ namespace ImageDetection.YOLO
                 }
             }
             GC.SuppressFinalize(this);
+        }
+
+        public bool UnloadModel(string modelKey)
+        {
+            if (_cache.TryRemove(modelKey, out var lazy) && lazy.IsValueCreated)
+            {
+                try
+                {
+                    var task = lazy.Value;
+                    if (task.IsCompletedSuccessfully)
+                    {
+                        task.Result.session.Dispose();
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // optional: loggen
+                }
+            }
+            return false;
         }
 
         public ValueTask DisposeAsync()

@@ -64,7 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\DesktopOverlay\DesktopOverlay.csproj" />
-    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMehods.csproj" />
+    <ProjectReference Include="..\ImageHelperMehods\ImageHelperMethods.csproj" />
   </ItemGroup>
 
 </Project>

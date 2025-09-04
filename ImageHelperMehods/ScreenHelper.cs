@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Drawing;
@@ -6,7 +6,6 @@ using OpenCvSharp;
 using SharpDX.DXGI;
 using SharpDX.Direct3D11;
 using Device = SharpDX.Direct3D11.Device;
-using ImageHelperMethods;
 using System.Windows.Forms;
 using System.Linq;
 
@@ -303,6 +302,17 @@ namespace ImageHelperMethods
             }
         }
 
+        public static System.Drawing.Point ConvertResultToGlobalDesktopCoordinates(System.Drawing.Point localPoint, System.Drawing.Point globalOffset)
+        {
+            if (localPoint == null)
+                throw new ArgumentNullException(nameof(localPoint));
+
+            // Convert local image coordinates to global desktop coordinates
+            // This ensures compatibility with ScreenHelper.GetScreens() coordinate system
+            return new System.Drawing.Point(
+                localPoint.X + globalOffset.X,
+                localPoint.Y + globalOffset.Y);
+        }
 
         public static int FindOutputIndexForWindow(Rectangle windowRect, int adapterIdx, DxgiResources dxgi)
         {
