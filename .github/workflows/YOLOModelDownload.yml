@@ -126,6 +126,7 @@ jobs:
       - name: Create Pull Request for manifest update
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.ONNX_Export_Token }}
           commit-message: "chore(manifest): update ${{ github.event.inputs.model_key }}"
           title: "Manifest: ${{ github.event.inputs.model_key }} → models-${{ github.run_number }}"
           body: |
