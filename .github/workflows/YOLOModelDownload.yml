@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       model_url:
-        description: "PT-Download-URL (z. B. https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt)"
+        description: "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8n.pt"
         required: true
       model_key:
-        description: "Schlüssel im Manifest (z. B. yolov8n)"
+        description: "yolov8n"
         required: true
       imgsz:
-        description: "Bildgröße (z. B. 640)"
+        description: "640"
         required: false
         default: "640"
       opset:
