@@ -22,7 +22,8 @@ jobs:
 
     permissions:
       contents: write   # für Release & Commit
-
+      pull-requests: write
+  
     steps:
       - uses: actions/checkout@v4
         with:
