@@ -1,1 +1,7 @@
-{}
+{
+  "yolov8n": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-5/yolov8n.onnx",
+    "sha256": "6576e8064243569e8bb442d824a1314f782174a41ee6321318c8de6827a25886",
+    "size": 12823619
+  }
+}
