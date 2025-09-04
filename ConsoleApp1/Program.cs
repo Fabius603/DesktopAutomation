@@ -21,7 +21,6 @@ using ImageDetection.YOLO;
 
 class Program
 {
-    [STAThread]
     static async Task Main(string[] args)
     {
         var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
