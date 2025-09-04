@@ -8,8 +8,8 @@ namespace ImageDetection.Model
 {
     public enum ModelDownloadStatus
     {
+        NotStarted,
         Completed,
-        DownloadingPt,
-        ConvertingToOnnx,
+        DownloadingOnnx,
     }
 }
