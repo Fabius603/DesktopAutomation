@@ -1,9 +1,10 @@
 name: Build YOLO ONNX
+
 on:
   workflow_dispatch:
     inputs:
       model_url:
-        description: "PT Download-URL"
+        description: "PT Download-URL (z.B. https://.../yolov8n.pt)"
         required: true
       model_key:
         description: "Kurzname fürs Manifest (z.B. yolov8n)"
@@ -24,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -32,40 +35,59 @@ jobs:
 
       - name: Install deps (CPU-only)
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
-          pip install ultralytics onnx onnxsim
+          pip install "ultralytics>=8.0.0" onnx onnxsim
 
       - name: Download .pt
         run: |
-          curl -L "${{ github.event.inputs.model_url }}" -o model.pt
+          set -euo pipefail
+          curl -fL "${{ github.event.inputs.model_url }}" -o model.pt
+          ls -lah
 
-      - name: Export to ONNX
+      - name: Export to ONNX (Ultralytics)
         env:
           IMGSZ: ${{ github.event.inputs.imgsz }}
           OPSET: ${{ github.event.inputs.opset }}
         run: |
+          set -euo pipefail
           python - << 'PY'
-          import os
+          import os, sys
           from ultralytics import YOLO
           imgsz = int(os.environ.get("IMGSZ","640"))
           opset = int(os.environ.get("OPSET","12"))
+          print(f"[info] ultralytics version:", YOLO.__module__)
           m = YOLO("model.pt")
-          m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
+          # Export in definierten Ordner
+          r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
+          print("[info] export result:", r)
           PY
+          echo "[debug] Inhalt von runs/:"
+          find runs -maxdepth 3 -type f -printf "%p (%s bytes)\n" || true
 
       - name: Find ONNX and compute SHA256
         id: meta
         run: |
-          ONNX=$(find runs/export -name "*.onnx" -type f | head -n1)
-          test -f "$ONNX"
+          set -euo pipefail
+          # Bevorzugt im erwarteten Ordner suchen …
+          ONNX=$(find runs/export -name "*.onnx" -type f | head -n1 || true)
+          # … sonst im ganzen Repo fallback
+          if [ -z "${ONNX}" ]; then
+            ONNX=$(find . -name "*.onnx" -type f | head -n1 || true)
+          fi
+          if [ -z "${ONNX}" ]; then
+            echo "::error::Keine .onnx-Datei gefunden. Prüfe Export-Logs oben."
+            exit 1
+          fi
+          echo "[info] Gefundene ONNX: ${ONNX}"
           KEY="${{ github.event.inputs.model_key }}"
           TARGET="${KEY}.onnx"
           cp "$ONNX" "$TARGET"
           SIZE=$(stat -c%s "$TARGET")
           SHA=$(sha256sum "$TARGET" | cut -d ' ' -f1)
-          echo "file=$TARGET" >> $GITHUB_OUTPUT
-          echo "size=$SIZE" >> $GITHUB_OUTPUT
-          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "file=$TARGET"   >> $GITHUB_OUTPUT
+          echo "size=$SIZE"     >> $GITHUB_OUTPUT
+          echo "sha256=$SHA"    >> $GITHUB_OUTPUT
 
       - name: Create/Update Release and upload asset
         uses: softprops/action-gh-release@v2
@@ -76,25 +98,40 @@ jobs:
           prerelease: false
           files: ${{ steps.meta.outputs.file }}
 
+      - name: Install jq (JSON tool)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
       - name: Update manifest (yolo-models.json)
         env:
-          KEY: ${{ github.event.inputs.model_key }}
-          SIZE: ${{ steps.meta.outputs.size }}
-          SHA: ${{ steps.meta.outputs.sha256 }}
-          REPO: ${{ github.repository }}
-          RUNNUM: ${{ github.run_number }}
+          KEY:   ${{ github.event.inputs.model_key }}
+          SIZE:  ${{ steps.meta.outputs.size }}
+          SHA:   ${{ steps.meta.outputs.sha256 }}
+          REPO:  ${{ github.repository }}
+          RUN:   ${{ github.run_number }}
         run: |
-          URL="https://github.com/${REPO}/releases/download/models-${RUNNUM}/${KEY}.onnx"
+          set -euo pipefail
+          URL="https://github.com/${REPO}/releases/download/models-${RUN}/${KEY}.onnx"
+          test -f yolo-models.json || echo "{}" > yolo-models.json
           tmp=$(mktemp)
-          if [ ! -f yolo-models.json ]; then echo "{}" > yolo-models.json; fi
-          cat yolo-models.json | jq --arg key "$KEY" --arg url "$URL" --arg sha "$SHA" --argjson size "$SIZE" \
-            '.[$key] = {url: $url, sha256: $sha, size: $size}' > "$tmp"
+          jq --arg key "$KEY" --arg url "$URL" --arg sha "$SHA" --argjson size "$SIZE" \
+             '.[$key] = {url: $url, sha256: $sha, size: $size}' yolo-models.json > "$tmp"
           mv "$tmp" yolo-models.json
+          echo "[info] Manifest aktualisiert:"
+          cat yolo-models.json
 
-      - name: Commit manifest
+      - name: Commit manifest to main
         run: |
+          set -euo pipefail
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
           git add yolo-models.json
+          if git diff --cached --quiet; then
+            echo "Manifest unverändert – kein Commit nötig."
+            exit 0
+          fi
           git commit -m "Update manifest for ${{ github.event.inputs.model_key }}"
-          git push
+          # optional: immer nach main pushen (egal von wo getriggert)
+          git push origin HEAD:main
