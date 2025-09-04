@@ -114,15 +114,21 @@ jobs:
           RUN:   ${{ github.run_number }}
         run: |
           set -euo pipefail
+          MANIFEST="ImageDetection/YOLO/Resources/yolo-models.json"
           URL="https://github.com/${REPO}/releases/download/models-${RUN}/${KEY}.onnx"
-          test -f yolo-models.json || echo "{}" > yolo-models.json
+      
+          # Ordner sicherstellen, leere JSON ggf. anlegen
+          mkdir -p "$(dirname "$MANIFEST")"
+          [ -f "$MANIFEST" ] || echo '{}' > "$MANIFEST"
+      
           tmp=$(mktemp)
           jq --arg key "$KEY" --arg url "$URL" --arg sha "$SHA" --argjson size "$SIZE" \
-             '.[$key] = {url: $url, sha256: $sha, size: $size}' yolo-models.json > "$tmp"
-          mv "$tmp" yolo-models.json
+             '.[$key] = {url: $url, sha256: $sha, size: $size}' "$MANIFEST" > "$tmp"
+          mv "$tmp" "$MANIFEST"
+      
           echo "[info] Manifest aktualisiert:"
-          cat yolo-models.json
-
+          cat "$MANIFEST"
+      
       - name: Create Pull Request for manifest update
         uses: peter-evans/create-pull-request@v6
         with:
@@ -138,7 +144,7 @@ jobs:
           branch: "ci/manifest-${{ github.event.inputs.model_key }}-${{ github.run_number }}"
           base: ${{ github.event.repository.default_branch }}
           add-paths: |
-            yolo-models.json
+            ImageDetection/YOLO/Resources/yolo-models.json
           labels: |
             ci
             manifest
