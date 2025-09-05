@@ -1,5 +1,4 @@
 name: Build YOLO ONNX
-run-name: "Build YOLO ONNX – ${{ inputs.model_key || 'manual' }}"
 
 on:
   workflow_dispatch:
@@ -18,26 +17,21 @@ on:
         default: "12"
       display_name:
         description: "Anzeigename (z.B. YOLOv8 Nano)"
+        required: false
         default: ""
       description:
         description: "Kurzbeschreibung fürs UI"
-        default: ""
-      ultralytics_spec:
-        description: "Ultralytics Version/Fork (pip specifier)"
-        default: "ultralytics>=8.0.0"
-      advanced_opts:
-        description: "Optional: key=value (je Zeile). Keys: torch_spec, extra_pip, pickle_alias_from, pickle_alias_to"
+        required: false
         default: ""
 
 jobs:
   export-onnx:
-    name: "Export ${{ inputs.model_key }} to ONNX"
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write   # für Release & Commit
       pull-requests: write
-
+  
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,120 +42,32 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Parse advanced options
-        id: adv
-        run: |
-          set -euo pipefail
-
-          # Datei mit den advanced_opts anlegen (mehrzeilig möglich)
-          cat > adv_opts.txt << 'EOF'
-          ${{ github.event.inputs.advanced_opts }}
-          EOF
-
-          TORCH_SPEC=""
-          EXTRA_PIP=""
-          PICKLE_FROM=""
-          PICKLE_TO="DetectionModel"  # Default
-
-          while IFS= read -r line; do
-            # Leerzeilen/Kommentare überspringen
-            [ -z "${line// }" ] && continue
-            case "$line" in \#*) continue ;; esac
-
-            # key=value (nur erstes '=' trennt; Werte können '==' enthalten)
-            key="${line%%=*}"
-            val="${line#*=}"
-            key="$(echo "$key" | xargs)"   # trim
-            val="$(echo "$val" | xargs)"   # trim
-            [ -z "$key" ] && continue
-
-            case "$key" in
-              torch_spec)         TORCH_SPEC="$val" ;;
-              extra_pip)          EXTRA_PIP="$val" ;;
-              pickle_alias_from)  PICKLE_FROM="$val" ;;
-              pickle_alias_to)    PICKLE_TO="$val" ;;
-              *) echo "::notice::Unbekannte Option in advanced_opts ignoriert: $key" ;;
-            esac
-          done < adv_opts.txt
-
-          {
-            echo "TORCH_SPEC=$TORCH_SPEC"
-            echo "EXTRA_PIP=$EXTRA_PIP"
-            echo "PICKLE_ALIAS_FROM=$PICKLE_FROM"
-            echo "PICKLE_ALIAS_TO=$PICKLE_TO"
-          } >> "$GITHUB_ENV"
-
-          echo "[info] Parsed advanced opts:"
-          echo "  TORCH_SPEC=$TORCH_SPEC"
-          echo "  EXTRA_PIP=$EXTRA_PIP"
-          echo "  PICKLE_ALIAS_FROM=$PICKLE_FROM"
-          echo "  PICKLE_ALIAS_TO=$PICKLE_TO"
-
       - name: Install deps (CPU-only)
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip wheel
-
-          if [ -n "${TORCH_SPEC:-}" ]; then
-            echo "[info] Installing torch: ${TORCH_SPEC}"
-            pip install "${TORCH_SPEC}"
-          fi
-
-          echo "[info] Installing ultralytics: ${{ github.event.inputs.ultralytics_spec }}"
-          pip install "${{ github.event.inputs.ultralytics_spec }}" onnx onnxsim
-
-          if [ -n "${EXTRA_PIP:-}" ]; then
-            echo "[info] Installing extra packages: ${EXTRA_PIP}"
-            pip install ${EXTRA_PIP}
-          fi
-
-          echo "[info] Versions:"
-          python - << 'PY'
-          import sys, importlib
-          def show(n):
-              try:
-                  m=importlib.import_module(n)
-                  print(f"{n}: {getattr(m,'__version__',None)}")
-              except Exception as e:
-                  print(f"{n}: <not installed> ({e})")
-          for n in ["torch","ultralytics","onnx","onnxsim"]:
-              show(n)
-          print("python:", sys.version)
-          PY
+          python -m pip install --upgrade pip
+          pip install "ultralytics>=8.0.0" onnx onnxsim
 
       - name: Download .pt
         run: |
           set -euo pipefail
           curl -fL "${{ github.event.inputs.model_url }}" -o model.pt
-          ls -lah model.pt
+          ls -lah
 
       - name: Export to ONNX (Ultralytics)
         env:
-          IMGSZ:             ${{ github.event.inputs.imgsz }}
-          OPSET:             ${{ github.event.inputs.opset }}
-          PICKLE_ALIAS_FROM: ${{ env.PICKLE_ALIAS_FROM }}
-          PICKLE_ALIAS_TO:   ${{ env.PICKLE_ALIAS_TO }}
+          IMGSZ: ${{ github.event.inputs.imgsz }}
+          OPSET: ${{ github.event.inputs.opset }}
         run: |
           set -euo pipefail
           python - << 'PY'
-          import os
+          import os, sys
           from ultralytics import YOLO
-
-          alias_from = os.environ.get("PICKLE_ALIAS_FROM","").strip()
-          alias_to   = os.environ.get("PICKLE_ALIAS_TO","DetectionModel").strip() or "DetectionModel"
-          if alias_from:
-              print(f"[warn] Applying pickle alias: {alias_from} -> {alias_to}")
-              import ultralytics.nn.tasks as tasks
-              target = getattr(tasks, alias_to, None)
-              if target is None:
-                  raise RuntimeError(f"Zielklasse '{alias_to}' existiert nicht in ultralytics.nn.tasks")
-              setattr(tasks, alias_from, target)
-
           imgsz = int(os.environ.get("IMGSZ","640"))
           opset = int(os.environ.get("OPSET","12"))
-          print("[info] Lade Modell…")
+          print(f"[info] ultralytics version:", YOLO.__module__)
           m = YOLO("model.pt")
-          print("[info] Export…")
+          # Export in definierten Ordner
           r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
           print("[info] export result:", r)
           PY
@@ -172,7 +78,9 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
+          # Bevorzugt im erwarteten Ordner suchen …
           ONNX=$(find runs/export -name "*.onnx" -type f | head -n1 || true)
+          # … sonst im ganzen Repo fallback
           if [ -z "${ONNX}" ]; then
             ONNX=$(find . -name "*.onnx" -type f | head -n1 || true)
           fi
@@ -241,7 +149,7 @@ jobs:
 
           echo "[info] Manifest aktualisiert:"
           cat "$MANIFEST"
-
+      
       - name: Create Pull Request for manifest update
         uses: peter-evans/create-pull-request@v6
         with:
