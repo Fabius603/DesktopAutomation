@@ -1,4 +1,5 @@
 name: Build YOLO ONNX
+run-name: "Build YOLO ONNX – ${{ inputs.model_key || 'manual' }}"
 
 on:
   workflow_dispatch:
@@ -17,36 +18,30 @@ on:
         default: "12"
       display_name:
         description: "Anzeigename (z.B. YOLOv8 Nano)"
-        required: false
         default: ""
       description:
         description: "Kurzbeschreibung fürs UI"
-        required: false
         default: ""
       ultralytics_spec:
         description: "Ultralytics Version/Fork (pip specifier)"
-        required: false
         default: "ultralytics>=8.0.0"
       torch_spec:
         description: "Torch Version (optional)"
-        required: false
         default: ""
       extra_pip:
         description: "Weitere Pakete (optional)"
-        required: false
         default: ""
       pickle_alias_from:
         description: "OPTIONAL: unbekannte Pickle-Klasse (z.B. HumanModel)"
-        required: false
         default: ""
       pickle_alias_to:
-        description: "OPTIONAL: Zielklasse in ultralytics.nn.tasks (z.B. DetectionModel)"
-        required: false
+        description: "OPTIONAL: Zielklasse (z.B. DetectionModel)"
         default: "DetectionModel"
 
 
 jobs:
   export-onnx:
+    name: "Export ${{ inputs.model_key }} to ONNX"
     runs-on: ubuntu-latest
 
     permissions:
