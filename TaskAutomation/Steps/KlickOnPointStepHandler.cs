@@ -31,9 +31,9 @@ namespace TaskAutomation.Steps
                 // Check if we have a valid point
                 if (jobExecutor.LatestCalculatedPoint == null)
                 {
-                    var errorMessage = "No valid point available for clicking - point not set by previous steps";
-                    logger.LogWarning("KlickOnPointStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
+                    var infoMessage = "No valid point available for clicking - point not set by previous steps";
+                    logger.LogInformation("KlickOnPointStepHandler: {InfoMessage}", infoMessage);
+                    return true;
                 }
 
                 // Use the step's unique ID as dictionary key
