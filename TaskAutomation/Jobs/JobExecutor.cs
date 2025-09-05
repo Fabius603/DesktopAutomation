@@ -25,6 +25,7 @@ using TaskAutomation.Orchestration;
 using Common.JsonRepository;
 using ImageDetection.Model;
 using ImageDetection.YOLO;
+using TaskAutomation.Events;
 
 namespace TaskAutomation.Jobs
 {
@@ -34,6 +35,7 @@ namespace TaskAutomation.Jobs
         private readonly IJsonRepository<Job> _jobRepository;
         private readonly IJsonRepository<Makro> _makroRepository;
         private readonly IRecordingIndicatorOverlay _recordingOverlay;
+        private readonly IImageDisplayService _imageDisplayService;
 
         // Event für allgemeine Job Fehler
         public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
@@ -181,6 +183,8 @@ namespace TaskAutomation.Jobs
 
         public Dictionary<string, DateTime> StepTimeouts => _stepTimeouts;
 
+        public IImageDisplayService ImageDisplayService => _imageDisplayService;
+
         public ILogger Logger => _logger;
 
         public JobExecutor(
@@ -190,7 +194,8 @@ namespace TaskAutomation.Jobs
             IMakroExecutor makroExecutor,
             IScriptExecutor scriptExecutor,
             IRecordingIndicatorOverlay recordingOverlay,
-            IYoloManager yoloManager)
+            IYoloManager yoloManager,
+            IImageDisplayService imageDisplayService)
         {
             _logger = logger;
             _jobRepository = jobRepo;
@@ -199,6 +204,7 @@ namespace TaskAutomation.Jobs
             _recordingOverlay = recordingOverlay;
             _scriptExecutor = scriptExecutor;
             _yoloManager = yoloManager;
+            _imageDisplayService = imageDisplayService;
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();

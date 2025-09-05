@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using OpenCvSharp.Extensions;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Events;
 
 namespace TaskAutomation.Steps
 {
@@ -35,24 +36,11 @@ namespace TaskAutomation.Steps
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                void ShowBitmapImage(Bitmap bitmap, string name)
-                {
-                    var mat = bitmap.ToMat();
-                    ShowMatImage(mat, name);
-                }
-
-                void ShowMatImage(Mat mat, string name)
-                {
-                    Cv2.Resize(mat, mat, new OpenCvSharp.Size(), 0.5, 0.5);
-                    Cv2.ImShow(name, mat);
-                    Cv2.WaitKey(1);
-                }
-
                 if (siStep.Settings.ShowRawImage)
                 {
                     string windowName = $"{siStep.Settings.WindowName} - Raw Image";
-                    ShowBitmapImage(executor.CurrentImage, windowName);
-                    logger.LogDebug("ShowImageStepHandler: Displayed raw image in window '{WindowName}'", windowName);
+                    executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImage, ImageDisplayType.Raw);
+                    logger.LogDebug("ShowImageStepHandler: Requested display of raw image in window '{WindowName}'", windowName);
                 }
                 
                 if (siStep.Settings.ShowProcessedImage)
@@ -63,15 +51,16 @@ namespace TaskAutomation.Steps
                         executor.CurrentImageWithResult.Height >= 10 &&
                         executor.CurrentImageWithResult.Width >= 10)
                     {
-                        ShowMatImage(executor.CurrentImageWithResult, windowName);
-                        logger.LogDebug("ShowImageStepHandler: Displayed processed image in window '{WindowName}'", windowName);
+                        using var processedBitmap = executor.CurrentImageWithResult.ToBitmap();
+                        executor.ImageDisplayService.DisplayImage(windowName, processedBitmap, ImageDisplayType.Processed);
+                        logger.LogDebug("ShowImageStepHandler: Requested display of processed image in window '{WindowName}'", windowName);
                     }
                     else
                     {
                         if (executor.CurrentImage != null)
                         {
-                            ShowBitmapImage(executor.CurrentImage, windowName);
-                            logger.LogDebug("ShowImageStepHandler: Displayed raw image as processed image in window '{WindowName}' (processed image not available)", windowName);
+                            executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImage, ImageDisplayType.Raw);
+                            logger.LogDebug("ShowImageStepHandler: Requested display of raw image as processed image in window '{WindowName}' (processed image not available)", windowName);
                         }
                     }
                 }

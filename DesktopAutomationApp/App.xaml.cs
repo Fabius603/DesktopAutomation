@@ -23,6 +23,7 @@ using TaskAutomation.Scripts;
 using DesktopAutomationApp.Services;
 using ImageDetection.YOLO;
 using ImageDetection.Model;
+using TaskAutomation.Events;
 
 namespace DesktopAutomationApp
 {
@@ -76,6 +77,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ILabelProvider, LabelProvider>();
                     services.AddSingleton(new YoloManagerOptions());
                     services.AddSingleton<IYoloManager, YoloManager>();
+                    services.AddSingleton<IImageDisplayService, ImageDisplayService>();
 
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();

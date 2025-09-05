@@ -15,6 +15,7 @@ using TaskAutomation.Orchestration;
 using TaskAutomation.Scripts;
 using ImageDetection.Model;
 using ImageDetection.YOLO;
+using TaskAutomation.Events;
 
 namespace TaskAutomation.Jobs
 {
@@ -65,6 +66,7 @@ namespace TaskAutomation.Jobs
         // Aktionen
         TaskAutomation.Makros.IMakroExecutor MakroExecutor { get; }
         IScriptExecutor ScriptExecutor { get; }
+        IImageDisplayService ImageDisplayService { get; }
 
         void StartRecordingOverlay(RecordingIndicatorOptions? options = null);
         void StopRecordingOverlay();

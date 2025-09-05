@@ -15,7 +15,7 @@ using ImageDetection.YOLO;         // dein YOLOModelDownloader
 
 namespace ImageDetection.YOLO
 {
-    public enum YoloGpuBackend { Cpu, DirectML, Cuda }
+    public enum YoloGpuBackend { Cpu, DirectML, Cuda, Auto }
 
     /// <summary>
     /// Default: erwartet eine Textdatei &lt;modelKey&gt;.labels.txt neben dem ONNX (eine Klasse pro Zeile).
@@ -57,6 +57,21 @@ namespace ImageDetection.YOLO
             _logger = logger;
             _opt = options ?? new YoloManagerOptions();
             _labels = labelProvider ?? new LabelProvider();
+
+            // Log verfügbare Execution Provider beim Start
+            var providers = new List<string> { "CPU" };
+            if (IsCudaAvailable()) providers.Add("CUDA");
+            if (IsDirectMLAvailable()) providers.Add("DirectML");
+            
+            _logger.LogInformation("Available ONNX Runtime Execution Providers: {Providers}", 
+                string.Join(", ", providers));
+            
+            // Automatische Backend-Auswahl falls Auto gewählt
+            if (_opt.GpuBackend == YoloGpuBackend.Auto)
+            {
+                var recommended = GetRecommendedBackend();
+                _logger.LogInformation("Auto backend selection: using {Backend}", recommended);
+            }
 
             // Progress vom Downloader nach außen weiterreichen
             _downloader.DownloadProgressChanged += (sender, e)
@@ -145,52 +160,95 @@ namespace ImageDetection.YOLO
                     return CreateWith(soCpu, "CPUExecutionProvider");
                 }
 
-                Exception? lastError = null;
-
-                // 1) CUDA versuchen
-                try
+                // Auto-Modus: Empfohlenes Backend verwenden
+                var targetBackend = _opt.GpuBackend;
+                if (targetBackend == YoloGpuBackend.Auto)
                 {
-        #if WINDOWS
-                    var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
-                    soCuda.AppendExecutionProvider_CUDA(); // benötigt Microsoft.ML.OnnxRuntime.Gpu + CUDA Runtime
-                    _logger.LogInformation("Trying CUDAExecutionProvider...");
-                    return CreateWith(soCuda, "CUDAExecutionProvider");
-        #else
-                    _logger.LogInformation("CUDA not supported on this platform; skipping.");
-        #endif
-                }
-                catch (Exception ex)
-                {
-                    lastError = ex;
-                    _logger.LogWarning(ex, "CUDA EP not available – trying DirectML next.");
+                    targetBackend = GetRecommendedBackend();
                 }
 
-                // 2) DirectML versuchen
-                try
+                Exception? lastCudaError = null;
+                Exception? lastDirectMLError = null;
+
+                // 1) CUDA versuchen (bei Auto/Cuda und wenn verfügbar)
+                if ((targetBackend == YoloGpuBackend.Cuda || targetBackend == YoloGpuBackend.Auto) &&
+                    IsCudaAvailable())
                 {
-                    var soDml = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
-                    soDml.AppendExecutionProvider_DML(); // benötigt Microsoft.ML.OnnxRuntime.DirectML
-                    _logger.LogInformation("Trying DmlExecutionProvider...");
-                    return CreateWith(soDml, "DmlExecutionProvider");
+                    try
+                    {
+                        var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                        soCuda.AppendExecutionProvider_CUDA();
+                        _logger.LogInformation("Using CUDAExecutionProvider (detected as available)");
+                        return CreateWith(soCuda, "CUDAExecutionProvider");
+                    }
+                    catch (Exception ex)
+                    {
+                        lastCudaError = ex;
+                        _logger.LogWarning(ex, "CUDA EP failed despite being detected as available");
+                    }
                 }
-                catch (Exception ex)
+                else if (targetBackend == YoloGpuBackend.Cuda)
                 {
-                    lastError = ex;
-                    _logger.LogWarning(ex, "DirectML EP not available – falling back to CPU.");
+                    _logger.LogWarning("CUDA requested but not available on this system");
+                }
+
+                // 2) DirectML versuchen (bei Auto/DirectML und wenn verfügbar)
+                if ((targetBackend == YoloGpuBackend.DirectML || targetBackend == YoloGpuBackend.Auto) &&
+                    IsDirectMLAvailable())
+                {
+                    try
+                    {
+                        _logger.LogInformation("Using DirectML GPU acceleration");
+                        var session = DirectMLHelper.CreateDirectMLSession(model.OnnxPath, _opt.Optimization, _logger);
+                        _logger.LogInformation("DirectML session created successfully");
+                        return session;
+                    }
+                    catch (Exception ex)
+                    {
+                        lastDirectMLError = ex;
+                        _logger.LogWarning(ex, "DirectML failed, trying fallback options");
+                        
+                        // Versuche CUDA als Fallback für DirectML
+                        if (IsCudaAvailable() && lastCudaError == null)
+                        {
+                            try
+                            {
+                                _logger.LogInformation("Trying CUDA as fallback for DirectML failure");
+                                var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                                soCuda.AppendExecutionProvider_CUDA();
+                                return CreateWith(soCuda, "CUDAExecutionProvider (DirectML fallback)");
+                            }
+                            catch (Exception cudaFallbackEx)
+                            {
+                                _logger.LogWarning(cudaFallbackEx, "CUDA fallback also failed");
+                                lastCudaError = cudaFallbackEx;
+                            }
+                        }
+                    }
+                }
+                else if (targetBackend == YoloGpuBackend.DirectML)
+                {
+                    _logger.LogWarning("DirectML requested but not available on this system");
                 }
 
                 // 3) CPU (Fallback)
                 try
                 {
                     var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
-                    _logger.LogInformation("Using CPUExecutionProvider (fallback).");
+                    _logger.LogInformation("Using CPUExecutionProvider (fallback)");
                     return CreateWith(soCpu, "CPUExecutionProvider");
                 }
-                catch (Exception ex)
+                catch (Exception cpuEx)
                 {
+                    var allErrors = new List<Exception>();
+                    if (lastCudaError != null) allErrors.Add(lastCudaError);
+                    if (lastDirectMLError != null) allErrors.Add(lastDirectMLError);
+                    allErrors.Add(cpuEx);
+
                     throw new InvalidOperationException(
-                        "Konnte keine ONNX Runtime Session erstellen (CUDA/DML/CPU fehlgeschlagen).",
-                        new AggregateException(lastError, ex));
+                        "Konnte keine ONNX Runtime Session erstellen (alle Execution Provider fehlgeschlagen). " +
+                        "Bitte überprüfen Sie die Installation der ONNX Runtime.",
+                        new AggregateException(allErrors));
                 }
             }, ct);
         }
@@ -534,6 +592,44 @@ namespace ImageDetection.YOLO
         {
             Dispose();
             return ValueTask.CompletedTask;
+        }
+
+        // Einfache GPU-Backend-Erkennung
+        private static bool IsCudaAvailable()
+        {
+            try
+            {
+                using var options = new SessionOptions();
+                options.AppendExecutionProvider_CUDA();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsDirectMLAvailable()
+        {
+            try
+            {
+                using var options = new SessionOptions();
+                options.AppendExecutionProvider_DML();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static YoloGpuBackend GetRecommendedBackend()
+        {
+            if (IsCudaAvailable())
+                return YoloGpuBackend.Cuda;
+            if (IsDirectMLAvailable())
+                return YoloGpuBackend.DirectML;
+            return YoloGpuBackend.Cpu;
         }
     }
 }

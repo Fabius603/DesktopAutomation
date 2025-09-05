@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AI.DirectML" Version="1.15.4" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.22.1" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.22.1" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.19.2" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.19.2" />
     <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.Extensions" Version="4.11.0.20250507" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
@@ -30,5 +30,19 @@
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\ImageHelperMehods\ImageHelperMethods.csproj" />
   </ItemGroup>
+
+  <!-- Copy latest DirectML.dll to output directory -->
+  <Target Name="CopyDirectMLDll" AfterTargets="Build">
+    <PropertyGroup>
+      <DirectMLSourcePath>$(NuGetPackageRoot)microsoft.ai.directml\1.15.4\bin\x64-win\DirectML.dll</DirectMLSourcePath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(DirectMLSourcePath)" 
+          DestinationFolder="$(OutputPath)" 
+          Condition="Exists('$(DirectMLSourcePath)')" 
+          SkipUnchangedFiles="true" />
+    <Message Text="Copied latest DirectML.dll to output directory" 
+             Condition="Exists('$(DirectMLSourcePath)')" 
+             Importance="high" />
+  </Target>
 
 </Project>
