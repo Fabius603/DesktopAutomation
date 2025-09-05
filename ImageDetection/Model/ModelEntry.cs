@@ -17,7 +17,7 @@ namespace ImageDetection.Model
         public long Size { get; set; }
         [JsonPropertyName("description")]
         public string Description { get; set; } = "";
-        [JsonPropertyName("display_name")]
+        [JsonPropertyName("displayName")]
         public string DisplayName { get; set; } = "";
     }
 }
