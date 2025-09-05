@@ -129,41 +129,69 @@ namespace ImageDetection.YOLO
         {
             return Task.Run(() =>
             {
-                var so = new SessionOptions
+                // Helper zum Erstellen + Loggen
+                InferenceSession CreateWith(SessionOptions so, string label)
                 {
-                    GraphOptimizationLevel = _opt.Optimization
-                };
+                    var s = new InferenceSession(model.OnnxPath, so);
+                    _logger.LogInformation("ONNXRuntime: using {label}", label);
+                    return s;
+                }
 
+                // CPU direkt, falls ausdrücklich gewünscht
+                if (_opt.GpuBackend == YoloGpuBackend.Cpu)
+                {
+                    var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    _logger.LogInformation("CPU requested explicitly.");
+                    return CreateWith(soCpu, "CPUExecutionProvider");
+                }
+
+                Exception? lastError = null;
+
+                // 1) CUDA versuchen
                 try
                 {
-                    switch (_opt.GpuBackend)
-                    {
-                        case YoloGpuBackend.DirectML:
-                            so.AppendExecutionProvider_DML();
-                            _logger.LogInformation("Using DirectML execution provider.");
-                            break;
-
-                        case YoloGpuBackend.Cuda:
-#if WINDOWS
-                            so.AppendExecutionProvider_CUDA();
-                            _logger.LogInformation("Using CUDA execution provider.");
-#else
-                    _logger.LogWarning("CUDA backend requested but not supported on this platform. Falling back to CPU.");
-#endif
-                            break;
-
-                        case YoloGpuBackend.Cpu:
-                        default:
-                            _logger.LogInformation("Using CPU execution provider.");
-                            break;
-                    }
+        #if WINDOWS
+                    var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    soCuda.AppendExecutionProvider_CUDA(); // benötigt Microsoft.ML.OnnxRuntime.Gpu + CUDA Runtime
+                    _logger.LogInformation("Trying CUDAExecutionProvider...");
+                    return CreateWith(soCuda, "CUDAExecutionProvider");
+        #else
+                    _logger.LogInformation("CUDA not supported on this platform; skipping.");
+        #endif
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "GPU-Backend {backend} konnte nicht initialisiert werden – Fallback auf CPU.", _opt.GpuBackend);
+                    lastError = ex;
+                    _logger.LogWarning(ex, "CUDA EP not available – trying DirectML next.");
                 }
 
-                return new InferenceSession(model.OnnxPath, so);
+                // 2) DirectML versuchen
+                try
+                {
+                    var soDml = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    soDml.AppendExecutionProvider_DML(); // benötigt Microsoft.ML.OnnxRuntime.DirectML
+                    _logger.LogInformation("Trying DmlExecutionProvider...");
+                    return CreateWith(soDml, "DmlExecutionProvider");
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    _logger.LogWarning(ex, "DirectML EP not available – falling back to CPU.");
+                }
+
+                // 3) CPU (Fallback)
+                try
+                {
+                    var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    _logger.LogInformation("Using CPUExecutionProvider (fallback).");
+                    return CreateWith(soCpu, "CPUExecutionProvider");
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        "Konnte keine ONNX Runtime Session erstellen (CUDA/DML/CPU fehlgeschlagen).",
+                        new AggregateException(lastError, ex));
+                }
             }, ct);
         }
 

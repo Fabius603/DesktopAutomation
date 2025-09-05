@@ -17,6 +17,14 @@ namespace ImageDetection
 
             Scalar color = Scalar.LimeGreen;
             int thickness = 2;
+            int radius = 5;
+
+            if (result.CenterPoint != null)
+            {
+                // Mittelpunkt zeichnen
+                var center = new Point(result.CenterPoint.X, result.CenterPoint.Y);
+                Cv2.Circle(mat, center, radius, color, -1);
+            }
 
             if (result.BoundingBox.HasValue)
             {

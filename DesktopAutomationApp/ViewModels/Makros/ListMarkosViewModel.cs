@@ -189,7 +189,7 @@ namespace DesktopAutomationApp.ViewModels
             return newIdx >= 0 && newIdx < list.Count;
         }
 
-        private void MoveRelative(MakroBefehl? step, int delta)
+        private async void MoveRelative(MakroBefehl? step, int delta)
         {
             if (Selected?.Befehle == null || step == null) return;
             var list = Selected.Befehle;
@@ -203,9 +203,12 @@ namespace DesktopAutomationApp.ViewModels
             list.Insert(newIdx, step);
 
             SelectedStep = step;
+            
+            // Automatisch speichern nach Verschieben
+            await SaveAllAsync();
         }
 
-        private void EditStep(MakroBefehl? step)
+        private async void EditStep(MakroBefehl? step)
         {
             if (Selected?.Befehle == null || step == null) return;
 
@@ -234,6 +237,9 @@ namespace DesktopAutomationApp.ViewModels
             SelectedStep = vm.CreatedStep;
 
             CommandManager.InvalidateRequerySuggested();
+            
+            // Automatisch speichern nach Bearbeiten
+            await SaveAllAsync();
         }
 
         private async void LoadMakros()
@@ -335,7 +341,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // --- Step-Manipulation ---
-        private void MoveStep((int from, int to) args)
+        private async void MoveStep((int from, int to) args)
         {
             if (Selected?.Befehle == null) return;
             var list = Selected.Befehle;
@@ -344,13 +350,19 @@ namespace DesktopAutomationApp.ViewModels
             list.RemoveAt(args.from);
             list.Insert(args.to, item);
             OnPropertyChanged(nameof(SelectedSteps));
+            
+            // Automatisch speichern nach Verschieben
+            await SaveAllAsync();
         }
 
-        private void DeleteStep(MakroBefehl? step)
+        private async void DeleteStep(MakroBefehl? step)
         {
             if (Selected?.Befehle == null || step == null) return;
             Selected.Befehle.Remove(step);
             OnPropertyChanged(nameof(SelectedSteps));
+            
+            // Automatisch speichern nach Löschen
+            await SaveAllAsync();
         }
 
         private async Task DeleteSelectedAsync()
@@ -375,12 +387,15 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Makro gelöscht: {Name}", name);
         }
 
-        private void DuplicateStep(MakroBefehl? step)
+        private async void DuplicateStep(MakroBefehl? step)
         {
             if (Selected?.Befehle == null || step == null) return;
             var clone = CloneStep(step);
             Selected.Befehle.Add(clone);
             OnPropertyChanged(nameof(SelectedSteps));
+            
+            // Automatisch speichern nach Duplizieren
+            await SaveAllAsync();
         }
 
         private MakroBefehl CloneStep(MakroBefehl s)
@@ -458,6 +473,9 @@ namespace DesktopAutomationApp.ViewModels
                         SelectedStep = mapped.Last();
 
                     OnPropertyChanged(nameof(SelectedSteps));
+                    
+                    // Automatisch speichern nach Aufnahme
+                    await SaveAllAsync();
                 }
             }
             catch (Exception ex)
@@ -511,7 +529,7 @@ namespace DesktopAutomationApp.ViewModels
             return list;
         }
 
-        public void Dispose()
+        public new void Dispose()
         {
             StopPreview();
             _overlay?.Dispose();

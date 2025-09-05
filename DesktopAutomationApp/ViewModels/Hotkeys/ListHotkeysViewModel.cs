@@ -143,7 +143,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             // Eindeutigen Namen generieren
             var uniqueName = await GenerateUniqueHotkeyNameAsync("Neuer Hotkey");
-            
+            LoadJobs();
             var e = new EditableHotkey
             {
                 Name = uniqueName,
@@ -163,6 +163,7 @@ namespace DesktopAutomationApp.ViewModels
         private void EditHotkey()
         {
             if (Selected == null) return;
+            LoadJobs();
             _isNew = false;
             _snapshot = Selected.Clone();   // Snapshot für Cancel
             EditedHotkey = Selected;        // Edit am Original (Wrapper) → UI aktualisiert sofort

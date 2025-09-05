@@ -99,7 +99,7 @@ namespace DesktopAutomationApp.ViewModels
             return res == true;
         }
 
-        private void EditStep(JobStep? step = null)
+        private async void EditStep(JobStep? step = null)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
@@ -119,6 +119,9 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps[idx] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
+            
+            // Automatisch speichern nach Bearbeiten
+            await Save();
         }
 
         // ---------- Prefill: setzt alle benötigten Eigenschaften im Dialog-VM ----------
@@ -213,7 +216,7 @@ namespace DesktopAutomationApp.ViewModels
             return newIdx >= 0 && newIdx < _steps.Count;
         }
 
-        private void MoveRelative(JobStep? step, int delta)
+        private async void MoveRelative(JobStep? step, int delta)
         {
             if (!CanMoveRelative(step, delta) || step == null) return;
 
@@ -225,9 +228,12 @@ namespace DesktopAutomationApp.ViewModels
 
             SelectedStep = step;
             CommandManager.InvalidateRequerySuggested();
+            
+            // Automatisch speichern nach Verschieben
+            await Save();
         }
 
-        private void DeleteStep(JobStep? step)
+        private async void DeleteStep(JobStep? step)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
@@ -250,6 +256,9 @@ namespace DesktopAutomationApp.ViewModels
             _steps.RemoveAt(idx);
             SelectedStep = next;
             CommandManager.InvalidateRequerySuggested();
+            
+            // Automatisch speichern nach Löschen
+            await Save();
         }
     }
 }
