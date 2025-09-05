@@ -13,5 +13,12 @@
     "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-8/yolov8s.onnx",
     "sha256": "b52eff8937b456b2f1b6aa830f7bcde1e20dd2b57ca469e4a473ae766cff78e4",
     "size": 44842275
+  },
+  "yolov8m": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-9/yolov8m.onnx",
+    "sha256": "55cbb4908a349c0edd9922bdf25e3c64c6e98bd3b70edaae61c23434981913a1",
+    "size": 103790706,
+    "displayName": "YOLO Medium Standard",
+    "description": "YOLO Modell in der medium Größe. Besitz verschiedene alltäglichen Objekte"
   }
 }
