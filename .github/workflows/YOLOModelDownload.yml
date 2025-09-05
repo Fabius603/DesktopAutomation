@@ -24,19 +24,19 @@ on:
         required: false
         default: ""
       ultralytics_spec:
-        description: "pip-Spec für Ultralytics (z.B. ultralytics==8.3.0 oder git+https://...)"
+        description: "Ultralytics Version/Fork (pip specifier)"
         required: false
         default: "ultralytics>=8.0.0"
       torch_spec:
-        description: "OPTIONAL: pip-Spec für torch (z.B. torch==2.3.1)"
+        description: "Torch Version (pip specifier, optional)"
         required: false
         default: ""
       extra_pip:
-        description: "OPTIONAL: zusätzliche Pakete (mehrere Zeilen möglich)"
+        description: "Weitere Pakete (leer- oder zeilengetrennt, optional)"
         required: false
         default: ""
       pickle_alias_from:
-        description: "OPTIONAL: unbekannte Pickle-Klasse (z.B. HumanModel)"
+        description: "OPTIONAL: Unbekannte Pickle-Klasse (z.B. HumanModel)"
         required: false
         default: ""
       pickle_alias_to:
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write   # für Release & Commit
       pull-requests: write
   
     steps:
@@ -79,23 +79,17 @@ jobs:
           pip install "${ULTRALYTICS_SPEC}" onnx onnxsim
           if [ -n "${EXTRA_PIP}" ]; then
             echo "[info] Installing extra packages:"
-            printf "%s\n" "${EXTRA_PIP}"
-            # Mehrzeiliges Feld Zeile für Zeile an pip übergeben
-            while IFS= read -r line; do
-              [ -z "$line" ] && continue
-              pip install "$line"
-            done << 'EOF'
-          ${EXTRA_PIP}
-EOF
+            # sowohl leer- als auch zeilengetrennt unterstützen
+            echo "${EXTRA_PIP}" | tr '\n' ' ' | xargs -r pip install
           fi
           echo "[info] Versions:"
           python - << 'PY'
-import sys, pkgutil, importlib
+import sys, importlib
 def show(name):
     try:
         m = importlib.import_module(name)
         v = getattr(m, '__version__', None)
-        print(f"{name}:", v)
+        print(f"{name}: {v}")
     except Exception as e:
         print(f"{name}: <not installed> ({e})")
 for n in ["torch","ultralytics","onnx","onnxsim"]:
@@ -107,7 +101,7 @@ PY
         run: |
           set -euo pipefail
           curl -fL "${{ github.event.inputs.model_url }}" -o model.pt
-          ls -lah
+          ls -lah model.pt
 
       - name: Export to ONNX (Ultralytics)
         env:
@@ -120,7 +114,7 @@ PY
           python - << 'PY'
 import os
 from ultralytics import YOLO
-print("[info] ultralytics import ok")
+
 imgsz = int(os.environ.get("IMGSZ","640"))
 opset = int(os.environ.get("OPSET","12"))
 
@@ -135,6 +129,7 @@ if alias_from:
         raise RuntimeError(f"Zielklasse '{alias_to}' existiert nicht in ultralytics.nn.tasks")
     setattr(tasks, alias_from, target)
 
+print("[info] ultralytics:", YOLO.__module__)
 print("[info] Lade Modell…")
 m = YOLO("model.pt")
 print("[info] Export…")
@@ -149,6 +144,7 @@ PY
         run: |
           set -euo pipefail
           ONNX=$(find runs/export -name "*.onnx" -type f | head -n1 || true)
+          # Fallback: Gesamtes Repo durchsuchen
           if [ -z "${ONNX}" ]; then
             ONNX=$(find . -name "*.onnx" -type f | head -n1 || true)
           fi
