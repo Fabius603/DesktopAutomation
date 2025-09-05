@@ -23,13 +23,33 @@ on:
         description: "Kurzbeschreibung fürs UI"
         required: false
         default: ""
+      ultralytics_spec:
+        description: "pip-Spec für Ultralytics (z.B. ultralytics==8.3.0 oder git+https://...)"
+        required: false
+        default: "ultralytics>=8.0.0"
+      torch_spec:
+        description: "OPTIONAL: pip-Spec für torch (z.B. torch==2.3.1)"
+        required: false
+        default: ""
+      extra_pip:
+        description: "OPTIONAL: zusätzliche Pakete (mehrere Zeilen möglich)"
+        required: false
+        default: ""
+      pickle_alias_from:
+        description: "OPTIONAL: unbekannte Pickle-Klasse (z.B. HumanModel)"
+        required: false
+        default: ""
+      pickle_alias_to:
+        description: "OPTIONAL: Zielklasse in ultralytics.nn.tasks (z.B. DetectionModel)"
+        required: false
+        default: "DetectionModel"
 
 jobs:
   export-onnx:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write   # für Release & Commit
+      contents: write
       pull-requests: write
   
     steps:
@@ -41,12 +61,47 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
 
-      - name: Install deps (CPU-only)
+      - name: Install deps (CPU-only, version/fork-steuerbar)
+        env:
+          TORCH_SPEC:       ${{ github.event.inputs.torch_spec }}
+          ULTRALYTICS_SPEC: ${{ github.event.inputs.ultralytics_spec }}
+          EXTRA_PIP:        ${{ github.event.inputs.extra_pip }}
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip
-          pip install "ultralytics>=8.0.0" onnx onnxsim
+          python -m pip install --upgrade pip wheel
+          if [ -n "${TORCH_SPEC}" ]; then
+            echo "[info] Installing torch: ${TORCH_SPEC}"
+            pip install "${TORCH_SPEC}"
+          fi
+          echo "[info] Installing ultralytics: ${ULTRALYTICS_SPEC}"
+          pip install "${ULTRALYTICS_SPEC}" onnx onnxsim
+          if [ -n "${EXTRA_PIP}" ]; then
+            echo "[info] Installing extra packages:"
+            printf "%s\n" "${EXTRA_PIP}"
+            # Mehrzeiliges Feld Zeile für Zeile an pip übergeben
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              pip install "$line"
+            done << 'EOF'
+          ${EXTRA_PIP}
+EOF
+          fi
+          echo "[info] Versions:"
+          python - << 'PY'
+import sys, pkgutil, importlib
+def show(name):
+    try:
+        m = importlib.import_module(name)
+        v = getattr(m, '__version__', None)
+        print(f"{name}:", v)
+    except Exception as e:
+        print(f"{name}: <not installed> ({e})")
+for n in ["torch","ultralytics","onnx","onnxsim"]:
+    show(n)
+print("python:", sys.version)
+PY
 
       - name: Download .pt
         run: |
@@ -56,21 +111,36 @@ jobs:
 
       - name: Export to ONNX (Ultralytics)
         env:
-          IMGSZ: ${{ github.event.inputs.imgsz }}
-          OPSET: ${{ github.event.inputs.opset }}
+          IMGSZ:             ${{ github.event.inputs.imgsz }}
+          OPSET:             ${{ github.event.inputs.opset }}
+          PICKLE_ALIAS_FROM: ${{ github.event.inputs.pickle_alias_from }}
+          PICKLE_ALIAS_TO:   ${{ github.event.inputs.pickle_alias_to }}
         run: |
           set -euo pipefail
           python - << 'PY'
-          import os, sys
-          from ultralytics import YOLO
-          imgsz = int(os.environ.get("IMGSZ","640"))
-          opset = int(os.environ.get("OPSET","12"))
-          print(f"[info] ultralytics version:", YOLO.__module__)
-          m = YOLO("model.pt")
-          # Export in definierten Ordner
-          r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
-          print("[info] export result:", r)
-          PY
+import os
+from ultralytics import YOLO
+print("[info] ultralytics import ok")
+imgsz = int(os.environ.get("IMGSZ","640"))
+opset = int(os.environ.get("OPSET","12"))
+
+# Optionaler Pickle-Alias: z.B. mappe 'HumanModel' -> 'DetectionModel'
+alias_from = os.environ.get("PICKLE_ALIAS_FROM","").strip()
+alias_to   = os.environ.get("PICKLE_ALIAS_TO","DetectionModel").strip() or "DetectionModel"
+if alias_from:
+    print(f"[warn] Applying pickle alias: {alias_from} -> {alias_to}")
+    import ultralytics.nn.tasks as tasks
+    target = getattr(tasks, alias_to, None)
+    if target is None:
+        raise RuntimeError(f"Zielklasse '{alias_to}' existiert nicht in ultralytics.nn.tasks")
+    setattr(tasks, alias_from, target)
+
+print("[info] Lade Modell…")
+m = YOLO("model.pt")
+print("[info] Export…")
+r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
+print("[info] export result:", r)
+PY
           echo "[debug] Inhalt von runs/:"
           find runs -maxdepth 3 -type f -printf "%p (%s bytes)\n" || true
 
@@ -78,9 +148,7 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
-          # Bevorzugt im erwarteten Ordner suchen …
           ONNX=$(find runs/export -name "*.onnx" -type f | head -n1 || true)
-          # … sonst im ganzen Repo fallback
           if [ -z "${ONNX}" ]; then
             ONNX=$(find . -name "*.onnx" -type f | head -n1 || true)
           fi
