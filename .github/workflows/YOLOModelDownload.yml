@@ -28,13 +28,22 @@ on:
         required: false
         default: "ultralytics>=8.0.0"
       torch_spec:
-        description: "Torch Version (pip specifier, optional)"
+        description: "Torch Version (optional)"
         required: false
         default: ""
       extra_pip:
-        description: "Weitere Pakete, durch Leerzeichen getrennt (optional)"
+        description: "Weitere Pakete (optional)"
         required: false
         default: ""
+      pickle_alias_from:
+        description: "OPTIONAL: unbekannte Pickle-Klasse (z.B. HumanModel)"
+        required: false
+        default: ""
+      pickle_alias_to:
+        description: "OPTIONAL: Zielklasse in ultralytics.nn.tasks (z.B. DetectionModel)"
+        required: false
+        default: "DetectionModel"
+
 
 jobs:
   export-onnx:
@@ -76,20 +85,24 @@ jobs:
         env:
           IMGSZ: ${{ github.event.inputs.imgsz }}
           OPSET: ${{ github.event.inputs.opset }}
+          PICKLE_ALIAS_FROM: ${{ github.event.inputs.pickle_alias_from }}
+          PICKLE_ALIAS_TO: ${{ github.event.inputs.pickle_alias_to }}
         run: |
-          set -euo pipefail
-          python - << 'PY'
-          import os, sys
+          python - <<'PY'
+          import os
           from ultralytics import YOLO
+      
+          alias_from = os.environ.get("PICKLE_ALIAS_FROM","").strip()
+          alias_to   = os.environ.get("PICKLE_ALIAS_TO","DetectionModel").strip()
+          if alias_from:
+              import ultralytics.nn.tasks as tasks
+              setattr(tasks, alias_from, getattr(tasks, alias_to))
+      
           imgsz = int(os.environ.get("IMGSZ","640"))
           opset = int(os.environ.get("OPSET","12"))
-          print(f"[info] ultralytics version:", YOLO.__module__)
           m = YOLO("model.pt")
-          r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
-          print("[info] export result:", r)
+          m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
           PY
-          echo "[debug] Inhalt von runs/:"
-          find runs -maxdepth 3 -type f -printf "%p (%s bytes)\n" || true
 
       - name: Find ONNX and compute SHA256
         id: meta
