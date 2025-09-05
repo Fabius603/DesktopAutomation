@@ -23,6 +23,18 @@ on:
         description: "Kurzbeschreibung fürs UI"
         required: false
         default: ""
+      ultralytics_spec:
+        description: "Ultralytics Version/Fork (pip specifier)"
+        required: false
+        default: "ultralytics>=8.0.0"
+      torch_spec:
+        description: "Torch Version (pip specifier, optional)"
+        required: false
+        default: ""
+      extra_pip:
+        description: "Weitere Pakete, durch Leerzeichen getrennt (optional)"
+        required: false
+        default: ""
 
 jobs:
   export-onnx:
@@ -46,7 +58,13 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install "ultralytics>=8.0.0" onnx onnxsim
+          if [ -n "${{ github.event.inputs.torch_spec }}" ]; then
+            pip install "${{ github.event.inputs.torch_spec }}"
+          fi
+          pip install "${{ github.event.inputs.ultralytics_spec }}" onnx onnxsim
+          if [ -n "${{ github.event.inputs.extra_pip }}" ]; then
+            pip install ${{ github.event.inputs.extra_pip }}
+          fi
 
       - name: Download .pt
         run: |
@@ -67,7 +85,6 @@ jobs:
           opset = int(os.environ.get("OPSET","12"))
           print(f"[info] ultralytics version:", YOLO.__module__)
           m = YOLO("model.pt")
-          # Export in definierten Ordner
           r = m.export(format="onnx", imgsz=imgsz, opset=opset, simplify=True, project="runs", name="export")
           print("[info] export result:", r)
           PY
@@ -78,9 +95,7 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
-          # Bevorzugt im erwarteten Ordner suchen …
           ONNX=$(find runs/export -name "*.onnx" -type f | head -n1 || true)
-          # … sonst im ganzen Repo fallback
           if [ -z "${ONNX}" ]; then
             ONNX=$(find . -name "*.onnx" -type f | head -n1 || true)
           fi
