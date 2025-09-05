@@ -15,6 +15,14 @@ on:
       opset:
         description: "ONNX Opset (default 12)"
         default: "12"
+      display_name:
+        description: "Anzeigename (z.B. YOLOv8 Nano)"
+        required: false
+        default: ""
+      description:
+        description: "Kurzbeschreibung fürs UI"
+        required: false
+        default: ""
 
 jobs:
   export-onnx:
@@ -112,20 +120,33 @@ jobs:
           SHA:   ${{ steps.meta.outputs.sha256 }}
           REPO:  ${{ github.repository }}
           RUN:   ${{ github.run_number }}
+          DISP:  ${{ github.event.inputs.display_name }}
+          DESC:  ${{ github.event.inputs.description }}
         run: |
           set -euo pipefail
           MANIFEST="ImageDetection/YOLO/Resources/yolo-models.json"
           URL="https://github.com/${REPO}/releases/download/models-${RUN}/${KEY}.onnx"
-      
-          # Ordner sicherstellen, leere JSON ggf. anlegen
+
           mkdir -p "$(dirname "$MANIFEST")"
           [ -f "$MANIFEST" ] || echo '{}' > "$MANIFEST"
-      
+
           tmp=$(mktemp)
-          jq --arg key "$KEY" --arg url "$URL" --arg sha "$SHA" --argjson size "$SIZE" \
-             '.[$key] = {url: $url, sha256: $sha, size: $size}' "$MANIFEST" > "$tmp"
+          jq \
+            --arg key "$KEY" \
+            --arg url "$URL" \
+            --arg sha "$SHA" \
+            --argjson size "$SIZE" \
+            --arg disp "$DISP" \
+            --arg desc "$DESC" \
+            '.[$key] = ((.[$key] // {}) + {
+                url:        $url,
+                sha256:     $sha,
+                size:       $size,
+                displayName:(if ($disp|length) > 0 then $disp else $key end),
+                description:$desc
+              })' "$MANIFEST" > "$tmp"
           mv "$tmp" "$MANIFEST"
-      
+
           echo "[info] Manifest aktualisiert:"
           cat "$MANIFEST"
       
