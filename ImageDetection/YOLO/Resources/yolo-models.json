@@ -8,5 +8,10 @@
     "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-7/yolov8l.onnx",
     "sha256": "ec33ab71fd8b6abea00fcb3bc5992051e3b0e706c4eb0c661b160fa5b52d3d35",
     "size": 174915790
+  },
+  "yolov8s": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-8/yolov8s.onnx",
+    "sha256": "b52eff8937b456b2f1b6aa830f7bcde1e20dd2b57ca469e4a473ae766cff78e4",
+    "size": 44842275
   }
 }
