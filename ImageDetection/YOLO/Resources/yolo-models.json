@@ -26,5 +26,12 @@
     "size": 103790706,
     "displayName": "YOLO Medium Standard",
     "description": "YOLO Modell in der medium Größe. Besitz verschiedene alltäglichen Objekte"
+  },
+  "yolo11x": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-20/yolo11x.onnx",
+    "sha256": "09186518ea7e1d4fe65c44559755e0e352bda1edce15e498f92b33e0bee44a67",
+    "size": 228016463,
+    "displayName": "YOLO 11",
+    "description": "Großes allgemeines Modell"
   }
 }
