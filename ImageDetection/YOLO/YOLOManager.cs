@@ -20,7 +20,7 @@ namespace ImageDetection.YOLO
     /// <summary>
     /// Default: erwartet eine Textdatei &lt;modelKey&gt;.labels.txt neben dem ONNX (eine Klasse pro Zeile).
     /// </summary>
-    public sealed class SidecarLabelProvider : ILabelProvider
+    public sealed class LabelProvider : ILabelProvider
     {
         public IReadOnlyList<string> GetLabels(string modelKey, string onnxPath)
         {
@@ -37,11 +37,10 @@ namespace ImageDetection.YOLO
 
     public sealed class YoloManager : IYoloManager
     {
-        private readonly YOLOModelDownloader _downloader;
+        private readonly IYOLOModelDownloader _downloader;
         private readonly ILogger<YoloManager> _logger;
         private readonly YoloManagerOptions _opt;
         private readonly ILabelProvider _labels;
-
 
         private readonly ConcurrentDictionary<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>> _cache
             = new();
@@ -49,7 +48,7 @@ namespace ImageDetection.YOLO
         public event Action<string, ModelDownloadStatus, int, string?>? DownloadProgressChanged;
 
         public YoloManager(
-            YOLOModelDownloader downloader,
+            IYOLOModelDownloader downloader,
             ILogger<YoloManager> logger,
             YoloManagerOptions? options = null,
             ILabelProvider? labelProvider = null)
@@ -57,7 +56,7 @@ namespace ImageDetection.YOLO
             _downloader = downloader;
             _logger = logger;
             _opt = options ?? new YoloManagerOptions();
-            _labels = labelProvider ?? new SidecarLabelProvider();
+            _labels = labelProvider ?? new LabelProvider();
 
             // Progress vom Downloader nach außen weiterreichen
             _downloader.DownloadProgressChanged += (sender, e)
@@ -81,41 +80,49 @@ namespace ImageDetection.YOLO
 
         public List<string> GetAvailableModels()
         {
-            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            // 1) Bereits bekannte Keys aus dem Cache
-            foreach (var key in _cache.Keys)
-                set.Add(key);
-
-            // 2) Aus den Verzeichnissen geladener Modelle alle *.onnx ergänzen
-            foreach (var kv in _cache)
+            try
             {
-                var lazy = kv.Value;
-                if (!lazy.IsValueCreated) continue;
+                var manifest = ModelManifestProvider.LoadManifest();
+                var availableModels = new List<string>();
 
-                var task = lazy.Value;
-                if (!task.IsCompletedSuccessfully) continue;
-
-                var onnxPath = task.Result.model.OnnxPath;
-                var dir = Path.GetDirectoryName(onnxPath);
-                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
-
-                foreach (var file in Directory.EnumerateFiles(dir, "*.onnx"))
+                foreach (var modelKey in manifest.Models.Keys)
                 {
-                    var key = Path.GetFileNameWithoutExtension(file);
-                    set.Add(key);
+                    var onnxPath = Path.Combine(_downloader.ModelFolderPath, modelKey + ".onnx");
+                    if (File.Exists(onnxPath))
+                    {
+                        availableModels.Add(modelKey);
+                    }
                 }
-            }
 
-            return set.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+                return availableModels.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Konnte Modell-Manifest nicht laden, um verfügbare Modelle zu ermitteln.");
+                return new List<string>();
+            }
         }
 
         public List<string> GetClassesForModel(string modelKey)
         {
-            // Sicherstellen (lädt bei Bedarf); synchron warten ist hier ok
-            var t = GetOrCreateAsync(modelKey, CancellationToken.None);
-            var (_, _, labels) = t.GetAwaiter().GetResult();
-            return labels.ToList();
+            try
+            {                
+                var onnxPath = Path.Combine(_downloader.ModelFolderPath, modelKey + ".onnx");
+                
+                if (!File.Exists(onnxPath))
+                {
+                    _logger.LogWarning("ONNX-Datei für Modell {modelKey} nicht gefunden: {onnxPath}", modelKey, onnxPath);
+                    return new List<string>();
+                }
+
+                var labelList = _labels.GetLabels(modelKey, onnxPath);
+                return labelList.ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Fehler beim Laden der Labels für Modell {modelKey}", modelKey);
+                return new List<string>();
+            }
         }
 
         private Task<InferenceSession> CreateSessionAsync(YOLOModel model, CancellationToken ct)

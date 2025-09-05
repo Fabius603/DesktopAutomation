@@ -15,5 +15,9 @@ namespace ImageDetection.Model
         public string Sha256 { get; set; } = "";
         [JsonPropertyName("size")]
         public long Size { get; set; }
+        [JsonPropertyName("description")]
+        public string Description { get; set; } = "";
+        [JsonPropertyName("display_name")]
+        public string DisplayName { get; set; } = "";
     }
 }

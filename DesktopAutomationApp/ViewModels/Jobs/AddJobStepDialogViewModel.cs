@@ -73,6 +73,7 @@ namespace DesktopAutomationApp.ViewModels
                 "DesktopDuplication" => true,
                 "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
                 "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
+                "YoloDetection" => !string.IsNullOrWhiteSpace(YoloDetectionStep_Model) && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName) && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1,
                 _ => false
             };
         }
@@ -88,7 +89,8 @@ namespace DesktopAutomationApp.ViewModels
             "MakroExecution",
             "JobExecution",
             "ScriptExecution",
-            "KlickOnPoint"
+            "KlickOnPoint",
+            "YoloDetection"
         };
 
         private string _selectedType = "TemplateMatching";
@@ -109,6 +111,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowJobExecution));
                 OnChange(nameof(ShowScriptExecution));
                 OnChange(nameof(ShowKlickOnPoint));
+                OnChange(nameof(ShowYoloDetection));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -122,6 +125,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowJobExecution => SelectedType == "JobExecution";
         public bool ShowScriptExecution => SelectedType == "ScriptExecution";
         public bool ShowKlickOnPoint => SelectedType == "KlickOnPoint";
+        public bool ShowYoloDetection => SelectedType == "YoloDetection";
 
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }
@@ -182,20 +186,83 @@ namespace DesktopAutomationApp.ViewModels
 
         // ===== YOLODetectionStep Felder =====
         private string _yoloDetectionStep_Model = string.Empty;
-        public string YoloDetectionStep_Model { get => _yoloDetectionStep_Model; set { _yoloDetectionStep_Model = value; OnChange(); } }
+        public string YoloDetectionStep_Model 
+        { 
+            get => _yoloDetectionStep_Model; 
+            set 
+            { 
+                _yoloDetectionStep_Model = value; 
+                OnChange(); 
+                OnChange(nameof(YoloDetectionStep_AvailableClasses));
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
+            } 
+        }
+        
         private float _yoloDetectionStep_ConfidenceThreshold = 0.5f;
-        public float YoloDetectionStep_ConfidenceThreshold { get => _yoloDetectionStep_ConfidenceThreshold; set { _yoloDetectionStep_ConfidenceThreshold = value; OnChange(); } }
-        private string _yoloDetectionSteo_ClassName = string.Empty;
-        public string YoloDetectionStep_ClassName { get => _yoloDetectionSteo_ClassName; set { _yoloDetectionSteo_ClassName = value; OnChange(); } }
-        private bool _yoloDetectionStep_DrawResults = false;
+        public float YoloDetectionStep_ConfidenceThreshold { get => _yoloDetectionStep_ConfidenceThreshold; set { _yoloDetectionStep_ConfidenceThreshold = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        
+        private string _yoloDetectionStep_ClassName = string.Empty;
+        public string YoloDetectionStep_ClassName { get => _yoloDetectionStep_ClassName; set { _yoloDetectionStep_ClassName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        
+        private bool _yoloDetectionStep_DrawResults = true;
         public bool YoloDetectionStep_DrawResults { get => _yoloDetectionStep_DrawResults; set { _yoloDetectionStep_DrawResults = value; OnChange(); } }
+        
         private bool _yoloDetectionStep_EnableROI = false;
         public bool YoloDetectionStep_EnableROI { get => _yoloDetectionStep_EnableROI; set { _yoloDetectionStep_EnableROI = value; OnChange(); } }
+        
         private int _yoloDetectionStep_RoiX, _yoloDetectionStep_RoiY, _yoloDetectionStep_RoiW, _yoloDetectionStep_RoiH;
         public int YoloDetectionStep_RoiX { get => _yoloDetectionStep_RoiX; set { _yoloDetectionStep_RoiX = value; OnChange(); } }
         public int YoloDetectionStep_RoiY { get => _yoloDetectionStep_RoiY; set { _yoloDetectionStep_RoiY = value; OnChange(); } }
         public int YoloDetectionStep_RoiW { get => _yoloDetectionStep_RoiW; set { _yoloDetectionStep_RoiW = value; OnChange(); } }
         public int YoloDetectionStep_RoiH { get => _yoloDetectionStep_RoiH; set { _yoloDetectionStep_RoiH = value; OnChange(); } }
+
+        // YOLO Listen Properties
+        public ObservableCollection<string> YoloDetectionStep_AvailableModels
+        {
+            get
+            {
+                try
+                {
+                    var yoloManager = _ctx.YoloManager;
+                    if (yoloManager != null)
+                    {
+                        var models = yoloManager.GetAvailableModels();
+                        return new ObservableCollection<string>(models);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Fehler beim Laden der Modelle - Log könnte hier hilfreich sein
+                    System.Diagnostics.Debug.WriteLine($"Fehler beim Laden der YOLO-Modelle: {ex.Message}");
+                }
+                return new ObservableCollection<string>();
+            }
+        }
+
+        public ObservableCollection<string> YoloDetectionStep_AvailableClasses
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(YoloDetectionStep_Model))
+                    return new ObservableCollection<string>();
+
+                try
+                {
+                    var yoloManager = _ctx.YoloManager;
+                    if (yoloManager != null)
+                    {
+                        var classes = yoloManager.GetClassesForModel(YoloDetectionStep_Model);
+                        return new ObservableCollection<string>(classes);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Fehler beim Laden der Klassen - Log könnte hier hilfreich sein
+                    System.Diagnostics.Debug.WriteLine($"Fehler beim Laden der YOLO-Klassen für Model '{YoloDetectionStep_Model}': {ex.Message}");
+                }
+                return new ObservableCollection<string>();
+            }
+        }
 
         // Datei-Auswahl (in VM gewünscht)
         private void BrowseTemplatePath()

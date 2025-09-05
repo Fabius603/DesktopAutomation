@@ -20,10 +20,7 @@ namespace DesktopAutomationApp.Views
     /// </summary>
     public partial class JobStepsView : UserControl
     {
-        public JobStepsView()
-        {
-            InitializeComponent();
-        }
+        public JobStepsView() => InitializeComponent();
 
         private void StepsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

@@ -25,6 +25,10 @@ namespace ImageDetection.YOLO
 
         public event EventHandler<ModelDownloadProgressEventArgs>? DownloadProgressChanged;
 
+        public string ModelFolderPath { get; } = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "DesktopAutomation", "YOLOModels");
+
         public YOLOModelDownloader(ILogger<YOLOModelDownloader> logger, HttpClient? httpClient = null)
         {
             _httpClient = httpClient ?? new HttpClient();
@@ -37,12 +41,9 @@ namespace ImageDetection.YOLO
             if (!manifest.Models.TryGetValue(modelKey, out var entry))
                 throw new InvalidOperationException($"Model '{modelKey}' nicht im Manifest.");
 
-            var appDataRoot = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "DesktopAutomation", "YOLOModels");
-            Directory.CreateDirectory(appDataRoot);
+            Directory.CreateDirectory(ModelFolderPath);
 
-            var onnxPath = Path.Combine(appDataRoot, modelKey + ".onnx");
+            var onnxPath = Path.Combine(ModelFolderPath, modelKey + ".onnx");
 
             // parallele Downloads auf denselben Pfad vermeiden
             var gate = _pathLocks.GetOrAdd(onnxPath, _ => new SemaphoreSlim(1, 1));
@@ -94,6 +95,48 @@ namespace ImageDetection.YOLO
                 gate.Release();
                 // Speicher aufräumen, falls keine weiteren Nutzer
                 if (gate.CurrentCount == 1) _pathLocks.TryRemove(onnxPath, out _);
+            }
+        }
+
+        public async Task<bool> UninstallModelAsync(string modelKey, CancellationToken ct = default)
+        {
+            try
+            {
+                var onnxPath = Path.Combine(ModelFolderPath, modelKey + ".onnx");
+                var labelsPath = Path.Combine(ModelFolderPath, $"{modelKey}.labels.txt");
+
+                bool wasDeleted = false;
+
+                // ONNX-Datei löschen
+                if (File.Exists(onnxPath))
+                {
+                    File.Delete(onnxPath);
+                    wasDeleted = true;
+                    _logger.LogInformation("ONNX-Datei gelöscht: {onnxPath}", onnxPath);
+                }
+
+                // Labels-Datei löschen
+                if (File.Exists(labelsPath))
+                {
+                    File.Delete(labelsPath);
+                    _logger.LogInformation("Labels-Datei gelöscht: {labelsPath}", labelsPath);
+                }
+
+                if (wasDeleted)
+                {
+                    _logger.LogInformation("Modell {modelKey} erfolgreich deinstalliert.", modelKey);
+                }
+                else
+                {
+                    _logger.LogWarning("Modell {modelKey} war nicht installiert.", modelKey);
+                }
+
+                return wasDeleted;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler beim Deinstallieren des Modells {modelKey}.", modelKey);
+                return false;
             }
         }
 

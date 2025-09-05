@@ -81,6 +81,9 @@
             <DataTemplate DataType="{x:Type vm:JobStepsViewModel}">
                 <views:JobStepsView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:YoloDownloadsViewModel}">
+                <views:YoloDownloadsView/>
+            </DataTemplate>
             
         </ResourceDictionary>
     </Application.Resources>

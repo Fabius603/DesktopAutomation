@@ -242,6 +242,43 @@
             </Grid>
         </DataTemplate>
 
+        <!-- YOLODetectionStep -->
+        <DataTemplate DataType="{x:Type jobs:YOLODetectionStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="YOLO Detection" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Model: "/><Run Text="{Binding Settings.Model}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Klassenname: "/><Run Text="{Binding Settings.ClassName}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="EnableROI: "/>
+                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="ROI (X,Y,Breite,Höhe): "/>
+                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="DrawResults: "/>
+                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
     </UserControl.Resources>
 
     <Grid>

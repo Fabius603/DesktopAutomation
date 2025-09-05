@@ -19,6 +19,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListMakrosViewModel _listMakros;
         private readonly ListJobsViewModel _listJobs;
         private readonly ListHotkeysViewModel _listHotkeys;
+        private readonly YoloDownloadsViewModel _yoloDownloads;
 
         public object? CurrentContent
         {
@@ -40,6 +41,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListMakros { get; }
         public ICommand ShowListJobs { get; }
         public ICommand ShowListHotkeys { get; }
+        public ICommand ShowYoloDownloads { get; }
 
         public MainViewModel(
             IServiceProvider services,
@@ -47,7 +49,8 @@ namespace DesktopAutomationApp.ViewModels
             StartViewModel startViewModel,
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
-            ListHotkeysViewModel listHotkeysViewModel)
+            ListHotkeysViewModel listHotkeysViewModel,
+            YoloDownloadsViewModel yoloDownloadsViewModel)
         {
             _services = services;
             _jobDispatcher = jobDispatcher;
@@ -55,6 +58,7 @@ namespace DesktopAutomationApp.ViewModels
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
+            _yoloDownloads = yoloDownloadsViewModel;
 
             // Events für Job-Fehler abonnieren
             _jobDispatcher.JobErrorOccurred += OnJobErrorOccurred;
@@ -67,6 +71,7 @@ namespace DesktopAutomationApp.ViewModels
             ShowListMakros = new RelayCommand(() => CurrentContent = _listMakros);
             ShowListJobs = new RelayCommand(() => CurrentContent = _listJobs);
             ShowListHotkeys = new RelayCommand(() => CurrentContent = _listHotkeys);
+            ShowYoloDownloads = new RelayCommand(() => CurrentContent = _yoloDownloads);
 
             // Startseite
             CurrentContent = _start;

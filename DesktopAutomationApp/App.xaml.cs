@@ -22,6 +22,7 @@ using ImageCapture.DesktopDuplication.RecordingIndicator;
 using TaskAutomation.Scripts;
 using DesktopAutomationApp.Services;
 using ImageDetection.YOLO;
+using ImageDetection.Model;
 
 namespace DesktopAutomationApp
 {
@@ -64,10 +65,7 @@ namespace DesktopAutomationApp
                     // Repository-Service registrieren
                     services.AddSingleton<IRepositoryService, RepositoryService>();
 
-                    services.AddSingleton<JobExecutor>();
-
-                    services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
-                    services.AddSingleton<IJobExecutor>(sp => sp.GetRequiredService<JobExecutor>());
+                    services.AddSingleton<IJobExecutor, JobExecutor>();
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IScriptExecutor, ScriptExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
@@ -75,6 +73,8 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IMacroPreviewService, MacroPreviewService>();
                     services.AddSingleton<IRecordingIndicatorOverlay, RecordingIndicatorOverlay>();
                     services.AddSingleton<IYOLOModelDownloader, YOLOModelDownloader>();
+                    services.AddSingleton<ILabelProvider, LabelProvider>();
+                    services.AddSingleton(new YoloManagerOptions());
                     services.AddSingleton<IYoloManager, YoloManager>();
 
                     // ---- ViewModels / Views ----
@@ -83,6 +83,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListHotkeysViewModel>();
                     services.AddSingleton<ListJobsViewModel>();
                     services.AddSingleton<ListMakrosViewModel>();
+                    services.AddSingleton<YoloDownloadsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
 
                     services.AddSingleton<MainWindow>();
@@ -90,6 +91,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListHotkeysView>();
                     services.AddSingleton<ListJobsView>();
                     services.AddSingleton<ListMakrosView>();
+                    services.AddSingleton<YoloDownloadsView>();
                 })
                 .Build();
         }

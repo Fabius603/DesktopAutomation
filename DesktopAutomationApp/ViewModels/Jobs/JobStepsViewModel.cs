@@ -189,7 +189,7 @@ namespace DesktopAutomationApp.ViewModels
                     break;
 
                 case YOLODetectionStep yd:
-                    vm.SelectedType = "YOLODetection";
+                    vm.SelectedType = "YoloDetection";
                     vm.YoloDetectionStep_Model = yd.Settings.Model;
                     vm.YoloDetectionStep_ConfidenceThreshold = yd.Settings.ConfidenceThreshold;
                     vm.YoloDetectionStep_ClassName = yd.Settings.ClassName;

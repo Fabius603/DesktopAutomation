@@ -178,6 +178,50 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- YOLO Detection -->
+            <StackPanel Visibility="{Binding ShowYoloDetection, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Model:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="220" 
+                              ItemsSource="{Binding YoloDetectionStep_AvailableModels}"
+                              SelectedItem="{Binding YoloDetectionStep_Model}"
+                              IsEditable="True"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Klassenname:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="220" 
+                              ItemsSource="{Binding YoloDetectionStep_AvailableClasses}"
+                              SelectedItem="{Binding YoloDetectionStep_ClassName}"
+                              IsEditable="True"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Confidence (0..1):" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding YoloDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding YoloDetectionStep_DrawResults}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="ROI aktivieren" IsChecked="{Binding YoloDetectionStep_EnableROI}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="ROI:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="X:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiX}"/>
+                    <TextBlock Text="Y:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiY}"/>
+                    <TextBlock Text="Breite:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiW}"/>
+                    <TextBlock Text="Höhe:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiH}"/>
+                </StackPanel>
+            </StackPanel>
+
         </StackPanel>
 
         <!-- Buttons -->

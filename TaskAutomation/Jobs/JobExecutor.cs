@@ -84,7 +84,7 @@ namespace TaskAutomation.Jobs
             { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
             { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
             { typeof(JobExecutionStep), new JobExecutionStepHandler() },
-            { typeof(YOLOStepHandler), new YOLOStepHandler() },
+            { typeof(YOLODetectionStep), new YOLOStepHandler() },
         };
 
         // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
@@ -189,7 +189,8 @@ namespace TaskAutomation.Jobs
             IJsonRepository<Makro> makroRepo,
             IMakroExecutor makroExecutor,
             IScriptExecutor scriptExecutor,
-            IRecordingIndicatorOverlay recordingOverlay)
+            IRecordingIndicatorOverlay recordingOverlay,
+            IYoloManager yoloManager)
         {
             _logger = logger;
             _jobRepository = jobRepo;
@@ -197,7 +198,7 @@ namespace TaskAutomation.Jobs
             _makroExecutor = makroExecutor;
             _recordingOverlay = recordingOverlay;
             _scriptExecutor = scriptExecutor;
-
+            _yoloManager = yoloManager;
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -289,6 +290,9 @@ namespace TaskAutomation.Jobs
 
             CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
+
+            // YOLO-Modelle vorladen für bessere Performance
+            await PreloadYoloModelsAsync(job, ct);
 
             // Schritte, die optional aktiv sind
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
@@ -465,6 +469,9 @@ namespace TaskAutomation.Jobs
                 try { _videoRecorder?.Dispose(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Dispose des VideoRecorders."); }
                 try { Cv2.DestroyAllWindows(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Schließen von OpenCV-Fenstern."); }
 
+                // YOLO-Modelle optional entladen (Ressourcen sparen)
+                await UnloadYoloModelsAsync(job);
+
                 // Abschluss-Log (Status abhängig von Abbruch)
                 _logger.LogInformation("Job '{JobName}' {Status}.", job.Name, "beendet");
             }
@@ -513,6 +520,119 @@ namespace TaskAutomation.Jobs
                 stepType, jobName, exception.Message);
             
             JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(jobName, stepType, exception));
+        }
+
+        /// <summary>
+        /// Lädt alle YOLO-Modelle vor, die im Job verwendet werden, um bessere Performance zu erzielen.
+        /// </summary>
+        private async Task PreloadYoloModelsAsync(Job job, CancellationToken ct)
+        {
+            if (_yoloManager == null)
+            {
+                _logger.LogDebug("YoloManager nicht verfügbar - YOLO-Modell-Vorladen übersprungen");
+                return;
+            }
+
+            var yoloSteps = job.Steps.OfType<YOLODetectionStep>().ToList();
+            if (yoloSteps.Count == 0)
+            {
+                _logger.LogDebug("Keine YOLO-Steps im Job '{JobName}' - Vorladen übersprungen", job.Name);
+                return;
+            }
+
+            var modelsToPreload = yoloSteps
+                .Select(step => step.Settings.Model)
+                .Where(model => !string.IsNullOrWhiteSpace(model))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (modelsToPreload.Count == 0)
+            {
+                _logger.LogWarning("YOLO-Steps gefunden, aber keine gültigen Modell-Namen in Job '{JobName}'", job.Name);
+                return;
+            }
+
+            _logger.LogInformation("Lade {Count} YOLO-Modell(e) vor für Job '{JobName}': {Models}", 
+                modelsToPreload.Count, job.Name, string.Join(", ", modelsToPreload));
+
+            var preloadTasks = modelsToPreload.Select(async model =>
+            {
+                try
+                {
+                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    await _yoloManager.EnsureModelAsync(model, ct);
+                    stopwatch.Stop();
+                    _logger.LogInformation("YOLO-Modell '{Model}' erfolgreich vorgeladen in {ElapsedMs}ms", 
+                        model, stopwatch.ElapsedMilliseconds);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Fehler beim Vorladen von YOLO-Modell '{Model}': {Message}", 
+                        model, ex.Message);
+                    throw; // Weiterwerfen, damit der Job nicht startet, wenn Modelle fehlen
+                }
+            });
+
+            await Task.WhenAll(preloadTasks);
+            _logger.LogInformation("Alle YOLO-Modelle für Job '{JobName}' erfolgreich vorgeladen", job.Name);
+        }
+
+        /// <summary>
+        /// Entlädt alle YOLO-Modelle, die im Job verwendet wurden, um Speicher freizugeben.
+        /// </summary>
+        private async Task UnloadYoloModelsAsync(Job job)
+        {
+            if (_yoloManager == null)
+            {
+                return;
+            }
+
+            var yoloSteps = job.Steps.OfType<YOLODetectionStep>().ToList();
+            if (yoloSteps.Count == 0)
+            {
+                return;
+            }
+
+            var modelsToUnload = yoloSteps
+                .Select(step => step.Settings.Model)
+                .Where(model => !string.IsNullOrWhiteSpace(model))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (modelsToUnload.Count == 0)
+            {
+                return;
+            }
+
+            _logger.LogInformation("Entlade {Count} YOLO-Modell(e) für Job '{JobName}': {Models}", 
+                modelsToUnload.Count, job.Name, string.Join(", ", modelsToUnload));
+
+            await Task.Run(() =>
+            {
+                foreach (var model in modelsToUnload)
+                {
+                    try
+                    {
+                        bool unloaded = _yoloManager.UnloadModel(model);
+                        if (unloaded)
+                        {
+                            _logger.LogDebug("YOLO-Modell '{Model}' erfolgreich entladen", model);
+                        }
+                        else
+                        {
+                            _logger.LogDebug("YOLO-Modell '{Model}' war nicht geladen oder konnte nicht entladen werden", model);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Fehler beim Entladen von YOLO-Modell '{Model}': {Message}", 
+                            model, ex.Message);
+                        // Weiter mit den anderen Modellen
+                    }
+                }
+            });
+
+            _logger.LogInformation("YOLO-Modell-Cleanup für Job '{JobName}' abgeschlossen", job.Name);
         }
 
         public void Dispose()
