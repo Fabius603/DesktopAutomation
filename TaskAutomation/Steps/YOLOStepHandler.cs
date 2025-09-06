@@ -88,6 +88,7 @@ namespace TaskAutomation.Steps
                     roi,
                     ct);
 
+                // Always update CurrentImageWithResult, either with annotations or without
                 if (executor.DetectionResult?.Success == true)
                 {
                     // Convert to global desktop coordinates
@@ -102,7 +103,7 @@ namespace TaskAutomation.Steps
                         executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, 
                         executor.DetectionResult.Confidence);
 
-                    // Draw results if enabled
+                    // Draw results if enabled, otherwise use clean image
                     if (yoloStep.Settings.DrawResults)
                     {
                         executor.ImageToProcess = (Bitmap)executor.CurrentImage.Clone();
@@ -111,13 +112,21 @@ namespace TaskAutomation.Steps
                             executor.DetectionResult);
                         logger.LogDebug("YOLOStepHandler: Results drawn on image");
                     }
+                    else
+                    {
+                        // Set CurrentImageWithResult to current image without annotations
+                        executor.CurrentImageWithResult = (Bitmap)executor.CurrentImage.Clone();
+                        logger.LogDebug("YOLOStepHandler: CurrentImageWithResult set to clean image (DrawResults disabled)");
+                    }
                 }
                 else
                 {
-                    // If YOLO detection failed, reset the point
+                    // If YOLO detection failed, reset the point but still update the image
                     executor.LatestCalculatedPoint = null;
+                    executor.CurrentImageWithResult = (Bitmap)executor.CurrentImage.Clone();
                     logger.LogInformation("YOLOStepHandler: YOLO detection failed - no object '{ClassName}' found above threshold {Threshold}", 
                         yoloStep.Settings.ClassName, yoloStep.Settings.ConfidenceThreshold);
+                    logger.LogDebug("YOLOStepHandler: CurrentImageWithResult set to clean image (no detections)");
                 }
 
                 return true;

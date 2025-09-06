@@ -83,6 +83,7 @@ namespace TaskAutomation.Steps
                 // Use the current offset directly for template matching
                 executor.DetectionResult = executor.TemplateMatcher.Detect(executor.ImageToProcess);
 
+                // Always update CurrentImageWithResult, either with annotations or without
                 if (executor.DetectionResult.Success)
                 {
                     executor.LatestCalculatedPoint = ClassConverter.ToCv(
@@ -94,6 +95,7 @@ namespace TaskAutomation.Steps
                     logger.LogInformation("TemplateMatchingStepHandler: Template matching successful at point ({X}, {Y}) with confidence {Confidence:F3}", 
                         executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, executor.DetectionResult.Confidence);
                     
+                    // Draw results if enabled, otherwise use clean image
                     if (tmStep.Settings.DrawResults)
                     {
                         executor.CurrentImageWithResult = DrawResult.DrawDetectionResult(
@@ -101,12 +103,20 @@ namespace TaskAutomation.Steps
                             executor.DetectionResult);
                         logger.LogDebug("TemplateMatchingStepHandler: Results drawn on image");
                     }
+                    else
+                    {
+                        // Set CurrentImageWithResult to current image without annotations
+                        executor.CurrentImageWithResult = (Bitmap)executor.ImageToProcess.Clone();
+                        logger.LogDebug("TemplateMatchingStepHandler: CurrentImageWithResult set to clean image (DrawResults disabled)");
+                    }
                 }
                 else
                 {
-                    // If template matching failed, reset the point
+                    // If template matching failed, reset the point but still update the image
                     executor.LatestCalculatedPoint = null;
+                    executor.CurrentImageWithResult = (Bitmap)executor.ImageToProcess.Clone();
                     logger.LogInformation("TemplateMatchingStepHandler: Template matching failed - no match found above threshold");
+                    logger.LogDebug("TemplateMatchingStepHandler: CurrentImageWithResult set to clean image (no detections)");
                 }
 
                 return true;
