@@ -11,6 +11,18 @@ namespace ImageCapture.ProcessDuplication
 {
     public static class ImageConverter
     {
+        /// <summary>
+        /// Konvertiert Texture2D direkt zu Bitmap - effizienter als über Mat
+        /// </summary>
+        public static Bitmap ToBitmap(Texture2D image, Device device)
+        {
+            return Texture2DToBitmap(image, device);
+        }
+
+        /// <summary>
+        /// Legacy-Methode - konvertiert über Bitmap für bessere Performance
+        /// </summary>
+        [Obsolete("Diese Methode ist weniger effizient. Verwenden Sie ToBitmap() für bessere Performance.")]
         public static Mat ToMat(Texture2D image, Device device)
         {
             // Temporäre Bitmap erzeugen und in Mat konvertieren

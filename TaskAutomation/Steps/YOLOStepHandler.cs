@@ -105,7 +105,7 @@ namespace TaskAutomation.Steps
                     // Draw results if enabled
                     if (yoloStep.Settings.DrawResults)
                     {
-                        executor.ImageToProcess = executor.CurrentImage.ToMat();
+                        executor.ImageToProcess = (Bitmap)executor.CurrentImage.Clone();
                         executor.CurrentImageWithResult = DrawResult.DrawDetectionResult(
                             executor.ImageToProcess,
                             executor.DetectionResult);

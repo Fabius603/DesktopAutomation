@@ -48,7 +48,7 @@ namespace TaskAutomation.Jobs
         private IMakroExecutor _makroExecutor;
         private IScriptExecutor _scriptExecutor;
         private Bitmap _currentImage;
-        private Mat _currentImageWithResult;
+        private Bitmap _currentImageWithResult;
         private bool _disposed = false;
         private StreamVideoRecorder _videoRecorder;
         private ProcessDuplicator _processDuplicator;
@@ -56,7 +56,7 @@ namespace TaskAutomation.Jobs
         private IYoloManager _yoloManager;
         private TemplateMatching _templateMatcher;
         private IDetectionResult _detectionResult;
-        private Mat _imageToProcess;
+        private Bitmap _imageToProcess;
         private Point _currentOffset = new Point(0, 0);
         private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
         private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
@@ -108,7 +108,7 @@ namespace TaskAutomation.Jobs
             set => _currentImage = value;
         }
 
-        public Mat CurrentImageWithResult
+        public Bitmap CurrentImageWithResult
         {
             get => _currentImageWithResult;
             set => _currentImageWithResult = value;
@@ -150,7 +150,7 @@ namespace TaskAutomation.Jobs
             set => _detectionResult = value;
         }
 
-        public Mat ImageToProcess
+        public Bitmap ImageToProcess
         {
             get => _imageToProcess;
             set => _imageToProcess = value;

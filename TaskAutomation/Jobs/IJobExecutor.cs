@@ -45,7 +45,7 @@ namespace TaskAutomation.Jobs
         ProcessDuplicatorResult ProcessDuplicationResult { get; set; }
         DesktopFrame CurrentDesktopFrame { get; set; }
         System.Drawing.Bitmap CurrentImage { get; set; }
-        OpenCvSharp.Mat CurrentImageWithResult { get; set; }
+        System.Drawing.Bitmap CurrentImageWithResult { get; set; }
 
         // Ressourcen
         StreamVideoRecorder VideoRecorder { get; set; }
@@ -54,7 +54,7 @@ namespace TaskAutomation.Jobs
         TemplateMatching TemplateMatcher { get; set; }
         IYoloManager YoloManager { get; set; }
         IDetectionResult DetectionResult { get; set; }
-        OpenCvSharp.Mat ImageToProcess { get; set; }
+        System.Drawing.Bitmap ImageToProcess { get; set; }
 
         // Kontext-Parameter
         OpenCvSharp.Point CurrentOffset { get; set; }

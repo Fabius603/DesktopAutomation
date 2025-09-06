@@ -58,21 +58,21 @@ namespace TaskAutomation.Steps
                 if (vcStep.Settings.UseRawImage)
                 {
                     ct.ThrowIfCancellationRequested();
-                    executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
+                    executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImage?.Clone());
                     logger.LogDebug("VideoCreationStepHandler: Added raw image frame to video");
                 }
                 else if (vcStep.Settings.UseProcessedImage)
                 {
-                    if (executor.CurrentImageWithResult != null && !executor.CurrentImageWithResult.IsDisposed)
+                    if (executor.CurrentImageWithResult != null && executor.CurrentImageWithResult.Width > 0 && executor.CurrentImageWithResult.Height > 0)
                     {
                         ct.ThrowIfCancellationRequested();
-                        executor.VideoRecorder.AddFrame(executor.CurrentImageWithResult.ToBitmap().Clone() as Bitmap);
+                        executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImageWithResult.Clone());
                         logger.LogDebug("VideoCreationStepHandler: Added processed image frame to video");
                     }
                     else
                     {
                         ct.ThrowIfCancellationRequested();
-                        executor.VideoRecorder.AddFrame(executor.CurrentImage?.Clone() as Bitmap);
+                        executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImage?.Clone());
                         logger.LogDebug("VideoCreationStepHandler: Added raw image frame to video (processed image not available)");
                     }
                 }

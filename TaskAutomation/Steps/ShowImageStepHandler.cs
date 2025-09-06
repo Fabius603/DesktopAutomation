@@ -47,12 +47,10 @@ namespace TaskAutomation.Steps
                 {
                     string windowName = $"{siStep.Settings.WindowName} - Processed Image";
                     if (executor.CurrentImageWithResult != null &&
-                        !executor.CurrentImageWithResult.IsDisposed &&
-                        executor.CurrentImageWithResult.Height >= 10 &&
-                        executor.CurrentImageWithResult.Width >= 10)
+                        executor.CurrentImageWithResult.Width >= 10 &&
+                        executor.CurrentImageWithResult.Height >= 10)
                     {
-                        using var processedBitmap = executor.CurrentImageWithResult.ToBitmap();
-                        executor.ImageDisplayService.DisplayImage(windowName, processedBitmap, ImageDisplayType.Processed);
+                        executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImageWithResult, ImageDisplayType.Processed);
                         logger.LogDebug("ShowImageStepHandler: Requested display of processed image in window '{WindowName}'", windowName);
                     }
                     else

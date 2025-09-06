@@ -1,5 +1,6 @@
 using ImageDetection.Model;
 using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -253,6 +254,22 @@ namespace ImageDetection.Algorithms.TemplateMatching
         public void EnableROI()
         {
             _useROI = true;
+        }
+
+        /// <summary>
+        /// Effizienter Bitmap-Overload für Template Matching - vermeidet unnötige Konvertierungen
+        /// </summary>
+        public IDetectionResult Detect(Bitmap bitmap)
+        {
+            if (bitmap == null)
+            {
+                return new DetectionResult { Success = false, Confidence = 0 };
+            }
+
+            using (var mat = bitmap.ToMat())
+            {
+                return Detect(mat);
+            }
         }
 
         public void DisableROI()

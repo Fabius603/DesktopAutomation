@@ -78,7 +78,7 @@ namespace TaskAutomation.Steps
 
                 logger.LogInformation("TemplateMatchingStepHandler: Starting template matching with confidence threshold {Threshold}", tmStep.Settings.ConfidenceThreshold);
 
-                executor.ImageToProcess = executor.CurrentImage.ToMat();
+                executor.ImageToProcess = (Bitmap)executor.CurrentImage.Clone();
 
                 // Use the current offset directly for template matching
                 executor.DetectionResult = executor.TemplateMatcher.Detect(executor.ImageToProcess);
