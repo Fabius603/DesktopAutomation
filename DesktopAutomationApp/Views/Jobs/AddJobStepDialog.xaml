@@ -95,10 +95,15 @@
                     <TextBox Width="220" Text="{Binding ShowImageStep_WindowName, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <CheckBox Content="Rohbild anzeigen" IsChecked="{Binding ShowImageStep_ShowRawImage}"/>
+                    <TextBlock Text="Bildquelle:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <CheckBox Content="Verarbeitetes Bild anzeigen" IsChecked="{Binding ShowImageStep_ShowProcessedImage}"/>
+                    <RadioButton Content="Rohbild anzeigen" IsChecked="{Binding ShowImageStep_ShowRawImage}" 
+                                 GroupName="ShowImageSource" Margin="16,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <RadioButton Content="Verarbeitetes Bild anzeigen" IsChecked="{Binding ShowImageStep_ShowProcessedImage}" 
+                                 GroupName="ShowImageSource" Margin="16,0,0,0"/>
                 </StackPanel>
             </StackPanel>
 
@@ -106,17 +111,24 @@
             <StackPanel Visibility="{Binding ShowVideoCreation, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Speicherpfad:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBox Width="220" Text="{Binding VideoCreationStep_SavePath}"/>
+                    <TextBox Width="220" Text="{Binding VideoCreationStep_SavePath}" IsReadOnly="True"/>
+                    <Button Content="…" Width="28" Height="24" Margin="8,0,0,0"
+                            Command="{Binding BrowseVideoSavePathCommand}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                     <TextBlock Text="Dateiname:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Width="220" Text="{Binding VideoCreationStep_FileName, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <CheckBox Content="Rohbild verwenden" IsChecked="{Binding VideoCreationStep_UseRawImage}"/>
+                    <TextBlock Text="Bildquelle:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <CheckBox Content="Verarbeitetes Bild verwenden" IsChecked="{Binding VideoCreationStep_UseProcessedImage}"/>
+                    <RadioButton Content="Rohbild verwenden" IsChecked="{Binding VideoCreationStep_UseRawImage}" 
+                                 GroupName="VideoImageSource" Margin="16,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <RadioButton Content="Verarbeitetes Bild verwenden" IsChecked="{Binding VideoCreationStep_UseProcessedImage}" 
+                                 GroupName="VideoImageSource" Margin="16,0,0,0"/>
                 </StackPanel>
             </StackPanel>
 

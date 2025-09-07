@@ -163,10 +163,11 @@ namespace DesktopAutomationApp.ViewModels
         private void EditHotkey()
         {
             if (Selected == null) return;
-            LoadJobs();
             _isNew = false;
             _snapshot = Selected.Clone();   // Snapshot für Cancel
             EditedHotkey = Selected;        // Edit am Original (Wrapper) → UI aktualisiert sofort
+            
+            LoadJobs(); 
             IsEditing = true;
         }
 
@@ -292,10 +293,42 @@ namespace DesktopAutomationApp.ViewModels
 
         private void UpdateAvailableActionsFromJobs()
         {
-            AvailableActions.Clear();
+            // Aktuelle Action merken, falls wir gerade editieren
+            string? currentEditedAction = EditedHotkey?.Action?.Name;
+            
+            // Neue Job-Namen sammeln
+            var newActions = new List<string>();
+            
+            // Jobs hinzufügen
             foreach (var job in Jobs.OrderBy(j => j.Name))
             {
-                AvailableActions.Add(job.Name);
+                newActions.Add(job.Name);
+            }
+            
+            // Aktuelle Action hinzufügen, falls sie nicht bereits in der Job-Liste ist
+            if (!string.IsNullOrWhiteSpace(currentEditedAction) && 
+                !newActions.Contains(currentEditedAction))
+            {
+                newActions.Add(currentEditedAction);
+            }
+            
+            // Liste synchronisieren ohne Clear() zu verwenden
+            // Zuerst alle entfernen, die nicht mehr da sein sollen
+            for (int i = AvailableActions.Count - 1; i >= 0; i--)
+            {
+                if (!newActions.Contains(AvailableActions[i]))
+                {
+                    AvailableActions.RemoveAt(i);
+                }
+            }
+            
+            // Dann neue hinzufügen
+            foreach (var action in newActions.OrderBy(a => a))
+            {
+                if (!AvailableActions.Contains(action))
+                {
+                    AvailableActions.Add(action);
+                }
             }
         }
 
@@ -339,9 +372,11 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (EditedHotkey == null) return;
 
+            // Nur bei neuen Hotkeys Namen eindeutig machen
+            if (!_isNew) return;
+
             var existingHotkeys = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
             var existingNames = existingHotkeys
-                .Where(h => !ReferenceEquals(h, EditedHotkey)) // Aktuell bearbeiteten ausschließen
                 .Select(h => h.Name)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 

@@ -31,6 +31,7 @@ namespace DesktopAutomationApp.ViewModels
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
+            BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
         }
 
@@ -52,6 +53,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand BrowseTemplatePathCommand { get; }
         public ICommand BrowseScriptPathCommand { get; }
+        public ICommand BrowseVideoSavePathCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
 
         private void Confirm()
@@ -298,6 +300,21 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private void BrowseVideoSavePath()
+        {
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Ordner für Video-Speicherung auswählen",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+
+            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                VideoCreationStep_SavePath = folderDialog.SelectedPath;
+            }
+        }
+
         private void ChooseMonitor()
         {
             try
@@ -425,10 +442,30 @@ namespace DesktopAutomationApp.ViewModels
         public string ShowImageStep_WindowName { get => _showImageStep_WindowName; set { _showImageStep_WindowName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         private bool _showImageStep_ShowRawImage = true;
-        public bool ShowImageStep_ShowRawImage { get => _showImageStep_ShowRawImage; set { _showImageStep_ShowRawImage = value; OnChange(); } }
+        public bool ShowImageStep_ShowRawImage 
+        { 
+            get => _showImageStep_ShowRawImage; 
+            set 
+            { 
+                _showImageStep_ShowRawImage = value; 
+                if (value) _showImageStep_ShowProcessedImage = false;
+                OnChange(); 
+                OnChange(nameof(ShowImageStep_ShowProcessedImage));
+            } 
+        }
 
         private bool _showImageStep_ShowProcessedImage = false;
-        public bool ShowImageStep_ShowProcessedImage { get => _showImageStep_ShowProcessedImage; set { _showImageStep_ShowProcessedImage = value; OnChange(); } }
+        public bool ShowImageStep_ShowProcessedImage 
+        { 
+            get => _showImageStep_ShowProcessedImage; 
+            set 
+            { 
+                _showImageStep_ShowProcessedImage = value; 
+                if (value) _showImageStep_ShowRawImage = false;
+                OnChange(); 
+                OnChange(nameof(ShowImageStep_ShowRawImage));
+            } 
+        }
 
         // ===== VideoCreation Felder =====
         private string _videoCreationStep_SavePath = string.Empty;
@@ -438,10 +475,30 @@ namespace DesktopAutomationApp.ViewModels
         public string VideoCreationStep_FileName { get => _videoCreationStep_FileName; set { _videoCreationStep_FileName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         private bool _videoCreationStep_UseRawImage = true;
-        public bool VideoCreationStep_UseRawImage { get => _videoCreationStep_UseRawImage; set { _videoCreationStep_UseRawImage = value; OnChange(); } }
+        public bool VideoCreationStep_UseRawImage 
+        { 
+            get => _videoCreationStep_UseRawImage; 
+            set 
+            { 
+                _videoCreationStep_UseRawImage = value; 
+                if (value) _videoCreationStep_UseProcessedImage = false;
+                OnChange(); 
+                OnChange(nameof(VideoCreationStep_UseProcessedImage));
+            } 
+        }
 
-        private bool _videoCreationStep_UseProcessedImage = true;
-        public bool VideoCreationStep_UseProcessedImage { get => _videoCreationStep_UseProcessedImage; set { _videoCreationStep_UseProcessedImage = value; OnChange(); } }
+        private bool _videoCreationStep_UseProcessedImage = false;
+        public bool VideoCreationStep_UseProcessedImage 
+        { 
+            get => _videoCreationStep_UseProcessedImage; 
+            set 
+            { 
+                _videoCreationStep_UseProcessedImage = value; 
+                if (value) _videoCreationStep_UseRawImage = false;
+                OnChange(); 
+                OnChange(nameof(VideoCreationStep_UseRawImage));
+            } 
+        }
 
         // ===== JobExecution Felder =====
         public ObservableCollection<string> AvailableJobNames

@@ -36,7 +36,7 @@
                 <ItemsControl ItemsSource="{Binding Models}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{DynamicResource MahApps.Brushes.Theme.Background}"
+                            <Border Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
                                     BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
                                     BorderThickness="1"
                                     CornerRadius="8"
