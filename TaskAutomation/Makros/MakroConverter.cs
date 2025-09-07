@@ -50,7 +50,9 @@ namespace TaskAutomation.Makros
 
             return type switch
             {
-                "mouseMove" => JsonSerializer.Deserialize<MouseMoveBefehl>(root.GetRawText(), options),
+                "mouseMoveAbsolute" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options),
+                "mouseMoveRelative" => JsonSerializer.Deserialize<MouseMoveRelativeBefehl>(root.GetRawText(), options),
+                "mouseMove" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options), // Legacy compatibility
                 "mouseDown" => JsonSerializer.Deserialize<MouseDownBefehl>(root.GetRawText(), options),
                 "mouseUp" => JsonSerializer.Deserialize<MouseUpBefehl>(root.GetRawText(), options),
                 "keyDown" => JsonSerializer.Deserialize<KeyDownBefehl>(root.GetRawText(), options),

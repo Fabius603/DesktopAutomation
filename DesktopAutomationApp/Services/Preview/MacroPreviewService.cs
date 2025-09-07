@@ -68,34 +68,37 @@ namespace DesktopAutomationApp.Services.Preview
             {
                 switch (cmd)
                 {
-                    case MouseMoveBefehl m:
+                    case MouseMoveAbsoluteBefehl m:
                         {
                             var p = ((float)m.X, (float)m.Y);
                             mousePositions.Add((p, t));
                             nodeIdx++;
 
-                            // Node als Orientierungspunkt (statisch)
-                            stat.Add(new NodeItem(
-                                id: $"node_{nodeIdx}",
-                                globalX: p.Item1, globalY: p.Item2,
-                                radius: 6f,
-                                label: nodeIdx.ToString(),
-                                fill: new Color(20, 130, 255, 160),
-                                stroke: new Color(20, 130, 255, 220),
-                                strokeWidth: 2f,
-                                text: new Color(255, 255, 255, 255)
-                            )
-                            { Transform = tr });
+                            // Nur Position erfassen für Liniendarstellung - keine Node/Punkt
+                            lastPos = p;
+                            break;
+                        }
 
-                            // (kein t++ hier – Zeit steigt nur bei Timeout)
+                    case MouseMoveRelativeBefehl mr:
+                        {
+                            // Relative Bewegung von letzter Position
+                            var p = lastPos.HasValue 
+                                ? ((float)(lastPos.Value.Item1 + mr.DeltaX), (float)(lastPos.Value.Item2 + mr.DeltaY))
+                                : ((float)mr.DeltaX, (float)mr.DeltaY);
+                            
+                            mousePositions.Add((p, t));
+                            nodeIdx++;
+
+                            // Nur Position erfassen für Liniendarstellung - keine Node/Punkt
                             lastPos = p;
                             break;
                         }
 
                     case MouseDownBefehl d:
                         {
-                            var p = ((float)d.X, (float)d.Y);
-                            mousePositions.Add((p, t)); // Down definiert auch eine relevante Position
+                            // Mouse Down ohne Koordinaten - verwende letzte Position
+                            if (!lastPos.HasValue) lastPos = (0f, 0f); // Fallback
+                            var p = lastPos.Value;
 
                             // Puls (timed)
                             timed.Add(new ClickPulseItem(
@@ -120,14 +123,14 @@ namespace DesktopAutomationApp.Services.Preview
                             )
                             { Transform = tr });
 
-                            lastPos = p;
                             break;
                         }
 
                     case MouseUpBefehl u:
                         {
-                            var p = ((float)u.X, (float)u.Y);
-                            mousePositions.Add((p, t));
+                            // Mouse Up ohne Koordinaten - verwende letzte Position
+                            if (!lastPos.HasValue) lastPos = (0f, 0f); // Fallback
+                            var p = lastPos.Value;
 
                             timed.Add(new ClickPulseItem(
                                 id: $"mu_{t:F3}",
@@ -150,7 +153,6 @@ namespace DesktopAutomationApp.Services.Preview
                             )
                             { Transform = tr });
 
-                            lastPos = p;
                             break;
                         }
 

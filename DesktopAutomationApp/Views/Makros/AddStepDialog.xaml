@@ -24,12 +24,20 @@
 
         <!-- Dynamische Felder -->
         <StackPanel Grid.Row="1" Margin="0,0,0,8">
-            <!-- Maus: X/Y -->
+            <!-- Maus: X/Y (Absolute) -->
             <StackPanel Orientation="Horizontal" Visibility="{Binding ShowMouseXY, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="X:" VerticalAlignment="Center" Margin="0,0,4,0"/>
                 <TextBox Width="60" Text="{Binding X}"/>
                 <TextBlock Text="  Y:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                 <TextBox Width="60" Text="{Binding Y}"/>
+            </StackPanel>
+
+            <!-- Maus: DeltaX/DeltaY (Relativ) -->
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ShowMouseDelta, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="DeltaX:" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBox Width="60" Text="{Binding DeltaX}"/>
+                <TextBlock Text="  DeltaY:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                <TextBox Width="60" Text="{Binding DeltaY}"/>
             </StackPanel>
 
             <!-- Maus: Button -->

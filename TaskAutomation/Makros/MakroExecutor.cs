@@ -6,6 +6,7 @@ using WindowsInput.Native;
 using ImageHelperMethods;
 using Common.Logging;
 using Microsoft.Extensions.Logging;
+using System.Runtime.InteropServices;
 
 namespace TaskAutomation.Makros
 {
@@ -20,28 +21,67 @@ namespace TaskAutomation.Makros
             _sim = new InputSimulator();
         }
 
+        /// <summary>
+        /// Konvertiert einen absoluten Punkt zu einem relativen MouseMoveBefehl
+        /// basierend auf der aktuellen Mausposition
+        /// </summary>
+        public static MouseMoveRelativeBefehl CreateRelativeMouseMove(int targetX, int targetY)
+        {
+            // Aktuelle Mausposition abfragen
+            if (GetCursorPos(out var currentPos))
+            {
+                int deltaX = targetX - currentPos.X;
+                int deltaY = targetY - currentPos.Y;
+                
+                return new MouseMoveRelativeBefehl
+                {
+                    DeltaX = deltaX,
+                    DeltaY = deltaY
+                };
+            }
+            else
+            {
+                // Fallback: wenn aktuelle Position nicht ermittelt werden kann,
+                // verwende absolute Koordinaten als relative (von 0,0)
+                return new MouseMoveRelativeBefehl
+                {
+                    DeltaX = targetX,
+                    DeltaY = targetY
+                };
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
         public async Task ExecuteMakro(Makro makro, DxgiResources dxgi, CancellationToken ct)
         {
             foreach (var befehl in makro.Befehle)
             {
                 ct.ThrowIfCancellationRequested();
-                (double, double) XY = (0, 0);
                 switch (befehl)
                 {
-                    case MouseMoveBefehl m:
-                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
+                    case MouseMoveAbsoluteBefehl m:
+                        var xy = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
+                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(xy.Item1, xy.Item2);
+                        break;
+
+                    case MouseMoveRelativeBefehl m:
+                        _sim.Mouse.MoveMouseBy(m.DeltaX, m.DeltaY);
                         break;
 
                     case MouseDownBefehl m:
-                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
                         PressMouse(m.Button, down: true);
                         break;
 
                     case MouseUpBefehl m:
-                        XY = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(XY.Item1, XY.Item2);
                         PressMouse(m.Button, down: false);
                         break;
 

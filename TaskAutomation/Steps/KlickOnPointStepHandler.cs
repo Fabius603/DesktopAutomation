@@ -87,32 +87,32 @@ namespace TaskAutomation.Steps
         {
             var commands = new ObservableCollection<MakroBefehl>();
 
+            // Always move mouse to position first - now using relative movement
+            commands.Add(MakroExecutor.CreateRelativeMouseMove(point.X, point.Y));
+
             // Check if only mouse move is requested (no click)
             if (settings.ClickType == "none")
             {
-                // Only move mouse, no click
-                commands.Add(new MouseMoveBefehl
+                // Only mouse move, no additional clicks
+                return new Makro
                 {
-                    X = point.X,
-                    Y = point.Y
-                });
+                    Name = $"TempMove_{DateTime.Now:HHmmss}",
+                    Befehle = commands
+                };
             }
+
             // Perform the click based on configuration
-            else if (settings.DoubleClick)
+            if (settings.DoubleClick)
             {
                 // Double click: Down-Up-Down-Up sequence with small delay
                 commands.Add(new MouseDownBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
 
                 commands.Add(new MouseUpBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
 
                 // Small delay between clicks (50ms is typical for double-click)
@@ -120,16 +120,12 @@ namespace TaskAutomation.Steps
 
                 commands.Add(new MouseDownBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
 
                 commands.Add(new MouseUpBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
             }
             else
@@ -137,16 +133,12 @@ namespace TaskAutomation.Steps
                 // Single click: Down-Up
                 commands.Add(new MouseDownBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
 
                 commands.Add(new MouseUpBefehl
                 {
-                    Button = settings.ClickType,
-                    X = point.X,
-                    Y = point.Y
+                    Button = settings.ClickType
                 });
             }
 

@@ -40,6 +40,7 @@ namespace TaskAutomation.Hotkeys
         private const int WM_MBUTTONUP = 0x0208;
         private const int WM_XBUTTONDOWN = 0x020B;
         private const int WM_XBUTTONUP = 0x020C;
+        private const int WM_MOUSEMOVE = 0x0200;
 
         private static bool IsModifierVk(uint vk) =>
             vk is
@@ -104,6 +105,11 @@ namespace TaskAutomation.Hotkeys
 
         public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
 
+        // Captured Input Events für Makro-Aufnahme
+        public event Action<MouseDownCaptured>? MouseDownCaptured;
+        public event Action<MouseUpCaptured>? MouseUpCaptured;
+        public event Action<MouseMoveCaptured>? MouseMoveCaptured;
+
         // Edge-Only: welche VKs sind aktuell gedrückt (um Auto-Repeat zu ignorieren)
         private readonly HashSet<uint> _downKeys = new();
 
@@ -115,6 +121,10 @@ namespace TaskAutomation.Hotkeys
         private List<CapturedInputEvent>? _recordBuffer;
         private Stopwatch? _recordSw;
         private TimeSpan _lastAt;
+
+        // MouseMove throttling für Aufnahme
+        private (int x, int y) _lastMousePos = (-1, -1);
+        private const int MouseMoveThreshold = 5; // Mindestabstand in Pixeln
 
         public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger, IJsonRepository<HotkeyDefinition> repo)
         {
@@ -348,6 +358,15 @@ namespace TaskAutomation.Hotkeys
                         break;
                     case WM_XBUTTONUP:
                         AddWithTimeout(new MouseUpCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        break;
+                    case WM_MOUSEMOVE:
+                        // Throttling: nur bei signifikanter Bewegung aufnehmen
+                        if (Math.Abs(x - _lastMousePos.x) >= MouseMoveThreshold || 
+                            Math.Abs(y - _lastMousePos.y) >= MouseMoveThreshold)
+                        {
+                            _lastMousePos = (x, y);
+                            AddWithTimeout(new MouseMoveCaptured(x, y));
+                        }
                         break;
                 }
             }

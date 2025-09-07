@@ -19,7 +19,8 @@ namespace TaskAutomation.Makros
 
 
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-    [JsonDerivedType(typeof(MouseMoveBefehl), "mouse_move")]
+    [JsonDerivedType(typeof(MouseMoveAbsoluteBefehl), "mouse_move_absolute")]
+    [JsonDerivedType(typeof(MouseMoveRelativeBefehl), "mouse_move_relative")]
     [JsonDerivedType(typeof(MouseDownBefehl), "mouse_down")]
     [JsonDerivedType(typeof(MouseUpBefehl), "mouse_up")]
     [JsonDerivedType(typeof(KeyDownBefehl), "key_down")]
@@ -27,24 +28,26 @@ namespace TaskAutomation.Makros
     [JsonDerivedType(typeof(TimeoutBefehl), "timeout")]
     public abstract class MakroBefehl { }
 
-    public sealed class MouseMoveBefehl : MakroBefehl
+    public sealed class MouseMoveAbsoluteBefehl : MakroBefehl
     {
         [JsonPropertyName("x")] public int X { get; set; }
         [JsonPropertyName("y")] public int Y { get; set; }
+    }
+
+    public sealed class MouseMoveRelativeBefehl : MakroBefehl
+    {
+        [JsonPropertyName("deltaX")] public int DeltaX { get; set; }
+        [JsonPropertyName("deltaY")] public int DeltaY { get; set; }
     }
 
     public sealed class MouseDownBefehl : MakroBefehl
     {
         [JsonPropertyName("button")] public string Button { get; set; } = string.Empty;
-        [JsonPropertyName("x")] public int X { get; set; }
-        [JsonPropertyName("y")] public int Y { get; set; }
     }
 
     public sealed class MouseUpBefehl : MakroBefehl
     {
         [JsonPropertyName("button")] public string Button { get; set; } = string.Empty;
-        [JsonPropertyName("x")] public int X { get; set; }
-        [JsonPropertyName("y")] public int Y { get; set; }
     }
 
     public sealed class KeyDownBefehl : MakroBefehl

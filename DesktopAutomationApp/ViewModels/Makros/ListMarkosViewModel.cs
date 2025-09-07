@@ -278,21 +278,24 @@ namespace DesktopAutomationApp.ViewModels
         {
             switch (step)
             {
-                case MouseMoveBefehl mm:
-                    vm.SelectedType = "MouseMove";
+                case MouseMoveAbsoluteBefehl mm:
+                    vm.SelectedType = "MouseMoveAbsolute";
                     vm.X = mm.X; vm.Y = mm.Y;
+                    break;
+
+                case MouseMoveRelativeBefehl mr:
+                    vm.SelectedType = "MouseMoveRelative";
+                    vm.DeltaX = mr.DeltaX; vm.DeltaY = mr.DeltaY;
                     break;
 
                 case MouseDownBefehl md:
                     vm.SelectedType = "MouseDown";
                     vm.MouseButton = md.Button;
-                    vm.X = md.X; vm.Y = md.Y;
                     break;
 
                 case MouseUpBefehl mu:
                     vm.SelectedType = "MouseUp";
                     vm.MouseButton = mu.Button;
-                    vm.X = mu.X; vm.Y = mu.Y;
                     break;
 
                 case KeyDownBefehl kd:
@@ -506,21 +509,21 @@ namespace DesktopAutomationApp.ViewModels
                         list.Add(new KeyUpBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, ku.VirtualKey) });
                         break;
 
+                    case MouseMoveCaptured mm:
+                        list.Add(new MouseMoveAbsoluteBefehl { X = mm.X, Y = mm.Y });
+                        break;
+
                     case MouseDownCaptured md:
                         list.Add(new MouseDownBefehl
                         {
-                            Button = _hotkeys.FormatMouseButton(md.Button),
-                            X = md.X,
-                            Y = md.Y
+                            Button = _hotkeys.FormatMouseButton(md.Button)
                         });
                         break;
 
                     case MouseUpCaptured mu:
                         list.Add(new MouseUpBefehl
                         {
-                            Button = _hotkeys.FormatMouseButton(mu.Button),
-                            X = mu.X,
-                            Y = mu.Y
+                            Button = _hotkeys.FormatMouseButton(mu.Button)
                         });
                         break;
                 }

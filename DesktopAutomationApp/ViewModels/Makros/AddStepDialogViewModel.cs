@@ -23,9 +23,9 @@ namespace DesktopAutomationApp.ViewModels
 
         public ICommand CaptureKeyCommand { get; }
 
-        public string[] StepTypes { get; } = { "MouseMove", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
+        public string[] StepTypes { get; } = { "MouseMoveAbsolute", "MouseMoveRelative", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
 
-        private string _selectedType = "MouseMove";
+        private string _selectedType = "MouseMoveAbsolute";
         public string SelectedType
         {
             get => _selectedType;
@@ -34,6 +34,7 @@ namespace DesktopAutomationApp.ViewModels
                 _selectedType = value;
                 OnChange();
                 OnChange(nameof(ShowMouseXY));
+                OnChange(nameof(ShowMouseDelta));
                 OnChange(nameof(ShowMouseButton));
                 OnChange(nameof(ShowKey));
                 OnChange(nameof(ShowDuration));
@@ -53,7 +54,8 @@ namespace DesktopAutomationApp.ViewModels
         public string ConfirmButtonText => Mode == StepDialogMode.Edit ? "Anpassen" : "Hinzufügen";
 
         // Sichtbarkeiten
-        public bool ShowMouseXY => SelectedType is "MouseMove" or "MouseDown" or "MouseUp";
+        public bool ShowMouseXY => SelectedType is "MouseMoveAbsolute";
+        public bool ShowMouseDelta => SelectedType is "MouseMoveRelative";
         public bool ShowMouseButton => SelectedType is "MouseDown" or "MouseUp";
         public bool ShowKey => SelectedType is "KeyDown" or "KeyUp";
         public bool ShowDuration => SelectedType is "Timeout";
@@ -64,6 +66,12 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _y;
         public int Y { get => _y; set { _y = value; OnChange(); } }
+
+        private int _deltaX;
+        public int DeltaX { get => _deltaX; set { _deltaX = value; OnChange(); } }
+
+        private int _deltaY;
+        public int DeltaY { get => _deltaY; set { _deltaY = value; OnChange(); } }
 
         private string _mouseButton = "Left";
         public string MouseButton { get => _mouseButton; set { _mouseButton = value; OnChange(); } }
@@ -88,9 +96,10 @@ namespace DesktopAutomationApp.ViewModels
         {
             CreatedStep = SelectedType switch
             {
-                "MouseMove" => new MouseMoveBefehl { X = X, Y = Y },
-                "MouseDown" => new MouseDownBefehl { Button = MouseButton, X = X, Y = Y },
-                "MouseUp" => new MouseUpBefehl { Button = MouseButton, X = X, Y = Y },
+                "MouseMoveAbsolute" => new MouseMoveAbsoluteBefehl { X = X, Y = Y },
+                "MouseMoveRelative" => new MouseMoveRelativeBefehl { DeltaX = DeltaX, DeltaY = DeltaY },
+                "MouseDown" => new MouseDownBefehl { Button = MouseButton },
+                "MouseUp" => new MouseUpBefehl { Button = MouseButton },
                 "KeyDown" => new KeyDownBefehl { Key = Key },
                 "KeyUp" => new KeyUpBefehl { Key = Key },
                 "Timeout" => new TimeoutBefehl { Duration = Duration },

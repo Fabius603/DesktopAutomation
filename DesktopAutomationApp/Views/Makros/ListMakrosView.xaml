@@ -44,8 +44,8 @@
         <!-- Muster: OuterGrid: [TypeCol(shared)] [16px] [DetailsGrid] -->
         <!-- DetailsGrid: [ParamLabelCol(shared)] [12px] [ValueCol] mit expliziten RowDefinitions -->
 
-        <!-- MouseMove -->
-        <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
+        <!-- MouseMoveAbsolute -->
+        <DataTemplate DataType="{x:Type mak:MouseMoveAbsoluteBefehl}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
@@ -53,7 +53,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="MouseMove" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="MouseMove Absolute" Style="{StaticResource TypeLabel}"/>
 
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
@@ -75,6 +75,37 @@
             </Grid>
         </DataTemplate>
 
+        <!-- MouseMoveRelative -->
+        <DataTemplate DataType="{x:Type mak:MouseMoveRelativeBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="64"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="MouseMove Relative" Style="{StaticResource TypeLabel}"/>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="DeltaX:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding DeltaX}" Style="{StaticResource ParamValue}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="DeltaY:" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DeltaY}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
         <!-- MouseDown -->
         <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
             <Grid>
@@ -89,8 +120,6 @@
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
@@ -100,12 +129,6 @@
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
         </DataTemplate>
@@ -124,8 +147,6 @@
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
@@ -135,12 +156,6 @@
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
         </DataTemplate>
@@ -370,7 +385,7 @@
                                             <Grid>
                                                 <Grid.Resources>
                                                     <!-- Editor-Templates pro Typ -->
-                                                    <DataTemplate DataType="{x:Type mak:MouseMoveBefehl}">
+                                                    <DataTemplate DataType="{x:Type mak:MouseMoveAbsoluteBefehl}">
                                                         <UniformGrid Columns="4">
                                                             <TextBlock Text="X:" VerticalAlignment="Center"/>
                                                             <TextBox Text="{Binding X}"/>
@@ -379,8 +394,17 @@
                                                         </UniformGrid>
                                                     </DataTemplate>
 
+                                                    <DataTemplate DataType="{x:Type mak:MouseMoveRelativeBefehl}">
+                                                        <UniformGrid Columns="4">
+                                                            <TextBlock Text="DeltaX:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding DeltaX}"/>
+                                                            <TextBlock Text="DeltaY:" VerticalAlignment="Center"/>
+                                                            <TextBox Text="{Binding DeltaY}"/>
+                                                        </UniformGrid>
+                                                    </DataTemplate>
+
                                                     <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
-                                                        <UniformGrid Columns="6">
+                                                        <UniformGrid Columns="2">
                                                             <TextBlock Text="Button:" VerticalAlignment="Center"/>
                                                             <ComboBox SelectedValuePath="Content"
                                                                                       SelectedValue="{Binding Button}">
@@ -388,15 +412,11 @@
                                                                 <ComboBoxItem Content="Right"/>
                                                                 <ComboBoxItem Content="Middle"/>
                                                             </ComboBox>
-                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding X}"/>
-                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Y}"/>
                                                         </UniformGrid>
                                                     </DataTemplate>
 
                                                     <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
-                                                        <UniformGrid Columns="6">
+                                                        <UniformGrid Columns="2">
                                                             <TextBlock Text="Button:" VerticalAlignment="Center"/>
                                                             <ComboBox SelectedValuePath="Content"
                                                                                       SelectedValue="{Binding Button}">
@@ -404,10 +424,6 @@
                                                                 <ComboBoxItem Content="Right"/>
                                                                 <ComboBoxItem Content="Middle"/>
                                                             </ComboBox>
-                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding X}"/>
-                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Y}"/>
                                                         </UniformGrid>
                                                     </DataTemplate>
 
