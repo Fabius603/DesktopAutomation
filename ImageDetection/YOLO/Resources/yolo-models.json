@@ -33,5 +33,12 @@
     "size": 228016463,
     "displayName": "YOLO 11",
     "description": "Großes allgemeines Modell"
+  },
+  "YOLOv8m_head_detector": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-22/YOLOv8m_head_detector.onnx",
+    "sha256": "b4d8deb8cefd751db02e57df06ed0eda1cc4d658608bc185cf4825f14410d516",
+    "size": 103606563,
+    "displayName": "HeadDetector Medium",
+    "description": "Mittelgroße Head Detection"
   }
 }
