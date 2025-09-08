@@ -61,6 +61,22 @@ namespace DesktopAutomationApp.ViewModels
 
         public string RecordButtonText => IsRecording ? "Aufnahme stoppen" : "Aufnahme starten";
 
+        private bool _isCapturingClick;
+        public bool IsCapturingClick
+        {
+            get => _isCapturingClick;
+            private set
+            {
+                if (_isCapturingClick == value) return;
+                _isCapturingClick = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CaptureClickButtonText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string CaptureClickButtonText => IsCapturingClick ? "Klick-Erfassung läuft..." : "Einzelnen Klick erfassen";
+
         public ObservableCollection<MakroBefehl>? SelectedSteps =>
             Selected?.Befehle != null ? new ObservableCollection<MakroBefehl>(Selected.Befehle) : null;
 
@@ -84,6 +100,9 @@ namespace DesktopAutomationApp.ViewModels
 
         // Aufnahme (jetzt aktiv)
         public ICommand RecordStepsCommand { get; }
+        
+        // Einzelklick-Erfassung
+        public ICommand CaptureClickCommand { get; }
 
         // Vorschau
         public ICommand CopyNameCommand { get; }
@@ -123,6 +142,9 @@ namespace DesktopAutomationApp.ViewModels
 
             // Aufnahme-Button: Toggle Start/Stop
             RecordStepsCommand = new RelayCommand(async () => await ToggleRecordAsync(), () => Selected != null);
+
+            // Einzelklick-Erfassung
+            CaptureClickCommand = new RelayCommand(async () => await CaptureClickAsync(), () => Selected != null && !IsCapturingClick && !IsRecording);
 
             CopyNameCommand = new RelayCommand<Makro?>(m =>
             {
@@ -435,6 +457,58 @@ namespace DesktopAutomationApp.ViewModels
                 
                 // Automatisch speichern nach Hinzufügen eines neuen Steps
                 await SaveAllAsync();
+            }
+        }
+
+        // ============================
+        // Einzelklick-Erfassung
+        // ============================
+        private async Task CaptureClickAsync()
+        {
+            if (Selected == null) return;
+
+            try
+            {
+                IsCapturingClick = true;
+                _log.LogInformation("Einzelklick-Erfassung gestartet.");
+
+                using var clickOverlay = new ClickCaptureOverlay();
+                var clickPoint = await clickOverlay.CaptureClickAsync();
+
+                _log.LogInformation("Klick erfasst bei: {X}, {Y}", clickPoint.X, clickPoint.Y);
+
+                // Erstelle MouseMoveAbsolute-Befehl
+                var moveCommand = new MouseMoveAbsoluteBefehl 
+                { 
+                    X = clickPoint.X, 
+                    Y = clickPoint.Y 
+                };
+
+                // Füge Befehl hinzu
+                Selected.Befehle ??= new();
+                int insertIndex = SelectedStep != null
+                    ? Math.Min(Selected.Befehle.Count, Selected.Befehle.IndexOf(SelectedStep) + 1)
+                    : Selected.Befehle.Count;
+
+                Selected.Befehle.Insert(insertIndex, moveCommand);
+                SelectedStep = moveCommand;
+
+                OnPropertyChanged(nameof(SelectedSteps));
+                
+                // Automatisch speichern
+                await SaveAllAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                _log.LogInformation("Einzelklick-Erfassung abgebrochen.");
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Fehler bei der Einzelklick-Erfassung.");
+            }
+            finally
+            {
+                IsCapturingClick = false;
             }
         }
 
