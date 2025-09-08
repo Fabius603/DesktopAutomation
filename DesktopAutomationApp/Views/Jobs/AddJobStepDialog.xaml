@@ -63,6 +63,8 @@
                     <TextBox Width="60" Text="{Binding TemplateMatchingStep_RoiW}"/>
                     <TextBlock Text="Höhe:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                     <TextBox Width="60" Text="{Binding TemplateMatchingStep_RoiH}"/>
+                    <Button Content="Capture ROI" Margin="8,0,0,0" Padding="8,4"
+                            Command="{Binding CaptureTemplateMatchingRoiCommand}"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -266,6 +268,8 @@
                     <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiW}"/>
                     <TextBlock Text="Höhe:" VerticalAlignment="Center" Margin="8,0,4,0"/>
                     <TextBox Width="60" Text="{Binding YoloDetectionStep_RoiH}"/>
+                    <Button Content="Capture ROI" Margin="8,0,0,0" Padding="8,4"
+                            Command="{Binding CaptureYoloDetectionRoiCommand}"/>
                 </StackPanel>
             </StackPanel>
 

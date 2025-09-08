@@ -33,6 +33,8 @@ namespace DesktopAutomationApp.ViewModels
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
             BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
+            CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
+            CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
         }
 
         // ----- Dialog-Interop -----
@@ -55,6 +57,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseScriptPathCommand { get; }
         public ICommand BrowseVideoSavePathCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
+        public ICommand CaptureTemplateMatchingRoiCommand { get; }
+        public ICommand CaptureYoloDetectionRoiCommand { get; }
 
         private void Confirm()
         {
@@ -449,6 +453,56 @@ namespace DesktopAutomationApp.ViewModels
                         overlay.Close();
                     }
                 }
+            }
+        }
+
+        private async void CaptureTemplateMatchingRoi()
+        {
+            try
+            {
+                var roiOverlay = new DesktopOverlay.RoiCaptureOverlay();
+                var rect = await roiOverlay.CaptureRoiAsync();
+                
+                TemplateMatchingStep_RoiX = rect.X;
+                TemplateMatchingStep_RoiY = rect.Y;
+                TemplateMatchingStep_RoiW = rect.Width;
+                TemplateMatchingStep_RoiH = rect.Height;
+            }
+            catch (OperationCanceledException)
+            {
+                // User aborted with ESC - this is not an error, just ignore
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Handle actual errors
+                System.Windows.MessageBox.Show($"Error capturing ROI: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void CaptureYoloDetectionRoi()
+        {
+            try
+            {
+                var roiOverlay = new DesktopOverlay.RoiCaptureOverlay();
+                var rect = await roiOverlay.CaptureRoiAsync();
+                
+                YoloDetectionStep_RoiX = rect.X;
+                YoloDetectionStep_RoiY = rect.Y;
+                YoloDetectionStep_RoiW = rect.Width;
+                YoloDetectionStep_RoiH = rect.Height;
+            }
+            catch (OperationCanceledException)
+            {
+                // User aborted with ESC - this is not an error, just ignore
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Handle actual errors
+                System.Windows.MessageBox.Show($"Error capturing ROI: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
