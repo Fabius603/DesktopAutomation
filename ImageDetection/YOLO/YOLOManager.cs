@@ -263,41 +263,50 @@ namespace ImageDetection.YOLO
         {
             var (model, session, labels) = await GetOrCreateAsync(modelKey, ct).ConfigureAwait(false);
 
-            // Input-Name ermitteln (zur Sicherheit)
-            var inputName = session.InputMetadata.Keys.First(); // meist "images"
-            var classId = IndexOfLabel(labels, objectName);
-            if (classId < 0) return new DetectionResult { Success = false };
+            // Input-Name holen ohne LINQ
+            string? inputName = null;
+            foreach (var k in session.InputMetadata.Keys) { inputName = k; break; }
+            if (inputName is null)
+                return new DetectionResult { Success = false };
 
-            // ROI clampen + Crop
+            int classId = IndexOfLabel(labels, objectName);
+            if (classId < 0)
+                return new DetectionResult { Success = false };
+
+            // ROI clampen
             var full = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var useRoi = roi.HasValue ? Rectangle.Intersect(roi.Value, full) : full;
-            if (useRoi.Width <= 0 || useRoi.Height <= 0) return new DetectionResult { Success = false };
-            using var crop = bitmap.Clone(useRoi, bitmap.PixelFormat);
+            if (useRoi.Width <= 0 || useRoi.Height <= 0)
+                return new DetectionResult { Success = false };
 
-            // Preprocessing
-            var inputSize = _opt.InputSize;
-            var (tensor, scale, padX, padY) = LetterboxToTensor(crop, inputSize);
+            // InputSize stride-ausrichten (z. B. 32)
+            int align = 32;
+            var inputSize = Math.Max(align, ((_opt.InputSize + (align - 1)) / align) * align);
+
+            // Preprocessing: direkt ROI -> Letterbox -> Tensor
+            var (tensor, scale, padX, padY) = LetterboxToTensor(bitmap, useRoi, inputSize);
 
             // Inferenz
-            var inputs = new[] { NamedOnnxValue.CreateFromTensor(inputName, tensor) };
-            using var results = session.Run(inputs);
-            var first = results.First();
+            var input = NamedOnnxValue.CreateFromTensor(inputName, tensor); // bei manchen ORT-Versionen NICHT IDisposable
+            using var results = session.Run(new[] { input });
+            using var first = results.First();
             var outTensor = first.AsTensor<float>();
-            var dims = outTensor.Dimensions.ToArray(); // z.B. [1,84,N] oder [1,N,84]
+
+            // C#12: Span vermeiden
+            int[] dims = outTensor.Dimensions.ToArray();
             var (isCHW, num, attrs) = InterpretDims(dims);
 
-            // Decode + NMS für genau DIE gewünschte Klasse (classId)
-            var dets = DecodeDetections(
+            // Nur Top-1 der gewünschten Klasse dekodieren
+            var bestList = DecodeDetections(
                 outTensor, isCHW, num, attrs, threshold,
                 inputSize, scale, padX, padY,
                 roiOffsetInImage: useRoi.Location,
                 requiredClassId: classId);
 
-            if (dets.Count == 0) return new DetectionResult { Success = false };
+            if (bestList.Count == 0)
+                return new DetectionResult { Success = false };
 
-            var best = dets.OrderByDescending(d => d.Confidence).First();
-            // Desktop-Koordinate: ohne globalen Offset == identisch zur Bildkoordinate
-            // (falls du den globalen Offset kennst, addierst du ihn hier drauf)
+            var best = bestList[0]; // DecodeDetections liefert bereits nur Top-1
             return new DetectionResult
             {
                 Success = true,
@@ -337,40 +346,49 @@ namespace ImageDetection.YOLO
         }
 
         /// <summary> Letterbox-Resize (Proportionen halten) → NCHW Float32 [0..1] </summary>
-        private static (DenseTensor<float> input, float scale, float padX, float padY) LetterboxToTensor(Bitmap bmp, int inputSize)
+        private static (DenseTensor<float> input, float scale, float padX, float padY)
+        LetterboxToTensor(Bitmap src, Rectangle srcRect, int inputSize)
         {
-            // Zielgröße
-            int w0 = bmp.Width, h0 = bmp.Height;
-            float r = Math.Min((float)inputSize / w0, (float)inputSize / h0);
-            int nw = (int)Math.Round(w0 * r);
-            int nh = (int)Math.Round(h0 * r);
-            int padX = (inputSize - nw) / 2;
-            int padY = (inputSize - nh) / 2;
+            // Skalierung & Padding berechnen
+            int w0 = srcRect.Width, h0 = srcRect.Height;
+            float scale = Math.Min((float)inputSize / w0, (float)inputSize / h0);
+            int nw = (int)Math.Round(w0 * scale);
+            int nh = (int)Math.Round(h0 * scale);
+            float padX = (inputSize - nw) * 0.5f;
+            float padY = (inputSize - nh) * 0.5f;
 
-            using var resized = new Bitmap(bmp, new Size(nw, nh));
+            // Canvas erzeugen und ROI direkt skaliert zeichnen
             using var canvas = new Bitmap(inputSize, inputSize, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
             using (var g = Graphics.FromImage(canvas))
             {
                 g.Clear(Color.Black);
-                g.DrawImage(resized, padX, padY, nw, nh);
+                g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                var dst = new Rectangle((int)padX, (int)padY, nw, nh);
+                g.DrawImage(src, dst, srcRect, GraphicsUnit.Pixel);
             }
 
-            // BGR/RGB → NCHW float
+            // Tensor anlegen (NCHW)
             var tensor = new DenseTensor<float>(new[] { 1, 3, inputSize, inputSize });
-            var data = tensor.Buffer.Span;
 
+            // Canvas -> Tensor kopieren
             var bd = canvas.LockBits(new Rectangle(0, 0, inputSize, inputSize),
-                                     System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                                     canvas.PixelFormat);
+                                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                                    canvas.PixelFormat);
             try
             {
-                int stride = bd.Stride;
                 unsafe
                 {
-                    byte* ptr = (byte*)bd.Scan0;
+                    byte* basePtr = (byte*)bd.Scan0;
+                    int stride = bd.Stride;
+                    int plane = inputSize * inputSize;
+                    var buf = tensor.Buffer.Span;
+
                     for (int y = 0; y < inputSize; y++)
                     {
-                        byte* row = ptr + y * stride;
+                        byte* row = basePtr + y * stride;
+                        int rowBase = y * inputSize;
                         for (int x = 0; x < inputSize; x++)
                         {
                             int idx = x * 3;
@@ -378,11 +396,10 @@ namespace ImageDetection.YOLO
                             byte gch = row[idx + 1];
                             byte rch = row[idx + 2];
 
-                            // NCHW: [0]=R, [1]=G, [2]=B
-                            int baseIdx = y * inputSize + x;
-                            data[0 * inputSize * inputSize + baseIdx] = rch / 255f;
-                            data[1 * inputSize * inputSize + baseIdx] = gch / 255f;
-                            data[2 * inputSize * inputSize + baseIdx] = b / 255f;
+                            int p = rowBase + x;
+                            buf[0 * plane + p] = rch * (1f / 255f);
+                            buf[1 * plane + p] = gch * (1f / 255f);
+                            buf[2 * plane + p] = b   * (1f / 255f);
                         }
                     }
                 }
@@ -392,7 +409,7 @@ namespace ImageDetection.YOLO
                 canvas.UnlockBits(bd);
             }
 
-            return (tensor, r, padX, padY);
+            return (tensor, scale, padX, padY);
         }
 
         private static (bool isCHW, int num, int attrs) InterpretDims(int[] dims)
@@ -415,7 +432,7 @@ namespace ImageDetection.YOLO
             Tensor<float> oTensor,
             bool isCHW,
             int num,              // Anzahl Kandidaten
-            int attrs,            // 4 + numClasses
+            int attrs,            // 4(+1) + numClasses
             float threshold,
             int inputSize,
             float scale,
@@ -424,80 +441,80 @@ namespace ImageDetection.YOLO
             Point roiOffsetInImage,
             int requiredClassId)
         {
+            // Layout: [cx,cy,w,h,(obj?), class0..classN-1]
             int numClasses = attrs - 4;
-            var raw = new List<(RectangleF box, int cls, float conf)>(Math.Min(num, 1000));
+            bool hasObj = (attrs == numClasses + 5);
+            int baseCls = hasObj ? 5 : 4;
+
+            float bestS = -1f;
+            RectangleF bestBox = default;
+            bool found = false;
 
             if (isCHW)
             {
-                // [1, attrs, num]  -> (a,k)
+                // [1, attrs, num]
+                int clsOff = baseCls + requiredClassId;
                 for (int k = 0; k < num; k++)
                 {
                     float cx = oTensor[0, 0, k];
                     float cy = oTensor[0, 1, k];
-                    float w = oTensor[0, 2, k];
-                    float h = oTensor[0, 3, k];
+                    float w  = oTensor[0, 2, k];
+                    float h  = oTensor[0, 3, k];
 
-                    // Klassenmax
-                    int bestC = -1; float bestS = 0f;
-                    for (int c = 0; c < numClasses; c++)
+                    float s = oTensor[0, clsOff, k];
+                    if (hasObj) s *= oTensor[0, 4, k]; // obj * class
+                    if (s < threshold) continue;
+
+                    if (s > bestS)
                     {
-                        float s = oTensor[0, 4 + c, k];
-                        if (s > bestS) { bestS = s; bestC = c; }
+                        var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
+                        bestBox = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
+                        bestS = s;
+                        found = true;
                     }
-                    if (bestC != requiredClassId) continue;
-                    if (bestS < threshold) continue;
-
-                    var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
-                    // ROI-Offset zurück auf Ursprungsbild
-                    boxImg = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
-                    raw.Add((boxImg, bestC, bestS));
                 }
             }
             else
             {
-                // [1, num, attrs] -> (k,a)
+                // [1, num, attrs]
+                int clsOff = baseCls + requiredClassId;
                 for (int k = 0; k < num; k++)
                 {
                     float cx = oTensor[0, k, 0];
                     float cy = oTensor[0, k, 1];
-                    float w = oTensor[0, k, 2];
-                    float h = oTensor[0, k, 3];
+                    float w  = oTensor[0, k, 2];
+                    float h  = oTensor[0, k, 3];
 
-                    int bestC = -1; float bestS = 0f;
-                    for (int c = 0; c < numClasses; c++)
+                    float s = oTensor[0, k, clsOff];
+                    if (hasObj) s *= oTensor[0, k, 4];
+                    if (s < threshold) continue;
+
+                    if (s > bestS)
                     {
-                        float s = oTensor[0, k, 4 + c];
-                        if (s > bestS) { bestS = s; bestC = c; }
+                        var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
+                        bestBox = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
+                        bestS = s;
+                        found = true;
                     }
-                    if (bestC != requiredClassId) continue;
-                    if (bestS < threshold) continue;
-
-                    var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
-                    boxImg = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
-                    raw.Add((boxImg, bestC, bestS));
                 }
             }
 
-            // NMS
-            var kept = Nms(raw, _opt.NmsIou);
+            if (!found) return new List<IDetectionResult>(0);
 
-            // Map auf IDetectionResult
-            var list = new List<IDetectionResult>(kept.Count);
-            foreach (var d in kept)
+            var center = new Point(
+                (int)Math.Round(bestBox.X + bestBox.Width * 0.5f),
+                (int)Math.Round(bestBox.Y + bestBox.Height * 0.5f));
+
+            return new List<IDetectionResult>(1)
             {
-                var center = new Point(
-                    (int)Math.Round(d.box.X + d.box.Width / 2f),
-                    (int)Math.Round(d.box.Y + d.box.Height / 2f));
-
-                list.Add(new DetectionResult
+                new DetectionResult
                 {
                     Success = true,
-                    Confidence = d.conf,
-                    BoundingBox = Rectangle.Round(d.box),
+                    Confidence = bestS,
+                    BoundingBox = Rectangle.Round(bestBox),
                     CenterPoint = center,
-                });
-            }
-            return list;
+                }
+            };
         }
 
         private static RectangleF ReverseLetterboxToImageSpace(
