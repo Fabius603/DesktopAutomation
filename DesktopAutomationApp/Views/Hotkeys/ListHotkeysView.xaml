@@ -77,9 +77,10 @@
                     <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" IsReadOnly="True" Width="2*"/>
                     <DataGridCheckBoxColumn Header="Aktiv"
                                 Binding="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                Width="Auto"
+                                Width="60"
+                                CanUserResize="False"
                                 IsThreeState="False"/>
-                    <DataGridTemplateColumn Header="" Width="Auto">
+                    <DataGridTemplateColumn Header="" Width="50" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Edit"
