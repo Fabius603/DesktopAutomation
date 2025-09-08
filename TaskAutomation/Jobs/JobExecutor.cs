@@ -42,7 +42,7 @@ namespace TaskAutomation.Jobs
         
         // Event für Job Step Fehler
         public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
-
+        private Rectangle _desktopBounds;
         private ProcessDuplicatorResult _processDuplicationResult;
         private DesktopFrame _currentDesktopFrame;
         private IMakroExecutor _makroExecutor;
@@ -85,6 +85,7 @@ namespace TaskAutomation.Jobs
             { typeof(MakroExecutionStep), new MakroExecutionStepHandler() },
             { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
             { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
+            { typeof(KlickOnPoint3DStep), new KlickOnPoint3DStepHandler() },
             { typeof(JobExecutionStep), new JobExecutionStepHandler() },
             { typeof(YOLODetectionStep), new YOLOStepHandler() },
         };
@@ -160,6 +161,12 @@ namespace TaskAutomation.Jobs
         {
             get => _currentOffset;
             set => _currentOffset = value;
+        }
+
+        public Rectangle DesktopBounds
+        {
+            get => _desktopBounds;
+            set => _desktopBounds = value;
         }
 
         public DxgiResources DxgiResources => _dxgiResources;
@@ -322,7 +329,7 @@ namespace TaskAutomation.Jobs
 
                         if (desktopDuplicationStep != null)
                         {
-                            var screenBounds = ImageHelperMethods.ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
+                            var screenBounds = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
                             if (!screenBounds.IsEmpty)
                             {
                                 videoWidth = screenBounds.Width;
@@ -350,6 +357,8 @@ namespace TaskAutomation.Jobs
 
                 if (desktopDuplicationStep != null && !_recordingOverlay.IsRunning)
                 {
+                    DesktopBounds = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
+
                     try
                     {
                         StartRecordingOverlay(

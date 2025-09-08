@@ -198,6 +198,40 @@
             </Grid>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type jobs:KlickOnPoint3DStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Klick auf Punkt 3D" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="FOV: "/><Run Text="{Binding Settings.FOV, StringFormat=F1}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Maus Sensitivity X: "/><Run Text="{Binding Settings.MausSensitivityX, StringFormat=F2}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Maus Sensitivity Y: "/><Run Text="{Binding Settings.MausSensitivityY, StringFormat=F2}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Doppelklick: "/>
+                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Klick-Typ: "/><Run Text="{Binding Settings.ClickType}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.Timeout}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type jobs:ScriptExecutionStep}">
             <Grid>
                 <Grid.ColumnDefinitions>

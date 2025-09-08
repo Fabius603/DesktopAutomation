@@ -185,6 +185,16 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
                     break;
 
+                case KlickOnPoint3DStep kp3d:
+                    vm.SelectedType = "KlickOnPoint3D";
+                    vm.KlickOnPoint3DStep_FOV = kp3d.Settings.FOV;
+                    vm.KlickOnPoint3DStep_MausSensitivityX = kp3d.Settings.MausSensitivityX;
+                    vm.KlickOnPoint3DStep_MausSensitivityY = kp3d.Settings.MausSensitivityY;
+                    vm.KlickOnPoint3DStep_DoubleClick = kp3d.Settings.DoubleClick;
+                    vm.KlickOnPoint3DStep_ClickType = kp3d.Settings.ClickType;
+                    vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
+                    break;
+
                 case JobExecutionStep je:
                     vm.SelectedType = "JobExecution";
                     vm.JobExecutionStep_SelectedJobName = je.Settings.JobName;

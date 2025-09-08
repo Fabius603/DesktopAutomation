@@ -16,6 +16,7 @@ using TaskAutomation.Scripts;
 using ImageDetection.Model;
 using ImageDetection.YOLO;
 using TaskAutomation.Events;
+using System.Drawing;
 
 namespace TaskAutomation.Jobs
 {
@@ -55,6 +56,7 @@ namespace TaskAutomation.Jobs
         IYoloManager YoloManager { get; set; }
         IDetectionResult DetectionResult { get; set; }
         System.Drawing.Bitmap ImageToProcess { get; set; }
+        Rectangle DesktopBounds { get; set; }
 
         // Kontext-Parameter
         OpenCvSharp.Point CurrentOffset { get; set; }

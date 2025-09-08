@@ -12,6 +12,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
+    [JsonDerivedType(typeof(KlickOnPoint3DStep), "klick_on_point_3d")]
     [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
     [JsonDerivedType(typeof(YOLODetectionStep), "yolo_detection")]
     public abstract class JobStep
@@ -155,6 +156,28 @@ namespace TaskAutomation.Jobs
 
     public sealed class KlickOnPointSettings
     {
+        [JsonPropertyName("double_click")]
+        public bool DoubleClick { get; set; } = false;
+        [JsonPropertyName("click_type")]
+        public string ClickType { get; set; } = "left";
+        [JsonPropertyName("timeout_ms")]
+        public int TimeoutMs { get; set; } = 1000;
+    }
+
+    public sealed class KlickOnPoint3DStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public KlickOnPoint3DSettings Settings { get; set; } = new();
+    }
+
+    public sealed class KlickOnPoint3DSettings
+    {
+        [JsonPropertyName("fov")]
+        public float FOV { get; set; } = 90.0f;
+        [JsonPropertyName("maus_sensitivity_x")]
+        public float MausSensitivityX { get; set; } = 1.0f;
+        [JsonPropertyName("maus_sensitivity_y")]
+        public float MausSensitivityY { get; set; } = 1.0f;
         [JsonPropertyName("double_click")]
         public bool DoubleClick { get; set; } = false;
         [JsonPropertyName("click_type")]

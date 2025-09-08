@@ -190,6 +190,41 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- KlickOnPoint3D -->
+            <StackPanel Visibility="{Binding ShowKlickOnPoint3D, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="FOV:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding KlickOnPoint3DStep_FOV, UpdateSourceTrigger=PropertyChanged, StringFormat=F1}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Maus Sensitivity X:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding KlickOnPoint3DStep_MausSensitivityX, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Maus Sensitivity Y:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding KlickOnPoint3DStep_MausSensitivityY, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Doppelklick:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <CheckBox IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Klick-Typ:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Width="120" SelectedItem="{Binding KlickOnPoint3DStep_ClickType}">
+                        <ComboBox.Items>
+                            <sys:String>left</sys:String>
+                            <sys:String>right</sys:String>
+                            <sys:String>middle</sys:String>
+                            <sys:String>none</sys:String>
+                        </ComboBox.Items>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <TextBlock Text="Timeout (ms):" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox Width="80" Text="{Binding KlickOnPoint3DStep_Timeout}"/>
+                </StackPanel>
+            </StackPanel>
+
             <!-- YOLO Detection -->
             <StackPanel Visibility="{Binding ShowYoloDetection, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal">

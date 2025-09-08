@@ -75,6 +75,7 @@ namespace DesktopAutomationApp.ViewModels
                 "DesktopDuplication" => true,
                 "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
                 "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
+                "KlickOnPoint3D" => !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType) && KlickOnPoint3DStep_Timeout >= 0 && KlickOnPoint3DStep_FOV > 0,
                 "YoloDetection" => !string.IsNullOrWhiteSpace(YoloDetectionStep_Model) && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName) && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1,
                 _ => false
             };
@@ -92,6 +93,7 @@ namespace DesktopAutomationApp.ViewModels
             "JobExecution",
             "ScriptExecution",
             "KlickOnPoint",
+            "KlickOnPoint3D",
             "YoloDetection"
         };
 
@@ -113,6 +115,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowJobExecution));
                 OnChange(nameof(ShowScriptExecution));
                 OnChange(nameof(ShowKlickOnPoint));
+                OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
@@ -127,6 +130,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowJobExecution => SelectedType == "JobExecution";
         public bool ShowScriptExecution => SelectedType == "ScriptExecution";
         public bool ShowKlickOnPoint => SelectedType == "KlickOnPoint";
+        public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
 
         // ----- Ergebnis -----
@@ -185,6 +189,25 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _klickOnPointStep_TimeoutMs = 5000;
         public int KlickOnPointStep_TimeoutMs { get => _klickOnPointStep_TimeoutMs; set { _klickOnPointStep_TimeoutMs = value; OnChange(); } }
+
+        // ===== KlickOnPoint3D Felder =====
+        private float _klickOnPoint3DStep_FOV = 90.0f;
+        public float KlickOnPoint3DStep_FOV { get => _klickOnPoint3DStep_FOV; set { _klickOnPoint3DStep_FOV = value; OnChange(); } }
+
+        private float _klickOnPoint3DStep_MausSensitivityX = 1.0f;
+        public float KlickOnPoint3DStep_MausSensitivityX { get => _klickOnPoint3DStep_MausSensitivityX; set { _klickOnPoint3DStep_MausSensitivityX = value; OnChange(); } }
+
+        private float _klickOnPoint3DStep_MausSensitivityY = 1.0f;
+        public float KlickOnPoint3DStep_MausSensitivityY { get => _klickOnPoint3DStep_MausSensitivityY; set { _klickOnPoint3DStep_MausSensitivityY = value; OnChange(); } }
+
+        private bool _klickOnPoint3DStep_DoubleClick = false;
+        public bool KlickOnPoint3DStep_DoubleClick { get => _klickOnPoint3DStep_DoubleClick; set { _klickOnPoint3DStep_DoubleClick = value; OnChange(); } }
+
+        private string _klickOnPoint3DStep_ClickType = "left";
+        public string KlickOnPoint3DStep_ClickType { get => _klickOnPoint3DStep_ClickType; set { _klickOnPoint3DStep_ClickType = value; OnChange(); } }
+
+        private int _klickOnPoint3DStep_Timeout = 5000;
+        public int KlickOnPoint3DStep_Timeout { get => _klickOnPoint3DStep_Timeout; set { _klickOnPoint3DStep_Timeout = value; OnChange(); } }
 
         // ===== YOLODetectionStep Felder =====
         private string _yoloDetectionStep_Model = string.Empty;
@@ -614,6 +637,18 @@ namespace DesktopAutomationApp.ViewModels
                         DoubleClick = KlickOnPointStep_DoubleClick,
                         ClickType = KlickOnPointStep_ClickType,
                         TimeoutMs = KlickOnPointStep_TimeoutMs
+                    }
+                },
+                "KlickOnPoint3D" => new KlickOnPoint3DStep
+                {
+                    Settings = new KlickOnPoint3DSettings
+                    {
+                        FOV = KlickOnPoint3DStep_FOV,
+                        MausSensitivityX = KlickOnPoint3DStep_MausSensitivityX,
+                        MausSensitivityY = KlickOnPoint3DStep_MausSensitivityY,
+                        DoubleClick = KlickOnPoint3DStep_DoubleClick,
+                        ClickType = KlickOnPoint3DStep_ClickType,
+                        TimeoutMs = KlickOnPoint3DStep_Timeout
                     }
                 },
                 "YoloDetection" => new YOLODetectionStep
