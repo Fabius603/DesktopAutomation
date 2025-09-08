@@ -77,6 +77,21 @@ namespace DesktopAutomationApp.ViewModels
 
         public string CaptureClickButtonText => IsCapturingClick ? "Klick-Erfassung läuft..." : "Einzelnen Klick erfassen";
 
+        private bool _recordMousePath = false;
+        public bool RecordMousePath
+        {
+            get => _recordMousePath;
+            set
+            {
+                if (_recordMousePath == value) return;
+                _recordMousePath = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RecordMousePathText));
+            }
+        }
+
+        public string RecordMousePathText => RecordMousePath ? "Mauspfad: AN" : "Mauspfad: AUS";
+
         public ObservableCollection<MakroBefehl>? SelectedSteps =>
             Selected?.Befehle != null ? new ObservableCollection<MakroBefehl>(Selected.Befehle) : null;
 
@@ -103,6 +118,9 @@ namespace DesktopAutomationApp.ViewModels
         
         // Einzelklick-Erfassung
         public ICommand CaptureClickCommand { get; }
+        
+        // Mauspfad-Option
+        public ICommand ToggleMousePathCommand { get; }
 
         // Vorschau
         public ICommand CopyNameCommand { get; }
@@ -145,6 +163,13 @@ namespace DesktopAutomationApp.ViewModels
 
             // Einzelklick-Erfassung
             CaptureClickCommand = new RelayCommand(async () => await CaptureClickAsync(), () => Selected != null && !IsCapturingClick && !IsRecording);
+
+            // Mauspfad-Option umschalten
+            ToggleMousePathCommand = new RelayCommand(() => 
+            { 
+                RecordMousePath = !RecordMousePath; 
+                CommandManager.InvalidateRequerySuggested(); 
+            });
 
             CopyNameCommand = new RelayCommand<Makro?>(m =>
             {
@@ -565,29 +590,50 @@ namespace DesktopAutomationApp.ViewModels
         private List<MakroBefehl> MapCapturedEventsToSteps(IReadOnlyList<CapturedInputEvent> events)
         {
             var list = new List<MakroBefehl>(events.Count);
+            int? lastMouseX = null, lastMouseY = null;
+            int accumulatedTimeout = 0; // Sammelt aufeinanderfolgende Timeouts
 
             foreach (var ev in events)
             {
                 switch (ev)
                 {
                     case TimeoutEvent t:
-                        if (t.Milliseconds > 0)
-                            list.Add(new TimeoutBefehl { Duration = t.Milliseconds });
+                        // Sammle Timeout-Zeit, aber füge noch keinen Befehl hinzu
+                        accumulatedTimeout += t.Milliseconds;
                         break;
 
                     case KeyDownCaptured kd:
+                        // Vor anderem Befehl: akkumulierten Timeout hinzufügen
+                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
                         list.Add(new KeyDownBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, kd.VirtualKey) });
                         break;
 
                     case KeyUpCaptured ku:
+                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
                         list.Add(new KeyUpBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, ku.VirtualKey) });
                         break;
 
                     case MouseMoveCaptured mm:
-                        list.Add(new MouseMoveAbsoluteBefehl { X = mm.X, Y = mm.Y });
+                        // Nur MouseMove hinzufügen, wenn Mauspfad aktiviert ist
+                        if (RecordMousePath)
+                        {
+                            AddAccumulatedTimeout(list, ref accumulatedTimeout);
+                            list.Add(new MouseMoveAbsoluteBefehl { X = mm.X, Y = mm.Y });
+                            lastMouseX = mm.X;
+                            lastMouseY = mm.Y;
+                        }
                         break;
 
                     case MouseDownCaptured md:
+                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
+                        // Bei Mausklick: Wenn Mauspfad deaktiviert ist, MouseMove zur aktuellen Position hinzufügen
+                        // aber nur wenn sich die Position geändert hat
+                        if (!RecordMousePath && (lastMouseX != md.X || lastMouseY != md.Y))
+                        {
+                            list.Add(new MouseMoveAbsoluteBefehl { X = md.X, Y = md.Y });
+                            lastMouseX = md.X;
+                            lastMouseY = md.Y;
+                        }
                         list.Add(new MouseDownBefehl
                         {
                             Button = _hotkeys.FormatMouseButton(md.Button)
@@ -595,6 +641,15 @@ namespace DesktopAutomationApp.ViewModels
                         break;
 
                     case MouseUpCaptured mu:
+                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
+                        // Bei Mausklick: Wenn Mauspfad deaktiviert ist, MouseMove zur aktuellen Position hinzufügen
+                        // aber nur wenn sich die Position geändert hat
+                        if (!RecordMousePath && (lastMouseX != mu.X || lastMouseY != mu.Y))
+                        {
+                            list.Add(new MouseMoveAbsoluteBefehl { X = mu.X, Y = mu.Y });
+                            lastMouseX = mu.X;
+                            lastMouseY = mu.Y;
+                        }
                         list.Add(new MouseUpBefehl
                         {
                             Button = _hotkeys.FormatMouseButton(mu.Button)
@@ -603,7 +658,25 @@ namespace DesktopAutomationApp.ViewModels
                 }
             }
 
+            if (list.Count > 5)
+            {
+                list.RemoveRange(list.Count - 5, 5);
+            }
+            else
+            {
+                list.Clear();
+            }
+
             return list;
+        }
+
+        private void AddAccumulatedTimeout(List<MakroBefehl> list, ref int accumulatedTimeout)
+        {
+            if (accumulatedTimeout > 0)
+            {
+                list.Add(new TimeoutBefehl { Duration = accumulatedTimeout });
+                accumulatedTimeout = 0;
+            }
         }
 
         public new void Dispose()

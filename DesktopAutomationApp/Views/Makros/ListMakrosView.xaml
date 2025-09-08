@@ -37,6 +37,7 @@
             <Setter Property="LineHeight" Value="18"/>
         </Style>
 
+        <conv:StepNumberConverter x:Key="StepNumberConverter"/>
         <conv:TypeNameConverter x:Key="TypeNameConverter"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         
@@ -339,6 +340,26 @@
                             </Style>
                         </Button.Style>
                     </Button>
+                    <Button Command="{Binding ToggleMousePathCommand}"
+                        Content="{Binding RecordMousePathText}"
+                        Margin="8,0,0,0"
+                        FontSize="13"
+                        ToolTip="Umschalten: Mauspfad aufzeichnen oder nur bei Klicks">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RecordMousePath}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding Selected.Befehle}"
@@ -396,15 +417,31 @@
                     <!-- DEIN ItemTemplate (mit ergänztem Background & Triggern) -->
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <!-- Zwei Spalten: links Inhalt, rechts Pfeile (▲ links von ▼) -->
+                            <!-- Drei Spalten: Nummer, Inhalt, Aktionen -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
+                                    <!-- Schrittnummer -->
+                                    <TextBlock Grid.Column="0" 
+                                               FontWeight="Bold"
+                                               FontSize="14"
+                                               VerticalAlignment="Top"
+                                               Margin="0,0,12,0"
+                                               Foreground="{DynamicResource MahApps.Brushes.Accent}">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource StepNumberConverter}">
+                                                <Binding />
+                                                <Binding RelativeSource="{RelativeSource AncestorType=ListBox}" Path="ItemsSource"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+
                                     <!-- Inhalt -->
-                                    <StackPanel Grid.Column="0">
+                                    <StackPanel Grid.Column="1">
                                         <!-- ANZEIGE: nutzt implizite DataTemplates -->
                                         <ContentPresenter Content="{Binding}"/>
                                             <Grid>
@@ -477,7 +514,7 @@
                                     </StackPanel>
 
                                 <!-- Aktionen rechts: ✎ , ▲ , ▼ , 🗑 -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                <StackPanel Grid.Column="2" Orientation="Horizontal"
                                     HorizontalAlignment="Right" VerticalAlignment="Center"
                                     Margin="8,0,0,0">
 
