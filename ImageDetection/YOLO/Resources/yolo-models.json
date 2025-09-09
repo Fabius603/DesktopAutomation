@@ -5,5 +5,12 @@
     "size": 12823619,
     "displayName": "YOLO Nano Standard",
     "description": "YOLO Modell in der nano Größe. Besitz verschiedene alltäglichen Objekte"
+  },
+  "valorant_csgo": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-23/valorant_csgo.onnx",
+    "sha256": "3a529fd16884d767623228a87c63583984ecb4885e6695ace8d15497a91978b4",
+    "size": 12251049,
+    "displayName": "YOLO Valorant CSGO",
+    "description": "Modell zu Erkennung von Valorant und CSGO Charakteren"
   }
 }
