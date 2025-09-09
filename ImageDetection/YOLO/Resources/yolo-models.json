@@ -19,5 +19,12 @@
     "size": 12253426,
     "displayName": "valorant",
     "description": "YOLO Modell für Valorant"
+  },
+  "yolo11n": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-25/yolo11n.onnx",
+    "sha256": "4daf044e83ef720e214319bc7e904879291b70053daf2771d0440d57ee9a8f91",
+    "size": 10594165,
+    "displayName": "YOLO 11 nano",
+    "description": "YOLO Modell 11 nano. Kleinstes neuestes Modell "
   }
 }
