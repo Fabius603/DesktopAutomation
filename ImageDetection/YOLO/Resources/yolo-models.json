@@ -12,5 +12,12 @@
     "size": 12251049,
     "displayName": "YOLO Valorant CSGO",
     "description": "Modell zu Erkennung von Valorant und CSGO Charakteren"
+  },
+  "valorant": {
+    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-24/valorant.onnx",
+    "sha256": "d284da34676a64224e625424d9df14cdd485922bb6a64fb3d2d12bc8edc9c461",
+    "size": 12253426,
+    "displayName": "valorant",
+    "description": "YOLO Modell für Valorant"
   }
 }
