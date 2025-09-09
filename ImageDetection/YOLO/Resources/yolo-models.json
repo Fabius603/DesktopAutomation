@@ -6,34 +6,6 @@
     "displayName": "YOLO Nano Standard",
     "description": "YOLO Modell in der nano Größe. Besitz verschiedene alltäglichen Objekte"
   },
-  "yolov8l": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-7/yolov8l.onnx",
-    "sha256": "ec33ab71fd8b6abea00fcb3bc5992051e3b0e706c4eb0c661b160fa5b52d3d35",
-    "size": 174915790,
-    "displayName": "YOLO Large Standard",
-    "description": "YOLO Modell in der large Größe. Besitz verschiedene alltäglichen Objekte"
-  },
-  "yolov8s": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-8/yolov8s.onnx",
-    "sha256": "b52eff8937b456b2f1b6aa830f7bcde1e20dd2b57ca469e4a473ae766cff78e4",
-    "size": 44842275,
-    "displayName": "YOLO Small Standard",
-    "description": "YOLO Modell in der small Größe. Besitz verschiedene alltäglichen Objekte"
-  },
-  "yolov8m": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-9/yolov8m.onnx",
-    "sha256": "55cbb4908a349c0edd9922bdf25e3c64c6e98bd3b70edaae61c23434981913a1",
-    "size": 103790706,
-    "displayName": "YOLO Medium Standard",
-    "description": "YOLO Modell in der medium Größe. Besitz verschiedene alltäglichen Objekte"
-  },
-  "yolo11x": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-20/yolo11x.onnx",
-    "sha256": "09186518ea7e1d4fe65c44559755e0e352bda1edce15e498f92b33e0bee44a67",
-    "size": 228016463,
-    "displayName": "YOLO 11",
-    "description": "Großes allgemeines Modell"
-  },
   "YOLOv8m_head_detector": {
     "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-22/YOLOv8m_head_detector.onnx",
     "sha256": "b4d8deb8cefd751db02e57df06ed0eda1cc4d658608bc185cf4825f14410d516",
