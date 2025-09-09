@@ -22,38 +22,53 @@ namespace TaskAutomation.Steps
             }
 
             var settings = jobExecutionStep.Settings;
-            var targetJobName = settings.JobName;
 
-            logger.LogDebug("JobExecutionStepHandler: Processing job execution step for target job '{TargetJobName}'", targetJobName);
+            logger.LogDebug("JobExecutionStepHandler: Processing job execution step");
 
-            // Validation: Check if target job name is empty
-            if (string.IsNullOrWhiteSpace(targetJobName))
+            // Try to find by ID first, fallback to name for backward compatibility
+            Job? targetJob = null;
+            string? targetJobInfo = null;
+
+            if (settings.JobId.HasValue)
             {
-                var errorMessage = "No job name specified in JobExecutionStep";
+                targetJob = ctx.AllJobs.Values.FirstOrDefault(j => j.Id == settings.JobId.Value);
+                targetJobInfo = $"ID '{settings.JobId}'";
+                if (targetJob == null)
+                {
+                    var errorMessage = $"Target job with ID '{settings.JobId}' not found";
+                    logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(settings.JobName))
+            {
+                if (!ctx.AllJobs.TryGetValue(settings.JobName, out targetJob))
+                {
+                    var errorMessage = $"Target job '{settings.JobName}' not found";
+                    logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+                targetJobInfo = $"name '{settings.JobName}'";
+            }
+            else
+            {
+                var errorMessage = "No job ID or name specified in JobExecutionStep";
                 logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
                 throw new InvalidOperationException(errorMessage);
             }
 
             // Validation: Check if trying to execute the same job (prevent infinite recursion)
-            if (string.Equals(targetJobName, job.Name, StringComparison.OrdinalIgnoreCase))
+            if (targetJob.Id == job.Id)
             {
-                var errorMessage = $"Cannot execute the same job '{job.Name}' that is currently running - preventing infinite recursion";
+                var errorMessage = $"Cannot execute the same job '{job.Name}' (ID: {job.Id}) that is currently running - preventing infinite recursion";
                 logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
-            }
-
-            // Validation: Check if target job exists
-            if (!ctx.AllJobs.TryGetValue(targetJobName, out var targetJob))
-            {
-                var errorMessage = $"Target job '{targetJobName}' not found";
-                logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
                 throw new InvalidOperationException(errorMessage);
             }
 
             // Validation: Check if target job is repeating (not allowed)
             if (targetJob.Repeating)
             {
-                var errorMessage = $"Cannot execute repeating job '{targetJobName}' from within another job";
+                var errorMessage = $"Cannot execute repeating job '{targetJob.Name}' from within another job";
                 logger.LogWarning("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
                 throw new InvalidOperationException(errorMessage);
             }
@@ -62,25 +77,26 @@ namespace TaskAutomation.Steps
             {
                 if (settings.WaitForCompletion)
                 {
-                    logger.LogInformation("JobExecutionStepHandler: Executing job '{TargetJobName}' and waiting for completion", targetJobName);
+                    logger.LogInformation("JobExecutionStepHandler: Executing job '{TargetJobName}' (ID: {TargetJobId}) and waiting for completion", targetJob.Name, targetJob.Id);
                     // Execute job and wait for completion
-                    await ctx.ExecuteJob(targetJobName, ct);
-                    logger.LogInformation("JobExecutionStepHandler: Job '{TargetJobName}' completed successfully", targetJobName);
+                    await ctx.ExecuteJob(targetJob.Name, ct);
+                    logger.LogInformation("JobExecutionStepHandler: Job '{TargetJobName}' completed successfully", targetJob.Name);
                 }
                 else
                 {
-                    logger.LogInformation("JobExecutionStepHandler: Starting job '{TargetJobName}' in fire-and-forget mode", targetJobName);
+                    logger.LogInformation("JobExecutionStepHandler: Starting job '{TargetJobName}' (ID: {TargetJobId}) in fire-and-forget mode", targetJob.Name, targetJob.Id);
                     // Fire and forget - start job without waiting
+                    var jobName = targetJob.Name; // Capture for closure
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            await ctx.ExecuteJob(targetJobName, CancellationToken.None);
-                            logger.LogDebug("JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' completed", targetJobName);
+                            await ctx.ExecuteJob(jobName, CancellationToken.None);
+                            logger.LogDebug("JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' completed", jobName);
                         }
                         catch (Exception ex)
                         {
-                            logger.LogError(ex, "JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' failed", targetJobName);
+                            logger.LogError(ex, "JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' failed", jobName);
                         }
                     });
                 }
@@ -89,12 +105,12 @@ namespace TaskAutomation.Steps
             }
             catch (OperationCanceledException)
             {
-                logger.LogInformation("JobExecutionStepHandler: Job '{TargetJobName}' execution was cancelled", targetJobName);
+                logger.LogInformation("JobExecutionStepHandler: Job '{TargetJobName}' execution was cancelled", targetJob.Name);
                 return false;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "JobExecutionStepHandler: Failed to execute job '{TargetJobName}': {ErrorMessage}", targetJobName, ex.Message);
+                logger.LogError(ex, "JobExecutionStepHandler: Failed to execute job {TargetJobInfo}: {ErrorMessage}", targetJobInfo, ex.Message);
                 throw; // Re-throw all other exceptions
             }
         }

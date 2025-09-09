@@ -599,16 +599,31 @@ namespace DesktopAutomationApp.ViewModels
             set { _jobExecutionStep_SelectedJobName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
+        private Guid? _jobExecutionStep_SelectedJobId;
+        public Guid? JobExecutionStep_SelectedJobId
+        {
+            get => _jobExecutionStep_SelectedJobId;
+            set { _jobExecutionStep_SelectedJobId = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
         private bool _jobExecutionStep_WaitForCompletion = true;
         public bool JobExecutionStep_WaitForCompletion { get => _jobExecutionStep_WaitForCompletion; set { _jobExecutionStep_WaitForCompletion = value; OnChange(); } }
 
         // ===== MakroExecution Felder =====
         public ObservableCollection<string> MakroNames => new ObservableCollection<string>(_ctx.AllMakros?.Keys?.OrderBy(n => n) ?? Enumerable.Empty<string>());
+        
         private string? _makroExecutionStep_SelectedMakroName;
         public string? MakroExecutionStep_SelectedMakroName
         {
             get => _makroExecutionStep_SelectedMakroName;
             set { _makroExecutionStep_SelectedMakroName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private Guid? _makroExecutionStep_SelectedMakroId;
+        public Guid? MakroExecutionStep_SelectedMakroId
+        {
+            get => _makroExecutionStep_SelectedMakroId;
+            set { _makroExecutionStep_SelectedMakroId = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         // ===== Fabrik =====
@@ -665,7 +680,9 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new MakroExecutionSettings
                     {
-                        MakroName = MakroExecutionStep_SelectedMakroName ?? MakroNames.FirstOrDefault(string.Empty)
+                        MakroName = MakroExecutionStep_SelectedMakroName ?? MakroNames.FirstOrDefault(string.Empty),
+                        MakroId = MakroExecutionStep_SelectedMakroId ?? 
+                                  (_ctx.AllMakros?.Values?.FirstOrDefault(m => m.Name == MakroExecutionStep_SelectedMakroName)?.Id)
                     }
                 },
                 "JobExecution" => new JobExecutionStep
@@ -673,6 +690,8 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new JobExecutionStepSettings
                     {
                         JobName = JobExecutionStep_SelectedJobName ?? AvailableJobNames.FirstOrDefault(string.Empty),
+                        JobId = JobExecutionStep_SelectedJobId ??
+                                (_ctx.AllJobs?.Values?.FirstOrDefault(j => j.Name == JobExecutionStep_SelectedJobName)?.Id),
                         WaitForCompletion = JobExecutionStep_WaitForCompletion
                     }
                 },

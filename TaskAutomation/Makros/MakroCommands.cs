@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,6 +10,9 @@ namespace TaskAutomation.Makros
 {
     public class Makro
     {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
@@ -26,7 +29,11 @@ namespace TaskAutomation.Makros
     [JsonDerivedType(typeof(KeyDownBefehl), "key_down")]
     [JsonDerivedType(typeof(KeyUpBefehl), "key_up")]
     [JsonDerivedType(typeof(TimeoutBefehl), "timeout")]
-    public abstract class MakroBefehl { }
+    public abstract class MakroBefehl 
+    { 
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+    }
 
     public sealed class MouseMoveAbsoluteBefehl : MakroBefehl
     {

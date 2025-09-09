@@ -1,4 +1,4 @@
-﻿using DesktopAutomationApp.ViewModels;
+using DesktopAutomationApp.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,20 +37,16 @@ namespace DesktopAutomationApp.Views
         {
             if (e.EditAction != DataGridEditAction.Commit) return;
 
+            // Wichtig: Commit ist noch nicht komplett – nach hinten schieben:
             Dispatcher.BeginInvoke(new Action(async () =>
             {
                 if (DataContext is ListMakrosViewModel vm && e.Row?.Item is Makro m)
                 {
-                    // Name eindeutig machen
-                    vm.EnsureUniqueNameFor(m);
+                    await vm.EnsureUniqueNameFor(m);
 
-                    // Sicherstellen, dass Items den aktuellen Stand hat
-                    var index = vm.Items.IndexOf(m);
-                    if (index >= 0)
-                        vm.Items[index] = m;
+                    CollectionViewSource.GetDefaultView(vm.Items)?.Refresh();
 
-                    // Änderungen abspeichern
-                    await vm.SaveAllAsync();
+                    await vm.SaveAllAsync();           
                 }
             }), System.Windows.Threading.DispatcherPriority.Background);
         }

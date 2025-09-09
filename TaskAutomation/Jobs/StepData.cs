@@ -132,6 +132,9 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("makro_name")]
         public string MakroName { get; set; } = string.Empty;
+
+        [JsonPropertyName("makro_id")]
+        public Guid? MakroId { get; set; }
     }
 
     public sealed class ScriptExecutionStep : JobStep
@@ -196,6 +199,10 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("job_name")]
         public string JobName { get; set; } = string.Empty;
+
+        [JsonPropertyName("job_id")]
+        public Guid? JobId { get; set; }
+
         [JsonPropertyName("wait_for_completion")]
         public bool WaitForCompletion { get; set; } = true;
     }

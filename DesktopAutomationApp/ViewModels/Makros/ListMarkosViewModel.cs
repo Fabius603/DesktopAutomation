@@ -302,23 +302,18 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
         }
 
-        public async void EnsureUniqueNameFor(Makro? m)
+        public async Task EnsureUniqueNameFor(Makro m)
         {
-            if (m == null) return;
+            var result = await _repositoryService.EnsureUniqueNameAsync(
+                m,
+                x => x.Name,
+                (x, name) => x.Name = name,
+                x => x.Id.ToString(),
+                x => x.Name ?? ""
+            );
 
-            try
-            {
-                await _repositoryService.EnsureUniqueNameAsync(
-                    m,
-                    makro => makro.Name ?? "",
-                    (makro, name) => makro.Name = name,
-                    makro => makro.Name);
-                await _executor.ReloadMakrosAsync();
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, "Fehler beim Eindeutig-Machen des Makro-Namens");
-            }
+            if (result.changed)
+                await _repositoryService.SaveAsync(m);
         }
 
         private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)

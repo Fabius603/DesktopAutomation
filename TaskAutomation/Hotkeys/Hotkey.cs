@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Hotkeys
@@ -6,6 +6,9 @@ namespace TaskAutomation.Hotkeys
     /// <summary>Definition eines Hotkeys inkl. auszuführender Action.</summary>
     public class HotkeyDefinition
     {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
 
@@ -49,6 +52,9 @@ namespace TaskAutomation.Hotkeys
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
 
+        [JsonPropertyName("job_id")]
+        public Guid? JobId { get; set; }
+
         [JsonPropertyName("command")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ActionCommand Command { get; set; } = ActionCommand.Start;
@@ -65,6 +71,7 @@ namespace TaskAutomation.Hotkeys
         public ActionDefinition Clone() => new ActionDefinition
         {
             Name = this.Name,
+            JobId = this.JobId,
             Command = this.Command
         };
     }

@@ -13,13 +13,42 @@ namespace DesktopAutomationApp.Models
     {
         private string _name = string.Empty;
         private ActionCommand _command = ActionCommand.Start;
+        private Guid? _jobId;
+        private Func<EditableActionDefinition, string>? _jobNameResolver;
 
-        public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); } } }
+        public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayName)); } } }
         public ActionCommand Command { get => _command; set { if (_command != value) { _command = value; OnPropertyChanged(); } } }
+        public Guid? JobId { get => _jobId; set { if (_jobId != value) { _jobId = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayName)); } } }
 
-        public ActionDefinition ToDomain() => new() { Name = Name, Command = Command };
+        /// <summary>
+        /// Der aktuell anzuzeigende Job-Name. Basiert auf JobId falls vorhanden, andernfalls auf Name.
+        /// </summary>
+        public string DisplayName => _jobNameResolver?.Invoke(this) ?? Name;
+
+        /// <summary>
+        /// Setzt den Resolver für die Anzeige des aktuellen Job-Namens
+        /// </summary>
+        public void SetJobNameResolver(Func<EditableActionDefinition, string> resolver)
+        {
+            _jobNameResolver = resolver;
+            OnPropertyChanged(nameof(DisplayName));
+        }
+
+        /// <summary>
+        /// Kopiert den Job-Name-Resolver von einer anderen ActionDefinition
+        /// </summary>
+        public void CopyJobNameResolverFrom(EditableActionDefinition other)
+        {
+            if (other != null)
+            {
+                _jobNameResolver = other._jobNameResolver;
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        }
+
+        public ActionDefinition ToDomain() => new() { Name = Name, Command = Command, JobId = JobId };
         public static EditableActionDefinition FromDomain(ActionDefinition? d) =>
-            new() { Name = d?.Name ?? "", Command = d?.Command ?? ActionCommand.Start };
+            new() { Name = d?.Name ?? "", Command = d?.Command ?? ActionCommand.Start, JobId = d?.JobId };
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
@@ -42,14 +71,26 @@ namespace DesktopAutomationApp.Models
         // Anzeige-Property: sofort aktualisiert ohne Converter
         public string DisplayTrigger => BuildTriggerText(Modifiers, VirtualKeyCode);
 
-        public EditableHotkey Clone() => new()
+        public EditableHotkey Clone()
         {
-            Name = Name,
-            Modifiers = Modifiers,
-            VirtualKeyCode = VirtualKeyCode,
-            Action = new EditableActionDefinition { Name = Action.Name, Command = Action.Command },
-            Active = Active
-        };
+            var cloned = new EditableHotkey
+            {
+                Name = Name,
+                Modifiers = Modifiers,
+                VirtualKeyCode = VirtualKeyCode,
+                Action = new EditableActionDefinition 
+                { 
+                    Name = Action.Name, 
+                    Command = Action.Command, 
+                    JobId = Action.JobId
+                },
+                Active = Active
+            };
+            
+            // Resolver kopieren
+            cloned.Action.CopyJobNameResolverFrom(Action);
+            return cloned;
+        }
 
         public HotkeyDefinition ToDomain() => new()
         {

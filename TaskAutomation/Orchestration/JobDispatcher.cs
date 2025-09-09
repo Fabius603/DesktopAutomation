@@ -57,23 +57,90 @@ namespace TaskAutomation.Orchestration
                 return;
 
             var actionDef = e.Action;
-            var name = actionDef.Name;
             var cmd = actionDef.Command;
 
             switch (cmd)
             {
                 case ActionCommand.Start:
-                    StartJob(name);
+                    StartJobByAction(actionDef);
                     break;
                 case ActionCommand.Stop:
-                    CancelJob(name);
+                    CancelJobByAction(actionDef);
                     break;
                 case ActionCommand.Toggle:
-                    if (_jobTokens.ContainsKey(name))
-                        CancelJob(name);
-                    else
-                        StartJob(name);
+                    ToggleJobByAction(actionDef);
                     break;
+            }
+        }
+
+        private void StartJobByAction(ActionDefinition actionDef)
+        {
+            var jobName = FindJobNameByAction(actionDef);
+            if (jobName != null)
+            {
+                StartJob(jobName);
+            }
+            else
+            {
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+            }
+        }
+
+        private void CancelJobByAction(ActionDefinition actionDef)
+        {
+            var jobName = FindJobNameByAction(actionDef);
+            if (jobName != null)
+            {
+                CancelJob(jobName);
+            }
+            else
+            {
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+            }
+        }
+
+        private void ToggleJobByAction(ActionDefinition actionDef)
+        {
+            var jobName = FindJobNameByAction(actionDef);
+            if (jobName != null)
+            {
+                if (_jobTokens.ContainsKey(jobName))
+                    CancelJob(jobName);
+                else
+                    StartJob(jobName);
+            }
+            else
+            {
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+            }
+        }
+
+        private string? FindJobNameByAction(ActionDefinition actionDef)
+        {
+            // Try to find by ID first, fallback to name for backward compatibility
+            if (actionDef.JobId.HasValue)
+            {
+                var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == actionDef.JobId.Value);
+                if (job != null)
+                {
+                    return job.Name;
+                }
+                _logger.LogWarning("Job with ID '{JobId}' not found", actionDef.JobId);
+                return null;
+            }
+            else if (!string.IsNullOrWhiteSpace(actionDef.Name))
+            {
+                if (_executor.AllJobs.ContainsKey(actionDef.Name))
+                {
+                    return actionDef.Name;
+                }
+                _logger.LogWarning("Job with name '{JobName}' not found", actionDef.Name);
+                return null;
+            }
+            else
+            {
+                _logger.LogWarning("Action has neither JobId nor valid Name");
+                return null;
             }
         }
 

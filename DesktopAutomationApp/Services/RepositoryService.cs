@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Common.JsonRepository;
+using System.Collections.Concurrent;
 
 namespace DesktopAutomationApp.Services
 {
@@ -20,7 +21,13 @@ namespace DesktopAutomationApp.Services
         Task SaveAllAsync<T>(IEnumerable<T> items) where T : class;
         Task DeleteAsync<T>(string key) where T : class;
         Task<T> CreateNewAsync<T>(string baseName, Func<string, T> factory, Func<T, string> keySelector) where T : class;
-        Task EnsureUniqueNameAsync<T>(T item, Func<T, string> nameSelector, Action<T, string> nameSetter, Func<T, string> keySelector) where T : class;
+        Task<(bool changed, string newName)> EnsureUniqueNameAsync<T>(
+            T item,
+            Func<T, string?> nameSelector,
+            Action<T, string> nameSetter,
+            Func<T, string> idSelector,                
+            Func<T, string> keyNameSelector           
+        ) where T : class;
 
         event EventHandler<RepositoryChangedEventArgs>? DataChanged;
     }
@@ -43,7 +50,8 @@ namespace DesktopAutomationApp.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<RepositoryService> _logger;
-
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+        private SemaphoreSlim GetLock<T>() => _locks.GetOrAdd(typeof(T).FullName!, _ => new SemaphoreSlim(1, 1));
         public event EventHandler<RepositoryChangedEventArgs>? DataChanged;
 
         public RepositoryService(IServiceProvider serviceProvider, ILogger<RepositoryService> logger)
@@ -158,31 +166,51 @@ namespace DesktopAutomationApp.Services
             }
         }
 
-        public async Task EnsureUniqueNameAsync<T>(T item, Func<T, string> nameSelector, Action<T, string> nameSetter, Func<T, string> keySelector) where T : class
+        /// <summary>
+        /// Saniert den Namen und liefert einen eindeutigen Namen zurück – speichert NICHT.
+        /// </summary>
+        public async Task<(bool changed, string newName)> EnsureUniqueNameAsync<T>(
+            T item,
+            Func<T, string?> nameSelector,
+            Action<T, string> nameSetter,
+            Func<T, string> idSelector,                // stabile ID!
+            Func<T, string> keyNameSelector            // Name-Property für Vergleich
+        ) where T : class
         {
+            var gate = GetLock<T>();
+            await gate.WaitAsync();
             try
             {
-                var currentName = nameSelector(item)?.Trim() ?? "";
-                if (string.IsNullOrEmpty(currentName))
+                var current = NamePolicy.Sanitize(nameSelector(item));
+                var myId = idSelector(item);
+
+                var all = await LoadAllAsync<T>(); // holt andere Instanzen
+                                                   // Alle existierenden Namen außer mir
+                var taken = all
+                    .Where(x => idSelector(x) != myId)
+                    .Select(keyNameSelector)
+                    .Select(NamePolicy.Sanitize)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var unique = NamePolicy.MakeUnique(current, taken);
+
+                if (!string.Equals(unique, nameSelector(item), StringComparison.Ordinal))
                 {
-                    currentName = "Unnamed";
+                    nameSetter(item, unique);
+                    _logger.LogInformation("Name eindeutig gemacht: {Type} -> '{NewName}'", typeof(T).Name, unique);
+                    return (true, unique);
                 }
 
-                var existingItems = await LoadAllAsync<T>();
-                var otherItems = existingItems.Where(x => !ReferenceEquals(x, item));
-                var uniqueName = GenerateUniqueName(currentName, otherItems, keySelector);
-
-                if (uniqueName != nameSelector(item))
-                {
-                    nameSetter(item, uniqueName);
-                    await SaveAsync(item);
-                    _logger.LogInformation("Name eindeutig gemacht: {Type} umbenannt zu '{NewName}'", typeof(T).Name, uniqueName);
-                }
+                return (false, current);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Fehler beim Eindeutig-Machen des Namens für {Type}", typeof(T).Name);
                 throw;
+            }
+            finally
+            {
+                gate.Release();
             }
         }
 

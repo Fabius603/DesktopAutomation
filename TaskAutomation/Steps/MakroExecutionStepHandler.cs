@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using TaskAutomation.Makros;
 using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
@@ -25,23 +26,37 @@ namespace TaskAutomation.Steps
 
             try
             {
-                if (string.IsNullOrWhiteSpace(miStep.Settings.MakroName))
+                // Try to find by ID first, fallback to name for backward compatibility
+                TaskAutomation.Makros.Makro? makro = null;
+                if (miStep.Settings.MakroId.HasValue)
                 {
-                    var errorMessage = "No makro name specified";
+                    makro = executor.AllMakros.Values.FirstOrDefault(m => m.Id == miStep.Settings.MakroId.Value);
+                    if (makro == null)
+                    {
+                        var errorMessage = $"Makro with ID '{miStep.Settings.MakroId}' not found";
+                        logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
+                        throw new InvalidOperationException(errorMessage);
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(miStep.Settings.MakroName))
+                {
+                    if (!executor.AllMakros.TryGetValue(miStep.Settings.MakroName, out makro))
+                    {
+                        var errorMessage = $"Makro '{miStep.Settings.MakroName}' not found";
+                        logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
+                        throw new InvalidOperationException(errorMessage);
+                    }
+                }
+                else
+                {
+                    var errorMessage = "No makro ID or name specified";
                     logger.LogWarning("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                if (!executor.AllMakros.TryGetValue(miStep.Settings.MakroName, out var makro))
-                {
-                    var errorMessage = $"Makro '{miStep.Settings.MakroName}' not found";
-                    logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                logger.LogInformation("MakroExecutionStepHandler: Executing makro '{MakroName}'", miStep.Settings.MakroName);
+                logger.LogInformation("MakroExecutionStepHandler: Executing makro '{MakroName}' (ID: {MakroId})", makro.Name, makro.Id);
                 await executor.MakroExecutor.ExecuteMakro(makro, executor.DxgiResources, ct);
-                logger.LogInformation("MakroExecutionStepHandler: Makro '{MakroName}' executed successfully", miStep.Settings.MakroName);
+                logger.LogInformation("MakroExecutionStepHandler: Makro '{MakroName}' executed successfully", makro.Name);
 
                 return true;
             }
@@ -52,7 +67,8 @@ namespace TaskAutomation.Steps
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "MakroExecutionStepHandler: Failed to execute makro '{MakroName}': {ErrorMessage}", miStep.Settings.MakroName, ex.Message);
+                var makroInfo = miStep.Settings.MakroId.HasValue ? $"ID '{miStep.Settings.MakroId}'" : $"name '{miStep.Settings.MakroName}'";
+                logger.LogError(ex, "MakroExecutionStepHandler: Failed to execute makro {MakroInfo}: {ErrorMessage}", makroInfo, ex.Message);
                 throw; // Re-throw all other exceptions
             }
         }

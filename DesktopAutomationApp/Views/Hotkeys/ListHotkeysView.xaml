@@ -73,7 +73,7 @@
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
                     <!-- Trigger direkt aus EditableHotkey.DisplayTrigger -->
                     <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Action" Binding="{Binding Action.Name}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Action" Binding="{Binding Action.DisplayName}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" IsReadOnly="True" Width="2*"/>
                     <DataGridCheckBoxColumn Header="Aktiv"
                                 Binding="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

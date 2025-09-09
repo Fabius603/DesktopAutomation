@@ -109,7 +109,7 @@ namespace DesktopAutomationApp.ViewModels
             CommandsView = CollectionViewSource.GetDefaultView(AvailableCommands);
             CommandsView.Filter = o => o is ActionCommand c && (string.IsNullOrWhiteSpace(CommandFilter) || c.ToString().Contains(CommandFilter, StringComparison.OrdinalIgnoreCase));
 
-            RefreshCommand          = new RelayCommand(async () => await LoadAsync());
+            RefreshCommand          = new RelayCommand(async () => await RefreshAllAsync());
             NewCommand              = new RelayCommand(NewHotkey, () => IsBrowse);
             EditCommand             = new RelayCommand<object?>(_ => EditHotkey(), _ => IsBrowse && Selected != null);
             DeleteCommand           = new RelayCommand(async () => await DeleteSelectedAsync(), () => IsBrowse && Selected != null);
@@ -119,31 +119,65 @@ namespace DesktopAutomationApp.ViewModels
             StartCaptureCommand     = new RelayCommand(async () => await CaptureAsync(), () => IsEditing && !IsCapturing && EditedHotkey != null);
             CancelCaptureCommand    = new RelayCommand(() => _captureCts?.Cancel(), () => IsEditing && IsCapturing);
 
-            _ = LoadAsync();
+            _ = InitialLoadAsync();
         }
 
-        private async Task LoadAsync()
+        private async Task InitialLoadAsync()
         {
-            Jobs.Clear();
+            // Beim ersten Laden nur einmal Jobs laden
             LoadJobs();
+            
             var list = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
             {
                 var ehk = EditableHotkey.FromDomain(hk);
+                // Job-Name-Resolver setzen für korrekte Anzeige
+                ehk.Action.SetJobNameResolver(GetCurrentJobNameForAction);
                 Items.Add(ehk);
                 ehk.PropertyChanged += SaveActiveNoEditor;
             }
             Selected = Items.FirstOrDefault();
             IsEditing = false; IsCapturing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
-            _log.LogInformation("Hotkeys geladen: {Count}", Items.Count);
+            _log.LogInformation("Hotkeys initial geladen: {HotkeyCount} Hotkeys, {JobCount} Jobs", Items.Count, Jobs.Count);
+        }
+
+        private async Task RefreshAllAsync()
+        {
+            await LoadAsync();
+        }
+
+        private async Task LoadAsync()
+        {
+            // Jobs explizit neu laden (z.B. bei Refresh-Button)
+            LoadJobs();
+            
+            var list = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
+            Items.Clear();
+            foreach (var hk in list.OrderBy(h => h.Name))
+            {
+                var ehk = EditableHotkey.FromDomain(hk);
+                // Job-Name-Resolver setzen für korrekte Anzeige
+                ehk.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+                Items.Add(ehk);
+                ehk.PropertyChanged += SaveActiveNoEditor;
+            }
+            Selected = Items.FirstOrDefault();
+            IsEditing = false; IsCapturing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
+            _log.LogInformation("Hotkeys und Jobs neu geladen: {HotkeyCount} Hotkeys, {JobCount} Jobs", Items.Count, Jobs.Count);
         }
 
         private async void NewHotkey()
         {
             // Eindeutigen Namen generieren
             var uniqueName = await GenerateUniqueHotkeyNameAsync("Neuer Hotkey");
-            LoadJobs();
+            
+            // Jobs nur laden wenn noch keine vorhanden
+            if (Jobs.Count == 0)
+            {
+                LoadJobs();
+            }
+            
             var e = new EditableHotkey
             {
                 Name = uniqueName,
@@ -152,6 +186,8 @@ namespace DesktopAutomationApp.ViewModels
                 Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Toggle },
                 Active = true
             };
+            // Job-Name-Resolver setzen
+            e.Action.SetJobNameResolver(GetCurrentJobNameForAction);
             Items.Add(e);
             Selected = e;
             _isNew = true;
@@ -167,7 +203,22 @@ namespace DesktopAutomationApp.ViewModels
             _snapshot = Selected.Clone();   // Snapshot für Cancel
             EditedHotkey = Selected;        // Edit am Original (Wrapper) → UI aktualisiert sofort
             
-            LoadJobs(); 
+            // Jobs nur beim ersten Edit neu laden, um aktuelle Daten zu haben
+            if (Jobs.Count == 0)
+            {
+                LoadJobs();
+            }
+            
+            // Beim Bearbeiten: Action.Name auf aktuellen Job-Namen setzen falls Job-ID vorhanden
+            if (EditedHotkey.Action.JobId.HasValue)
+            {
+                var currentJobName = GetCurrentJobNameForAction(EditedHotkey.Action);
+                if (!currentJobName.StartsWith("[Job nicht gefunden"))
+                {
+                    EditedHotkey.Action.Name = currentJobName;
+                }
+            }
+            
             IsEditing = true;
         }
 
@@ -210,11 +261,65 @@ namespace DesktopAutomationApp.ViewModels
             var error = ValidateEdited(EditedHotkey);
             if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
             
+            // Job-ID automatisch setzen basierend auf Job-Namen
+            UpdateJobIdFromJobName(EditedHotkey);
+            
             // Namen eindeutig machen, falls nötig
             await EnsureUniqueNameForEditedHotkeyAsync();
             
+            // Nach dem Speichern: Sicherstellen, dass Action.Name der aktuelle Job-Name ist
+            if (EditedHotkey.Action.JobId.HasValue)
+            {
+                var currentJobName = GetCurrentJobNameForAction(EditedHotkey.Action);
+                if (!currentJobName.StartsWith("[Job nicht gefunden"))
+                {
+                    EditedHotkey.Action.Name = currentJobName;
+                }
+            }
+            
             IsEditing = false; EditedHotkey = null; _snapshot = null; _isNew = false;
             await SaveAllAsync();
+        }
+
+        private void UpdateJobIdFromJobName(EditableHotkey hotkey)
+        {
+            if (hotkey?.Action == null || string.IsNullOrWhiteSpace(hotkey.Action.Name))
+                return;
+
+            var job = Jobs.FirstOrDefault(j => string.Equals(j.Name, hotkey.Action.Name, StringComparison.OrdinalIgnoreCase));
+            if (job != null)
+            {
+                hotkey.Action.JobId = job.Id;
+                _log.LogDebug("Job-ID für Hotkey '{HotkeyName}' gesetzt: {JobName} -> {JobId}", hotkey.Name, job.Name, job.Id);
+            }
+            else
+            {
+                // Wenn kein Job mit diesem Namen gefunden wird, Job-ID zurücksetzen
+                hotkey.Action.JobId = null;
+                _log.LogDebug("Kein Job für Hotkey '{HotkeyName}' mit Namen '{JobName}' gefunden, Job-ID zurückgesetzt", hotkey.Name, hotkey.Action.Name);
+            }
+        }
+
+        /// <summary>
+        /// Gibt den aktuellen Job-Namen für die angegebene Hotkey-Action zurück.
+        /// Verwendet die Job-ID falls vorhanden, andernfalls den gespeicherten Namen.
+        /// </summary>
+        public string GetCurrentJobNameForAction(EditableActionDefinition action)
+        {
+            if (action?.JobId.HasValue == true)
+            {
+                var job = Jobs.FirstOrDefault(j => j.Id == action.JobId.Value);
+                if (job != null)
+                {
+                    return job.Name;
+                }
+                // Job mit dieser ID existiert nicht mehr
+                _log.LogWarning("Job mit ID {JobId} nicht gefunden", action.JobId);
+                return $"[Job nicht gefunden: {action.JobId}]";
+            }
+            
+            // Fallback auf gespeicherten Namen
+            return action?.Name ?? string.Empty;
         }
 
         private void CancelEdit()
@@ -266,6 +371,12 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task SaveAllAsync()
         {
+            // Job-IDs für alle Hotkeys aktualisieren
+            foreach (var hotkey in Items)
+            {
+                UpdateJobIdFromJobName(hotkey);
+            }
+
             var domain = Items.Select(i => i.ToDomain()).ToList();
             await _repositoryService.SaveAllAsync(domain);
             _log.LogInformation("Hotkeys gespeichert: {Count}", domain.Count);
@@ -285,6 +396,19 @@ namespace DesktopAutomationApp.ViewModels
 
             var error = ValidateEdited(Selected);
             if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
+
+            // Job-ID automatisch setzen basierend auf Job-Namen
+            UpdateJobIdFromJobName(Selected);
+            
+            // Nach dem Update: Sicherstellen, dass Action.Name der aktuelle Job-Name ist
+            if (Selected.Action.JobId.HasValue)
+            {
+                var currentJobName = GetCurrentJobNameForAction(Selected.Action);
+                if (!currentJobName.StartsWith("[Job nicht gefunden"))
+                {
+                    Selected.Action.Name = currentJobName;
+                }
+            }
 
             await _repositoryService.SaveAsync(Selected.ToDomain());
             _log.LogInformation("Hotkey gespeichert");
@@ -336,11 +460,24 @@ namespace DesktopAutomationApp.ViewModels
         {
             await _executor.ReloadJobsAsync();
 
+            var previousJobCount = Jobs.Count;
             Jobs.Clear();
             foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
                 Jobs.Add(j);
 
             UpdateAvailableActionsFromJobs();
+            
+            // Alle Hotkey-Actions über geänderte Job-Namen benachrichtigen
+            foreach (var hotkey in Items)
+            {
+                hotkey.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+            }
+            
+            // Nur loggen wenn sich etwas geändert hat
+            if (Jobs.Count != previousJobCount)
+            {
+                _log.LogDebug("Jobs neu geladen: {Count} Jobs, {HotkeyCount} Hotkeys aktualisiert", Jobs.Count, Items.Count);
+            }
         }
 
         private static string? ValidateEdited(EditableHotkey hk)
@@ -395,6 +532,11 @@ namespace DesktopAutomationApp.ViewModels
                 EditedHotkey.Name = uniqueName;
                 _log.LogInformation("Hotkey-Name wurde eindeutig gemacht: '{OriginalName}' -> '{UniqueName}'", originalName, uniqueName);
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
         }
     }
 }

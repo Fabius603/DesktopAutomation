@@ -136,22 +136,20 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        public async void EnsureUniqueNameFor(Job? j)
+        public async Task EnsureUniqueNameFor(Job? j)
         {
-            if (j == null) return;
+            var result = await _repositoryService.EnsureUniqueNameAsync(
+                j,
+                job => job.Name,
+                (job, name) => job.Name = name,
+                job => job.Id.ToString(),
+                job => job.Name ?? ""
+            );
 
-            try
+            if (result.changed)
             {
-                await _repositoryService.EnsureUniqueNameAsync(
-                    j, 
-                    job => job.Name ?? "", 
-                    (job, name) => job.Name = name,
-                    job => job.Name);
+                await _repositoryService.SaveAsync(j);
                 await _executor.ReloadJobsAsync();
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, "Fehler beim Eindeutig-Machen des Job-Namens");
             }
         }
     }
