@@ -21,36 +21,6 @@ namespace TaskAutomation.Makros
             _sim = new InputSimulator();
         }
 
-        /// <summary>
-        /// Konvertiert einen absoluten Punkt zu einem relativen MouseMoveBefehl
-        /// basierend auf der aktuellen Mausposition
-        /// </summary>
-        public static MouseMoveRelativeBefehl CreateRelativeMouseMove(int targetX, int targetY)
-        {
-            // Aktuelle Mausposition abfragen
-            if (GetCursorPos(out var currentPos))
-            {
-                int deltaX = targetX - currentPos.X;
-                int deltaY = targetY - currentPos.Y;
-                
-                return new MouseMoveRelativeBefehl
-                {
-                    DeltaX = deltaX,
-                    DeltaY = deltaY
-                };
-            }
-            else
-            {
-                // Fallback: wenn aktuelle Position nicht ermittelt werden kann,
-                // verwende absolute Koordinaten als relative (von 0,0)
-                return new MouseMoveRelativeBefehl
-                {
-                    DeltaX = targetX,
-                    DeltaY = targetY
-                };
-            }
-        }
-
         [DllImport("user32.dll")]
         private static extern bool GetCursorPos(out POINT lpPoint);
 

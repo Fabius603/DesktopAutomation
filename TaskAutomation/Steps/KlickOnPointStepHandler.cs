@@ -88,7 +88,11 @@ namespace TaskAutomation.Steps
             var commands = new ObservableCollection<MakroBefehl>();
 
             // Always move mouse to position first - now using relative movement
-            commands.Add(MakroExecutor.CreateRelativeMouseMove(point.X, point.Y));
+            commands.Add(new MouseMoveAbsoluteBefehl
+            {
+                X = point.X,
+                Y = point.Y
+            });
 
             // Check if only mouse move is requested (no click)
             if (settings.ClickType == "none")
