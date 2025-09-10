@@ -11,7 +11,8 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using ImageDetection.Model;         // für YOLOModel DTO
 using ImageHelperMethods;          // dein ScreenHelper
-using ImageDetection.YOLO;         // dein YOLOModelDownloader
+using ImageDetection.YOLO;
+using System.Collections.ObjectModel;         // dein YOLOModelDownloader
 
 namespace ImageDetection.YOLO
 {
@@ -41,6 +42,7 @@ namespace ImageDetection.YOLO
         private readonly ILogger<YoloManager> _logger;
         private readonly YoloManagerOptions _opt;
         private readonly ILabelProvider _labels;
+        private readonly ConcurrentDictionary<string, YoloBuffers> _yolobufferCache = new();
 
         private readonly ConcurrentDictionary<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>> _cache
             = new();
@@ -279,34 +281,33 @@ namespace ImageDetection.YOLO
             if (useRoi.Width <= 0 || useRoi.Height <= 0)
                 return new DetectionResult { Success = false };
 
-            // InputSize stride-ausrichten (z. B. 32)
-            int align = 32;
-            var inputSize = Math.Max(align, ((_opt.InputSize + (align - 1)) / align) * align);
+            var buf = GetOrCreateBuffers(modelKey, _opt.InputSize);
+
 
             // Preprocessing: direkt ROI -> Letterbox -> Tensor
-            var (tensor, scale, padX, padY) = LetterboxToTensor(bitmap, useRoi, inputSize);
+            var (scale, padX, padY) = PreprocessIntoBuffers(bitmap, useRoi, buf);
 
-            // Inferenz
-            var input = NamedOnnxValue.CreateFromTensor(inputName, tensor); // bei manchen ORT-Versionen NICHT IDisposable
-            using var results = session.Run(new[] { input });
-            using var first = results.First();
-            var outTensor = first.AsTensor<float>();
+            EnsureBinding(buf, session);
 
-            // C#12: Span vermeiden
+            using var ro = new RunOptions();
+            session.RunWithBinding(ro, buf.Binding!);
+
+            var outTensor = new DenseTensor<float>(buf.Output!, buf.OutputDims!);
+            
             int[] dims = outTensor.Dimensions.ToArray();
             var (isCHW, num, attrs) = InterpretDims(dims);
 
             // Nur Top-1 der gewünschten Klasse dekodieren
             var bestList = DecodeDetections(
                 outTensor, isCHW, num, attrs, threshold,
-                inputSize, scale, padX, padY,
+                _opt.InputSize, scale, padX, padY,
                 roiOffsetInImage: useRoi.Location,
                 requiredClassId: classId);
 
             if (bestList.Count == 0)
                 return new DetectionResult { Success = false };
 
-            var best = bestList[0]; // DecodeDetections liefert bereits nur Top-1
+            var best = bestList[0];
             return new DetectionResult
             {
                 Success = true,
@@ -314,6 +315,46 @@ namespace ImageDetection.YOLO
                 BoundingBox = Rectangle.Round(best.BoundingBox!.Value),
                 CenterPoint = best.CenterPoint,
             };
+        }
+
+        private static void EnsureBinding(YoloBuffers buf, InferenceSession session)
+        {
+            if (buf.Binding != null) return;
+
+            // Input/Output-Namen
+            buf.InputName = session.InputMetadata.Keys.First();
+            buf.OutputName = session.OutputMetadata.Keys.First();
+
+            // 1x Run ohne Binding, um Output-Shape zu erfahren
+            // (wir nutzen dafür einmalig NamedOnnxValue und DenseTensor auf das bestehende Input-Array)
+            var inputValue = NamedOnnxValue.CreateFromTensor(
+                buf.InputName, new DenseTensor<float>(buf.Input, new[] { 1, 3, buf.Size, buf.Size }));
+            using (var results = session.Run(new[] { inputValue }))
+            using (var first = results.First())
+            {
+                var outTensor = first.AsTensor<float>();
+                buf.OutputDims = outTensor.Dimensions.ToArray();
+                buf.Output = new float[outTensor.Length];
+            }
+
+            // Binding auf unsere Arrays
+            var mi = OrtMemoryInfo.DefaultInstance;
+
+            var inputOrt = OrtValue.CreateTensorValueFromMemory<float>(
+                mi,
+                new Memory<float>(buf.Input),
+                buf.InputShape);
+
+            var outShape = buf.OutputDims!.Select(d => (long)d).ToArray();
+
+            var outputOrt = OrtValue.CreateTensorValueFromMemory<float>(
+                mi,
+                new Memory<float>(buf.Output!),
+                outShape);
+            
+            buf.Binding = session.CreateIoBinding();
+            buf.Binding.BindInput(buf.InputName!, inputOrt);
+            buf.Binding.BindOutput(buf.OutputName!, outputOrt);
         }
 
         // ------------ Cache & Initialisierung ------------
@@ -325,13 +366,17 @@ namespace ImageDetection.YOLO
             return lazy.Value;
         }
 
+        private YoloBuffers GetOrCreateBuffers(string modelKey, int inputSize)
+        {
+            return _yolobufferCache.GetOrAdd(modelKey, _ => new YoloBuffers(inputSize));
+        }
+
         private async Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)> CreateAsync(string modelKey, CancellationToken ct)
         {
             var model = await _downloader.DownloadModelAsync(modelKey, ct).ConfigureAwait(false);
 
             var session = await CreateSessionAsync(model, ct).ConfigureAwait(false);
             var labelList = _labels.GetLabels(modelKey, model.OnnxPath);
-
             return (model, session, labelList);
         }
 
@@ -346,9 +391,11 @@ namespace ImageDetection.YOLO
         }
 
         /// <summary> Letterbox-Resize (Proportionen halten) → NCHW Float32 [0..1] </summary>
-        private static (DenseTensor<float> input, float scale, float padX, float padY)
-        LetterboxToTensor(Bitmap src, Rectangle srcRect, int inputSize)
+        private static (float scale, float padX, float padY)
+        PreprocessIntoBuffers(Bitmap src, Rectangle srcRect, YoloBuffers buf)
         {
+            int inputSize = buf.Size;
+
             // Skalierung & Padding berechnen
             int w0 = srcRect.Width, h0 = srcRect.Height;
             float scale = Math.Min((float)inputSize / w0, (float)inputSize / h0);
@@ -358,8 +405,7 @@ namespace ImageDetection.YOLO
             float padY = (inputSize - nh) * 0.5f;
 
             // Canvas erzeugen und ROI direkt skaliert zeichnen
-            using var canvas = new Bitmap(inputSize, inputSize, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            using (var g = Graphics.FromImage(canvas))
+            using (var g = Graphics.FromImage(buf.Canvas))
             {
                 g.Clear(Color.Black);
                 g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
@@ -369,13 +415,10 @@ namespace ImageDetection.YOLO
                 g.DrawImage(src, dst, srcRect, GraphicsUnit.Pixel);
             }
 
-            // Tensor anlegen (NCHW)
-            var tensor = new DenseTensor<float>(new[] { 1, 3, inputSize, inputSize });
-
             // Canvas -> Tensor kopieren
-            var bd = canvas.LockBits(new Rectangle(0, 0, inputSize, inputSize),
+            var bd = buf.Canvas.LockBits(new Rectangle(0, 0, inputSize, inputSize),
                                     System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                                    canvas.PixelFormat);
+                                    buf.Canvas.PixelFormat);
             try
             {
                 unsafe
@@ -383,7 +426,7 @@ namespace ImageDetection.YOLO
                     byte* basePtr = (byte*)bd.Scan0;
                     int stride = bd.Stride;
                     int plane = inputSize * inputSize;
-                    var buf = tensor.Buffer.Span;
+                    var dst = buf.Input;
 
                     for (int y = 0; y < inputSize; y++)
                     {
@@ -397,19 +440,19 @@ namespace ImageDetection.YOLO
                             byte rch = row[idx + 2];
 
                             int p = rowBase + x;
-                            buf[0 * plane + p] = rch * (1f / 255f);
-                            buf[1 * plane + p] = gch * (1f / 255f);
-                            buf[2 * plane + p] = b   * (1f / 255f);
+                            dst[0 * plane + p] = rch * (1f / 255f);
+                            dst[1 * plane + p] = gch * (1f / 255f);
+                            dst[2 * plane + p] = b   * (1f / 255f);
                         }
                     }
                 }
             }
             finally
             {
-                canvas.UnlockBits(bd);
+                buf.Canvas.UnlockBits(bd);
             }
 
-            return (tensor, scale, padX, padY);
+            return (scale, padX, padY);
         }
 
         private static (bool isCHW, int num, int attrs) InterpretDims(int[] dims)
@@ -573,14 +616,23 @@ namespace ImageDetection.YOLO
                     try
                     {
                         var t = kv.Value.Value;
-                        if (t.IsCompletedSuccessfully)
-                        {
-                            t.Result.session.Dispose();
-                        }
+                        if (t.IsCompletedSuccessfully) t.Result.session.Dispose();
                     }
                     catch { /* ignore */ }
                 }
             }
+
+            foreach (var kv in _yolobufferCache)
+            {
+                try
+                {
+                    kv.Value.Binding?.Dispose();
+                    kv.Value.Canvas.Dispose();
+                    // float[] werden vom GC eingesammelt
+                }
+                catch { /* ignore */ }
+            }
+
             GC.SuppressFinalize(this);
         }
 
