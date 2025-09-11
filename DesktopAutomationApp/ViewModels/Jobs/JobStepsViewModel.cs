@@ -193,6 +193,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPoint3DStep_DoubleClick = kp3d.Settings.DoubleClick;
                     vm.KlickOnPoint3DStep_ClickType = kp3d.Settings.ClickType;
                     vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
+                    vm.KlickOnPoint3DStep_InvertMouseMovementY = kp3d.Settings.InvertMouseMovementY;
+                    vm.KlickOnPoint3DStep_InvertMouseMovementX = kp3d.Settings.InvertMouseMovementX;
                     break;
 
                 case JobExecutionStep je:

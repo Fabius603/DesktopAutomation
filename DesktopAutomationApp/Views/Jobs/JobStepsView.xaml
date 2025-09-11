@@ -228,6 +228,14 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.Timeout}"/>
                     </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Invert MouseMovement Y: "/>
+                        <Run Text="{Binding Settings.InvertMouseMovementY, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Invert MouseMovement X: "/>
+                        <Run Text="{Binding Settings.InvertMouseMovementX, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>

@@ -187,6 +187,10 @@ namespace TaskAutomation.Jobs
         public string ClickType { get; set; } = "left";
         [JsonPropertyName("timeout_ms")]
         public int TimeoutMs { get; set; } = 1000;
+        [JsonPropertyName("Invert MouseMovement Y")]
+        public bool InvertMouseMovementY { get; set; } = false;
+        [JsonPropertyName("Invert MouseMovement X")]
+        public bool InvertMouseMovementX { get; set; } = false;
     }
 
     public sealed class JobExecutionStep : JobStep

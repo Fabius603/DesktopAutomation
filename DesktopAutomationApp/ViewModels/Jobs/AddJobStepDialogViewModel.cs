@@ -212,6 +212,10 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _klickOnPoint3DStep_Timeout = 5000;
         public int KlickOnPoint3DStep_Timeout { get => _klickOnPoint3DStep_Timeout; set { _klickOnPoint3DStep_Timeout = value; OnChange(); } }
+        private bool _klickOnPoint3DStep_InvertMouseMovementY = false;
+        public bool KlickOnPoint3DStep_InvertMouseMovementY { get => _klickOnPoint3DStep_InvertMouseMovementY; set { _klickOnPoint3DStep_InvertMouseMovementY = value; OnChange(); } }
+        private bool _klickOnPoint3DStep_InvertMouseMovementX = false;
+        public bool KlickOnPoint3DStep_InvertMouseMovementX { get => _klickOnPoint3DStep_InvertMouseMovementX; set { _klickOnPoint3DStep_InvertMouseMovementX = value; OnChange(); } }
 
         // ===== YOLODetectionStep Felder =====
         private string _yoloDetectionStep_Model = string.Empty;
@@ -721,7 +725,9 @@ namespace DesktopAutomationApp.ViewModels
                         MausSensitivityY = KlickOnPoint3DStep_MausSensitivityY,
                         DoubleClick = KlickOnPoint3DStep_DoubleClick,
                         ClickType = KlickOnPoint3DStep_ClickType,
-                        TimeoutMs = KlickOnPoint3DStep_Timeout
+                        TimeoutMs = KlickOnPoint3DStep_Timeout,
+                        InvertMouseMovementY = KlickOnPoint3DStep_InvertMouseMovementY,
+                        InvertMouseMovementX = KlickOnPoint3DStep_InvertMouseMovementX
                     }
                 },
                 "YoloDetection" => new YOLODetectionStep

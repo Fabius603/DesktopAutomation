@@ -25,9 +25,10 @@ namespace TaskAutomation.Steps
                 throw new InvalidOperationException(errorMessage);
             }
 
-            logger.LogDebug("KlickOnPoint3DStepHandler: Processing klick on point 3D step with FOV '{FOV}', sensitivity X: {SensitivityX}, sensitivity Y: {SensitivityY}, click type: '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms",
+            logger.LogDebug("KlickOnPoint3DStepHandler: Processing klick on point 3D step with FOV '{FOV}', sensitivity X: {SensitivityX}, sensitivity Y: {SensitivityY}, click type: '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms, invert Y: {InvertY}, invert X: {InvertX}",
                 klickStep3D.Settings.FOV, klickStep3D.Settings.MausSensitivityX, klickStep3D.Settings.MausSensitivityY,
-                klickStep3D.Settings.ClickType, klickStep3D.Settings.DoubleClick, klickStep3D.Settings.TimeoutMs);
+                klickStep3D.Settings.ClickType, klickStep3D.Settings.DoubleClick, klickStep3D.Settings.TimeoutMs,
+                klickStep3D.Settings.InvertMouseMovementY, klickStep3D.Settings.InvertMouseMovementX);
 
             try
             {
@@ -61,7 +62,9 @@ namespace TaskAutomation.Steps
                     screenBounds.Size,
                     klickStep3D.Settings.FOV,
                     klickStep3D.Settings.MausSensitivityX,
-                    klickStep3D.Settings.MausSensitivityY
+                    klickStep3D.Settings.MausSensitivityY,
+                    klickStep3D.Settings.InvertMouseMovementY,
+                    klickStep3D.Settings.InvertMouseMovementX
                     );
                 logger.LogInformation("KlickOnPoint3DStepHandler: Moving mouse by (dx: {DX}, dy: {DY}) to target point ({X}, {Y}) and executing {ClickType} click",
                     dx, dy, point.X, point.Y, klickStep3D.Settings.ClickType);
@@ -160,7 +163,7 @@ namespace TaskAutomation.Steps
             };
         }
 
-        private static (int dx, int dy) CalculateRelativeMouseMovement(Point target, Size desktopSize, float fov, float sensitivityX, float sensitivityY)
+        private static (int dx, int dy) CalculateRelativeMouseMovement(Point target, Size desktopSize, float fov, float sensitivityX, float sensitivityY, bool invertY, bool invertX)
         {
             // 0) optionale Grundskalierung für "Sensitivity" -> rad/Count
             //    Kalibriere diese beiden Konstanten einmalig auf deine Ziel-App!
@@ -192,8 +195,14 @@ namespace TaskAutomation.Steps
             float pitchErr = MathF.Atan2(y, MathF.Sqrt(x * x + 1f));    // [-π/2, π/2]
 
             // 5) Winkel -> Mauscounts
-            float dx = -yawErr / radPerCountX;
-            float dy = -pitchErr / radPerCountY;
+            float dx = yawErr / radPerCountX;
+            float dy = pitchErr / radPerCountY;
+
+            if (invertY)
+                dy = -dy;
+
+            if (invertX)
+                dx = -dx;
 
             // 6) Runden auf ganzzahlige Counts
             return ((int)MathF.Round(dx), (int)MathF.Round(dy));

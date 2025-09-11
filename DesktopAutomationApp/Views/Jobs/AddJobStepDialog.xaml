@@ -225,6 +225,12 @@
                     <TextBlock Text="Timeout (ms):" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Width="80" Text="{Binding KlickOnPoint3DStep_Timeout}"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Invert Mouse Movement Y" IsChecked="{Binding KlickOnPoint3DStep_InvertMouseMovementY}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox Content="Invert Mouse Movement X" IsChecked="{Binding KlickOnPoint3DStep_InvertMouseMovementX}"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- YOLO Detection -->
