@@ -192,8 +192,8 @@ namespace TaskAutomation.Steps
             float pitchErr = MathF.Atan2(y, MathF.Sqrt(x * x + 1f));    // [-π/2, π/2]
 
             // 5) Winkel -> Mauscounts
-            float dx = yawErr / radPerCountX;
-            float dy = pitchErr / radPerCountY;
+            float dx = -yawErr / radPerCountX;
+            float dy = -pitchErr / radPerCountY;
 
             // 6) Runden auf ganzzahlige Counts
             return ((int)MathF.Round(dx), (int)MathF.Round(dy));
