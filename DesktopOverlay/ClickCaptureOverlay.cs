@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -125,18 +126,21 @@ namespace DesktopOverlay
 
         private void CloseOverlay()
         {
-            if (_overlayForm?.InvokeRequired == true)
-            {
-                _overlayForm.Invoke(new Action(CloseOverlay));
-                return;
-            }
+            var form = Interlocked.Exchange(ref _overlayForm, null);
+            if (form == null) return;
 
-            if (_overlayForm != null)
+            try
             {
-                _overlayForm.Close();
-                _overlayForm.Dispose();
-                _overlayForm = null;
+                if (form.InvokeRequired)
+                    form.Invoke(new Action(() => { form.Close(); form.Dispose(); }));
+                else
+                {
+                    form.Close();
+                    form.Dispose();
+                }
             }
+            catch (InvalidAsynchronousStateException) { /* STA thread already gone */ }
+            catch (ObjectDisposedException) { /* form was already disposed */ }
         }
 
         const uint WDA_EXCLUDEFROMCAPTURE = 0x11;

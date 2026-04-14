@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
@@ -11,7 +12,7 @@ using Common.JsonRepository;
 
 namespace DesktopAutomationApp.ViewModels
 {
-    public sealed class JobStepsViewModel : ViewModelBase
+    public sealed class JobStepsViewModel : ViewModelBase, INavigationGuard
     {
         private readonly IJobExecutor _jobExecutionContext;
         private readonly ObservableCollection<JobStep> _steps;
@@ -30,8 +31,16 @@ namespace DesktopAutomationApp.ViewModels
             set { _selectedStep = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
         }
 
+        private bool _hasUnsavedChanges;
+        public bool HasUnsavedChanges
+        {
+            get => _hasUnsavedChanges;
+            private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+        }
+
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
+        public ICommand CancelCommand { get; }
         public ICommand AddStepCommand { get; }
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
@@ -49,24 +58,38 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
 
-            BackCommand = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand = new RelayCommand(async () => await Save(), () => true);
+            BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
+            SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
+            CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
 
-            AddStepCommand = new RelayCommand(async () => await AddStep());
-            EditStepCommand = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
+            AddStepCommand    = new RelayCommand(async () => await AddStep());
+            EditStepCommand   = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             DeleteStepCommand = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
-            _executor = executor;
         }
 
+        // ---------- INavigationGuard ----------
+        public async Task SaveAsync() => await Save();
+
+        public void DiscardChanges()
+        {
+            _steps.Clear();
+            foreach (var s in Job.Steps ?? Enumerable.Empty<JobStep>())
+                _steps.Add(s);
+            HasUnsavedChanges = false;
+        }
+
+        // ---------- Save ----------
         private async Task Save()
         {
             Job.Steps = _steps.ToList();
             await _jobRepo.SaveAsync(Job);
             await _executor.ReloadJobsAsync();
+            HasUnsavedChanges = false;
         }
 
+        // ---------- Add / Edit ----------
         private async Task AddStep()
         {
             var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Add };
@@ -82,9 +105,7 @@ namespace DesktopAutomationApp.ViewModels
 
                 _steps.Insert(insertIndex, vm.CreatedStep);
                 SelectedStep = vm.CreatedStep;
-                
-                // Automatisch speichern nach Hinzufügen eines neuen Steps
-                await Save();
+                HasUnsavedChanges = true;
             }
         }
 
@@ -99,14 +120,12 @@ namespace DesktopAutomationApp.ViewModels
             return res == true;
         }
 
-        private async void EditStep(JobStep? step = null)
+        private void EditStep(JobStep? step = null)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
 
             var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Edit };
-
-            // <<<<<< Prefill hier im ViewModel >>>>>>
             Prefill(vm, target);
 
             bool? result;
@@ -119,12 +138,10 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps[idx] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
-            
-            // Automatisch speichern nach Bearbeiten
-            await Save();
+            HasUnsavedChanges = true;
         }
 
-        // ---------- Prefill: setzt alle benötigten Eigenschaften im Dialog-VM ----------
+        // ---------- Prefill ----------
         private static void Prefill(AddJobStepDialogViewModel vm, JobStep s)
         {
             switch (s)
@@ -146,11 +163,6 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "DesktopDuplication";
                     vm.DesktopDuplicationStep_DesktopIdx = d.Settings.DesktopIdx;
                     break;
-
-                //case ProcessDuplicationStep p:
-                //    vm.SelectedType = "ProcessDuplication";
-                //    vm.ProcessName = p.Settings.ProcessName;
-                //    break;
 
                 case ShowImageStep si:
                     vm.SelectedType = "ShowImage";
@@ -218,7 +230,7 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        // ---------- Move/Delete ----------
+        // ---------- Move / Delete ----------
         private bool CanMoveRelative(JobStep? step, int delta)
         {
             if (step == null) return false;
@@ -228,7 +240,7 @@ namespace DesktopAutomationApp.ViewModels
             return newIdx >= 0 && newIdx < _steps.Count;
         }
 
-        private async void MoveRelative(JobStep? step, int delta)
+        private void MoveRelative(JobStep? step, int delta)
         {
             if (!CanMoveRelative(step, delta) || step == null) return;
 
@@ -239,19 +251,17 @@ namespace DesktopAutomationApp.ViewModels
             _steps.Insert(newIdx, step);
 
             SelectedStep = step;
+            HasUnsavedChanges = true;
             CommandManager.InvalidateRequerySuggested();
-            
-            // Automatisch speichern nach Verschieben
-            await Save();
         }
 
-        private async void DeleteStep(JobStep? step)
+        private void DeleteStep(JobStep? step)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
 
             var result = MessageBox.Show(
-                $"Möchten Sie den Makro „{target}“ wirklich löschen?",
+                $"Möchten Sie den Step wirklich löschen?",
                 "Löschen bestätigen",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -267,10 +277,8 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps.RemoveAt(idx);
             SelectedStep = next;
+            HasUnsavedChanges = true;
             CommandManager.InvalidateRequerySuggested();
-            
-            // Automatisch speichern nach Löschen
-            await Save();
         }
     }
 }

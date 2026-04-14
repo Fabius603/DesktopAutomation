@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+
+    <!-- ═══ Dialog Window Style ═══ -->
+    <Style x:Key="DialogWindowStyle" TargetType="{x:Type mah:MetroWindow}">
+        <Setter Property="TitleBarHeight" Value="36"/>
+        <Setter Property="WindowTitleBrush" Value="{DynamicResource App.Brush.SidebarBackground}"/>
+        <Setter Property="NonActiveWindowTitleBrush" Value="{DynamicResource App.Brush.SidebarBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.WindowBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="GlowBrush" Value="{DynamicResource App.Brush.AccentDark}"/>
+        <Setter Property="ShowIconOnTitleBar" Value="False"/>
+        <Setter Property="TextElement.FontSize" Value="13"/>
+    </Style>
+
+</ResourceDictionary>

@@ -13,7 +13,7 @@
 
         <!-- Titel -->
         <TextBlock Text="DesktopAutomation"
-                   Style="{StaticResource Heading1}" />
+                   Style="{StaticResource PageTitle}" />
 
         <!-- Inhalt -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -36,7 +36,7 @@
                 </Border>
 
                 <!-- Funktionsblöcke: 3 Spalten, gleiche Breiten/Höhen -->
-<Grid Margin="0,8,0,0">
+<Grid Margin="0,12,0,0">
     <Grid.ColumnDefinitions>
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="*" />
@@ -44,7 +44,7 @@
     </Grid.ColumnDefinitions>
 
     <!-- Hotkeys -->
-    <Border Grid.Column="0" Style="{StaticResource CardBox}">
+    <Border Grid.Column="0" Style="{StaticResource CardBox}" Margin="0,0,6,0">
         <StackPanel Margin="12">
             <TextBlock Style="{StaticResource Heading3}" Text="Hotkeys" Margin="0,0,0,6"/>
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
@@ -61,7 +61,7 @@
     </Border>
 
     <!-- Jobs -->
-    <Border Grid.Column="1" Style="{StaticResource CardBox}">
+    <Border Grid.Column="1" Style="{StaticResource CardBox}" Margin="3,0">
         <StackPanel Margin="12">
             <TextBlock Style="{StaticResource Heading3}" Text="Jobs" Margin="0,0,0,6"/>
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
@@ -78,7 +78,7 @@
     </Border>
 
     <!-- Makros -->
-    <Border Grid.Column="2" Style="{StaticResource CardBox}">
+    <Border Grid.Column="2" Style="{StaticResource CardBox}" Margin="6,0,0,0">
         <StackPanel Margin="12">
             <TextBlock Style="{StaticResource Heading3}" Text="Makros" Margin="0,0,0,6"/>
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,6">
@@ -96,13 +96,13 @@
 </Grid>
 
                 <!-- Beispiele -->
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
                     <StackPanel Margin="12">
                         <TextBlock Style="{StaticResource Heading2}" Text="Beispiele" Margin="0,0,0,6"/>
                         <ItemsControl>
                             <ItemsControl.Items>
                                 <TextBlock TextWrapping="Wrap"
-                                           Text="• STRG+ALT+M startet den Job „OpenMail“, der ein Makro ausführt und den Posteingang öffnet." />
+                                           Text="• STRG+ALT+M startet den Job &quot;OpenMail&quot;, der ein Makro ausführt und den Posteingang öffnet." />
                                 <TextBlock TextWrapping="Wrap"
                                            Text="• STRG+SHIFT+S startet eine Erkennung per Template-Matching und speichert ein kurzes Video." />
                                 <TextBlock TextWrapping="Wrap"
@@ -113,7 +113,7 @@
                 </Border>
 
                 <!-- Status / Roadmap -->
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
                     <StackPanel Margin="12">
                         <TextBlock Style="{StaticResource Heading2}" Text="Status &amp; Roadmap" Margin="0,0,0,6"/>
                         <TextBlock TextWrapping="Wrap">
@@ -125,10 +125,10 @@
                 </Border>
 
                 <!-- Hinweis -->
-                <TextBlock Foreground="{DynamicResource MahApps.Brushes.Gray4}"
+                <TextBlock Foreground="{DynamicResource App.Brush.TextMuted}"
                            FontStyle="Italic"
                            TextWrapping="Wrap"
-                           Margin="0,8,0,0">
+                           Margin="0,12,0,0">
                     Hinweis: Konfigurationen werden als JSON-Dateien geladen (Jobs, Makros, Hotkeys).
                     Backups werden automatisch erstellt; Änderungen in der UI überschreiben die Zieldateien.
                 </TextBlock>

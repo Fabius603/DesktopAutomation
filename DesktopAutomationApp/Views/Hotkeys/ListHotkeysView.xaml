@@ -5,14 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
     <UserControl.Resources>
-        <!-- Nur noch allgemeine Converter nötig -->
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-        <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter"/>
         <Style x:Key="AutoOpenComboStyle" TargetType="ComboBox"
            BasedOn="{StaticResource {x:Type ComboBox}}">
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ComboBox_PreviewMouseLeftButtonDown"/>
@@ -31,29 +28,45 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="Hotkeys" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Aktualisieren"
-            Command="{Binding RefreshCommand}"
-            Margin="8,0,0,0"
-            ToolTip="Hotkeys und Jobs neu laden" 
-            FontSize="14"/>
-
-            <Button Content="Neu"
-            Command="{Binding NewCommand}"
-            Margin="8,0,0,0"
-            ToolTip="Neuen Hotkey anlegen" 
-            FontSize="14"/>
-
-            <Button Content="Löschen"
-            Command="{Binding DeleteCommand}"
-            Margin="8,0,0,0"
-            ToolTip="Ausgewählten Hotkey löschen" 
-            FontSize="14"/>
-
-            <TextBlock Text="{Binding Items.Count, StringFormat='  ({0} Hotkeys)'}"
-               Margin="8,0,0,0" VerticalAlignment="Center"/>
-        </StackPanel>
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}"
+                        Command="{Binding NewCommand}"
+                        ToolTip="Neuen Hotkey anlegen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Neu" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}"
+                        Command="{Binding DeleteCommand}"
+                        Margin="8,0,0,0"
+                        ToolTip="Ausgewählten Hotkey löschen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Löschen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding RefreshCommand}"
+                        ToolTip="Hotkeys und Jobs neu laden">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Hotkeys" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Border Style="{StaticResource CountBadge}"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
+                               Foreground="{DynamicResource App.Brush.Accent}"
+                               FontSize="13"/>
+                </Border>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Liste -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
@@ -83,10 +96,12 @@
                     <DataGridTemplateColumn Header="" Width="50" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Edit"
+                                <Button Style="{StaticResource ButtonIcon}"
                                         Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
-                                        FontSize="14"/>
+                                        ToolTip="Bearbeiten">
+                                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                                </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -99,8 +114,7 @@
                 Style="{StaticResource CardBorderStyle}"
                 Margin="0,8,0,0"
                 Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid Margin="12"
-                  Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid Margin="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -110,9 +124,8 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Name -->
@@ -121,66 +134,56 @@
                          Text="{Binding EditedHotkey.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <!-- Action (durchsuchbar) -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Action" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
-                    <ComboBox ItemsSource="{Binding ActionsView}"
-                              Style="{StaticResource AutoOpenComboStyle}"
-                              IsEditable="True"
-                              StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="True"
-                              SelectedItem="{Binding EditedHotkey.Action.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              MinWidth="280"/>
-                </DockPanel>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Action" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
+                          ItemsSource="{Binding ActionsView}"
+                          Style="{StaticResource AutoOpenComboStyle}"
+                          IsEditable="True"
+                          StaysOpenOnEdit="True"
+                          IsTextSearchEnabled="True"
+                          SelectedItem="{Binding EditedHotkey.Action.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          MinWidth="280"/>
 
                 <!-- Command (durchsuchbar) -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,8,0,0">
-                    <ComboBox ItemsSource="{Binding CommandsView}"
-                              Style="{StaticResource AutoOpenComboStyle}"
-                              IsEditable="True"
-                              StaysOpenOnEdit="True"
-                              IsTextSearchEnabled="True"
-                              SelectedItem="{Binding EditedHotkey.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              MinWidth="200"/>
-                </DockPanel>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
+                          ItemsSource="{Binding CommandsView}"
+                          Style="{StaticResource AutoOpenComboStyle}"
+                          IsEditable="True"
+                          StaysOpenOnEdit="True"
+                          IsTextSearchEnabled="True"
+                          SelectedItem="{Binding EditedHotkey.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          MinWidth="200"/>
 
-                <!--Aktiv-->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,8,0,0">
-                    <CheckBox DockPanel.Dock="Left"
-                              Margin="0,0,8,0"
-                              VerticalAlignment="Center"
-                              IsThreeState="False"
-                              IsEnabled="True"
-                              IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ToolTip="Hotkey ist aktiv/inaktiv">
-                    </CheckBox>
-                </DockPanel>
-                
+                <!-- Aktiv -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
+                          VerticalAlignment="Center"
+                          IsThreeState="False"
+                          IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Hotkey ist aktiv/inaktiv"/>
+
                 <!-- Trigger -->
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Trigger" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,8,0,0" >
-                    <!-- Anzeige: berechnete Property; aktualisiert sich sofort -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Trigger" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBox IsReadOnly="True" Width="240"
                              Text="{Binding EditedHotkey.DisplayTrigger, Mode=OneWay}" />
-
-                    <!-- Start/Status-Button -->
                     <Button Margin="8,0,0,0"
+                            Style="{StaticResource ButtonSecondary}"
                             Content="{Binding IsCapturing, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Erfassen...,Erfassung läuft...'}"
                             Command="{Binding StartCaptureCommand}"
                             IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBooleanConverter}}" />
-
-                    <!-- Abbrechen nur sichtbar während Capture -->
                     <Button Margin="8,0,0,0"
+                            Style="{StaticResource ButtonToolbar}"
                             Content="Abbrechen"
                             Command="{Binding CancelCaptureCommand}"
                             Visibility="{Binding IsCapturing, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </StackPanel>
 
                 <!-- Aktionen -->
-                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,12,0,0">
-                    <Button Content="Speichern" Command="{Binding SaveEditCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Abbrechen" Command="{Binding CancelEditCommand}" />
+                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,16,0,0">
+                    <Button Content="Speichern" Style="{StaticResource ButtonPrimary}" Command="{Binding SaveEditCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Abbrechen" Style="{StaticResource ButtonSecondary}" Command="{Binding CancelEditCommand}" />
                 </StackPanel>
             </Grid>
         </Border>

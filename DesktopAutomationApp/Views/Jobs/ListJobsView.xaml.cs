@@ -1,18 +1,9 @@
 ﻿using DesktopAutomationApp.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Views
@@ -42,5 +33,24 @@ namespace DesktopAutomationApp.Views
                 }
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
+
+        private void JobGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var row = FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
+            if (row == null || !row.IsSelected) return;
+            JobGrid.SelectedItem = null;
+            e.Handled = true;
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
+        {
+            while (obj != null)
+            {
+                if (obj is T t) return t;
+                obj = System.Windows.Media.VisualTreeHelper.GetParent(obj);
+            }
+            return null;
+        }
     }
 }
+

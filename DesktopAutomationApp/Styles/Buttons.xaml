@@ -1,0 +1,121 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+
+    <!-- ═══ Primary Button ═══ -->
+    <Style x:Key="ButtonPrimary" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
+        <Setter Property="Background" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentLight}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentDark}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ═══ Secondary Button ═══ -->
+    <Style x:Key="ButtonSecondary" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentDark}"/>
+                <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ═══ Danger Button ═══ -->
+    <Style x:Key="ButtonDanger" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
+        <Setter Property="Background" Value="{DynamicResource App.Brush.Danger}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.DangerLight}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ═══ Icon Button (kompakt, transparent) ═══ -->
+    <Style x:Key="ButtonIcon" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ═══ Icon Button Danger (z.B. Löschen) ═══ -->
+    <Style x:Key="ButtonIconDanger" TargetType="Button" BasedOn="{StaticResource ButtonIcon}">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
+                <Setter Property="Background" Value="#26E63946"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ═══ Toolbar Button (flach, kompakt) ═══ -->
+    <Style x:Key="ButtonToolbar" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

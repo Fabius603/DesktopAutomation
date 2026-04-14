@@ -73,7 +73,7 @@ namespace DesktopAutomationApp.ViewModels
                 "TemplateMatching" => !string.IsNullOrWhiteSpace(TemplateMatchingStep_TemplatePath) && TemplateMatchingStep_ConfidenceThreshold is >= 0 and <= 1,
                 //"ProcessDuplication" => !string.IsNullOrWhiteSpace(ProcessName),
                 "ShowImage" => !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
-                "VideoCreation" => !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
+                "VideoCreation" => !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath) && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
                 "MakroExecution" => !string.IsNullOrWhiteSpace(MakroExecutionStep_SelectedMakroName),
                 "JobExecution" => !string.IsNullOrWhiteSpace(JobExecutionStep_SelectedJobName),
                 "DesktopDuplication" => true,

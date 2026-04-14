@@ -1,557 +1,84 @@
 <UserControl x:Class="DesktopAutomationApp.Views.ListMakrosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
-             xmlns:views="clr-namespace:DesktopAutomationApp.Views"
-             xmlns:mak="clr-namespace:TaskAutomation.Makros;assembly=TaskAutomation"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
-             xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
-    <UserControl.Resources>
-
-        <!-- Typ-Label links -->
-        <Style x:Key="TypeLabel" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="Margin" Value="0,0,0,0"/>
-        </Style>
-
-        <!-- Label (licksbündig, gemeinsame Breite) -->
-        <Style x:Key="ParamLabel" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,2,0,2"/>
-            <Setter Property="TextAlignment" Value="Left"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
-            <Setter Property="LineHeight" Value="18"/>
-        </Style>
-
-        <!-- Wert (linksbündig) -->
-        <Style x:Key="ParamValue" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,2,0,2"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
-            <Setter Property="LineHeight" Value="18"/>
-        </Style>
-
-        <conv:StepNumberConverter x:Key="StepNumberConverter"/>
-        <conv:TypeNameConverter x:Key="TypeNameConverter"/>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        
-        <!-- ========== EINHEITLICHE DETAIL-TEMPLATES ========== -->
-        <!-- Muster: OuterGrid: [TypeCol(shared)] [16px] [DetailsGrid] -->
-        <!-- DetailsGrid: [ParamLabelCol(shared)] [12px] [ValueCol] mit expliziten RowDefinitions -->
-
-        <!-- MouseMoveAbsolute -->
-        <DataTemplate DataType="{x:Type mak:MouseMoveAbsoluteBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="MouseMove Absolute" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="X:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Y:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- MouseMoveRelative -->
-        <DataTemplate DataType="{x:Type mak:MouseMoveRelativeBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="MouseMove Relative" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="DeltaX:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding DeltaX}" Style="{StaticResource ParamValue}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="DeltaY:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DeltaY}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- MouseDown -->
-        <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="MouseDown" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- MouseUp -->
-        <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="MouseUp" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Button:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- KeyDown -->
-        <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="KeyDown" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Key:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- KeyUp -->
-        <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="KeyUp" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Key:" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-
-        <!-- Timeout -->
-        <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
-                    <ColumnDefinition Width="64"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0" Text="Timeout" Style="{StaticResource TypeLabel}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Duration (ms):" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Duration}" Style="{StaticResource ParamValue}"/>
-                </Grid>
-            </Grid>
-        </DataTemplate>
-    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="2*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-
-            <Button Content="Neues Makro" Command="{Binding NewMakroCommand}" FontSize="13"/>
-            <Button Content="Makro Löschen" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0" FontSize="13"/>
-
-            <Separator Width="16" Margin="8,0,8,0"/>
-            
-            <Button Content="Vorschau (Übersicht)" Command="{Binding PreviewOverviewCommand}" Margin="0,0,8,0" FontSize="13"/>
-            <Button Content="Vorschau (Ablauf)" Command="{Binding PreviewPlaybackCommand}" Margin="0,0,8,0" FontSize="13"/>
-            <Button Content="Vorschau beenden" Command="{Binding PreviewStopCommand}" Margin="0,0,0,0" FontSize="13"/>
-            
-            <Separator Width="16" Margin="8,0,8,0"/>
-            
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" FontSize="13"/>
-        </StackPanel>
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding NewMakroCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Neues Makro" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Loeschen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
+                               Foreground="{DynamicResource App.Brush.Accent}"
+                               FontSize="13"/>
+                </Border>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Liste der Makros -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <DataGrid x:Name="MakroGrid"
-          ItemsSource="{Binding Items}"
-          SelectedItem="{Binding Selected}"
-          AutoGenerateColumns="False"
-          CanUserAddRows="False"
-          CanUserDeleteRows="False"
-          IsReadOnly="False"
-          RowEditEnding="MakroGrid_RowEditEnding">
+                      ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding Selected}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      RowEditEnding="MakroGrid_RowEditEnding"
+                      PreviewMouseLeftButtonDown="MakroGrid_PreviewMouseDown">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{
-                        Binding Name, 
-                        UpdateSourceTrigger=PropertyChanged, 
-                        ValidatesOnDataErrors=True, 
-                        NotifyOnValidationError=True
-                        }"
+                    <DataGridTextColumn Header="Name"
+                        Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                         Width="2*"/>
                     <DataGridTextColumn Header="# Befehle"
                         Binding="{Binding Befehle.Count}"
                         IsReadOnly="True" Width="*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="90">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ButtonPrimary}"
+                                        Command="{Binding DataContext.OpenMakroCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="Oeffnen" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-        </Border>
-
-        <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Margin="0,8,0,0">
-            <DockPanel>
-                <!-- Kopfbereich: Bearbeiten / Neu / Aufnahme -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
-                    <Button Content="Neuen Step hinzufügen"
-                        Command="{Binding AddStepCommand}" Margin="0,0,0,0" FontSize="13"/>
-                    <Button Command="{Binding RecordStepsCommand}"
-                        Content="{Binding RecordButtonText}"
-                        Margin="8,0,0,0"
-                        FontSize="13"
-                        Focusable="False"
-                        IsTabStop="False"
-                        IsDefault="False"
-                        IsCancel="False"
-                        ClickMode="Release">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="True"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button Command="{Binding CaptureClickCommand}"
-                        Content="{Binding CaptureClickButtonText}"
-                        Margin="8,0,0,0"
-                        FontSize="13"
-                        Focusable="False"
-                        IsTabStop="False"
-                        IsDefault="False"
-                        IsCancel="False"
-                        ClickMode="Release">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="True"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCapturingClick}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                        <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button Command="{Binding ToggleMousePathCommand}"
-                        Content="{Binding RecordMousePathText}"
-                        Margin="8,0,0,0"
-                        FontSize="13"
-                        ToolTip="Umschalten: Mauspfad aufzeichnen oder nur bei Klicks">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="IsEnabled" Value="True"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecordMousePath}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.ThemeForeground}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
-
-                <ListBox ItemsSource="{Binding Selected.Befehle}"
-         SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
-         ScrollViewer.VerticalScrollBarVisibility="Auto">
-
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="VerticalContentAlignment"   Value="Stretch"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <!-- wichtig für Hover-HitTests -->
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <!-- eine neutrale Hülle, die Hover-Ereignisse bekommt -->
-                                        <Border Background="{TemplateBinding Background}">
-                                            <!-- Das ist der sichtbare Rahmen deiner „Karte“ -->
-                                            <Border x:Name="Card"
-                                                Margin="12,8,12,0"
-                                                Padding="12"
-                                                Background="Transparent"
-                                                BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
-                                                BorderThickness="1"
-                                                CornerRadius="8">
-                                                <ContentPresenter/>
-                                            </Border>
-                                        </Border>
-
-                                        <ControlTemplate.Triggers>
-                                            <!-- HOVER: nur der Rahmen -->
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <!-- Teste bei Bedarf erst mit fester Farbe z. B. #FF0078D4 -->
-                                                <Setter TargetName="Card" Property="BorderBrush"
-                                                    Value="{DynamicResource MahApps.Brushes.Highlight}"/>
-                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
-                                                
-                                            </Trigger>
-
-                                            <!-- SELECTED -->
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Card" Property="BorderBrush"
-                                                    Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                                <Setter TargetName="Card" Property="Background"
-                                                    Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-
-                    <!-- DEIN ItemTemplate (mit ergänztem Background & Triggern) -->
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <!-- Drei Spalten: Nummer, Inhalt, Aktionen -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Schrittnummer -->
-                                    <TextBlock Grid.Column="0" 
-                                               FontWeight="Bold"
-                                               FontSize="14"
-                                               VerticalAlignment="Top"
-                                               Margin="0,0,12,0"
-                                               Foreground="{DynamicResource MahApps.Brushes.Accent}">
-                                        <TextBlock.Text>
-                                            <MultiBinding Converter="{StaticResource StepNumberConverter}">
-                                                <Binding />
-                                                <Binding RelativeSource="{RelativeSource AncestorType=ListBox}" Path="ItemsSource"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-
-                                    <!-- Inhalt -->
-                                    <StackPanel Grid.Column="1">
-                                        <!-- ANZEIGE: nutzt implizite DataTemplates -->
-                                        <ContentPresenter Content="{Binding}"/>
-                                            <Grid>
-                                                <Grid.Resources>
-                                                    <!-- Editor-Templates pro Typ -->
-                                                    <DataTemplate DataType="{x:Type mak:MouseMoveAbsoluteBefehl}">
-                                                        <UniformGrid Columns="4">
-                                                            <TextBlock Text="X:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding X}"/>
-                                                            <TextBlock Text="Y:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Y}"/>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:MouseMoveRelativeBefehl}">
-                                                        <UniformGrid Columns="4">
-                                                            <TextBlock Text="DeltaX:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding DeltaX}"/>
-                                                            <TextBlock Text="DeltaY:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding DeltaY}"/>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
-                                                        <UniformGrid Columns="2">
-                                                            <TextBlock Text="Button:" VerticalAlignment="Center"/>
-                                                            <ComboBox SelectedValuePath="Content"
-                                                                                      SelectedValue="{Binding Button}">
-                                                                <ComboBoxItem Content="Left"/>
-                                                                <ComboBoxItem Content="Right"/>
-                                                                <ComboBoxItem Content="Middle"/>
-                                                            </ComboBox>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:MouseUpBefehl}">
-                                                        <UniformGrid Columns="2">
-                                                            <TextBlock Text="Button:" VerticalAlignment="Center"/>
-                                                            <ComboBox SelectedValuePath="Content"
-                                                                                      SelectedValue="{Binding Button}">
-                                                                <ComboBoxItem Content="Left"/>
-                                                                <ComboBoxItem Content="Right"/>
-                                                                <ComboBoxItem Content="Middle"/>
-                                                            </ComboBox>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:KeyDownBefehl}">
-                                                        <UniformGrid Columns="2">
-                                                            <TextBlock Text="Key:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Key}"/>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:KeyUpBefehl}">
-                                                        <UniformGrid Columns="2">
-                                                            <TextBlock Text="Key:" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Key}"/>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-
-                                                    <DataTemplate DataType="{x:Type mak:TimeoutBefehl}">
-                                                        <UniformGrid Columns="2">
-                                                            <TextBlock Text="Duration (ms):" VerticalAlignment="Center"/>
-                                                            <TextBox Text="{Binding Duration}"/>
-                                                        </UniformGrid>
-                                                    </DataTemplate>
-                                                </Grid.Resources>
-                                            </Grid>
-                                    </StackPanel>
-
-                                <!-- Aktionen rechts: ✎ , ▲ , ▼ , 🗑 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal"
-                                    HorizontalAlignment="Right" VerticalAlignment="Center"
-                                    Margin="8,0,0,0">
-
-                                    <!-- Bearbeiten -->
-                                    <Button Content="Edit" Width="50" Height="35" Margin="0,0,30,0" FontSize="13"
-                                        ToolTip="Step bearbeiten"
-                                        Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-
-                                    <!-- ▲ nach oben -->
-                                    <Button Content="▲" Width="35" Height="35" Margin="0,0,4,0"
-                                        ToolTip="Schritt nach oben"
-                                        Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-
-                                    <!-- ▼ nach unten -->
-                                    <Button Content="▼" Width="35" Height="35" Margin="0,0,4,0"
-                                        ToolTip="Schritt nach unten"
-                                        Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-
-                                    <!-- Löschen (falls noch nicht vorhanden) -->
-                                    <Button Content="Delete" Width="60" Height="35" Margin="80,0,0,0" FontSize="13"
-                                        ToolTip="Step löschen"
-                                        Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

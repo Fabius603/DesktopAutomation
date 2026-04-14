@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
 using TaskAutomation.Jobs;
+using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 
 namespace DesktopAutomationApp.ViewModels
@@ -67,11 +69,14 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Jobliste in die Details:
             _listJobs.RequestOpenJob += OpenJobDetails;
 
-            ShowStart = new RelayCommand(() => CurrentContent = _start);
-            ShowListMakros = new RelayCommand(() => CurrentContent = _listMakros);
-            ShowListJobs = new RelayCommand(() => CurrentContent = _listJobs);
-            ShowListHotkeys = new RelayCommand(() => CurrentContent = _listHotkeys);
-            ShowYoloDownloads = new RelayCommand(() => CurrentContent = _yoloDownloads);
+            // Navigation aus der Makroliste in die Details:
+            _listMakros.RequestOpenMakro += OpenMakroDetails;
+
+            ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _start; });
+            ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listMakros; });
+            ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listJobs; });
+            ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listHotkeys; });
+            ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
 
             // Startseite
             CurrentContent = _start;
@@ -79,13 +84,32 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OpenJobDetails(Job job)
         {
-            // ViewModel mit Laufzeit-Argument 'job' aus DI erstellen
             var detailsVm = ActivatorUtilities.CreateInstance<JobStepsViewModel>(_services, job);
-
-            // Rücknavigation: zurück zur Jobliste
-            detailsVm.RequestBack += () => CurrentContent = _listJobs;
-
+            detailsVm.RequestBack += async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listJobs; };
             CurrentContent = detailsVm;
+        }
+
+        private void OpenMakroDetails(Makro makro)
+        {
+            var detailsVm = ActivatorUtilities.CreateInstance<MakroStepsViewModel>(_services, makro);
+            detailsVm.RequestBack += async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listMakros; };
+            CurrentContent = detailsVm;
+        }
+
+        private async Task<bool> CheckNavigationGuardAsync()
+        {
+            if (_currentContent is not INavigationGuard guard || !guard.HasUnsavedChanges)
+                return true;
+
+            var r = MessageBox.Show(
+                "Es gibt ungespeicherte Aenderungen. Moechten Sie speichern?",
+                "Ungespeicherte Aenderungen",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Warning);
+
+            if (r == MessageBoxResult.Yes)   { await guard.SaveAsync(); return true; }
+            if (r == MessageBoxResult.No)    { guard.DiscardChanges(); return true; }
+            return false; // Cancel
         }
 
         private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)

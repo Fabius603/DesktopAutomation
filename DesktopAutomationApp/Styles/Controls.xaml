@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+
+    <!-- ═══ TextBox — abgerundete Ecken, Accent-Focus ═══ -->
+    <Style TargetType="TextBox" BasedOn="{StaticResource MahApps.Styles.TextBox}">
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource App.Brush.Accent}"/>
+    </Style>
+
+    <!-- ═══ ProgressBar — Accent, abgerundet ═══ -->
+    <Style TargetType="ProgressBar" BasedOn="{StaticResource MahApps.Styles.ProgressBar}">
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+        <Setter Property="Height" Value="6"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="3"/>
+    </Style>
+
+</ResourceDictionary>

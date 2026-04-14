@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -13,29 +14,52 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Jobs" Style="{StaticResource Heading1}" Margin="0,0,12,0"/>
-            <Button Content="Neuer Job" Command="{Binding CreateNewJobCommand}" Margin="8,0,0,0" FontSize="14"/>
-            <Button Content="Job löschen" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0" FontSize="14"/>
-
-            <Separator Width="16" Margin="8,0,8,0"/>
-
-            <Button Content="Aktualisieren" Command="{Binding RefreshCommand}" Margin="0,0,0,0" FontSize="14"/>
-        </StackPanel>
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding CreateNewJobCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Neuer Job" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Job löschen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Jobs" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Border Style="{StaticResource CountBadge}"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
+                               Foreground="{DynamicResource App.Brush.Accent}"
+                               FontSize="13"/>
+                </Border>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Tabelle -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <DataGrid ItemsSource="{Binding Items}"
+            <DataGrid x:Name="JobGrid"
+                      ItemsSource="{Binding Items}"
                 AutoGenerateColumns="False"
                 IsReadOnly="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
-                HeadersVisibility="Column"
-                GridLinesVisibility="None"
-                RowHeaderWidth="0"
                 SelectionMode="Single"
                 SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
-                RowEditEnding="JobGrid_RowEditEnding">
+                ScrollViewer.CanContentScroll="False"
+                RowEditEnding="JobGrid_RowEditEnding"
+                PreviewMouseLeftButtonDown="JobGrid_PreviewMouseDown">
                 <DataGrid.Columns>
                     <DataGridTextColumn 
                         Header="Name"      
@@ -56,16 +80,20 @@
                         Binding="{Binding Steps.Count}"  
                         IsReadOnly="True"  
                         Width="*"/>
-                    <DataGridTemplateColumn 
-                        Header="" 
-                        IsReadOnly="True" 
-                        Width="75">
+                    <DataGridTemplateColumn
+                        Header=""
+                        IsReadOnly="True"
+                        Width="90">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Öffnen"
-                                    Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    CommandParameter="{Binding}"
-                                    FontSize="14"/>
+                                <Button Style="{StaticResource ButtonPrimary}"
+                                        Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

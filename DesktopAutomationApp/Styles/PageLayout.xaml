@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══ Page Header — Einheitlicher Kopfbereich für alle Views ═══ -->
+    <Style x:Key="PageHeaderBorder" TargetType="Border">
+        <Setter Property="Margin" Value="0,0,0,16"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <!-- ═══ Toolbar Separator ═══ -->
+    <Style x:Key="ToolbarSeparator" TargetType="Border">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.TextMuted}"/>
+        <Setter Property="Opacity" Value="0.4"/>
+        <Setter Property="Margin" Value="8,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ═══ Badge / Count Anzeige ═══ -->
+    <Style x:Key="CountBadge" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="12,0,0,0"/>
+    </Style>
+
+</ResourceDictionary>

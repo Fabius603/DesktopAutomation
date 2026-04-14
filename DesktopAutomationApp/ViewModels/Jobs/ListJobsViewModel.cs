@@ -78,7 +78,7 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
                 Items.Add(j);
 
-            SelectedJob = Items.FirstOrDefault();
+
         }
 
 
@@ -119,13 +119,17 @@ namespace DesktopAutomationApp.ViewModels
 
         public async void CreateNewJob()
         {
+            var dlg = new NewItemNameDialog("Neuer Job", "Name des neuen Jobs:")
+                { Owner = Application.Current.MainWindow };
+            if (dlg.ShowDialog() != true) return;
+
             try
             {
                 var newJob = await _repositoryService.CreateNewAsync<Job>(
-                    "NeuerJob", 
+                    dlg.ResultName,
                     name => new Job { Name = name, Repeating = false, Steps = new() },
                     job => job.Name);
-                
+
                 Items.Add(newJob);
                 SelectedJob = newJob;
                 await _executor.ReloadJobsAsync();

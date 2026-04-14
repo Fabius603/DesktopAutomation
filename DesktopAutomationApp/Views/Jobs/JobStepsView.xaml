@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
@@ -10,10 +11,7 @@
              Style="{StaticResource ContentViewBase}">
 
     <UserControl.Resources>
-        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-        <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter"/>
         <conv:RectToStringConverter x:Key="RectToStringConverter"/>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -329,73 +327,53 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header: Zurück + Titel -->
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-            <Button Content="⟵ Zurück"
-                    Command="{Binding BackCommand}"
-                    Margin="0,0,12,0"
-                    FontSize="14"/>
-            <TextBlock Text="{Binding Title}" Style="{StaticResource Heading1}"/>
-        </StackPanel>
+        <!-- Header: Zurück + Titel + Add + Save + Cancel -->
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Speichern" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Abbrechen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
+                <Button Style="{StaticResource ButtonPrimary}"
+                        Command="{Binding AddStepCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Neuer Step" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding BackCommand}"
+                        Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Zurück" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}"/>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Unterer Bereich: wie Makro-Ansicht (DockPanel + ListBox mit Hover/Selected) -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <DockPanel>
 
-                <!-- Optionaler Kopfbereich im Panel (nur Layout, Logik folgt später) -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="12,12,12,0" Height="30">
-                    <Button Content="Neuen Step hinzufügen"
-                            Command="{Binding AddStepCommand}"
-                            FontSize="13"/>
-                    <!-- Platz für weitere Controls bei Bedarf -->
-                </StackPanel>
-
                 <!-- ListBox mit Hover-/Selected-Rahmen wie im Makro -->
                 <ListBox ItemsSource="{Binding Steps}"
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                            <Setter Property="VerticalContentAlignment"   Value="Stretch"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border Background="{TemplateBinding Background}">
-                                            <Border x:Name="Card"
-                                                    Margin="12,8,12,0"
-                                                    Padding="12"
-                                                    Background="Transparent"
-                                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="8">
-                                                <ContentPresenter/>
-                                            </Border>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <!-- Hover -->
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Card" Property="BorderBrush"
-                                                        Value="{DynamicResource MahApps.Brushes.Highlight}"/>
-                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
-                                            </Trigger>
-                                            <!-- Selected -->
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Card" Property="BorderBrush"
-                                                        Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                                <Setter TargetName="Card" Property="Background"
-                                                        Value="{DynamicResource MahApps.Brushes.Accent}"/>
-                                                <Setter TargetName="Card" Property="BorderThickness" Value="2"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}">
 
                     <!-- Inhalt + Aktionsleiste rechts (Edit/Hoch/Runter/Delete exakt wie Makro) -->
                     <ListBox.ItemTemplate>
@@ -416,29 +394,36 @@
                                             VerticalAlignment="Center"
                                             Margin="8,0,0,0">
                                     <!-- Bearbeiten -->
-                                    <Button Content="Edit"
-                                            Width="50" Height="35" Margin="0,0,30,0" FontSize="13"
+                                    <Button Style="{StaticResource ButtonIcon}"
+                                            Margin="0,0,6,0"
                                             ToolTip="Step bearbeiten"
                                             Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
-                                    <!-- ▲ nach oben -->
-                                    <Button Content="▲"
-                                            Width="35" Height="35" Margin="0,0,4,0"
+                                            CommandParameter="{Binding}">
+                                        <iconPacks:PackIconMaterial Kind="Pencil"/>
+                                    </Button>
+                                    <!-- Nach oben -->
+                                    <Button Style="{StaticResource ButtonIcon}"
+                                            Margin="0,0,6,0"
                                             ToolTip="Schritt nach oben"
                                             Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
-                                    <!-- ▼ nach unten -->
-                                    <Button Content="▼"
-                                            Width="35" Height="35" Margin="0,0,4,0"
+                                            CommandParameter="{Binding}">
+                                        <iconPacks:PackIconMaterial Kind="ArrowUp"/>
+                                    </Button>
+                                    <!-- Nach unten -->
+                                    <Button Style="{StaticResource ButtonIcon}"
+                                            Margin="0,0,6,0"
                                             ToolTip="Schritt nach unten"
                                             Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}">
+                                        <iconPacks:PackIconMaterial Kind="ArrowDown"/>
+                                    </Button>
                                     <!-- Löschen -->
-                                    <Button Content="Delete"
-                                            Width="60" Height="35" Margin="80,0,0,0" FontSize="13"
+                                    <Button Style="{StaticResource ButtonIconDanger}"
                                             ToolTip="Step löschen"
                                             Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}">
+                                        <iconPacks:PackIconMaterial Kind="Delete"/>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>

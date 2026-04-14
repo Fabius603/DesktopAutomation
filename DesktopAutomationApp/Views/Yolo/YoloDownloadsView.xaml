@@ -3,15 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
     <UserControl.Resources>
-        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <conv:InverseBooleanConverter x:Key="InverseBoolToVis"/>
     </UserControl.Resources>
 
     <Grid>
@@ -21,14 +20,18 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-            <TextBlock Text="YOLO Downloads" Style="{StaticResource Heading1}" VerticalAlignment="Center"/>
-            <Button Content="⟲ Refresh" 
-                    Command="{Binding RefreshCommand}"
-                    Margin="16,0,0,0"
-                    Padding="8,4"
-                    FontSize="13"/>
-        </StackPanel>
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <TextBlock Text="YOLO Downloads" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
+        </DockPanel>
 
         <!-- Modelliste -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
@@ -36,12 +39,7 @@
                 <ItemsControl ItemsSource="{Binding Models}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
-                                    BorderBrush="{DynamicResource MahApps.Brushes.Control.Border}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Margin="12,8,12,8"
-                                    Padding="16">
+                            <Border Style="{StaticResource ItemCardStyle}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -56,72 +54,74 @@
 
                                     <!-- Titel und Status -->
                                     <StackPanel Grid.Row="0" Grid.Column="0">
-                                        <TextBlock Text="{Binding DisplayName}" 
-                                                   FontWeight="Bold" 
-                                                   FontSize="16"
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   Style="{StaticResource Subtitle}"
                                                    Margin="0,0,0,4"/>
-                                        <TextBlock Text="{Binding StatusText}" 
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource MahApps.Brushes.Accent}"/>
-                                    </StackPanel>
-
-                                    <!-- Buttons -->
-                                    <StackPanel Grid.Row="0" Grid.Column="1" 
-                                                Orientation="Horizontal" 
-                                                VerticalAlignment="Top">
-                                        <Button Content="Download"
-                                                Command="{Binding DataContext.DownloadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                Margin="0,0,8,0"
-                                                Padding="12,6"
-                                                FontSize="13"
-                                                Visibility="{Binding IsInstalled, Converter={StaticResource InverseBoolToVis}}"/>
-                                        
-                                        <Button Content="Uninstall"
-                                                Command="{Binding DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                Padding="12,6"
-                                                FontSize="13"
-                                                Background="{DynamicResource MahApps.Brushes.ValidationSummary5}"
-                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   Style="{StaticResource CaptionText}"
+                                                   Foreground="{DynamicResource App.Brush.Accent}"/>
                                     </StackPanel>
 
                                     <!-- Beschreibung -->
                                     <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
                                                Text="{Binding Description}"
-                                               TextWrapping="Wrap"
+                                               Style="{StaticResource BodyText}"
                                                Margin="0,8,0,8"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource MahApps.Brushes.Gray1}"/>
+                                               Foreground="{DynamicResource App.Brush.TextSecondary}"/>
 
                                     <!-- Detailinfos -->
-                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                                                 Orientation="Horizontal"
                                                 Margin="0,0,0,8">
-                                        <TextBlock Text="Model Key:" 
-                                                   FontSize="12" 
-                                                   Foreground="{DynamicResource MahApps.Brushes.Gray2}"
+                                        <TextBlock Text="Model Key:"
+                                                   Style="{StaticResource CaptionText}"
                                                    Margin="0,0,8,0"/>
-                                        <TextBlock Text="{Binding ModelKey}" 
-                                                   FontSize="12" 
+                                        <TextBlock Text="{Binding ModelKey}"
+                                                   FontSize="12"
                                                    FontFamily="Consolas"
                                                    Margin="0,0,16,0"/>
-                                        
-                                        <TextBlock Text="Size:" 
-                                                   FontSize="12" 
-                                                   Foreground="{DynamicResource MahApps.Brushes.Gray2}"
+
+                                        <TextBlock Text="Size:"
+                                                   Style="{StaticResource CaptionText}"
                                                    Margin="0,0,8,0"
                                                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"/>
-                                        <TextBlock Text="{Binding FileSizeDisplay}" 
+                                        <TextBlock Text="{Binding FileSizeDisplay}"
                                                    FontSize="12"
                                                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"/>
                                     </StackPanel>
 
+                                    <!-- Buttons -->
+                                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                Margin="0,4,0,0">
+                                        <Button Style="{StaticResource ButtonPrimary}"
+                                                Command="{Binding DataContext.DownloadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,8,0"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="Download" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Download" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource ButtonDanger}"
+                                                Command="{Binding DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Deinstallieren" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
                                     <!-- Progress Bar -->
-                                    <ProgressBar Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                    <ProgressBar Grid.Row="0" Grid.Column="1"
                                                  Value="{Binding DownloadProgress}"
                                                  Minimum="0" Maximum="100"
-                                                 Height="8"
+                                                 Width="120" Height="8"
+                                                 VerticalAlignment="Center"
                                                  Visibility="{Binding IsDownloading, Converter={StaticResource BoolToVis}}"/>
                                 </Grid>
                             </Border>

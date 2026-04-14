@@ -1,0 +1,99 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:DesktopAutomationApp.Converters">
+
+    <!-- Converter direkt hier deklariert, da ResourceDictionaries nicht auf App.xaml-Inline-Ressourcen zugreifen können -->
+    <conv:EqualityConverter x:Key="EqualityConverter"/>
+
+    <!-- ═══ Sidebar Navigation Button ═══
+         Verwende Tag="StartViewModel" etc. auf dem Button, um den Active-State zu steuern.
+         Der Active-State wird per DataTrigger erkannt (vergleicht CurrentContentName mit Tag).
+         EqualityConverter muss in App.xaml als StaticResource registriert sein.
+    ═══ -->
+    <Style x:Key="SidebarNavButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Active indicator bar (links) -->
+                        <Border x:Name="ActiveBar"
+                                HorizontalAlignment="Left"
+                                Width="3" CornerRadius="0,2,2,0"
+                                Background="{DynamicResource App.Brush.Accent}"
+                                Visibility="Collapsed"/>
+                        <!-- Content -->
+                        <Border x:Name="ContentBorder"
+                                Background="Transparent"
+                                CornerRadius="8"
+                                Margin="8,0,8,0"
+                                Padding="12,0">
+                            <ContentPresenter VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ContentBorder" Property="Background"
+                                    Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ContentBorder" Property="Background"
+                                    Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <!-- Active: CurrentContentName == Tag → Accent-Farbe + Bar -->
+            <DataTrigger Value="True">
+                <DataTrigger.Binding>
+                    <MultiBinding Converter="{StaticResource EqualityConverter}">
+                        <Binding Path="DataContext.CurrentContentName"
+                                 RelativeSource="{RelativeSource AncestorType=Window}"/>
+                        <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
+                    </MultiBinding>
+                </DataTrigger.Binding>
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <!-- Active bar sichtbar -->
+                                <Border HorizontalAlignment="Left"
+                                        Width="3" CornerRadius="0,2,2,0"
+                                        Background="{DynamicResource App.Brush.Accent}"/>
+                                <Border x:Name="ContentBorder"
+                                        Background="{DynamicResource App.Brush.AccentSubtle}"
+                                        CornerRadius="8"
+                                        Margin="8,0,8,0"
+                                        Padding="12,0">
+                                    <ContentPresenter VerticalAlignment="Center"
+                                                      HorizontalAlignment="Left"
+                                                      TextBlock.Foreground="{DynamicResource App.Brush.Accent}"/>
+                                </Border>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ContentBorder" Property="Background"
+                                            Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>
