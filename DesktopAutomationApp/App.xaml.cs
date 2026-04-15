@@ -1,7 +1,6 @@
 using System.Configuration;
 using System.Data;
 using System.Windows;
-using ControlzEx.Theming;
 using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Hosting;
@@ -30,6 +29,7 @@ namespace DesktopAutomationApp
     public partial class App : Application
     {
         private IHost _host = null!;
+        private System.Windows.Forms.NotifyIcon? _trayIcon;
 
         public App()
         {
@@ -98,6 +98,7 @@ namespace DesktopAutomationApp
                 })
                 .Build();
         }
+
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -109,17 +110,56 @@ namespace DesktopAutomationApp
 
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
+
+            SetupTrayIcon(mainWindow);
+
             mainWindow.Show();
         }
 
         protected override async void OnExit(ExitEventArgs e)
         {
-            // Serilog ordentlich schließen
+            _trayIcon?.Dispose();
+            _trayIcon = null;
+
             Log.CloseAndFlush();
 
             await _host.StopAsync();
             _host.Dispose();
             base.OnExit(e);
+        }
+
+        private void SetupTrayIcon(MainWindow mainWindow)
+        {
+            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+
+            var openItem = contextMenu.Items.Add("Öffnen");
+            openItem.Click += (_, _) => ShowMainWindow(mainWindow);
+
+            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
+            var exitItem = contextMenu.Items.Add("Beenden");
+            exitItem.Click += (_, _) => Shutdown();
+
+            _trayIcon = new System.Windows.Forms.NotifyIcon
+            {
+                Text = "DesktopAutomation",
+                ContextMenuStrip = contextMenu,
+            };
+
+            var iconStream = GetResourceStream(new Uri("pack://application:,,,/Assets/App.ico"));
+            if (iconStream != null)
+                _trayIcon.Icon = new System.Drawing.Icon(iconStream.Stream);
+
+            _trayIcon.Visible = true;
+            _trayIcon.DoubleClick += (_, _) => ShowMainWindow(mainWindow);
+        }
+
+        private void ShowMainWindow(MainWindow mainWindow)
+        {
+            mainWindow.Show();
+            if (mainWindow.WindowState == WindowState.Minimized)
+                mainWindow.WindowState = WindowState.Normal;
+            mainWindow.Activate();
         }
 
         private JsonSerializerOptions GetOptions()

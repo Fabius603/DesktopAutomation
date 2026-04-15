@@ -129,15 +129,25 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*"/>
                                 <DataGridTextColumn Header="Trigger" Binding="{Binding Trigger}" Width="*"/>
-                                <DataGridTextColumn Header="Action" Binding="{Binding ActionName}" Width="2*"/>
+                                <DataGridTextColumn Header="Job" Binding="{Binding ActionName}" Width="2*"/>
                                 <DataGridTextColumn Header="Command" Binding="{Binding Command}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
 
                         <TextBlock Text="Keine Hotkeys registriert"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
-                                   FontStyle="Italic" Margin="0,8,0,0"
-                                   Visibility="{Binding ActiveHotkeys.Count, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                   FontStyle="Italic" Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ActiveHotkeys.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -181,8 +191,18 @@
 
                         <TextBlock Text="Keine Jobs aktiv"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
-                                   FontStyle="Italic" Margin="0,4,0,0"
-                                   Visibility="{Binding RunningJobCount, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                   FontStyle="Italic" Margin="0,4,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RunningJobCount}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
