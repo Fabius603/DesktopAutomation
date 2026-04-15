@@ -41,6 +41,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand RenameCommand { get; }
         public ICommand AddStepCommand { get; }
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
@@ -61,6 +62,7 @@ namespace DesktopAutomationApp.ViewModels
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
+            RenameCommand = new RelayCommand(async () => await Rename());
 
             AddStepCommand    = new RelayCommand(async () => await AddStep());
             EditStepCommand   = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
@@ -87,6 +89,19 @@ namespace DesktopAutomationApp.ViewModels
             await _jobRepo.SaveAsync(Job);
             await _executor.ReloadJobsAsync();
             HasUnsavedChanges = false;
+        }
+
+        // ---------- Rename ----------
+        private async Task Rename()
+        {
+            var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", Job.Name)
+                { Owner = Application.Current?.MainWindow };
+            if (dlg.ShowDialog() != true) return;
+
+            Job.Name = dlg.ResultName.Trim();
+            OnPropertyChanged(nameof(Title));
+            await _jobRepo.SaveAsync(Job);
+            await _executor.ReloadJobsAsync();
         }
 
         // ---------- Add / Edit ----------
@@ -181,7 +196,10 @@ namespace DesktopAutomationApp.ViewModels
 
                 case MakroExecutionStep me:
                     vm.SelectedType = "MakroExecution";
-                    vm.MakroExecutionStep_SelectedMakroName = me.Settings.MakroName;
+                    if (me.Settings.MakroId.HasValue)
+                        vm.MakroExecutionStep_SelectedMakro = vm.AvailableMakros.FirstOrDefault(m => m.Id == me.Settings.MakroId.Value);
+                    if (vm.MakroExecutionStep_SelectedMakro == null && !string.IsNullOrWhiteSpace(me.Settings.MakroName))
+                        vm.MakroExecutionStep_SelectedMakro = vm.AvailableMakros.FirstOrDefault(m => string.Equals(m.Name, me.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
                     break;
 
                 case ScriptExecutionStep se:
@@ -211,7 +229,10 @@ namespace DesktopAutomationApp.ViewModels
 
                 case JobExecutionStep je:
                     vm.SelectedType = "JobExecution";
-                    vm.JobExecutionStep_SelectedJobName = je.Settings.JobName;
+                    if (je.Settings.JobId.HasValue)
+                        vm.JobExecutionStep_SelectedJob = vm.AvailableJobs.FirstOrDefault(j => j.Id == je.Settings.JobId.Value);
+                    if (vm.JobExecutionStep_SelectedJob == null && !string.IsNullOrWhiteSpace(je.Settings.JobName))
+                        vm.JobExecutionStep_SelectedJob = vm.AvailableJobs.FirstOrDefault(j => string.Equals(j.Name, je.Settings.JobName, StringComparison.OrdinalIgnoreCase));
                     vm.JobExecutionStep_WaitForCompletion = je.Settings.WaitForCompletion;
                     break;
 
@@ -260,7 +281,7 @@ namespace DesktopAutomationApp.ViewModels
             var target = step ?? SelectedStep;
             if (target == null) return;
 
-            var result = MessageBox.Show(
+            var result = AppDialog.Show(
                 $"Möchten Sie den Step wirklich löschen?",
                 "Löschen bestätigen",
                 MessageBoxButton.YesNo,

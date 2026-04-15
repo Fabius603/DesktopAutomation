@@ -59,9 +59,9 @@ namespace DesktopAutomationApp
                 .UseSerilog()
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddJsonRepository<Job>("Configs/Job", "jobs.json", options, j => j.Name);
-                    services.AddJsonRepository<Makro>("Configs/Makro", "makros.json", options, m => m.Name);
-                    services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", "hotkeys.json", options, hk => hk.Name);
+                    services.AddJsonRepository<Job>("Configs/Job", "jobs.json", options, j => j.Id.ToString());
+                    services.AddJsonRepository<Makro>("Configs/Makro", "makros.json", options, m => m.Id.ToString());
+                    services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", "hotkeys.json", options, hk => hk.Id.ToString());
 
                     // Repository-Service registrieren
                     services.AddSingleton<IRepositoryService, RepositoryService>();
@@ -87,6 +87,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
+                    services.AddTransient<HotkeyDetailViewModel>();
 
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<StartView>();

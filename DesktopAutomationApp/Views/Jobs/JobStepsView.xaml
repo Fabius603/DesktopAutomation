@@ -360,7 +360,10 @@
                         <TextBlock Text="Zurück" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}"/>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="Umbenennen">
+                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                </Button>
             </StackPanel>
         </DockPanel>
 

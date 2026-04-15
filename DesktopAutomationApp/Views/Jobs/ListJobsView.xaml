@@ -55,15 +55,16 @@
                 IsReadOnly="False"
                 CanUserAddRows="False"
                 CanUserDeleteRows="False"
-                SelectionMode="Single"
+                SelectionMode="Extended"
                 SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
                 ScrollViewer.CanContentScroll="False"
-                RowEditEnding="JobGrid_RowEditEnding"
+                SelectionChanged="JobGrid_SelectionChanged"
                 PreviewMouseLeftButtonDown="JobGrid_PreviewMouseDown">
                 <DataGrid.Columns>
-                    <DataGridTextColumn 
-                        Header="Name"      
-                        Binding="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"      
+                    <DataGridTextColumn
+                        Header="Name"
+                        Binding="{Binding Name}"
+                        IsReadOnly="True"
                         Width="3*"/>
                     <DataGridTemplateColumn Header="Wiederholend" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
@@ -83,7 +84,7 @@
                     <DataGridTemplateColumn
                         Header=""
                         IsReadOnly="True"
-                        Width="90">
+                        Width="200">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Style="{StaticResource ButtonPrimary}"

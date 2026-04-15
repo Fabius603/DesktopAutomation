@@ -42,7 +42,8 @@ namespace TaskAutomation.Steps
             }
             else if (!string.IsNullOrWhiteSpace(settings.JobName))
             {
-                if (!ctx.AllJobs.TryGetValue(settings.JobName, out targetJob))
+                targetJob = ctx.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, settings.JobName, StringComparison.OrdinalIgnoreCase));
+                if (targetJob == null)
                 {
                     var errorMessage = $"Target job '{settings.JobName}' not found";
                     logger.LogError("JobExecutionStepHandler: {ErrorMessage}", errorMessage);
@@ -79,24 +80,23 @@ namespace TaskAutomation.Steps
                 {
                     logger.LogInformation("JobExecutionStepHandler: Executing job '{TargetJobName}' (ID: {TargetJobId}) and waiting for completion", targetJob.Name, targetJob.Id);
                     // Execute job and wait for completion
-                    await ctx.ExecuteJob(targetJob.Name, ct);
+                    await ctx.ExecuteJob(targetJob.Id, ct);
                     logger.LogInformation("JobExecutionStepHandler: Job '{TargetJobName}' completed successfully", targetJob.Name);
                 }
                 else
                 {
                     logger.LogInformation("JobExecutionStepHandler: Starting job '{TargetJobName}' (ID: {TargetJobId}) in fire-and-forget mode", targetJob.Name, targetJob.Id);
-                    // Fire and forget - start job without waiting
-                    var jobName = targetJob.Name; // Capture for closure
+                    var jobId = targetJob.Id;
                     _ = Task.Run(async () =>
                     {
                         try
                         {
-                            await ctx.ExecuteJob(jobName, CancellationToken.None);
-                            logger.LogDebug("JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' completed", jobName);
+                            await ctx.ExecuteJob(jobId, CancellationToken.None);
+                            logger.LogDebug("JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' completed", targetJob.Name);
                         }
                         catch (Exception ex)
                         {
-                            logger.LogError(ex, "JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' failed", jobName);
+                            logger.LogError(ex, "JobExecutionStepHandler: Fire-and-forget job '{TargetJobName}' failed", targetJob.Name);
                         }
                     });
                 }

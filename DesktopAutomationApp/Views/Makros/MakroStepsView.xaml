@@ -237,6 +237,9 @@
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" Margin="0,0,12,0" ToolTip="Umbenennen">
+                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                </Button>
                 <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Steps.Count, StringFormat='({0})'}"
                                Foreground="{DynamicResource App.Brush.Accent}"

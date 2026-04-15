@@ -32,6 +32,7 @@ namespace TaskAutomation.Jobs
         IReadOnlyDictionary<string, Job> AllJobs { get; }
         IReadOnlyDictionary<string, Makro> AllMakros { get; }
         Task ExecuteJob(string jobName, CancellationToken ct = default);
+        Task ExecuteJob(Guid jobId, CancellationToken ct = default);
         Task ReloadJobsAsync();
         Task ReloadMakrosAsync();
 

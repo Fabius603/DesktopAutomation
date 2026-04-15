@@ -8,11 +8,12 @@ namespace DesktopAutomationApp.Views
     {
         public string ResultName { get; private set; } = string.Empty;
 
-        public NewItemNameDialog(string title, string prompt)
+        public NewItemNameDialog(string title, string prompt, string? initialValue = null)
         {
             InitializeComponent();
             Title = title;
             PromptText.Text = prompt;
+            NameBox.Text = initialValue ?? string.Empty;
             Loaded += (_, _) => { NameBox.Focus(); NameBox.SelectAll(); };
         }
 

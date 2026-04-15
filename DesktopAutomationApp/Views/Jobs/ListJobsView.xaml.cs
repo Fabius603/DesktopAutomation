@@ -1,9 +1,9 @@
 ﻿using DesktopAutomationApp.ViewModels;
-using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Views
@@ -12,32 +12,21 @@ namespace DesktopAutomationApp.Views
     {
         public ListJobsView() => InitializeComponent();
 
-        private void JobGrid_RowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
+        private void JobGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.EditAction != DataGridEditAction.Commit) return;
-
-            Dispatcher.BeginInvoke(new Action(async () =>
-            {
-                if (DataContext is ListJobsViewModel vm && e.Row?.Item is Job j)
-                {
-                    // Name eindeutig machen
-                    vm.EnsureUniqueNameFor(j);
-
-                    // Sicherstellen, dass Items den aktuellen Stand hat
-                    var index = vm.Items.IndexOf(j);
-                    if (index >= 0)
-                        vm.Items[index] = j;
-
-                    // Änderungen abspeichern
-                    await vm.SaveAllAsync();
-                }
-            }), System.Windows.Threading.DispatcherPriority.Background);
+            if (DataContext is ListJobsViewModel vm)
+                vm.SetSelectedItems(JobGrid.SelectedItems.Cast<Job>());
         }
 
         private void JobGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            var row = FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
-            if (row == null || !row.IsSelected) return;
+            if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0) return;
+            var src = e.OriginalSource as DependencyObject;
+            if (FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(src) != null) return;
+            var cell = FindAncestor<DataGridCell>(src);
+            if (cell != null && !cell.IsReadOnly) return;
+            var row = FindAncestor<DataGridRow>(src);
+            if (row == null || !row.IsSelected || JobGrid.SelectedItems.Count != 1) return;
             JobGrid.SelectedItem = null;
             e.Handled = true;
         }
@@ -47,7 +36,7 @@ namespace DesktopAutomationApp.Views
             while (obj != null)
             {
                 if (obj is T t) return t;
-                obj = System.Windows.Media.VisualTreeHelper.GetParent(obj);
+                obj = VisualTreeHelper.GetParent(obj);
             }
             return null;
         }

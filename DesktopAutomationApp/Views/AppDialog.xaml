@@ -1,0 +1,69 @@
+<mah:MetroWindow x:Class="DesktopAutomationApp.Views.AppDialog"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                 WindowStartupLocation="CenterOwner"
+                 SizeToContent="WidthAndHeight"
+                 ResizeMode="NoResize"
+                 ShowInTaskbar="False"
+                 MinWidth="360"
+                 MaxWidth="520"
+                 Style="{StaticResource DialogWindowStyle}">
+
+    <Grid Margin="24,20,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Icon + Message -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Top">
+            <iconPacks:PackIconMaterial x:Name="DialogIcon"
+                                        Width="24" Height="24"
+                                        VerticalAlignment="Top"
+                                        Margin="0,1,14,0"/>
+            <TextBlock x:Name="MessageText"
+                       MaxWidth="400"
+                       TextWrapping="Wrap"
+                       FontSize="13"
+                       LineHeight="20"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource App.Brush.TextPrimary}"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <!-- Yes / OK -->
+            <Button x:Name="YesButton"
+                    MinWidth="90"
+                    Click="Yes_Click"
+                    IsDefault="True">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial x:Name="YesIcon" Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock x:Name="YesText" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <!-- No -->
+            <Button x:Name="NoButton"
+                    Style="{StaticResource ButtonSecondary}"
+                    MinWidth="80"
+                    Margin="8,0,0,0"
+                    Click="No_Click"
+                    Visibility="Collapsed">
+                <TextBlock Text="Nein"/>
+            </Button>
+            <!-- Cancel -->
+            <Button x:Name="CancelButton"
+                    Style="{StaticResource ButtonSecondary}"
+                    MinWidth="80"
+                    Margin="8,0,0,0"
+                    Click="Cancel_Click"
+                    IsCancel="True"
+                    Visibility="Collapsed">
+                <TextBlock Text="Abbrechen"/>
+            </Button>
+        </StackPanel>
+    </Grid>
+</mah:MetroWindow>

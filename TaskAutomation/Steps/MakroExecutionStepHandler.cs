@@ -40,7 +40,8 @@ namespace TaskAutomation.Steps
                 }
                 else if (!string.IsNullOrWhiteSpace(miStep.Settings.MakroName))
                 {
-                    if (!executor.AllMakros.TryGetValue(miStep.Settings.MakroName, out makro))
+                    makro = executor.AllMakros.Values.FirstOrDefault(m => string.Equals(m.Name, miStep.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
+                    if (makro == null)
                     {
                         var errorMessage = $"Makro '{miStep.Settings.MakroName}' not found";
                         logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);

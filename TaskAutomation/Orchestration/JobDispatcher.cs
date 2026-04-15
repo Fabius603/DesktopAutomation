@@ -19,7 +19,7 @@ namespace TaskAutomation.Orchestration
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
         private readonly IGlobalHotkeyService _hotkeyService;
-        private readonly ConcurrentDictionary<string, CancellationTokenSource> _jobTokens;
+        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _jobTokens;
 
         /// <summary>
         /// Wird ausgelöst, wenn bei der Ausführung eines Jobs ein Fehler auftritt.
@@ -44,7 +44,7 @@ namespace TaskAutomation.Orchestration
             _hotkeyService = hotkeyService ?? throw new ArgumentNullException(nameof(hotkeyService));
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
 
-            _jobTokens = new ConcurrentDictionary<string, CancellationTokenSource>(StringComparer.OrdinalIgnoreCase);
+            _jobTokens = new ConcurrentDictionary<Guid, CancellationTokenSource>();
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
             _executor.JobErrorOccurred += OnJobErrorOccurred;
             _executor.JobStepErrorOccurred += OnJobStepErrorOccurred;
@@ -75,10 +75,10 @@ namespace TaskAutomation.Orchestration
 
         private void StartJobByAction(ActionDefinition actionDef)
         {
-            var jobName = FindJobNameByAction(actionDef);
-            if (jobName != null)
+            var job = FindJobByAction(actionDef);
+            if (job != null)
             {
-                StartJob(jobName);
+                StartJob(job);
             }
             else
             {
@@ -88,10 +88,10 @@ namespace TaskAutomation.Orchestration
 
         private void CancelJobByAction(ActionDefinition actionDef)
         {
-            var jobName = FindJobNameByAction(actionDef);
-            if (jobName != null)
+            var job = FindJobByAction(actionDef);
+            if (job != null)
             {
-                CancelJob(jobName);
+                CancelJobById(job.Id);
             }
             else
             {
@@ -101,13 +101,13 @@ namespace TaskAutomation.Orchestration
 
         private void ToggleJobByAction(ActionDefinition actionDef)
         {
-            var jobName = FindJobNameByAction(actionDef);
-            if (jobName != null)
+            var job = FindJobByAction(actionDef);
+            if (job != null)
             {
-                if (_jobTokens.ContainsKey(jobName))
-                    CancelJob(jobName);
+                if (_jobTokens.ContainsKey(job.Id))
+                    CancelJobById(job.Id);
                 else
-                    StartJob(jobName);
+                    StartJob(job);
             }
             else
             {
@@ -115,27 +115,22 @@ namespace TaskAutomation.Orchestration
             }
         }
 
-        private string? FindJobNameByAction(ActionDefinition actionDef)
+        private Job? FindJobByAction(ActionDefinition actionDef)
         {
             // Try to find by ID first, fallback to name for backward compatibility
             if (actionDef.JobId.HasValue)
             {
                 var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == actionDef.JobId.Value);
-                if (job != null)
-                {
-                    return job.Name;
-                }
-                _logger.LogWarning("Job with ID '{JobId}' not found", actionDef.JobId);
-                return null;
+                if (job == null)
+                    _logger.LogWarning("Job with ID '{JobId}' not found", actionDef.JobId);
+                return job;
             }
             else if (!string.IsNullOrWhiteSpace(actionDef.Name))
             {
-                if (_executor.AllJobs.ContainsKey(actionDef.Name))
-                {
-                    return actionDef.Name;
-                }
-                _logger.LogWarning("Job with name '{JobName}' not found", actionDef.Name);
-                return null;
+                var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, actionDef.Name, StringComparison.OrdinalIgnoreCase));
+                if (job == null)
+                    _logger.LogWarning("Job with name '{JobName}' not found", actionDef.Name);
+                return job;
             }
             else
             {
@@ -144,38 +139,54 @@ namespace TaskAutomation.Orchestration
             }
         }
 
-        private void StartJob(string name)
+        private void StartJob(Job job)
         {
-            if (_jobTokens.ContainsKey(name))
+            if (_jobTokens.ContainsKey(job.Id))
             {
-                _logger.LogWarning("Job '{Name}' läuft bereits.", name);
+                _logger.LogWarning("Job '{Name}' läuft bereits.", job.Name);
                 return;
             }
 
             var cts = new CancellationTokenSource();
-            if (!_jobTokens.TryAdd(name, cts))
+            if (!_jobTokens.TryAdd(job.Id, cts))
                 return;
 
+            var jobId = job.Id;
+            var jobName = job.Name;
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _executor.ExecuteJob(name, cts.Token).ConfigureAwait(false);
+                    await _executor.ExecuteJob(jobId, cts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger.LogInformation("Job '{Name}' abgebrochen.", name);
+                    _logger.LogInformation("Job '{Name}' abgebrochen.", jobName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Fehler bei Job '{Name}'", name);
+                    _logger.LogError(ex, "Fehler bei Job '{Name}'", jobName);
                 }
                 finally
                 {
-                    _jobTokens.TryRemove(name, out _);
+                    _jobTokens.TryRemove(jobId, out _);
                     cts.Dispose();
                 }
             });
+        }
+
+        private void CancelJobById(Guid id)
+        {
+            if (_jobTokens.TryRemove(id, out var cts))
+            {
+                _logger.LogInformation("Job (ID: {JobId}) Abbruch angefordert.", id);
+                cts.Cancel();
+                cts.Dispose();
+            }
+            else
+            {
+                _logger.LogWarning("Kein laufender Job mit ID '{JobId}' gefunden.", id);
+            }
         }
 
         private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)
@@ -195,16 +206,13 @@ namespace TaskAutomation.Orchestration
         /// </summary>
         public void CancelJob(string name)
         {
-            if (_jobTokens.TryRemove(name, out var cts))
+            var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (job == null)
             {
-                _logger.LogInformation("Job '{Name}' Abbruch angefordert.", name);
-                cts.Cancel();
-                cts.Dispose();
+                _logger.LogWarning("Kein Job mit Namen '{Name}' gefunden.", name);
+                return;
             }
-            else
-            {
-                _logger.LogWarning("Kein laufender Job '{Name}' gefunden.", name);
-            }
+            CancelJobById(job.Id);
         }
 
         /// <summary>

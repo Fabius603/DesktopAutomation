@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Input;
 using DesktopAutomationApp.Services.Preview;
+using DesktopAutomationApp.Views;
 using Microsoft.Win32;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
@@ -74,8 +75,8 @@ namespace DesktopAutomationApp.ViewModels
                 //"ProcessDuplication" => !string.IsNullOrWhiteSpace(ProcessName),
                 "ShowImage" => !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
                 "VideoCreation" => !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath) && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
-                "MakroExecution" => !string.IsNullOrWhiteSpace(MakroExecutionStep_SelectedMakroName),
-                "JobExecution" => !string.IsNullOrWhiteSpace(JobExecutionStep_SelectedJobName),
+                "MakroExecution" => MakroExecutionStep_SelectedMakro != null,
+                "JobExecution" => JobExecutionStep_SelectedJob != null,
                 "DesktopDuplication" => true,
                 "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
                 "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
@@ -358,7 +359,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler", 
+                AppDialog.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -480,7 +481,7 @@ namespace DesktopAutomationApp.ViewModels
             catch (Exception ex)
             {
                 // Handle actual errors
-                System.Windows.MessageBox.Show($"Error capturing ROI: {ex.Message}", "Error", 
+                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -491,7 +492,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var roiOverlay = new DesktopOverlay.RoiCaptureOverlay();
                 var rect = await roiOverlay.CaptureRoiAsync();
-                
+
                 YoloDetectionStep_RoiX = rect.X;
                 YoloDetectionStep_RoiY = rect.Y;
                 YoloDetectionStep_RoiW = rect.Width;
@@ -505,7 +506,7 @@ namespace DesktopAutomationApp.ViewModels
             catch (Exception ex)
             {
                 // Handle actual errors
-                System.Windows.MessageBox.Show($"Error capturing ROI: {ex.Message}", "Error", 
+                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -582,17 +583,30 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== JobExecution Felder =====
-        public ObservableCollection<string> AvailableJobNames
+        public ObservableCollection<Job> AvailableJobs
         {
             get
             {
                 var allJobs = _ctx.AllJobs?.Values?.Where(j => j != null) ?? Enumerable.Empty<Job>();
                 var availableJobs = allJobs
-                    .Where(j => !j.Repeating && 
-                               j.Name != _currentJobBeingEdited?.Name)
-                    .Select(j => j.Name)
-                    .OrderBy(n => n);
-                return new ObservableCollection<string>(availableJobs);
+                    .Where(j => !j.Repeating &&
+                               j.Id != _currentJobBeingEdited?.Id)
+                    .OrderBy(j => j.Name);
+                return new ObservableCollection<Job>(availableJobs);
+            }
+        }
+
+        private Job? _jobExecutionStep_SelectedJob;
+        public Job? JobExecutionStep_SelectedJob
+        {
+            get => _jobExecutionStep_SelectedJob;
+            set
+            {
+                _jobExecutionStep_SelectedJob = value;
+                _jobExecutionStep_SelectedJobId = value?.Id;
+                _jobExecutionStep_SelectedJobName = value?.Name;
+                OnChange();
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -614,8 +628,23 @@ namespace DesktopAutomationApp.ViewModels
         public bool JobExecutionStep_WaitForCompletion { get => _jobExecutionStep_WaitForCompletion; set { _jobExecutionStep_WaitForCompletion = value; OnChange(); } }
 
         // ===== MakroExecution Felder =====
-        public ObservableCollection<string> MakroNames => new ObservableCollection<string>(_ctx.AllMakros?.Keys?.OrderBy(n => n) ?? Enumerable.Empty<string>());
-        
+        public ObservableCollection<Makro> AvailableMakros => new ObservableCollection<Makro>(
+            _ctx.AllMakros?.Values?.OrderBy(m => m.Name) ?? Enumerable.Empty<Makro>());
+
+        private Makro? _makroExecutionStep_SelectedMakro;
+        public Makro? MakroExecutionStep_SelectedMakro
+        {
+            get => _makroExecutionStep_SelectedMakro;
+            set
+            {
+                _makroExecutionStep_SelectedMakro = value;
+                _makroExecutionStep_SelectedMakroId = value?.Id;
+                _makroExecutionStep_SelectedMakroName = value?.Name;
+                OnChange();
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+
         private string? _makroExecutionStep_SelectedMakroName;
         public string? MakroExecutionStep_SelectedMakroName
         {
@@ -684,18 +713,16 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new MakroExecutionSettings
                     {
-                        MakroName = MakroExecutionStep_SelectedMakroName ?? MakroNames.FirstOrDefault(string.Empty),
-                        MakroId = MakroExecutionStep_SelectedMakroId ?? 
-                                  (_ctx.AllMakros?.Values?.FirstOrDefault(m => m.Name == MakroExecutionStep_SelectedMakroName)?.Id)
+                        MakroName = MakroExecutionStep_SelectedMakro?.Name ?? string.Empty,
+                        MakroId = MakroExecutionStep_SelectedMakro?.Id
                     }
                 },
                 "JobExecution" => new JobExecutionStep
                 {
                     Settings = new JobExecutionStepSettings
                     {
-                        JobName = JobExecutionStep_SelectedJobName ?? AvailableJobNames.FirstOrDefault(string.Empty),
-                        JobId = JobExecutionStep_SelectedJobId ??
-                                (_ctx.AllJobs?.Values?.FirstOrDefault(j => j.Name == JobExecutionStep_SelectedJobName)?.Id),
+                        JobName = JobExecutionStep_SelectedJob?.Name ?? string.Empty,
+                        JobId = JobExecutionStep_SelectedJob?.Id,
                         WaitForCompletion = JobExecutionStep_WaitForCompletion
                     }
                 },

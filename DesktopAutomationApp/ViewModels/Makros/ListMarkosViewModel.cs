@@ -2,6 +2,7 @@ using DesktopAutomationApp.Services;
 using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,6 +22,16 @@ namespace DesktopAutomationApp.ViewModels
         public string Title => "Makros";
 
         public ObservableCollection<Makro> Items { get; } = new();
+
+        private readonly List<Makro> _selectedItems = new();
+        public IReadOnlyList<Makro> SelectedItems => _selectedItems;
+
+        public void SetSelectedItems(IEnumerable<Makro> items)
+        {
+            _selectedItems.Clear();
+            _selectedItems.AddRange(items);
+            CommandManager.InvalidateRequerySuggested();
+        }
 
         private Makro? _selected;
         public Makro? Selected
@@ -49,9 +60,11 @@ namespace DesktopAutomationApp.ViewModels
             RefreshCommand   = new RelayCommand(LoadMakros);
             SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
             NewMakroCommand  = new RelayCommand(CreateNewMakro);
-            DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => Selected != null);
-            OpenMakroCommand = new RelayCommand<Makro?>(m => { if (m != null) RequestOpenMakro?.Invoke(m); }, m => m != null);
-
+            DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
+            OpenMakroCommand = new RelayCommand<Makro?>(m => 
+            { 
+                if (m != null) RequestOpenMakro?.Invoke(m); 
+            }, m => m != null);
             LoadMakros();
         }
 
@@ -73,22 +86,6 @@ namespace DesktopAutomationApp.ViewModels
             await _executor.ReloadMakrosAsync();
         }
 
-        public async Task SaveSingleAsync(Makro m) => await _repositoryService.SaveAsync(m);
-
-        public async Task EnsureUniqueNameFor(Makro m)
-        {
-            var result = await _repositoryService.EnsureUniqueNameAsync(
-                m,
-                x => x.Name,
-                (x, name) => x.Name = name,
-                x => x.Id.ToString(),
-                x => x.Name ?? ""
-            );
-
-            if (result.changed)
-                await _repositoryService.SaveAsync(m);
-        }
-
         private async void CreateNewMakro()
         {
             var dlg = new NewItemNameDialog("Neues Makro", "Name des neuen Makros:")
@@ -97,11 +94,8 @@ namespace DesktopAutomationApp.ViewModels
 
             try
             {
-                var newMakro = await _repositoryService.CreateNewAsync<Makro>(
-                    dlg.ResultName,
-                    name => new Makro { Name = name, Befehle = new() },
-                    makro => makro.Name);
-
+                var newMakro = new Makro { Name = dlg.ResultName, Befehle = new() };
+                await _repositoryService.SaveAsync(newMakro);
                 Items.Add(newMakro);
                 Selected = newMakro;
                 await _executor.ReloadMakrosAsync();
@@ -114,24 +108,23 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task DeleteSelectedAsync()
         {
-            if (Selected == null) return;
+            if (_selectedItems.Count == 0) return;
 
-            var result = MessageBox.Show(
-                $"Moechten Sie den Makro '{Selected.Name}' wirklich loeschen?",
-                "Loeschen bestaetigen",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var message = _selectedItems.Count == 1
+                ? $"Möchten Sie den Makro '{_selectedItems[0].Name}' wirklich löschen?"
+                : $"Möchten Sie die {_selectedItems.Count} ausgewählten Makros wirklich löschen?";
 
-            if (result != MessageBoxResult.Yes)
-                return;
+            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
 
-            var name = Selected.Name;
-            var idx = Items.IndexOf(Selected);
-            Items.Remove(Selected);
-            Selected = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
-            await _repositoryService.DeleteAsync<Makro>(name);
-
-            _log.LogInformation("Makro gelöscht: {Name}", name);
+            var toDelete = _selectedItems.ToList();
+            foreach (var makro in toDelete)
+            {
+                Items.Remove(makro);
+                await _repositoryService.DeleteAsync<Makro>(makro.Id.ToString());
+                _log.LogInformation("Makro gelöscht: {Name}", makro.Name);
+            }
+            Selected = null;
         }
     }
 }

@@ -1,30 +1,17 @@
-﻿<UserControl x:Class="DesktopAutomationApp.Views.ListHotkeysView"
+<UserControl x:Class="DesktopAutomationApp.Views.ListHotkeysView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
-    <UserControl.Resources>
-        <Style x:Key="AutoOpenComboStyle" TargetType="ComboBox"
-           BasedOn="{StaticResource {x:Type ComboBox}}">
-            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="ComboBox_PreviewMouseLeftButtonDown"/>
-            <EventSetter Event="GotKeyboardFocus" Handler="ComboBox_GotKeyboardFocus"/>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Toolbar -->
-            <RowDefinition Height="2*"/>
-            <!-- Liste -->
-            <RowDefinition Height="Auto"/>
-            <!-- Editor -->
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
@@ -70,13 +57,16 @@
 
         <!-- Liste -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
-            <DataGrid ItemsSource="{Binding Items}"
+            <DataGrid x:Name="HotkeyGrid"
+                      ItemsSource="{Binding Items}"
                       SelectedItem="{Binding Selected}"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       IsReadOnly="False"
-                      ScrollViewer.CanContentScroll="False">
+                      ScrollViewer.CanContentScroll="False"
+                      SelectionChanged="HotkeyGrid_SelectionChanged"
+                      PreviewMouseLeftButtonDown="HotkeyGrid_PreviewMouseDown">
 
                 <DataGrid.InputBindings>
                     <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
@@ -84,108 +74,34 @@
 
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
-                    <!-- Trigger direkt aus EditableHotkey.DisplayTrigger -->
                     <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Action" Binding="{Binding Action.DisplayName}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" IsReadOnly="True" Width="2*"/>
-                    <DataGridCheckBoxColumn Header="Aktiv"
-                                Binding="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                Width="60"
-                                CanUserResize="False"
-                                IsThreeState="False"/>
-                    <DataGridTemplateColumn Header="" Width="50" CanUserResize="False">
+                    <DataGridTemplateColumn Header="Aktiv" Width="60" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Style="{StaticResource ButtonIcon}"
-                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                        CommandParameter="{Binding}"
-                                        ToolTip="Bearbeiten">
-                                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                                <CheckBox IsChecked="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ButtonPrimary}"
+                                        Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-        </Border>
-
-        <!-- Editor -->
-        <Border Grid.Row="2"
-                Style="{StaticResource CardBorderStyle}"
-                Margin="0,8,0,0"
-                Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid Margin="12">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Name -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" VerticalAlignment="Center"/>
-                <TextBox Grid.Row="0" Grid.Column="1"
-                         Text="{Binding EditedHotkey.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <!-- Action (durchsuchbar) -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Action" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
-                          ItemsSource="{Binding ActionsView}"
-                          Style="{StaticResource AutoOpenComboStyle}"
-                          IsEditable="True"
-                          StaysOpenOnEdit="True"
-                          IsTextSearchEnabled="True"
-                          SelectedItem="{Binding EditedHotkey.Action.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          MinWidth="280"/>
-
-                <!-- Command (durchsuchbar) -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
-                          ItemsSource="{Binding CommandsView}"
-                          Style="{StaticResource AutoOpenComboStyle}"
-                          IsEditable="True"
-                          StaysOpenOnEdit="True"
-                          IsTextSearchEnabled="True"
-                          SelectedItem="{Binding EditedHotkey.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          MinWidth="200"/>
-
-                <!-- Aktiv -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
-                          VerticalAlignment="Center"
-                          IsThreeState="False"
-                          IsChecked="{Binding EditedHotkey.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          ToolTip="Hotkey ist aktiv/inaktiv"/>
-
-                <!-- Trigger -->
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Trigger" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBox IsReadOnly="True" Width="240"
-                             Text="{Binding EditedHotkey.DisplayTrigger, Mode=OneWay}" />
-                    <Button Margin="8,0,0,0"
-                            Style="{StaticResource ButtonSecondary}"
-                            Content="{Binding IsCapturing, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Erfassen...,Erfassung läuft...'}"
-                            Command="{Binding StartCaptureCommand}"
-                            IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBooleanConverter}}" />
-                    <Button Margin="8,0,0,0"
-                            Style="{StaticResource ButtonToolbar}"
-                            Content="Abbrechen"
-                            Command="{Binding CancelCaptureCommand}"
-                            Visibility="{Binding IsCapturing, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                </StackPanel>
-
-                <!-- Aktionen -->
-                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,16,0,0">
-                    <Button Content="Speichern" Style="{StaticResource ButtonPrimary}" Command="{Binding SaveEditCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Abbrechen" Style="{StaticResource ButtonSecondary}" Command="{Binding CancelEditCommand}" />
-                </StackPanel>
-            </Grid>
         </Border>
     </Grid>
 </UserControl>

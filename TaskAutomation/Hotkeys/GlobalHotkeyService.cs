@@ -92,7 +92,7 @@ namespace TaskAutomation.Hotkeys
         private const int _maxWorkerThreads = 4;
 
         // Datenstrukturen
-        private readonly Dictionary<string, HotkeyDefinition> _definitions;
+        private readonly Dictionary<Guid, HotkeyDefinition> _definitions;
         private readonly BlockingCollection<Action> _workQueue = new();
         private readonly Thread[] _workers;
 
@@ -113,7 +113,7 @@ namespace TaskAutomation.Hotkeys
         // Edge-Only: welche VKs sind aktuell gedrückt (um Auto-Repeat zu ignorieren)
         private readonly HashSet<uint> _downKeys = new();
 
-        public IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys => _definitions;
+        public IReadOnlyDictionary<Guid, HotkeyDefinition> Hotkeys => _definitions;
 
         // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
         private volatile bool _isHotkeyRecording;
@@ -130,7 +130,7 @@ namespace TaskAutomation.Hotkeys
         {
             _logger = logger;
             _repository = repo;
-            _definitions = new(StringComparer.OrdinalIgnoreCase);
+            _definitions = new();
             _hookCallback = HookCallback;
             _mouseHookCallback = MouseHookCallback;
             _workers = new Thread[_maxWorkerThreads];
@@ -182,7 +182,7 @@ namespace TaskAutomation.Hotkeys
         /// <summary>
         /// Registriert einen Hotkey mit zugehörigem Action-Namen.
         /// </summary>
-        public void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action)
+        public void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action, Guid? id = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name darf nicht leer sein.", nameof(name));
@@ -193,15 +193,16 @@ namespace TaskAutomation.Hotkeys
                 throw new ArgumentException("Ein Modifier darf nicht allein als Hotkey registriert werden.", nameof(virtualKeyCode));
 
             var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, action);
-            _definitions[name] = def;
-            _logger.LogInformation("Hotkey registriert: {Name} => Action '{ActionName}', Command '{ActionCommand}'",
-                name, action.Name, action.Command);
+            if (id.HasValue) def.Id = id.Value;
+            _definitions[def.Id] = def;
+            _logger.LogInformation("Hotkey registriert: {Name} (ID: {Id}) => Action '{ActionName}', Command '{ActionCommand}'",
+                name, def.Id, action.Name, action.Command);
         }
 
-        public void UnregisterHotkey(string name)
+        public void UnregisterHotkey(Guid id)
         {
-            _definitions.Remove(name);
-            _logger.LogInformation("Hotkey '{Name}' entfernt.", name);
+            _definitions.Remove(id);
+            _logger.LogInformation("Hotkey (ID: {Id}) entfernt.", id);
         }
 
         public void UnregisterAllHotkeys()
@@ -219,7 +220,7 @@ namespace TaskAutomation.Hotkeys
                 UnregisterAllHotkeys();
                 foreach (var e in entries)
                     if (e.Active)
-                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action);
+                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action, e.Id);
             }
             catch (Exception ex)
             {

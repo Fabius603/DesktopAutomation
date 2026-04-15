@@ -2,18 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Xml.Linq;
 using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
-using SharpDX.Direct3D11;
 using TaskAutomation.Jobs;
-using TaskAutomation.Makros;
-using Common.JsonRepository;
 using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
@@ -29,6 +23,16 @@ namespace DesktopAutomationApp.ViewModels
 
         public ObservableCollection<Job> Items { get; } = new();
 
+        private readonly List<Job> _selectedItems = new();
+        public IReadOnlyList<Job> SelectedItems => _selectedItems;
+
+        public void SetSelectedItems(IEnumerable<Job> items)
+        {
+            _selectedItems.Clear();
+            _selectedItems.AddRange(items);
+            CommandManager.InvalidateRequerySuggested();
+        }
+
         public ICommand RefreshCommand { get; }
         public ICommand OpenJobCommand { get; } // Parameter: Job
         public ICommand DeleteJobCommand { get; }
@@ -42,7 +46,7 @@ namespace DesktopAutomationApp.ViewModels
         public Job? SelectedJob
         {
             get => _selectedJob;
-            set { _selectedJob = value; OnPropertyChanged(); }
+            set { _selectedJob = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
         }
 
         private bool _editing;
@@ -52,7 +56,10 @@ namespace DesktopAutomationApp.ViewModels
             set => _editing = value;
         }
 
-        public ListJobsViewModel(IJobExecutor executor, ILogger<ListJobsViewModel> log, IRepositoryService repositoryService)
+        public ListJobsViewModel(
+            IJobExecutor executor, 
+            ILogger<ListJobsViewModel> log, 
+            IRepositoryService repositoryService)
         {
             _executor = executor;
             _log = log;
@@ -63,7 +70,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (job != null) RequestOpenJob?.Invoke(job);
             }, job => job != null);
-            DeleteJobCommand = new RelayCommand(async () => await DeleteJobAsync());
+            DeleteJobCommand = new RelayCommand(async () => await DeleteJobAsync(), () => _selectedItems.Count > 0);
             CreateNewJobCommand = new RelayCommand(CreateNewJob);
             SaveAllCommand = new RelayCommand(async () => await SaveAllAsync());
             SaveWithoutEditorCommand = new RelayCommand(async () => await SaveWithoutEditorAsync());
@@ -97,24 +104,24 @@ namespace DesktopAutomationApp.ViewModels
 
         public async Task DeleteJobAsync()
         {
-            if (SelectedJob == null) return;
+            if (_selectedItems.Count == 0) return;
 
-            var result = MessageBox.Show(
-                $"Möchten Sie den Job „{SelectedJob.Name}“ wirklich löschen?",
-                "Löschen bestätigen",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var message = _selectedItems.Count == 1
+                ? $"Möchten Sie den Job '{_selectedItems[0].Name}' wirklich löschen?"
+                : $"Möchten Sie die {_selectedItems.Count} ausgewählten Jobs wirklich löschen?";
 
-            if (result != MessageBoxResult.Yes)
-                return;
+            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
 
-            string name = SelectedJob.Name;
-            var idx = Items.IndexOf(SelectedJob);
-            Items.Remove(SelectedJob);
-            SelectedJob = Items.ElementAtOrDefault(Math.Max(0, idx - 1));
-            await _repositoryService.DeleteAsync<Job>(name);
-
-            _log.LogInformation("Job gelöscht: {Name}", name);
+            var toDelete = _selectedItems.ToList();
+            foreach (var job in toDelete)
+            {
+                Items.Remove(job);
+                await _repositoryService.DeleteAsync<Job>(job.Id.ToString());
+                _log.LogInformation("Job gelöscht: {Name}", job.Name);
+            }
+            SelectedJob = null;
+            await _executor.ReloadJobsAsync();
         }
 
         public async void CreateNewJob()
@@ -125,11 +132,8 @@ namespace DesktopAutomationApp.ViewModels
 
             try
             {
-                var newJob = await _repositoryService.CreateNewAsync<Job>(
-                    dlg.ResultName,
-                    name => new Job { Name = name, Repeating = false, Steps = new() },
-                    job => job.Name);
-
+                var newJob = new Job { Name = dlg.ResultName, Repeating = false, Steps = new() };
+                await _repositoryService.SaveAsync(newJob);
                 Items.Add(newJob);
                 SelectedJob = newJob;
                 await _executor.ReloadJobsAsync();
@@ -140,21 +144,5 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        public async Task EnsureUniqueNameFor(Job? j)
-        {
-            var result = await _repositoryService.EnsureUniqueNameAsync(
-                j,
-                job => job.Name,
-                (job, name) => job.Name = name,
-                job => job.Id.ToString(),
-                job => job.Name ?? ""
-            );
-
-            if (result.changed)
-            {
-                await _repositoryService.SaveAsync(j);
-                await _executor.ReloadJobsAsync();
-            }
-        }
     }
 }

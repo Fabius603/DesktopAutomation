@@ -13,7 +13,7 @@ namespace TaskAutomation.Hotkeys
         /// Achtung: In der konkreten Klasse ist dies ein Dictionary.
         /// Für Consumer empfehlenswert: IReadOnlyDictionary.
         /// </summary>
-        IReadOnlyDictionary<string, HotkeyDefinition> Hotkeys { get; }
+        IReadOnlyDictionary<Guid, HotkeyDefinition> Hotkeys { get; }
 
 
         /// <summary>
@@ -30,12 +30,12 @@ namespace TaskAutomation.Hotkeys
         /// <summary>
         /// Registriert/aktualisiert einen Hotkey.
         /// </summary>
-        void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action);
+        void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action, Guid? id = null);
 
         /// <summary>
         /// Entfernt einen registrierten Hotkey.
         /// </summary>
-        void UnregisterHotkey(string name);
+        void UnregisterHotkey(Guid id);
 
         /// <summary>
         /// Entfernt alle registrierten Hotkeys.

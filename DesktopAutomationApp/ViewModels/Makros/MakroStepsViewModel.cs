@@ -77,6 +77,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand RenameCommand { get; }
         public ICommand AddStepCommand { get; }
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
@@ -113,6 +114,7 @@ namespace DesktopAutomationApp.ViewModels
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
+            RenameCommand = new RelayCommand(() => Rename());
 
             AddStepCommand      = new RelayCommand(async () => await OpenAddStepDialog());
             EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
@@ -151,6 +153,19 @@ namespace DesktopAutomationApp.ViewModels
             _originalSteps.Clear();
             _originalSteps.AddRange(Steps);
             HasUnsavedChanges = false;
+        }
+
+        // ---------- Rename ----------
+        private async void Rename()
+        {
+            var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", Makro.Name)
+                { Owner = Application.Current?.MainWindow };
+            if (dlg.ShowDialog() != true) return;
+
+            Makro.Name = dlg.ResultName.Trim();
+            OnPropertyChanged(nameof(Title));
+            await _repositoryService.SaveAsync(Makro);
+            await _executor.ReloadMakrosAsync();
         }
 
         // ---------- Steps ----------
@@ -212,7 +227,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (step == null) return;
 
-            var result = MessageBox.Show(
+            var result = AppDialog.Show(
                 $"Möchten Sie diesen Step wirklich löschen?",
                 "Löschen bestätigen",
                 MessageBoxButton.YesNo,

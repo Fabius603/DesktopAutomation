@@ -233,7 +233,7 @@ namespace TaskAutomation.Jobs
                     _logger.LogWarning("Job ohne gültigen Namen ignoriert.");
                     continue;
                 }
-                _allJobs[j.Name] = j;
+                _allJobs[j.Id.ToString()] = j;
                 added++;
             }
             _logger.LogInformation("Jobs geladen: {Count}", added);
@@ -263,7 +263,7 @@ namespace TaskAutomation.Jobs
                     _logger.LogWarning("Makro ohne gültigen Namen ignoriert.");
                     continue;
                 }
-                _allMakros[m.Name] = m;
+                _allMakros[m.Id.ToString()] = m;
                 added++;
             }
             _logger.LogInformation("Makros geladen: {Count}", added);
@@ -273,9 +273,23 @@ namespace TaskAutomation.Jobs
         public Task ExecuteJob(string jobName, CancellationToken ct = default)
             => ExecuteJobAsync(jobName, ct);
 
+        public Task ExecuteJob(Guid jobId, CancellationToken ct = default)
+        {
+            var job = AllJobs.Values.FirstOrDefault(j => j.Id == jobId);
+            if (job == null)
+            {
+                var errorMessage = $"Job mit ID '{jobId}' existiert nicht.";
+                _logger.LogError(errorMessage);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobId.ToString(), new ArgumentException(errorMessage)));
+                return Task.CompletedTask;
+            }
+            return ExecuteJobAsync(job, ct);
+        }
+
         private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
         {
-            if (string.IsNullOrWhiteSpace(jobName) || !AllJobs.TryGetValue(jobName, out var job))
+            var job = AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, jobName, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(jobName) || job == null)
             {
                 var errorMessage = $"Job '{jobName}' existiert nicht.";
                 _logger.LogError(errorMessage);

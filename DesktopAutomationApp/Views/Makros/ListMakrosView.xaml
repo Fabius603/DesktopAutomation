@@ -24,7 +24,7 @@
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Loeschen" VerticalAlignment="Center"/>
+                        <TextBlock Text="Löschen" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -54,16 +54,17 @@
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       IsReadOnly="False"
-                      RowEditEnding="MakroGrid_RowEditEnding"
+                      SelectionChanged="MakroGrid_SelectionChanged"
                       PreviewMouseLeftButtonDown="MakroGrid_PreviewMouseDown">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name"
-                        Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                        Binding="{Binding Name}"
+                        IsReadOnly="True"
                         Width="2*"/>
                     <DataGridTextColumn Header="# Befehle"
                         Binding="{Binding Befehle.Count}"
                         IsReadOnly="True" Width="*"/>
-                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="90">
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="200">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Style="{StaticResource ButtonPrimary}"
@@ -71,7 +72,7 @@
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="Oeffnen" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </DataTemplate>

@@ -51,6 +51,9 @@
             <DataTemplate DataType="{x:Type vm:MakroStepsViewModel}">
                 <views:MakroStepsView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:HotkeyDetailViewModel}">
+                <views:HotkeyDetailView/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:YoloDownloadsViewModel}">
                 <views:YoloDownloadsView/>
             </DataTemplate>

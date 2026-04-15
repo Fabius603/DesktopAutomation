@@ -1,43 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
+using DesktopAutomationApp.Models;
+using DesktopAutomationApp.ViewModels;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace DesktopAutomationApp.Views
 {
-    /// <summary>
-    /// Interaktionslogik für ListHotkeyView.xaml
-    /// </summary>
     public partial class ListHotkeysView : UserControl
     {
         public ListHotkeysView() => InitializeComponent();
 
-        private void ComboBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void HotkeyGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ComboBox cb && !cb.IsDropDownOpen)
-            {
-                cb.Focus();
-                cb.IsDropDownOpen = true;
-                e.Handled = true; // Klick nicht noch zusätzlich verarbeiten
-            }
+            if (DataContext is ListHotkeysViewModel vm)
+                vm.SetSelectedItems(HotkeyGrid.SelectedItems.Cast<EditableHotkey>());
         }
 
-        private void ComboBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        private void HotkeyGrid_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is ComboBox cb && !cb.IsDropDownOpen)
+            if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) != 0) return;
+            var src = e.OriginalSource as DependencyObject;
+            if (FindAncestor<System.Windows.Controls.Primitives.ButtonBase>(src) != null) return;
+            var cell = FindAncestor<DataGridCell>(src);
+            if (cell != null && !cell.IsReadOnly) return;
+            var row = FindAncestor<DataGridRow>(src);
+            if (row == null || !row.IsSelected || HotkeyGrid.SelectedItems.Count != 1) return;
+            HotkeyGrid.SelectedItem = null;
+            e.Handled = true;
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
+        {
+            while (obj != null)
             {
-                cb.IsDropDownOpen = true;
+                if (obj is T t) return t;
+                obj = VisualTreeHelper.GetParent(obj);
             }
+            return null;
         }
     }
 }

@@ -3,9 +3,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
+using DesktopAutomationApp.Models;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
+using DesktopAutomationApp.Views;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -72,10 +74,13 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Makroliste in die Details:
             _listMakros.RequestOpenMakro += OpenMakroDetails;
 
+            // Navigation aus der Hotkeyliste in die Details:
+            _listHotkeys.RequestOpenHotkey += OpenHotkeyDetails;
+
             ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _start; });
-            ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listMakros; });
-            ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listJobs; });
-            ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listHotkeys; });
+            ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listMakros; _listMakros.RefreshCommand.Execute(null); } });
+            ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
+            ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listHotkeys; _listHotkeys.RefreshCommand.Execute(null); } });
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
 
             // Startseite
@@ -85,14 +90,42 @@ namespace DesktopAutomationApp.ViewModels
         private void OpenJobDetails(Job job)
         {
             var detailsVm = ActivatorUtilities.CreateInstance<JobStepsViewModel>(_services, job);
-            detailsVm.RequestBack += async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listJobs; };
+            detailsVm.RequestBack += async () =>
+            {
+                if (await CheckNavigationGuardAsync())
+                {
+                    CurrentContent = _listJobs;
+                    _listJobs.RefreshCommand.Execute(null);
+                }
+            };
             CurrentContent = detailsVm;
         }
 
         private void OpenMakroDetails(Makro makro)
         {
             var detailsVm = ActivatorUtilities.CreateInstance<MakroStepsViewModel>(_services, makro);
-            detailsVm.RequestBack += async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _listMakros; };
+            detailsVm.RequestBack += async () =>
+            {
+                if (await CheckNavigationGuardAsync())
+                {
+                    CurrentContent = _listMakros;
+                    _listMakros.RefreshCommand.Execute(null);
+                }
+            };
+            CurrentContent = detailsVm;
+        }
+
+        private void OpenHotkeyDetails(EditableHotkey hotkey)
+        {
+            var detailsVm = ActivatorUtilities.CreateInstance<HotkeyDetailViewModel>(_services, hotkey);
+            detailsVm.RequestBack += async () =>
+            {
+                if (await CheckNavigationGuardAsync())
+                {
+                    CurrentContent = _listHotkeys;
+                    _listHotkeys.RefreshCommand.Execute(null);
+                }
+            };
             CurrentContent = detailsVm;
         }
 
@@ -101,9 +134,9 @@ namespace DesktopAutomationApp.ViewModels
             if (_currentContent is not INavigationGuard guard || !guard.HasUnsavedChanges)
                 return true;
 
-            var r = MessageBox.Show(
-                "Es gibt ungespeicherte Aenderungen. Moechten Sie speichern?",
-                "Ungespeicherte Aenderungen",
+            var r = AppDialog.Show(
+                "Es gibt ungespeicherte Änderungen. Möchten Sie speichern?",
+                "Ungespeicherte Änderungen",
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Warning);
 
@@ -120,13 +153,13 @@ namespace DesktopAutomationApp.ViewModels
                 var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
                 var title = "Job-Ausführungsfehler";
                 
-                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+                AppDialog.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
             });
         }
 
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
-            // Auf dem UI-Thread ausführen, da wir ein MessageBox anzeigen
+            // Auf dem UI-Thread ausführen, da wir ein AppDialog anzeigen
             Application.Current?.Dispatcher?.Invoke(() =>
             {
                 var message = $"Fehler beim Ausführen des Job-Steps:\n\n" +
@@ -134,8 +167,8 @@ namespace DesktopAutomationApp.ViewModels
                              $"Step: {e.StepType}\n\n" +
                              $"Fehlermeldung:\n{e.ErrorMessage}";
                 var title = "Job-Step-Ausführungsfehler";
-                
-                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+
+                AppDialog.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
             });
         }
     }

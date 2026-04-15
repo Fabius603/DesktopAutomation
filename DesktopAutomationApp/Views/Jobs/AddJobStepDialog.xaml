@@ -142,8 +142,9 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Makro-Name:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox Width="200"
-                          ItemsSource="{Binding MakroNames}"
-                          SelectedItem="{Binding MakroExecutionStep_SelectedMakroName}"/>
+                          ItemsSource="{Binding AvailableMakros}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding MakroExecutionStep_SelectedMakro}"/>
                 </StackPanel>
             </StackPanel>
 
@@ -152,8 +153,9 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Job-Name:" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox Width="200"
-                          ItemsSource="{Binding AvailableJobNames}"
-                          SelectedItem="{Binding JobExecutionStep_SelectedJobName}"/>
+                          ItemsSource="{Binding AvailableJobs}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding JobExecutionStep_SelectedJob}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <CheckBox Content="Auf Beendigung warten" IsChecked="{Binding JobExecutionStep_WaitForCompletion}"/>

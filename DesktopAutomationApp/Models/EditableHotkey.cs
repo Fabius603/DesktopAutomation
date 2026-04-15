@@ -56,12 +56,14 @@ namespace DesktopAutomationApp.Models
 
     public sealed class EditableHotkey : INotifyPropertyChanged
     {
+        private Guid _id = Guid.NewGuid();
         private string _name = string.Empty;
         private KeyModifiers _modifiers;
         private uint _vk;
         private EditableActionDefinition _action = new();
         private bool _active = true;
 
+        public Guid Id { get => _id; set { _id = value; OnPropertyChanged(); } }
         public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); } } }
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _vk; set { if (_vk != value) { _vk = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
@@ -75,18 +77,19 @@ namespace DesktopAutomationApp.Models
         {
             var cloned = new EditableHotkey
             {
+                Id = Id,
                 Name = Name,
                 Modifiers = Modifiers,
                 VirtualKeyCode = VirtualKeyCode,
-                Action = new EditableActionDefinition 
-                { 
-                    Name = Action.Name, 
-                    Command = Action.Command, 
+                Action = new EditableActionDefinition
+                {
+                    Name = Action.Name,
+                    Command = Action.Command,
                     JobId = Action.JobId
                 },
                 Active = Active
             };
-            
+
             // Resolver kopieren
             cloned.Action.CopyJobNameResolverFrom(Action);
             return cloned;
@@ -94,6 +97,7 @@ namespace DesktopAutomationApp.Models
 
         public HotkeyDefinition ToDomain() => new()
         {
+            Id = Id,
             Name = Name,
             Modifiers = Modifiers,
             VirtualKeyCode = VirtualKeyCode,
@@ -103,6 +107,7 @@ namespace DesktopAutomationApp.Models
 
         public static EditableHotkey FromDomain(HotkeyDefinition d) => new()
         {
+            Id = d.Id,
             Name = d.Name,
             Modifiers = d.Modifiers,
             VirtualKeyCode = d.VirtualKeyCode,
