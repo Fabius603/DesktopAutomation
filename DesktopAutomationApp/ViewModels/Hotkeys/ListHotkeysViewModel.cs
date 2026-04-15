@@ -106,9 +106,16 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task NewHotkeyAsync()
         {
+            var dlg = new NewItemNameDialog("Neuer Hotkey", "Name:", "Neuer Hotkey")
+                { Owner = System.Windows.Application.Current?.MainWindow };
+            if (dlg.ShowDialog() != true) return;
+
+            var name = dlg.ResultName.Trim();
+            if (string.IsNullOrWhiteSpace(name)) return;
+
             var e = new EditableHotkey
             {
-                Name = "Neuer Hotkey",
+                Name = name,
                 Modifiers = KeyModifiers.None,
                 VirtualKeyCode = 0,
                 Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Toggle },
@@ -116,9 +123,6 @@ namespace DesktopAutomationApp.ViewModels
             };
             e.Action.SetJobNameResolver(GetCurrentJobNameForAction);
 
-            // Save immediately so it exists in the repository
-            await _repositoryService.SaveAsync(e.ToDomain());
-            Items.Add(e);
             Selected = e;
 
             RequestOpenHotkey?.Invoke(e);

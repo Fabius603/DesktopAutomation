@@ -330,6 +330,23 @@
         <!-- Header: Zurück + Titel + Add + Save + Cancel -->
         <DockPanel Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding StartJobCommand}"
+                        Visibility="{Binding IsJobRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                        ToolTip="Job starten">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Start" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}" Command="{Binding StopJobCommand}"
+                        Visibility="{Binding IsJobRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        ToolTip="Job stoppen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>

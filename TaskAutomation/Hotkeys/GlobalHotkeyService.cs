@@ -20,6 +20,7 @@ namespace TaskAutomation.Hotkeys
     /// </summary>
     public class GlobalHotkeyService : IGlobalHotkeyService, IDisposable
     {
+        private volatile bool _isPaused;
         private volatile bool _isCapturing;
         private TaskCompletionSource<(KeyModifiers mods, uint vk)>? _captureTcs;
 
@@ -114,6 +115,16 @@ namespace TaskAutomation.Hotkeys
         private readonly HashSet<uint> _downKeys = new();
 
         public IReadOnlyDictionary<Guid, HotkeyDefinition> Hotkeys => _definitions;
+
+        public bool IsPaused => _isPaused;
+
+        public void SetPaused(bool paused)
+        {
+            _isPaused = paused;
+            _logger.LogInformation("Hotkey-Ausführung {State}", paused ? "pausiert" : "fortgesetzt");
+        }
+
+        public event Action? HotkeysChanged;
 
         // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
         private volatile bool _isHotkeyRecording;
@@ -221,6 +232,8 @@ namespace TaskAutomation.Hotkeys
                 foreach (var e in entries)
                     if (e.Active)
                         RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action, e.Id);
+
+                HotkeysChanged?.Invoke();
             }
             catch (Exception ex)
             {
@@ -377,6 +390,8 @@ namespace TaskAutomation.Hotkeys
 
         private bool TryExec(uint vk, KeyModifiers mods)
         {
+            if (_isPaused) return false;
+
             foreach (var def in _definitions.Values)
             {
                 if (!def.Active) continue;

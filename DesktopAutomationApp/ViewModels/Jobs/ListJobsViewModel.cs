@@ -8,6 +8,7 @@ using System.Windows.Input;
 using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
@@ -17,11 +18,13 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<ListJobsViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IRepositoryService _repositoryService;
+        private readonly IJobDispatcher _dispatcher;
 
         public string Title => "Jobs";
         public string Description => "Verfügbare Jobs";
 
         public ObservableCollection<Job> Items { get; } = new();
+        public ObservableCollection<Guid> RunningJobIds { get; } = new();
 
         private readonly List<Job> _selectedItems = new();
         public IReadOnlyList<Job> SelectedItems => _selectedItems;
@@ -39,6 +42,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CreateNewJobCommand { get; }
         public ICommand SaveAllCommand { get; }
         public ICommand SaveWithoutEditorCommand { get; }
+        public ICommand StartJobCommand { get; }
+        public ICommand StopJobCommand { get; }
 
         public event Action<Job>? RequestOpenJob; // Signal an Host (MainViewModel)
 
@@ -57,13 +62,15 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         public ListJobsViewModel(
-            IJobExecutor executor, 
-            ILogger<ListJobsViewModel> log, 
-            IRepositoryService repositoryService)
+            IJobExecutor executor,
+            ILogger<ListJobsViewModel> log,
+            IRepositoryService repositoryService,
+            IJobDispatcher dispatcher)
         {
             _executor = executor;
             _log = log;
             _repositoryService = repositoryService;
+            _dispatcher = dispatcher;
 
             RefreshCommand = new RelayCommand(LoadJobs);
             OpenJobCommand = new RelayCommand<Job?>(job =>
@@ -74,6 +81,17 @@ namespace DesktopAutomationApp.ViewModels
             CreateNewJobCommand = new RelayCommand(CreateNewJob);
             SaveAllCommand = new RelayCommand(async () => await SaveAllAsync());
             SaveWithoutEditorCommand = new RelayCommand(async () => await SaveWithoutEditorAsync());
+            StartJobCommand = new RelayCommand<object?>(param =>
+            {
+                if (param is Guid id) _dispatcher.StartJob(id);
+            });
+            StopJobCommand = new RelayCommand<object?>(param =>
+            {
+                if (param is Guid id) _dispatcher.CancelJob(id);
+            });
+
+            _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
+
             LoadJobs();
         }
 
@@ -142,6 +160,23 @@ namespace DesktopAutomationApp.ViewModels
             {
                 _log.LogError(ex, "Fehler beim Erstellen eines neuen Jobs");
             }
+        }
+
+        private void OnRunningJobsChanged()
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                RunningJobIds.Clear();
+                foreach (var id in _dispatcher.RunningJobIds)
+                    RunningJobIds.Add(id);
+            });
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+            base.Dispose(disposing);
         }
 
     }

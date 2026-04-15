@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
+using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
 using Common.JsonRepository;
@@ -18,6 +19,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ObservableCollection<JobStep> _steps;
         private readonly IJsonRepository<Job> _jobRepo;
         private readonly IJobExecutor _executor;
+        private readonly IJobDispatcher _dispatcher;
 
         public Job Job { get; }
         public string Title => Job.Name;
@@ -38,6 +40,13 @@ namespace DesktopAutomationApp.ViewModels
             private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
         }
 
+        private bool _isJobRunning;
+        public bool IsJobRunning
+        {
+            get => _isJobRunning;
+            private set { _isJobRunning = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+        }
+
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -47,15 +56,18 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveStepUpCommand { get; }
         public ICommand MoveStepDownCommand { get; }
         public ICommand DeleteStepCommand { get; }
+        public ICommand StartJobCommand { get; }
+        public ICommand StopJobCommand { get; }
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo)
+        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo, IJobDispatcher dispatcher)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
             _executor = executor;
             _jobRepo = repo;
+            _dispatcher = dispatcher;
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
 
@@ -69,6 +81,12 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             DeleteStepCommand = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
+
+            StartJobCommand = new RelayCommand(() => _dispatcher.StartJob(Job.Id), () => !IsJobRunning);
+            StopJobCommand  = new RelayCommand(() => _dispatcher.CancelJob(Job.Id), () => IsJobRunning);
+
+            _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
+            IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
         }
 
         // ---------- INavigationGuard ----------
@@ -300,6 +318,21 @@ namespace DesktopAutomationApp.ViewModels
             SelectedStep = next;
             HasUnsavedChanges = true;
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void OnRunningJobsChanged()
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+            });
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+            base.Dispose(disposing);
         }
     }
 }

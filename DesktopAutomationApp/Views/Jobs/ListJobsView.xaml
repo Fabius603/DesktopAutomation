@@ -76,11 +76,53 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn 
-                        Header="#Steps"    
-                        Binding="{Binding Steps.Count}"  
-                        IsReadOnly="True"  
+                    <DataGridTextColumn
+                        Header="#Steps"
+                        Binding="{Binding Steps.Count}"
+                        IsReadOnly="True"
                         Width="*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- Play Button: sichtbar wenn Job NICHT läuft -->
+                                    <Button Style="{StaticResource ButtonPrimary}"
+                                            Command="{Binding DataContext.StartJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding Id}"
+                                            ToolTip="Job starten">
+                                        <Button.Visibility>
+                                            <MultiBinding Converter="{StaticResource CollectionContainsConverter}" ConverterParameter="Invert">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="DataContext.RunningJobIds" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                                <Binding Path="DataContext.RunningJobIds.Count" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                            </MultiBinding>
+                                        </Button.Visibility>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Start" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <!-- Stop Button: sichtbar wenn Job läuft -->
+                                    <Button Style="{StaticResource ButtonDanger}"
+                                            Command="{Binding DataContext.StopJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding Id}"
+                                            ToolTip="Job stoppen">
+                                        <Button.Visibility>
+                                            <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="DataContext.RunningJobIds" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                                <Binding Path="DataContext.RunningJobIds.Count" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                            </MultiBinding>
+                                        </Button.Visibility>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn
                         Header=""
                         IsReadOnly="True"

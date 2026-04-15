@@ -59,5 +59,20 @@ namespace TaskAutomation.Hotkeys
         string FormatKey(KeyModifiers mods, uint vk);
 
         string FormatMouseButton(MouseButtons button);
+
+        /// <summary>
+        /// Gibt an, ob die Hotkey-Ausführung global pausiert ist.
+        /// </summary>
+        bool IsPaused { get; }
+
+        /// <summary>
+        /// Setzt den globalen Pause-Zustand für die Hotkey-Ausführung.
+        /// </summary>
+        void SetPaused(bool paused);
+
+        /// <summary>
+        /// Wird ausgelöst, wenn sich die Hotkey-Registrierungen geändert haben.
+        /// </summary>
+        event Action? HotkeysChanged;
     }
 }

@@ -19,7 +19,23 @@ namespace TaskAutomation.Orchestration
         /// </summary>
         event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
+        /// <summary>
+        /// Wird ausgelöst, wenn sich die Liste der laufenden Jobs ändert.
+        /// </summary>
+        event Action? RunningJobsChanged;
+
+        /// <summary>
+        /// IDs der aktuell laufenden Jobs.
+        /// </summary>
+        IReadOnlyCollection<Guid> RunningJobIds { get; }
+
         /// <summary>Bricht einen laufenden Job ab (falls vorhanden).</summary>
         void CancelJob(string name);
+
+        /// <summary>Bricht einen laufenden Job per ID ab (falls vorhanden).</summary>
+        void CancelJob(Guid id);
+
+        /// <summary>Startet einen Job per ID.</summary>
+        void StartJob(Guid id);
     }
 }

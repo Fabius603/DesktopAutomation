@@ -106,8 +106,12 @@ namespace DesktopAutomationApp.ViewModels
             CommandsView = CollectionViewSource.GetDefaultView(AvailableCommands);
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => true);
-            CancelCommand = new RelayCommand(() => { DiscardChanges(); RequestBack?.Invoke(); });
+            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
+            CancelCommand = new RelayCommand(() =>
+            {
+                if (!_isNew) DiscardChanges();
+                RequestBack?.Invoke();
+            }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(Rename);
             StartCaptureCommand = new RelayCommand(async () => await CaptureAsync(), () => !IsCapturing);
             CancelCaptureCommand = new RelayCommand(() => _captureCts?.Cancel(), () => IsCapturing);
@@ -115,8 +119,8 @@ namespace DesktopAutomationApp.ViewModels
             LoadJobs();
             ResolveSelectedJob();
 
-            // Reset after initial setup
-            HasUnsavedChanges = false;
+            // New hotkeys need saving, existing ones start clean
+            HasUnsavedChanges = _isNew;
         }
 
         private void LoadJobs()

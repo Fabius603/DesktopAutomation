@@ -339,7 +339,7 @@
                     <Button Style="{StaticResource ButtonToolbar}" Command="{Binding PreviewOverviewCommand}" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Eye" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="Uebersicht" VerticalAlignment="Center"/>
+                            <TextBlock Text="Übersicht" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource ButtonToolbar}" Command="{Binding PreviewPlaybackCommand}" Margin="0,0,8,0">

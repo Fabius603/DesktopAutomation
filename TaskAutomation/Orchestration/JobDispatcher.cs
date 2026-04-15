@@ -32,6 +32,16 @@ namespace TaskAutomation.Orchestration
         public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
         /// <summary>
+        /// Wird ausgelöst, wenn sich die Liste der laufenden Jobs ändert.
+        /// </summary>
+        public event Action? RunningJobsChanged;
+
+        /// <summary>
+        /// IDs der aktuell laufenden Jobs.
+        /// </summary>
+        public IReadOnlyCollection<Guid> RunningJobIds => _jobTokens.Keys.ToArray();
+
+        /// <summary>
         /// Erstellt einen neuen Dispatcher mit dem gegebenen JobExecutor.
         /// </summary>
         /// <param name="hotkeyService">Instanz des GlobalHotkeyService</param>
@@ -151,6 +161,8 @@ namespace TaskAutomation.Orchestration
             if (!_jobTokens.TryAdd(job.Id, cts))
                 return;
 
+            RunningJobsChanged?.Invoke();
+
             var jobId = job.Id;
             var jobName = job.Name;
             _ = Task.Run(async () =>
@@ -171,6 +183,7 @@ namespace TaskAutomation.Orchestration
                 {
                     _jobTokens.TryRemove(jobId, out _);
                     cts.Dispose();
+                    RunningJobsChanged?.Invoke();
                 }
             });
         }
@@ -182,6 +195,7 @@ namespace TaskAutomation.Orchestration
                 _logger.LogInformation("Job (ID: {JobId}) Abbruch angefordert.", id);
                 cts.Cancel();
                 cts.Dispose();
+                RunningJobsChanged?.Invoke();
             }
             else
             {
@@ -213,6 +227,25 @@ namespace TaskAutomation.Orchestration
                 return;
             }
             CancelJobById(job.Id);
+        }
+
+        /// <summary>
+        /// Fordert den Abbruch eines laufenden Jobs per ID an.
+        /// </summary>
+        public void CancelJob(Guid id) => CancelJobById(id);
+
+        /// <summary>
+        /// Startet einen Job per ID.
+        /// </summary>
+        public void StartJob(Guid id)
+        {
+            var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
+            if (job == null)
+            {
+                _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
+                return;
+            }
+            StartJob(job);
         }
 
         /// <summary>
