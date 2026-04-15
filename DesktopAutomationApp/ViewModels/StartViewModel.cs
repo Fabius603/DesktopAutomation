@@ -99,8 +99,8 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Name = hk.Name,
                     Trigger = _hotkeyService.FormatKey(hk.Modifiers, hk.VirtualKeyCode),
-                    ActionName = hk.Action?.Name ?? "",
-                    Command = hk.Action?.Command.ToString() ?? ""
+                    ActionName = hk.Job?.Name ?? "",
+                    Command = hk.Job?.Command.ToString() ?? ""
                 });
             }
             ActiveHotkeyCount = ActiveHotkeys.Count;

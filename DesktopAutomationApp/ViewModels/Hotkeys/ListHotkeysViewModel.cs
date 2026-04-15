@@ -81,7 +81,7 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var hk in list.OrderBy(h => h.Name))
             {
                 var ehk = EditableHotkey.FromDomain(hk);
-                ehk.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+                ehk.Job.SetJobNameResolver(GetCurrentJobNameForAction);
                 Items.Add(ehk);
                 ehk.PropertyChanged += OnHotkeyActiveChanged;
             }
@@ -97,7 +97,7 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var hk in list.OrderBy(h => h.Name))
             {
                 var ehk = EditableHotkey.FromDomain(hk);
-                ehk.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+                ehk.Job.SetJobNameResolver(GetCurrentJobNameForAction);
                 Items.Add(ehk);
                 ehk.PropertyChanged += OnHotkeyActiveChanged;
             }
@@ -118,10 +118,10 @@ namespace DesktopAutomationApp.ViewModels
                 Name = name,
                 Modifiers = KeyModifiers.None,
                 VirtualKeyCode = 0,
-                Action = new EditableActionDefinition { Name = "", Command = ActionCommand.Toggle },
+                Job = new EditableJobReference { Name = "", Command = ActionCommand.Toggle },
                 Active = true
             };
-            e.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+            e.Job.SetJobNameResolver(GetCurrentJobNameForAction);
 
             Selected = e;
 
@@ -161,11 +161,11 @@ namespace DesktopAutomationApp.ViewModels
             var error = ValidateEdited(hk);
             if (error != null) { _log.LogWarning("Hotkey ungültig: {Error}", error); return; }
 
-            if (hk.Action.JobId.HasValue)
+            if (hk.Job.JobId.HasValue)
             {
-                var currentJobName = GetCurrentJobNameForAction(hk.Action);
+                var currentJobName = GetCurrentJobNameForAction(hk.Job);
                 if (!currentJobName.StartsWith("[Job nicht gefunden"))
-                    hk.Action.Name = currentJobName;
+                    hk.Job.Name = currentJobName;
             }
 
             await _repositoryService.SaveAsync(hk.ToDomain());
@@ -182,25 +182,25 @@ namespace DesktopAutomationApp.ViewModels
                 Jobs.Add(j);
 
             foreach (var hotkey in Items)
-                hotkey.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+                hotkey.Job.SetJobNameResolver(GetCurrentJobNameForAction);
         }
 
-        public string GetCurrentJobNameForAction(EditableActionDefinition action)
+        public string GetCurrentJobNameForAction(EditableJobReference job)
         {
-            if (action?.JobId.HasValue == true)
+            if (job?.JobId.HasValue == true)
             {
-                var job = Jobs.FirstOrDefault(j => j.Id == action.JobId.Value);
-                if (job != null) return job.Name;
-                _log.LogWarning("Job mit ID {JobId} nicht gefunden", action.JobId);
-                return $"[Job nicht gefunden: {action.JobId}]";
+                var j = Jobs.FirstOrDefault(x => x.Id == job.JobId.Value);
+                if (j != null) return j.Name;
+                _log.LogWarning("Job mit ID {JobId} nicht gefunden", job.JobId);
+                return $"[Job nicht gefunden: {job.JobId}]";
             }
-            return action?.Name ?? string.Empty;
+            return job?.Name ?? string.Empty;
         }
 
         private static string? ValidateEdited(EditableHotkey hk)
         {
             if (string.IsNullOrWhiteSpace(hk.Name)) return "Name ist erforderlich.";
-            if (string.IsNullOrWhiteSpace(hk.Action?.Name)) return "Action ist erforderlich.";
+            if (string.IsNullOrWhiteSpace(hk.Job?.Name)) return "Job ist erforderlich.";
             if (hk.VirtualKeyCode == 0) return "Bitte eine Tastenkombination erfassen.";
             return null;
         }

@@ -42,7 +42,7 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Zurueck" VerticalAlignment="Center"/>
+                        <TextBlock Text="Zurück" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
@@ -66,10 +66,10 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Action (Job-Auswahl) -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Action" VerticalAlignment="Center"/>
+                <!-- Job-Auswahl -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Job" VerticalAlignment="Center"/>
                 <ComboBox Grid.Row="0" Grid.Column="1"
-                          ItemsSource="{Binding ActionsView}"
+                          ItemsSource="{Binding JobsView}"
                           Style="{StaticResource AutoOpenComboStyle}"
                           IsTextSearchEnabled="True"
                           DisplayMemberPath="Name"
@@ -85,7 +85,7 @@
                           IsEditable="True"
                           StaysOpenOnEdit="True"
                           IsTextSearchEnabled="True"
-                          SelectedItem="{Binding EditedHotkey.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedItem="{Binding EditedHotkey.Job.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           MinWidth="200"/>
 
                 <!-- Aktiv -->

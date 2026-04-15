@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
+using TaskAutomation.Makros;
 using Common.Logging;
 
 namespace TaskAutomation.Orchestration
@@ -20,6 +21,7 @@ namespace TaskAutomation.Orchestration
         private readonly IJobExecutor _executor;
         private readonly IGlobalHotkeyService _hotkeyService;
         private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _jobTokens;
+        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _makroTokens;
 
         /// <summary>
         /// Wird ausgelöst, wenn bei der Ausführung eines Jobs ein Fehler auftritt.
@@ -37,9 +39,19 @@ namespace TaskAutomation.Orchestration
         public event Action? RunningJobsChanged;
 
         /// <summary>
+        /// Wird ausgelöst, wenn sich die Liste der laufenden Makros ändert.
+        /// </summary>
+        public event Action? RunningMakrosChanged;
+
+        /// <summary>
         /// IDs der aktuell laufenden Jobs.
         /// </summary>
         public IReadOnlyCollection<Guid> RunningJobIds => _jobTokens.Keys.ToArray();
+
+        /// <summary>
+        /// IDs der aktuell laufenden Makros.
+        /// </summary>
+        public IReadOnlyCollection<Guid> RunningMakroIds => _makroTokens.Keys.ToArray();
 
         /// <summary>
         /// Erstellt einen neuen Dispatcher mit dem gegebenen JobExecutor.
@@ -55,6 +67,7 @@ namespace TaskAutomation.Orchestration
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
 
             _jobTokens = new ConcurrentDictionary<Guid, CancellationTokenSource>();
+            _makroTokens = new ConcurrentDictionary<Guid, CancellationTokenSource>();
             _hotkeyService.HotkeyPressed += OnHotkeyPressed;
             _executor.JobErrorOccurred += OnJobErrorOccurred;
             _executor.JobStepErrorOccurred += OnJobStepErrorOccurred;
@@ -63,55 +76,55 @@ namespace TaskAutomation.Orchestration
 
         private void OnHotkeyPressed(object? sender, HotkeyPressedEventArgs e)
         {
-            if (e?.Action is null)
+            if (e?.Job is null)
                 return;
 
-            var actionDef = e.Action;
-            var cmd = actionDef.Command;
+            var jobRef = e.Job;
+            var cmd = jobRef.Command;
 
             switch (cmd)
             {
                 case ActionCommand.Start:
-                    StartJobByAction(actionDef);
+                    StartJobByAction(jobRef);
                     break;
                 case ActionCommand.Stop:
-                    CancelJobByAction(actionDef);
+                    CancelJobByAction(jobRef);
                     break;
                 case ActionCommand.Toggle:
-                    ToggleJobByAction(actionDef);
+                    ToggleJobByAction(jobRef);
                     break;
             }
         }
 
-        private void StartJobByAction(ActionDefinition actionDef)
+        private void StartJobByAction(JobReference jobRef)
         {
-            var job = FindJobByAction(actionDef);
+            var job = FindJobByAction(jobRef);
             if (job != null)
             {
                 StartJob(job);
             }
             else
             {
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
             }
         }
 
-        private void CancelJobByAction(ActionDefinition actionDef)
+        private void CancelJobByAction(JobReference jobRef)
         {
-            var job = FindJobByAction(actionDef);
+            var job = FindJobByAction(jobRef);
             if (job != null)
             {
                 CancelJobById(job.Id);
             }
             else
             {
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
             }
         }
 
-        private void ToggleJobByAction(ActionDefinition actionDef)
+        private void ToggleJobByAction(JobReference jobRef)
         {
-            var job = FindJobByAction(actionDef);
+            var job = FindJobByAction(jobRef);
             if (job != null)
             {
                 if (_jobTokens.ContainsKey(job.Id))
@@ -121,25 +134,24 @@ namespace TaskAutomation.Orchestration
             }
             else
             {
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", actionDef.Name, actionDef.JobId);
+                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
             }
         }
 
-        private Job? FindJobByAction(ActionDefinition actionDef)
+        private Job? FindJobByAction(JobReference jobRef)
         {
-            // Try to find by ID first, fallback to name for backward compatibility
-            if (actionDef.JobId.HasValue)
+            if (jobRef.JobId.HasValue)
             {
-                var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == actionDef.JobId.Value);
+                var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == jobRef.JobId.Value);
                 if (job == null)
-                    _logger.LogWarning("Job with ID '{JobId}' not found", actionDef.JobId);
+                    _logger.LogWarning("Job with ID '{JobId}' not found", jobRef.JobId);
                 return job;
             }
-            else if (!string.IsNullOrWhiteSpace(actionDef.Name))
+            else if (!string.IsNullOrWhiteSpace(jobRef.Name))
             {
-                var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, actionDef.Name, StringComparison.OrdinalIgnoreCase));
+                var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, jobRef.Name, StringComparison.OrdinalIgnoreCase));
                 if (job == null)
-                    _logger.LogWarning("Job with name '{JobName}' not found", actionDef.Name);
+                    _logger.LogWarning("Job with name '{JobName}' not found", jobRef.Name);
                 return job;
             }
             else
@@ -246,6 +258,77 @@ namespace TaskAutomation.Orchestration
                 return;
             }
             StartJob(job);
+        }
+
+        /// <summary>
+        /// Startet ein Makro per ID.
+        /// </summary>
+        public void StartMakro(Guid id)
+        {
+            var makro = _executor.AllMakros.Values.FirstOrDefault(m => m.Id == id);
+            if (makro == null)
+            {
+                _logger.LogWarning("Makro mit ID '{MakroId}' nicht gefunden.", id);
+                return;
+            }
+            StartMakro(makro);
+        }
+
+        private void StartMakro(Makro makro)
+        {
+            if (_makroTokens.ContainsKey(makro.Id))
+            {
+                _logger.LogWarning("Makro '{Name}' läuft bereits.", makro.Name);
+                return;
+            }
+
+            var cts = new CancellationTokenSource();
+            if (!_makroTokens.TryAdd(makro.Id, cts))
+                return;
+
+            RunningMakrosChanged?.Invoke();
+
+            var makroId = makro.Id;
+            var makroName = makro.Name;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _executor.MakroExecutor.ExecuteMakro(makro, null!, cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("Makro '{Name}' abgebrochen.", makroName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Fehler bei Makro '{Name}'", makroName);
+                }
+                finally
+                {
+                    _makroTokens.TryRemove(makroId, out _);
+                    cts.Dispose();
+                    RunningMakrosChanged?.Invoke();
+                }
+            });
+        }
+
+        /// <summary>
+        /// Bricht ein laufendes Makro per ID ab.
+        /// </summary>
+        public void CancelMakro(Guid id)
+        {
+            if (_makroTokens.TryRemove(id, out var cts))
+            {
+                _logger.LogInformation("Makro (ID: {MakroId}) Abbruch angefordert.", id);
+                cts.Cancel();
+                cts.Dispose();
+                RunningMakrosChanged?.Invoke();
+            }
+            else
+            {
+                _logger.LogWarning("Kein laufendes Makro mit ID '{MakroId}' gefunden.", id);
+            }
         }
 
         /// <summary>

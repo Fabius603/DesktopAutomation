@@ -5,6 +5,7 @@
              xmlns:mak="clr-namespace:TaskAutomation.Makros;assembly=TaskAutomation"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
@@ -216,6 +217,23 @@
         <!-- Header -->
         <DockPanel Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding StartMakroCommand}"
+                        Visibility="{Binding IsMakroRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                        ToolTip="Makro starten">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Start" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}" Command="{Binding StopMakroCommand}"
+                        Visibility="{Binding IsMakroRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        ToolTip="Makro stoppen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -233,7 +251,7 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Zurueck" VerticalAlignment="Center"/>
+                        <TextBlock Text="Zurück" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
@@ -361,7 +379,8 @@
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}">
+                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
+                         behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Grid.IsSharedSizeScope="True">

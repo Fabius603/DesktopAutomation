@@ -64,6 +64,48 @@
                     <DataGridTextColumn Header="# Befehle"
                         Binding="{Binding Befehle.Count}"
                         IsReadOnly="True" Width="*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- Play Button: sichtbar wenn Makro NICHT läuft -->
+                                    <Button Style="{StaticResource ButtonPrimary}"
+                                            Command="{Binding DataContext.StartMakroCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding Id}"
+                                            ToolTip="Makro starten">
+                                        <Button.Visibility>
+                                            <MultiBinding Converter="{StaticResource CollectionContainsConverter}" ConverterParameter="Invert">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="DataContext.RunningMakroIds" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                                <Binding Path="DataContext.RunningMakroIds.Count" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                            </MultiBinding>
+                                        </Button.Visibility>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Start" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <!-- Stop Button: sichtbar wenn Makro läuft -->
+                                    <Button Style="{StaticResource ButtonDanger}"
+                                            Command="{Binding DataContext.StopMakroCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding Id}"
+                                            ToolTip="Makro stoppen">
+                                        <Button.Visibility>
+                                            <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
+                                                <Binding Path="Id"/>
+                                                <Binding Path="DataContext.RunningMakroIds" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                                <Binding Path="DataContext.RunningMakroIds.Count" RelativeSource="{RelativeSource AncestorType=DataGrid}"/>
+                                            </MultiBinding>
+                                        </Button.Visibility>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="" IsReadOnly="True" Width="200">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

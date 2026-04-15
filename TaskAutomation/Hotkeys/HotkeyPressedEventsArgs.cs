@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +8,7 @@ namespace TaskAutomation.Hotkeys
 {
     public class HotkeyPressedEventArgs : EventArgs
     {
-        public ActionDefinition Action { get; }
-        public HotkeyPressedEventArgs(ActionDefinition action) => Action = action;
+        public JobReference Job { get; }
+        public HotkeyPressedEventArgs(JobReference job) => Job = job;
     }
 }

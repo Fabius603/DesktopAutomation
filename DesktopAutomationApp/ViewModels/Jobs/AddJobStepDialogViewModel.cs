@@ -589,8 +589,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var allJobs = _ctx.AllJobs?.Values?.Where(j => j != null) ?? Enumerable.Empty<Job>();
                 var availableJobs = allJobs
-                    .Where(j => !j.Repeating &&
-                               j.Id != _currentJobBeingEdited?.Id)
+                    .Where(j => j.Id != _currentJobBeingEdited?.Id)
                     .OrderBy(j => j.Name);
                 return new ObservableCollection<Job>(availableJobs);
             }

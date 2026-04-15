@@ -25,9 +25,19 @@ namespace TaskAutomation.Orchestration
         event Action? RunningJobsChanged;
 
         /// <summary>
+        /// Wird ausgelöst, wenn sich die Liste der laufenden Makros ändert.
+        /// </summary>
+        event Action? RunningMakrosChanged;
+
+        /// <summary>
         /// IDs der aktuell laufenden Jobs.
         /// </summary>
         IReadOnlyCollection<Guid> RunningJobIds { get; }
+
+        /// <summary>
+        /// IDs der aktuell laufenden Makros.
+        /// </summary>
+        IReadOnlyCollection<Guid> RunningMakroIds { get; }
 
         /// <summary>Bricht einen laufenden Job ab (falls vorhanden).</summary>
         void CancelJob(string name);
@@ -37,5 +47,11 @@ namespace TaskAutomation.Orchestration
 
         /// <summary>Startet einen Job per ID.</summary>
         void StartJob(Guid id);
+
+        /// <summary>Startet ein Makro per ID.</summary>
+        void StartMakro(Guid id);
+
+        /// <summary>Bricht ein laufendes Makro per ID ab.</summary>
+        void CancelMakro(Guid id);
     }
 }

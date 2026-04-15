@@ -14,6 +14,7 @@ using System.Windows.Input;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using TaskAutomation.Orchestration;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -24,6 +25,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IMacroPreviewService _preview;
         private readonly IRepositoryService _repositoryService;
         private readonly IGlobalHotkeyService _hotkeys;
+        private readonly IJobDispatcher _dispatcher;
 
         private readonly List<MakroBefehl> _originalSteps;
         private Overlay _overlay;
@@ -73,6 +75,13 @@ namespace DesktopAutomationApp.ViewModels
         }
         public string RecordMousePathText => RecordMousePath ? "Mauspfad: AN" : "Mauspfad: AUS";
 
+        private bool _isMakroRunning;
+        public bool IsMakroRunning
+        {
+            get => _isMakroRunning;
+            private set { _isMakroRunning = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+        }
+
         // --- Commands ---
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
@@ -82,6 +91,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
         public ICommand MoveStepDownCommand { get; }
+        public ICommand ReorderStepCommand { get; }
         public ICommand DeleteStepCommand { get; }
         public ICommand DuplicateStepCommand { get; }
         public ICommand RecordStepsCommand { get; }
@@ -90,6 +100,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand PreviewOverviewCommand { get; }
         public ICommand PreviewPlaybackCommand { get; }
         public ICommand PreviewStopCommand { get; }
+        public ICommand StartMakroCommand { get; }
+        public ICommand StopMakroCommand { get; }
 
         public event Action? RequestBack;
 
@@ -99,7 +111,8 @@ namespace DesktopAutomationApp.ViewModels
             ILogger<MakroStepsViewModel> log,
             IMacroPreviewService preview,
             IRepositoryService repositoryService,
-            IGlobalHotkeyService hotkeys)
+            IGlobalHotkeyService hotkeys,
+            IJobDispatcher dispatcher)
         {
             Makro = makro ?? throw new ArgumentNullException(nameof(makro));
             _executor = executor;
@@ -107,6 +120,7 @@ namespace DesktopAutomationApp.ViewModels
             _preview = preview;
             _repositoryService = repositoryService;
             _hotkeys = hotkeys;
+            _dispatcher = dispatcher;
 
             _originalSteps = new List<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
             Steps = new ObservableCollection<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
@@ -120,6 +134,7 @@ namespace DesktopAutomationApp.ViewModels
             EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
             MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
+            ReorderStepCommand  = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
             DeleteStepCommand   = new RelayCommand<MakroBefehl?>(DeleteStep, s => s != null);
             DuplicateStepCommand = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
 
@@ -130,6 +145,12 @@ namespace DesktopAutomationApp.ViewModels
             PreviewOverviewCommand = new RelayCommand(ShowOverview, CanPreview);
             PreviewPlaybackCommand = new RelayCommand(() => ShowPlayback(), CanPreview);
             PreviewStopCommand     = new RelayCommand(StopPreview, () => _overlay != null);
+
+            StartMakroCommand = new RelayCommand(() => _dispatcher.StartMakro(Makro.Id), () => !IsMakroRunning);
+            StopMakroCommand  = new RelayCommand(() => _dispatcher.CancelMakro(Makro.Id), () => IsMakroRunning);
+
+            _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
+            IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
         }
 
         // ---------- INavigationGuard ----------
@@ -184,6 +205,17 @@ namespace DesktopAutomationApp.ViewModels
             var idx = Steps.IndexOf(step);
             Steps.RemoveAt(idx);
             Steps.Insert(idx + delta, step);
+            SelectedStep = step;
+            HasUnsavedChanges = true;
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void MoveToIndex(int from, int to)
+        {
+            if (from < 0 || from >= Steps.Count || to < 0 || to >= Steps.Count || from == to) return;
+            var step = Steps[from];
+            Steps.RemoveAt(from);
+            Steps.Insert(to, step);
             SelectedStep = step;
             HasUnsavedChanges = true;
             CommandManager.InvalidateRequerySuggested();
@@ -471,9 +503,18 @@ namespace DesktopAutomationApp.ViewModels
 
         public new void Dispose()
         {
+            _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
             StopPreview();
             _overlay?.Dispose();
             _overlay = null;
+        }
+
+        private void OnRunningMakrosChanged()
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
+            });
         }
     }
 

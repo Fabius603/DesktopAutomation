@@ -40,7 +40,7 @@
                     MinWidth="90">
                 <StackPanel Orientation="Horizontal">
                     <iconPacks:PackIconMaterial Kind="Plus" Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock Text="Erstellen" VerticalAlignment="Center"/>
+                    <TextBlock Text="Umbenennen" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
             <Button Style="{StaticResource ButtonSecondary}"

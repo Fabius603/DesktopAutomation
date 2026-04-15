@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Input;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using TaskAutomation.Orchestration;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -18,10 +19,12 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
         private readonly IRepositoryService _repositoryService;
+        private readonly IJobDispatcher _dispatcher;
 
         public string Title => "Makros";
 
         public ObservableCollection<Makro> Items { get; } = new();
+        public ObservableCollection<Guid> RunningMakroIds { get; } = new();
 
         private readonly List<Makro> _selectedItems = new();
         public IReadOnlyList<Makro> SelectedItems => _selectedItems;
@@ -45,26 +48,41 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand NewMakroCommand { get; }
         public ICommand DeleteMakroCommand { get; }
         public ICommand OpenMakroCommand { get; }
+        public ICommand StartMakroCommand { get; }
+        public ICommand StopMakroCommand { get; }
 
         public event Action<Makro>? RequestOpenMakro;
 
         public ListMakrosViewModel(
             IJobExecutor executor,
             ILogger<ListMakrosViewModel> log,
-            IRepositoryService repositoryService)
+            IRepositoryService repositoryService,
+            IJobDispatcher dispatcher)
         {
             _executor = executor;
             _log = log;
             _repositoryService = repositoryService;
+            _dispatcher = dispatcher;
 
             RefreshCommand   = new RelayCommand(LoadMakros);
             SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
             NewMakroCommand  = new RelayCommand(CreateNewMakro);
             DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
-            OpenMakroCommand = new RelayCommand<Makro?>(m => 
-            { 
-                if (m != null) RequestOpenMakro?.Invoke(m); 
+            OpenMakroCommand = new RelayCommand<Makro?>(m =>
+            {
+                if (m != null) RequestOpenMakro?.Invoke(m);
             }, m => m != null);
+            StartMakroCommand = new RelayCommand<object?>(param =>
+            {
+                if (param is Guid id) _dispatcher.StartMakro(id);
+            });
+            StopMakroCommand = new RelayCommand<object?>(param =>
+            {
+                if (param is Guid id) _dispatcher.CancelMakro(id);
+            });
+
+            _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
+
             LoadMakros();
         }
 
@@ -125,6 +143,23 @@ namespace DesktopAutomationApp.ViewModels
                 _log.LogInformation("Makro gelöscht: {Name}", makro.Name);
             }
             Selected = null;
+        }
+
+        private void OnRunningMakrosChanged()
+        {
+            Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                RunningMakroIds.Clear();
+                foreach (var id in _dispatcher.RunningMakroIds)
+                    RunningMakroIds.Add(id);
+            });
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
+            base.Dispose(disposing);
         }
     }
 }

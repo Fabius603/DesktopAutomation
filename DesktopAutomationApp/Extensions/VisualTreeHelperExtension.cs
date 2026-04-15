@@ -7,7 +7,9 @@
             while (d != null)
             {
                 if (d is T t) return t;
-                d = VisualTreeHelper.GetParent(d);
+                d = d is Visual or Media3D.Visual3D
+                    ? VisualTreeHelper.GetParent(d)
+                    : LogicalTreeHelper.GetParent(d);
             }
             return null;
         }

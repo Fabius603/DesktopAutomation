@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using OpenCvSharp;
 using ImageCapture.ProcessDuplication;
 using ImageCapture.DesktopDuplication;
@@ -62,7 +64,27 @@ namespace TaskAutomation.Jobs
         private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
         private Job? _currentJob;
-        
+
+        /// <summary>
+        /// Verfolgt die Job-Aufrufkette im aktuellen async-Kontext für Zykluserkennung.
+        /// Jede Ebene bekommt einen Snapshot — keine Konflikte mit parallelen Chains.
+        /// </summary>
+        private static readonly AsyncLocal<ImmutableHashSet<Guid>> _executionChain = new();
+
+        /// <summary>
+        /// Steps, die nur von einem Job gleichzeitig verwendet werden dürfen.
+        /// Key: Step-Typ, Value: Fehlermeldung ({0} = Owner-Jobname).
+        /// </summary>
+        private static readonly Dictionary<Type, string> _exclusiveSteps = new()
+        {
+            [typeof(DesktopDuplicationStep)] = "Desktop Duplication wird bereits von Job '{0}' verwendet.",
+        };
+
+        /// <summary>
+        /// Aktuell belegte exklusive Steps. Key: Step-Typ, Value: Name des Jobs der ihn belegt.
+        /// </summary>
+        private readonly ConcurrentDictionary<Type, string> _exclusiveStepOwners = new();
+
         public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
         public Job? CurrentJob 
@@ -318,6 +340,19 @@ namespace TaskAutomation.Jobs
             CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
+            // Zyklus-Erkennung: prüfen ob dieser Job bereits in der aktuellen Aufrufkette ist
+            var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
+            if (parentChain.Contains(job.Id))
+            {
+                var chain = string.Join(" → ", parentChain.Select(id =>
+                    _allJobs.Values.FirstOrDefault(j => j.Id == id)?.Name ?? id.ToString()));
+                var errorMessage = $"Zirkuläre Abhängigkeit erkannt: Job '{job.Name}' ist bereits in der Aufrufkette [{chain}].";
+                _logger.LogError(errorMessage);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(errorMessage)));
+                return;
+            }
+            _executionChain.Value = parentChain.Add(job.Id);
+
             // YOLO-Modelle vorladen für bessere Performance
             await PreloadYoloModelsAsync(job, ct);
 
@@ -325,6 +360,27 @@ namespace TaskAutomation.Jobs
             var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
             var showImageStep = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
+
+            // Prüfen ob exklusive Steps bereits von einem anderen Job belegt sind
+            var acquiredSteps = new List<Type>();
+            foreach (var (stepType, errorTemplate) in _exclusiveSteps)
+            {
+                if (job.Steps.Any(s => s.GetType() == stepType))
+                {
+                    if (!_exclusiveStepOwners.TryAdd(stepType, job.Name))
+                    {
+                        var owner = _exclusiveStepOwners[stepType];
+                        var errorMessage = string.Format(errorTemplate, owner);
+                        _logger.LogWarning(errorMessage);
+                        JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(errorMessage)));
+                        // Bereits belegte Steps wieder freigeben
+                        foreach (var acquired in acquiredSteps)
+                            _exclusiveStepOwners.TryRemove(acquired, out _);
+                        return;
+                    }
+                    acquiredSteps.Add(stepType);
+                }
+            }
 
             bool recorderStarted = false;
 
@@ -503,6 +559,13 @@ namespace TaskAutomation.Jobs
 
                 // Abschluss-Log (Status abhängig von Abbruch)
                 _logger.LogInformation("Job '{JobName}' {Status}.", job.Name, "beendet");
+
+                // Exklusive Steps wieder freigeben
+                foreach (var acquired in acquiredSteps)
+                    _exclusiveStepOwners.TryRemove(acquired, out _);
+
+                // Aufrufkette auf den Zustand vor diesem Job zurücksetzen
+                _executionChain.Value = parentChain;
             }
         }
 

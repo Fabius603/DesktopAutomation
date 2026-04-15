@@ -55,6 +55,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
         public ICommand MoveStepDownCommand { get; }
+        public ICommand ReorderStepCommand { get; }
         public ICommand DeleteStepCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
@@ -80,6 +81,7 @@ namespace DesktopAutomationApp.ViewModels
             EditStepCommand   = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
+            ReorderStepCommand = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
             DeleteStepCommand = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
 
             StartJobCommand = new RelayCommand(() => _dispatcher.StartJob(Job.Id), () => !IsJobRunning);
@@ -289,6 +291,17 @@ namespace DesktopAutomationApp.ViewModels
             _steps.RemoveAt(idx);
             _steps.Insert(newIdx, step);
 
+            SelectedStep = step;
+            HasUnsavedChanges = true;
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void MoveToIndex(int from, int to)
+        {
+            if (from < 0 || from >= _steps.Count || to < 0 || to >= _steps.Count || from == to) return;
+            var step = _steps[from];
+            _steps.RemoveAt(from);
+            _steps.Insert(to, step);
             SelectedStep = step;
             HasUnsavedChanges = true;
             CommandManager.InvalidateRequerySuggested();

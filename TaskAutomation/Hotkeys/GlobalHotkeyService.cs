@@ -193,21 +193,21 @@ namespace TaskAutomation.Hotkeys
         /// <summary>
         /// Registriert einen Hotkey mit zugehörigem Action-Namen.
         /// </summary>
-        public void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action, Guid? id = null)
+        public void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, JobReference job, Guid? id = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name darf nicht leer sein.", nameof(name));
-            if (string.IsNullOrWhiteSpace(action.Name))
-                throw new ArgumentException("ActionName darf nicht leer sein.", nameof(action.Name));
+            if (string.IsNullOrWhiteSpace(job.Name))
+                throw new ArgumentException("ActionName darf nicht leer sein.", nameof(job.Name));
 
             if (IsModifierVk(virtualKeyCode) && modifiers == KeyModifiers.None)
                 throw new ArgumentException("Ein Modifier darf nicht allein als Hotkey registriert werden.", nameof(virtualKeyCode));
 
-            var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, action);
+            var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, job);
             if (id.HasValue) def.Id = id.Value;
             _definitions[def.Id] = def;
-            _logger.LogInformation("Hotkey registriert: {Name} (ID: {Id}) => Action '{ActionName}', Command '{ActionCommand}'",
-                name, def.Id, action.Name, action.Command);
+            _logger.LogInformation("Hotkey registriert: {Name} (ID: {Id}) => Job '{JobName}', Command '{JobCommand}'",
+                name, def.Id, job.Name, job.Command);
         }
 
         public void UnregisterHotkey(Guid id)
@@ -231,7 +231,7 @@ namespace TaskAutomation.Hotkeys
                 UnregisterAllHotkeys();
                 foreach (var e in entries)
                     if (e.Active)
-                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Action, e.Id);
+                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Job, e.Id);
 
                 HotkeysChanged?.Invoke();
             }
@@ -401,11 +401,11 @@ namespace TaskAutomation.Hotkeys
                 if (def.Modifiers == mods)
                 {
                     _workQueue.Add(() =>
-                        HotkeyPressed?.Invoke(this, new HotkeyPressedEventArgs(def.Action))
+                        HotkeyPressed?.Invoke(this, new HotkeyPressedEventArgs(def.Job))
                     );
 
-                    _logger.LogDebug("Hotkey erkannt: {Name} (Action: {ActionName}, Command: {Command})",
-                        def.Name, def.Action.Name, def.Action.Command);
+                    _logger.LogDebug("Hotkey erkannt: {Name} (Job: {JobName}, Command: {Command})",
+                        def.Name, def.Job.Name, def.Job.Command);
                     return true;
                 }
             }

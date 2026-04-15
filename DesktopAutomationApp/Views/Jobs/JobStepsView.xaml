@@ -7,6 +7,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
 
@@ -393,7 +394,8 @@
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}">
+                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
+                         behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <!-- Inhalt + Aktionsleiste rechts (Edit/Hoch/Runter/Delete exakt wie Makro) -->
                     <ListBox.ItemTemplate>

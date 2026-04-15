@@ -41,15 +41,15 @@ namespace DesktopAutomationApp.ViewModels
                 _selectedJob = value;
                 if (EditedHotkey != null && value != null)
                 {
-                    EditedHotkey.Action.JobId = value.Id;
-                    EditedHotkey.Action.Name = value.Name;
+                    EditedHotkey.Job.JobId = value.Id;
+                    EditedHotkey.Job.Name = value.Name;
                 }
                 OnPropertyChanged();
                 HasUnsavedChanges = true;
             }
         }
 
-        public ICollectionView ActionsView { get; }
+        public ICollectionView JobsView { get; }
 
         public ObservableCollection<ActionCommand> AvailableCommands { get; } = new();
         public ICollectionView CommandsView { get; }
@@ -90,19 +90,19 @@ namespace DesktopAutomationApp.ViewModels
             _capture = capture;
             _executor = executor;
             _log = log;
-            _isNew = hotkey.VirtualKeyCode == 0 && string.IsNullOrWhiteSpace(hotkey.Action?.Name);
+            _isNew = hotkey.VirtualKeyCode == 0 && string.IsNullOrWhiteSpace(hotkey.Job?.Name);
 
             // Snapshot for cancel
             _snapshot = hotkey.Clone();
 
             // Track changes on the hotkey
             EditedHotkey.PropertyChanged += (_, _) => HasUnsavedChanges = true;
-            EditedHotkey.Action.PropertyChanged += (_, _) => HasUnsavedChanges = true;
+            EditedHotkey.Job.PropertyChanged += (_, _) => HasUnsavedChanges = true;
 
             foreach (var c in Enum.GetValues(typeof(ActionCommand)).Cast<ActionCommand>())
                 AvailableCommands.Add(c);
 
-            ActionsView = new ListCollectionView(Jobs);
+            JobsView = new ListCollectionView(Jobs);
             CommandsView = CollectionViewSource.GetDefaultView(AvailableCommands);
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
@@ -110,7 +110,6 @@ namespace DesktopAutomationApp.ViewModels
             CancelCommand = new RelayCommand(() =>
             {
                 if (!_isNew) DiscardChanges();
-                RequestBack?.Invoke();
             }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(Rename);
             StartCaptureCommand = new RelayCommand(async () => await CaptureAsync(), () => !IsCapturing);
@@ -130,29 +129,29 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
                 Jobs.Add(j);
 
-            EditedHotkey.Action.SetJobNameResolver(GetCurrentJobNameForAction);
+            EditedHotkey.Job.SetJobNameResolver(GetCurrentJobName);
         }
 
         private void ResolveSelectedJob()
         {
-            if (EditedHotkey.Action.JobId.HasValue)
-                _selectedJob = Jobs.FirstOrDefault(j => j.Id == EditedHotkey.Action.JobId.Value);
-            else if (!string.IsNullOrWhiteSpace(EditedHotkey.Action.Name))
-                _selectedJob = Jobs.FirstOrDefault(j => string.Equals(j.Name, EditedHotkey.Action.Name, StringComparison.OrdinalIgnoreCase));
+            if (EditedHotkey.Job.JobId.HasValue)
+                _selectedJob = Jobs.FirstOrDefault(j => j.Id == EditedHotkey.Job.JobId.Value);
+            else if (!string.IsNullOrWhiteSpace(EditedHotkey.Job.Name))
+                _selectedJob = Jobs.FirstOrDefault(j => string.Equals(j.Name, EditedHotkey.Job.Name, StringComparison.OrdinalIgnoreCase));
             else
                 _selectedJob = null;
             OnPropertyChanged(nameof(SelectedJob));
         }
 
-        private string GetCurrentJobNameForAction(EditableActionDefinition action)
+        private string GetCurrentJobName(EditableJobReference jobRef)
         {
-            if (action?.JobId.HasValue == true)
+            if (jobRef?.JobId.HasValue == true)
             {
-                var job = Jobs.FirstOrDefault(j => j.Id == action.JobId.Value);
+                var job = Jobs.FirstOrDefault(j => j.Id == jobRef.JobId.Value);
                 if (job != null) return job.Name;
-                return $"[Job nicht gefunden: {action.JobId}]";
+                return $"[Job nicht gefunden: {jobRef.JobId}]";
             }
-            return action?.Name ?? string.Empty;
+            return jobRef?.Name ?? string.Empty;
         }
 
         private async Task CaptureAsync()
@@ -189,9 +188,18 @@ namespace DesktopAutomationApp.ViewModels
                 { Owner = Application.Current?.MainWindow };
             if (dlg.ShowDialog() != true) return;
 
+            var hadChanges = HasUnsavedChanges;
             EditedHotkey.Name = dlg.ResultName.Trim();
             OnPropertyChanged(nameof(Title));
-            HasUnsavedChanges = true;
+            _snapshot.Name = EditedHotkey.Name;
+            HasUnsavedChanges = hadChanges;
+
+            if (!_isNew)
+            {
+                await _repositoryService.SaveAsync(EditedHotkey.ToDomain());
+                await _capture.ReloadFromRepositoryAsync();
+                _log.LogInformation("Hotkey umbenannt: {Name}", EditedHotkey.Name);
+            }
         }
 
         // --- INavigationGuard ---
@@ -206,12 +214,11 @@ namespace DesktopAutomationApp.ViewModels
                 return;
             }
 
-            // Update JobId if needed
-            if (EditedHotkey.Action.JobId.HasValue)
+            if (EditedHotkey.Job.JobId.HasValue)
             {
-                var currentJobName = GetCurrentJobNameForAction(EditedHotkey.Action);
+                var currentJobName = GetCurrentJobName(EditedHotkey.Job);
                 if (!currentJobName.StartsWith("[Job nicht gefunden"))
-                    EditedHotkey.Action.Name = currentJobName;
+                    EditedHotkey.Job.Name = currentJobName;
             }
 
             await _repositoryService.SaveAsync(EditedHotkey.ToDomain());
@@ -225,9 +232,9 @@ namespace DesktopAutomationApp.ViewModels
             EditedHotkey.Name = _snapshot.Name;
             EditedHotkey.Modifiers = _snapshot.Modifiers;
             EditedHotkey.VirtualKeyCode = _snapshot.VirtualKeyCode;
-            EditedHotkey.Action.Name = _snapshot.Action.Name;
-            EditedHotkey.Action.Command = _snapshot.Action.Command;
-            EditedHotkey.Action.JobId = _snapshot.Action.JobId;
+            EditedHotkey.Job.Name = _snapshot.Job.Name;
+            EditedHotkey.Job.Command = _snapshot.Job.Command;
+            EditedHotkey.Job.JobId = _snapshot.Job.JobId;
             EditedHotkey.Active = _snapshot.Active;
             HasUnsavedChanges = false;
         }
@@ -235,7 +242,7 @@ namespace DesktopAutomationApp.ViewModels
         private string? ValidateEdited()
         {
             if (string.IsNullOrWhiteSpace(EditedHotkey.Name)) return "Name ist erforderlich.";
-            if (string.IsNullOrWhiteSpace(EditedHotkey.Action?.Name)) return "Action ist erforderlich.";
+            if (string.IsNullOrWhiteSpace(EditedHotkey.Job?.Name)) return "Job ist erforderlich.";
             if (EditedHotkey.VirtualKeyCode == 0) return "Bitte eine Tastenkombination erfassen.";
             return null;
         }

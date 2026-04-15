@@ -30,7 +30,7 @@ namespace TaskAutomation.Hotkeys
         /// <summary>
         /// Registriert/aktualisiert einen Hotkey.
         /// </summary>
-        void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action, Guid? id = null);
+        void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, JobReference job, Guid? id = null);
 
         /// <summary>
         /// Entfernt einen registrierten Hotkey.

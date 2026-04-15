@@ -3,7 +3,7 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Hotkeys
 {
-    /// <summary>Definition eines Hotkeys inkl. auszuführender Action.</summary>
+    /// <summary>Definition eines Hotkeys inkl. auszuführendem Job.</summary>
     public class HotkeyDefinition
     {
         [JsonPropertyName("id")]
@@ -19,19 +19,18 @@ namespace TaskAutomation.Hotkeys
         public uint VirtualKeyCode { get; set; }
 
         [JsonPropertyName("action")]
-        public ActionDefinition Action { get; set; } = new ActionDefinition();
+        public JobReference Job { get; set; } = new JobReference();
 
         [JsonPropertyName("active")]
         public bool Active { get; set; } = true;
 
-        // Optional: vorhandenen Ctor beibehalten – praktisch für Service-Erzeugung
         [JsonConstructor]
-        public HotkeyDefinition(string name, KeyModifiers modifiers, uint virtualKeyCode, ActionDefinition action)
+        public HotkeyDefinition(string name, KeyModifiers modifiers, uint virtualKeyCode, JobReference job)
         {
             Name = name;
             Modifiers = modifiers;
             VirtualKeyCode = virtualKeyCode;
-            Action = action ?? new ActionDefinition();
+            Job = job ?? new JobReference();
         }
 
         public HotkeyDefinition() { }
@@ -41,13 +40,13 @@ namespace TaskAutomation.Hotkeys
             Name = this.Name,
             Modifiers = this.Modifiers,
             VirtualKeyCode = this.VirtualKeyCode,
-            Action = this.Action?.Clone() ?? new ActionDefinition()
+            Job = this.Job?.Clone() ?? new JobReference()
         };
     }
 
     public enum ActionCommand { Start, Stop, Toggle }
 
-    public class ActionDefinition
+    public class JobReference
     {
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
@@ -60,15 +59,15 @@ namespace TaskAutomation.Hotkeys
         public ActionCommand Command { get; set; } = ActionCommand.Start;
 
         [JsonConstructor]
-        public ActionDefinition(string name, ActionCommand command)
+        public JobReference(string name, ActionCommand command)
         {
             Name = name;
             Command = command;
         }
 
-        public ActionDefinition() { }
+        public JobReference() { }
 
-        public ActionDefinition Clone() => new ActionDefinition
+        public JobReference Clone() => new JobReference
         {
             Name = this.Name,
             JobId = this.JobId,

@@ -22,7 +22,7 @@
                         ToolTip="Neuen Hotkey anlegen">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Neu" VerticalAlignment="Center"/>
+                        <TextBlock Text="Neuer Hotkey" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}"
@@ -31,7 +31,7 @@
                         ToolTip="Ausgewählten Hotkey löschen">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Löschen" VerticalAlignment="Center"/>
+                        <TextBlock Text="Hotkey löschen" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -75,8 +75,8 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Action" Binding="{Binding Action.DisplayName}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Command" Binding="{Binding Action.Command}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Job" Binding="{Binding Job.DisplayName}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Command" Binding="{Binding Job.Command}" IsReadOnly="True" Width="2*"/>
                     <DataGridTemplateColumn Header="Aktiv" Width="60" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

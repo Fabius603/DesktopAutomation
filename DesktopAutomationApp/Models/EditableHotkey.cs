@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,12 +9,12 @@ using TaskAutomation.Hotkeys;
 
 namespace DesktopAutomationApp.Models
 {
-    public sealed class EditableActionDefinition : INotifyPropertyChanged
+    public sealed class EditableJobReference : INotifyPropertyChanged
     {
         private string _name = string.Empty;
         private ActionCommand _command = ActionCommand.Start;
         private Guid? _jobId;
-        private Func<EditableActionDefinition, string>? _jobNameResolver;
+        private Func<EditableJobReference, string>? _jobNameResolver;
 
         public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayName)); } } }
         public ActionCommand Command { get => _command; set { if (_command != value) { _command = value; OnPropertyChanged(); } } }
@@ -28,16 +28,16 @@ namespace DesktopAutomationApp.Models
         /// <summary>
         /// Setzt den Resolver für die Anzeige des aktuellen Job-Namens
         /// </summary>
-        public void SetJobNameResolver(Func<EditableActionDefinition, string> resolver)
+        public void SetJobNameResolver(Func<EditableJobReference, string> resolver)
         {
             _jobNameResolver = resolver;
             OnPropertyChanged(nameof(DisplayName));
         }
 
         /// <summary>
-        /// Kopiert den Job-Name-Resolver von einer anderen ActionDefinition
+        /// Kopiert den Job-Name-Resolver von einer anderen JobReference
         /// </summary>
-        public void CopyJobNameResolverFrom(EditableActionDefinition other)
+        public void CopyJobNameResolverFrom(EditableJobReference other)
         {
             if (other != null)
             {
@@ -46,8 +46,8 @@ namespace DesktopAutomationApp.Models
             }
         }
 
-        public ActionDefinition ToDomain() => new() { Name = Name, Command = Command, JobId = JobId };
-        public static EditableActionDefinition FromDomain(ActionDefinition? d) =>
+        public JobReference ToDomain() => new() { Name = Name, Command = Command, JobId = JobId };
+        public static EditableJobReference FromDomain(JobReference? d) =>
             new() { Name = d?.Name ?? "", Command = d?.Command ?? ActionCommand.Start, JobId = d?.JobId };
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -60,14 +60,14 @@ namespace DesktopAutomationApp.Models
         private string _name = string.Empty;
         private KeyModifiers _modifiers;
         private uint _vk;
-        private EditableActionDefinition _action = new();
+        private EditableJobReference _job = new();
         private bool _active = true;
 
         public Guid Id { get => _id; set { _id = value; OnPropertyChanged(); } }
         public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); } } }
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _vk; set { if (_vk != value) { _vk = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
-        public EditableActionDefinition Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); } } }
+        public EditableJobReference Job { get => _job; set { if (!ReferenceEquals(_job, value) && value != null) { _job = value; OnPropertyChanged(); } } }
         public bool Active { get => _active; set { if (_active != value) { _active = value; OnPropertyChanged(); } } }
 
         // Anzeige-Property: sofort aktualisiert ohne Converter
@@ -81,17 +81,16 @@ namespace DesktopAutomationApp.Models
                 Name = Name,
                 Modifiers = Modifiers,
                 VirtualKeyCode = VirtualKeyCode,
-                Action = new EditableActionDefinition
+                Job = new EditableJobReference
                 {
-                    Name = Action.Name,
-                    Command = Action.Command,
-                    JobId = Action.JobId
+                    Name = Job.Name,
+                    Command = Job.Command,
+                    JobId = Job.JobId
                 },
                 Active = Active
             };
 
-            // Resolver kopieren
-            cloned.Action.CopyJobNameResolverFrom(Action);
+            cloned.Job.CopyJobNameResolverFrom(Job);
             return cloned;
         }
 
@@ -101,7 +100,7 @@ namespace DesktopAutomationApp.Models
             Name = Name,
             Modifiers = Modifiers,
             VirtualKeyCode = VirtualKeyCode,
-            Action = Action.ToDomain(),
+            Job = Job.ToDomain(),
             Active = Active
         };
 
@@ -111,11 +110,10 @@ namespace DesktopAutomationApp.Models
             Name = d.Name,
             Modifiers = d.Modifiers,
             VirtualKeyCode = d.VirtualKeyCode,
-            Action = EditableActionDefinition.FromDomain(d.Action),
+            Job = EditableJobReference.FromDomain(d.Job),
             Active = d.Active
         };
 
-        // Formatierung – analog zu deinem bisherigen Converter
         private static string BuildTriggerText(KeyModifiers mods, uint vk)
         {
             var parts = new System.Collections.Generic.List<string>();
@@ -142,7 +140,7 @@ namespace DesktopAutomationApp.Models
 
             if ((vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5A))
                 return ((char)vk).ToString().ToUpperInvariant();
-            if (vk >= 0x70 && vk <= 0x7B) // F1..F12
+            if (vk >= 0x70 && vk <= 0x7B)
                 return $"F{vk - 0x6F}";
             return $"0x{vk:X2}";
         }
