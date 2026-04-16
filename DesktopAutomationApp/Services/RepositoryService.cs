@@ -19,6 +19,7 @@ namespace DesktopAutomationApp.Services
         Task SaveAsync<T>(T item) where T : class;
         Task SaveAllAsync<T>(IEnumerable<T> items) where T : class;
         Task DeleteAsync<T>(string key) where T : class;
+        string GetDirectoryPath<T>() where T : class;
 
         event EventHandler<RepositoryChangedEventArgs>? DataChanged;
     }
@@ -133,6 +134,11 @@ namespace DesktopAutomationApp.Services
                 _logger.LogError(ex, "Fehler beim Löschen von {Type} mit Key '{Key}'", typeof(T).Name, key);
                 throw;
             }
+        }
+
+        public string GetDirectoryPath<T>() where T : class
+        {
+            return GetRepository<T>().DirectoryPath;
         }
     }
 }

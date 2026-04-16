@@ -122,9 +122,11 @@ namespace TaskAutomation.Hotkeys
         {
             _isPaused = paused;
             _logger.LogInformation("Hotkey-Ausführung {State}", paused ? "pausiert" : "fortgesetzt");
+            PausedChanged?.Invoke();
         }
 
         public event Action? HotkeysChanged;
+        public event Action? PausedChanged;
 
         // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
         private volatile bool _isHotkeyRecording;

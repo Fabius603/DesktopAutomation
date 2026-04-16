@@ -74,5 +74,10 @@ namespace TaskAutomation.Hotkeys
         /// Wird ausgelöst, wenn sich die Hotkey-Registrierungen geändert haben.
         /// </summary>
         event Action? HotkeysChanged;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn sich der Pause-Zustand geändert hat.
+        /// </summary>
+        event Action? PausedChanged;
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -44,6 +45,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand SaveWithoutEditorCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
+        public ICommand OpenFolderCommand { get; }
 
         public event Action<Job>? RequestOpenJob; // Signal an Host (MainViewModel)
 
@@ -89,6 +91,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (param is Guid id) _dispatcher.CancelJob(id);
             });
+            OpenFolderCommand = new RelayCommand(() =>
+                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<Job>()) { UseShellExecute = true }));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
 

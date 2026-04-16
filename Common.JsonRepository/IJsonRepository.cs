@@ -5,6 +5,8 @@ namespace Common.JsonRepository
 {
     public interface IJsonRepository<T>
     {
+        string DirectoryPath { get; }
+
         /// <summary>
         /// Lädt alle Objekte vom Dateisystem.
         /// </summary>

@@ -35,6 +35,11 @@
                         <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="Ordner im Explorer öffnen">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Jobs" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>

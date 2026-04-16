@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -49,6 +50,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand OpenFolderCommand { get; }
 
         public ListHotkeysViewModel(
             IRepositoryService repositoryService,
@@ -68,6 +70,8 @@ namespace DesktopAutomationApp.ViewModels
                 if (h != null) RequestOpenHotkey?.Invoke(h);
             }, h => h != null);
             DeleteCommand  = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
+            OpenFolderCommand = new RelayCommand(() =>
+                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<HotkeyDefinition>()) { UseShellExecute = true }));
 
             _ = InitialLoadAsync();
         }
@@ -106,7 +110,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task NewHotkeyAsync()
         {
-            var dlg = new NewItemNameDialog("Neuer Hotkey", "Name:", "Neuer Hotkey")
+            var dlg = new NewItemNameDialog("Neuer Hotkey", "Name des neuen Hotkeys:")
                 { Owner = System.Windows.Application.Current?.MainWindow };
             if (dlg.ShowDialog() != true) return;
 

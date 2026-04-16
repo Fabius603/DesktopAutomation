@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -50,6 +51,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenMakroCommand { get; }
         public ICommand StartMakroCommand { get; }
         public ICommand StopMakroCommand { get; }
+        public ICommand OpenFolderCommand { get; }
 
         public event Action<Makro>? RequestOpenMakro;
 
@@ -80,6 +82,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (param is Guid id) _dispatcher.CancelMakro(id);
             });
+            OpenFolderCommand = new RelayCommand(() =>
+                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<Makro>()) { UseShellExecute = true }));
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
 

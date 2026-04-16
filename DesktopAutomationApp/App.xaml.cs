@@ -1,5 +1,6 @@
 using System.Configuration;
 using System.Data;
+using System.Linq;
 using System.Windows;
 using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Views;
@@ -59,9 +60,9 @@ namespace DesktopAutomationApp
                 .UseSerilog()
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddJsonRepository<Job>("Configs/Job", "jobs.json", options, j => j.Id.ToString());
-                    services.AddJsonRepository<Makro>("Configs/Makro", "makros.json", options, m => m.Id.ToString());
-                    services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", "hotkeys.json", options, hk => hk.Id.ToString());
+                    services.AddJsonRepository<Job>("Configs/Job", options, j => j.Id.ToString());
+                    services.AddJsonRepository<Makro>("Configs/Makro", options, m => m.Id.ToString());
+                    services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", options, hk => hk.Id.ToString());
 
                     // Repository-Service registrieren
                     services.AddSingleton<IRepositoryService, RepositoryService>();
@@ -130,6 +131,9 @@ namespace DesktopAutomationApp
 
         private void SetupTrayIcon(MainWindow mainWindow)
         {
+            var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
+            var hotkeyService = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
 
             var openItem = contextMenu.Items.Add("Öffnen");
@@ -137,8 +141,33 @@ namespace DesktopAutomationApp
 
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
+            var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem("Alle Jobs stoppen");
+            stopJobsItem.Click += (_, _) =>
+            {
+                foreach (var id in dispatcher.RunningJobIds.ToArray())
+                    dispatcher.CancelJob(id);
+            };
+            contextMenu.Items.Add(stopJobsItem);
+
+            var toggleHotkeysItem = new System.Windows.Forms.ToolStripMenuItem();
+            toggleHotkeysItem.Click += (_, _) =>
+                hotkeyService.SetPaused(!hotkeyService.IsPaused);
+            contextMenu.Items.Add(toggleHotkeysItem);
+
+            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
             var exitItem = contextMenu.Items.Add("Beenden");
             exitItem.Click += (_, _) => Shutdown();
+
+            contextMenu.Opening += (_, _) =>
+            {
+                var hasRunningJobs = dispatcher.RunningJobIds.Count > 0;
+                stopJobsItem.Visible = hasRunningJobs;
+                toggleHotkeysItem.Text = hotkeyService.IsPaused ? "Hotkeys fortsetzen" : "Hotkeys pausieren";
+            };
+
+            hotkeyService.PausedChanged += () =>
+                toggleHotkeysItem.Text = hotkeyService.IsPaused ? "Hotkeys fortsetzen" : "Hotkeys pausieren";
 
             _trayIcon = new System.Windows.Forms.NotifyIcon
             {

@@ -1,4 +1,5 @@
 using MahApps.Metro.Controls;
+using MahApps.Metro.IconPacks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -14,6 +15,11 @@ namespace DesktopAutomationApp.Views
             Title = title;
             PromptText.Text = prompt;
             NameBox.Text = initialValue ?? string.Empty;
+
+            bool isRename = !string.IsNullOrWhiteSpace(initialValue);
+            OkText.Text = isRename ? "Umbenennen" : "Erstellen";
+            OkIcon.Kind = isRename ? PackIconMaterialKind.Pencil : PackIconMaterialKind.Plus;
+
             Loaded += (_, _) => { NameBox.Focus(); NameBox.SelectAll(); };
         }
 

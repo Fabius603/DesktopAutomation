@@ -10,7 +10,6 @@ namespace Common.JsonRepository
         public static IServiceCollection AddJsonRepository<T>(
             this IServiceCollection services,
             string relativeFolderPath,     // z.B. "Configs/Jobs"
-            string saveFileName,           // z.B. "jobs.json"
             JsonSerializerOptions jsonOptions,
             Func<T, string> keySelector)
             where T : class
@@ -19,16 +18,12 @@ namespace Common.JsonRepository
             var configDir = Path.Combine(baseDir, "DesktopAutomation", relativeFolderPath);
             Directory.CreateDirectory(configDir);
 
-            var filePath = Path.Combine(configDir, saveFileName);
-
             services.AddSingleton<IJsonRepository<T>>(_ =>
                 new JsonRepository<T>(
                     new JsonRepositoryOptions
                     {
-                        FilePath = filePath,
+                        DirectoryPath = configDir,
                         JsonOptions = jsonOptions,
-                        CreateBackup = true,                // optional
-                                                            // BackupSuffixFormat = "yyyyMMddHHmmssfff"
                     },
                     keySelector
                 )
@@ -37,5 +32,4 @@ namespace Common.JsonRepository
             return services;
         }
     }
-
 }
