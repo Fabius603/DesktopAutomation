@@ -37,7 +37,7 @@ namespace ImageDetection.YOLO
 
         public async Task<YOLOModel> DownloadModelAsync(string modelKey, CancellationToken ct = default)
         {
-            var manifest = ModelManifestProvider.LoadManifest();
+            var manifest = ModelManifestProvider.LoadManifest(ModelFolderPath);
             if (!manifest.Models.TryGetValue(modelKey, out var entry))
                 throw new InvalidOperationException($"Model '{modelKey}' nicht im Manifest.");
 
@@ -50,8 +50,11 @@ namespace ImageDetection.YOLO
             await gate.WaitAsync(ct);
             try
             {
-                // Bereits vorhanden & Hash ok → fertig
-                if (File.Exists(onnxPath) && await VerifySha256Async(onnxPath, entry.Sha256, ct))
+                // Bereits vorhanden & Hash ok (oder kein Hash angegeben) → fertig
+                bool alreadyValid = File.Exists(onnxPath) &&
+                    (string.IsNullOrEmpty(entry.Sha256) || await VerifySha256Async(onnxPath, entry.Sha256, ct));
+
+                if (alreadyValid)
                 {
                     Report(modelKey, ModelDownloadStatus.Completed, 100, "Bereits vorhanden");
                     return new YOLOModel
@@ -71,7 +74,7 @@ namespace ImageDetection.YOLO
                     http: _httpClient,
                     url: entry.Url,
                     target: onnxPath,
-                    expectedSha256: entry.Sha256,
+                    expectedSha256: entry.Sha256,   // null = kein Hash-Check
                     progress: progress,
                     ct: ct);
 
@@ -93,7 +96,6 @@ namespace ImageDetection.YOLO
             finally
             {
                 gate.Release();
-                // Speicher aufräumen, falls keine weiteren Nutzer
                 if (gate.CurrentCount == 1) _pathLocks.TryRemove(onnxPath, out _);
             }
         }
@@ -144,7 +146,7 @@ namespace ImageDetection.YOLO
             HttpClient http,
             string url,
             string target,
-            string expectedSha256,
+            string? expectedSha256,
             IProgress<int>? progress,
             CancellationToken ct)
         {
@@ -199,12 +201,15 @@ namespace ImageDetection.YOLO
                 return 0;
             });
 
-            // Hash prüfen (neue Read-Session → keine Locks vom Schreibstream)
-            var ok = await VerifySha256Async(tmp, expectedSha256, ct);
-            if (!ok)
+            // Hash prüfen, falls angegeben
+            if (!string.IsNullOrEmpty(expectedSha256))
             {
-                TryDeleteQuiet(tmp);
-                throw new InvalidOperationException("Hash mismatch für heruntergeladenes Modell.");
+                var ok = await VerifySha256Async(tmp, expectedSha256, ct);
+                if (!ok)
+                {
+                    TryDeleteQuiet(tmp);
+                    throw new InvalidOperationException("Hash mismatch für heruntergeladenes Modell.");
+                }
             }
 
             // Ziel ersetzen – atomar, mit Retry gegen AV/Indexing
@@ -218,6 +223,9 @@ namespace ImageDetection.YOLO
             // garantiert 100% melden, falls Content-Length unbekannt war
             progress?.Report(100);
         }
+
+        public async Task EnsureLabelsAsync(string modelKey, string onnxPath, CancellationToken ct = default)
+            => await EnsureLabelsSidecarAsync(modelKey, onnxPath, ct);
 
         private async Task EnsureLabelsSidecarAsync(string modelKey, string onnxPath, CancellationToken ct)
         {

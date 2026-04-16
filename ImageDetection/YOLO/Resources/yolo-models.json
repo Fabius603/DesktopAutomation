@@ -1,23 +1,12 @@
 {
-  "yolov8n": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-6/yolov8n.onnx",
-    "sha256": "9fd0d695b585e8c8a104f54fd1b63e829c30bb1d35d1f42934559f70921379dc",
-    "size": 12823619,
-    "displayName": "YOLO Nano Standard",
-    "description": "YOLO Modell in der nano Größe. Besitz verschiedene alltäglichen Objekte"
+  "yolo11n": {
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.onnx",
+    "displayName": "YOLO11 Nano",
+    "description": "Offizielles YOLO11 Nano Detektionsmodell von Ultralytics. Erkennt 80 COCO-Klassen (Personen, Autos, Tiere, …)."
   },
-  "valorant_csgo": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-23/valorant_csgo.onnx",
-    "sha256": "3a529fd16884d767623228a87c63583984ecb4885e6695ace8d15497a91978b4",
-    "size": 12251049,
-    "displayName": "YOLO Valorant CSGO",
-    "description": "Modell zu Erkennung von Valorant und CSGO Charakteren"
-  },
-  "valorant": {
-    "url": "https://github.com/Fabius603/DesktopAutomation/releases/download/models-24/valorant.onnx",
-    "sha256": "d284da34676a64224e625424d9df14cdd485922bb6a64fb3d2d12bc8edc9c461",
-    "size": 12253426,
-    "displayName": "valorant",
-    "description": "YOLO Modell für Valorant"
+  "firstPersonShooter": {
+    "url": "https://raw.githubusercontent.com/Weser87/yolov8_aimbot/refs/heads/main/models/sunxds_0.2.1_640.onnx",
+    "displayName": "First Person Shooter",
+    "description": "First Person Shooter Detektionsmodell"
   }
 }

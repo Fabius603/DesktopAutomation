@@ -13,5 +13,6 @@ namespace ImageDetection.YOLO
         event EventHandler<ModelDownloadProgressEventArgs>? DownloadProgressChanged;
         Task<YOLOModel> DownloadModelAsync(string modelKey, CancellationToken ct = default);
         Task<bool> UninstallModelAsync(string modelKey, CancellationToken ct = default);
+        Task EnsureLabelsAsync(string modelKey, string onnxPath, CancellationToken ct = default);
     }
 }

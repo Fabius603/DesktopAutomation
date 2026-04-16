@@ -12,7 +12,7 @@ namespace ImageDetection.Model
         [JsonPropertyName("url")]
         public string Url { get; set; } = "";
         [JsonPropertyName("sha256")]
-        public string Sha256 { get; set; } = "";
+        public string? Sha256 { get; set; }
         [JsonPropertyName("size")]
         public long Size { get; set; }
         [JsonPropertyName("description")]

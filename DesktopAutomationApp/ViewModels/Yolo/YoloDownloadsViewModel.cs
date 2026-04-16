@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
 using ImageDetection.YOLO;
 using ImageDetection.Model;
 
@@ -23,6 +24,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand DownloadCommand { get; }
         public ICommand UninstallCommand { get; }
+        public ICommand OpenFolderCommand { get; }
+        public ICommand AddLocalModelCommand { get; }
 
         public YoloDownloadsViewModel(IYOLOModelDownloader downloader, ILogger<YoloDownloadsViewModel> logger)
         {
@@ -32,50 +35,53 @@ namespace DesktopAutomationApp.ViewModels
             RefreshCommand = new RelayCommand(async () => await RefreshModelsAsync());
             DownloadCommand = new RelayCommand<YoloModelEntry>(async model => await DownloadModelAsync(model), CanDownload);
             UninstallCommand = new RelayCommand<YoloModelEntry>(async model => await UninstallModelAsync(model), CanUninstall);
+            OpenFolderCommand = new RelayCommand(OpenFolder);
+            AddLocalModelCommand = new RelayCommand(async () => await AddLocalModelAsync());
 
-            // Event für Progress-Updates
             _downloader.DownloadProgressChanged += OnDownloadProgressChanged;
 
-            // Initial laden
             _ = Task.Run(async () => await RefreshModelsAsync());
+        }
+
+        private void OpenFolder()
+        {
+            Directory.CreateDirectory(_downloader.ModelFolderPath);
+            System.Diagnostics.Process.Start("explorer.exe", _downloader.ModelFolderPath);
         }
 
         private async Task RefreshModelsAsync()
         {
             try
             {
-                var manifest = ModelManifestProvider.LoadManifest();
+                var folder = _downloader.ModelFolderPath;
+                Directory.CreateDirectory(folder);
+
+                var manifest = ModelManifestProvider.LoadManifest(folder);
                 var existingModels = Models.ToList();
-                
+
+                var onDisk = Directory.GetFiles(folder, "*.onnx")
+                    .Select(f => Path.GetFileNameWithoutExtension(f)!)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
                 Models.Clear();
 
+                // 1) Manifest-Modelle
                 foreach (var kvp in manifest.Models)
                 {
                     var modelKey = kvp.Key;
                     var manifestEntry = kvp.Value;
-                    var onnxPath = Path.Combine(_downloader.ModelFolderPath, modelKey + ".onnx");
+                    var onnxPath = Path.Combine(folder, modelKey + ".onnx");
                     var isInstalled = File.Exists(onnxPath);
-                    
-                    var fileSize = 0L;
-                    if (isInstalled)
-                    {
-                        try
-                        {
-                            fileSize = new FileInfo(onnxPath).Length;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Fehler beim Ermitteln der Dateigröße für {modelKey}", modelKey);
-                        }
-                    }
 
-                    // Bestehenden Eintrag wiederverwenden (um Progress zu behalten)
-                    var existingEntry = existingModels.FirstOrDefault(e => e.ModelKey == modelKey);
-                    if (existingEntry != null)
+                    var fileSize = isInstalled ? TryGetFileSize(onnxPath) : 0L;
+
+                    var existing = existingModels.FirstOrDefault(e => e.ModelKey == modelKey);
+                    if (existing != null)
                     {
-                        existingEntry.IsInstalled = isInstalled;
-                        existingEntry.FileSizeBytes = fileSize;
-                        Models.Add(existingEntry);
+                        existing.IsInstalled = isInstalled;
+                        existing.FileSizeBytes = fileSize;
+                        existing.IsLocal = false;
+                        Models.Add(existing);
                     }
                     else
                     {
@@ -86,13 +92,36 @@ namespace DesktopAutomationApp.ViewModels
                             Description = manifestEntry.Description ?? "",
                             IsInstalled = isInstalled,
                             FileSizeBytes = fileSize,
-                            DownloadProgress = 0,
-                            IsDownloading = false
+                            IsLocal = false
                         });
                     }
                 }
 
-                _logger.LogInformation("Modelliste aktualisiert: {count} Modelle gefunden.", Models.Count);
+                // 2) Lokal abgelegte Modelle die NICHT im Manifest stehen
+                foreach (var key in onDisk.Where(k => !manifest.Models.ContainsKey(k)).OrderBy(k => k))
+                {
+                    var onnxPath = Path.Combine(folder, key + ".onnx");
+                    var existing = existingModels.FirstOrDefault(e => e.ModelKey == key);
+                    if (existing != null)
+                    {
+                        existing.FileSizeBytes = TryGetFileSize(onnxPath);
+                        Models.Add(existing);
+                    }
+                    else
+                    {
+                        Models.Add(new YoloModelEntry
+                        {
+                            ModelKey = key,
+                            DisplayName = key,
+                            Description = "",
+                            IsInstalled = true,
+                            FileSizeBytes = TryGetFileSize(onnxPath),
+                            IsLocal = true
+                        });
+                    }
+                }
+
+                _logger.LogInformation("Modelliste aktualisiert: {count} Einträge.", Models.Count);
             }
             catch (Exception ex)
             {
@@ -102,7 +131,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task DownloadModelAsync(YoloModelEntry? model)
         {
-            if (model == null || model.IsInstalled || model.IsDownloading)
+            if (model == null || model.IsInstalled || model.IsDownloading || model.IsLocal)
                 return;
 
             try
@@ -119,7 +148,7 @@ namespace DesktopAutomationApp.ViewModels
 
                 model.IsDownloading = false;
                 model.DownloadProgress = 100;
-                await RefreshModelsAsync(); // Status aktualisieren
+                await RefreshModelsAsync();
 
                 _logger.LogInformation("Download abgeschlossen für Modell: {modelKey}", model.ModelKey);
             }
@@ -147,10 +176,10 @@ namespace DesktopAutomationApp.ViewModels
                 _logger.LogInformation("Deinstallation gestartet für Modell: {modelKey}", model.ModelKey);
 
                 var success = await _downloader.UninstallModelAsync(model.ModelKey);
-                
+
                 if (success)
                 {
-                    await RefreshModelsAsync(); // Status aktualisieren
+                    await RefreshModelsAsync();
                     _logger.LogInformation("Deinstallation abgeschlossen für Modell: {modelKey}", model.ModelKey);
                 }
                 else
@@ -171,23 +200,48 @@ namespace DesktopAutomationApp.ViewModels
             {
                 model.DownloadProgress = e.ProgressPercent;
                 model.IsDownloading = e.Status == ModelDownloadStatus.DownloadingOnnx;
-                
-                if (e.Status == ModelDownloadStatus.Completed)
-                {
-                    model.IsDownloading = false;
-                    // RefreshModelsAsync wird bereits in DownloadModelAsync aufgerufen
-                }
             }
         }
 
         private bool CanDownload(YoloModelEntry? model)
-        {
-            return model != null && !model.IsInstalled && !model.IsDownloading;
-        }
+            => model != null && !model.IsInstalled && !model.IsDownloading && !model.IsLocal;
 
         private bool CanUninstall(YoloModelEntry? model)
+            => model != null && model.IsInstalled && !model.IsDownloading;
+
+        private async Task AddLocalModelAsync()
         {
-            return model != null && model.IsInstalled && !model.IsDownloading;
+            var dialog = new OpenFileDialog
+            {
+                Title = "ONNX-Modelldatei auswählen",
+                Filter = "ONNX-Modelle (*.onnx)|*.onnx",
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            var sourcePath = dialog.FileName;
+            var modelKey = Path.GetFileNameWithoutExtension(sourcePath);
+            var destPath = Path.Combine(_downloader.ModelFolderPath, Path.GetFileName(sourcePath));
+
+            try
+            {
+                Directory.CreateDirectory(_downloader.ModelFolderPath);
+                File.Copy(sourcePath, destPath, overwrite: true);
+                await _downloader.EnsureLabelsAsync(modelKey, destPath);
+                await RefreshModelsAsync();
+                _logger.LogInformation("Lokales Modell hinzugefügt: {modelKey}", modelKey);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler beim Hinzufügen des lokalen Modells: {modelKey}", modelKey);
+            }
+        }
+
+        private static long TryGetFileSize(string path)        {
+            try { return new FileInfo(path).Length; }
+            catch { return 0L; }
         }
 
         protected override void Dispose(bool disposing)
@@ -208,6 +262,7 @@ namespace DesktopAutomationApp.ViewModels
         private int _downloadProgress;
         private bool _isDownloading;
         private long _fileSizeBytes;
+        private bool _isLocal;
 
         public string ModelKey { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
@@ -222,7 +277,7 @@ namespace DesktopAutomationApp.ViewModels
         public int DownloadProgress
         {
             get => _downloadProgress;
-            set { _downloadProgress = value; OnPropertyChanged(); }
+            set { _downloadProgress = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusText)); }
         }
 
         public bool IsDownloading
@@ -237,15 +292,20 @@ namespace DesktopAutomationApp.ViewModels
             set { _fileSizeBytes = value; OnPropertyChanged(); OnPropertyChanged(nameof(FileSizeDisplay)); }
         }
 
+        public bool IsLocal
+        {
+            get => _isLocal;
+            set { _isLocal = value; OnPropertyChanged(); OnPropertyChanged(nameof(StatusText)); }
+        }
+
         public string StatusText
         {
             get
             {
-                if (IsDownloading)
-                    return $"Downloading... {DownloadProgress}%";
-                if (IsInstalled)
-                    return "Installed";
-                return "Not installed";
+                if (IsDownloading) return $"Downloading... {DownloadProgress}%";
+                if (IsLocal) return "Lokal";
+                if (IsInstalled) return "Installiert";
+                return "Nicht installiert";
             }
         }
 
@@ -253,16 +313,10 @@ namespace DesktopAutomationApp.ViewModels
         {
             get
             {
-                if (FileSizeBytes == 0)
-                    return "";
-                
-                if (FileSizeBytes < 1024)
-                    return $"{FileSizeBytes} B";
-                if (FileSizeBytes < 1024 * 1024)
-                    return $"{FileSizeBytes / 1024.0:F1} KB";
-                if (FileSizeBytes < 1024 * 1024 * 1024)
-                    return $"{FileSizeBytes / (1024.0 * 1024.0):F1} MB";
-                
+                if (FileSizeBytes <= 0) return "";
+                if (FileSizeBytes < 1024) return $"{FileSizeBytes} B";
+                if (FileSizeBytes < 1024 * 1024) return $"{FileSizeBytes / 1024.0:F1} KB";
+                if (FileSizeBytes < 1024L * 1024 * 1024) return $"{FileSizeBytes / (1024.0 * 1024.0):F1} MB";
                 return $"{FileSizeBytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
             }
         }
@@ -270,8 +324,6 @@ namespace DesktopAutomationApp.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
