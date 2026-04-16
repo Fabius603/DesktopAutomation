@@ -312,24 +312,19 @@ namespace ImageDetection.YOLO
             int[] dims = outTensor.Dimensions.ToArray();
             var (isCHW, num, attrs) = InterpretDims(dims);
 
-            // Nur Top-1 der gewünschten Klasse dekodieren
-            var bestList = DecodeDetections(
+            var allList = DecodeDetections(
                 outTensor, isCHW, num, attrs, threshold,
                 _opt.InputSize, scale, padX, padY,
                 roiOffsetInImage: useRoi.Location,
                 requiredClassId: classId);
 
-            if (bestList.Count == 0)
+            if (allList.Count == 0)
                 return new DetectionResult { Success = false };
 
-            var best = bestList[0];
-            return new DetectionResult
-            {
-                Success = true,
-                Confidence = best.Confidence,
-                BoundingBox = Rectangle.Round(best.BoundingBox!.Value),
-                CenterPoint = best.CenterPoint,
-            };
+            // Erstes = bestes (absteigend sortiert)
+            var best = (DetectionResult)allList[0];
+            best.AllResults = allList;
+            return best;
         }
 
         private static void EnsureBinding(YoloBuffers buf, InferenceSession session)
@@ -528,8 +523,8 @@ namespace ImageDetection.YOLO
         private List<IDetectionResult> DecodeDetections(
             Tensor<float> oTensor,
             bool isCHW,
-            int num,              // Anzahl Kandidaten
-            int attrs,            // 4(+1) + numClasses
+            int num,
+            int attrs,
             float threshold,
             int inputSize,
             float scale,
@@ -538,80 +533,73 @@ namespace ImageDetection.YOLO
             Point roiOffsetInImage,
             int requiredClassId)
         {
-            // Layout: [cx,cy,w,h,(obj?), class0..classN-1]
             int numClasses = attrs - 4;
             bool hasObj = (attrs == numClasses + 5);
             int baseCls = hasObj ? 5 : 4;
+            int clsOff  = baseCls + requiredClassId;
 
-            float bestS = -1f;
-            RectangleF bestBox = default;
-            bool found = false;
+            var hits = new List<(RectangleF box, float score)>();
 
             if (isCHW)
             {
-                // [1, attrs, num]
-                int clsOff = baseCls + requiredClassId;
                 for (int k = 0; k < num; k++)
                 {
-                    float cx = oTensor[0, 0, k];
-                    float cy = oTensor[0, 1, k];
-                    float w  = oTensor[0, 2, k];
-                    float h  = oTensor[0, 3, k];
-
                     float s = oTensor[0, clsOff, k];
-                    if (hasObj) s *= oTensor[0, 4, k]; // obj * class
+                    if (hasObj) s *= oTensor[0, 4, k];
                     if (s < threshold) continue;
 
-                    if (s > bestS)
-                    {
-                        var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
-                        bestBox = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
-                        bestS = s;
-                        found = true;
-                    }
+                    hits.Add((ReverseLetterboxToImageSpace(
+                        oTensor[0, 0, k], oTensor[0, 1, k],
+                        oTensor[0, 2, k], oTensor[0, 3, k],
+                        inputSize, scale, padX, padY), s));
                 }
             }
             else
             {
-                // [1, num, attrs]
-                int clsOff = baseCls + requiredClassId;
                 for (int k = 0; k < num; k++)
                 {
-                    float cx = oTensor[0, k, 0];
-                    float cy = oTensor[0, k, 1];
-                    float w  = oTensor[0, k, 2];
-                    float h  = oTensor[0, k, 3];
-
                     float s = oTensor[0, k, clsOff];
                     if (hasObj) s *= oTensor[0, k, 4];
                     if (s < threshold) continue;
 
-                    if (s > bestS)
-                    {
-                        var boxImg = ReverseLetterboxToImageSpace(cx, cy, w, h, inputSize, scale, padX, padY);
-                        bestBox = new RectangleF(boxImg.X + roiOffsetInImage.X, boxImg.Y + roiOffsetInImage.Y, boxImg.Width, boxImg.Height);
-                        bestS = s;
-                        found = true;
-                    }
+                    hits.Add((ReverseLetterboxToImageSpace(
+                        oTensor[0, k, 0], oTensor[0, k, 1],
+                        oTensor[0, k, 2], oTensor[0, k, 3],
+                        inputSize, scale, padX, padY), s));
                 }
             }
 
-            if (!found) return new List<IDetectionResult>(0);
+            if (hits.Count == 0) return [];
 
-            var center = new Point(
-                (int)Math.Round(bestBox.X + bestBox.Width * 0.5f),
-                (int)Math.Round(bestBox.Y + bestBox.Height * 0.5f));
-
-            return new List<IDetectionResult>(1)
+            // NMS
+            hits.Sort((a, b) => b.score.CompareTo(a.score));
+            var kept = new List<(RectangleF box, float score)>(hits.Count);
+            foreach (var h in hits)
             {
-                new DetectionResult
+                bool suppressed = false;
+                foreach (var k in kept)
+                    if (IoU(h.box, k.box) > 0.45f) { suppressed = true; break; }
+                if (!suppressed) kept.Add(h);
+            }
+
+            var results = new List<IDetectionResult>(kept.Count);
+            foreach (var (box, score) in kept)
+            {
+                var absBox = new RectangleF(
+                    box.X + roiOffsetInImage.X, box.Y + roiOffsetInImage.Y,
+                    box.Width, box.Height);
+                var rounded = Rectangle.Round(absBox);
+                results.Add(new DetectionResult
                 {
-                    Success = true,
-                    Confidence = bestS,
-                    BoundingBox = Rectangle.Round(bestBox),
-                    CenterPoint = center,
-                }
-            };
+                    Success    = true,
+                    Confidence = score,
+                    BoundingBox = rounded,
+                    CenterPoint = new Point(
+                        (int)Math.Round(absBox.X + absBox.Width  * 0.5f),
+                        (int)Math.Round(absBox.Y + absBox.Height * 0.5f)),
+                });
+            }
+            return results;
         }
 
         private static RectangleF ReverseLetterboxToImageSpace(

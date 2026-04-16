@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ImageDetection.Model
 {
@@ -13,6 +9,7 @@ namespace ImageDetection.Model
         public Point CenterPoint { get; set; }
         public Rectangle? BoundingBox { get; set; }
         public float Confidence { get; set; }
+        public IReadOnlyList<IDetectionResult> AllResults { get; set; } = [];
 
         public DetectionResult()
         {

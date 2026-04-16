@@ -1,71 +1,63 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using ImageDetection.Model;
-using OpenCvSharp;
-using OpenCvSharp.Extensions;
 
 namespace ImageDetection
 {
     public static class DrawResult
     {
+        private static readonly Color ColorBest  = Color.OrangeRed;
+        private static readonly Color ColorOther = Color.LimeGreen;
+        private const int Thickness = 2;
+        private const int Radius    = 5;
+
         /// <summary>
-        /// Zeichnet ein DetectionResult (BoundingBox oder Rechteck um den CenterPoint) direkt auf ein Bitmap.
+        /// Zeichnet alle Ergebnisse aus <see cref="IDetectionResult.AllResults"/> in Grün
+        /// und das beste Ergebnis (das übergebene <paramref name="result"/> selbst) in Orange-Rot.
+        /// Falls AllResults leer ist, wird nur das Einzelergebnis gezeichnet.
         /// </summary>
         public static Bitmap DrawDetectionResult(Bitmap bitmap, IDetectionResult result)
         {
             if (result == null || !result.Success || bitmap == null)
                 return bitmap;
 
-            using (var graphics = Graphics.FromImage(bitmap))
+            using var graphics = Graphics.FromImage(bitmap);
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            var all = result.AllResults;
+
+            if (all == null || all.Count == 0)
             {
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                
-                var color = Color.LimeGreen;
-                int thickness = 2;
-                int radius = 5;
+                // Nur Einzelergebnis – als bestes zeichnen
+                DrawSingle(graphics, result, ColorBest);
+            }
+            else
+            {
+                // Alle anderen zuerst (grün), dann bestes oben drauf (orange-rot)
+                foreach (var r in all)
+                    if (r != result)
+                        DrawSingle(graphics, r, ColorOther);
 
-                if (result.CenterPoint != null)
-                {
-                    // Mittelpunkt zeichnen
-                    using (var brush = new SolidBrush(color))
-                    {
-                        var centerX = result.CenterPoint.X - radius;
-                        var centerY = result.CenterPoint.Y - radius;
-                        graphics.FillEllipse(brush, centerX, centerY, radius * 2, radius * 2);
-                    }
-                }
-
-                if (result.BoundingBox.HasValue)
-                {
-                    // BoundingBox zeichnen
-                    var bb = result.BoundingBox.Value;
-                    using (var pen = new Pen(color, thickness))
-                    {
-                        graphics.DrawRectangle(pen, bb);
-                    }
-                }
+                DrawSingle(graphics, result, ColorBest);
             }
 
             return bitmap;
         }
 
-        /// <summary>
-        /// Legacy-Methode für Kompatibilität mit OpenCV Mat - konvertiert zu Bitmap, zeichnet und konvertiert zurück.
-        /// Warnung: Diese Methode ist weniger effizient aufgrund der Konvertierungen.
-        /// </summary>
-        [Obsolete("Diese Methode ist weniger effizient. Verwenden Sie die Bitmap-Version für bessere Performance.")]
-        public static Mat DrawDetectionResult(Mat mat, IDetectionResult result)
+        private static void DrawSingle(Graphics g, IDetectionResult r, Color color)
         {
-            if (result == null || !result.Success || mat == null)
-                return mat;
-
-            using (var bitmap = mat.ToBitmap())
+            if (r.BoundingBox.HasValue)
             {
-                DrawDetectionResult(bitmap, result);
-                return bitmap.ToMat();
+                using var pen = new Pen(color, Thickness);
+                g.DrawRectangle(pen, r.BoundingBox.Value);
             }
+
+            using var brush = new SolidBrush(color);
+            g.FillEllipse(brush,
+                r.CenterPoint.X - Radius,
+                r.CenterPoint.Y - Radius,
+                Radius * 2, Radius * 2);
         }
     }
 }
