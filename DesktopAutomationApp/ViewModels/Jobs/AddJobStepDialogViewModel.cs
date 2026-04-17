@@ -211,9 +211,9 @@ namespace DesktopAutomationApp.ViewModels
 
         public string StepTypeDescription => SelectedType switch
         {
-            "TemplateMatching"   => "Vergleicht ein Bild-Template mit dem aktuellen Kamerabild und speichert die Fundstelle. Wird typischerweise vor einem KlickOnPoint-Step eingesetzt.",
+            "TemplateMatching"   => "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden.",
             "DesktopDuplication" => "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit.",
-            "ShowImage"          => "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an – nützlich zur Fehlersuche.",
+            "ShowImage"          => "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an.",
             "VideoCreation"      => "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte.",
             "MakroExecution"     => "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus.",
             "JobExecution"       => "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird.",
@@ -278,7 +278,7 @@ namespace DesktopAutomationApp.ViewModels
         private string _klickOnPointStep_ClickType = "left";
         public string KlickOnPointStep_ClickType { get => _klickOnPointStep_ClickType; set { _klickOnPointStep_ClickType = value; OnChange(); } }
 
-        private int _klickOnPointStep_TimeoutMs = 5000;
+        private int _klickOnPointStep_TimeoutMs = 0;
         public int KlickOnPointStep_TimeoutMs { get => _klickOnPointStep_TimeoutMs; set { _klickOnPointStep_TimeoutMs = value; OnChange(); } }
 
         // ===== KlickOnPoint3D Felder =====
@@ -297,7 +297,7 @@ namespace DesktopAutomationApp.ViewModels
         private string _klickOnPoint3DStep_ClickType = "left";
         public string KlickOnPoint3DStep_ClickType { get => _klickOnPoint3DStep_ClickType; set { _klickOnPoint3DStep_ClickType = value; OnChange(); } }
 
-        private int _klickOnPoint3DStep_Timeout = 5000;
+        private int _klickOnPoint3DStep_Timeout = 0;
         public int KlickOnPoint3DStep_Timeout { get => _klickOnPoint3DStep_Timeout; set { _klickOnPoint3DStep_Timeout = value; OnChange(); } }
         private bool _klickOnPoint3DStep_InvertMouseMovementY = false;
         public bool KlickOnPoint3DStep_InvertMouseMovementY { get => _klickOnPoint3DStep_InvertMouseMovementY; set { _klickOnPoint3DStep_InvertMouseMovementY = value; OnChange(); } }

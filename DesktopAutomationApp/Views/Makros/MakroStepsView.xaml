@@ -379,6 +379,7 @@
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.CanContentScroll="False"
                          ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
                          behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
                     <ListBox.ItemTemplate>
