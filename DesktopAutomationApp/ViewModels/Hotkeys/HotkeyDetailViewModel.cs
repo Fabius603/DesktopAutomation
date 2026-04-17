@@ -18,6 +18,10 @@ namespace DesktopAutomationApp.ViewModels
 {
     public sealed class HotkeyDetailViewModel : ViewModelBase, INavigationGuard
     {
+        // ── records ─────────────────────────────────────────────────────────────
+        public record ActionItem(string Name, Guid Id, string Category);
+
+        // ── DI ──────────────────────────────────────────────────────────────────
         private readonly IRepositoryService _repositoryService;
         private readonly IGlobalHotkeyService _capture;
         private readonly IJobExecutor _executor;
@@ -26,30 +30,44 @@ namespace DesktopAutomationApp.ViewModels
         private readonly EditableHotkey _snapshot;
         private readonly bool _isNew;
 
+        // ── public state ────────────────────────────────────────────────────────
         public EditableHotkey EditedHotkey { get; }
-
         public string Title => EditedHotkey.Name;
 
-        public ObservableCollection<Job> Jobs { get; } = new();
+        public ObservableCollection<ActionItem> Actions { get; } = new();
+        public ListCollectionView ActionsView { get; }
 
-        private Job? _selectedJob;
-        public Job? SelectedJob
+        private ActionItem? _selectedAction;
+        public ActionItem? SelectedAction
         {
-            get => _selectedJob;
+            get => _selectedAction;
             set
             {
-                _selectedJob = value;
+                _selectedAction = value;
                 if (EditedHotkey != null && value != null)
                 {
-                    EditedHotkey.Job.JobId = value.Id;
-                    EditedHotkey.Job.Name = value.Name;
+                    if (value.Category == "Makro")
+                    {
+                        EditedHotkey.Job.ActionType = HotkeyActionType.Makro;
+                        EditedHotkey.Job.MakroId   = value.Id;
+                        EditedHotkey.Job.JobId      = null;
+                        EditedHotkey.Job.Name       = value.Name;
+                    }
+                    else
+                    {
+                        EditedHotkey.Job.ActionType = HotkeyActionType.Job;
+                        EditedHotkey.Job.JobId      = value.Id;
+                        EditedHotkey.Job.MakroId    = null;
+                        EditedHotkey.Job.Name       = value.Name;
+                    }
                 }
                 OnPropertyChanged();
                 HasUnsavedChanges = true;
             }
         }
 
-        public ICollectionView JobsView { get; }
+        /// <summary>Command-Zeile immer anzeigen — gilt für Jobs und Makros.</summary>
+        public bool ShowCommand => true;
 
         public ObservableCollection<ActionCommand> AvailableCommands { get; } = new();
         public ICollectionView CommandsView { get; }
@@ -69,6 +87,7 @@ namespace DesktopAutomationApp.ViewModels
             private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
         }
 
+        // ── commands ────────────────────────────────────────────────────────────
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -78,6 +97,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
+        // ── ctor ────────────────────────────────────────────────────────────────
         public HotkeyDetailViewModel(
             EditableHotkey hotkey,
             IRepositoryService repositoryService,
@@ -92,73 +112,90 @@ namespace DesktopAutomationApp.ViewModels
             _log = log;
             _isNew = hotkey.VirtualKeyCode == 0 && string.IsNullOrWhiteSpace(hotkey.Job?.Name);
 
-            // Snapshot for cancel
             _snapshot = hotkey.Clone();
 
-            // Track changes on the hotkey
             EditedHotkey.PropertyChanged += (_, _) => HasUnsavedChanges = true;
             EditedHotkey.Job.PropertyChanged += (_, _) => HasUnsavedChanges = true;
 
             foreach (var c in Enum.GetValues(typeof(ActionCommand)).Cast<ActionCommand>())
                 AvailableCommands.Add(c);
 
-            JobsView = new ListCollectionView(Jobs);
+            ActionsView = new ListCollectionView(Actions);
+            ActionsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ActionItem.Category)));
+
             CommandsView = CollectionViewSource.GetDefaultView(AvailableCommands);
 
-            BackCommand = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
-            CancelCommand = new RelayCommand(() =>
-            {
-                if (!_isNew) DiscardChanges();
-            }, () => HasUnsavedChanges);
-            RenameCommand = new RelayCommand(Rename);
+            BackCommand         = new RelayCommand(() => RequestBack?.Invoke());
+            SaveCommand         = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
+            CancelCommand       = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
+            RenameCommand       = new RelayCommand(Rename);
             StartCaptureCommand = new RelayCommand(async () => await CaptureAsync(), () => !IsCapturing);
             CancelCaptureCommand = new RelayCommand(() => _captureCts?.Cancel(), () => IsCapturing);
 
-            LoadJobs();
-            ResolveSelectedJob();
+            LoadActions();
+            ResolveSelectedAction();
 
-            // New hotkeys need saving, existing ones start clean
             HasUnsavedChanges = _isNew;
         }
 
-        private void LoadJobs()
+        // ── loading ─────────────────────────────────────────────────────────────
+        private void LoadActions()
         {
             _executor.ReloadJobsAsync().GetAwaiter().GetResult();
-            Jobs.Clear();
+            Actions.Clear();
+
             foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
-                Jobs.Add(j);
+                Actions.Add(new ActionItem(j.Name, j.Id, "Job"));
 
-            EditedHotkey.Job.SetJobNameResolver(GetCurrentJobName);
+            foreach (var m in _executor.AllMakros.Values.OrderBy(m => m.Name))
+                Actions.Add(new ActionItem(m.Name, m.Id, "Makro"));
+
+            EditedHotkey.Job.SetJobNameResolver(GetCurrentActionName);
         }
 
-        private void ResolveSelectedJob()
+        private void ResolveSelectedAction()
         {
-            if (EditedHotkey.Job.JobId.HasValue)
-                _selectedJob = Jobs.FirstOrDefault(j => j.Id == EditedHotkey.Job.JobId.Value);
-            else if (!string.IsNullOrWhiteSpace(EditedHotkey.Job.Name))
-                _selectedJob = Jobs.FirstOrDefault(j => string.Equals(j.Name, EditedHotkey.Job.Name, StringComparison.OrdinalIgnoreCase));
-            else
-                _selectedJob = null;
-            OnPropertyChanged(nameof(SelectedJob));
-        }
-
-        private string GetCurrentJobName(EditableJobReference jobRef)
-        {
-            if (jobRef?.JobId.HasValue == true)
+            if (EditedHotkey.Job.ActionType == HotkeyActionType.Makro && EditedHotkey.Job.MakroId.HasValue)
             {
-                var job = Jobs.FirstOrDefault(j => j.Id == jobRef.JobId.Value);
-                if (job != null) return job.Name;
+                _selectedAction = Actions.FirstOrDefault(a => a.Category == "Makro" && a.Id == EditedHotkey.Job.MakroId.Value);
+            }
+            else if (EditedHotkey.Job.JobId.HasValue)
+            {
+                _selectedAction = Actions.FirstOrDefault(a => a.Category == "Job" && a.Id == EditedHotkey.Job.JobId.Value);
+            }
+            else if (!string.IsNullOrWhiteSpace(EditedHotkey.Job.Name))
+            {
+                _selectedAction = Actions.FirstOrDefault(a =>
+                    string.Equals(a.Name, EditedHotkey.Job.Name, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                _selectedAction = null;
+            }
+            OnPropertyChanged(nameof(SelectedAction));
+        }
+
+        private string GetCurrentActionName(EditableJobReference jobRef)
+        {
+            if (jobRef.ActionType == HotkeyActionType.Makro && jobRef.MakroId.HasValue)
+            {
+                var m = Actions.FirstOrDefault(a => a.Category == "Makro" && a.Id == jobRef.MakroId.Value);
+                return m?.Name ?? $"[Makro nicht gefunden: {jobRef.MakroId}]";
+            }
+            if (jobRef.JobId.HasValue)
+            {
+                var j = Actions.FirstOrDefault(a => a.Category == "Job" && a.Id == jobRef.JobId.Value);
+                if (j != null) return j.Name;
                 return $"[Job nicht gefunden: {jobRef.JobId}]";
             }
             return jobRef?.Name ?? string.Empty;
         }
 
+        // ── capture ─────────────────────────────────────────────────────────────
         private async Task CaptureAsync()
         {
             _captureCts = new CancellationTokenSource();
             IsCapturing = true;
-
             try
             {
                 var (mods, vk) = await _capture.CaptureNextAsync(_captureCts.Token);
@@ -166,14 +203,8 @@ namespace DesktopAutomationApp.ViewModels
                 EditedHotkey.VirtualKeyCode = vk;
                 HasUnsavedChanges = true;
             }
-            catch (OperationCanceledException)
-            {
-                _log.LogInformation("Hotkey-Erfassung abgebrochen.");
-            }
-            catch (Exception ex)
-            {
-                _log.LogError(ex, "Fehler bei der Hotkey-Erfassung.");
-            }
+            catch (OperationCanceledException) { _log.LogInformation("Hotkey-Erfassung abgebrochen."); }
+            catch (Exception ex) { _log.LogError(ex, "Fehler bei der Hotkey-Erfassung."); }
             finally
             {
                 _captureCts?.Dispose();
@@ -182,6 +213,7 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        // ── rename ───────────────────────────────────────────────────────────────
         private async void Rename()
         {
             var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", EditedHotkey.Name)
@@ -202,8 +234,7 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        // --- INavigationGuard ---
-
+        // ── INavigationGuard ─────────────────────────────────────────────────────
         public async Task SaveAsync()
         {
             var error = ValidateEdited();
@@ -214,11 +245,11 @@ namespace DesktopAutomationApp.ViewModels
                 return;
             }
 
-            if (EditedHotkey.Job.JobId.HasValue)
+            // Ensure name is current
+            if (EditedHotkey.Job.ActionType == HotkeyActionType.Job && EditedHotkey.Job.JobId.HasValue)
             {
-                var currentJobName = GetCurrentJobName(EditedHotkey.Job);
-                if (!currentJobName.StartsWith("[Job nicht gefunden"))
-                    EditedHotkey.Job.Name = currentJobName;
+                var name = GetCurrentActionName(EditedHotkey.Job);
+                if (!name.StartsWith("[")) EditedHotkey.Job.Name = name;
             }
 
             await _repositoryService.SaveAsync(EditedHotkey.ToDomain());
@@ -229,20 +260,23 @@ namespace DesktopAutomationApp.ViewModels
 
         public void DiscardChanges()
         {
-            EditedHotkey.Name = _snapshot.Name;
-            EditedHotkey.Modifiers = _snapshot.Modifiers;
+            EditedHotkey.Name           = _snapshot.Name;
+            EditedHotkey.Modifiers      = _snapshot.Modifiers;
             EditedHotkey.VirtualKeyCode = _snapshot.VirtualKeyCode;
-            EditedHotkey.Job.Name = _snapshot.Job.Name;
-            EditedHotkey.Job.Command = _snapshot.Job.Command;
-            EditedHotkey.Job.JobId = _snapshot.Job.JobId;
-            EditedHotkey.Active = _snapshot.Active;
+            EditedHotkey.Job.Name       = _snapshot.Job.Name;
+            EditedHotkey.Job.Command    = _snapshot.Job.Command;
+            EditedHotkey.Job.JobId      = _snapshot.Job.JobId;
+            EditedHotkey.Job.ActionType = _snapshot.Job.ActionType;
+            EditedHotkey.Job.MakroId    = _snapshot.Job.MakroId;
+            EditedHotkey.Active         = _snapshot.Active;
+            ResolveSelectedAction();
             HasUnsavedChanges = false;
         }
 
         private string? ValidateEdited()
         {
             if (string.IsNullOrWhiteSpace(EditedHotkey.Name)) return "Name ist erforderlich.";
-            if (string.IsNullOrWhiteSpace(EditedHotkey.Job?.Name)) return "Job ist erforderlich.";
+            if (_selectedAction == null) return "Bitte eine Aktion (Job oder Makro) auswählen.";
             if (EditedHotkey.VirtualKeyCode == 0) return "Bitte eine Tastenkombination erfassen.";
             return null;
         }

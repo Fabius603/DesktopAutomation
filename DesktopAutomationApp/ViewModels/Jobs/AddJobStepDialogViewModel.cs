@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
 using DesktopAutomationApp.Services.Preview;
@@ -36,6 +38,49 @@ namespace DesktopAutomationApp.ViewModels
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
+
+            InitDefaults();
+        }
+
+        private void InitDefaults()
+        {
+            // Video Creation: Standard-Videoordner + DesktopAutomation
+            _videoCreationStep_SavePath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+                "DesktopAutomation");
+
+            // Makro: erstes verfügbares Makro vorauswählen
+            _makroExecutionStep_SelectedMakro = _ctx.AllMakros?.Values
+                ?.OrderBy(m => m.Name).FirstOrDefault();
+            if (_makroExecutionStep_SelectedMakro != null)
+            {
+                _makroExecutionStep_SelectedMakroId   = _makroExecutionStep_SelectedMakro.Id;
+                _makroExecutionStep_SelectedMakroName = _makroExecutionStep_SelectedMakro.Name;
+            }
+
+            // Job: ersten verfügbaren Job vorauswählen
+            _jobExecutionStep_SelectedJob = _ctx.AllJobs?.Values
+                ?.Where(j => j?.Id != _currentJobBeingEdited?.Id)
+                .OrderBy(j => j.Name).FirstOrDefault();
+            if (_jobExecutionStep_SelectedJob != null)
+            {
+                _jobExecutionStep_SelectedJobId   = _jobExecutionStep_SelectedJob.Id;
+                _jobExecutionStep_SelectedJobName = _jobExecutionStep_SelectedJob.Name;
+            }
+
+            // YOLO: erstes verfügbares Modell + erste Klasse vorauswählen
+            try
+            {
+                var firstModel = _ctx.YoloManager?.GetAvailableModels()?.FirstOrDefault();
+                if (firstModel != null)
+                {
+                    _yoloDetectionStep_Model = firstModel;
+                    var firstClass = _ctx.YoloManager?.GetClassesForModel(firstModel)?.FirstOrDefault();
+                    if (firstClass != null)
+                        _yoloDetectionStep_ClassName = firstClass;
+                }
+            }
+            catch { }
         }
 
         // ----- Dialog-Interop -----
@@ -87,6 +132,31 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ----- Step-Auswahl -----
+        public record StepTypeItem(string Name, string Category);
+
+        public ListCollectionView StepTypeItems { get; } = CreateStepTypeItems();
+
+        private static ListCollectionView CreateStepTypeItems()
+        {
+            var items = new List<StepTypeItem>
+            {
+                new("DesktopDuplication", "Erfassung"),
+                new("TemplateMatching",   "Erkennung"),
+                new("YoloDetection",      "Erkennung"),
+                new("KlickOnPoint",       "Interaktion"),
+                new("KlickOnPoint3D",     "Interaktion"),
+                new("ShowImage",          "Ausgabe"),
+                new("VideoCreation",      "Ausgabe"),
+                new("MakroExecution",     "Automatisierung"),
+                new("JobExecution",       "Automatisierung"),
+                new("ScriptExecution",    "Automatisierung"),
+            };
+            var view = new ListCollectionView(items);
+            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
+            return view;
+        }
+
+        // kept for CanConfirm switch — still string-based
         public string[] StepTypes { get; } =
         {
             "TemplateMatching",
@@ -122,6 +192,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowKlickOnPoint));
                 OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
+                OnChange(nameof(StepTypeDescription));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -137,6 +208,21 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowKlickOnPoint => SelectedType == "KlickOnPoint";
         public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
+
+        public string StepTypeDescription => SelectedType switch
+        {
+            "TemplateMatching"   => "Vergleicht ein Bild-Template mit dem aktuellen Kamerabild und speichert die Fundstelle. Wird typischerweise vor einem KlickOnPoint-Step eingesetzt.",
+            "DesktopDuplication" => "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit.",
+            "ShowImage"          => "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an – nützlich zur Fehlersuche.",
+            "VideoCreation"      => "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte.",
+            "MakroExecution"     => "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus.",
+            "JobExecution"       => "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird.",
+            "ScriptExecution"    => "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet.",
+            "KlickOnPoint"       => "Klickt auf den zuletzt erkannten Bildpunkt (z. B. Ergebnis eines TemplateMatching- oder YOLO-Steps). Wartet bis zum angegebenen Timeout auf einen Fund.",
+            "KlickOnPoint3D"     => "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird.",
+            "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
+            _                    => string.Empty
+        };
 
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }

@@ -10,6 +10,14 @@
         <Setter Property="CaretBrush" Value="{DynamicResource App.Brush.Accent}"/>
     </Style>
 
+    <!-- ═══ ComboBox — abgerundete Ecken, einheitliche Höhe ═══ -->
+    <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}">
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="MinHeight" Value="34"/>
+    </Style>
+
     <!-- ═══ ProgressBar — Accent, abgerundet ═══ -->
     <Style TargetType="ProgressBar" BasedOn="{StaticResource MahApps.Styles.ProgressBar}">
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>

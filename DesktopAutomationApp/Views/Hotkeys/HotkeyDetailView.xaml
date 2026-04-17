@@ -66,16 +66,31 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Job-Auswahl -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Job" VerticalAlignment="Center"/>
+                <!-- Aktion-Auswahl (Job oder Makro) -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Aktion" VerticalAlignment="Center"/>
                 <ComboBox Grid.Row="0" Grid.Column="1"
-                          ItemsSource="{Binding JobsView}"
+                          ItemsSource="{Binding ActionsView}"
                           Style="{StaticResource AutoOpenComboStyle}"
-                          IsTextSearchEnabled="True"
                           DisplayMemberPath="Name"
-                          TextSearch.TextPath="Name"
-                          SelectedItem="{Binding SelectedJob, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                          MinWidth="280"/>
+                          SelectedValuePath="."
+                          SelectedItem="{Binding SelectedAction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          MinWidth="280">
+                    <ComboBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                            BorderThickness="0,1,0,0"
+                                            Margin="0,4,0,0" Padding="4,6,4,2">
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="{StaticResource App.Brush.Accent}"
+                                                   FontSize="10" FontWeight="SemiBold"/>
+                                    </Border>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ComboBox.GroupStyle>
+                </ComboBox>
 
                 <!-- Command -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,10,0,0"/>

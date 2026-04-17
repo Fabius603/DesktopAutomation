@@ -14,11 +14,15 @@ namespace DesktopAutomationApp.Models
         private string _name = string.Empty;
         private ActionCommand _command = ActionCommand.Start;
         private Guid? _jobId;
+        private HotkeyActionType _actionType = HotkeyActionType.Job;
+        private Guid? _makroId;
         private Func<EditableJobReference, string>? _jobNameResolver;
 
         public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayName)); } } }
         public ActionCommand Command { get => _command; set { if (_command != value) { _command = value; OnPropertyChanged(); } } }
         public Guid? JobId { get => _jobId; set { if (_jobId != value) { _jobId = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayName)); } } }
+        public HotkeyActionType ActionType { get => _actionType; set { if (_actionType != value) { _actionType = value; OnPropertyChanged(); } } }
+        public Guid? MakroId { get => _makroId; set { if (_makroId != value) { _makroId = value; OnPropertyChanged(); } } }
 
         /// <summary>
         /// Der aktuell anzuzeigende Job-Name. Basiert auf JobId falls vorhanden, andernfalls auf Name.
@@ -46,9 +50,9 @@ namespace DesktopAutomationApp.Models
             }
         }
 
-        public JobReference ToDomain() => new() { Name = Name, Command = Command, JobId = JobId };
+        public JobReference ToDomain() => new() { Name = Name, Command = Command, JobId = JobId, ActionType = ActionType, MakroId = MakroId };
         public static EditableJobReference FromDomain(JobReference? d) =>
-            new() { Name = d?.Name ?? "", Command = d?.Command ?? ActionCommand.Start, JobId = d?.JobId };
+            new() { Name = d?.Name ?? "", Command = d?.Command ?? ActionCommand.Start, JobId = d?.JobId, ActionType = d?.ActionType ?? HotkeyActionType.Job, MakroId = d?.MakroId };
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
@@ -85,7 +89,9 @@ namespace DesktopAutomationApp.Models
                 {
                     Name = Job.Name,
                     Command = Job.Command,
-                    JobId = Job.JobId
+                    JobId = Job.JobId,
+                    ActionType = Job.ActionType,
+                    MakroId = Job.MakroId,
                 },
                 Active = Active
             };

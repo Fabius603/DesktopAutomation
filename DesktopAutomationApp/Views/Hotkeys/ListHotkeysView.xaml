@@ -83,7 +83,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Job" Binding="{Binding Job.DisplayName}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Aktion" Binding="{Binding Job.DisplayName}" IsReadOnly="True" Width="2*"/>
                     <DataGridTextColumn Header="Command" Binding="{Binding Job.Command}" IsReadOnly="True" Width="2*"/>
                     <DataGridTemplateColumn Header="Aktiv" Width="60" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>

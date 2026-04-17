@@ -46,6 +46,8 @@ namespace TaskAutomation.Hotkeys
 
     public enum ActionCommand { Start, Stop, Toggle }
 
+    public enum HotkeyActionType { Job, Makro }
+
     public class JobReference
     {
         [JsonPropertyName("name")]
@@ -57,6 +59,13 @@ namespace TaskAutomation.Hotkeys
         [JsonPropertyName("command")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ActionCommand Command { get; set; } = ActionCommand.Start;
+
+        [JsonPropertyName("action_type")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public HotkeyActionType ActionType { get; set; } = HotkeyActionType.Job;
+
+        [JsonPropertyName("makro_id")]
+        public Guid? MakroId { get; set; }
 
         [JsonConstructor]
         public JobReference(string name, ActionCommand command)
@@ -71,7 +80,9 @@ namespace TaskAutomation.Hotkeys
         {
             Name = this.Name,
             JobId = this.JobId,
-            Command = this.Command
+            Command = this.Command,
+            ActionType = this.ActionType,
+            MakroId = this.MakroId,
         };
     }
 }

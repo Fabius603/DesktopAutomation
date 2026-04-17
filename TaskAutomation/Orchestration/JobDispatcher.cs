@@ -80,9 +80,33 @@ namespace TaskAutomation.Orchestration
                 return;
 
             var jobRef = e.Job;
-            var cmd = jobRef.Command;
 
-            switch (cmd)
+            if (jobRef.ActionType == HotkeyActionType.Makro)
+            {
+                var cmd = jobRef.Command;
+                switch (cmd)
+                {
+                    case ActionCommand.Stop:
+                        if (jobRef.MakroId.HasValue) CancelMakro(jobRef.MakroId.Value);
+                        break;
+                    case ActionCommand.Toggle:
+                        if (jobRef.MakroId.HasValue)
+                        {
+                            if (_makroTokens.ContainsKey(jobRef.MakroId.Value))
+                                CancelMakro(jobRef.MakroId.Value);
+                            else
+                                StartMakro(jobRef.MakroId.Value);
+                        }
+                        break;
+                    default: // Start
+                        if (jobRef.MakroId.HasValue) StartMakro(jobRef.MakroId.Value);
+                        break;
+                }
+                return;
+            }
+
+            var jobCmd = jobRef.Command;
+            switch (jobCmd)
             {
                 case ActionCommand.Start:
                     StartJobByAction(jobRef);
