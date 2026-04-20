@@ -33,6 +33,8 @@
             <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter" />
             <conv:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <conv:CollectionContainsConverter x:Key="CollectionContainsConverter" />
+            <conv:PrerequisiteStateConverter x:Key="PrerequisiteStateConverter" />
+            <conv:StepPrerequisiteStateConverter x:Key="StepPrerequisiteStateConverter" />
 
             <!-- ViewModel -> View Mapping -->
             <DataTemplate DataType="{x:Type vm:StartViewModel}">

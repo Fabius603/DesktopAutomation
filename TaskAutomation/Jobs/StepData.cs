@@ -15,6 +15,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(KlickOnPoint3DStep), "klick_on_point_3d")]
     [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
     [JsonDerivedType(typeof(YOLODetectionStep), "yolo_detection")]
+    [JsonDerivedType(typeof(TimeoutStep), "timeout")]
     public abstract class JobStep
     {
         [JsonPropertyName("id")]
@@ -197,6 +198,19 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("settings")]
         public JobExecutionStepSettings Settings { get; set; } = new();
+    }
+
+    // ---- Timeout ----
+    public sealed class TimeoutStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public TimeoutSettings Settings { get; set; } = new();
+    }
+
+    public sealed class TimeoutSettings
+    {
+        [JsonPropertyName("delay_ms")]
+        public int DelayMs { get; set; } = 1000;
     }
 
     public sealed class JobExecutionStepSettings

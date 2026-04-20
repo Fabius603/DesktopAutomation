@@ -25,9 +25,6 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="DesktopAutomation" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <TextBlock Text="{Binding AppVersion, StringFormat='v{0}'}"
-                           Foreground="{DynamicResource App.Brush.TextMuted}"
-                           VerticalAlignment="Center" FontSize="13"/>
             </StackPanel>
         </DockPanel>
 

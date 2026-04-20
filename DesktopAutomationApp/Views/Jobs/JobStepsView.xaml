@@ -321,6 +321,25 @@
             </Grid>
         </DataTemplate>
 
+        <!-- TimeoutStep -->
+        <DataTemplate DataType="{x:Type jobs:TimeoutStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Timeout" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Wartezeit (ms): "/><Run Text="{Binding Settings.DelayMs}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
     </UserControl.Resources>
 
     <Grid>
@@ -423,14 +442,30 @@
                                                        Foreground="{StaticResource App.Brush.TextMuted}"
                                                        VerticalAlignment="Center"
                                                        Margin="0,0,5,0"/>
-                                            <Border Background="{StaticResource App.Brush.AccentSubtle}"
-                                                    BorderBrush="{StaticResource App.Brush.Accent}"
-                                                    BorderThickness="1" CornerRadius="3"
-                                                    Padding="5,1" Margin="0,0,10,0">
-                                                <TextBlock Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter='prereqs'}"
-                                                           Foreground="{StaticResource App.Brush.Accent}"
-                                                           FontSize="10"/>
-                                            </Border>
+                                            <ItemsControl Margin="0,0,10,0" VerticalAlignment="Center">
+                                                <ItemsControl.ItemsSource>
+                                                    <MultiBinding Converter="{StaticResource StepPrerequisiteStateConverter}">
+                                                        <Binding />
+                                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    </MultiBinding>
+                                                </ItemsControl.ItemsSource>
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderThickness="1" CornerRadius="3"
+                                                                Padding="5,1" Margin="0,0,4,0"
+                                                                Background="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, ConverterParameter=background, TargetNullValue={StaticResource App.Brush.AccentSubtle}}"
+                                                                BorderBrush="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, ConverterParameter=border, TargetNullValue={StaticResource App.Brush.Accent}}">
+                                                            <TextBlock Text="{Binding Name}" FontSize="10"
+                                                                       Foreground="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, TargetNullValue={StaticResource App.Brush.Accent}}"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                             <TextBlock Text="Liefert:"
                                                        FontSize="10" FontWeight="SemiBold"
                                                        Foreground="{StaticResource App.Brush.TextMuted}"

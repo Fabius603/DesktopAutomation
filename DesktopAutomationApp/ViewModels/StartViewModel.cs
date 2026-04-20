@@ -46,8 +46,6 @@ namespace DesktopAutomationApp.ViewModels
         private int _runningJobCount;
         public int RunningJobCount { get => _runningJobCount; private set => SetProperty(ref _runningJobCount, value); }
 
-        public string AppVersion { get; }
-
         // --- Commands ---
         public ICommand ToggleHotkeyPauseCommand { get; }
         public ICommand CancelJobCommand { get; }
@@ -63,7 +61,6 @@ namespace DesktopAutomationApp.ViewModels
             _dispatcher = dispatcher;
 
             var assembly = Assembly.GetEntryAssembly();
-            AppVersion = assembly?.GetName().Version?.ToString(3) ?? "1.0.0";
 
             ToggleHotkeyPauseCommand = new RelayCommand(TogglePause);
             CancelJobCommand = new RelayCommand<object?>(param =>

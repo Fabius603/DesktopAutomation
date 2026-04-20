@@ -73,6 +73,11 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
 
+            // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
+            // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
+            // Konverter in der View (StepPrerequisiteStateConverter) neu ausgewertet werden.
+            _steps.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Steps));
+
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
@@ -138,17 +143,20 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Add / Edit ----------
         private async Task AddStep()
         {
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Add };
+            // Determine insert position before opening the dialog so the
+            // dialog receives the correct preceding-steps snapshot.
+            int insertIndex = SelectedStep != null
+                ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
+                : _steps.Count;
 
-            bool? result;
-            ShowDialogWithVm(vm, out result);
+            var precedingSteps = _steps.Take(insertIndex).ToList();
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+                { Mode = StepDialogMode.Add };
+
+            ShowDialogWithVm(vm, out bool? result);
 
             if (result == true && vm.CreatedStep != null)
             {
-                int insertIndex = SelectedStep != null
-                    ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
-                    : _steps.Count;
-
                 _steps.Insert(insertIndex, vm.CreatedStep);
                 SelectedStep = vm.CreatedStep;
                 HasUnsavedChanges = true;
@@ -171,16 +179,19 @@ namespace DesktopAutomationApp.ViewModels
             var target = step ?? SelectedStep;
             if (target == null) return;
 
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, Job) { Mode = StepDialogMode.Edit };
-            Prefill(vm, target);
-
-            bool? result;
-            ShowDialogWithVm(vm, out result);
-
-            if (result != true || vm.CreatedStep == null) return;
-
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
+
+            // Only steps before the edited one count as "preceding" for
+            // prerequisite evaluation.
+            var precedingSteps = _steps.Take(idx).ToList();
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+                { Mode = StepDialogMode.Edit };
+            Prefill(vm, target);
+
+            ShowDialogWithVm(vm, out bool? result);
+
+            if (result != true || vm.CreatedStep == null) return;
 
             _steps[idx] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
@@ -278,6 +289,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.YoloDetectionStep_RoiY = yd.Settings.ROI.Y;
                     vm.YoloDetectionStep_RoiW = yd.Settings.ROI.Width;
                     vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
+                    break;
+
+                case TimeoutStep to:
+                    vm.SelectedType = "Timeout";
+                    vm.TimeoutStep_DelayMs = to.Settings.DelayMs;
                     break;
             }
         }

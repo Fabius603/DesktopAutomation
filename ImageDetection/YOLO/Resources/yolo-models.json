@@ -3,10 +3,5 @@
     "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.onnx",
     "displayName": "YOLO11 Nano",
     "description": "Offizielles YOLO11 Nano Detektionsmodell von Ultralytics. Erkennt 80 COCO-Klassen (Personen, Autos, Tiere, …)."
-  },
-  "firstPersonShooter": {
-    "url": "https://raw.githubusercontent.com/Weser87/yolov8_aimbot/refs/heads/main/models/sunxds_0.2.1_640.onnx",
-    "displayName": "First Person Shooter",
-    "description": "First Person Shooter Detektionsmodell"
   }
 }

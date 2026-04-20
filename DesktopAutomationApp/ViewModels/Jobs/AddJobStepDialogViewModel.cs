@@ -25,12 +25,17 @@ namespace DesktopAutomationApp.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
         private readonly IJobExecutor _ctx;
-        private readonly Job? _currentJobBeingEdited;
+        private readonly IReadOnlyList<JobStep> _precedingSteps;
+        private readonly Guid? _currentJobId;
 
-        public AddJobStepDialogViewModel(IJobExecutor ctx, Job? currentJobBeingEdited = null)
+        public AddJobStepDialogViewModel(
+            IJobExecutor ctx,
+            IReadOnlyList<JobStep> precedingSteps,
+            Guid? currentJobId = null)
         {
             _ctx = ctx;
-            _currentJobBeingEdited = currentJobBeingEdited;
+            _precedingSteps = precedingSteps;
+            _currentJobId = currentJobId;
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
@@ -61,7 +66,7 @@ namespace DesktopAutomationApp.ViewModels
 
             // Job: ersten verfügbaren Job vorauswählen
             _jobExecutionStep_SelectedJob = _ctx.AllJobs?.Values
-                ?.Where(j => j?.Id != _currentJobBeingEdited?.Id)
+                ?.Where(j => j?.Id != _currentJobId)
                 .OrderBy(j => j.Name).FirstOrDefault();
             if (_jobExecutionStep_SelectedJob != null)
             {
@@ -128,6 +133,7 @@ namespace DesktopAutomationApp.ViewModels
                 "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
                 "KlickOnPoint3D" => !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType) && KlickOnPoint3DStep_Timeout >= 0 && KlickOnPoint3DStep_FOV > 0,
                 "YoloDetection" => !string.IsNullOrWhiteSpace(YoloDetectionStep_Model) && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName) && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1,
+                "Timeout" => TimeoutStep_DelayMs >= 0,
                 _ => false
             };
         }
@@ -151,6 +157,7 @@ namespace DesktopAutomationApp.ViewModels
                 new("MakroExecution",     "Automatisierung"),
                 new("JobExecution",       "Automatisierung"),
                 new("ScriptExecution",    "Automatisierung"),
+                new("Timeout",            "Automatisierung"),
             };
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
@@ -170,10 +177,14 @@ namespace DesktopAutomationApp.ViewModels
             "ScriptExecution",
             "KlickOnPoint",
             "KlickOnPoint3D",
-            "YoloDetection"
+            "YoloDetection",
+            "Timeout"
         };
 
-        private string _selectedType = "TemplateMatching";
+        private static string GetFirstStepTypeName() =>
+            CreateStepTypeItems().Cast<StepTypeItem>().First().Name;
+
+        private string _selectedType = GetFirstStepTypeName();
         public string SelectedType
         {
             get => _selectedType;
@@ -193,6 +204,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowKlickOnPoint));
                 OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
+                OnChange(nameof(ShowTimeout));
                 OnChange(nameof(StepTypeDescription));
                 OnChange(nameof(StepPrerequisites));
                 OnChange(nameof(StepOutput));
@@ -211,6 +223,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowKlickOnPoint => SelectedType == "KlickOnPoint";
         public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
+        public bool ShowTimeout => SelectedType == "Timeout";
 
         public string StepTypeDescription => SelectedType switch
         {
@@ -224,11 +237,33 @@ namespace DesktopAutomationApp.ViewModels
             "KlickOnPoint"       => "Klickt auf den zuletzt erkannten Bildpunkt (z. B. Ergebnis eines TemplateMatching- oder YOLO-Steps). Wartet bis zum angegebenen Timeout auf einen Fund.",
             "KlickOnPoint3D"     => "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird.",
             "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
+            "Timeout"            => "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird.",
             _                    => string.Empty
         };
 
-        public IReadOnlyList<string> StepPrerequisites
-            => (StepPipelineRegistry.GetByName(SelectedType)?.Prerequisites) ?? Array.Empty<string>();
+        /// <summary>Voraussetzung eines Steps mit Information ob sie durch vorherige Steps erfüllt ist.</summary>
+        public sealed record PrerequisiteItem(string Name, bool IsSatisfied);
+
+        private HashSet<string> GetAvailableOutputs()
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var step in _precedingSteps)
+            {
+                var info = StepPipelineRegistry.Get(step.GetType());
+                if (info != null) set.Add(info.Output);
+            }
+            return set;
+        }
+
+        public IReadOnlyList<PrerequisiteItem> StepPrerequisites
+        {
+            get
+            {
+                var prereqs   = StepPipelineRegistry.GetByName(SelectedType)?.Prerequisites ?? Array.Empty<string>();
+                var available = GetAvailableOutputs();
+                return prereqs.Select(p => new PrerequisiteItem(p, available.Contains(p))).ToList();
+            }
+        }
 
         public string StepOutput
             => StepPipelineRegistry.GetByName(SelectedType)?.Output ?? "–";
@@ -684,7 +719,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var allJobs = _ctx.AllJobs?.Values?.Where(j => j != null) ?? Enumerable.Empty<Job>();
                 var availableJobs = allJobs
-                    .Where(j => j.Id != _currentJobBeingEdited?.Id)
+                    .Where(j => j.Id != _currentJobId)
                     .OrderBy(j => j.Name);
                 return new ObservableCollection<Job>(availableJobs);
             }
@@ -752,6 +787,10 @@ namespace DesktopAutomationApp.ViewModels
             get => _makroExecutionStep_SelectedMakroId;
             set { _makroExecutionStep_SelectedMakroId = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
+
+        // ===== Timeout Felder =====
+        private int _timeoutStep_DelayMs = 1000;
+        public int TimeoutStep_DelayMs { get => _timeoutStep_DelayMs; set { _timeoutStep_DelayMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         // ===== Fabrik =====
         public void CreateStep()
@@ -861,6 +900,13 @@ namespace DesktopAutomationApp.ViewModels
                         DrawResults = YoloDetectionStep_DrawResults,
                         EnableROI = YoloDetectionStep_EnableROI,
                         ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH)
+                    }
+                },
+                "Timeout" => new TimeoutStep
+                {
+                    Settings = new TimeoutSettings
+                    {
+                        DelayMs = TimeoutStep_DelayMs
                     }
                 },
                 _ => null

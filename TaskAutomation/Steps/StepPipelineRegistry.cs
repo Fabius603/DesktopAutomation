@@ -63,6 +63,10 @@ namespace TaskAutomation.Steps
                 Prerequisites: [],
                 Output:        "TaskResult"),
 
+            [typeof(TimeoutStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult"),
+
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["CaptureResult"],
@@ -94,6 +98,7 @@ namespace TaskAutomation.Steps
             ["MakroExecution"]     = typeof(MakroExecutionStep),
             ["JobExecution"]       = typeof(JobExecutionStep),
             ["ScriptExecution"]    = typeof(ScriptExecutionStep),
+            ["Timeout"]            = typeof(TimeoutStep),
         };
 
         /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>

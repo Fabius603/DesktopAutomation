@@ -70,6 +70,7 @@ namespace TaskAutomation.Jobs
             { typeof(KlickOnPoint3DStep),      new KlickOnPoint3DStepHandler()      },
             { typeof(JobExecutionStep),        new JobExecutionStepHandler()        },
             { typeof(YOLODetectionStep),       new YOLOStepHandler()                },
+            { typeof(TimeoutStep),             new TimeoutStepHandler()             },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
