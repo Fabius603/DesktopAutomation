@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using TaskAutomation.Steps;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -193,6 +194,8 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
                 OnChange(nameof(StepTypeDescription));
+                OnChange(nameof(StepPrerequisites));
+                OnChange(nameof(StepOutput));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -223,6 +226,12 @@ namespace DesktopAutomationApp.ViewModels
             "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
             _                    => string.Empty
         };
+
+        public IReadOnlyList<string> StepPrerequisites
+            => (StepPipelineRegistry.GetByName(SelectedType)?.Prerequisites) ?? Array.Empty<string>();
+
+        public string StepOutput
+            => StepPipelineRegistry.GetByName(SelectedType)?.Output ?? "–";
 
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }

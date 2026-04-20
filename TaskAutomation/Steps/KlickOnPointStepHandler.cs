@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
@@ -10,80 +11,57 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public class KlickOnPointStepHandler : IJobStepHandler
+    public sealed class KlickOnPointStepHandler : JobStepHandler<KlickOnPointStep, TaskResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor jobExecutor, CancellationToken ct)
+        protected override async Task<TaskResult> ExecuteCoreAsync(
+            KlickOnPointStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = jobExecutor.Logger;
+            var logger = ctx.Logger;
+            logger.LogDebug(
+                "KlickOnPointStepHandler: click='{ClickType}' double={Double} timeout={T}ms",
+                step.Settings.ClickType, step.Settings.DoubleClick, step.Settings.TimeoutMs);
 
-            if (step is not KlickOnPointStep klickStep)
+            // Hole den detektierten Punkt vom letzten Detection-Step
+            var detection = GetDetection(ctx.Results);
+            if (!detection.Found || detection.Point is null)
             {
-                var errorMessage = $"Invalid step type - expected KlickOnPointStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("KlickOnPointStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                logger.LogInformation("KlickOnPointStepHandler: No detection point available, skipping click");
+                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
             }
 
-            logger.LogDebug("KlickOnPointStepHandler: Processing click on point step with click type '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms",
-                klickStep.Settings.ClickType, klickStep.Settings.DoubleClick, klickStep.Settings.TimeoutMs);
-
-            try
+            // Timeout-Check
+            var stepKey = $"KlickOnPoint_{step.Id}";
+            if (ctx.StepTimeouts.TryGetValue(stepKey, out var last))
             {
-                // Check if we have a valid point
-                if (jobExecutor.LatestCalculatedPoint == null)
+                var elapsed = DateTime.Now - last;
+                if (elapsed.TotalMilliseconds < step.Settings.TimeoutMs)
                 {
-                    var infoMessage = "No valid point available for clicking - point not set by previous steps";
-                    logger.LogInformation("KlickOnPointStepHandler: {InfoMessage}", infoMessage);
-                    return true;
+                    logger.LogDebug("KlickOnPointStepHandler: Timeout not elapsed ({R:F0}ms remaining), skipping",
+                        step.Settings.TimeoutMs - elapsed.TotalMilliseconds);
+                    return new TaskResult { WasExecuted = true, Success = true };
                 }
-
-                // Use the step's unique ID as dictionary key
-                var stepKey = $"KlickOnPoint_{klickStep.Id}";
-
-                // Check if timeout is still active
-                if (jobExecutor.StepTimeouts.TryGetValue(stepKey, out var lastExecution))
-                {
-                    var timeSinceLastExecution = DateTime.Now - lastExecution;
-                    if (timeSinceLastExecution.TotalMilliseconds < klickStep.Settings.TimeoutMs)
-                    {
-                        // Timeout not yet elapsed, skip execution
-                        logger.LogDebug("KlickOnPointStepHandler: Skipping click - timeout not yet elapsed ({TimeRemaining}ms remaining)",
-                            klickStep.Settings.TimeoutMs - timeSinceLastExecution.TotalMilliseconds);
-                        return true;
-                    }
-                }
-
-                // Update timeout tracker
-                jobExecutor.StepTimeouts[stepKey] = DateTime.Now;
-
-                var point = jobExecutor.LatestCalculatedPoint.Value;
-                logger.LogInformation("KlickOnPointStepHandler: Executing {ClickType} click at point ({X}, {Y})",
-                    klickStep.Settings.DoubleClick ? "double" : "single", point.X, point.Y);
-
-                // Create temporary macro for click execution
-                var macro = CreateClickMacro(klickStep.Settings, point);
-
-                // Execute the macro
-                await jobExecutor.MakroExecutor.ExecuteMakro(macro, jobExecutor.DxgiResources, ct);
-
-                // Reset the point after click
-                jobExecutor.LatestCalculatedPoint = null;
-                logger.LogDebug("KlickOnPointStepHandler: Click executed successfully, point reset");
-
-                return true;
             }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("KlickOnPointStepHandler: Click on point was cancelled");
-                return false; // Return false for cancellation, don't treat as error
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "KlickOnPointStepHandler: Failed to execute click: {ErrorMessage}", ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+            ctx.StepTimeouts[stepKey] = DateTime.Now;
+
+            var point = detection.Point.Value;
+            logger.LogInformation("KlickOnPointStepHandler: Clicking at ({X},{Y})", point.X, point.Y);
+
+            var macro = CreateClickMacro(step.Settings, point);
+            await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
+
+            return new TaskResult { WasExecuted = true, Success = true };
         }
 
-        private static Makro CreateClickMacro(KlickOnPointSettings settings, OpenCvSharp.Point point)
+        protected override TaskResult CreateDefault() => TaskResult.Default;
+
+        internal static DetectionResult GetDetection(IJobResultStore results)
+        {
+            var r = results.Get<TemplateMatchingStep, DetectionResult>();
+            if (!r.WasExecuted) r = results.Get<YOLODetectionStep, DetectionResult>();
+            return r;
+        }
+
+        private static Makro CreateClickMacro(KlickOnPointSettings settings, System.Drawing.Point point)
         {
             var commands = new ObservableCollection<MakroBefehl>();
 

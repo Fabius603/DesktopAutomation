@@ -1,146 +1,92 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using Microsoft.Extensions.Logging;
 using ImageHelperMethods;
 using ImageDetection;
-using OpenCvSharp.Extensions;
-using OpenCvSharp;
 
 namespace TaskAutomation.Steps
 {
-    public class YOLOStepHandler : IJobStepHandler
+    public sealed class YOLOStepHandler : JobStepHandler<YOLODetectionStep, DetectionResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
+        protected override async Task<DetectionResult> ExecuteCoreAsync(
+            YOLODetectionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = executor.Logger;
-            
-            if (step is not YOLODetectionStep yoloStep)
+            var logger = ctx.Logger;
+            logger.LogDebug("YOLOStepHandler: Detecting '{ClassName}' with model '{Model}'",
+                step.Settings.ClassName, step.Settings.Model);
+
+            if (string.IsNullOrWhiteSpace(step.Settings.Model))
+                throw new InvalidOperationException("No YOLO model specified");
+
+            if (string.IsNullOrWhiteSpace(step.Settings.ClassName))
+                throw new InvalidOperationException("No class name specified for YOLO detection");
+
+            if (ctx.YoloManager == null)
+                throw new InvalidOperationException("YoloManager not available");
+
+            var capture = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            if (!capture.HasImage)
+                throw new InvalidOperationException("No captured image available for YOLO detection");
+
+            await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
+
+            System.Drawing.Rectangle? roi = null;
+            if (step.Settings.EnableROI && step.Settings.ROI.Width > 0 && step.Settings.ROI.Height > 0)
+                roi = new System.Drawing.Rectangle(
+                    step.Settings.ROI.X, step.Settings.ROI.Y,
+                    step.Settings.ROI.Width, step.Settings.ROI.Height);
+
+            var rawResult = await ctx.YoloManager.DetectAsync(
+                step.Settings.Model, step.Settings.ClassName, capture.Image!,
+                step.Settings.ConfidenceThreshold, roi, ct);
+
+            if (rawResult?.Success != true)
             {
-                var errorMessage = $"Invalid step type - expected YOLODetectionStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("YOLOStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                logger.LogInformation(
+                    "YOLOStepHandler: No '{ClassName}' found above threshold {T}",
+                    step.Settings.ClassName, step.Settings.ConfidenceThreshold);
+                return new DetectionResult
+                {
+                    WasExecuted    = true,
+                    Found          = false,
+                    ProcessedImage = (Bitmap)capture.Image!.Clone()
+                };
             }
 
-            logger.LogDebug("YOLOStepHandler: Processing YOLO detection with model '{Model}' for class '{ClassName}'", 
-                yoloStep.Settings.Model, yoloStep.Settings.ClassName);
+            var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
+                    rawResult.CenterPoint,
+                    capture.Offset);
 
-            try
+            logger.LogInformation(
+                "YOLOStepHandler: Found at ({X},{Y}) confidence {C:F3}",
+                globalPoint.X, globalPoint.Y, rawResult.Confidence);
+
+            Bitmap processedImg;
+            if (step.Settings.DrawResults)
             {
-                // Validation
-                if (string.IsNullOrWhiteSpace(yoloStep.Settings.Model))
-                {
-                    var errorMessage = "No YOLO model specified";
-                    logger.LogWarning("YOLOStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                if (string.IsNullOrWhiteSpace(yoloStep.Settings.ClassName))
-                {
-                    var errorMessage = "No class name specified for YOLO detection";
-                    logger.LogWarning("YOLOStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                if (executor.CurrentImage == null)
-                {
-                    var errorMessage = "No current image available for YOLO detection";
-                    logger.LogWarning("YOLOStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                if (executor.YoloManager == null)
-                {
-                    var errorMessage = "YoloManager not available in executor";
-                    logger.LogError("YOLOStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                // Ensure model is available/downloaded
-                await executor.YoloManager.EnsureModelAsync(yoloStep.Settings.Model, ct);
-                logger.LogDebug("YOLOStepHandler: Model '{Model}' ensured/loaded", yoloStep.Settings.Model);
-
-                // Prepare ROI if enabled
-                System.Drawing.Rectangle? roi = null;
-                if (yoloStep.Settings.EnableROI && yoloStep.Settings.ROI.Width > 0 && yoloStep.Settings.ROI.Height > 0)
-                {
-                    roi = new System.Drawing.Rectangle(
-                        yoloStep.Settings.ROI.X,
-                        yoloStep.Settings.ROI.Y,
-                        yoloStep.Settings.ROI.Width,
-                        yoloStep.Settings.ROI.Height);
-                    logger.LogDebug("YOLOStepHandler: ROI enabled with bounds {ROI}", roi);
-                }
-
-                logger.LogInformation("YOLOStepHandler: Starting YOLO detection with model '{Model}', class '{ClassName}', threshold {Threshold}", 
-                    yoloStep.Settings.Model, yoloStep.Settings.ClassName, yoloStep.Settings.ConfidenceThreshold);
-
-                // Perform YOLO detection
-                executor.DetectionResult = await executor.YoloManager.DetectAsync(
-                    yoloStep.Settings.Model,
-                    yoloStep.Settings.ClassName,
-                    executor.CurrentImage,
-                    yoloStep.Settings.ConfidenceThreshold,
-                    roi,
-                    ct);
-
-                // Always update CurrentImageWithResult, either with annotations or without
-                if (executor.DetectionResult?.Success == true)
-                {
-                    // Convert to global desktop coordinates
-                    executor.LatestCalculatedPoint = ClassConverter.ToCv(
-                        ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
-                            executor.DetectionResult.CenterPoint,
-                            ClassConverter.ToDrawing(executor.CurrentOffset)
-                        )
-                    );
-
-                    logger.LogInformation("YOLOStepHandler: YOLO detection successful at point ({X}, {Y}) with confidence {Confidence:F3}", 
-                        executor.LatestCalculatedPoint.Value.X, executor.LatestCalculatedPoint.Value.Y, 
-                        executor.DetectionResult.Confidence);
-
-                    // Draw results if enabled, otherwise use clean image
-                    if (yoloStep.Settings.DrawResults)
-                    {
-                        executor.ImageToProcess = (Bitmap)executor.CurrentImage.Clone();
-                        executor.CurrentImageWithResult = DrawResult.DrawDetectionResult(
-                            executor.ImageToProcess,
-                            executor.DetectionResult);
-                        logger.LogDebug("YOLOStepHandler: Results drawn on image");
-                    }
-                    else
-                    {
-                        // Set CurrentImageWithResult to current image without annotations
-                        executor.CurrentImageWithResult = (Bitmap)executor.CurrentImage.Clone();
-                        logger.LogDebug("YOLOStepHandler: CurrentImageWithResult set to clean image (DrawResults disabled)");
-                    }
-                }
-                else
-                {
-                    // If YOLO detection failed, reset the point but still update the image
-                    executor.LatestCalculatedPoint = null;
-                    executor.CurrentImageWithResult = (Bitmap)executor.CurrentImage.Clone();
-                    logger.LogInformation("YOLOStepHandler: YOLO detection failed - no object '{ClassName}' found above threshold {Threshold}", 
-                        yoloStep.Settings.ClassName, yoloStep.Settings.ConfidenceThreshold);
-                    logger.LogDebug("YOLOStepHandler: CurrentImageWithResult set to clean image (no detections)");
-                }
-
-                return true;
+                var imageToProcess = (Bitmap)capture.Image!.Clone();
+                processedImg = DrawResult.DrawDetectionResult(imageToProcess, rawResult);
+                if (!ReferenceEquals(processedImg, imageToProcess))
+                    imageToProcess.Dispose();
             }
-            catch (OperationCanceledException)
+            else
             {
-                logger.LogInformation("YOLOStepHandler: YOLO detection was cancelled");
-                return false; // Return false for cancellation, don't treat as error
+                processedImg = (Bitmap)capture.Image!.Clone();
             }
-            catch (Exception ex)
+
+            return new DetectionResult
             {
-                logger.LogError(ex, "YOLOStepHandler: Failed to execute YOLO detection: {ErrorMessage}", ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+                WasExecuted    = true,
+                Found          = true,
+                Point          = globalPoint,
+                Confidence     = rawResult.Confidence,
+                ProcessedImage = processedImg
+            };
         }
+
+        protected override DetectionResult CreateDefault() => DetectionResult.Default;
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
@@ -12,86 +13,56 @@ using Point = OpenCvSharp.Point;
 
 namespace TaskAutomation.Steps
 {
-    public class KlickOnPoint3DStepHandler : IJobStepHandler
+    public sealed class KlickOnPoint3DStepHandler : JobStepHandler<KlickOnPoint3DStep, TaskResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor jobExecutor, CancellationToken ct)
+        protected override async Task<TaskResult> ExecuteCoreAsync(
+            KlickOnPoint3DStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = jobExecutor.Logger;
+            var logger = ctx.Logger;
 
-            if (step is not KlickOnPoint3DStep klickStep3D)
+            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+            if (!detection.Found || detection.Point is null)
             {
-                var errorMessage = $"Invalid step type - expected KlickOnPoint3DStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("KlickOnPoint3DStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                logger.LogInformation("KlickOnPoint3DStepHandler: No detection point available, skipping");
+                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
             }
 
-            logger.LogDebug("KlickOnPoint3DStepHandler: Processing klick on point 3D step with FOV '{FOV}', sensitivity X: {SensitivityX}, sensitivity Y: {SensitivityY}, click type: '{ClickType}', double click: {DoubleClick}, timeout: {TimeoutMs}ms, invert Y: {InvertY}, invert X: {InvertX}",
-                klickStep3D.Settings.FOV, klickStep3D.Settings.MausSensitivityX, klickStep3D.Settings.MausSensitivityY,
-                klickStep3D.Settings.ClickType, klickStep3D.Settings.DoubleClick, klickStep3D.Settings.TimeoutMs,
-                klickStep3D.Settings.InvertMouseMovementY, klickStep3D.Settings.InvertMouseMovementX);
-
-            try
+            var stepKey = $"KlickOnPoint3D_{step.Id}";
+            if (ctx.StepTimeouts.TryGetValue(stepKey, out var last))
             {
-                if (jobExecutor.LatestCalculatedPoint == null)
+                var elapsed = DateTime.Now - last;
+                if (elapsed.TotalMilliseconds < step.Settings.TimeoutMs)
                 {
-                    var infoMessage = "No valid point available for clicking - point not set by previous steps";
-                    logger.LogInformation("KlickOnPoint3DStepHandler: {InfoMessage}", infoMessage);
-                    return true;
+                    logger.LogDebug("KlickOnPoint3DStepHandler: Timeout not elapsed ({R:F0}ms remaining), skipping",
+                        step.Settings.TimeoutMs - elapsed.TotalMilliseconds);
+                    return new TaskResult { WasExecuted = true, Success = true };
                 }
-
-                var stepKey = $"KlickOnPoint3D_{klickStep3D.Id}";
-
-                if (jobExecutor.StepTimeouts.TryGetValue(stepKey, out var lastExecution))
-                {
-                    var timeSinceLastExecution = DateTime.Now - lastExecution;
-                    if (timeSinceLastExecution.TotalMilliseconds < klickStep3D.Settings.TimeoutMs)
-                    {
-                        // Timeout not yet elapsed, skip execution
-                        logger.LogDebug("KlickOnPoint3DStepHandler: Skipping click - timeout not yet elapsed ({TimeRemaining}ms remaining)",
-                            klickStep3D.Settings.TimeoutMs - timeSinceLastExecution.TotalMilliseconds);
-                        return true;
-                    }
-                }
-                jobExecutor.StepTimeouts[stepKey] = DateTime.Now;
-
-                var point = jobExecutor.LatestCalculatedPoint.Value;
-                var screenBounds = jobExecutor.DesktopBounds;
-
-                var (dx, dy) = CalculateRelativeMouseMovement(
-                    point,
-                    screenBounds.Size,
-                    klickStep3D.Settings.FOV,
-                    klickStep3D.Settings.MausSensitivityX,
-                    klickStep3D.Settings.MausSensitivityY,
-                    klickStep3D.Settings.InvertMouseMovementY,
-                    klickStep3D.Settings.InvertMouseMovementX
-                    );
-                logger.LogInformation("KlickOnPoint3DStepHandler: Moving mouse by (dx: {DX}, dy: {DY}) to target point ({X}, {Y}) and executing {ClickType} click",
-                    dx, dy, point.X, point.Y, klickStep3D.Settings.ClickType);
-
-                // Create temporary macro for click execution
-                var macro = CreateClickMacro(klickStep3D.Settings, new Point(dx, dy));
-
-                // Execute the macro
-                await jobExecutor.MakroExecutor.ExecuteMakro(macro, jobExecutor.DxgiResources, ct);
-
-                // Reset the point after click
-                jobExecutor.LatestCalculatedPoint = null;
-                
-                logger.LogDebug("KlickOnPoint3DStepHandler: Click executed successfully, point reset");
-                return true;
             }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("KlickOnPoint3DStepHandler: Klick on point 3D was cancelled");
-                return false; // Return false for cancellation, don't treat as error
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "KlickOnPoint3DStepHandler: Failed to execute klick on point 3D: {ErrorMessage}", ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+            ctx.StepTimeouts[stepKey] = DateTime.Now;
+
+            var point        = detection.Point.Value;
+            var capture      = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            var screenBounds = capture.Bounds;
+
+            var (dx, dy) = CalculateRelativeMouseMovement(
+                new OpenCvSharp.Point(point.X, point.Y), screenBounds.Size,
+                step.Settings.FOV,
+                step.Settings.MausSensitivityX,
+                step.Settings.MausSensitivityY,
+                step.Settings.InvertMouseMovementY,
+                step.Settings.InvertMouseMovementX);
+
+            logger.LogInformation(
+                "KlickOnPoint3DStepHandler: Moving mouse (dx:{DX}, dy:{DY}) to ({X},{Y}), click='{Click}'",
+                dx, dy, point.X, point.Y, step.Settings.ClickType);
+
+            var macro = CreateClickMacro(step.Settings, new Point(dx, dy));
+            await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
+
+            return new TaskResult { WasExecuted = true, Success = true };
         }
+
+        protected override TaskResult CreateDefault() => TaskResult.Default;
 
         private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point point)
         {

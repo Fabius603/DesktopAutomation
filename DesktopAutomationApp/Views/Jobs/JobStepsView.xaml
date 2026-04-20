@@ -13,6 +13,7 @@
 
     <UserControl.Resources>
         <conv:RectToStringConverter x:Key="RectToStringConverter"/>
+        <conv:StepPipelineInfoConverter x:Key="PipelineInfoConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -408,7 +409,43 @@
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Links: Step-Details via implizite DataTemplates -->
-                                <ContentPresenter Grid.Column="0" Content="{Binding}"/>
+                                <StackPanel Grid.Column="0">
+                                    <ContentPresenter Content="{Binding}"/>
+
+                                    <!-- Pipeline-Info -->
+                                    <Border Margin="0,6,0,0"
+                                            BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                            BorderThickness="0,1,0,0"
+                                            Padding="0,5,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Benötigt:"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource App.Brush.TextMuted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,5,0"/>
+                                            <Border Background="{StaticResource App.Brush.AccentSubtle}"
+                                                    BorderBrush="{StaticResource App.Brush.Accent}"
+                                                    BorderThickness="1" CornerRadius="3"
+                                                    Padding="5,1" Margin="0,0,10,0">
+                                                <TextBlock Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter='prereqs'}"
+                                                           Foreground="{StaticResource App.Brush.Accent}"
+                                                           FontSize="10"/>
+                                            </Border>
+                                            <TextBlock Text="Liefert:"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource App.Brush.TextMuted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,5,0"/>
+                                            <Border BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                                    BorderThickness="1" CornerRadius="3"
+                                                    Padding="5,1">
+                                                <TextBlock Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter='output'}"
+                                                           Foreground="{StaticResource App.Brush.TextSecondary}"
+                                                           FontSize="10"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
 
                                 <!-- Rechts: Buttons identisch zur Makro-Ansicht -->
                                 <StackPanel Grid.Column="1"

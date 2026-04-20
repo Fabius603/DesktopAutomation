@@ -1,75 +1,54 @@
 ﻿using ImageCapture.ProcessDuplication;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public class ProcessDuplicationStepHandler : IJobStepHandler
+    public sealed class ProcessDuplicationStepHandler : JobStepHandler<ProcessDuplicationStep, CaptureResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
+        protected override async Task<CaptureResult> ExecuteCoreAsync(
+            ProcessDuplicationStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = executor.Logger;
-            
-            if (step is not ProcessDuplicationStep pdStep)
+            var logger = ctx.Logger;
+            logger.LogDebug("ProcessDuplicationStepHandler: Capturing process '{ProcessName}'", step.Settings.ProcessName);
+
+            if (string.IsNullOrWhiteSpace(step.Settings.ProcessName))
+                throw new InvalidOperationException("No process name specified");
+
+            if (ctx.ProcessDuplicator == null)
+                ctx.ProcessDuplicator = new ProcessDuplicator(step.Settings.ProcessName);
+
+            using var captureResult = ctx.ProcessDuplicator.CaptureProcess();
+
+            if (!captureResult.ProcessFound)
             {
-                var errorMessage = $"Invalid step type - expected ProcessDuplicationStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("ProcessDuplicationStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                logger.LogWarning("ProcessDuplicationStepHandler: Process '{ProcessName}' not found", step.Settings.ProcessName);
+                return new CaptureResult { WasExecuted = true };
             }
 
-            logger.LogDebug("ProcessDuplicationStepHandler: Processing process duplication for process '{ProcessName}'", pdStep.Settings.ProcessName);
+            var bitmap = captureResult.ProcessImage.Clone() as Bitmap;
+            var offset = captureResult.WindowOffsetOnDesktop;
+            var bounds = new System.Drawing.Rectangle(
+                offset.X, offset.Y, bitmap!.Width, bitmap.Height);
 
-            try
+            logger.LogInformation(
+                "ProcessDuplicationStepHandler: Captured '{ProcessName}' at offset ({X},{Y})",
+                step.Settings.ProcessName, offset.X, offset.Y);
+
+            return new CaptureResult
             {
-                if (string.IsNullOrWhiteSpace(pdStep.Settings.ProcessName))
-                {
-                    var errorMessage = "No process name specified";
-                    logger.LogWarning("ProcessDuplicationStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                executor.ProcessDuplicationResult?.Dispose(); // Vorherigen Frame freigeben
-                executor.CurrentImage?.Dispose(); // Vorheriges Desktop-Bild freigeben
-
-                if (executor.ProcessDuplicator == null)
-                {
-                    executor.ProcessDuplicator = new ProcessDuplicator(pdStep.Settings.ProcessName);
-                    logger.LogDebug("ProcessDuplicationStepHandler: Created new ProcessDuplicator for process '{ProcessName}'", pdStep.Settings.ProcessName);
-                }
-
-                logger.LogInformation("ProcessDuplicationStepHandler: Capturing process '{ProcessName}'", pdStep.Settings.ProcessName);
-                executor.ProcessDuplicationResult = executor.ProcessDuplicator.CaptureProcess();
-                
-                if (!executor.ProcessDuplicationResult.ProcessFound)
-                {
-                    logger.LogWarning("ProcessDuplicationStepHandler: Process '{ProcessName}' not found", pdStep.Settings.ProcessName);
-                    return true; // Continue with next step
-                }
-
-                executor.CurrentImage = executor.ProcessDuplicationResult.ProcessImage.Clone() as Bitmap;
-                executor.CurrentOffset = executor.ProcessDuplicationResult.WindowOffsetOnDesktop;
-                
-                logger.LogInformation("ProcessDuplicationStepHandler: Successfully captured process '{ProcessName}' at offset ({X}, {Y})", 
-                    pdStep.Settings.ProcessName, executor.CurrentOffset.X, executor.CurrentOffset.Y);
-                
-                return true;
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("ProcessDuplicationStepHandler: Process duplication was cancelled");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "ProcessDuplicationStepHandler: Failed to capture process '{ProcessName}': {ErrorMessage}", pdStep.Settings.ProcessName, ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+                WasExecuted = true,
+                Image       = bitmap,
+                Bounds      = bounds,
+                Offset      = new System.Drawing.Point(offset.X, offset.Y)
+            };
         }
+
+        protected override CaptureResult CreateDefault() => CaptureResult.Default;
     }
 }
+

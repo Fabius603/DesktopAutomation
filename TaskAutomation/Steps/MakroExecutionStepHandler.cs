@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
@@ -9,69 +8,39 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public class MakroExecutionStepHandler : IJobStepHandler
+    public sealed class MakroExecutionStepHandler : JobStepHandler<MakroExecutionStep, TaskResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
+        protected override async Task<TaskResult> ExecuteCoreAsync(
+            MakroExecutionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = executor.Logger;
-            
-            if (step is not MakroExecutionStep miStep)
+            var logger = ctx.Logger;
+            logger.LogDebug("MakroExecutionStepHandler: Executing makro '{Name}'", step.Settings.MakroName);
+
+            Makro? makro = null;
+            if (step.Settings.MakroId.HasValue)
             {
-                var errorMessage = $"Invalid step type - expected MakroExecutionStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                makro = ctx.AllMakros.Values.FirstOrDefault(m => m.Id == step.Settings.MakroId.Value);
+                if (makro == null)
+                    throw new InvalidOperationException($"Makro with ID '{step.Settings.MakroId}' not found");
+            }
+            else if (!string.IsNullOrWhiteSpace(step.Settings.MakroName))
+            {
+                makro = ctx.AllMakros.Values.FirstOrDefault(m =>
+                    string.Equals(m.Name, step.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
+                if (makro == null)
+                    throw new InvalidOperationException($"Makro '{step.Settings.MakroName}' not found");
+            }
+            else
+            {
+                throw new InvalidOperationException("No makro ID or name specified");
             }
 
-            logger.LogDebug("MakroExecutionStepHandler: Processing makro execution for makro '{MakroName}'", miStep.Settings.MakroName);
+            logger.LogInformation("MakroExecutionStepHandler: Executing '{Name}' (ID:{Id})", makro.Name, makro.Id);
+            await ctx.MakroExecutor.ExecuteMakro(makro, ctx.DxgiResources, ct);
 
-            try
-            {
-                // Try to find by ID first, fallback to name for backward compatibility
-                TaskAutomation.Makros.Makro? makro = null;
-                if (miStep.Settings.MakroId.HasValue)
-                {
-                    makro = executor.AllMakros.Values.FirstOrDefault(m => m.Id == miStep.Settings.MakroId.Value);
-                    if (makro == null)
-                    {
-                        var errorMessage = $"Makro with ID '{miStep.Settings.MakroId}' not found";
-                        logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
-                        throw new InvalidOperationException(errorMessage);
-                    }
-                }
-                else if (!string.IsNullOrWhiteSpace(miStep.Settings.MakroName))
-                {
-                    makro = executor.AllMakros.Values.FirstOrDefault(m => string.Equals(m.Name, miStep.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
-                    if (makro == null)
-                    {
-                        var errorMessage = $"Makro '{miStep.Settings.MakroName}' not found";
-                        logger.LogError("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
-                        throw new InvalidOperationException(errorMessage);
-                    }
-                }
-                else
-                {
-                    var errorMessage = "No makro ID or name specified";
-                    logger.LogWarning("MakroExecutionStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                logger.LogInformation("MakroExecutionStepHandler: Executing makro '{MakroName}' (ID: {MakroId})", makro.Name, makro.Id);
-                await executor.MakroExecutor.ExecuteMakro(makro, executor.DxgiResources, ct);
-                logger.LogInformation("MakroExecutionStepHandler: Makro '{MakroName}' executed successfully", makro.Name);
-
-                return true;
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("MakroExecutionStepHandler: Makro execution was cancelled");
-                return false; // Return false for cancellation, don't treat as error
-            }
-            catch (Exception ex)
-            {
-                var makroInfo = miStep.Settings.MakroId.HasValue ? $"ID '{miStep.Settings.MakroId}'" : $"name '{miStep.Settings.MakroName}'";
-                logger.LogError(ex, "MakroExecutionStepHandler: Failed to execute makro {MakroInfo}: {ErrorMessage}", makroInfo, ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+            return new TaskResult { WasExecuted = true, Success = true };
         }
+
+        protected override TaskResult CreateDefault() => TaskResult.Default;
     }
 }

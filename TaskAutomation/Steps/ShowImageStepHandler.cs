@@ -1,81 +1,50 @@
-﻿using OpenCvSharp;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
-using OpenCvSharp.Extensions;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Events;
 
 namespace TaskAutomation.Steps
 {
-    public class ShowImageStepHandler : IJobStepHandler
+    public sealed class ShowImageStepHandler : JobStepHandler<ShowImageStep, OutputResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
+        protected override async Task<OutputResult> ExecuteCoreAsync(
+            ShowImageStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = executor.Logger;
-            
-            if (step is not ShowImageStep siStep)
+            var logger = ctx.Logger;
+            logger.LogDebug("ShowImageStepHandler: Window '{Name}'", step.Settings.WindowName);
+
+            var capture   = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+
+            var rawImage       = capture.Image;
+            var processedImage = detection.ProcessedImage ?? rawImage;
+
+            if (rawImage == null)
+                throw new InvalidOperationException("No captured image available to display");
+
+            if (step.Settings.ShowRawImage)
             {
-                var errorMessage = $"Invalid step type - expected ShowImageStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("ShowImageStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                var winName = $"{step.Settings.WindowName} - Raw Image";
+                ctx.ImageDisplayService.DisplayImage(winName, rawImage, ImageDisplayType.Raw);
+                logger.LogDebug("ShowImageStepHandler: Raw image displayed in '{Win}'", winName);
             }
 
-            logger.LogDebug("ShowImageStepHandler: Processing show image step with window name '{WindowName}'", siStep.Settings.WindowName);
-
-            try
+            if (step.Settings.ShowProcessedImage)
             {
-                if (executor.CurrentImage == null)
-                {
-                    var errorMessage = "No current image available to display";
-                    logger.LogWarning("ShowImageStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
+                var winName = $"{step.Settings.WindowName} - Processed Image";
+                var img     = (processedImage != null && processedImage.Width >= 10 && processedImage.Height >= 10)
+                                  ? processedImage : rawImage;
+                ctx.ImageDisplayService.DisplayImage(winName, img, ImageDisplayType.Processed);
+                logger.LogDebug("ShowImageStepHandler: Processed image displayed in '{Win}'", winName);
+            }
 
-                if (siStep.Settings.ShowRawImage)
-                {
-                    string windowName = $"{siStep.Settings.WindowName} - Raw Image";
-                    executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImage, ImageDisplayType.Raw);
-                    logger.LogDebug("ShowImageStepHandler: Requested display of raw image in window '{WindowName}'", windowName);
-                }
-                
-                if (siStep.Settings.ShowProcessedImage)
-                {
-                    string windowName = $"{siStep.Settings.WindowName} - Processed Image";
-                    if (executor.CurrentImageWithResult != null &&
-                        executor.CurrentImageWithResult.Width >= 10 &&
-                        executor.CurrentImageWithResult.Height >= 10)
-                    {
-                        executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImageWithResult, ImageDisplayType.Processed);
-                        logger.LogDebug("ShowImageStepHandler: Requested display of processed image in window '{WindowName}'", windowName);
-                    }
-                    else
-                    {
-                        if (executor.CurrentImage != null)
-                        {
-                            executor.ImageDisplayService.DisplayImage(windowName, executor.CurrentImage, ImageDisplayType.Raw);
-                            logger.LogDebug("ShowImageStepHandler: Requested display of raw image as processed image in window '{WindowName}' (processed image not available)", windowName);
-                        }
-                    }
-                }
-
-                logger.LogInformation("ShowImageStepHandler: Images displayed successfully");
-                return true;
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("ShowImageStepHandler: Show image was cancelled");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "ShowImageStepHandler: Failed to display images: {ErrorMessage}", ex.Message);
-                throw; // Re-throw all other exceptions
-            }
+            logger.LogInformation("ShowImageStepHandler: Images displayed successfully");
+            return new OutputResult { WasExecuted = true, Success = true };
         }
+
+        protected override OutputResult CreateDefault() => OutputResult.Default;
     }
 }

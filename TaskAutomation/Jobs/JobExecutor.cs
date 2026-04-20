@@ -9,23 +9,17 @@ using ImageCapture.DesktopDuplication;
 using ImageCapture.Video;
 using System.Drawing;
 using ImageDetection.Algorithms.TemplateMatching;
-using OpenCvSharp.Extensions;
 using ImageDetection;
-using SharpDX;
 using System.Text;
-using Point = OpenCvSharp.Point;
 using ImageHelperMethods;
 using TaskAutomation.Makros;
 using System.Linq;
 using TaskAutomation.Steps;
 using Microsoft.Extensions.Logging;
-using Common.Logging;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
-using System.CodeDom.Compiler;
 using TaskAutomation.Scripts;
 using TaskAutomation.Orchestration;
 using Common.JsonRepository;
-using ImageDetection.Model;
 using ImageDetection.YOLO;
 using TaskAutomation.Events;
 
@@ -38,183 +32,57 @@ namespace TaskAutomation.Jobs
         private readonly IJsonRepository<Makro> _makroRepository;
         private readonly IRecordingIndicatorOverlay _recordingOverlay;
         private readonly IImageDisplayService _imageDisplayService;
-
-        // Event für allgemeine Job Fehler
-        public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
-        
-        // Event für Job Step Fehler
-        public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
-        private Rectangle _desktopBounds;
-        private ProcessDuplicatorResult _processDuplicationResult;
-        private DesktopFrame _currentDesktopFrame;
-        private IMakroExecutor _makroExecutor;
-        private IScriptExecutor _scriptExecutor;
-        private Bitmap _currentImage;
-        private Bitmap _currentImageWithResult;
+        private readonly IMakroExecutor _makroExecutor;
+        private readonly IScriptExecutor _scriptExecutor;
+        private readonly IYoloManager _yoloManager;
         private bool _disposed = false;
-        private StreamVideoRecorder _videoRecorder;
-        private ProcessDuplicator _processDuplicator;
-        private DesktopDuplicator _desktopDuplicator;
-        private IYoloManager _yoloManager;
-        private TemplateMatching _templateMatcher;
-        private IDetectionResult _detectionResult;
-        private Bitmap _imageToProcess;
-        private Point _currentOffset = new Point(0, 0);
-        private DxgiResources _dxgiResources { get; } = DxgiResources.Instance;
-        private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly DxgiResources _dxgiResources = DxgiResources.Instance;
+        private readonly Dictionary<string, Job>   _allJobs   = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
         private Job? _currentJob;
 
-        /// <summary>
-        /// Verfolgt die Job-Aufrufkette im aktuellen async-Kontext für Zykluserkennung.
-        /// Jede Ebene bekommt einen Snapshot — keine Konflikte mit parallelen Chains.
-        /// </summary>
+        // ── Events ─────────────────────────────────────────────────────────────
+        public event EventHandler<JobErrorEventArgs>?     JobErrorOccurred;
+        public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
+
+        // ── Zyklus-Erkennung ───────────────────────────────────────────────────
         private static readonly AsyncLocal<ImmutableHashSet<Guid>> _executionChain = new();
 
-        /// <summary>
-        /// Steps, die nur von einem Job gleichzeitig verwendet werden dürfen.
-        /// Key: Step-Typ, Value: Fehlermeldung ({0} = Owner-Jobname).
-        /// </summary>
+        // ── Exklusive Steps ────────────────────────────────────────────────────
         private static readonly Dictionary<Type, string> _exclusiveSteps = new()
         {
             [typeof(DesktopDuplicationStep)] = "Desktop Duplication wird bereits von Job '{0}' verwendet.",
         };
-
-        /// <summary>
-        /// Aktuell belegte exklusive Steps. Key: Step-Typ, Value: Name des Jobs der ihn belegt.
-        /// </summary>
         private readonly ConcurrentDictionary<Type, string> _exclusiveStepOwners = new();
 
-        public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
+        // ── Handler-Registry ───────────────────────────────────────────────────
+        private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
+        {
+            { typeof(ProcessDuplicationStep),  new ProcessDuplicationStepHandler()  },
+            { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
+            { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
+            { typeof(ShowImageStep),           new ShowImageStepHandler()           },
+            { typeof(VideoCreationStep),       new VideoCreationStepHandler()       },
+            { typeof(MakroExecutionStep),      new MakroExecutionStepHandler()      },
+            { typeof(ScriptExecutionStep),     new ScriptExecutionStepHandler()     },
+            { typeof(KlickOnPointStep),        new KlickOnPointStepHandler()        },
+            { typeof(KlickOnPoint3DStep),      new KlickOnPoint3DStepHandler()      },
+            { typeof(JobExecutionStep),        new JobExecutionStepHandler()        },
+            { typeof(YOLODetectionStep),       new YOLOStepHandler()                },
+        };
+
+        // ── IJobExecutor ───────────────────────────────────────────────────────
+        public IReadOnlyDictionary<string, Job>   AllJobs   => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
-        public Job? CurrentJob 
+        public IYoloManager   YoloManager   => _yoloManager;
+        public IMakroExecutor MakroExecutor => _makroExecutor;
+
+        public Job? CurrentJob
         {
             get => _currentJob;
             private set => _currentJob = value;
         }
-
-        private Point? _latestCalculatedPoint;
-        private readonly Dictionary<string, DateTime> _stepTimeouts = new(StringComparer.OrdinalIgnoreCase);
-
-
-        private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
-        {
-            { typeof(ProcessDuplicationStep), new ProcessDuplicationStepHandler() },
-            { typeof(DesktopDuplicationStep), new DesktopDuplicationStepHandler() },
-            { typeof(TemplateMatchingStep), new TemplateMatchingStepHandler() },
-            { typeof(ShowImageStep), new ShowImageStepHandler() },
-            { typeof(VideoCreationStep), new VideoCreationStepHandler() },
-            { typeof(MakroExecutionStep), new MakroExecutionStepHandler() },
-            { typeof(ScriptExecutionStep), new ScriptExecutionStepHandler() },
-            { typeof(KlickOnPointStep), new KlickOnPointStepHandler() },
-            { typeof(KlickOnPoint3DStep), new KlickOnPoint3DStepHandler() },
-            { typeof(JobExecutionStep), new JobExecutionStepHandler() },
-            { typeof(YOLODetectionStep), new YOLOStepHandler() },
-        };
-
-        // Öffentliche Properties für den Zugriff von außen (z.B. Handler)
-        public ProcessDuplicatorResult ProcessDuplicationResult
-        {
-            get => _processDuplicationResult;
-            set => _processDuplicationResult = value;
-        }
-
-        public DesktopFrame CurrentDesktopFrame
-        {
-            get => _currentDesktopFrame;
-            set => _currentDesktopFrame = value;
-        }
-
-        public Bitmap CurrentImage
-        {
-            get => _currentImage;
-            set => _currentImage = value;
-        }
-
-        public Bitmap CurrentImageWithResult
-        {
-            get => _currentImageWithResult;
-            set => _currentImageWithResult = value;
-        }
-
-        public StreamVideoRecorder VideoRecorder
-        {
-            get => _videoRecorder;
-            set => _videoRecorder = value;
-        }
-
-        public ProcessDuplicator ProcessDuplicator
-        {
-            get => _processDuplicator;
-            set => _processDuplicator = value;
-        }
-
-        public DesktopDuplicator DesktopDuplicator
-        {
-            get => _desktopDuplicator;
-            set => _desktopDuplicator = value;
-        }
-
-        public IYoloManager YoloManager
-        {
-            get => _yoloManager;
-            set => _yoloManager = value;
-        }
-
-        public TemplateMatching TemplateMatcher
-        {
-            get => _templateMatcher;
-            set => _templateMatcher = value;
-        }
-
-        public IDetectionResult DetectionResult
-        {
-            get => _detectionResult;
-            set => _detectionResult = value;
-        }
-
-        public Bitmap ImageToProcess
-        {
-            get => _imageToProcess;
-            set => _imageToProcess = value;
-        }
-
-        public Point CurrentOffset
-        {
-            get => _currentOffset;
-            set => _currentOffset = value;
-        }
-
-        public Rectangle DesktopBounds
-        {
-            get => _desktopBounds;
-            set => _desktopBounds = value;
-        }
-
-        public DxgiResources DxgiResources => _dxgiResources;
-
-        public IMakroExecutor MakroExecutor
-        {
-            get => _makroExecutor;
-            set => _makroExecutor = value;
-        }
-        public IScriptExecutor ScriptExecutor
-        {
-            get => _scriptExecutor;
-            set => _scriptExecutor = value;
-        }
-
-        public Point? LatestCalculatedPoint
-        {
-            get => _latestCalculatedPoint;
-            set => _latestCalculatedPoint = value;
-        }
-
-        public Dictionary<string, DateTime> StepTimeouts => _stepTimeouts;
-
-        public IImageDisplayService ImageDisplayService => _imageDisplayService;
-
-        public ILogger Logger => _logger;
 
         public JobExecutor(
             ILogger<JobExecutor> logger,
@@ -226,19 +94,20 @@ namespace TaskAutomation.Jobs
             IYoloManager yoloManager,
             IImageDisplayService imageDisplayService)
         {
-            _logger = logger;
-            _jobRepository = jobRepo;
-            _makroRepository = makroRepo;
-            _makroExecutor = makroExecutor;
-            _recordingOverlay = recordingOverlay;
-            _scriptExecutor = scriptExecutor;
-            _yoloManager = yoloManager;
+            _logger            = logger;
+            _jobRepository     = jobRepo;
+            _makroRepository   = makroRepo;
+            _makroExecutor     = makroExecutor;
+            _recordingOverlay  = recordingOverlay;
+            _scriptExecutor    = scriptExecutor;
+            _yoloManager       = yoloManager;
             _imageDisplayService = imageDisplayService;
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
 
-            _logger.LogInformation("JobExecutor initialisiert. Verfügbare Jobs: {JobCount}, Makros: {MakroCount}",
+            _logger.LogInformation(
+                "JobExecutor initialisiert. Jobs: {Jobs}, Makros: {Makros}",
                 AllJobs.Count, AllMakros.Count);
         }
 
@@ -328,59 +197,68 @@ namespace TaskAutomation.Jobs
         {
             if (job == null)
             {
-                var errorMessage = "Job ist null.";
-                _logger.LogError(errorMessage);
-                
-                // Event für allgemeine Job-Fehler auslösen  
-                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs("Unknown", 
-                    new ArgumentNullException(nameof(job), errorMessage)));
+                var err = "Job ist null.";
+                _logger.LogError(err);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs("Unknown",
+                    new ArgumentNullException(nameof(job), err)));
                 return;
             }
 
             CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
-            // Zyklus-Erkennung: prüfen ob dieser Job bereits in der aktuellen Aufrufkette ist
+            // ── Zyklus-Erkennung ──────────────────────────────────────────────
             var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
             if (parentChain.Contains(job.Id))
             {
                 var chain = string.Join(" → ", parentChain.Select(id =>
                     _allJobs.Values.FirstOrDefault(j => j.Id == id)?.Name ?? id.ToString()));
-                var errorMessage = $"Zirkuläre Abhängigkeit erkannt: Job '{job.Name}' ist bereits in der Aufrufkette [{chain}].";
-                _logger.LogError(errorMessage);
-                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(errorMessage)));
+                var err = $"Zirkuläre Abhängigkeit erkannt: Job '{job.Name}' ist bereits in [{chain}].";
+                _logger.LogError(err);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
                 return;
             }
             _executionChain.Value = parentChain.Add(job.Id);
 
-            // YOLO-Modelle vorladen für bessere Performance
+            // ── YOLO-Modelle vorladen ─────────────────────────────────────────
             await PreloadYoloModelsAsync(job, ct);
 
-            // Schritte, die optional aktiv sind
-            var videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
+            // ── Schritte analysieren ──────────────────────────────────────────
+            var videoStep             = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
-            var showImageStep = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
+            var showImageStep         = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
-            // Prüfen ob exklusive Steps bereits von einem anderen Job belegt sind
+            // ── Exklusive Steps reservieren ───────────────────────────────────
             var acquiredSteps = new List<Type>();
-            foreach (var (stepType, errorTemplate) in _exclusiveSteps)
+            foreach (var (stepType, errTemplate) in _exclusiveSteps)
             {
-                if (job.Steps.Any(s => s.GetType() == stepType))
+                if (!job.Steps.Any(s => s.GetType() == stepType)) continue;
+
+                if (!_exclusiveStepOwners.TryAdd(stepType, job.Name))
                 {
-                    if (!_exclusiveStepOwners.TryAdd(stepType, job.Name))
-                    {
-                        var owner = _exclusiveStepOwners[stepType];
-                        var errorMessage = string.Format(errorTemplate, owner);
-                        _logger.LogWarning(errorMessage);
-                        JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(errorMessage)));
-                        // Bereits belegte Steps wieder freigeben
-                        foreach (var acquired in acquiredSteps)
-                            _exclusiveStepOwners.TryRemove(acquired, out _);
-                        return;
-                    }
-                    acquiredSteps.Add(stepType);
+                    var owner = _exclusiveStepOwners[stepType];
+                    var err   = string.Format(errTemplate, owner);
+                    _logger.LogWarning(err);
+                    JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
+                    foreach (var acquired in acquiredSteps)
+                        _exclusiveStepOwners.TryRemove(acquired, out _);
+                    return;
                 }
+                acquiredSteps.Add(stepType);
             }
+
+            // ── Pipeline-Kontext erstellen ────────────────────────────────────
+            var pipelineCtx = new StepPipelineContext(
+                _logger,
+                _dxgiResources,
+                _allJobs,
+                _allMakros,
+                _makroExecutor,
+                _scriptExecutor,
+                _yoloManager,
+                _imageDisplayService,
+                job,
+                ExecuteJob);
 
             bool recorderStarted = false;
 
@@ -388,35 +266,28 @@ namespace TaskAutomation.Jobs
             {
                 ct.ThrowIfCancellationRequested();
 
-                // Videoaufnahme vorbereiten/optional starten
+                // ── VideoRecorder initialisieren ──────────────────────────────
                 if (videoStep != null)
                 {
                     try
                     {
-                        // Determine video resolution based on the desktop duplication step
-                        int videoWidth = 1920;
+                        int videoWidth  = 1920;
                         int videoHeight = 1080;
 
                         if (desktopDuplicationStep != null)
                         {
-                            var screenBounds = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
-                            if (!screenBounds.IsEmpty)
-                            {
-                                videoWidth = screenBounds.Width;
-                                videoHeight = screenBounds.Height;
-                            }
+                            var sb = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
+                            if (!sb.IsEmpty) { videoWidth = sb.Width; videoHeight = sb.Height; }
                         }
 
-                        _videoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
+                        pipelineCtx.VideoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
                         {
                             OutputDirectory = videoStep.Settings.SavePath,
-                            FileName = videoStep.Settings.FileName
+                            FileName        = videoStep.Settings.FileName
                         };
-
-                        // Kann selbst abgebrochen werden -> Flag erst NACH erfolgreichem Start setzen
-                        await _videoRecorder.StartAsync(ct).ConfigureAwait(false);
+                        await pipelineCtx.VideoRecorder.StartAsync(ct).ConfigureAwait(false);
                         recorderStarted = true;
-                        _logger.LogInformation("VideoRecorder gestartet …");
+                        _logger.LogInformation("VideoRecorder gestartet.");
                     }
                     catch (Exception ex)
                     {
@@ -425,73 +296,43 @@ namespace TaskAutomation.Jobs
                     }
                 }
 
+                // ── Aufnahme-Overlay ──────────────────────────────────────────
                 if (desktopDuplicationStep != null && !_recordingOverlay.IsRunning)
                 {
-                    DesktopBounds = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
-
                     try
                     {
-                        StartRecordingOverlay(
-                            options: new RecordingIndicatorOptions
-                            {
-                                MonitorIndex = desktopDuplicationStep.Settings.DesktopIdx,
-                                Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
-                                BorderThickness = 2f,
-                                Mode = RecordingIndicatorMode.RedBorder,
-                                BadgeCorner = Corner.TopRight,
-                                Label = "REC"
-                            });
+                        StartRecordingOverlay(new RecordingIndicatorOptions
+                        {
+                            MonitorIndex    = desktopDuplicationStep.Settings.DesktopIdx,
+                            Color           = new GameOverlay.Drawing.Color(255, 64, 64, 220),
+                            BorderThickness = 2f,
+                            Mode            = RecordingIndicatorMode.RedBorder,
+                            BadgeCorner     = Corner.TopRight,
+                            Label           = "REC"
+                        });
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Fehler beim Starten des Aufnahme-Overlays: {Message}", ex.Message);
-                        throw; // Job abbrechen
+                        throw;
                     }
                 }
 
-                bool continueJob = true;
+                // ── Ausführungsschleife ───────────────────────────────────────
                 do
                 {
-                    // Vor jeder Runde alte Prozess-Duplizierung freigeben
-                    _processDuplicationResult?.Dispose();
-                    _processDuplicationResult = null;
+                    pipelineCtx.ResetResults();
 
-                    foreach (JobStep step in job.Steps)
+                    foreach (var step in job.Steps)
                     {
                         ct.ThrowIfCancellationRequested();
-
-                        try
-                        {
-                            bool success = await ExecuteStepAsync(step, job, ct).ConfigureAwait(false);
-                            if (success)
-                            {
-                                _logger.LogDebug("Job '{JobName}' Schritt '{StepType}' erfolgreich.", job.Name, step.GetType().Name);
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Job '{JobName}' Schritt '{StepType}' fehlgeschlagen - Job wird beendet.", job.Name, step.GetType().Name);
-                                continueJob = false;
-                                break; // Job bei Fehler sofort beenden
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
-                            continueJob = false;
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Fehler in Schritt '{StepType}': {Message}",
-                                step.GetType().Name, ex.Message);
-                            continueJob = false;
-                            break;
-                        }
+                        await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
+                        _logger.LogDebug(
+                            "Job '{JobName}' → Step '{StepType}' abgeschlossen.",
+                            job.Name, step.GetType().Name);
                     }
-
-                    if (!continueJob) break;
                 }
-                while (job.Repeating && continueJob);
+                while (job.Repeating && !ct.IsCancellationRequested);
             }
             catch (OperationCanceledException)
             {
@@ -499,106 +340,73 @@ namespace TaskAutomation.Jobs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unerwarteter Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
-                
-                // Event für allgemeine Job-Fehler auslösen
+                _logger.LogError(ex, "Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
             }
             finally
             {
                 CurrentJob = null;
+
                 if (showImageStep != null)
                 {
-                    Cv2.DestroyAllWindows();
+                    try { Cv2.DestroyAllWindows(); } catch { /* best-effort */ }
                 }
 
-                // Stop/Speichern VideoRecorder nur, wenn tatsächlich gestartet
-                if (recorderStarted && _videoRecorder != null)
+                if (recorderStarted && pipelineCtx.VideoRecorder != null)
                 {
                     try
                     {
-                        await _videoRecorder.StopAndSave();
+                        await pipelineCtx.VideoRecorder.StopAndSave();
                         _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Fehler beim Stoppen/Speichern des VideoRecorders.");
-                    }
+                    catch (Exception ex) { _logger.LogError(ex, "Fehler beim Stoppen des VideoRecorders."); }
                 }
 
-                // Desktop-Duplizierung/Overlay nur, wenn der Step existierte (und ggf. initialisiert wurde)
                 if (desktopDuplicationStep != null)
                 {
-                    try
-                    {
-                        _desktopDuplicator?.Dispose();
-                        _desktopDuplicator = null;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Fehler beim Dispose des DesktopDuplicators.");
-                    }
-
-                    try
-                    {
-                        StopRecordingOverlay();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Fehler beim StopRecordingOverlay.");
-                    }
+                    try { StopRecordingOverlay(); }
+                    catch (Exception ex) { _logger.LogError(ex, "Fehler beim StopRecordingOverlay."); }
                 }
 
-                // Generelles Aufräumen (idempotent)
-                try { _processDuplicationResult?.Dispose(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Dispose von _processDuplicationResult."); }
-                try { _videoRecorder?.Dispose(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Dispose des VideoRecorders."); }
-                try { Cv2.DestroyAllWindows(); } catch (Exception ex) { _logger.LogError(ex, "Fehler beim Schließen von OpenCV-Fenstern."); }
+                try { pipelineCtx.VideoRecorder?.Dispose(); } catch { /* best-effort */ }
+                try { pipelineCtx.Dispose(); }                catch { /* best-effort */ }
+                try { Cv2.DestroyAllWindows(); }              catch { /* best-effort */ }
 
-                // YOLO-Modelle optional entladen (Ressourcen sparen)
                 await UnloadYoloModelsAsync(job);
 
-                // Abschluss-Log (Status abhängig von Abbruch)
-                _logger.LogInformation("Job '{JobName}' {Status}.", job.Name, "beendet");
+                _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
 
-                // Exklusive Steps wieder freigeben
                 foreach (var acquired in acquiredSteps)
                     _exclusiveStepOwners.TryRemove(acquired, out _);
 
-                // Aufrufkette auf den Zustand vor diesem Job zurücksetzen
                 _executionChain.Value = parentChain;
             }
         }
 
-        /// <summary>
-        /// Führt einen einzelnen Job-Schritt aus.
-        /// </summary>
-        /// <param name="step">Das Schrittobjekt.</param>
-        /// <param name="jobContext">Der aktuelle Job-Kontext (für übergreifende Infos wie Repeating).</param>
-        /// <returns>True, wenn der Job fortgesetzt werden soll, false bei Abbruch.</returns>
-        private async Task<bool> ExecuteStepAsync(object step, Job jobContext, CancellationToken ct)
+        /// <summary>Führt einen einzelnen Step aus und feuert bei Ausnahmen das Error-Event.</summary>
+        private async Task ExecuteStepAsync(
+            JobStep step, StepPipelineContext ctx, Job job, CancellationToken ct)
         {
             if (!_stepHandlers.TryGetValue(step.GetType(), out var handler))
             {
                 _logger.LogWarning("Unbekannter Step-Typ: {StepType}", step.GetType().Name);
-                return true;
+                return;
             }
 
             try
             {
-                return await handler.ExecuteAsync(step, jobContext, this, ct);
+                await handler.ExecuteAsync(step, ctx, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Weitergeben – wird in der Ausführungsschleife behandelt
             }
             catch (Exception ex)
             {
-                var stepTypeName = step.GetType().Name;
-                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", stepTypeName, ex.Message);
-                
-                // Event für UI-Fehlerbehandlung auslösen
-                JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(
-                    jobContext.Name, 
-                    stepTypeName, 
-                    ex));
-                
-                return false; // Job stoppen bei Fehler
+                var typeName = step.GetType().Name;
+                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", typeName, ex.Message);
+                JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, typeName, ex));
+                throw; // Job stoppen
             }
         }
 
@@ -737,18 +545,6 @@ namespace TaskAutomation.Jobs
         {
             if (!_disposed)
             {
-                if (disposing)
-                {
-                    _processDuplicationResult?.Dispose();
-                    _currentImage?.Dispose();
-                    _videoRecorder?.Dispose();
-                    _currentDesktopFrame?.Dispose();
-                    _currentImageWithResult?.Dispose();
-                    _processDuplicator?.Dispose();
-                    _desktopDuplicator?.Dispose();
-                    _templateMatcher?.Dispose();
-                    _imageToProcess?.Dispose();
-                }
                 _disposed = true;
             }
         }

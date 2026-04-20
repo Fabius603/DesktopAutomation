@@ -1,96 +1,49 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
-using OpenCvSharp.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public class VideoCreationStepHandler : IJobStepHandler
+    public sealed class VideoCreationStepHandler : JobStepHandler<VideoCreationStep, OutputResult>
     {
-        public async Task<bool> ExecuteAsync(object step, Job jobContext, IJobExecutor executor, CancellationToken ct)
+        protected override async Task<OutputResult> ExecuteCoreAsync(
+            VideoCreationStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger = executor.Logger;
+            var logger = ctx.Logger;
+            ct.ThrowIfCancellationRequested();
 
-            if (step is not VideoCreationStep vcStep)
+            if (ctx.VideoRecorder == null)
+                throw new InvalidOperationException("VideoRecorder is not initialized");
+
+            var capture   = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+
+            if (capture.Image == null || capture.Image.Width == 0)
+                throw new InvalidOperationException("No valid image available for video recording");
+
+            Bitmap? frameToAdd;
+            if (step.Settings.UseRawImage)
             {
-                var errorMessage = $"Invalid step type - expected VideoCreationStep, got {step?.GetType().Name ?? "null"}";
-                logger.LogError("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                frameToAdd = (Bitmap)capture.Image.Clone();
+            }
+            else
+            {
+                var processed = detection.ProcessedImage;
+                frameToAdd = (processed != null && processed.Width > 0)
+                    ? (Bitmap)processed.Clone()
+                    : (Bitmap)capture.Image.Clone();
             }
 
-            logger.LogDebug("VideoCreationStepHandler: Processing video creation step");
+            ct.ThrowIfCancellationRequested();
+            ctx.VideoRecorder.AddFrame(frameToAdd);
+            logger.LogDebug("VideoCreationStepHandler: Frame added to video recorder");
 
-            try
-            {
-                ct.ThrowIfCancellationRequested();
-
-                if (executor.VideoRecorder == null)
-                {
-                    var errorMessage = "VideoRecorder is not initialized";
-                    logger.LogWarning("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                if (!string.IsNullOrEmpty(vcStep.Settings.SavePath))
-                {
-                    executor.VideoRecorder.OutputDirectory = vcStep.Settings.SavePath;
-                    logger.LogDebug("VideoCreationStepHandler: Set output directory to '{SavePath}'", vcStep.Settings.SavePath);
-                }
-
-                if (!string.IsNullOrEmpty(vcStep.Settings.FileName))
-                {
-                    executor.VideoRecorder.FileName = vcStep.Settings.FileName;
-                    logger.LogDebug("VideoCreationStepHandler: Set filename to '{FileName}'", vcStep.Settings.FileName);
-                }
-
-                if (executor.CurrentImage == null || executor.CurrentImage.Width == 0 && executor.CurrentImage.Height == 0)
-                {
-                    var errorMessage = "No valid image available for video recording";
-                    logger.LogWarning("VideoCreationStepHandler: {ErrorMessage}", errorMessage);
-                    throw new InvalidOperationException(errorMessage);
-                }
-
-                if (vcStep.Settings.UseRawImage)
-                {
-                    ct.ThrowIfCancellationRequested();
-                    executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImage?.Clone());
-                    logger.LogDebug("VideoCreationStepHandler: Added raw image frame to video");
-                }
-                else if (vcStep.Settings.UseProcessedImage)
-                {
-                    if (executor.CurrentImageWithResult != null && executor.CurrentImageWithResult.Width > 0 && executor.CurrentImageWithResult.Height > 0)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImageWithResult.Clone());
-                        logger.LogDebug("VideoCreationStepHandler: Added processed image frame to video");
-                    }
-                    else
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        executor.VideoRecorder.AddFrame((Bitmap)executor.CurrentImage?.Clone());
-                        logger.LogDebug("VideoCreationStepHandler: Added raw image frame to video (processed image not available)");
-                    }
-                }
-
-                logger.LogInformation("VideoCreationStepHandler: Video frame added successfully");
-                return true;
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("VideoCreationStepHandler: Video creation was cancelled");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "VideoCreationStepHandler: Failed to add video frame: {ErrorMessage}", ex.Message);
-                throw; // Re-throw all other exceptions
-            }
-            
+            return new OutputResult { WasExecuted = true, Success = true };
         }
+
+        protected override OutputResult CreateDefault() => OutputResult.Default;
     }
 }

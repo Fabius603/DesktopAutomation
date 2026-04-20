@@ -1,0 +1,102 @@
+using System;
+using System.Collections.Generic;
+using TaskAutomation.Jobs;
+
+namespace TaskAutomation.Steps
+{
+    /// <summary>
+    /// Beschreibt Voraussetzungen (Eingaben) und Ausgabe eines Step-Typs
+    /// in der Ausführungs-Pipeline.
+    /// </summary>
+    public sealed record StepPipelineInfo(
+        string[] Prerequisites,
+        string   Output);
+
+    /// <summary>
+    /// Statisches Registry das für jeden bekannten <see cref="JobStep"/>-Typ
+    /// die Pipeline-Metadaten (Voraussetzungen, Ausgabe) speichert.
+    /// Wird von der UI genutzt, um dem Anwender anzuzeigen, was ein Step braucht
+    /// und was er liefert.
+    /// </summary>
+    public static class StepPipelineRegistry
+    {
+        private static readonly Dictionary<Type, StepPipelineInfo> _map = new()
+        {
+            // ── Erfassung ──────────────────────────────────────────────────────
+            [typeof(DesktopDuplicationStep)] = new(
+                Prerequisites: [],
+                Output:        "CaptureResult"),
+
+            [typeof(ProcessDuplicationStep)] = new(
+                Prerequisites: [],
+                Output:        "CaptureResult"),
+
+            // ── Erkennung ──────────────────────────────────────────────────────
+            [typeof(TemplateMatchingStep)] = new(
+                Prerequisites: ["CaptureResult"],
+                Output:        "DetectionResult"),
+
+            [typeof(YOLODetectionStep)] = new(
+                Prerequisites: ["CaptureResult"],
+                Output:        "DetectionResult"),
+
+            // ── Interaktion ────────────────────────────────────────────────────
+            [typeof(KlickOnPointStep)] = new(
+                Prerequisites: ["DetectionResult"],
+                Output:        "TaskResult"),
+
+            [typeof(KlickOnPoint3DStep)] = new(
+                Prerequisites: ["DetectionResult"],
+                Output:        "TaskResult"),
+
+            // ── Automatisierung ────────────────────────────────────────────────
+            [typeof(MakroExecutionStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult"),
+
+            [typeof(ScriptExecutionStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult"),
+
+            [typeof(JobExecutionStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult"),
+
+            // ── Ausgabe ────────────────────────────────────────────────────────
+            [typeof(ShowImageStep)] = new(
+                Prerequisites: ["CaptureResult"],
+                Output:        "OutputResult"),
+
+            [typeof(VideoCreationStep)] = new(
+                Prerequisites: ["CaptureResult"],
+                Output:        "OutputResult"),
+        };
+
+        /// <summary>Gibt die Pipeline-Info für den angegebenen Step-Typ zurück.</summary>
+        public static StepPipelineInfo? Get(Type stepType)
+            => _map.TryGetValue(stepType, out var info) ? info : null;
+
+        /// <summary>Gibt die Pipeline-Info für <typeparamref name="TStep"/> zurück.</summary>
+        public static StepPipelineInfo? Get<TStep>() where TStep : JobStep
+            => Get(typeof(TStep));
+
+        // ── Name-Mapping für ViewModel-Nutzung mit String-Keys ─────────────────
+        private static readonly Dictionary<string, Type> _nameMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["DesktopDuplication"] = typeof(DesktopDuplicationStep),
+            ["TemplateMatching"]   = typeof(TemplateMatchingStep),
+            ["YoloDetection"]      = typeof(YOLODetectionStep),
+            ["KlickOnPoint"]       = typeof(KlickOnPointStep),
+            ["KlickOnPoint3D"]     = typeof(KlickOnPoint3DStep),
+            ["ShowImage"]          = typeof(ShowImageStep),
+            ["VideoCreation"]      = typeof(VideoCreationStep),
+            ["MakroExecution"]     = typeof(MakroExecutionStep),
+            ["JobExecution"]       = typeof(JobExecutionStep),
+            ["ScriptExecution"]    = typeof(ScriptExecutionStep),
+        };
+
+        /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>
+        public static StepPipelineInfo? GetByName(string name)
+            => _nameMap.TryGetValue(name, out var t) ? Get(t) : null;
+    }
+}
