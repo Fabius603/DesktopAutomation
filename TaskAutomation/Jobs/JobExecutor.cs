@@ -207,6 +207,18 @@ namespace TaskAutomation.Jobs
             CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
+            // ── Pipeline-Validierung ──────────────────────────────────────────
+            var chainErrors = StepPipelineRegistry.ValidateStepChain(job.Steps ?? Enumerable.Empty<JobStep>());
+            if (chainErrors.Count > 0)
+            {
+                var details = string.Join("; ", chainErrors.Select(e =>
+                    $"Step {e.StepIndex + 1} ({e.StepTypeName}): fehlende Voraussetzung '{e.MissingPrerequisite}'"));
+                var err = $"Job '{job.Name}' kann nicht ausgeführt werden – ungültige Pipeline: {details}";
+                _logger.LogError(err);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
+                return;
+            }
+
             // ── Zyklus-Erkennung ──────────────────────────────────────────────
             var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
             if (parentChain.Contains(job.Id))

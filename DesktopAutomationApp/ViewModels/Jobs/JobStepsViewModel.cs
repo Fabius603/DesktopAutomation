@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
+using TaskAutomation.Steps;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
 using Common.JsonRepository;
@@ -105,6 +106,16 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Save ----------
         private async Task Save()
         {
+            var errors = StepPipelineRegistry.ValidateStepChain(_steps);
+            if (errors.Count > 0)
+            {
+                var msg = "Der Job kann nicht gespeichert werden, da folgende Voraussetzungen nicht erfüllt sind:\n\n"
+                    + string.Join("\n", errors.Select(e =>
+                        $"  • Step {e.StepIndex + 1} ({e.StepTypeName}): benötigt \u201e{e.MissingPrerequisite}\u201c"));
+                AppDialog.Show(msg, "Ungültige Pipeline", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             Job.Steps = _steps.ToList();
             await _jobRepo.SaveAsync(Job);
             await _executor.ReloadJobsAsync();

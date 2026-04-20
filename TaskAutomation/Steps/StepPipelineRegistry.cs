@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
@@ -98,5 +99,40 @@ namespace TaskAutomation.Steps
         /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>
         public static StepPipelineInfo? GetByName(string name)
             => _nameMap.TryGetValue(name, out var t) ? Get(t) : null;
+
+        // ── Validierung ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Beschreibt eine fehlende Voraussetzung in der Step-Kette.
+        /// </summary>
+        public sealed record StepChainError(int StepIndex, string StepTypeName, string MissingPrerequisite);
+
+        /// <summary>
+        /// Prüft, ob alle Voraussetzungen in der übergebenen Step-Sequenz erfüllt sind.
+        /// Gibt eine Liste der Verstöße zurück (leer = gültig).
+        /// </summary>
+        public static IReadOnlyList<StepChainError> ValidateStepChain(IEnumerable<JobStep> steps)
+        {
+            var errors    = new List<StepChainError>();
+            var available = new HashSet<string>(StringComparer.Ordinal);
+            int index     = 0;
+
+            foreach (var step in steps)
+            {
+                var info = Get(step.GetType());
+                if (info != null)
+                {
+                    foreach (var prereq in info.Prerequisites)
+                    {
+                        if (!available.Contains(prereq))
+                            errors.Add(new StepChainError(index, step.GetType().Name, prereq));
+                    }
+                    available.Add(info.Output);
+                }
+                index++;
+            }
+
+            return errors;
+        }
     }
 }
