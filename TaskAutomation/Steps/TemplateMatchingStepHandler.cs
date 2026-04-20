@@ -39,8 +39,8 @@ namespace TaskAutomation.Steps
             ctx.TemplateMatcher.SetTemplate(step.Settings.TemplatePath);
             ctx.TemplateMatcher.SetThreshold(step.Settings.ConfidenceThreshold);
 
-            var imageToProcess = (Bitmap)capture.Image!.Clone();
-            var rawResult      = ctx.TemplateMatcher.Detect(imageToProcess);
+            // capture.Image direkt übergeben – Detect() liest es nur (kein Clone vor der Erkennung nötig).
+            var rawResult = ctx.TemplateMatcher.Detect(capture.Image!);
 
             if (!rawResult.Success)
             {
@@ -49,7 +49,7 @@ namespace TaskAutomation.Steps
                 {
                     WasExecuted    = true,
                     Found          = false,
-                    ProcessedImage = imageToProcess   // transfer ownership
+                    ProcessedImage = null   // ShowImageStep / VideoCreationStep fallen auf CaptureResult.Image zurück
                 };
             }
 
@@ -61,16 +61,14 @@ namespace TaskAutomation.Steps
                 "TemplateMatchingStepHandler: Found at ({X},{Y}) confidence {C:F3}",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
 
-            Bitmap processedImg;
+            Bitmap? processedImg = null;
             if (step.Settings.DrawResults)
             {
-                processedImg = DrawResult.DrawDetectionResult(imageToProcess, rawResult);
-                if (!ReferenceEquals(processedImg, imageToProcess))
-                    imageToProcess.Dispose();
-            }
-            else
-            {
-                processedImg = imageToProcess;
+                // Nur für Annotation klonen – spart ~8 MB Memcopy wenn DrawResults=false
+                var clone = (Bitmap)capture.Image!.Clone();
+                processedImg = DrawResult.DrawDetectionResult(clone, rawResult);
+                if (!ReferenceEquals(processedImg, clone))
+                    clone.Dispose();
             }
 
             return new DetectionResult

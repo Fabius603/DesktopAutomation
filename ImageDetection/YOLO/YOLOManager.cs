@@ -307,13 +307,11 @@ namespace ImageDetection.YOLO
                     buf.Output![i] = (float)buf.OutputFp16[i];
             }
 
-            var outTensor = new DenseTensor<float>(buf.Output!, buf.OutputDims!);
-            
-            int[] dims = outTensor.Dimensions.ToArray();
-            var (isCHW, num, attrs) = InterpretDims(dims);
+            // Kein DenseTensor-Wrapper – direkt auf buf.Output arbeiten
+            var (isCHW, num, attrs) = InterpretDims(buf.OutputDims!);
 
             var allList = DecodeDetections(
-                outTensor, isCHW, num, attrs, threshold,
+                buf.Output!, buf.OutputDims!, isCHW, num, attrs, threshold,
                 _opt.InputSize, scale, padX, padY,
                 roiOffsetInImage: useRoi.Location,
                 requiredClassId: classId);
@@ -452,53 +450,73 @@ namespace ImageDetection.YOLO
             int nh = (int)Math.Round(h0 * scale);
             float padX = (inputSize - nw) * 0.5f;
             float padY = (inputSize - nh) * 0.5f;
+            int padXi = (int)padX;
+            int padYi = (int)padY;
 
-            // Canvas erzeugen und ROI direkt skaliert zeichnen
-            using (var g = Graphics.FromImage(buf.Canvas))
-            {
-                g.Clear(Color.Black);
-                g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
-                var dst = new Rectangle((int)padX, (int)padY, nw, nh);
-                g.DrawImage(src, dst, srcRect, GraphicsUnit.Pixel);
-            }
-
-            // Canvas -> Tensor kopieren
-            var bd = buf.Canvas.LockBits(new Rectangle(0, 0, inputSize, inputSize),
-                                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                                    buf.Canvas.PixelFormat);
+            // Quelle direkt per LockBits lesen – kein GDI+ DrawImage-Overhead
+            var srcBd = src.LockBits(srcRect,
+                System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             try
             {
                 unsafe
                 {
-                    byte* basePtr = (byte*)bd.Scan0;
-                    int stride = bd.Stride;
+                    byte* srcBase = (byte*)srcBd.Scan0;
+                    int srcStride = srcBd.Stride;
                     int plane = inputSize * inputSize;
                     var dst = buf.Input;
 
-                    for (int y = 0; y < inputSize; y++)
-                    {
-                        byte* row = basePtr + y * stride;
-                        int rowBase = y * inputSize;
-                        for (int x = 0; x < inputSize; x++)
-                        {
-                            int idx = x * 3;
-                            byte b = row[idx + 0];
-                            byte gch = row[idx + 1];
-                            byte rch = row[idx + 2];
+                    float scaleInv = 1f / scale;
+                    const float norm = 1f / 255f;
 
-                            int p = rowBase + x;
-                            dst[0 * plane + p] = rch * (1f / 255f);
-                            dst[1 * plane + p] = gch * (1f / 255f);
-                            dst[2 * plane + p] = b   * (1f / 255f);
+                    for (int ty = 0; ty < inputSize; ty++)
+                    {
+                        int rowBase = ty * inputSize;
+
+                        // Pixel im Letterbox-Canvas der in der Paddingfläche liegt → schwarz
+                        if (ty < padYi || ty >= padYi + nh)
+                        {
+                            int off = rowBase;
+                            for (int tx = 0; tx < inputSize; tx++, off++)
+                            {
+                                dst[0 * plane + off] = 0f;
+                                dst[1 * plane + off] = 0f;
+                                dst[2 * plane + off] = 0f;
+                            }
+                            continue;
+                        }
+
+                        // y-Koordinate im Quellbild (nearest-neighbor in Y)
+                        int sy = (int)((ty - padYi + 0.5f) * scaleInv);
+                        if (sy >= h0) sy = h0 - 1;
+                        byte* srcRow = srcBase + sy * srcStride;
+
+                        for (int tx = 0; tx < inputSize; tx++)
+                        {
+                            int p = rowBase + tx;
+
+                            if (tx < padXi || tx >= padXi + nw)
+                            {
+                                dst[0 * plane + p] = 0f;
+                                dst[1 * plane + p] = 0f;
+                                dst[2 * plane + p] = 0f;
+                                continue;
+                            }
+
+                            int sx = (int)((tx - padXi + 0.5f) * scaleInv);
+                            if (sx >= w0) sx = w0 - 1;
+
+                            byte* px = srcRow + sx * 4; // BGRA
+                            dst[0 * plane + p] = px[2] * norm; // R
+                            dst[1 * plane + p] = px[1] * norm; // G
+                            dst[2 * plane + p] = px[0] * norm; // B
                         }
                     }
                 }
             }
             finally
             {
-                buf.Canvas.UnlockBits(bd);
+                src.UnlockBits(srcBd);
             }
 
             return (scale, padX, padY);
@@ -521,7 +539,8 @@ namespace ImageDetection.YOLO
         }
 
         private List<IDetectionResult> DecodeDetections(
-            Tensor<float> oTensor,
+            float[] output,
+            int[] dims,
             bool isCHW,
             int num,
             int attrs,
@@ -542,29 +561,32 @@ namespace ImageDetection.YOLO
 
             if (isCHW)
             {
+                // dims = [1, attrs, num]  → flat index: [0, a, k] = a*num + k
                 for (int k = 0; k < num; k++)
                 {
-                    float s = oTensor[0, clsOff, k];
-                    if (hasObj) s *= oTensor[0, 4, k];
+                    float s = output[clsOff * num + k];
+                    if (hasObj) s *= output[4 * num + k];
                     if (s < threshold) continue;
 
                     hits.Add((ReverseLetterboxToImageSpace(
-                        oTensor[0, 0, k], oTensor[0, 1, k],
-                        oTensor[0, 2, k], oTensor[0, 3, k],
+                        output[0 * num + k], output[1 * num + k],
+                        output[2 * num + k], output[3 * num + k],
                         inputSize, scale, padX, padY), s));
                 }
             }
             else
             {
+                // dims = [1, num, attrs]  → flat index: [0, k, a] = k*attrs + a
                 for (int k = 0; k < num; k++)
                 {
-                    float s = oTensor[0, k, clsOff];
-                    if (hasObj) s *= oTensor[0, k, 4];
+                    int off = k * attrs;
+                    float s = output[off + clsOff];
+                    if (hasObj) s *= output[off + 4];
                     if (s < threshold) continue;
 
                     hits.Add((ReverseLetterboxToImageSpace(
-                        oTensor[0, k, 0], oTensor[0, k, 1],
-                        oTensor[0, k, 2], oTensor[0, k, 3],
+                        output[off + 0], output[off + 1],
+                        output[off + 2], output[off + 3],
                         inputSize, scale, padX, padY), s));
                 }
             }
@@ -669,7 +691,6 @@ namespace ImageDetection.YOLO
                 try
                 {
                     kv.Value.Binding?.Dispose();
-                    kv.Value.Canvas.Dispose();
                     // float[] werden vom GC eingesammelt
                 }
                 catch { /* ignore */ }

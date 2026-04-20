@@ -103,10 +103,44 @@ namespace ImageDetection.Algorithms.TemplateMatching
         {
             if (resultMat == null) return [];
 
-            var results = new List<IDetectionResult>();
             bool isSqDiff = _templateMatchMode == TemplateMatchModes.SqDiffNormed;
 
-            // Arbeitskopie für iterative Suppression
+            // ── Fast path: nur ein Ergebnis benötigt (MultiplePoints deaktiviert) ──────────────
+            if (!_multiplePoints)
+            {
+                Cv2.MinMaxLoc(resultMat,
+                    out double minVal, out double maxVal,
+                    out OpenCvSharp.Point minLoc, out OpenCvSharp.Point maxLoc);
+
+                double score = isSqDiff ? minVal : maxVal;
+                OpenCvSharp.Point loc = isSqDiff ? minLoc : maxLoc;
+
+                bool passes = isSqDiff
+                    ? score <= (1.0 - _confidenceThreshold)
+                    : score >= _confidenceThreshold;
+
+                if (!passes) return [];
+
+                double confidencePct = isSqDiff
+                    ? Math.Clamp((1.0 - score) * 100.0, 0, 100)
+                    : Math.Clamp(score * 100.0, 0, 100);
+
+                int cx = loc.X + _template.Width  / 2 + roiOffset.X;
+                int cy = loc.Y + _template.Height / 2 + roiOffset.Y;
+                var center = new System.Drawing.Point(cx, cy);
+                return [new DetectionResult
+                {
+                    Success     = true,
+                    CenterPoint = center,
+                    BoundingBox = ToRect(center, ClassConverter.ToDrawing(_templateSize)),
+                    Confidence  = (float)confidencePct,
+                }];
+            }
+
+            // ── Slow path: mehrere Ergebnisse (Suppression-Loop) ────────────────────────
+            var results = new List<IDetectionResult>();
+
+            // Arbeitskopie für iterative Suppression (nur im MultiplePoints-Modus)
             using var work = resultMat.Clone();
 
             while (true)

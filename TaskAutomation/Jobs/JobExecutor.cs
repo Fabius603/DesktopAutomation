@@ -338,7 +338,17 @@ namespace TaskAutomation.Jobs
                     foreach (var step in job.Steps)
                     {
                         ct.ThrowIfCancellationRequested();
-                        await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
+                        try
+                        {
+                            await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException) { throw; }
+                        catch (Exception ex)
+                        {
+                            JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, step.GetType().Name, ex));
+                            // StepException verhindert, dass der äußere catch ein zweites Event feuert.
+                            throw new StepException(ex);
+                        }
                         _logger.LogDebug(
                             "Job '{JobName}' → Step '{StepType}' abgeschlossen.",
                             job.Name, step.GetType().Name);
@@ -349,6 +359,11 @@ namespace TaskAutomation.Jobs
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
+            }
+            catch (StepException)
+            {
+                // Fehler wurde bereits über JobStepErrorOccurred gemeldet – kein weiteres Event.
+                _logger.LogDebug("Job '{JobName}' nach Step-Fehler gestoppt.", job.Name);
             }
             catch (Exception ex)
             {
@@ -395,7 +410,7 @@ namespace TaskAutomation.Jobs
             }
         }
 
-        /// <summary>Führt einen einzelnen Step aus und feuert bei Ausnahmen das Error-Event.</summary>
+        /// <summary>Führt einen einzelnen Step aus – loggt Fehler und rethrowt.</summary>
         private async Task ExecuteStepAsync(
             JobStep step, StepPipelineContext ctx, Job job, CancellationToken ct)
         {
@@ -411,14 +426,12 @@ namespace TaskAutomation.Jobs
             }
             catch (OperationCanceledException)
             {
-                throw; // Weitergeben – wird in der Ausführungsschleife behandelt
+                throw;
             }
             catch (Exception ex)
             {
-                var typeName = step.GetType().Name;
-                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", typeName, ex.Message);
-                JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, typeName, ex));
-                throw; // Job stoppen
+                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", step.GetType().Name, ex.Message);
+                throw;
             }
         }
 
@@ -559,6 +572,16 @@ namespace TaskAutomation.Jobs
             {
                 _disposed = true;
             }
+        }
+
+        /// <summary>
+        /// Interner Marker: zeigt an, dass ein Step-Fehler bereits über
+        /// <see cref="IJobExecutor.JobStepErrorOccurred"/> gemeldet wurde.
+        /// Verhindert, dass der äußere Job-Catch ein zweites Event feuert.
+        /// </summary>
+        private sealed class StepException : Exception
+        {
+            public StepException(Exception inner) : base(inner.Message, inner) { }
         }
     }
 }

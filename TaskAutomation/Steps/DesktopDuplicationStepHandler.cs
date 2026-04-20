@@ -22,6 +22,9 @@ namespace TaskAutomation.Steps
             {
                 logger.LogDebug("DesktopDuplicationStepHandler: Creating new DesktopDuplicator for monitor {MonitorIndex}", step.Settings.DesktopIdx);
                 ctx.DesktopDuplicator = new DesktopDuplicator(step.Settings.DesktopIdx);
+                // 16 ms ≈ 60 fps: DXGI blockiert intern bis ein neuer Frame verfügbar ist,
+                // statt sofort zurückzukehren (aquireFrameTimeout=0) und im Handler zu pollen.
+                ctx.DesktopDuplicator.SetFrameTimeout(16);
                 await Task.Delay(100, ct);
             }
 
@@ -36,15 +39,13 @@ namespace TaskAutomation.Steps
                 try
                 {
                     frame?.Dispose();
+                    // GetLatestFrame() blockiert jetzt bis zu 16 ms (SetFrameTimeout),
+                    // daher reichen kurze Retries ohne extra Task.Delay.
                     frame = ctx.DesktopDuplicator.GetLatestFrame();
                     if (frame?.DesktopImage == null)
                     {
                         retryCount++;
-                        if (retryCount < maxRetries)
-                        {
-                            logger.LogWarning("DesktopDuplicationStepHandler: No image on attempt {Attempt}/{Max}, retrying...", retryCount, maxRetries);
-                            await Task.Delay(50, ct);
-                        }
+                        logger.LogWarning("DesktopDuplicationStepHandler: No image on attempt {Attempt}/{Max}, retrying...", retryCount, maxRetries);
                     }
                 }
                 catch (Exception ex) when (retryCount < maxRetries - 1)
@@ -53,7 +54,7 @@ namespace TaskAutomation.Steps
                     frame?.Dispose();
                     frame = null;
                     logger.LogWarning(ex, "DesktopDuplicationStepHandler: Capture failed on attempt {Attempt}/{Max}, retrying...", retryCount, maxRetries);
-                    await Task.Delay(100, ct);
+                    await Task.Delay(50, ct);
                 }
             }
 
@@ -65,7 +66,11 @@ namespace TaskAutomation.Steps
 
             using (frame)
             {
-                var bitmap       = new Bitmap(frame.DesktopImage);
+                // Eigentumsübertragung: frame.DesktopImage wird direkt übernommen,
+                // kein extra new Bitmap(...)-Klon nötig (spart ~8 MB Memcopy bei 1080p).
+                var bitmap       = frame.DesktopImage;
+                frame.DesktopImage = null; // verhindert Dispose in using(frame)
+
                 var screenBounds = ScreenHelper.GetDesktopBounds(step.Settings.DesktopIdx);
                 var offset       = new System.Drawing.Point(screenBounds.Left, screenBounds.Top);
 

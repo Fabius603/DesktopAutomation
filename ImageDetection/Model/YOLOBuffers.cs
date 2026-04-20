@@ -1,4 +1,3 @@
-using System.Drawing;
 using Microsoft.ML.OnnxRuntime;
 
 namespace ImageDetection.Model
@@ -6,7 +5,6 @@ namespace ImageDetection.Model
     public sealed class YoloBuffers
     {
         public readonly int Size;
-        public readonly Bitmap Canvas;          // wiederverwendete Zeichenfläche (Size x Size)
         public readonly float[] Input;          // NCHW float32 (Preprocessing immer in float32)
         public readonly long[] InputShape;      // {1,3,Size,Size}
         public Float16[]? InputFp16;            // nur befüllt wenn Modell Float16 erwartet
@@ -22,7 +20,6 @@ namespace ImageDetection.Model
         public YoloBuffers(int size)
         {
             Size = size;
-            Canvas = new Bitmap(size, size, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
             Input = new float[1 * 3 * size * size];
             InputShape = new long[] { 1, 3, size, size };
         }
