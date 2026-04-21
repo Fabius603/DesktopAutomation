@@ -46,6 +46,7 @@ jobs:
             Write-Host "Release $tag not found – will create."
             "EXISTS=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           }
+          exit 0
 
       - name: Setup .NET
         if: steps.check.outputs.EXISTS == 'false'
