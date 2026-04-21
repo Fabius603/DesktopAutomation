@@ -3,7 +3,7 @@ name: Release (Windows self-contained)
 on:
   push:
     branches:
-      - main                # läuft bei jedem Push auf main
+      - master              # läuft bei jedem Push auf master
     paths:
       - 'DesktopAutomationApp/DesktopAutomationApp.csproj'   # nur wenn csproj geändert wurde
   workflow_dispatch:        # manuell im Actions-Tab startbar
