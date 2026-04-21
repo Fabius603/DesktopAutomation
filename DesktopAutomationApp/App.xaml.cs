@@ -79,6 +79,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton(new YoloManagerOptions());
                     services.AddSingleton<IYoloManager, YoloManager>();
                     services.AddSingleton<IImageDisplayService, ImageDisplayService>();
+                    services.AddSingleton<IUpdateService, UpdateService>();
 
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();

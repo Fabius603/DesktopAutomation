@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
 using DesktopAutomationApp.Models;
+using DesktopAutomationApp.Services;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
@@ -18,6 +20,48 @@ namespace DesktopAutomationApp.ViewModels
 
         private readonly IServiceProvider _services;
         private readonly IJobDispatcher _jobDispatcher;
+        private readonly IUpdateService _updateService;
+
+        private bool _hasUpdate;
+        private string _latestVersion = string.Empty;
+        private string _updateUrl = string.Empty;
+        private string _assetDownloadUrl = string.Empty;
+        private bool _isUpdating;
+        private int _updateProgress;
+        private string _updateStatusText = string.Empty;
+
+        public bool HasUpdate
+        {
+            get => _hasUpdate;
+            private set => SetProperty(ref _hasUpdate, value);
+        }
+
+        public string LatestVersion
+        {
+            get => _latestVersion;
+            private set => SetProperty(ref _latestVersion, value);
+        }
+
+        public bool IsUpdating
+        {
+            get => _isUpdating;
+            private set => SetProperty(ref _isUpdating, value);
+        }
+
+        public int UpdateProgress
+        {
+            get => _updateProgress;
+            private set => SetProperty(ref _updateProgress, value);
+        }
+
+        public string UpdateStatusText
+        {
+            get => _updateStatusText;
+            private set => SetProperty(ref _updateStatusText, value);
+        }
+
+        public ICommand InstallUpdateCommand { get; }
+        public ICommand OpenUpdateCommand { get; }  // fallback: browser
 
         private readonly StartViewModel _start;
         private readonly ListMakrosViewModel _listMakros;
@@ -50,6 +94,7 @@ namespace DesktopAutomationApp.ViewModels
         public MainViewModel(
             IServiceProvider services,
             IJobDispatcher jobDispatcher,
+            IUpdateService updateService,
             StartViewModel startViewModel,
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
@@ -58,7 +103,18 @@ namespace DesktopAutomationApp.ViewModels
         {
             _services = services;
             _jobDispatcher = jobDispatcher;
+            _updateService = updateService;
             _start = startViewModel;
+
+            OpenUpdateCommand = new RelayCommand(() =>
+            {
+                if (!string.IsNullOrEmpty(_updateUrl))
+                    Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
+            });
+
+            InstallUpdateCommand = new RelayCommand(
+                async () => await InstallUpdateAsync(),
+                () => HasUpdate && !IsUpdating);
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
@@ -85,6 +141,65 @@ namespace DesktopAutomationApp.ViewModels
 
             // Startseite
             CurrentContent = _start;
+
+            // Update-Check im Hintergrund
+            _ = CheckForUpdateAsync();
+        }
+
+        private async Task CheckForUpdateAsync()
+        {
+            try
+            {
+                var result = await _updateService.CheckForUpdateAsync();
+                if (!result.HasUpdate) return;
+
+                _updateUrl = result.HtmlUrl;
+                _assetDownloadUrl = result.AssetDownloadUrl;
+                LatestVersion = result.LatestTag;
+                HasUpdate = true;
+            }
+            catch
+            {
+                // Update-Check darf niemals den App-Start blockieren oder abstürzen
+            }
+        }
+
+        private async Task InstallUpdateAsync()
+        {
+            IsUpdating = true;
+            UpdateProgress = 0;
+            UpdateStatusText = "Wird heruntergeladen…";
+
+            var progress = new Progress<int>(p =>
+            {
+                UpdateProgress = p;
+                UpdateStatusText = $"Wird heruntergeladen… {p} %";
+            });
+
+            try
+            {
+                var ok = await _updateService.DownloadAndInstallAsync(_assetDownloadUrl, progress);
+                if (!ok)
+                {
+                    UpdateStatusText = "Fehler beim Download.";
+                    IsUpdating = false;
+
+                    // Fallback: Browser öffnen
+                    if (!string.IsNullOrEmpty(_updateUrl))
+                        Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
+                    return;
+                }
+
+                UpdateStatusText = "Wird installiert…";
+                // Short delay so the user sees the message, then close
+                await Task.Delay(800);
+                Application.Current.Shutdown();
+            }
+            catch
+            {
+                UpdateStatusText = "Fehler beim Update.";
+                IsUpdating = false;
+            }
         }
 
         private void OpenJobDetails(Job job)

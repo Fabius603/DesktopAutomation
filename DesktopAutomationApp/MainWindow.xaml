@@ -37,6 +37,60 @@
                     </StackPanel>
                 </StackPanel>
 
+                <!-- Update-Notification (nur sichtbar wenn neue Version vorhanden) -->
+                <Border DockPanel.Dock="Bottom"
+                        Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="{DynamicResource App.Brush.AccentSubtle}"
+                        BorderBrush="{DynamicResource App.Brush.Accent}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Margin="12,0,12,16"
+                        Padding="12,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <iconPacks:PackIconMaterial Kind="ArrowUpCircleOutline"
+                                                        Width="14" Height="14"
+                                                        Foreground="{DynamicResource App.Brush.Accent}"
+                                                        VerticalAlignment="Center"
+                                                        Margin="0,0,6,0"/>
+                            <TextBlock Text="Update verfügbar"
+                                       FontWeight="SemiBold" FontSize="12"
+                                       Foreground="{DynamicResource App.Brush.Accent}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding LatestVersion}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"
+                                   Margin="0,0,0,8"/>
+
+                        <!-- Fortschrittsbalken (nur während Download sichtbar) -->
+                        <ProgressBar Value="{Binding UpdateProgress}"
+                                     Minimum="0" Maximum="100"
+                                     Height="4" Margin="0,0,0,4"
+                                     Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <TextBlock Text="{Binding UpdateStatusText}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource App.Brush.TextMuted}"
+                                   Margin="0,0,0,6"
+                                   Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <!-- Jetzt updaten -->
+                        <Button Style="{StaticResource ButtonPrimary}"
+                                Command="{Binding InstallUpdateCommand}"
+                                FontSize="11"
+                                Padding="8,4"
+                                HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="Download"
+                                                            Width="12" Height="12"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,5,0"/>
+                                <TextBlock Text="Jetzt updaten" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
                 <!-- Navigation -->
                 <StackPanel Margin="0,0,0,0">
                     <!-- Start -->

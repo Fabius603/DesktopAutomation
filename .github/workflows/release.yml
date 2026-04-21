@@ -2,8 +2,10 @@ name: Release (Windows self-contained)
 
 on:
   push:
-    tags:
-      - 'v*'                # läuft automatisch bei Tag-Push (z. B. v1.0.0)
+    branches:
+      - main                # läuft bei jedem Push auf main
+    paths:
+      - 'DesktopAutomationApp/DesktopAutomationApp.csproj'   # nur wenn csproj geändert wurde
   workflow_dispatch:        # manuell im Actions-Tab startbar
 
 permissions:
@@ -17,25 +19,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Version aus der csproj lesen (z. B. "1.2.3" → Tag "v1.2.3")
+      - name: Read version from csproj
+        id: ver
+        shell: pwsh
+        run: |
+          [xml]$csproj = Get-Content "DesktopAutomationApp/DesktopAutomationApp.csproj"
+          $version = $csproj.Project.PropertyGroup.Version | Select-Object -First 1
+          "VERSION=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "TAG=v$version"      | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Detected version: $version"
+
+      # Prüfen ob für diesen Tag schon ein Release existiert → wenn ja, abbrechen
+      - name: Check if release already exists
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ steps.ver.outputs.TAG }}"
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists – skipping."
+            "EXISTS=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            Write-Host "Release $tag not found – will create."
+            "EXISTS=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+
       - name: Setup .NET
+        if: steps.check.outputs.EXISTS == 'false'
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Cache NuGet
+        if: steps.check.outputs.EXISTS == 'false'
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.nuget/packages
+          path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
       - name: Restore
+        if: steps.check.outputs.EXISTS == 'false'
         run: dotnet restore
 
       # NUR das Startprojekt publishen (nicht die .sln)
       - name: Publish self-contained (win-x64)
+        if: steps.check.outputs.EXISTS == 'false'
         run: >
           dotnet publish ./DesktopAutomationApp/DesktopAutomationApp.csproj
           -c Release -r win-x64 --self-contained true
@@ -46,15 +79,18 @@ jobs:
           -o out/win-x64
 
       - name: Archive ZIP
+        if: steps.check.outputs.EXISTS == 'false'
         run: |
-          powershell Compress-Archive -Path out/win-x64\* -DestinationPath DesktopAutomation-${{ github.ref_name || 'manual' }}-win-x64.zip
+          powershell Compress-Archive -Path out/win-x64\* -DestinationPath DesktopAutomation-${{ steps.ver.outputs.TAG }}-win-x64.zip
 
-      # Bei Tag: ZIP direkt als Release-Asset anhängen
+      # Release anlegen (Tag wird von der Action automatisch erstellt)
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: steps.check.outputs.EXISTS == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          files: DesktopAutomation-${{ github.ref_name }}-win-x64.zip
+          tag_name: ${{ steps.ver.outputs.TAG }}
+          name: ${{ steps.ver.outputs.TAG }}
+          files: DesktopAutomation-${{ steps.ver.outputs.TAG }}-win-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
