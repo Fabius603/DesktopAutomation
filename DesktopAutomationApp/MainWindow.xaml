@@ -64,7 +64,7 @@
                                    Margin="0,0,0,8"/>
 
                         <!-- Fortschrittsbalken (nur während Download sichtbar) -->
-                        <ProgressBar Value="{Binding UpdateProgress}"
+                        <ProgressBar Value="{Binding UpdateProgress, Mode=OneWay}"
                                      Minimum="0" Maximum="100"
                                      Height="4" Margin="0,0,0,4"
                                      Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
