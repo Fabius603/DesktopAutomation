@@ -34,7 +34,12 @@ namespace DesktopAutomationApp.ViewModels
         public bool HasUpdate
         {
             get => _hasUpdate;
-            private set { SetProperty(ref _hasUpdate, value); OnPropertyChanged(nameof(ShowDownloadButton)); }
+            private set
+            {
+                SetProperty(ref _hasUpdate, value);
+                OnPropertyChanged(nameof(ShowDownloadButton));
+                (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
         public string LatestVersion

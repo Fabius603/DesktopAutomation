@@ -99,7 +99,7 @@
 
                         <!-- Neu starten (erscheint wenn Download abgeschlossen) -->
                         <Button Style="{StaticResource ButtonDanger}"
-                                Command="{Binding RestartToUpdateCommand}"
+                                Click="RestartToUpdate_Click"
                                 FontSize="11"
                                 Padding="8,4"
                                 HorizontalAlignment="Stretch"
