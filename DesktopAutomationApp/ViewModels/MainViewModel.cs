@@ -211,13 +211,9 @@ namespace DesktopAutomationApp.ViewModels
                 var ok = await _updateService.DownloadAndInstallAsync(_assetDownloadUrl, progress);
                 if (!ok)
                 {
-                    UpdateStatusText = "Fehler beim Download.";
+                    UpdateStatusText = "Fehler beim Download oder Entpacken.";
                     IsUpdating = false;
                     (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
-
-                    // Fallback: Browser öffnen
-                    if (!string.IsNullOrEmpty(_updateUrl))
-                        Process.Start(new ProcessStartInfo(_updateUrl) { UseShellExecute = true });
                     return;
                 }
 

@@ -85,8 +85,13 @@ namespace DesktopAutomationApp.Services
 
             try
             {
-                // 1. Download ZIP
-                var zipPath = Path.Combine(tempDir, "update.zip");
+                // 1. Download — keep original filename so we can detect type
+                var fileName = Uri.TryCreate(assetDownloadUrl, UriKind.Absolute, out var uri)
+                    ? Path.GetFileName(uri.LocalPath)
+                    : "update.bin";
+                if (string.IsNullOrEmpty(fileName)) fileName = "update.bin";
+                var downloadPath = Path.Combine(tempDir, fileName);
+
                 using var client = new HttpClient();
                 client.DefaultRequestHeaders.UserAgent.Add(
                     new ProductInfoHeaderValue("DesktopAutomation", GetCurrentVersion()));
@@ -96,7 +101,7 @@ namespace DesktopAutomationApp.Services
                 response.EnsureSuccessStatusCode();
 
                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                await using var fs = File.Create(zipPath);
+                await using var fs = File.Create(downloadPath);
                 await using var dl = await response.Content.ReadAsStreamAsync();
 
                 var buffer = new byte[81920];
@@ -110,41 +115,59 @@ namespace DesktopAutomationApp.Services
                         progress?.Report((int)(downloaded * 100 / totalBytes));
                 }
 
-                // 2. Extract
+                // 2. Extract (ZIP) or copy directly (single-exe release)
                 var extractDir = Path.Combine(tempDir, "x");
-                ZipFile.ExtractToDirectory(zipPath, extractDir);
+                Directory.CreateDirectory(extractDir);
 
-                // 3. Find new exe (single-file publish — usually just one .exe)
-                var newExe = FindExe(extractDir);
-                if (newExe is null) return false;
+                if (IsZipFile(downloadPath))
+                {
+                    ZipFile.ExtractToDirectory(downloadPath, extractDir);
+                }
+                else
+                {
+                    // Single-file release: rename to match current exe name
+                    var destName = Path.GetFileName(currentExe);
+                    File.Copy(downloadPath, Path.Combine(extractDir, destName), overwrite: true);
+                }
+
+                // 3. If the ZIP extracted into exactly one sub-folder, treat that as the source root
+                var sourceDir = extractDir;
+                var topEntries = Directory.GetFileSystemEntries(extractDir);
+                if (topEntries.Length == 1 && Directory.Exists(topEntries[0]))
+                    sourceDir = topEntries[0];
 
                 // 4. Write updater PS1 — waits for this process to exit, copies ALL files, relaunches
                 var pid = Process.GetCurrentProcess().Id;
                 var appDir = Path.GetDirectoryName(currentExe)!;
-                var script = $$"""
-                    $pid = {{pid}}
+                var sourceDirEsc = sourceDir.Replace("'", "''");
+                var appDirEsc    = appDir.Replace("'", "''");
+                var currentExeEsc = currentExe.Replace("'", "''");
+                var tempDirEsc   = tempDir.Replace("'", "''");
+
+                var script = $"""
+                    $pid = {pid}
                     $limit = 60
                     $elapsed = 0
-                    while ((Get-Process -Id $pid -ErrorAction SilentlyContinue) -ne $null) {
+                    while ((Get-Process -Id $pid -ErrorAction SilentlyContinue) -ne $null) {{
                         Start-Sleep -Milliseconds 300
                         $elapsed += 0.3
-                        if ($elapsed -ge $limit) { break }
-                    }
-                    Get-ChildItem -Path '{{extractDir}}' -Recurse -File | ForEach-Object {
-                        $rel  = $_.FullName.Substring('{{extractDir}}'.Length).TrimStart('\','/')
-                        $dest = Join-Path '{{appDir}}' $rel
+                        if ($elapsed -ge $limit) {{ break }}
+                    }}
+                    Get-ChildItem -LiteralPath '{sourceDirEsc}' -Recurse -File | ForEach-Object {{
+                        $rel  = $_.FullName.Substring('{sourceDirEsc}'.Length).TrimStart('\','/')
+                        $dest = Join-Path '{appDirEsc}' $rel
                         $destDir = Split-Path $dest -Parent
-                        if (-not (Test-Path $destDir)) { New-Item $destDir -ItemType Directory -Force | Out-Null }
+                        if (-not (Test-Path $destDir)) {{ New-Item $destDir -ItemType Directory -Force | Out-Null }}
                         Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
-                    }
-                    Start-Process -FilePath '{{currentExe}}'
-                    Remove-Item -LiteralPath '{{tempDir}}' -Recurse -Force -ErrorAction SilentlyContinue
+                    }}
+                    Start-Process -FilePath '{currentExeEsc}'
+                    Remove-Item -LiteralPath '{tempDirEsc}' -Recurse -Force -ErrorAction SilentlyContinue
                     """;
 
                 var scriptPath = Path.Combine(tempDir, "update.ps1");
                 await File.WriteAllTextAsync(scriptPath, script);
 
-                // 5. Launch updater then let the caller shut down the app
+                // 5. Launch updater (it blocks until this process exits, then copies + relaunches)
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
@@ -157,19 +180,23 @@ namespace DesktopAutomationApp.Services
             }
             catch
             {
-                // Clean up on failure, but don't rethrow — caller shows error
                 try { Directory.Delete(tempDir, recursive: true); } catch { }
                 return false;
             }
         }
 
-        private static string? FindExe(string dir)
+        /// <summary>Checks the ZIP magic bytes (PK\x03\x04) to distinguish ZIP from raw exe.</summary>
+        private static bool IsZipFile(string path)
         {
-            // Prefer a file named DesktopAutomationApp.exe; fall back to any .exe
-            var preferred = Directory.GetFiles(dir, "DesktopAutomationApp.exe", SearchOption.AllDirectories);
-            if (preferred.Length > 0) return preferred[0];
-            var any = Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories);
-            return any.Length > 0 ? any[0] : null;
+            try
+            {
+                using var fs = File.OpenRead(path);
+                var header = new byte[4];
+                if (fs.Read(header, 0, 4) < 4) return false;
+                return header[0] == 0x50 && header[1] == 0x4B &&
+                       header[2] == 0x03 && header[3] == 0x04;
+            }
+            catch { return false; }
         }
 
         private static string GetCurrentVersion()
