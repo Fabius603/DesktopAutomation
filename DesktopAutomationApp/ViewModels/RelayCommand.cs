@@ -18,14 +18,18 @@ namespace DesktopAutomationApp.ViewModels
         public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
         public void Execute(object? parameter) => _execute();
 
-        // Automatische Aktualisierung in WPF via CommandManager (plus manuelles Raise)
+        // Eigenes Event statt CommandManager.RequerySuggested:
+        // CommandManager.RequerySuggested feuert bei JEDER Mausbewegung und
+        // würde alle CanExecute-Prüfungen im gesamten Fenster auslösen → O(n²) bei vielen Steps.
+        private EventHandler? _canExecuteChanged;
         public event EventHandler? CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            add    => _canExecuteChanged += value;
+            remove => _canExecuteChanged -= value;
         }
 
-        public void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
+        public void RaiseCanExecuteChanged()
+            => _canExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
     // Mit Parameter
@@ -69,12 +73,14 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private EventHandler? _canExecuteChanged;
         public event EventHandler? CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            add    => _canExecuteChanged += value;
+            remove => _canExecuteChanged -= value;
         }
 
-        public void RaiseCanExecuteChanged() => CommandManager.InvalidateRequerySuggested();
+        public void RaiseCanExecuteChanged()
+            => _canExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }

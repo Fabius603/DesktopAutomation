@@ -36,18 +36,21 @@ namespace DesktopAutomationApp.ViewModels
 
         public ObservableCollection<MakroBefehl> Steps { get; }
 
+        /// <summary>Incrementiert bei jeder Listenänderung; wird von Konvertern als Cache-Schlüssel genutzt.</summary>
+        public int StepsVersion { get; private set; }
+
         private MakroBefehl? _selectedStep;
         public MakroBefehl? SelectedStep
         {
             get => _selectedStep;
-            set { _selectedStep = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            set { _selectedStep = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         private bool _hasUnsavedChanges;
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
-            private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         // --- Recording state ---
@@ -55,7 +58,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsRecording
         {
             get => _isRecording;
-            private set { if (_isRecording == value) return; _isRecording = value; OnPropertyChanged(); OnPropertyChanged(nameof(RecordButtonText)); CommandManager.InvalidateRequerySuggested(); }
+            private set { if (_isRecording == value) return; _isRecording = value; OnPropertyChanged(); OnPropertyChanged(nameof(RecordButtonText)); InvalidateAllCommands(); }
         }
         public string RecordButtonText => IsRecording ? "Aufnahme stoppen" : "Aufnahme starten";
 
@@ -63,7 +66,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsCapturingClick
         {
             get => _isCapturingClick;
-            private set { if (_isCapturingClick == value) return; _isCapturingClick = value; OnPropertyChanged(); OnPropertyChanged(nameof(CaptureClickButtonText)); CommandManager.InvalidateRequerySuggested(); }
+            private set { if (_isCapturingClick == value) return; _isCapturingClick = value; OnPropertyChanged(); OnPropertyChanged(nameof(CaptureClickButtonText)); InvalidateAllCommands(); }
         }
         public string CaptureClickButtonText => IsCapturingClick ? "Klick-Erfassung läuft..." : "Einzelnen Klick erfassen";
 
@@ -79,7 +82,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsMakroRunning
         {
             get => _isMakroRunning;
-            private set { _isMakroRunning = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _isMakroRunning = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         // --- Commands ---
@@ -124,6 +127,12 @@ namespace DesktopAutomationApp.ViewModels
 
             _originalSteps = new List<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
             Steps = new ObservableCollection<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
+            Steps.CollectionChanged += (_, _) =>
+            {
+                StepsVersion++;
+                OnPropertyChanged(nameof(StepsVersion));
+                InvalidateAllCommands();
+            };
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
@@ -140,7 +149,7 @@ namespace DesktopAutomationApp.ViewModels
 
             RecordStepsCommand   = new RelayCommand(async () => await ToggleRecordAsync());
             CaptureClickCommand  = new RelayCommand(async () => await CaptureClickAsync(), () => !IsCapturingClick && !IsRecording);
-            ToggleMousePathCommand = new RelayCommand(() => { RecordMousePath = !RecordMousePath; CommandManager.InvalidateRequerySuggested(); });
+            ToggleMousePathCommand = new RelayCommand(() => { RecordMousePath = !RecordMousePath; InvalidateAllCommands(); });
 
             PreviewOverviewCommand = new RelayCommand(ShowOverview, CanPreview);
             PreviewPlaybackCommand = new RelayCommand(() => ShowPlayback(), CanPreview);
@@ -207,7 +216,7 @@ namespace DesktopAutomationApp.ViewModels
             Steps.Insert(idx + delta, step);
             SelectedStep = step;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void MoveToIndex(int from, int to)
@@ -218,7 +227,7 @@ namespace DesktopAutomationApp.ViewModels
             Steps.Insert(to, step);
             SelectedStep = step;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void EditStep(MakroBefehl? step)
@@ -236,7 +245,7 @@ namespace DesktopAutomationApp.ViewModels
             Steps[index] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private async Task OpenAddStepDialog()
@@ -275,7 +284,7 @@ namespace DesktopAutomationApp.ViewModels
             Steps.RemoveAt(idx);
             SelectedStep = next;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void DuplicateStep(MakroBefehl? step)
@@ -515,6 +524,25 @@ namespace DesktopAutomationApp.ViewModels
             {
                 IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
             });
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (SaveCommand            as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartMakroCommand      as RelayCommand)?.RaiseCanExecuteChanged();
+            (StopMakroCommand       as RelayCommand)?.RaiseCanExecuteChanged();
+            (RecordStepsCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (CaptureClickCommand    as RelayCommand)?.RaiseCanExecuteChanged();
+            (PreviewOverviewCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (PreviewPlaybackCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (PreviewStopCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand        as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (MoveStepUpCommand      as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand    as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand      as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DuplicateStepCommand   as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
         }
     }
 

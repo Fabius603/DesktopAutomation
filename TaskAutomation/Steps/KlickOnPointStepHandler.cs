@@ -21,8 +21,8 @@ namespace TaskAutomation.Steps
                 "KlickOnPointStepHandler: click='{ClickType}' double={Double} timeout={T}ms",
                 step.Settings.ClickType, step.Settings.DoubleClick, step.Settings.TimeoutMs);
 
-            // Hole den detektierten Punkt vom letzten Detection-Step
-            var detection = GetDetection(ctx.Results);
+            // Hole den detektierten Punkt vom konfigurierten Detection-Step
+            var detection = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
             if (!detection.Found || detection.Point is null)
             {
                 logger.LogInformation("KlickOnPointStepHandler: No detection point available, skipping click");
@@ -53,13 +53,6 @@ namespace TaskAutomation.Steps
         }
 
         protected override TaskResult CreateDefault() => TaskResult.Default;
-
-        internal static DetectionResult GetDetection(IJobResultStore results)
-        {
-            var r = results.Get<TemplateMatchingStep, DetectionResult>();
-            if (!r.WasExecuted) r = results.Get<YOLODetectionStep, DetectionResult>();
-            return r;
-        }
 
         private static Makro CreateClickMacro(KlickOnPointSettings settings, System.Drawing.Point point)
         {

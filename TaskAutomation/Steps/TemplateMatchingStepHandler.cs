@@ -25,9 +25,12 @@ namespace TaskAutomation.Steps
             if (!File.Exists(step.Settings.TemplatePath))
                 throw new FileNotFoundException($"Template file not found: '{step.Settings.TemplatePath}'");
 
-            var capture = GetCapture(ctx.Results);
+            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
             if (!capture.HasImage)
-                throw new InvalidOperationException("No captured image available for template matching");
+            {
+                logger.LogInformation("TemplateMatchingStepHandler: Kein Bild verfügbar, Step wird übersprungen");
+                return new DetectionResult { WasExecuted = true, Found = false };
+            }
 
             if (ctx.TemplateMatcher == null)
                 ctx.TemplateMatcher = new TemplateMatching(step.Settings.TemplateMatchMode);
@@ -82,13 +85,6 @@ namespace TaskAutomation.Steps
         }
 
         protected override DetectionResult CreateDefault() => DetectionResult.Default;
-
-        internal static CaptureResult GetCapture(IJobResultStore results)
-        {
-            var r = results.Get<DesktopDuplicationStep, CaptureResult>();
-            if (!r.WasExecuted) r = results.Get<ProcessDuplicationStep, CaptureResult>();
-            return r;
-        }
     }
 }
 

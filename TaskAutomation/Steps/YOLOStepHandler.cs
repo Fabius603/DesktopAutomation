@@ -27,9 +27,12 @@ namespace TaskAutomation.Steps
             if (ctx.YoloManager == null)
                 throw new InvalidOperationException("YoloManager not available");
 
-            var capture = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
             if (!capture.HasImage)
-                throw new InvalidOperationException("No captured image available for YOLO detection");
+            {
+                logger.LogInformation("YOLOStepHandler: Kein Bild verfügbar, Step wird übersprungen");
+                return new DetectionResult { WasExecuted = true, Found = false };
+            }
 
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
 

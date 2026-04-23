@@ -34,7 +34,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             _selectedItems.Clear();
             _selectedItems.AddRange(items);
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         public ICommand RefreshCommand { get; }
@@ -53,7 +53,7 @@ namespace DesktopAutomationApp.ViewModels
         public Job? SelectedJob
         {
             get => _selectedJob;
-            set { _selectedJob = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            set { _selectedJob = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         private bool _editing;
@@ -181,6 +181,13 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
             base.Dispose(disposing);
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (DeleteJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (OpenJobCommand   as RelayCommand<Job?>)?.RaiseCanExecuteChanged();
         }
 
     }

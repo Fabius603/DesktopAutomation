@@ -16,14 +16,19 @@ namespace TaskAutomation.Steps
             var logger = ctx.Logger;
             logger.LogDebug("ShowImageStepHandler: Window '{Name}'", step.Settings.WindowName);
 
-            var capture   = TemplateMatchingStepHandler.GetCapture(ctx.Results);
-            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+            var capture   = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
+            var detection = string.IsNullOrEmpty(step.Settings.SourceDetectionStepId)
+                ? DetectionResult.Default
+                : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
 
             var rawImage       = capture.Image;
             var processedImage = detection.ProcessedImage ?? rawImage;
 
             if (rawImage == null)
-                throw new InvalidOperationException("No captured image available to display");
+            {
+                logger.LogInformation("ShowImageStepHandler: Kein Bild verfügbar, Step wird übersprungen");
+                return new OutputResult { WasExecuted = true, Success = false };
+            }
 
             if (step.Settings.ShowRawImage)
             {

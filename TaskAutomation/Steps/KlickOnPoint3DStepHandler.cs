@@ -20,7 +20,7 @@ namespace TaskAutomation.Steps
         {
             var logger = ctx.Logger;
 
-            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+            var detection = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
             if (!detection.Found || detection.Point is null)
             {
                 logger.LogInformation("KlickOnPoint3DStepHandler: No detection point available, skipping");
@@ -41,7 +41,7 @@ namespace TaskAutomation.Steps
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
             var point        = detection.Point.Value;
-            var capture      = TemplateMatchingStepHandler.GetCapture(ctx.Results);
+            var capture      = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
             var screenBounds = capture.Bounds;
 
             var (dx, dy) = CalculateRelativeMouseMovement(

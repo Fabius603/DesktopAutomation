@@ -14,6 +14,9 @@
     <UserControl.Resources>
         <conv:RectToStringConverter x:Key="RectToStringConverter"/>
         <conv:StepPipelineInfoConverter x:Key="PipelineInfoConverter"/>
+        <conv:StepBlockBorderConverter x:Key="StepBlockBorderConverter"/>
+        <conv:StepNumberConverter x:Key="StepNumberConverter"/>
+        <conv:SourceStepNameConverter x:Key="SourceStepNameConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -35,10 +38,26 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="TemplatePath: "/><Run Text="{Binding Settings.TemplatePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="MatchMode: "/><Run Text="{Binding Settings.TemplateMatchMode}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Mehrere Treffer: "/>
+                        <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
@@ -110,6 +129,30 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Erkennungsquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="WindowName: "/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
@@ -136,6 +179,30 @@
                 <TextBlock Text="Video Creation" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Erkennungsquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="SavePath: "/><Run Text="{Binding Settings.SavePath}"/>
                     </TextBlock>
@@ -185,6 +252,18 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Erkennungsquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Doppelklick: "/>
                         <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
@@ -210,6 +289,30 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Erkennungsquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="FOV: "/><Run Text="{Binding Settings.FOV, StringFormat=F1}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
@@ -226,7 +329,7 @@
                         <Run Text="Klick-Typ: "/><Run Text="{Binding Settings.ClickType}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.Timeout}"/>
+                        <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.TimeoutMs}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Invert MouseMovement Y: "/>
@@ -297,6 +400,18 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Model: "/><Run Text="{Binding Settings.Model}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
@@ -338,6 +453,90 @@
                     </TextBlock>
                 </StackPanel>
             </Grid>
+        </DataTemplate>
+
+        <!-- IfStep -->
+        <DataTemplate DataType="{x:Type jobs:IfStep}">
+            <StackPanel>
+                <TextBlock Text="If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+                <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource ParamText}" TextWrapping="Wrap">
+                                <Run Text="{Binding SourceStepDisplayName, Mode=OneWay}" FontWeight="SemiBold"/>
+                                <Run Text="."/>
+                                <Run Text="{Binding PropertyDisplayName, Mode=OneWay}"/>
+                                <Run Text=" "/>
+                                <Run Text="{Binding Operator, Mode=OneWay, Converter={StaticResource ConditionOperatorConverter}}"/>
+                                <Run Text=" "/>
+                                <Run Text="{Binding ComparisonValue, Mode=OneWay}"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
+                    <Run Text="("/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text=")"/>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <Button Content="+ Else If"
+                            Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
+                    <Button Content="+ Else"
+                            Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Padding="8,4" FontSize="11"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- ElseIfStep -->
+        <DataTemplate DataType="{x:Type jobs:ElseIfStep}">
+            <StackPanel>
+                <TextBlock Text="Else If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+                <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource ParamText}" TextWrapping="Wrap">
+                                <Run Text="{Binding SourceStepDisplayName, Mode=OneWay}" FontWeight="SemiBold"/>
+                                <Run Text="."/>
+                                <Run Text="{Binding PropertyDisplayName, Mode=OneWay}"/>
+                                <Run Text=" "/>
+                                <Run Text="{Binding Operator, Mode=OneWay, Converter={StaticResource ConditionOperatorConverter}}"/>
+                                <Run Text=" "/>
+                                <Run Text="{Binding ComparisonValue, Mode=OneWay}"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
+                    <Run Text="("/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text=")"/>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <Button Content="+ Else If"
+                            Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
+                    <Button Content="+ Else"
+                            Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Padding="8,4" FontSize="11"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- ElseStep -->
+        <DataTemplate DataType="{x:Type jobs:ElseStep}">
+            <TextBlock Text="Else" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+        </DataTemplate>
+
+        <!-- EndIfStep -->
+        <DataTemplate DataType="{x:Type jobs:EndIfStep}">
+            <TextBlock Text="End If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
         </DataTemplate>
 
     </UserControl.Resources>
@@ -414,72 +613,79 @@
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.CanContentScroll="False"
+                         ScrollViewer.CanContentScroll="True"
+                         VirtualizingStackPanel.ScrollUnit="Pixel"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
                          ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
                          behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <!-- Inhalt + Aktionsleiste rechts (Edit/Hoch/Runter/Delete exakt wie Makro) -->
                     <ListBox.ItemTemplate>
                         <DataTemplate>
+                            <!-- Outer grid: coloured left bar | content -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
+                                <!-- Coloured left bar -->
+                                <Border Grid.Column="0" CornerRadius="2,0,0,2">
+                                    <Border.Background>
+                                        <MultiBinding Converter="{StaticResource StepBlockBorderConverter}">
+                                            <Binding />
+                                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                        </MultiBinding>
+                                    </Border.Background>
+                                </Border>
+
+                                <!-- Subtle background tint over the whole row -->
+                                <Border Grid.Column="1" Grid.ColumnSpan="2">
+                                    <Border.Background>
+                                        <MultiBinding Converter="{StaticResource StepBlockBorderConverter}" ConverterParameter="background">
+                                            <Binding />
+                                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                        </MultiBinding>
+                                    </Border.Background>
+                                </Border>
+
+                                <!-- Inner grid: content | action buttons -->
+                                <Grid Grid.Column="1" Grid.ColumnSpan="2" Margin="8,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
                                 <!-- Links: Step-Details via implizite DataTemplates -->
                                 <StackPanel Grid.Column="0">
-                                    <ContentPresenter Content="{Binding}"/>
+                                    <!-- Schrittnummer + Step-Inhalt nebeneinander -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   FontWeight="Bold"
+                                                   FontSize="14"
+                                                   VerticalAlignment="Top"
+                                                   Foreground="{DynamicResource MahApps.Brushes.Accent}">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource StepNumberConverter}">
+                                                    <Binding/>
+                                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <ContentPresenter Grid.Column="2" Content="{Binding}"/>
+                                    </Grid>
 
-                                    <!-- Pipeline-Info -->
-                                    <Border Margin="0,6,0,0"
-                                            BorderBrush="{StaticResource App.Brush.CardBorder}"
-                                            BorderThickness="0,1,0,0"
-                                            Padding="0,5,0,0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Benötigt:"
-                                                       FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource App.Brush.TextMuted}"
-                                                       VerticalAlignment="Center"
-                                                       Margin="0,0,5,0"/>
-                                            <ItemsControl Margin="0,0,10,0" VerticalAlignment="Center">
-                                                <ItemsControl.ItemsSource>
-                                                    <MultiBinding Converter="{StaticResource StepPrerequisiteStateConverter}">
-                                                        <Binding />
-                                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                    </MultiBinding>
-                                                </ItemsControl.ItemsSource>
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <WrapPanel Orientation="Horizontal"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderThickness="1" CornerRadius="3"
-                                                                Padding="5,1" Margin="0,0,4,0"
-                                                                Background="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, ConverterParameter=background, TargetNullValue={StaticResource App.Brush.AccentSubtle}}"
-                                                                BorderBrush="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, ConverterParameter=border, TargetNullValue={StaticResource App.Brush.Accent}}">
-                                                            <TextBlock Text="{Binding Name}" FontSize="10"
-                                                                       Foreground="{Binding IsSatisfied, Converter={StaticResource PrerequisiteStateConverter}, TargetNullValue={StaticResource App.Brush.Accent}}"/>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                            <TextBlock Text="Liefert:"
-                                                       FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource App.Brush.TextMuted}"
-                                                       VerticalAlignment="Center"
-                                                       Margin="0,0,5,0"/>
-                                            <Border BorderBrush="{StaticResource App.Brush.CardBorder}"
-                                                    BorderThickness="1" CornerRadius="3"
-                                                    Padding="5,1">
-                                                <TextBlock Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter='output'}"
-                                                           Foreground="{StaticResource App.Brush.TextSecondary}"
-                                                           FontSize="10"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </Border>
+
                                 </StackPanel>
 
                                 <!-- Rechts: Buttons identisch zur Makro-Ansicht -->
@@ -520,7 +726,8 @@
                                         <iconPacks:PackIconMaterial Kind="Delete"/>
                                     </Button>
                                 </StackPanel>
-                            </Grid>
+                                </Grid><!-- /inner Grid (content | buttons) -->
+                            </Grid><!-- /outer Grid (bar | content) -->
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

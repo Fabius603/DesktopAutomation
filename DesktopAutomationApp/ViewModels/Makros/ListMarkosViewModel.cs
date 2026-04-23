@@ -34,14 +34,14 @@ namespace DesktopAutomationApp.ViewModels
         {
             _selectedItems.Clear();
             _selectedItems.AddRange(items);
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private Makro? _selected;
         public Makro? Selected
         {
             get => _selected;
-            set { _selected = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            set { _selected = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         public ICommand RefreshCommand { get; }
@@ -164,6 +164,14 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
                 _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
             base.Dispose(disposing);
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (SaveAllCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (DeleteMakroCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (OpenMakroCommand   as RelayCommand<Makro?>)?.RaiseCanExecuteChanged();
         }
     }
 }

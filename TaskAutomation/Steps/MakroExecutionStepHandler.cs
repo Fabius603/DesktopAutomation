@@ -19,12 +19,14 @@ namespace TaskAutomation.Steps
             Makro? makro = null;
             if (step.Settings.MakroId.HasValue)
             {
-                makro = ctx.AllMakros.Values.FirstOrDefault(m => m.Id == step.Settings.MakroId.Value);
+                // O(1) lookup via dictionary key (stored as ID.ToString())
+                ctx.AllMakros.TryGetValue(step.Settings.MakroId.Value.ToString(), out makro);
                 if (makro == null)
                     throw new InvalidOperationException($"Makro with ID '{step.Settings.MakroId}' not found");
             }
             else if (!string.IsNullOrWhiteSpace(step.Settings.MakroName))
             {
+                // Fallback: name-based lookup (O(n) but only when ID is absent)
                 makro = ctx.AllMakros.Values.FirstOrDefault(m =>
                     string.Equals(m.Name, step.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
                 if (makro == null)

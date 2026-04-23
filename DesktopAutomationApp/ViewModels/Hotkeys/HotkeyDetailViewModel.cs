@@ -76,7 +76,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsCapturing
         {
             get => _isCapturing;
-            private set { _isCapturing = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _isCapturing = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
         private CancellationTokenSource? _captureCts;
 
@@ -84,7 +84,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
-            private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         // ── commands ────────────────────────────────────────────────────────────
@@ -279,6 +279,15 @@ namespace DesktopAutomationApp.ViewModels
             if (_selectedAction == null) return "Bitte eine Aktion (Job oder Makro) auswählen.";
             if (EditedHotkey.VirtualKeyCode == 0) return "Bitte eine Tastenkombination erfassen.";
             return null;
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (SaveCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand        as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartCaptureCommand  as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCaptureCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
     }
 }

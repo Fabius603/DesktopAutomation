@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using OpenCvSharp;
 
@@ -16,6 +19,10 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
     [JsonDerivedType(typeof(YOLODetectionStep), "yolo_detection")]
     [JsonDerivedType(typeof(TimeoutStep), "timeout")]
+    [JsonDerivedType(typeof(IfStep),       "if")]
+    [JsonDerivedType(typeof(ElseIfStep),   "else_if")]
+    [JsonDerivedType(typeof(ElseStep),     "else")]
+    [JsonDerivedType(typeof(EndIfStep),    "end_if")]
     public abstract class JobStep
     {
         [JsonPropertyName("id")]
@@ -53,6 +60,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("draw_results")]
         public bool DrawResults { get; set; } = true;
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
     }
 
     // ---- DesktopDuplication ----
@@ -98,6 +108,12 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("show_processed_image")]
         public bool ShowProcessedImage { get; set; } = true;
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
+
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
     }
 
     // ---- VideoCreation ----
@@ -120,6 +136,12 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("use_processed_image")]
         public bool UseProcessedImage { get; set; } = true;
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
+
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
     }
 
     // ---- MakroExecution ----
@@ -166,6 +188,9 @@ namespace TaskAutomation.Jobs
         public string ClickType { get; set; } = "left";
         [JsonPropertyName("timeout_ms")]
         public int TimeoutMs { get; set; } = 1000;
+
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
     }
 
     public sealed class KlickOnPoint3DStep : JobStep
@@ -192,6 +217,12 @@ namespace TaskAutomation.Jobs
         public bool InvertMouseMovementY { get; set; } = false;
         [JsonPropertyName("Invert MouseMovement X")]
         public bool InvertMouseMovementX { get; set; } = false;
+
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
     }
 
     public sealed class JobExecutionStep : JobStep
@@ -248,5 +279,83 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("draw_results")]
         public bool DrawResults { get; set; } = true;
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
     }
+
+    // ---- If / ElseIf / Else / EndIf ----
+
+    public enum ConditionOperator
+    {
+        IsTrue,
+        IsFalse,
+        Equals,
+        NotEquals,
+        GreaterThan,
+        LessThan,
+        GreaterThanOrEqual,
+        LessThanOrEqual,
+    }
+
+    public enum ConditionMatchMode { All, Any }
+
+    public sealed class StepCondition : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? name = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        [JsonPropertyName("source_step_id")]
+        public string SourceStepId { get; set; } = "";
+
+        private string _sourceStepDisplayName = "";
+        [JsonIgnore]
+        public string SourceStepDisplayName
+        {
+            get => _sourceStepDisplayName;
+            set { if (_sourceStepDisplayName != value) { _sourceStepDisplayName = value; OnPropertyChanged(); } }
+        }
+
+        [JsonPropertyName("property")]
+        public string Property { get; set; } = "";
+
+        [JsonPropertyName("property_display_name")]
+        public string PropertyDisplayName { get; set; } = "";
+
+        [JsonPropertyName("operator")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ConditionOperator Operator { get; set; } = ConditionOperator.IsTrue;
+
+        [JsonPropertyName("comparison_value")]
+        public string? ComparisonValue { get; set; }
+    }
+
+    public sealed class IfConditionSettings
+    {
+        [JsonPropertyName("match_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ConditionMatchMode MatchMode { get; set; } = ConditionMatchMode.All;
+
+        [JsonPropertyName("conditions")]
+        public List<StepCondition> Conditions { get; set; } = new();
+    }
+
+    public sealed class IfStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public IfConditionSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ElseIfStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public IfConditionSettings Settings { get; set; } = new();
+    }
+
+    /// <summary>Marks the start of the else block. No configuration needed.</summary>
+    public sealed class ElseStep : JobStep { }
+
+    /// <summary>Marks the end of an if/elseif/else block. No configuration needed.</summary>
+    public sealed class EndIfStep : JobStep { }
 }

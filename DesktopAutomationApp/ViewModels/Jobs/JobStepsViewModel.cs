@@ -27,25 +27,28 @@ namespace DesktopAutomationApp.ViewModels
 
         public ObservableCollection<JobStep> Steps => _steps;
 
+        /// <summary>Incrementiert bei jeder Listenänderung; wird von Konvertern als Cache-Schlüssel genutzt.</summary>
+        public int StepsVersion { get; private set; }
+
         private JobStep? _selectedStep;
         public JobStep? SelectedStep
         {
             get => _selectedStep;
-            set { _selectedStep = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            set { _selectedStep = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         private bool _hasUnsavedChanges;
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
-            private set { _hasUnsavedChanges = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         private bool _isJobRunning;
         public bool IsJobRunning
         {
             get => _isJobRunning;
-            private set { _isJobRunning = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            private set { _isJobRunning = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         public ICommand BackCommand { get; }
@@ -60,6 +63,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand DeleteStepCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
+        public ICommand AddElseIfCommand { get; }
+        public ICommand AddElseCommand { get; }
 
         public event Action? RequestBack;
 
@@ -72,11 +77,18 @@ namespace DesktopAutomationApp.ViewModels
             _dispatcher = dispatcher;
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
+            ResolveConditionDisplayNames();
 
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
             // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
             // Konverter in der View (StepPrerequisiteStateConverter) neu ausgewertet werden.
-            _steps.CollectionChanged += (_, _) => OnPropertyChanged(nameof(Steps));
+            _steps.CollectionChanged += (_, _) =>
+            {
+                StepsVersion++;
+                OnPropertyChanged(nameof(StepsVersion));
+                ResolveConditionDisplayNames();
+                InvalidateAllCommands();
+            };
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
@@ -84,7 +96,9 @@ namespace DesktopAutomationApp.ViewModels
             RenameCommand = new RelayCommand(async () => await Rename());
 
             AddStepCommand    = new RelayCommand(async () => await AddStep());
-            EditStepCommand   = new RelayCommand<JobStep?>(EditStep, s => s != null || SelectedStep != null);
+            EditStepCommand   = new RelayCommand<JobStep?>(
+                EditStep,
+                s => { var t = s ?? SelectedStep; return t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             ReorderStepCommand = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
@@ -92,6 +106,9 @@ namespace DesktopAutomationApp.ViewModels
 
             StartJobCommand = new RelayCommand(() => _dispatcher.StartJob(Job.Id), () => !IsJobRunning);
             StopJobCommand  = new RelayCommand(() => _dispatcher.CancelJob(Job.Id), () => IsJobRunning);
+
+            AddElseIfCommand = new RelayCommand<JobStep?>(AddElseIf, CanAddElseIf);
+            AddElseCommand   = new RelayCommand<JobStep?>(AddElse, CanAddElse);
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
@@ -111,16 +128,6 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Save ----------
         private async Task Save()
         {
-            var errors = StepPipelineRegistry.ValidateStepChain(_steps);
-            if (errors.Count > 0)
-            {
-                var msg = "Der Job kann nicht gespeichert werden, da folgende Voraussetzungen nicht erfüllt sind:\n\n"
-                    + string.Join("\n", errors.Select(e =>
-                        $"  • Step {e.StepIndex + 1} ({e.StepTypeName}): benötigt \u201e{e.MissingPrerequisite}\u201c"));
-                AppDialog.Show(msg, "Ungültige Pipeline", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             Job.Steps = _steps.ToList();
             await _jobRepo.SaveAsync(Job);
             await _executor.ReloadJobsAsync();
@@ -157,7 +164,21 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result == true && vm.CreatedStep != null)
             {
+                // Prevent nesting: IfStep cannot be inserted inside an existing block.
+                if (vm.CreatedStep is TaskAutomation.Jobs.IfStep && CountOpenBlocksAt(insertIndex) > 0)
+                {
+                    MessageBox.Show(
+                        "If-Abfragen können nicht verschachtelt werden.",
+                        "Nicht erlaubt",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 _steps.Insert(insertIndex, vm.CreatedStep);
+                // If-Abfrage: automatisch EndIf direkt dahinter einfügen
+                if (vm.CreatedStep is TaskAutomation.Jobs.IfStep)
+                    _steps.Insert(insertIndex + 1, new TaskAutomation.Jobs.EndIfStep());
                 SelectedStep = vm.CreatedStep;
                 HasUnsavedChanges = true;
             }
@@ -186,7 +207,10 @@ namespace DesktopAutomationApp.ViewModels
             // prerequisite evaluation.
             var precedingSteps = _steps.Take(idx).ToList();
             var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
-                { Mode = StepDialogMode.Edit };
+                {
+                    Mode = StepDialogMode.Edit,
+                    IsTypeLocked = target is TaskAutomation.Jobs.ElseIfStep
+                };
             Prefill(vm, target);
 
             ShowDialogWithVm(vm, out bool? result);
@@ -214,6 +238,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.TemplateMatchingStep_RoiW = t.Settings.ROI.Width;
                     vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
                     vm.TemplateMatchingStep_DrawResults = t.Settings.DrawResults;
+                    vm.TemplateMatchingStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == t.Settings.SourceCaptureStepId);
                     break;
 
                 case DesktopDuplicationStep d:
@@ -226,6 +251,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ShowImageStep_WindowName = si.Settings.WindowName;
                     vm.ShowImageStep_ShowRawImage = si.Settings.ShowRawImage;
                     vm.ShowImageStep_ShowProcessedImage = si.Settings.ShowProcessedImage;
+                    vm.ShowImageStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceCaptureStepId);
+                    vm.ShowImageStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceDetectionStepId);
                     break;
 
                 case VideoCreationStep v:
@@ -234,6 +261,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.VideoCreationStep_FileName = v.Settings.FileName;
                     vm.VideoCreationStep_UseRawImage = v.Settings.UseRawImage;
                     vm.VideoCreationStep_UseProcessedImage = v.Settings.UseProcessedImage;
+                    vm.VideoCreationStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == v.Settings.SourceCaptureStepId);
+                    vm.VideoCreationStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == v.Settings.SourceDetectionStepId);
                     break;
 
                 case MakroExecutionStep me:
@@ -255,6 +284,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPointStep_ClickType = kp.Settings.ClickType;
                     vm.KlickOnPointStep_DoubleClick = kp.Settings.DoubleClick;
                     vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
+                    vm.KlickOnPointStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == kp.Settings.SourceDetectionStepId);
                     break;
 
                 case KlickOnPoint3DStep kp3d:
@@ -267,6 +297,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
                     vm.KlickOnPoint3DStep_InvertMouseMovementY = kp3d.Settings.InvertMouseMovementY;
                     vm.KlickOnPoint3DStep_InvertMouseMovementX = kp3d.Settings.InvertMouseMovementX;
+                    vm.KlickOnPoint3DStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == kp3d.Settings.SourceDetectionStepId);
+                    vm.KlickOnPoint3DStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == kp3d.Settings.SourceCaptureStepId);
                     break;
 
                 case JobExecutionStep je:
@@ -289,11 +321,30 @@ namespace DesktopAutomationApp.ViewModels
                     vm.YoloDetectionStep_RoiY = yd.Settings.ROI.Y;
                     vm.YoloDetectionStep_RoiW = yd.Settings.ROI.Width;
                     vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
+                    vm.YoloDetectionStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == yd.Settings.SourceCaptureStepId);
                     break;
 
                 case TimeoutStep to:
                     vm.SelectedType = "Timeout";
                     vm.TimeoutStep_DelayMs = to.Settings.DelayMs;
+                    break;
+
+                case TaskAutomation.Jobs.IfStep ifs:
+                    vm.SelectedType = "If";
+                    vm.LoadIfStepConditions(ifs.Settings);
+                    break;
+
+                case TaskAutomation.Jobs.ElseIfStep eifs:
+                    vm.SelectedType = "ElseIf";
+                    vm.LoadElseIfStepConditions(eifs.Settings);
+                    break;
+
+                case TaskAutomation.Jobs.ElseStep:
+                    vm.SelectedType = "Else";
+                    break;
+
+                case TaskAutomation.Jobs.EndIfStep:
+                    vm.SelectedType = "EndIf";
                     break;
             }
         }
@@ -305,7 +356,8 @@ namespace DesktopAutomationApp.ViewModels
             var idx = _steps.IndexOf(step);
             if (idx < 0) return false;
             var newIdx = idx + delta;
-            return newIdx >= 0 && newIdx < _steps.Count;
+            if (newIdx < 0 || newIdx >= _steps.Count) return false;
+            return !WouldViolateIfStructure(idx, newIdx);
         }
 
         private void MoveRelative(JobStep? step, int delta)
@@ -320,18 +372,19 @@ namespace DesktopAutomationApp.ViewModels
 
             SelectedStep = step;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void MoveToIndex(int from, int to)
         {
             if (from < 0 || from >= _steps.Count || to < 0 || to >= _steps.Count || from == to) return;
+            if (WouldViolateIfStructure(from, to)) return;
             var step = _steps[from];
             _steps.RemoveAt(from);
             _steps.Insert(to, step);
             SelectedStep = step;
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void DeleteStep(JobStep? step)
@@ -339,25 +392,44 @@ namespace DesktopAutomationApp.ViewModels
             var target = step ?? SelectedStep;
             if (target == null) return;
 
-            var result = AppDialog.Show(
-                $"Möchten Sie den Step wirklich löschen?",
-                "Löschen bestätigen",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            bool isIfOrEndIf = target is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep;
+            string message = isIfOrEndIf
+                ? "Möchten Sie den gesamten If-Block löschen (If, Else-If, Else und End-If)?"
+                : "Möchten Sie den Step wirklich löschen?";
 
-            if (result != MessageBoxResult.Yes)
-                return;
+            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
 
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
 
-            var next = _steps.ElementAtOrDefault(Math.Max(0, idx - 1))
-                      ?? _steps.ElementAtOrDefault(idx + 1);
+            if (isIfOrEndIf)
+            {
+                int ifIdx    = target is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+                int endIfIdx = target is TaskAutomation.Jobs.EndIfStep ? idx : FindMatchingEndIf(idx);
 
-            _steps.RemoveAt(idx);
-            SelectedStep = next;
+                if (ifIdx >= 0 && endIfIdx > ifIdx)
+                {
+                    for (int i = endIfIdx; i >= ifIdx; i--)
+                        _steps.RemoveAt(i);
+                    SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, ifIdx - 1));
+                }
+                else
+                {
+                    _steps.RemoveAt(idx);
+                    SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, idx - 1));
+                }
+            }
+            else
+            {
+                var next = _steps.ElementAtOrDefault(Math.Max(0, idx - 1))
+                          ?? _steps.ElementAtOrDefault(idx + 1);
+                _steps.RemoveAt(idx);
+                SelectedStep = next;
+            }
+
             HasUnsavedChanges = true;
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private void OnRunningJobsChanged()
@@ -368,11 +440,286 @@ namespace DesktopAutomationApp.ViewModels
             });
         }
 
+        // ---------- If/ElseIf/Else helpers ----------
+
+        /// <summary>
+        /// Scans backwards from <paramref name="fromIndex"/> to find the IfStep that owns the
+        /// ElseIf / Else / EndIf at that index (same nesting depth).
+        /// Returns -1 if not found.
+        /// </summary>
+        private int FindOwningIfStep(int fromIndex)
+        {
+            int depth = 0;
+            for (int i = fromIndex - 1; i >= 0; i--)
+            {
+                if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth++;
+                else if (_steps[i] is TaskAutomation.Jobs.IfStep)
+                {
+                    if (depth == 0) return i;
+                    depth--;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Returns the index just before the first same-level ElseStep in the block,
+        /// or <paramref name="endIfIdx"/> if no Else exists. Used to insert ElseIf at
+        /// the correct position (always before Else, never after it).
+        /// </summary>
+        private int FindInsertBeforeElseOrEndIf(int ifIdx, int endIfIdx)
+        {
+            int depth = 0;
+            for (int i = ifIdx + 1; i < endIfIdx; i++)
+            {
+                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
+                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth--;
+                else if (_steps[i] is TaskAutomation.Jobs.ElseStep && depth == 0) return i;
+            }
+            return endIfIdx;
+        }
+
+        /// <summary>
+        /// Returns true if moving the step at <paramref name="from"/> to <paramref name="to"/>
+        /// would produce an invalid If / ElseIf / Else / EndIf ordering.
+        /// Valid order within every block: If → ElseIf* → Else? → EndIf
+        /// Works by simulating the move on a copy and validating the result.
+        /// </summary>
+        private bool WouldViolateIfStructure(int from, int to)
+        {
+            if (from == to) return false;
+            var step = _steps[from];
+
+            // Regular steps cannot break the control-flow structure.
+            if (step is not (TaskAutomation.Jobs.IfStep     or
+                             TaskAutomation.Jobs.ElseIfStep or
+                             TaskAutomation.Jobs.ElseStep   or
+                             TaskAutomation.Jobs.EndIfStep))
+                return false;
+
+            var sim = new System.Collections.Generic.List<JobStep>(_steps);
+            sim.RemoveAt(from);
+            sim.Insert(to, step);
+            return !IsValidIfStructure(sim);
+        }
+
+        /// <summary>
+        /// Validates that every If-block in <paramref name="steps"/> obeys
+        /// If → ElseIf* → Else? → EndIf ordering (no ElseIf after Else, no orphaned markers).
+        /// </summary>
+        private static bool IsValidIfStructure(System.Collections.Generic.IReadOnlyList<JobStep> steps)
+        {
+            // Each stack entry: true = an Else has already been seen in this block.
+            var seenElse = new System.Collections.Generic.Stack<bool>();
+            foreach (var s in steps)
+            {
+                if (s is TaskAutomation.Jobs.IfStep)
+                {
+                    if (seenElse.Count > 0) return false; // no nesting allowed
+                    seenElse.Push(false);
+                }
+                else if (s is TaskAutomation.Jobs.ElseIfStep)
+                {
+                    if (seenElse.Count == 0) return false; // no owning If
+                    if (seenElse.Peek()) return false;     // ElseIf after Else
+                }
+                else if (s is TaskAutomation.Jobs.ElseStep)
+                {
+                    if (seenElse.Count == 0) return false; // no owning If
+                    if (seenElse.Peek()) return false;     // duplicate Else
+                    seenElse.Pop();
+                    seenElse.Push(true);
+                }
+                else if (s is TaskAutomation.Jobs.EndIfStep)
+                {
+                    if (seenElse.Count == 0) return false; // no owning If
+                    seenElse.Pop();
+                }
+            }
+            return seenElse.Count == 0; // every If must be closed
+        }
+
+        /// <summary>
+        /// Returns the number of currently open (unclosed) If-blocks at the given insert index.
+        /// Used to prevent nesting: returns > 0 when the position is inside an existing block.
+        /// </summary>
+        private int CountOpenBlocksAt(int insertIndex)
+        {
+            int depth = 0;
+            for (int i = 0; i < insertIndex && i < _steps.Count; i++)
+            {
+                if (_steps[i] is TaskAutomation.Jobs.IfStep)    depth++;
+                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep && depth > 0) depth--;
+            }
+            return depth;
+        }
+
+        /// <summary>
+        /// Findet den passenden EndIfStep zum IfStep/ElseIfStep bei fromIndex.
+        /// Scan vorwärts: jeder IfStep erhöht die Tiefe, EndIfStep bei Tiefe 0 ist der Treffer.
+        /// </summary>
+        private int FindMatchingEndIf(int fromIndex)
+        {
+            int depth = 0;
+            for (int i = fromIndex + 1; i < _steps.Count; i++)
+            {
+                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
+                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep)
+                {
+                    if (depth == 0) return i;
+                    depth--;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Gibt true zurück, wenn zwischen fromIndex und endIfIndex bereits ein ElseStep auf
+        /// der gleichen Verschachtelungsebene vorhanden ist.
+        /// </summary>
+        private bool HasElseInBlock(int fromIndex, int endIfIndex)
+        {
+            int depth = 0;
+            for (int i = fromIndex + 1; i < endIfIndex; i++)
+            {
+                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
+                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth--;
+                else if (_steps[i] is TaskAutomation.Jobs.ElseStep && depth == 0) return true;
+            }
+            return false;
+        }
+
+        private void AddElseIf(JobStep? step)
+        {
+            if (step == null) return;
+            int idx = _steps.IndexOf(step);
+            if (idx < 0) return;
+
+            // Normalize: always work relative to the owning IfStep
+            int ifIdx = step is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+            if (ifIdx < 0) return;
+
+            int endIfIdx = FindMatchingEndIf(ifIdx);
+            if (endIfIdx < 0) return;
+
+            // Insert before Else (if one exists) to keep If→ElseIf*→Else?→EndIf order
+            int insertIdx = FindInsertBeforeElseOrEndIf(ifIdx, endIfIdx);
+
+            var precedingSteps = _steps.Take(insertIdx).ToList();
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+                { Mode = StepDialogMode.Add, IsTypeLocked = true };
+            vm.SelectedType = "ElseIf";
+
+            ShowDialogWithVm(vm, out bool? result);
+
+            if (result == true && vm.CreatedStep != null)
+            {
+                _steps.Insert(insertIdx, vm.CreatedStep);
+                SelectedStep = vm.CreatedStep;
+                HasUnsavedChanges = true;
+                InvalidateAllCommands();
+            }
+        }
+
+        private void AddElse(JobStep? step)
+        {
+            if (step == null) return;
+            int idx = _steps.IndexOf(step);
+            if (idx < 0) return;
+
+            // Normalize to IfStep so HasElseInBlock scans the full block
+            int ifIdx = step is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+            if (ifIdx < 0) return;
+
+            int endIfIdx = FindMatchingEndIf(ifIdx);
+            if (endIfIdx < 0 || HasElseInBlock(ifIdx, endIfIdx)) return;
+
+            // Guard already passed above: HasElseInBlock returned false
+            _steps.Insert(endIfIdx, new TaskAutomation.Jobs.ElseStep());
+            HasUnsavedChanges = true;
+            InvalidateAllCommands();
+        }
+
+        private bool CanAddElse(JobStep? step)
+        {
+            if (step == null) return false;
+            int idx = _steps.IndexOf(step);
+            if (idx < 0) return false;
+
+            int ifIdx = step is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+            if (ifIdx < 0) return false;
+
+            int endIfIdx = FindMatchingEndIf(ifIdx);
+            if (endIfIdx < 0) return false;
+            return !HasElseInBlock(ifIdx, endIfIdx);
+        }
+
+        private bool CanAddElseIf(JobStep? step)
+        {
+            if (step == null) return false;
+            int idx = _steps.IndexOf(step);
+            if (idx < 0) return false;
+            int ifIdx = step is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+            if (ifIdx < 0) return false;
+            int endIfIdx = FindMatchingEndIf(ifIdx);
+            if (endIfIdx < 0) return false;
+            return true;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
             base.Dispose(disposing);
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (SaveCommand         as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand       as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartJobCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (StopJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand     as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepUpCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseIfCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseCommand      as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+        }
+
+        // ---------- Display-Name-Auflösung für If/ElseIf-Bedingungen ----------
+        /// <summary>
+        /// Füllt <see cref="TaskAutomation.Jobs.StepCondition.SourceStepDisplayName"/> für alle
+        /// If/ElseIf-Steps anhand der aktuellen Step-Liste. Wird nach dem Laden und nach jeder
+        /// Listenänderung aufgerufen, da SourceStepDisplayName nicht serialisiert wird.
+        /// </summary>
+        private void ResolveConditionDisplayNames()
+        {
+            // Schnelle Lookup-Map: StepId → (friendlyName, 1-basierter Index)
+            var idToName = new Dictionary<string, string>(_steps.Count, StringComparer.Ordinal);
+            for (int i = 0; i < _steps.Count; i++)
+            {
+                var step = _steps[i];
+                var friendly = TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name);
+                idToName[step.Id] = $"{friendly} (Step {i + 1})";
+            }
+
+            foreach (var step in _steps)
+            {
+                IEnumerable<TaskAutomation.Jobs.StepCondition>? conditions = step switch
+                {
+                    TaskAutomation.Jobs.IfStep     ifs  => ifs.Settings.Conditions,
+                    TaskAutomation.Jobs.ElseIfStep eifs => eifs.Settings.Conditions,
+                    _                                   => null
+                };
+                if (conditions is null) continue;
+
+                foreach (var cond in conditions)
+                    cond.SourceStepDisplayName = idToName.TryGetValue(cond.SourceStepId, out var name)
+                        ? name
+                        : cond.SourceStepId;
+            }
         }
     }
 }

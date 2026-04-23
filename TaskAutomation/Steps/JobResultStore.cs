@@ -10,6 +10,8 @@ namespace TaskAutomation.Steps
         private readonly Dictionary<Type, StepResultBase>   _byType = new();
         private readonly Dictionary<string, StepResultBase> _byId   = new(StringComparer.OrdinalIgnoreCase);
 
+        public JobResultStore() { }
+
         // ── Lesen ──────────────────────────────────────────────────────────────
 
         public TResult Get<TStep, TResult>()
@@ -38,6 +40,9 @@ namespace TaskAutomation.Steps
             _byId[stepId]         = result;
         }
 
+        public StepResultBase? GetRaw(string stepId)
+            => _byId.TryGetValue(stepId, out var r) ? r : null;
+
         // ── Interne Verwaltung ─────────────────────────────────────────────────
 
         /// <summary>
@@ -63,19 +68,21 @@ namespace TaskAutomation.Steps
             _byId.Clear();
         }
 
-        // ── Default-Wert per Reflection ────────────────────────────────────────
+        // ── Default-Wert per Reflection (gecacht pro Typ) ──────────────────────
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, StepResultBase>
+            _defaultCache = new();
 
         private static TResult GetDefault<TResult>() where TResult : StepResultBase
         {
-            // Sucht das statische Default-Feld (z.B. CaptureResult.Default)
-            var field = typeof(TResult).GetField("Default",
-                BindingFlags.Public | BindingFlags.Static);
+            return (TResult)_defaultCache.GetOrAdd(typeof(TResult), static t =>
+            {
+                var field = t.GetField("Default", BindingFlags.Public | BindingFlags.Static);
+                if (field?.GetValue(null) is StepResultBase def)
+                    return def;
 
-            if (field?.GetValue(null) is TResult def)
-                return def;
-
-            // Fallback: leere Instanz
-            return (TResult)Activator.CreateInstance(typeof(TResult))!;
+                return (StepResultBase)Activator.CreateInstance(t)!;
+            });
         }
     }
 }

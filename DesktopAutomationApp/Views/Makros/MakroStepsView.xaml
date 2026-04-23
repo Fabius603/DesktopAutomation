@@ -379,7 +379,10 @@
                          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.CanContentScroll="False"
+                         ScrollViewer.CanContentScroll="True"
+                         VirtualizingStackPanel.ScrollUnit="Pixel"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
                          ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
                          behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
                     <ListBox.ItemTemplate>
@@ -402,6 +405,7 @@
                                         <MultiBinding Converter="{StaticResource StepNumberConverter}">
                                             <Binding/>
                                             <Binding RelativeSource="{RelativeSource AncestorType=ListBox}" Path="ItemsSource"/>
+                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>

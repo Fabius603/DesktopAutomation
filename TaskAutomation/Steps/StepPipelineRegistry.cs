@@ -75,6 +75,12 @@ namespace TaskAutomation.Steps
             [typeof(VideoCreationStep)] = new(
                 Prerequisites: ["CaptureResult"],
                 Output:        "OutputResult"),
+
+            // ── Ablaufsteuerung ────────────────────────────────────────────────
+            [typeof(IfStep)]     = new(Prerequisites: [], Output: "–"),
+            [typeof(ElseIfStep)] = new(Prerequisites: [], Output: "–"),
+            [typeof(ElseStep)]   = new(Prerequisites: [], Output: "–"),
+            [typeof(EndIfStep)]  = new(Prerequisites: [], Output: "–"),
         };
 
         /// <summary>Gibt die Pipeline-Info für den angegebenen Step-Typ zurück.</summary>
@@ -99,6 +105,10 @@ namespace TaskAutomation.Steps
             ["JobExecution"]       = typeof(JobExecutionStep),
             ["ScriptExecution"]    = typeof(ScriptExecutionStep),
             ["Timeout"]            = typeof(TimeoutStep),
+            ["If"]                 = typeof(IfStep),
+            ["ElseIf"]             = typeof(ElseIfStep),
+            ["Else"]               = typeof(ElseStep),
+            ["EndIf"]              = typeof(EndIfStep),
         };
 
         /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>
@@ -127,12 +137,19 @@ namespace TaskAutomation.Steps
                 var info = Get(step.GetType());
                 if (info != null)
                 {
-                    foreach (var prereq in info.Prerequisites)
+                    // Control-flow markers (If/ElseIf/Else/EndIf) are transparent
+                    // to the pipeline validator – they have no prerequisites and
+                    // produce no output that other steps depend on.
+                    bool isControlFlow = step is IfStep or ElseIfStep or ElseStep or EndIfStep;
+                    if (!isControlFlow)
                     {
-                        if (!available.Contains(prereq))
-                            errors.Add(new StepChainError(index, step.GetType().Name, prereq));
+                        foreach (var prereq in info.Prerequisites)
+                        {
+                            if (!available.Contains(prereq))
+                                errors.Add(new StepChainError(index, step.GetType().Name, prereq));
+                        }
+                        available.Add(info.Output);
                     }
-                    available.Add(info.Output);
                 }
                 index++;
             }

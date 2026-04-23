@@ -18,11 +18,16 @@ namespace TaskAutomation.Steps
             if (ctx.VideoRecorder == null)
                 throw new InvalidOperationException("VideoRecorder is not initialized");
 
-            var capture   = TemplateMatchingStepHandler.GetCapture(ctx.Results);
-            var detection = KlickOnPointStepHandler.GetDetection(ctx.Results);
+            var capture   = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
+            var detection = string.IsNullOrEmpty(step.Settings.SourceDetectionStepId)
+                ? DetectionResult.Default
+                : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
 
             if (capture.Image == null || capture.Image.Width == 0)
-                throw new InvalidOperationException("No valid image available for video recording");
+            {
+                logger.LogInformation("VideoCreationStepHandler: Kein Bild verfügbar, Frame wird übersprungen");
+                return new OutputResult { WasExecuted = true, Success = false };
+            }
 
             Bitmap? frameToAdd;
             if (step.Settings.UseRawImage)

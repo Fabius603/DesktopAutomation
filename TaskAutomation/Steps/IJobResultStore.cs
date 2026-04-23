@@ -26,6 +26,12 @@ namespace TaskAutomation.Steps
             where TResult : StepResultBase;
 
         /// <summary>
+        /// Returns the raw result for the given step ID without generic type constraints,
+        /// or null if no result has been stored yet for that step.
+        /// </summary>
+        StepResultBase? GetRaw(string stepId);
+
+        /// <summary>
         /// Schreibt das Ergebnis eines Steps (wird von der Handler-Basisklasse automatisch aufgerufen).
         /// </summary>
         void Set<TStep>(StepResultBase result, string stepId)

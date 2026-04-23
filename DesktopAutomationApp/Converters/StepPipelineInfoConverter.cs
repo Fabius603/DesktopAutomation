@@ -36,44 +36,77 @@ namespace DesktopAutomationApp.Converters
     }
 
     /// <summary>
-    /// MultiValueConverter: [0] = aktueller JobStep, [1] = IEnumerable&lt;JobStep&gt; (alle Steps).
+    /// MultiValueConverter: [0] = aktueller JobStep, [1] = IEnumerable&lt;JobStep&gt; (alle Steps),
+    ///                       [2] = StepsVersion (int) — cache key.
     /// Gibt IReadOnlyList&lt;PrerequisiteDisplayItem&gt; zurück – jedes Item enthält Name + IsSatisfied.
     /// IsSatisfied = true, wenn ein VORHERIGER Step im Job das benötigte Ergebnis liefert.
+    ///
+    /// Der Scan der gesamten Liste wird pro StepsVersion genau einmal durchgeführt (O(n)),
+    /// danach ist jede Einzelabfrage O(1).
     /// </summary>
     public sealed class StepPrerequisiteStateConverter : IMultiValueConverter
     {
         public sealed record PrerequisiteDisplayItem(string Name, bool IsSatisfied);
+
+        // ── Cache ─────────────────────────────────────────────────────────────────
+        private int _cacheVersion = int.MinValue;
+        private Dictionary<JobStep, List<PrerequisiteDisplayItem>>? _prereqMap;
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values.Length < 2 || values[0] is not JobStep step)
                 return Array.Empty<PrerequisiteDisplayItem>();
 
-            var prereqs = StepPipelineRegistry.Get(step.GetType())?.Prerequisites
-                          ?? Array.Empty<string>();
+            int version = values.Length > 2 && values[2] is int v ? v : 0;
 
-            if (prereqs.Length == 0)
-                return Array.Empty<PrerequisiteDisplayItem>();
-
-            // Ausgaben aller Steps VOR dem aktuellen sammeln
-            var available = new HashSet<string>(StringComparer.Ordinal);
-            if (values[1] is System.Collections.IEnumerable allSteps)
+            if (_prereqMap == null || version != _cacheVersion)
             {
-                foreach (var obj in allSteps)
-                {
-                    if (obj is not JobStep s) continue;
-                    if (ReferenceEquals(s, step)) break;  // stop before current step
-                    var info = StepPipelineRegistry.Get(s.GetType());
-                    if (info != null) available.Add(info.Output);
-                }
+                _prereqMap    = BuildPrereqMap(values[1] as System.Collections.IEnumerable);
+                _cacheVersion = version;
             }
 
-            return prereqs
-                .Select(p => new PrerequisiteDisplayItem(p, available.Contains(p)))
-                .ToList();
+            return _prereqMap.TryGetValue(step, out var list)
+                ? list
+                : (object)Array.Empty<PrerequisiteDisplayItem>();
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
+
+        // ── helpers ───────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Single O(n) pass: for each step, records which prerequisites are satisfied
+        /// by the steps that precede it.
+        /// </summary>
+        private static Dictionary<JobStep, List<PrerequisiteDisplayItem>> BuildPrereqMap(
+            System.Collections.IEnumerable? allSteps)
+        {
+            var map       = new Dictionary<JobStep, List<PrerequisiteDisplayItem>>(ReferenceEqualityComparer.Instance);
+            var available = new HashSet<string>(StringComparer.Ordinal);
+
+            if (allSteps == null) return map;
+
+            foreach (var obj in allSteps)
+            {
+                if (obj is not JobStep s) continue;
+
+                var prereqs = StepPipelineRegistry.Get(s.GetType())?.Prerequisites
+                              ?? Array.Empty<string>();
+
+                if (prereqs.Length > 0)
+                {
+                    var items = new List<PrerequisiteDisplayItem>(prereqs.Length);
+                    foreach (var p in prereqs)
+                        items.Add(new PrerequisiteDisplayItem(p, available.Contains(p)));
+                    map[s] = items;
+                }
+
+                var output = StepPipelineRegistry.Get(s.GetType())?.Output;
+                if (output != null) available.Add(output);
+            }
+
+            return map;
+        }
     }
 }

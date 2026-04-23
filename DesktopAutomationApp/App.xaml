@@ -35,6 +35,8 @@
             <conv:CollectionContainsConverter x:Key="CollectionContainsConverter" />
             <conv:PrerequisiteStateConverter x:Key="PrerequisiteStateConverter" />
             <conv:StepPrerequisiteStateConverter x:Key="StepPrerequisiteStateConverter" />
+            <conv:ConditionOperatorConverter x:Key="ConditionOperatorConverter" />
+            <conv:ConditionMatchModeConverter x:Key="ConditionMatchModeConverter" />
 
             <!-- ViewModel -> View Mapping -->
             <DataTemplate DataType="{x:Type vm:StartViewModel}">

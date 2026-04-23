@@ -33,14 +33,14 @@ namespace DesktopAutomationApp.ViewModels
         {
             _selectedItems.Clear();
             _selectedItems.AddRange(items);
-            CommandManager.InvalidateRequerySuggested();
+            InvalidateAllCommands();
         }
 
         private EditableHotkey? _selected;
         public EditableHotkey? Selected
         {
             get => _selected;
-            set { _selected = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); }
+            set { _selected = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
         public event Action<EditableHotkey>? RequestOpenHotkey;
@@ -212,6 +212,13 @@ namespace DesktopAutomationApp.ViewModels
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
+        }
+
+        // ---------- Command invalidation helper ----------
+        private void InvalidateAllCommands()
+        {
+            (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (OpenCommand   as RelayCommand<EditableHotkey?>)?.RaiseCanExecuteChanged();
         }
     }
 }

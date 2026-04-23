@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using OpenCvSharp;
@@ -55,6 +56,8 @@ namespace TaskAutomation.Jobs
             [typeof(DesktopDuplicationStep)] = "Desktop Duplication wird bereits von Job '{0}' verwendet.",
         };
         private readonly ConcurrentDictionary<Type, string> _exclusiveStepOwners = new();
+
+        // ── Pipeline-Validierungs-Cache (pro Job-ID, wird bei Reload gelöscht) ──
 
         // ── Handler-Registry ───────────────────────────────────────────────────
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
@@ -208,18 +211,6 @@ namespace TaskAutomation.Jobs
             CurrentJob = job;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
 
-            // ── Pipeline-Validierung ──────────────────────────────────────────
-            var chainErrors = StepPipelineRegistry.ValidateStepChain(job.Steps ?? Enumerable.Empty<JobStep>());
-            if (chainErrors.Count > 0)
-            {
-                var details = string.Join("; ", chainErrors.Select(e =>
-                    $"Step {e.StepIndex + 1} ({e.StepTypeName}): fehlende Voraussetzung '{e.MissingPrerequisite}'"));
-                var err = $"Job '{job.Name}' kann nicht ausgeführt werden – ungültige Pipeline: {details}";
-                _logger.LogError(err);
-                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
-                return;
-            }
-
             // ── Zyklus-Erkennung ──────────────────────────────────────────────
             var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
             if (parentChain.Contains(job.Id))
@@ -336,9 +327,63 @@ namespace TaskAutomation.Jobs
                 {
                     pipelineCtx.ResetResults();
 
-                    foreach (var step in job.Steps)
+                    var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
+                    var branchStack = new Stack<BranchFrame>();
+
+                    foreach (var step in steps)
                     {
                         ct.ThrowIfCancellationRequested();
+
+                        bool parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
+
+                        // ── Control-flow steps: handle without executing ────────
+                        if (step is IfStep ifStep)
+                        {
+                            bool condMet = parentActive && EvaluateCondition(ifStep.Settings, pipelineCtx.Results);
+                            branchStack.Push(new BranchFrame(parentActive, condMet, condMet));
+                            continue;
+                        }
+
+                        if (step is ElseIfStep elseIfStep)
+                        {
+                            if (branchStack.Count > 0)
+                            {
+                                var top = branchStack.Pop();
+                                if (top.ParentActive && !top.AnyMatched)
+                                {
+                                    bool condMet = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results);
+                                    branchStack.Push(new BranchFrame(top.ParentActive, condMet, condMet));
+                                }
+                                else
+                                {
+                                    // A branch already matched or parent inactive – skip this branch.
+                                    branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
+                                }
+                            }
+                            continue;
+                        }
+
+                        if (step is ElseStep)
+                        {
+                            if (branchStack.Count > 0)
+                            {
+                                var top = branchStack.Pop();
+                                bool executeElse = top.ParentActive && !top.AnyMatched;
+                                branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
+                            }
+                            continue;
+                        }
+
+                        if (step is EndIfStep)
+                        {
+                            if (branchStack.Count > 0)
+                                branchStack.Pop();
+                            continue;
+                        }
+
+                        // ── Regular step: execute only when current branch is active ──
+                        if (!parentActive) continue;
+
                         try
                         {
                             await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
@@ -583,6 +628,100 @@ namespace TaskAutomation.Jobs
         private sealed class StepException : Exception
         {
             public StepException(Exception inner) : base(inner.Message, inner) { }
+        }
+
+        // ── If/Else Branching ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// Tracks execution state for one if/elseif/else block on the branch stack.
+        /// </summary>
+        private readonly struct BranchFrame
+        {
+            /// <summary>True when the enclosing block (parent) is currently executing.</summary>
+            public readonly bool ParentActive;
+            /// <summary>True when at least one branch in this block has already matched.</summary>
+            public readonly bool AnyMatched;
+            /// <summary>True when the current branch should be executed.</summary>
+            public readonly bool CurrentActive;
+
+            public BranchFrame(bool parentActive, bool anyMatched, bool currentActive)
+            {
+                ParentActive  = parentActive;
+                AnyMatched    = anyMatched;
+                CurrentActive = currentActive;
+            }
+        }
+
+        /// <summary>
+        /// Evaluates an <see cref="IfConditionSettings"/> against the current pipeline results.
+        /// Returns true when all (or any) conditions in the settings are met.
+        /// An empty condition list is treated as "always true".
+        /// </summary>
+        private static bool EvaluateCondition(IfConditionSettings settings, IJobResultStore results)
+        {
+            if (settings.Conditions.Count == 0) return true;
+
+            return settings.MatchMode == ConditionMatchMode.All
+                ? settings.Conditions.All(c  => EvaluateSingleCondition(c, results))
+                : settings.Conditions.Any(c  => EvaluateSingleCondition(c, results));
+        }
+
+        private static bool EvaluateSingleCondition(StepCondition condition, IJobResultStore results)
+        {
+            if (string.IsNullOrEmpty(condition.SourceStepId) || string.IsNullOrEmpty(condition.Property))
+                return false;
+
+            var result = results.GetRaw(condition.SourceStepId);
+            if (result is null) return false;
+
+            // Use reflection so property access stays in sync with StepResultMetadata
+            // without maintaining a parallel hard-coded switch.
+            var prop = result.GetType()
+                             .GetProperty(condition.Property, BindingFlags.Public | BindingFlags.Instance);
+            if (prop is null) return false;
+
+            var value = prop.GetValue(result);
+            if (value is null) return false;
+
+            return condition.Operator switch
+            {
+                ConditionOperator.IsTrue  => value is bool b  && b,
+                ConditionOperator.IsFalse => value is bool b2 && !b2,
+                _                         => CompareForOperator(value, condition.Operator, condition.ComparisonValue)
+            };
+        }
+
+        private static bool CompareForOperator(object value, ConditionOperator op, string? comparisonValue)
+        {
+            int cmp;
+            switch (value)
+            {
+                case bool b:
+                    if (!bool.TryParse(comparisonValue, out bool bv)) return false;
+                    cmp = b.CompareTo(bv);
+                    break;
+                case double d:
+                    if (!double.TryParse(comparisonValue,
+                            System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            out double dv)) return false;
+                    cmp = d.CompareTo(dv);
+                    break;
+                default:
+                    cmp = string.Compare(value.ToString(), comparisonValue,
+                                         StringComparison.OrdinalIgnoreCase);
+                    break;
+            }
+            return op switch
+            {
+                ConditionOperator.Equals             => cmp == 0,
+                ConditionOperator.NotEquals          => cmp != 0,
+                ConditionOperator.GreaterThan        => cmp > 0,
+                ConditionOperator.LessThan           => cmp < 0,
+                ConditionOperator.GreaterThanOrEqual => cmp >= 0,
+                ConditionOperator.LessThanOrEqual    => cmp <= 0,
+                _                                    => false
+            };
         }
     }
 }

@@ -44,6 +44,10 @@ namespace DesktopAutomationApp.ViewModels
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
+            IfStep_AddConditionCommand    = new RelayCommand(() =>
+                IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps())));
+            ElseIfStep_AddConditionCommand = new RelayCommand(() =>
+                ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps())));
 
             InitDefaults();
         }
@@ -87,6 +91,21 @@ namespace DesktopAutomationApp.ViewModels
                 }
             }
             catch { }
+
+            // If / ElseIf: start with one empty condition row
+            IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps()));
+            ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps()));
+
+            // Source step pre-selection (first available of the right type)
+            TemplateMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
+            YoloDetectionStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
+            KlickOnPointStep_SourceDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
+            KlickOnPoint3DStep_SourceDetectionStep  = AvailableDetectionSteps.FirstOrDefault();
+            KlickOnPoint3DStep_SourceCaptureStep    = AvailableCaptureSteps.FirstOrDefault();
+            ShowImageStep_SourceCaptureStep         = AvailableCaptureSteps.FirstOrDefault();
+            ShowImageStep_SourceDetectionStep       = AvailableDetectionSteps.FirstOrDefault();
+            VideoCreationStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
+            VideoCreationStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
         }
 
         // ----- Dialog-Interop -----
@@ -99,7 +118,21 @@ namespace DesktopAutomationApp.ViewModels
             set { _mode = value; OnChange(); OnChange(nameof(DialogTitle)); OnChange(nameof(ConfirmButtonText)); }
         }
 
-        public string DialogTitle => Mode == StepDialogMode.Edit ? "Job-Step bearbeiten" : "Neuen Job-Step hinzufügen";
+        // ----- Type-Lock (für intern erzeugten ElseIf-Dialog) -----
+        private bool _isTypeLocked;
+        public bool IsTypeLocked
+        {
+            get => _isTypeLocked;
+            set { _isTypeLocked = value; OnChange(); OnChange(nameof(ShowTypeSelector)); OnChange(nameof(DialogTitle)); }
+        }
+        public bool ShowTypeSelector => !IsTypeLocked;
+
+        public string DialogTitle =>
+            IsTypeLocked
+                ? (SelectedType == "ElseIf"
+                    ? (Mode == StepDialogMode.Edit ? "Else-If bearbeiten" : "Else-If hinzufügen")
+                    : (Mode == StepDialogMode.Edit ? "Step bearbeiten" : "Step hinzufügen"))
+                : (Mode == StepDialogMode.Edit ? "Job-Step bearbeiten" : "Neuen Job-Step hinzufügen");
         public string ConfirmButtonText => Mode == StepDialogMode.Edit ? "Übernehmen" : "Hinzufügen";
 
         // ----- Commands -----
@@ -111,6 +144,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ChooseMonitorCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
+        public ICommand IfStep_AddConditionCommand { get; }
+        public ICommand ElseIfStep_AddConditionCommand { get; }
 
         private void Confirm()
         {
@@ -122,24 +157,48 @@ namespace DesktopAutomationApp.ViewModels
         {
             return SelectedType switch
             {
-                "TemplateMatching" => !string.IsNullOrWhiteSpace(TemplateMatchingStep_TemplatePath) && TemplateMatchingStep_ConfidenceThreshold is >= 0 and <= 1,
-                //"ProcessDuplication" => !string.IsNullOrWhiteSpace(ProcessName),
-                "ShowImage" => !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
-                "VideoCreation" => !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath) && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
+                "TemplateMatching" =>
+                    !string.IsNullOrWhiteSpace(TemplateMatchingStep_TemplatePath)
+                    && TemplateMatchingStep_ConfidenceThreshold is >= 0 and <= 1
+                    && (AvailableCaptureSteps.Count == 0 || TemplateMatchingStep_SourceCaptureStep != null),
+                "ShowImage" =>
+                    !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
+                "VideoCreation" =>
+                    !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath)
+                    && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
                 "MakroExecution" => MakroExecutionStep_SelectedMakro != null,
-                "JobExecution" => JobExecutionStep_SelectedJob != null,
+                "JobExecution"   => JobExecutionStep_SelectedJob != null,
                 "DesktopDuplication" => true,
                 "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
-                "KlickOnPoint" => !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType) && KlickOnPointStep_TimeoutMs >= 0,
-                "KlickOnPoint3D" => !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType) && KlickOnPoint3DStep_Timeout >= 0 && KlickOnPoint3DStep_FOV > 0,
-                "YoloDetection" => !string.IsNullOrWhiteSpace(YoloDetectionStep_Model) && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName) && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1,
+                "KlickOnPoint" =>
+                    !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType)
+                    && KlickOnPointStep_TimeoutMs >= 0
+                    && (AvailableDetectionSteps.Count == 0 || KlickOnPointStep_SourceDetectionStep != null),
+                "KlickOnPoint3D" =>
+                    !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType)
+                    && KlickOnPoint3DStep_Timeout >= 0
+                    && KlickOnPoint3DStep_FOV > 0
+                    && (AvailableDetectionSteps.Count == 0 || KlickOnPoint3DStep_SourceDetectionStep != null)
+                    && (AvailableCaptureSteps.Count == 0   || KlickOnPoint3DStep_SourceCaptureStep != null),
+                "YoloDetection" =>
+                    !string.IsNullOrWhiteSpace(YoloDetectionStep_Model)
+                    && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName)
+                    && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1
+                    && (AvailableCaptureSteps.Count == 0 || YoloDetectionStep_SourceCaptureStep != null),
                 "Timeout" => TimeoutStep_DelayMs >= 0,
+                "If"      => true,
+                "ElseIf"  => true,
+                "Else"    => true,
+                "EndIf"   => true,
                 _ => false
             };
         }
 
         // ----- Step-Auswahl -----
-        public record StepTypeItem(string Name, string Category);
+        public record StepTypeItem(string Name, string Category, string? Label = null)
+        {
+            public string DisplayLabel => Label ?? Name;
+        }
 
         public ListCollectionView StepTypeItems { get; } = CreateStepTypeItems();
 
@@ -158,6 +217,7 @@ namespace DesktopAutomationApp.ViewModels
                 new("JobExecution",       "Automatisierung"),
                 new("ScriptExecution",    "Automatisierung"),
                 new("Timeout",            "Automatisierung"),
+                new("If",                 "Ablaufsteuerung", "If-Abfrage"),
             };
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
@@ -205,6 +265,10 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
                 OnChange(nameof(ShowTimeout));
+                OnChange(nameof(ShowIf));
+                OnChange(nameof(ShowElseIf));
+                OnChange(nameof(ShowElse));
+                OnChange(nameof(ShowEndIf));
                 OnChange(nameof(StepTypeDescription));
                 OnChange(nameof(StepPrerequisites));
                 OnChange(nameof(StepOutput));
@@ -224,6 +288,10 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
         public bool ShowTimeout => SelectedType == "Timeout";
+        public bool ShowIf     => SelectedType == "If";
+        public bool ShowElseIf => SelectedType == "ElseIf";
+        public bool ShowElse   => SelectedType == "Else";
+        public bool ShowEndIf  => SelectedType == "EndIf";
 
         public string StepTypeDescription => SelectedType switch
         {
@@ -238,6 +306,10 @@ namespace DesktopAutomationApp.ViewModels
             "KlickOnPoint3D"     => "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird.",
             "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
             "Timeout"            => "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird.",
+            "If"                 => "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist.",
+            "ElseIf"             => "Alternatives Kriterium innerhalb eines If-Blocks. Wird geprüft, wenn die vorherige Bedingung nicht zutraf.",
+            "Else"               => "Markiert den Fallback-Block eines If-Blocks. Wird ausgeführt, wenn keine vorherige Bedingung zutraf.",
+            "EndIf"              => "Beendet einen If/ElseIf/Else-Block.",
             _                    => string.Empty
         };
 
@@ -268,12 +340,62 @@ namespace DesktopAutomationApp.ViewModels
         public string StepOutput
             => StepPipelineRegistry.GetByName(SelectedType)?.Output ?? "–";
 
+        // ----- Quell-Step-Helfer -----
+
+        /// <summary>
+        /// Builds a list of all preceding steps that produce a result of the given type name.
+        /// </summary>
+        private IReadOnlyList<SourceStepItem> BuildStepItems(string resultTypeName)
+        {
+            var items = new List<SourceStepItem>();
+            for (int i = 0; i < _precedingSteps.Count; i++)
+            {
+                var step = _precedingSteps[i];
+                var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
+                if (info?.Output != resultTypeName) continue;
+                var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
+                    .FirstOrDefault(r => r.TypeName == resultTypeName);
+                if (descriptor is null) continue;
+                var name = $"{TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name)} (Step {i + 1})";
+                items.Add(new SourceStepItem(step.Id, name, descriptor));
+            }
+            return items;
+        }
+
+        /// <summary>All preceding steps that produce any evaluable result, for use in condition rows.</summary>
+        private IReadOnlyList<SourceStepItem> GetConditionSourceSteps()
+        {
+            var items = new List<SourceStepItem>();
+            for (int i = 0; i < _precedingSteps.Count; i++)
+            {
+                var step = _precedingSteps[i];
+                var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
+                if (info is null || info.Output == "–") continue;
+                var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
+                    .FirstOrDefault(r => r.TypeName == info.Output);
+                if (descriptor is null) continue;
+                var name = $"{TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name)} (Step {i + 1})";
+                items.Add(new SourceStepItem(step.Id, name, descriptor));
+            }
+            return items;
+        }
+
+        public IReadOnlyList<SourceStepItem> AvailableCaptureSteps   => BuildStepItems("CaptureResult");
+        public IReadOnlyList<SourceStepItem> AvailableDetectionSteps => BuildStepItems("DetectionResult");
+
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }
 
         // ===== TemplateMatching Felder =====
         private string _templateMatchingStep_TemplatePath = string.Empty;
         public string TemplateMatchingStep_TemplatePath { get => _templateMatchingStep_TemplatePath; set { _templateMatchingStep_TemplatePath = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+
+        private SourceStepItem? _templateMatchingStep_SourceCaptureStep;
+        public SourceStepItem? TemplateMatchingStep_SourceCaptureStep
+        {
+            get => _templateMatchingStep_SourceCaptureStep;
+            set { _templateMatchingStep_SourceCaptureStep = value; OnChange(); }
+        }
 
         public TemplateMatchModes[] TemplateMatchModesAll { get; } =
             Enum.GetValues(typeof(TemplateMatchModes)).Cast<TemplateMatchModes>().ToArray();
@@ -325,6 +447,13 @@ namespace DesktopAutomationApp.ViewModels
         private int _klickOnPointStep_TimeoutMs = 0;
         public int KlickOnPointStep_TimeoutMs { get => _klickOnPointStep_TimeoutMs; set { _klickOnPointStep_TimeoutMs = value; OnChange(); } }
 
+        private SourceStepItem? _klickOnPointStep_SourceDetectionStep;
+        public SourceStepItem? KlickOnPointStep_SourceDetectionStep
+        {
+            get => _klickOnPointStep_SourceDetectionStep;
+            set { _klickOnPointStep_SourceDetectionStep = value; OnChange(); }
+        }
+
         // ===== KlickOnPoint3D Felder =====
         private float _klickOnPoint3DStep_FOV = 90.0f;
         public float KlickOnPoint3DStep_FOV { get => _klickOnPoint3DStep_FOV; set { _klickOnPoint3DStep_FOV = value; OnChange(); } }
@@ -348,6 +477,20 @@ namespace DesktopAutomationApp.ViewModels
         private bool _klickOnPoint3DStep_InvertMouseMovementX = false;
         public bool KlickOnPoint3DStep_InvertMouseMovementX { get => _klickOnPoint3DStep_InvertMouseMovementX; set { _klickOnPoint3DStep_InvertMouseMovementX = value; OnChange(); } }
 
+        private SourceStepItem? _klickOnPoint3DStep_SourceDetectionStep;
+        public SourceStepItem? KlickOnPoint3DStep_SourceDetectionStep
+        {
+            get => _klickOnPoint3DStep_SourceDetectionStep;
+            set { _klickOnPoint3DStep_SourceDetectionStep = value; OnChange(); }
+        }
+
+        private SourceStepItem? _klickOnPoint3DStep_SourceCaptureStep;
+        public SourceStepItem? KlickOnPoint3DStep_SourceCaptureStep
+        {
+            get => _klickOnPoint3DStep_SourceCaptureStep;
+            set { _klickOnPoint3DStep_SourceCaptureStep = value; OnChange(); }
+        }
+
         // ===== YOLODetectionStep Felder =====
         private string _yoloDetectionStep_Model = string.Empty;
         public string YoloDetectionStep_Model 
@@ -360,6 +503,13 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(YoloDetectionStep_AvailableClasses));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
             } 
+        }
+
+        private SourceStepItem? _yoloDetectionStep_SourceCaptureStep;
+        public SourceStepItem? YoloDetectionStep_SourceCaptureStep
+        {
+            get => _yoloDetectionStep_SourceCaptureStep;
+            set { _yoloDetectionStep_SourceCaptureStep = value; OnChange(); }
         }
         
         private float _yoloDetectionStep_ConfidenceThreshold = 0.5f;
@@ -653,6 +803,20 @@ namespace DesktopAutomationApp.ViewModels
         private string _showImageStep_WindowName = "MyWindow";
         public string ShowImageStep_WindowName { get => _showImageStep_WindowName; set { _showImageStep_WindowName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
+        private SourceStepItem? _showImageStep_SourceCaptureStep;
+        public SourceStepItem? ShowImageStep_SourceCaptureStep
+        {
+            get => _showImageStep_SourceCaptureStep;
+            set { _showImageStep_SourceCaptureStep = value; OnChange(); }
+        }
+
+        private SourceStepItem? _showImageStep_SourceDetectionStep;
+        public SourceStepItem? ShowImageStep_SourceDetectionStep
+        {
+            get => _showImageStep_SourceDetectionStep;
+            set { _showImageStep_SourceDetectionStep = value; OnChange(); }
+        }
+
         private bool _showImageStep_ShowRawImage = true;
         public bool ShowImageStep_ShowRawImage 
         { 
@@ -660,9 +824,9 @@ namespace DesktopAutomationApp.ViewModels
             set 
             { 
                 _showImageStep_ShowRawImage = value; 
-                if (value) _showImageStep_ShowProcessedImage = false;
                 OnChange(); 
                 OnChange(nameof(ShowImageStep_ShowProcessedImage));
+                OnChange(nameof(ShowImageStep_ImageMode));
             } 
         }
 
@@ -673,10 +837,30 @@ namespace DesktopAutomationApp.ViewModels
             set 
             { 
                 _showImageStep_ShowProcessedImage = value; 
-                if (value) _showImageStep_ShowRawImage = false;
                 OnChange(); 
                 OnChange(nameof(ShowImageStep_ShowRawImage));
+                OnChange(nameof(ShowImageStep_ImageMode));
             } 
+        }
+
+        public string[] ImageModeOptions { get; } = { "Rohbild", "Verarbeitetes Bild", "Beides" };
+
+        public string ShowImageStep_ImageMode
+        {
+            get => (_showImageStep_ShowRawImage, _showImageStep_ShowProcessedImage) switch
+            {
+                (true,  false) => "Rohbild",
+                (false, true)  => "Verarbeitetes Bild",
+                _              => "Beides"
+            };
+            set
+            {
+                _showImageStep_ShowRawImage     = value != "Verarbeitetes Bild";
+                _showImageStep_ShowProcessedImage = value != "Rohbild";
+                OnChange();
+                OnChange(nameof(ShowImageStep_ShowRawImage));
+                OnChange(nameof(ShowImageStep_ShowProcessedImage));
+            }
         }
 
         // ===== VideoCreation Felder =====
@@ -686,6 +870,20 @@ namespace DesktopAutomationApp.ViewModels
         private string _videoCreationStep_FileName = "output.mp4";
         public string VideoCreationStep_FileName { get => _videoCreationStep_FileName; set { _videoCreationStep_FileName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
+        private SourceStepItem? _videoCreationStep_SourceCaptureStep;
+        public SourceStepItem? VideoCreationStep_SourceCaptureStep
+        {
+            get => _videoCreationStep_SourceCaptureStep;
+            set { _videoCreationStep_SourceCaptureStep = value; OnChange(); }
+        }
+
+        private SourceStepItem? _videoCreationStep_SourceDetectionStep;
+        public SourceStepItem? VideoCreationStep_SourceDetectionStep
+        {
+            get => _videoCreationStep_SourceDetectionStep;
+            set { _videoCreationStep_SourceDetectionStep = value; OnChange(); }
+        }
+
         private bool _videoCreationStep_UseRawImage = true;
         public bool VideoCreationStep_UseRawImage 
         { 
@@ -693,9 +891,9 @@ namespace DesktopAutomationApp.ViewModels
             set 
             { 
                 _videoCreationStep_UseRawImage = value; 
-                if (value) _videoCreationStep_UseProcessedImage = false;
                 OnChange(); 
                 OnChange(nameof(VideoCreationStep_UseProcessedImage));
+                OnChange(nameof(VideoCreationStep_ImageMode));
             } 
         }
 
@@ -706,10 +904,28 @@ namespace DesktopAutomationApp.ViewModels
             set 
             { 
                 _videoCreationStep_UseProcessedImage = value; 
-                if (value) _videoCreationStep_UseRawImage = false;
                 OnChange(); 
                 OnChange(nameof(VideoCreationStep_UseRawImage));
+                OnChange(nameof(VideoCreationStep_ImageMode));
             } 
+        }
+
+        public string VideoCreationStep_ImageMode
+        {
+            get => (_videoCreationStep_UseRawImage, _videoCreationStep_UseProcessedImage) switch
+            {
+                (true,  false) => "Rohbild",
+                (false, true)  => "Verarbeitetes Bild",
+                _              => "Beides"
+            };
+            set
+            {
+                _videoCreationStep_UseRawImage     = value != "Verarbeitetes Bild";
+                _videoCreationStep_UseProcessedImage = value != "Rohbild";
+                OnChange();
+                OnChange(nameof(VideoCreationStep_UseRawImage));
+                OnChange(nameof(VideoCreationStep_UseProcessedImage));
+            }
         }
 
         // ===== JobExecution Felder =====
@@ -792,6 +1008,74 @@ namespace DesktopAutomationApp.ViewModels
         private int _timeoutStep_DelayMs = 1000;
         public int TimeoutStep_DelayMs { get => _timeoutStep_DelayMs; set { _timeoutStep_DelayMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
+        // ===== If / ElseIf Felder =====
+
+        // ── MatchMode ──
+        private TaskAutomation.Jobs.ConditionMatchMode _ifStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.All;
+        public TaskAutomation.Jobs.ConditionMatchMode IfStep_MatchMode
+        {
+            get => _ifStep_MatchMode;
+            set { _ifStep_MatchMode = value; OnChange(); OnChange(nameof(IfStep_MatchModeIsAll)); OnChange(nameof(IfStep_MatchModeIsAny)); }
+        }
+        public bool IfStep_MatchModeIsAll
+        {
+            get => _ifStep_MatchMode == TaskAutomation.Jobs.ConditionMatchMode.All;
+            set { if (value) IfStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.All; }
+        }
+        public bool IfStep_MatchModeIsAny
+        {
+            get => _ifStep_MatchMode == TaskAutomation.Jobs.ConditionMatchMode.Any;
+            set { if (value) IfStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.Any; }
+        }
+        public System.Collections.ObjectModel.ObservableCollection<ConditionRowViewModel> IfStep_Conditions { get; } = new();
+
+        private TaskAutomation.Jobs.ConditionMatchMode _elseIfStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.All;
+        public TaskAutomation.Jobs.ConditionMatchMode ElseIfStep_MatchMode
+        {
+            get => _elseIfStep_MatchMode;
+            set { _elseIfStep_MatchMode = value; OnChange(); OnChange(nameof(ElseIfStep_MatchModeIsAll)); OnChange(nameof(ElseIfStep_MatchModeIsAny)); }
+        }
+        public bool ElseIfStep_MatchModeIsAll
+        {
+            get => _elseIfStep_MatchMode == TaskAutomation.Jobs.ConditionMatchMode.All;
+            set { if (value) ElseIfStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.All; }
+        }
+        public bool ElseIfStep_MatchModeIsAny
+        {
+            get => _elseIfStep_MatchMode == TaskAutomation.Jobs.ConditionMatchMode.Any;
+            set { if (value) ElseIfStep_MatchMode = TaskAutomation.Jobs.ConditionMatchMode.Any; }
+        }
+        public System.Collections.ObjectModel.ObservableCollection<ConditionRowViewModel> ElseIfStep_Conditions { get; } = new();
+
+        // ── Load from existing settings (called from Prefill) ──
+        public void LoadIfStepConditions(TaskAutomation.Jobs.IfConditionSettings settings)
+        {
+            IfStep_MatchMode = settings.MatchMode;
+            IfStep_Conditions.Clear();
+            foreach (var c in settings.Conditions)
+            {
+                var row = new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps());
+                row.LoadFrom(c);
+                IfStep_Conditions.Add(row);
+            }
+            if (IfStep_Conditions.Count == 0)
+                IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps()));
+        }
+
+        public void LoadElseIfStepConditions(TaskAutomation.Jobs.IfConditionSettings settings)
+        {
+            ElseIfStep_MatchMode = settings.MatchMode;
+            ElseIfStep_Conditions.Clear();
+            foreach (var c in settings.Conditions)
+            {
+                var row = new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps());
+                row.LoadFrom(c);
+                ElseIfStep_Conditions.Add(row);
+            }
+            if (ElseIfStep_Conditions.Count == 0)
+                ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps()));
+        }
+
         // ===== Fabrik =====
         public void CreateStep()
         {
@@ -806,7 +1090,8 @@ namespace DesktopAutomationApp.ViewModels
                         ConfidenceThreshold = TemplateMatchingStep_ConfidenceThreshold,
                         EnableROI = TemplateMatchingStep_EnableROI,
                         ROI = new Rect(TemplateMatchingStep_RoiX, TemplateMatchingStep_RoiY, TemplateMatchingStep_RoiW, TemplateMatchingStep_RoiH),
-                        DrawResults = TemplateMatchingStep_DrawResults
+                        DrawResults = TemplateMatchingStep_DrawResults,
+                        SourceCaptureStepId = TemplateMatchingStep_SourceCaptureStep?.StepId ?? ""
                     }
                 },
                 "DesktopDuplication" => new DesktopDuplicationStep
@@ -829,7 +1114,9 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         WindowName = ShowImageStep_WindowName,
                         ShowRawImage = ShowImageStep_ShowRawImage,
-                        ShowProcessedImage = ShowImageStep_ShowProcessedImage
+                        ShowProcessedImage = ShowImageStep_ShowProcessedImage,
+                        SourceCaptureStepId   = ShowImageStep_SourceCaptureStep?.StepId ?? "",
+                        SourceDetectionStepId = ShowImageStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
                 "VideoCreation" => new VideoCreationStep
@@ -839,7 +1126,9 @@ namespace DesktopAutomationApp.ViewModels
                         SavePath = VideoCreationStep_SavePath,
                         FileName = VideoCreationStep_FileName,
                         UseRawImage = VideoCreationStep_UseRawImage,
-                        UseProcessedImage = VideoCreationStep_UseProcessedImage
+                        UseProcessedImage = VideoCreationStep_UseProcessedImage,
+                        SourceCaptureStepId   = VideoCreationStep_SourceCaptureStep?.StepId ?? "",
+                        SourceDetectionStepId = VideoCreationStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
                 "MakroExecution" => new MakroExecutionStep
@@ -873,7 +1162,8 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         DoubleClick = KlickOnPointStep_DoubleClick,
                         ClickType = KlickOnPointStep_ClickType,
-                        TimeoutMs = KlickOnPointStep_TimeoutMs
+                        TimeoutMs = KlickOnPointStep_TimeoutMs,
+                        SourceDetectionStepId = KlickOnPointStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
                 "KlickOnPoint3D" => new KlickOnPoint3DStep
@@ -887,7 +1177,9 @@ namespace DesktopAutomationApp.ViewModels
                         ClickType = KlickOnPoint3DStep_ClickType,
                         TimeoutMs = KlickOnPoint3DStep_Timeout,
                         InvertMouseMovementY = KlickOnPoint3DStep_InvertMouseMovementY,
-                        InvertMouseMovementX = KlickOnPoint3DStep_InvertMouseMovementX
+                        InvertMouseMovementX = KlickOnPoint3DStep_InvertMouseMovementX,
+                        SourceDetectionStepId = KlickOnPoint3DStep_SourceDetectionStep?.StepId ?? "",
+                        SourceCaptureStepId   = KlickOnPoint3DStep_SourceCaptureStep?.StepId ?? ""
                     }
                 },
                 "YoloDetection" => new YOLODetectionStep
@@ -899,7 +1191,8 @@ namespace DesktopAutomationApp.ViewModels
                         ClassName = YoloDetectionStep_ClassName,
                         DrawResults = YoloDetectionStep_DrawResults,
                         EnableROI = YoloDetectionStep_EnableROI,
-                        ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH)
+                        ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH),
+                        SourceCaptureStepId = YoloDetectionStep_SourceCaptureStep?.StepId ?? ""
                     }
                 },
                 "Timeout" => new TimeoutStep
@@ -909,6 +1202,24 @@ namespace DesktopAutomationApp.ViewModels
                         DelayMs = TimeoutStep_DelayMs
                     }
                 },
+                "If" => new TaskAutomation.Jobs.IfStep
+                {
+                    Settings = new TaskAutomation.Jobs.IfConditionSettings
+                    {
+                        MatchMode  = IfStep_MatchMode,
+                        Conditions = IfStep_Conditions.Select(c => c.ToCondition()).ToList()
+                    }
+                },
+                "ElseIf" => new TaskAutomation.Jobs.ElseIfStep
+                {
+                    Settings = new TaskAutomation.Jobs.IfConditionSettings
+                    {
+                        MatchMode  = ElseIfStep_MatchMode,
+                        Conditions = ElseIfStep_Conditions.Select(c => c.ToCondition()).ToList()
+                    }
+                },
+                "Else"  => new TaskAutomation.Jobs.ElseStep(),
+                "EndIf" => new TaskAutomation.Jobs.EndIfStep(),
                 _ => null
             };
         }
