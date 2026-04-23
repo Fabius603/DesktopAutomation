@@ -21,7 +21,7 @@ namespace DesktopAutomationApp.Converters
             var info = StepPipelineRegistry.Get(step.GetType());
             if (info == null) return string.Empty;
 
-            return parameter as string switch
+            return (parameter as string) switch
             {
                 "prereqs" => info.Prerequisites.Length == 0
                     ? "–"
