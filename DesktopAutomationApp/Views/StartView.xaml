@@ -148,36 +148,64 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Laufende Jobs -->
+                <!-- Laufende Jobs & Makros -->
                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
                     <StackPanel Margin="12">
                         <DockPanel Margin="0,0,0,8">
-                            <Border DockPanel.Dock="Right" Style="{StaticResource CountBadge}" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding RunningJobCount}"
-                                           Foreground="{DynamicResource App.Brush.Accent}" FontSize="13"/>
-                            </Border>
-                            <TextBlock Style="{StaticResource Heading2}" Text="Laufende Jobs" VerticalAlignment="Center"/>
+                            <!-- Rechts: Stop All (F10) -->
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Style="{StaticResource ButtonDanger}"
+                                        Command="{Binding StopAllJobsCommand}"
+                                        ToolTip="Alle laufenden Jobs &amp; Makros beenden (F10)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="StopCircleOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Stop All" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="F10" Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
+                            </StackPanel>
+                            <!-- Links: Titel + Zähler -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource Heading2}" Text="Laufende Jobs &amp; Makros" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding RunningTotalCount, Mode=OneWay}"
+                                               Foreground="{DynamicResource App.Brush.Accent}" FontSize="13"/>
+                                </Border>
+                            </StackPanel>
                         </DockPanel>
 
-                        <ItemsControl ItemsSource="{Binding RunningJobs}">
+                        <!-- Kombinierte Liste: Jobs und Makros gleich dargestellt -->
+                        <ItemsControl ItemsSource="{Binding RunningItems}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardBox}" Margin="0,0,0,4">
                                         <DockPanel Margin="12,8">
                                             <Button DockPanel.Dock="Right"
                                                     Style="{StaticResource ButtonDanger}"
-                                                    Command="{Binding DataContext.CancelJobCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding Id}"
-                                                    ToolTip="Job abbrechen">
+                                                    Command="{Binding DataContext.CancelItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Abbrechen">
                                                 <StackPanel Orientation="Horizontal">
                                                     <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                                     <TextBlock Text="Stop" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14"
-                                                                           Foreground="{DynamicResource App.Brush.Accent}"
-                                                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <iconPacks:PackIconMaterial Width="14" Height="14"
+                                                                            Foreground="{DynamicResource App.Brush.Accent}"
+                                                                            VerticalAlignment="Center" Margin="0,0,8,0">
+                                                    <iconPacks:PackIconMaterial.Style>
+                                                        <Style TargetType="iconPacks:PackIconMaterial">
+                                                            <Setter Property="Kind" Value="Play"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMakro}" Value="True">
+                                                                    <Setter Property="Kind" Value="RepeatVariant"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </iconPacks:PackIconMaterial.Style>
+                                                </iconPacks:PackIconMaterial>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </DockPanel>
@@ -186,14 +214,15 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="Keine Jobs aktiv"
+                        <!-- Fallback wenn nichts läuft -->
+                        <TextBlock Text="Kein aktiver Job/Makro"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" Margin="0,4,0,0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RunningJobCount}" Value="0">
+                                        <DataTrigger Binding="{Binding RunningTotalCount}" Value="0">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
                                     </Style.Triggers>

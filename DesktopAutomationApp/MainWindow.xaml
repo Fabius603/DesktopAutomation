@@ -9,6 +9,9 @@
                  Background="{DynamicResource App.Brush.WindowBackground}"
                  GlowBrush="{DynamicResource App.Brush.AccentDark}"
                  WindowStartupLocation="CenterScreen">
+    <mah:MetroWindow.InputBindings>
+        <KeyBinding Key="F10" Command="{Binding StopAllJobsCommand}"/>
+    </mah:MetroWindow.InputBindings>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240"/>

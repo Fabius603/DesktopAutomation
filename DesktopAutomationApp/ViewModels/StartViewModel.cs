@@ -46,9 +46,23 @@ namespace DesktopAutomationApp.ViewModels
         private int _runningJobCount;
         public int RunningJobCount { get => _runningJobCount; private set => SetProperty(ref _runningJobCount, value); }
 
+        // --- Running Makros ---
+        public ObservableCollection<RunningJobInfo> RunningMakros { get; } = new();
+
+        private int _runningMakroCount;
+        public int RunningMakroCount { get => _runningMakroCount; private set => SetProperty(ref _runningMakroCount, value); }
+
+        // --- Combined running items (jobs + makros) ---
+        public ObservableCollection<RunningItemInfo> RunningItems { get; } = new();
+
+        private int _runningTotalCount;
+        public int RunningTotalCount { get => _runningTotalCount; private set => SetProperty(ref _runningTotalCount, value); }
+
         // --- Commands ---
         public ICommand ToggleHotkeyPauseCommand { get; }
         public ICommand CancelJobCommand { get; }
+        public ICommand CancelItemCommand { get; }
+        public ICommand StopAllJobsCommand { get; }
         public ICommand RefreshCommand { get; }
 
         public StartViewModel(
@@ -70,9 +84,23 @@ namespace DesktopAutomationApp.ViewModels
                 else if (param is string name && !string.IsNullOrEmpty(name))
                     _dispatcher.CancelJob(name);
             });
+            CancelItemCommand = new RelayCommand<RunningItemInfo?>(item =>
+            {
+                if (item == null) return;
+                if (item.IsMakro) _dispatcher.CancelMakro(item.Id);
+                else              _dispatcher.CancelJob(item.Id);
+            });
+            StopAllJobsCommand = new RelayCommand(() =>
+            {
+                foreach (var id in _dispatcher.RunningJobIds.ToList())
+                    _dispatcher.CancelJob(id);
+                foreach (var id in _dispatcher.RunningMakroIds.ToList())
+                    _dispatcher.CancelMakro(id);
+            }, () => RunningTotalCount > 0);
             RefreshCommand = new RelayCommand(Refresh);
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
+            _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
             _hotkeyService.HotkeysChanged += OnHotkeysChanged;
 
             Refresh();
@@ -82,6 +110,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             RefreshHotkeys();
             RefreshRunningJobs();
+            RefreshRunningMakros();
             RefreshCounts();
         }
 
@@ -113,11 +142,37 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var job = allJobs.Values.FirstOrDefault(j => j.Id == id);
                 if (job != null)
-                {
                     RunningJobs.Add(new RunningJobInfo { Id = id, Name = job.Name });
-                }
             }
             RunningJobCount = RunningJobs.Count;
+            RebuildRunningItems();
+        }
+
+        private void RefreshRunningMakros()
+        {
+            var runningIds = _dispatcher.RunningMakroIds;
+            var allMakros = _executor.AllMakros;
+
+            RunningMakros.Clear();
+            foreach (var id in runningIds)
+            {
+                var makro = allMakros.Values.FirstOrDefault(m => m.Id == id);
+                if (makro != null)
+                    RunningMakros.Add(new RunningJobInfo { Id = id, Name = makro.Name });
+            }
+            RunningMakroCount = RunningMakros.Count;
+            RebuildRunningItems();
+        }
+
+        private void RebuildRunningItems()
+        {
+            RunningItems.Clear();
+            foreach (var j in RunningJobs)
+                RunningItems.Add(new RunningItemInfo { Id = j.Id, Name = j.Name, IsMakro = false });
+            foreach (var m in RunningMakros)
+                RunningItems.Add(new RunningItemInfo { Id = m.Id, Name = m.Name, IsMakro = true });
+            RunningTotalCount = RunningItems.Count;
+            (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void RefreshCounts()
@@ -138,6 +193,11 @@ namespace DesktopAutomationApp.ViewModels
             Application.Current?.Dispatcher?.Invoke(RefreshRunningJobs);
         }
 
+        private void OnRunningMakrosChanged()
+        {
+            Application.Current?.Dispatcher?.Invoke(RefreshRunningMakros);
+        }
+
         private void OnHotkeysChanged()
         {
             Application.Current?.Dispatcher?.Invoke(() =>
@@ -152,6 +212,7 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
             {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+                _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
                 _hotkeyService.HotkeysChanged -= OnHotkeysChanged;
             }
             base.Dispose(disposing);
@@ -170,5 +231,12 @@ namespace DesktopAutomationApp.ViewModels
     {
         public Guid Id { get; init; }
         public string Name { get; init; } = "";
+    }
+
+    public sealed class RunningItemInfo
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = "";
+        public bool IsMakro { get; init; }
     }
 }

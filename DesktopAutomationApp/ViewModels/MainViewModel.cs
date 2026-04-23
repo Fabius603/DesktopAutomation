@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -107,6 +108,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListJobs { get; }
         public ICommand ShowListHotkeys { get; }
         public ICommand ShowYoloDownloads { get; }
+        public ICommand StopAllJobsCommand { get; }
 
         public MainViewModel(
             IServiceProvider services,
@@ -157,6 +159,13 @@ namespace DesktopAutomationApp.ViewModels
             ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
             ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listHotkeys; _listHotkeys.RefreshCommand.Execute(null); } });
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
+            StopAllJobsCommand = new RelayCommand(() =>
+            {
+                foreach (var id in _jobDispatcher.RunningJobIds.ToList())
+                    _jobDispatcher.CancelJob(id);
+                foreach (var id in _jobDispatcher.RunningMakroIds.ToList())
+                    _jobDispatcher.CancelMakro(id);
+            });
 
             // Startseite
             CurrentContent = _start;
