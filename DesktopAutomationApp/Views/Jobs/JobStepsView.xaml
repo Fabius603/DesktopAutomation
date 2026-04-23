@@ -609,16 +609,26 @@
             <DockPanel>
 
                 <!-- ListBox mit Hover-/Selected-Rahmen wie im Makro -->
-                <ListBox ItemsSource="{Binding Steps}"
-                         SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+                <ListBox x:Name="StepsList"
+                         ItemsSource="{Binding Steps}"
+                         SelectionMode="Extended"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingStackPanel.ScrollUnit="Pixel"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
+                         SelectionChanged="StepsList_SelectionChanged"
                          ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
                          behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
+
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="Delete"              Command="{Binding DeleteSelectedCommand}"/>
+                        <KeyBinding Key="C" Modifiers="Ctrl"  Command="{Binding CopyCommand}"/>
+                        <KeyBinding Key="V" Modifiers="Ctrl"  Command="{Binding PasteCommand}"/>
+                        <KeyBinding Key="Z" Modifiers="Ctrl"  Command="{Binding UndoCommand}"/>
+                        <KeyBinding Key="Y" Modifiers="Ctrl"  Command="{Binding RedoCommand}"/>
+                    </ListBox.InputBindings>
 
                     <!-- Inhalt + Aktionsleiste rechts (Edit/Hoch/Runter/Delete exakt wie Makro) -->
                     <ListBox.ItemTemplate>

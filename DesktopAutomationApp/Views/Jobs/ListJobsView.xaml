@@ -65,6 +65,11 @@
                 ScrollViewer.CanContentScroll="False"
                 SelectionChanged="JobGrid_SelectionChanged"
                 PreviewMouseLeftButtonDown="JobGrid_PreviewMouseDown">
+
+                <DataGrid.InputBindings>
+                    <KeyBinding Key="Delete" Command="{Binding DeleteJobCommand}"/>
+                </DataGrid.InputBindings>
+
                 <DataGrid.Columns>
                     <DataGridTextColumn
                         Header="Name"

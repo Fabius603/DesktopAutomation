@@ -61,6 +61,11 @@
                       IsReadOnly="False"
                       SelectionChanged="MakroGrid_SelectionChanged"
                       PreviewMouseLeftButtonDown="MakroGrid_PreviewMouseDown">
+
+                <DataGrid.InputBindings>
+                    <KeyBinding Key="Delete" Command="{Binding DeleteMakroCommand}"/>
+                </DataGrid.InputBindings>
+
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name"
                         Binding="{Binding Name}"

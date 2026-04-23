@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Text.Json;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
@@ -21,6 +23,16 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJsonRepository<Job> _jobRepo;
         private readonly IJobExecutor _executor;
         private readonly IJobDispatcher _dispatcher;
+
+        private readonly Stack<List<JobStep>> _undoStack = new();
+        private readonly Stack<List<JobStep>> _redoStack = new();
+        private List<JobStep> _clipboard  = new();
+
+        /// <summary>All currently selected steps (synced from the view's ListBox.SelectedItems).</summary>
+        public List<JobStep> SelectedSteps { get; } = new();
+
+        public bool CanUndo => _undoStack.Count > 0;
+        public bool CanRedo => _redoStack.Count > 0;
 
         public Job Job { get; }
         public string Title => Job.Name;
@@ -61,6 +73,11 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveStepDownCommand { get; }
         public ICommand ReorderStepCommand { get; }
         public ICommand DeleteStepCommand { get; }
+        public ICommand DeleteSelectedCommand { get; }
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
+        public ICommand CopyCommand { get; }
+        public ICommand PasteCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand AddElseIfCommand { get; }
@@ -102,7 +119,12 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             ReorderStepCommand = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
-            DeleteStepCommand = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
+            DeleteStepCommand    = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
+            DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            UndoCommand           = new RelayCommand(Undo, () => CanUndo);
+            RedoCommand           = new RelayCommand(Redo, () => CanRedo);
+            CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
 
             StartJobCommand = new RelayCommand(() => _dispatcher.StartJob(Job.Id), () => !IsJobRunning);
             StopJobCommand  = new RelayCommand(() => _dispatcher.CancelJob(Job.Id), () => IsJobRunning);
@@ -112,6 +134,17 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+        }
+
+        // ---------- Selection sync (called from code-behind) ----------
+        public void SetSelectedSteps(IEnumerable<object> items)
+        {
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(items.OfType<JobStep>());
+            // Keep SelectedStep in sync with the last selected item
+            if (SelectedSteps.Count > 0)
+                SelectedStep = SelectedSteps[^1];
+            InvalidateAllCommands();
         }
 
         // ---------- INavigationGuard ----------
@@ -180,6 +213,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (vm.CreatedStep is TaskAutomation.Jobs.IfStep)
                     _steps.Insert(insertIndex + 1, new TaskAutomation.Jobs.EndIfStep());
                 SelectedStep = vm.CreatedStep;
+                PushUndo();
                 HasUnsavedChanges = true;
             }
         }
@@ -218,6 +252,7 @@ namespace DesktopAutomationApp.ViewModels
             if (result != true || vm.CreatedStep == null) return;
 
             vm.CreatedStep.Id = target.Id;   // preserve original ID
+            PushUndo();
             _steps[idx] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
             HasUnsavedChanges = true;
@@ -368,6 +403,7 @@ namespace DesktopAutomationApp.ViewModels
             var idx = _steps.IndexOf(step);
             var newIdx = idx + delta;
 
+            PushUndo();
             _steps.RemoveAt(idx);
             _steps.Insert(newIdx, step);
 
@@ -380,6 +416,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (from < 0 || from >= _steps.Count || to < 0 || to >= _steps.Count || from == to) return;
             if (WouldViolateIfStructure(from, to)) return;
+            PushUndo();
             var step = _steps[from];
             _steps.RemoveAt(from);
             _steps.Insert(to, step);
@@ -395,12 +432,13 @@ namespace DesktopAutomationApp.ViewModels
 
             bool isIfOrEndIf = target is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep;
             string message = isIfOrEndIf
-                ? "Möchten Sie den gesamten If-Block löschen (If, Else-If, Else und End-If)?"
+                ? "Möchten Sie den If-Block löschen (If, Else-If, Else und End-If werden entfernt, die Steps innerhalb bleiben erhalten)?"
                 : "Möchten Sie den Step wirklich löschen?";
 
             var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
 
+            PushUndo();
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
 
@@ -411,8 +449,21 @@ namespace DesktopAutomationApp.ViewModels
 
                 if (ifIdx >= 0 && endIfIdx > ifIdx)
                 {
-                    for (int i = endIfIdx; i >= ifIdx; i--)
-                        _steps.RemoveAt(i);
+                    // Collect indices of If/ElseIf/Else/EndIf steps only — preserve regular steps inside.
+                    var indicesToRemove = new List<int>();
+                    for (int i = ifIdx; i <= endIfIdx; i++)
+                    {
+                        if (_steps[i] is TaskAutomation.Jobs.IfStep
+                            or TaskAutomation.Jobs.ElseIfStep
+                            or TaskAutomation.Jobs.ElseStep
+                            or TaskAutomation.Jobs.EndIfStep)
+                        {
+                            indicesToRemove.Add(i);
+                        }
+                    }
+                    // Remove from highest index downward to keep indices stable.
+                    for (int i = indicesToRemove.Count - 1; i >= 0; i--)
+                        _steps.RemoveAt(indicesToRemove[i]);
                     SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, ifIdx - 1));
                 }
                 else
@@ -439,6 +490,133 @@ namespace DesktopAutomationApp.ViewModels
             {
                 IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
             });
+        }
+
+        // ---------- Undo / Redo ----------
+        private void PushUndo()
+        {
+            _undoStack.Push(DeepCloneSteps(_steps));
+            _redoStack.Clear();
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void Undo()
+        {
+            if (_undoStack.Count == 0) return;
+            _redoStack.Push(DeepCloneSteps(_steps));
+            RestoreSnapshot(_undoStack.Pop());
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void Redo()
+        {
+            if (_redoStack.Count == 0) return;
+            _undoStack.Push(DeepCloneSteps(_steps));
+            RestoreSnapshot(_redoStack.Pop());
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void RestoreSnapshot(List<JobStep> snapshot)
+        {
+            _steps.Clear();
+            foreach (var s in snapshot) _steps.Add(s);
+            SelectedStep = null;
+            SelectedSteps.Clear();
+            HasUnsavedChanges = true;
+        }
+
+        // ---------- Copy / Paste ----------
+        private void CopySelected()
+        {
+            var sources = SelectedSteps.Count > 0 ? SelectedSteps : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
+            if (sources == null) return;
+            _clipboard = DeepCloneSteps(sources, newIds: false);
+            InvalidateAllCommands();
+        }
+
+        private void Paste()
+        {
+            if (_clipboard.Count == 0) return;
+
+            int insertAt = SelectedStep != null
+                ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
+                : _steps.Count;
+
+            // Clone again so multiple pastes produce independent copies with fresh IDs.
+            var toInsert = DeepCloneSteps(_clipboard, newIds: true);
+            PushUndo();
+            for (int i = 0; i < toInsert.Count; i++)
+                _steps.Insert(insertAt + i, toInsert[i]);
+
+            SelectedStep = toInsert[^1];
+            HasUnsavedChanges = true;
+        }
+
+        // ---------- Delete selected ----------
+        private void DeleteSelected()
+        {
+            var targets = SelectedSteps.Count > 0
+                ? SelectedSteps.ToList()
+                : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
+            if (targets == null || targets.Count == 0) return;
+
+            string message = targets.Count == 1
+                ? (targets[0] is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep
+                    ? "Möchten Sie den If-Block löschen (If, Else-If, Else und End-If werden entfernt, die Steps innerhalb bleiben erhalten)?"
+                    : "Möchten Sie den Step wirklich löschen?")
+                : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
+
+            if (AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
+            PushUndo();
+
+            // Collect all indices to remove (handle If/EndIf structure steps).
+            var indicesToRemove = new SortedSet<int>(Comparer<int>.Create((a, b) => b.CompareTo(a))); // descending
+            foreach (var target in targets)
+            {
+                int idx = _steps.IndexOf(target);
+                if (idx < 0) continue;
+
+                bool isStructure = target is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep;
+                if (isStructure)
+                {
+                    int ifIdx    = target is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
+                    int endIfIdx = target is TaskAutomation.Jobs.EndIfStep ? idx : FindMatchingEndIf(idx);
+                    if (ifIdx >= 0 && endIfIdx > ifIdx)
+                    {
+                        for (int i = ifIdx; i <= endIfIdx; i++)
+                            if (_steps[i] is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.ElseIfStep
+                                            or TaskAutomation.Jobs.ElseStep or TaskAutomation.Jobs.EndIfStep)
+                                indicesToRemove.Add(i);
+                    }
+                    else { indicesToRemove.Add(idx); }
+                }
+                else { indicesToRemove.Add(idx); }
+            }
+
+            int firstRemoved = indicesToRemove.Min;
+            foreach (var i in indicesToRemove) _steps.RemoveAt(i);
+
+            SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, firstRemoved - 1));
+            SelectedSteps.Clear();
+            HasUnsavedChanges = true;
+            InvalidateAllCommands();
+        }
+
+        // ---------- Deep clone helpers ----------
+        private static List<JobStep> DeepCloneSteps(IEnumerable<JobStep> steps, bool newIds = false)
+            => steps.Select(s => DeepCloneStep(s, newIds)).ToList();
+
+        private static JobStep DeepCloneStep(JobStep s, bool newId = false)
+        {
+            var json  = JsonSerializer.Serialize(s, s.GetType());
+            var clone = (JobStep)JsonSerializer.Deserialize(json, s.GetType())!;
+            if (newId) clone.Id = Guid.NewGuid().ToString();
+            return clone;
         }
 
         // ---------- If/ElseIf/Else helpers ----------
@@ -677,16 +855,21 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Command invalidation helper ----------
         private void InvalidateAllCommands()
         {
-            (SaveCommand         as RelayCommand)?.RaiseCanExecuteChanged();
-            (CancelCommand       as RelayCommand)?.RaiseCanExecuteChanged();
-            (StartJobCommand     as RelayCommand)?.RaiseCanExecuteChanged();
-            (StopJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
-            (EditStepCommand     as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveStepUpCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveStepDownCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (DeleteStepCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (AddElseIfCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (AddElseCommand      as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (SaveCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand        as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
+            (StopJobCommand       as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand      as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepUpCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand  as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (UndoCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (CopyCommand          as RelayCommand)?.RaiseCanExecuteChanged();
+            (PasteCommand         as RelayCommand)?.RaiseCanExecuteChanged();
+            (AddElseIfCommand     as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseCommand       as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
         }
 
         // ---------- Display-Name-Auflösung für If/ElseIf-Bedingungen ----------
