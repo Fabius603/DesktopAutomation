@@ -144,24 +144,24 @@ namespace DesktopAutomationApp.Services
                 var currentExeEsc = currentExe.Replace("'", "''");
                 var tempDirEsc   = tempDir.Replace("'", "''");
 
-                var script = $"""
-                    $pid = {pid}
+                var script = $$"""
+                    $pid = {{pid}}
                     $limit = 60
                     $elapsed = 0
-                    while ((Get-Process -Id $pid -ErrorAction SilentlyContinue) -ne $null) {{
+                    while ((Get-Process -Id $pid -ErrorAction SilentlyContinue) -ne $null) {
                         Start-Sleep -Milliseconds 300
                         $elapsed += 0.3
-                        if ($elapsed -ge $limit) {{ break }}
-                    }}
-                    Get-ChildItem -LiteralPath '{sourceDirEsc}' -Recurse -File | ForEach-Object {{
-                        $rel  = $_.FullName.Substring('{sourceDirEsc}'.Length).TrimStart('\','/')
-                        $dest = Join-Path '{appDirEsc}' $rel
+                        if ($elapsed -ge $limit) { break }
+                    }
+                    Get-ChildItem -LiteralPath '{{sourceDirEsc}}' -Recurse -File | ForEach-Object {
+                        $rel  = $_.FullName.Substring('{{sourceDirEsc}}'.Length).TrimStart('\','/')
+                        $dest = Join-Path '{{appDirEsc}}' $rel
                         $destDir = Split-Path $dest -Parent
-                        if (-not (Test-Path $destDir)) {{ New-Item $destDir -ItemType Directory -Force | Out-Null }}
+                        if (-not (Test-Path $destDir)) { New-Item $destDir -ItemType Directory -Force | Out-Null }
                         Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
-                    }}
-                    Start-Process -FilePath '{currentExeEsc}'
-                    Remove-Item -LiteralPath '{tempDirEsc}' -Recurse -Force -ErrorAction SilentlyContinue
+                    }
+                    Start-Process -FilePath '{{currentExeEsc}}'
+                    Remove-Item -LiteralPath '{{tempDirEsc}}' -Recurse -Force -ErrorAction SilentlyContinue
                     """;
 
                 var scriptPath = Path.Combine(tempDir, "update.ps1");
