@@ -27,13 +27,14 @@ namespace DesktopAutomationApp.ViewModels
         private string _updateUrl = string.Empty;
         private string _assetDownloadUrl = string.Empty;
         private bool _isUpdating;
+        private bool _isUpdateReady;
         private int _updateProgress;
         private string _updateStatusText = string.Empty;
 
         public bool HasUpdate
         {
             get => _hasUpdate;
-            private set => SetProperty(ref _hasUpdate, value);
+            private set { SetProperty(ref _hasUpdate, value); OnPropertyChanged(nameof(ShowDownloadButton)); }
         }
 
         public string LatestVersion
@@ -45,8 +46,18 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsUpdating
         {
             get => _isUpdating;
-            private set => SetProperty(ref _isUpdating, value);
+            private set { SetProperty(ref _isUpdating, value); OnPropertyChanged(nameof(ShowDownloadButton)); }
         }
+
+        /// <summary>True once the ZIP has been downloaded and the PS1 script is ready — shows the Restart button.</summary>
+        public bool IsUpdateReady
+        {
+            get => _isUpdateReady;
+            private set { SetProperty(ref _isUpdateReady, value); OnPropertyChanged(nameof(ShowDownloadButton)); }
+        }
+
+        /// <summary>Shows "Jetzt updaten" only when there is an update and it hasn't been downloaded yet.</summary>
+        public bool ShowDownloadButton => HasUpdate && !IsUpdating && !IsUpdateReady;
 
         public int UpdateProgress
         {
@@ -61,6 +72,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         public ICommand InstallUpdateCommand { get; }
+        public ICommand RestartToUpdateCommand { get; }
         public ICommand OpenUpdateCommand { get; }  // fallback: browser
 
         private readonly StartViewModel _start;
@@ -114,7 +126,10 @@ namespace DesktopAutomationApp.ViewModels
 
             InstallUpdateCommand = new RelayCommand(
                 async () => await InstallUpdateAsync(),
-                () => HasUpdate && !IsUpdating);
+                () => HasUpdate && !IsUpdating && !IsUpdateReady);
+            RestartToUpdateCommand = new RelayCommand(
+                () => Application.Current.Shutdown(),
+                () => IsUpdateReady);
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
@@ -167,8 +182,10 @@ namespace DesktopAutomationApp.ViewModels
         private async Task InstallUpdateAsync()
         {
             IsUpdating = true;
+            IsUpdateReady = false;
             UpdateProgress = 0;
             UpdateStatusText = "Wird heruntergeladen…";
+            (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             var progress = new Progress<int>(p =>
             {
@@ -183,6 +200,7 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     UpdateStatusText = "Fehler beim Download.";
                     IsUpdating = false;
+                    (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
                     // Fallback: Browser öffnen
                     if (!string.IsNullOrEmpty(_updateUrl))
@@ -190,15 +208,19 @@ namespace DesktopAutomationApp.ViewModels
                     return;
                 }
 
-                UpdateStatusText = "Wird installiert…";
-                // Short delay so the user sees the message, then close
-                await Task.Delay(800);
-                Application.Current.Shutdown();
+                // Download + PS1 script ready — show the Restart button
+                UpdateProgress = 100;
+                UpdateStatusText = "Update bereit. Bitte neu starten.";
+                IsUpdating = false;
+                IsUpdateReady = true;
+                (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (RestartToUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
             catch
             {
                 UpdateStatusText = "Fehler beim Update.";
                 IsUpdating = false;
+                (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 

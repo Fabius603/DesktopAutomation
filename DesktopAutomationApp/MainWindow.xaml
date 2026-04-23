@@ -74,18 +74,42 @@
                                    Margin="0,0,0,6"
                                    Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                        <!-- Jetzt updaten -->
+                        <!-- Statustext wenn Update fertig heruntergeladen -->
+                        <TextBlock Text="{Binding UpdateStatusText}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource App.Brush.Accent}"
+                                   Margin="0,0,0,6"
+                                   Visibility="{Binding IsUpdateReady, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <!-- Jetzt updaten (nur sichtbar solange noch nicht heruntergeladen) -->
                         <Button Style="{StaticResource ButtonPrimary}"
                                 Command="{Binding InstallUpdateCommand}"
                                 FontSize="11"
                                 Padding="8,4"
-                                HorizontalAlignment="Stretch">
+                                HorizontalAlignment="Stretch"
+                                Visibility="{Binding ShowDownloadButton, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <iconPacks:PackIconMaterial Kind="Download"
                                                             Width="12" Height="12"
                                                             VerticalAlignment="Center"
                                                             Margin="0,0,5,0"/>
                                 <TextBlock Text="Jetzt updaten" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Neu starten (erscheint wenn Download abgeschlossen) -->
+                        <Button Style="{StaticResource ButtonDanger}"
+                                Command="{Binding RestartToUpdateCommand}"
+                                FontSize="11"
+                                Padding="8,4"
+                                HorizontalAlignment="Stretch"
+                                Visibility="{Binding IsUpdateReady, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <iconPacks:PackIconMaterial Kind="Restart"
+                                                            Width="12" Height="12"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,5,0"/>
+                                <TextBlock Text="Neu starten um Update zu installieren" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
