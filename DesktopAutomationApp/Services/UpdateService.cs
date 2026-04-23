@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -115,65 +114,109 @@ namespace DesktopAutomationApp.Services
                         progress?.Report((int)(downloaded * 100 / totalBytes));
                 }
 
-                // 2. Extract (ZIP) or copy directly (single-exe release)
-                var extractDir = Path.Combine(tempDir, "x");
+                // 2. Determine payload type; use extension OR magic bytes to avoid false negatives.
+                var isZipByName = string.Equals(Path.GetExtension(downloadPath), ".zip", StringComparison.OrdinalIgnoreCase);
+                var isZipPayload = isZipByName || IsZipFile(downloadPath);
 
-                if (IsZipFile(downloadPath))
-                {
-                    // Important: this overload expects that destination directory does not exist.
-                    ZipFile.ExtractToDirectory(downloadPath, extractDir);
-                }
-                else
-                {
-                    Directory.CreateDirectory(extractDir);
-                    // Single-file release: rename to match current exe name
-                    var destName = Path.GetFileName(currentExe);
-                    File.Copy(downloadPath, Path.Combine(extractDir, destName), overwrite: true);
-                }
-
-                // 3. If the ZIP extracted into exactly one sub-folder, treat that as the source root
-                var sourceDir = extractDir;
-                var topEntries = Directory.GetFileSystemEntries(extractDir);
-                if (topEntries.Length == 1 && Directory.Exists(topEntries[0]))
-                    sourceDir = topEntries[0];
-
-                // 4. Write updater PS1 — waits for this process to exit, copies ALL files, relaunches
+                // 3. Write updater PS1 — waits for this process to exit, extracts/copies, relaunches
                 var pid = Process.GetCurrentProcess().Id;
                 var appDir = Path.GetDirectoryName(currentExe)!;
-                var sourceDirEsc = sourceDir.Replace("'", "''");
                 var appDirEsc    = appDir.Replace("'", "''");
                 var currentExeEsc = currentExe.Replace("'", "''");
                 var tempDirEsc   = tempDir.Replace("'", "''");
+                var downloadPathEsc = downloadPath.Replace("'", "''");
+                var payloadIsZip = isZipPayload ? "$true" : "$false";
+                var mainExeNameEsc = Path.GetFileName(currentExe).Replace("'", "''");
+                var payloadFolderNameEsc = Path.GetFileNameWithoutExtension(downloadPath).Replace("'", "''");
 
                 var script = $$"""
-                    $pid = {{pid}}
-                    $limit = 60
-                    $elapsed = 0
-                    while ((Get-Process -Id $pid -ErrorAction SilentlyContinue) -ne $null) {
-                        Start-Sleep -Milliseconds 300
-                        $elapsed += 0.3
-                        if ($elapsed -ge $limit) { break }
+                    $targetPid = {{pid}}
+                    $isZip = {{payloadIsZip}}
+                    $downloadPath = '{{downloadPathEsc}}'
+                    $stageDir = Join-Path '{{tempDirEsc}}' 'x'
+                    $mainExeName = '{{mainExeNameEsc}}'
+                    $payloadFolderName = '{{payloadFolderNameEsc}}'
+                    $logPath = Join-Path '{{tempDirEsc}}' 'update.log'
+                    $ErrorActionPreference = 'Stop'
+                    try {
+                        while ((Get-Process -Id $targetPid -ErrorAction SilentlyContinue) -ne $null) {
+                            Start-Sleep -Milliseconds 300
+                        }
+
+                        # Move away from the app directory so Remove-Item on app folder is not blocked by current location.
+                        Set-Location -LiteralPath ([System.IO.Path]::GetTempPath())
+
+                        if (Test-Path $stageDir) { Remove-Item -LiteralPath $stageDir -Recurse -Force -ErrorAction SilentlyContinue }
+                        New-Item -Path $stageDir -ItemType Directory -Force | Out-Null
+
+                        if ($isZip) {
+                            Expand-Archive -LiteralPath $downloadPath -DestinationPath $stageDir -Force
+                        } else {
+                            Copy-Item -LiteralPath $downloadPath -Destination (Join-Path $stageDir $mainExeName) -Force
+                        }
+
+                        $sourceDir = $stageDir
+                        $entries = Get-ChildItem -LiteralPath $stageDir -Force
+                        if ($entries.Count -eq 1 -and $entries[0].PSIsContainer) { $sourceDir = $entries[0].FullName }
+
+                        $mainSourceExe = Join-Path $sourceDir $mainExeName
+                        if (-not (Test-Path -LiteralPath $mainSourceExe)) {
+                            throw "Main executable not found in update payload: $mainSourceExe"
+                        }
+
+                        $currentAppDir = '{{appDirEsc}}'
+                        $parentDir = Split-Path $currentAppDir -Parent
+                        $newDirName = if ($sourceDir -eq $stageDir) { $payloadFolderName } else { Split-Path $sourceDir -Leaf }
+                        if ([string]::IsNullOrWhiteSpace($newDirName)) { $newDirName = 'DesktopAutomationApp' }
+                        $newAppDir = Join-Path $parentDir $newDirName
+
+                        # Stage installation folder first, then swap complete directory.
+                        $installStage = Join-Path '{{tempDirEsc}}' 'install'
+                        if (Test-Path -LiteralPath $installStage) {
+                            Remove-Item -LiteralPath $installStage -Recurse -Force -ErrorAction SilentlyContinue
+                        }
+                        New-Item -Path $installStage -ItemType Directory -Force | Out-Null
+
+                        $stagedRoot = Join-Path $installStage $newDirName
+                        Copy-Item -LiteralPath $sourceDir -Destination $stagedRoot -Recurse -Force -ErrorAction Stop
+
+                        if ((Test-Path -LiteralPath $newAppDir) -and ($newAppDir -ne $currentAppDir)) {
+                            Remove-Item -LiteralPath $newAppDir -Recurse -Force -ErrorAction Stop
+                        }
+
+                        if (Test-Path -LiteralPath $currentAppDir) {
+                            Remove-Item -LiteralPath $currentAppDir -Recurse -Force -ErrorAction Stop
+                        }
+
+                        Move-Item -LiteralPath $stagedRoot -Destination $newAppDir -Force
+
+                        $newExePath = Join-Path $newAppDir $mainExeName
+                        if (-not (Test-Path -LiteralPath $newExePath)) {
+                            throw "Updated executable missing after folder swap: $newExePath"
+                        }
+
+                        Start-Process -FilePath $newExePath
+                        Remove-Item -LiteralPath '{{tempDirEsc}}' -Recurse -Force -ErrorAction SilentlyContinue
                     }
-                    Get-ChildItem -LiteralPath '{{sourceDirEsc}}' -Recurse -File | ForEach-Object {
-                        $rel  = $_.FullName.Substring('{{sourceDirEsc}}'.Length).TrimStart('\','/')
-                        $dest = Join-Path '{{appDirEsc}}' $rel
-                        $destDir = Split-Path $dest -Parent
-                        if (-not (Test-Path $destDir)) { New-Item $destDir -ItemType Directory -Force | Out-Null }
-                        Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
+                    catch {
+                        try {
+                            $err = "$(Get-Date -Format o) - $($_.Exception.Message)"
+                            Add-Content -LiteralPath $logPath -Value $err
+                        } catch { }
+                        Remove-Item -LiteralPath '{{tempDirEsc}}' -Recurse -Force -ErrorAction SilentlyContinue
                     }
-                    Start-Process -FilePath '{{currentExeEsc}}'
-                    Remove-Item -LiteralPath '{{tempDirEsc}}' -Recurse -Force -ErrorAction SilentlyContinue
                     """;
 
                 var scriptPath = Path.Combine(tempDir, "update.ps1");
                 await File.WriteAllTextAsync(scriptPath, script);
 
-                // 5. Launch updater (it blocks until this process exits, then copies + relaunches)
+                // 4. Launch updater (it waits for this process to exit, then installs + relaunches)
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
                     Arguments = $"-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File \"{scriptPath}\"",
                     UseShellExecute = true,
+                    WorkingDirectory = Path.GetTempPath(),
                     WindowStyle = ProcessWindowStyle.Hidden,
                 });
 
