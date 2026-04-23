@@ -217,6 +217,7 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result != true || vm.CreatedStep == null) return;
 
+            vm.CreatedStep.Id = target.Id;   // preserve original ID
             _steps[idx] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
             HasUnsavedChanges = true;
