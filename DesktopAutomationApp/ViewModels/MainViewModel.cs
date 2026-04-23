@@ -128,8 +128,7 @@ namespace DesktopAutomationApp.ViewModels
                 async () => await InstallUpdateAsync(),
                 () => HasUpdate && !IsUpdating && !IsUpdateReady);
             RestartToUpdateCommand = new RelayCommand(
-                () => Application.Current.Shutdown(),
-                () => IsUpdateReady);
+                () => Application.Current.Shutdown());
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
@@ -214,7 +213,6 @@ namespace DesktopAutomationApp.ViewModels
                 IsUpdating = false;
                 IsUpdateReady = true;
                 (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
-                (RestartToUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
             catch
             {
