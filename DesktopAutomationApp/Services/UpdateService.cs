@@ -117,14 +117,15 @@ namespace DesktopAutomationApp.Services
 
                 // 2. Extract (ZIP) or copy directly (single-exe release)
                 var extractDir = Path.Combine(tempDir, "x");
-                Directory.CreateDirectory(extractDir);
 
                 if (IsZipFile(downloadPath))
                 {
+                    // Important: this overload expects that destination directory does not exist.
                     ZipFile.ExtractToDirectory(downloadPath, extractDir);
                 }
                 else
                 {
+                    Directory.CreateDirectory(extractDir);
                     // Single-file release: rename to match current exe name
                     var destName = Path.GetFileName(currentExe);
                     File.Copy(downloadPath, Path.Combine(extractDir, destName), overwrite: true);
