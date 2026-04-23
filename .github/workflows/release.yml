@@ -38,6 +38,25 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "${{ steps.ver.outputs.TAG }}"
+          $isManual = "${{ github.event_name }}" -eq "workflow_dispatch"
+
+          if ($isManual) {
+            Write-Host "Manual run detected - forcing release recreation for $tag."
+            gh release view $tag 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              gh release delete $tag --yes --cleanup-tag
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to delete existing release/tag $tag"
+              }
+              Write-Host "Deleted existing release and tag: $tag"
+            } else {
+              Write-Host "No existing release for $tag - creating a fresh one."
+            }
+
+            "EXISTS=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+
           gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Release $tag already exists – skipping."
