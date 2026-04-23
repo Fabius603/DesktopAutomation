@@ -531,7 +531,9 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Copy / Paste ----------
         private void CopySelected()
         {
-            var sources = SelectedSteps.Count > 0 ? SelectedSteps : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
+            var sources = SelectedSteps.Count > 0
+                ? SelectedSteps.OrderBy(s => _steps.IndexOf(s)).ToList()
+                : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
             if (sources == null) return;
             _clipboard = DeepCloneSteps(sources, newIds: false);
             InvalidateAllCommands();

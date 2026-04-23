@@ -31,6 +31,10 @@ namespace DesktopAutomationApp.ViewModels
         private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
 
+        private readonly Stack<List<MakroBefehl>> _undoStack = new();
+        private readonly Stack<List<MakroBefehl>> _redoStack = new();
+        private List<MakroBefehl> _clipboard = new();
+
         public Makro Makro { get; }
         public string Title => Makro.Name;
 
@@ -38,6 +42,12 @@ namespace DesktopAutomationApp.ViewModels
 
         /// <summary>Incrementiert bei jeder Listenänderung; wird von Konvertern als Cache-Schlüssel genutzt.</summary>
         public int StepsVersion { get; private set; }
+
+        /// <summary>All currently selected steps (synced from the view's ListBox.SelectedItems).</summary>
+        public List<MakroBefehl> SelectedSteps { get; } = new();
+
+        public bool CanUndo => _undoStack.Count > 0;
+        public bool CanRedo => _redoStack.Count > 0;
 
         private MakroBefehl? _selectedStep;
         public MakroBefehl? SelectedStep
@@ -96,6 +106,11 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveStepDownCommand { get; }
         public ICommand ReorderStepCommand { get; }
         public ICommand DeleteStepCommand { get; }
+        public ICommand DeleteSelectedCommand { get; }
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
+        public ICommand CopyCommand { get; }
+        public ICommand PasteCommand { get; }
         public ICommand DuplicateStepCommand { get; }
         public ICommand RecordStepsCommand { get; }
         public ICommand CaptureClickCommand { get; }
@@ -144,8 +159,13 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
             ReorderStepCommand  = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
-            DeleteStepCommand   = new RelayCommand<MakroBefehl?>(DeleteStep, s => s != null);
-            DuplicateStepCommand = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
+            DeleteStepCommand     = new RelayCommand<MakroBefehl?>(DeleteStep, s => s != null);
+            DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            UndoCommand           = new RelayCommand(Undo, () => CanUndo);
+            RedoCommand           = new RelayCommand(Redo, () => CanRedo);
+            CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
+            DuplicateStepCommand  = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
 
             RecordStepsCommand   = new RelayCommand(async () => await ToggleRecordAsync());
             CaptureClickCommand  = new RelayCommand(async () => await CaptureClickAsync(), () => !IsCapturingClick && !IsRecording);
@@ -160,6 +180,16 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
             IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
+        }
+
+        // ---------- Selection sync (called from code-behind) ----------
+        public void SetSelectedSteps(IEnumerable<object> items)
+        {
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(items.OfType<MakroBefehl>());
+            if (SelectedSteps.Count > 0)
+                SelectedStep = SelectedSteps[^1];
+            InvalidateAllCommands();
         }
 
         // ---------- INavigationGuard ----------
@@ -211,6 +241,7 @@ namespace DesktopAutomationApp.ViewModels
         private void MoveRelative(MakroBefehl? step, int delta)
         {
             if (!CanMoveRelative(step, delta) || step == null) return;
+            PushUndo();
             var idx = Steps.IndexOf(step);
             Steps.RemoveAt(idx);
             Steps.Insert(idx + delta, step);
@@ -222,6 +253,7 @@ namespace DesktopAutomationApp.ViewModels
         private void MoveToIndex(int from, int to)
         {
             if (from < 0 || from >= Steps.Count || to < 0 || to >= Steps.Count || from == to) return;
+            PushUndo();
             var step = Steps[from];
             Steps.RemoveAt(from);
             Steps.Insert(to, step);
@@ -242,6 +274,7 @@ namespace DesktopAutomationApp.ViewModels
             var dlg = new AddStepDialog { Owner = Application.Current.MainWindow, DataContext = vm };
             if (dlg.ShowDialog() != true || vm.CreatedStep == null) return;
 
+            PushUndo();
             Steps[index] = vm.CreatedStep;
             SelectedStep = vm.CreatedStep;
             HasUnsavedChanges = true;
@@ -259,6 +292,7 @@ namespace DesktopAutomationApp.ViewModels
                 ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
                 : Steps.Count;
 
+            PushUndo();
             Steps.Insert(insertIndex, dlgVm.CreatedStep);
             SelectedStep = dlgVm.CreatedStep;
             HasUnsavedChanges = true;
@@ -276,6 +310,7 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result != MessageBoxResult.Yes) return;
 
+            PushUndo();
             var idx = Steps.IndexOf(step);
             if (idx < 0) return;
 
@@ -290,8 +325,13 @@ namespace DesktopAutomationApp.ViewModels
         private void DuplicateStep(MakroBefehl? step)
         {
             if (step == null) return;
+            PushUndo();
             var clone = CloneStep(step);
-            Steps.Add(clone);
+            int insertIndex = SelectedStep != null
+                ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
+                : Steps.Count;
+            Steps.Insert(insertIndex, clone);
+            SelectedStep = clone;
             HasUnsavedChanges = true;
         }
 
@@ -299,6 +339,99 @@ namespace DesktopAutomationApp.ViewModels
         {
             var json = System.Text.Json.JsonSerializer.Serialize(s, JsonOptions.Default);
             return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
+        }
+
+        // ---------- Undo / Redo ----------
+        private void PushUndo()
+        {
+            _undoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            _redoStack.Clear();
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void Undo()
+        {
+            if (_undoStack.Count == 0) return;
+            _redoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            RestoreSnapshot(_undoStack.Pop());
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void Redo()
+        {
+            if (_redoStack.Count == 0) return;
+            _undoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            RestoreSnapshot(_redoStack.Pop());
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+        }
+
+        private void RestoreSnapshot(List<MakroBefehl> snapshot)
+        {
+            Steps.Clear();
+            foreach (var s in snapshot) Steps.Add(s);
+            SelectedStep = null;
+            SelectedSteps.Clear();
+            HasUnsavedChanges = true;
+        }
+
+        // ---------- Copy / Paste ----------
+        private void CopySelected()
+        {
+            var sources = SelectedSteps.Count > 0
+                ? SelectedSteps.OrderBy(s => Steps.IndexOf(s)).ToList()
+                : (SelectedStep != null ? new List<MakroBefehl> { SelectedStep } : null);
+            if (sources == null) return;
+            _clipboard = sources.Select(s => CloneStep(s)).ToList();
+            InvalidateAllCommands();
+        }
+
+        private void Paste()
+        {
+            if (_clipboard.Count == 0) return;
+
+            int insertAt = SelectedStep != null
+                ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
+                : Steps.Count;
+
+            var toInsert = _clipboard.Select(s => CloneStep(s)).ToList();
+            PushUndo();
+            for (int i = 0; i < toInsert.Count; i++)
+                Steps.Insert(insertAt + i, toInsert[i]);
+
+            SelectedStep = toInsert[^1];
+            HasUnsavedChanges = true;
+        }
+
+        // ---------- Delete selected ----------
+        private void DeleteSelected()
+        {
+            var targets = SelectedSteps.Count > 0
+                ? SelectedSteps.ToList()
+                : (SelectedStep != null ? new List<MakroBefehl> { SelectedStep } : null);
+            if (targets == null || targets.Count == 0) return;
+
+            string message = targets.Count == 1
+                ? "Möchten Sie den Step wirklich löschen?"
+                : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
+
+            if (AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
+            PushUndo();
+            int firstIdx = targets.Select(t => Steps.IndexOf(t)).Where(i => i >= 0).DefaultIfEmpty(0).Min();
+            foreach (var t in targets)
+            {
+                var idx = Steps.IndexOf(t);
+                if (idx >= 0) Steps.RemoveAt(idx);
+            }
+
+            SelectedStep = Steps.ElementAtOrDefault(Math.Max(0, firstIdx - 1));
+            SelectedSteps.Clear();
+            HasUnsavedChanges = true;
+            InvalidateAllCommands();
         }
 
         private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)
