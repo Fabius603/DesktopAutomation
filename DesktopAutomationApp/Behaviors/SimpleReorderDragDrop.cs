@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
+using System.Collections.Generic;
 
 namespace DesktopAutomationApp.Behaviors
 {
@@ -48,9 +49,22 @@ namespace DesktopAutomationApp.Behaviors
         private static int _fromIndex = -1;
         private static FrameworkElement? _draggedContainer;
         private static DragAdorner? _dragAdorner;
-        private static InsertionAdorner? _insertionAdorner;
+        private static GhostInsertionAdorner? _ghostInsertionAdorner;
         private static int _currentInsertIndex = -1;
         private static bool _isDragging;
+        private const double MidpointHysteresisPx = 4.0;
+        private const double GhostBottomMarginPx = 6.0;
+        private static double _draggedOriginalOpacity = 1.0;
+        private static readonly Dictionary<FrameworkElement, Transform?> _originalContainerTransforms = new();
+        private static int _lastShiftInsertIndex = -1;
+        private sealed class LayoutSnapshotItem
+        {
+            public int Index { get; init; }
+            public double Top { get; init; }
+            public double Bottom { get; init; }
+        }
+
+        private static readonly List<LayoutSnapshotItem> _dragLayoutSnapshot = new();
 
         private static void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -61,10 +75,12 @@ namespace DesktopAutomationApp.Behaviors
             if (_fromIndex >= 0)
             {
                 _draggedContainer = ic.ItemContainerGenerator.ContainerFromIndex(_fromIndex) as FrameworkElement;
+                _draggedOriginalOpacity = _draggedContainer?.Opacity ?? 1.0;
             }
             else
             {
                 _draggedContainer = null;
+                _draggedOriginalOpacity = 1.0;
             }
         }
 
@@ -78,19 +94,21 @@ namespace DesktopAutomationApp.Behaviors
 
             _isDragging = true;
 
+            CaptureDragLayoutSnapshot(ic);
+
             // Adorner erstellen
             var adornerLayer = AdornerLayer.GetAdornerLayer(ic);
             if (adornerLayer != null)
             {
                 _dragAdorner = new DragAdorner(ic, _draggedContainer);
                 adornerLayer.Add(_dragAdorner);
-
-                _insertionAdorner = new InsertionAdorner(ic);
-                adornerLayer.Add(_insertionAdorner);
+                _ghostInsertionAdorner = new GhostInsertionAdorner(ic, _draggedContainer);
+                adornerLayer.Add(_ghostInsertionAdorner);
             }
 
-            // Gezogenes Item visuell verstecken
-            _draggedContainer.Opacity = 0.3;
+            // Beim Start bleibt der Original-Step sichtbar, bis ein gültiger Zielslot erreicht ist.
+            _currentInsertIndex = -1;
+            UpdateDraggedContainerVisibility();
 
             try
             {
@@ -121,8 +139,9 @@ namespace DesktopAutomationApp.Behaviors
 
         private static void OnDragLeave(object sender, DragEventArgs e)
         {
-            _insertionAdorner?.Hide();
-            _currentInsertIndex = -1;
+            // Bewusst kein Reset hier:
+            // Wenn die Maus die Liste kurz verlässt, bleibt die letzte gültige Ghost-Position in der Liste stehen.
+            // Aufgeräumt wird beim Drop/Drag-Ende in CleanupAdorners.
         }
 
         private static void OnGiveFeedback(object sender, GiveFeedbackEventArgs e)
@@ -164,52 +183,237 @@ namespace DesktopAutomationApp.Behaviors
 
         private static void UpdateInsertionPosition(ItemsControl ic, Point mousePos)
         {
+            // Wenn die Maus oberhalb/unterhalb der Liste ist, die letzte gültige Position beibehalten.
+            if (mousePos.Y < 0 || mousePos.Y > ic.ActualHeight)
+                return;
+
             int insertIndex = -1;
             double insertionY = 0;
 
+            if (_dragLayoutSnapshot.Count == 0)
+                CaptureDragLayoutSnapshot(ic);
+
+            if (_dragLayoutSnapshot.Count == 0)
+            {
+                // Ohne Snapshot keine stabile Aussage; bisherige Position beibehalten.
+                return;
+            }
+
+            for (int i = 0; i < _dragLayoutSnapshot.Count; i++)
+            {
+                var snap = _dragLayoutSnapshot[i];
+                var top = snap.Top;
+                var bottom = snap.Bottom;
+                var midY = (top + bottom) / 2;
+
+                // Oberhalb der Mitte -> Slot vor dem Step.
+                if (mousePos.Y < midY)
+                {
+                    insertIndex = snap.Index;
+                    insertionY = top;
+                    break;
+                }
+
+                // Unterhalb der Mitte des letzten Steps -> Slot nach dem letzten Step.
+                if (i == _dragLayoutSnapshot.Count - 1)
+                {
+                    insertIndex = snap.Index + 1;
+                    insertionY = bottom;
+                }
+            }
+
+            if (insertIndex < 0)
+            {
+                // Keine neue gültige Position gefunden -> letzte Position beibehalten.
+                return;
+            }
+
+            insertIndex = ApplyMidpointHysteresis(mousePos.Y, insertIndex);
+            insertionY = GetInsertionYForInsertIndex(insertIndex, insertionY);
+
+            // Wenn der Slot der aktuellen Position des gezogenen Elements entspricht,
+            // die bisherige Vorschau beibehalten (kein Umschalten/Flickern).
+            if (insertIndex == _fromIndex || insertIndex == _fromIndex + 1)
+            {
+                _currentInsertIndex = -1;
+                _ghostInsertionAdorner?.Hide();
+                ResetShiftedContainers();
+                UpdateDraggedContainerVisibility();
+                return;
+            }
+
+            _currentInsertIndex = insertIndex;
+            UpdateDraggedContainerVisibility();
+            var ghostY = insertionY;
+            if (_draggedContainer != null && _fromIndex >= 0 && insertIndex > _fromIndex)
+                ghostY -= _draggedContainer.ActualHeight;
+
+            _ghostInsertionAdorner?.UpdatePosition(ghostY);
+            _ghostInsertionAdorner?.Show();
+            UpdateShiftedContainers(ic, insertIndex);
+        }
+
+        private static void UpdateDraggedContainerVisibility()
+        {
+            if (_draggedContainer == null) return;
+
+            // Nur ausblenden, wenn der Ghost wirklich an einem anderen Slot steht.
+            bool hideOriginal = _currentInsertIndex >= 0;
+            _draggedContainer.Opacity = hideOriginal ? 0.0 : _draggedOriginalOpacity;
+        }
+
+        private static int ApplyMidpointHysteresis(double mouseY, int candidateInsertIndex)
+        {
+            if (_currentInsertIndex < 0 || candidateInsertIndex < 0 || _dragLayoutSnapshot.Count == 0)
+                return candidateInsertIndex;
+
+            if (candidateInsertIndex == _currentInsertIndex)
+                return candidateInsertIndex;
+
+            // Nur Nachbar-Slot-Übergänge dämpfen; größere Sprünge direkt übernehmen.
+            if (Math.Abs(candidateInsertIndex - _currentInsertIndex) != 1)
+                return candidateInsertIndex;
+
+            double boundaryMidY;
+
+            if (candidateInsertIndex > _currentInsertIndex)
+            {
+                // Übergang von Slot i -> i+1: Grenze ist die Mitte von Step i.
+                if (!TryGetSnapshotByIndex(_currentInsertIndex, out var stepAtCurrent))
+                    return candidateInsertIndex;
+
+                boundaryMidY = (stepAtCurrent.Top + stepAtCurrent.Bottom) / 2.0;
+                return mouseY >= boundaryMidY + MidpointHysteresisPx ? candidateInsertIndex : _currentInsertIndex;
+            }
+
+            // Übergang von Slot i -> i-1: Grenze ist die Mitte von Step (i-1).
+            if (!TryGetSnapshotByIndex(candidateInsertIndex, out var stepBeforeCurrent))
+                return candidateInsertIndex;
+
+            boundaryMidY = (stepBeforeCurrent.Top + stepBeforeCurrent.Bottom) / 2.0;
+            return mouseY <= boundaryMidY - MidpointHysteresisPx ? candidateInsertIndex : _currentInsertIndex;
+        }
+
+        private static bool TryGetSnapshotByIndex(int itemIndex, out LayoutSnapshotItem snapshot)
+        {
+            for (int i = 0; i < _dragLayoutSnapshot.Count; i++)
+            {
+                var current = _dragLayoutSnapshot[i];
+                if (current.Index == itemIndex)
+                {
+                    snapshot = current;
+                    return true;
+                }
+            }
+
+            snapshot = null!;
+            return false;
+        }
+
+        private static double GetInsertionYForInsertIndex(int insertIndex, double fallbackY)
+        {
+            if (_dragLayoutSnapshot.Count == 0) return fallbackY;
+
+            // Slot 0: vor dem ersten Step
+            if (insertIndex <= 0)
+                return _dragLayoutSnapshot[0].Top;
+
+            // Slot nach letztem realisierten Step
+            var last = _dragLayoutSnapshot[^1];
+            if (insertIndex > last.Index)
+                return last.Bottom;
+
+            // Slot vor Step mit diesem Index
+            if (TryGetSnapshotByIndex(insertIndex, out var snap))
+                return snap.Top;
+
+            return fallbackY;
+        }
+
+        private static void UpdateShiftedContainers(ItemsControl ic, int insertIndex)
+        {
+            if (_fromIndex < 0 || _draggedContainer == null)
+            {
+                ResetShiftedContainers();
+                _lastShiftInsertIndex = -1;
+                return;
+            }
+
+            if (_lastShiftInsertIndex == insertIndex)
+                return;
+
+            var draggedHeight = _draggedContainer.ActualHeight;
+            if (draggedHeight <= 0)
+            {
+                ResetShiftedContainers();
+                _lastShiftInsertIndex = -1;
+                return;
+            }
+
+            bool movingDown = _fromIndex < insertIndex;
+
+            for (int i = 0; i < ic.Items.Count; i++)
+            {
+                if (i == _fromIndex) continue;
+                if (ic.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container) continue;
+
+                double offset = 0;
+                if (movingDown)
+                {
+                    // from=2, insert=6 => items 3..5 move up to make room
+                    if (i > _fromIndex && i < insertIndex)
+                        offset = -draggedHeight;
+                }
+                else
+                {
+                    // from=6, insert=2 => items 2..5 move down to make room
+                    if (i >= insertIndex && i < _fromIndex)
+                        offset = draggedHeight;
+                }
+
+                if (!_originalContainerTransforms.ContainsKey(container))
+                    _originalContainerTransforms[container] = container.RenderTransform;
+
+                container.RenderTransform = Math.Abs(offset) > 0.01
+                    ? new TranslateTransform(0, offset)
+                    : (_originalContainerTransforms.TryGetValue(container, out var original) ? original : Transform.Identity);
+            }
+
+            _lastShiftInsertIndex = insertIndex;
+        }
+
+        private static void ResetShiftedContainers()
+        {
+            if (_originalContainerTransforms.Count == 0) return;
+
+            foreach (var kvp in _originalContainerTransforms)
+            {
+                var container = kvp.Key;
+                if (container == null) continue;
+                container.RenderTransform = kvp.Value ?? Transform.Identity;
+            }
+            _originalContainerTransforms.Clear();
+            _lastShiftInsertIndex = -1;
+        }
+
+        private static void CaptureDragLayoutSnapshot(ItemsControl ic)
+        {
+            _dragLayoutSnapshot.Clear();
             for (int i = 0; i < ic.Items.Count; i++)
             {
                 if (ic.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container)
                     continue;
 
                 var transform = container.TransformToAncestor(ic);
-                var topLeft = transform.Transform(new Point(0, 0));
-                var bottomLeft = transform.Transform(new Point(0, container.ActualHeight));
-                double midY = (topLeft.Y + bottomLeft.Y) / 2;
-
-                if (mousePos.Y < midY)
+                var top = transform.Transform(new Point(0, 0)).Y;
+                var bottom = transform.Transform(new Point(0, container.ActualHeight)).Y;
+                _dragLayoutSnapshot.Add(new LayoutSnapshotItem
                 {
-                    insertIndex = i;
-                    insertionY = topLeft.Y;
-                    break;
-                }
-
-                // Nach dem letzten Element
-                if (i == ic.Items.Count - 1)
-                {
-                    insertIndex = i + 1;
-                    insertionY = bottomLeft.Y;
-                }
+                    Index = i,
+                    Top = top,
+                    Bottom = bottom
+                });
             }
-
-            if (insertIndex < 0)
-            {
-                _insertionAdorner?.Hide();
-                _currentInsertIndex = -1;
-                return;
-            }
-
-            // Nicht an der Position des gezogenen Elements anzeigen
-            if (insertIndex == _fromIndex || insertIndex == _fromIndex + 1)
-            {
-                _insertionAdorner?.Hide();
-                _currentInsertIndex = -1;
-                return;
-            }
-
-            _currentInsertIndex = insertIndex;
-            _insertionAdorner?.UpdatePosition(insertionY);
-            _insertionAdorner?.Show();
         }
 
         private static void CleanupAdorners(ItemsControl ic)
@@ -218,17 +422,22 @@ namespace DesktopAutomationApp.Behaviors
             if (adornerLayer != null)
             {
                 if (_dragAdorner != null) adornerLayer.Remove(_dragAdorner);
-                if (_insertionAdorner != null) adornerLayer.Remove(_insertionAdorner);
+                if (_ghostInsertionAdorner != null) adornerLayer.Remove(_ghostInsertionAdorner);
             }
 
             if (_draggedContainer != null)
-                _draggedContainer.Opacity = 1.0;
+                _draggedContainer.Opacity = _draggedOriginalOpacity;
+
+            ResetShiftedContainers();
 
             _dragAdorner = null;
-            _insertionAdorner = null;
+            _ghostInsertionAdorner = null;
             _draggedContainer = null;
+            _draggedOriginalOpacity = 1.0;
             _currentInsertIndex = -1;
             _isDragging = false;
+            _lastShiftInsertIndex = -1;
+            _dragLayoutSnapshot.Clear();
         }
 
         private static int ContainerIndexAt(ItemsControl ic, DependencyObject? origin)
@@ -253,6 +462,91 @@ namespace DesktopAutomationApp.Behaviors
             // Item aus dem Container ermitteln und Index bestimmen
             var item = ic.ItemContainerGenerator.ItemFromContainer(container);
             return ic.Items.IndexOf(item);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  GhostInsertionAdorner — transparenter Step-Platzhalter
+        // ═══════════════════════════════════════════════════════════════
+        private sealed class GhostInsertionAdorner : Adorner
+        {
+            private readonly Rectangle _child;
+            private readonly TranslateTransform _transform;
+            private bool _isVisible;
+
+            public GhostInsertionAdorner(UIElement adornedElement, FrameworkElement draggedItem)
+                : base(adornedElement)
+            {
+                IsHitTestVisible = false;
+                _transform = new TranslateTransform();
+
+                var accentBrush = TryFindAccentBrush(adornedElement) ?? Brushes.DodgerBlue;
+
+                var ghostFill = accentBrush.CloneCurrentValue();
+                ghostFill.Opacity = 0.16;
+
+                _child = new Rectangle
+                {
+                    Width = Math.Max(1, draggedItem.ActualWidth),
+                    Height = Math.Max(1, draggedItem.ActualHeight - GhostBottomMarginPx),
+                    Fill = ghostFill,
+                    Stroke = accentBrush,
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 4, 4 },
+                    RadiusX = 8,
+                    RadiusY = 8,
+                    RenderTransform = _transform,
+                    Visibility = Visibility.Collapsed,
+                    IsHitTestVisible = false
+                };
+
+                AddVisualChild(_child);
+            }
+
+            public void UpdatePosition(double y)
+            {
+                _transform.X = 0;
+                _transform.Y = y;
+                InvalidateArrange();
+            }
+
+            public void Show()
+            {
+                if (_isVisible) return;
+                _isVisible = true;
+                _child.Visibility = Visibility.Visible;
+            }
+
+            public void Hide()
+            {
+                if (!_isVisible) return;
+                _isVisible = false;
+                _child.Visibility = Visibility.Collapsed;
+            }
+
+            protected override int VisualChildrenCount => 1;
+            protected override Visual GetVisualChild(int index) => _child;
+
+            protected override Size MeasureOverride(Size constraint)
+            {
+                _child.Measure(constraint);
+                return _child.DesiredSize;
+            }
+
+            protected override Size ArrangeOverride(Size finalSize)
+            {
+                _child.Arrange(new Rect(new Point(0, 0), _child.DesiredSize));
+                return finalSize;
+            }
+
+            private static Brush? TryFindAccentBrush(DependencyObject element)
+            {
+                if (element is FrameworkElement fe)
+                {
+                    return fe.TryFindResource("MahApps.Brushes.Accent") as Brush
+                        ?? fe.TryFindResource("App.Brush.Accent") as Brush;
+                }
+                return null;
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -322,71 +616,5 @@ namespace DesktopAutomationApp.Behaviors
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        //  InsertionAdorner — horizontale Einfügelinie
-        // ═══════════════════════════════════════════════════════════════
-        private sealed class InsertionAdorner : Adorner
-        {
-            private double _insertionY;
-            private bool _isVisible;
-            private readonly Pen _pen;
-
-            public InsertionAdorner(UIElement adornedElement) : base(adornedElement)
-            {
-                IsHitTestVisible = false;
-
-                var accentBrush = TryFindAccentBrush(adornedElement) ?? Brushes.DodgerBlue;
-                _pen = new Pen(accentBrush, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-                _pen.Freeze();
-            }
-
-            public void UpdatePosition(double y)
-            {
-                _insertionY = y;
-                InvalidateVisual();
-            }
-
-            public void Show()
-            {
-                if (_isVisible) return;
-                _isVisible = true;
-                InvalidateVisual();
-            }
-
-            public void Hide()
-            {
-                if (!_isVisible) return;
-                _isVisible = false;
-                InvalidateVisual();
-            }
-
-            protected override void OnRender(DrawingContext dc)
-            {
-                if (!_isVisible) return;
-
-                double width = ((FrameworkElement)AdornedElement).ActualWidth;
-                double margin = 8;
-                double y = _insertionY;
-
-                // Linie zeichnen
-                dc.DrawLine(_pen, new Point(margin, y), new Point(width - margin, y));
-
-                // Kleine Kreise an den Enden
-                var brush = _pen.Brush;
-                dc.DrawEllipse(brush, null, new Point(margin, y), 4, 4);
-                dc.DrawEllipse(brush, null, new Point(width - margin, y), 4, 4);
-            }
-
-            private static Brush? TryFindAccentBrush(DependencyObject element)
-            {
-                if (element is FrameworkElement fe)
-                {
-                    var brush = fe.TryFindResource("MahApps.Brushes.Accent") as Brush
-                             ?? fe.TryFindResource("App.Brush.Accent") as Brush;
-                    return brush;
-                }
-                return null;
-            }
-        }
     }
 }
