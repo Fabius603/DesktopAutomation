@@ -13,8 +13,8 @@ namespace DesktopAutomationApp.Converters
             {
                 return mode switch
                 {
-                    ConditionMatchMode.All => "Alle Bedingungen",
-                    ConditionMatchMode.Any => "Eine Bedingung",
+                    ConditionMatchMode.All => "Alle Bedingungen müssen erfüllt sein",
+                    ConditionMatchMode.Any => "Mindestens eine Bedingung muss erfüllt sein",
                     _                      => mode.ToString()
                 };
             }

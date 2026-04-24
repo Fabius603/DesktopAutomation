@@ -17,6 +17,7 @@
         <conv:StepBlockBorderConverter x:Key="StepBlockBorderConverter"/>
         <conv:StepNumberConverter x:Key="StepNumberConverter"/>
         <conv:SourceStepNameConverter x:Key="SourceStepNameConverter"/>
+        <conv:StepConditionDisplayConverter x:Key="StepConditionDisplayConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -462,15 +463,9 @@
                 <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Style="{StaticResource ParamText}" TextWrapping="Wrap">
-                                <Run Text="{Binding SourceStepDisplayName, Mode=OneWay}" FontWeight="SemiBold"/>
-                                <Run Text="."/>
-                                <Run Text="{Binding PropertyDisplayName, Mode=OneWay}"/>
-                                <Run Text=" "/>
-                                <Run Text="{Binding Operator, Mode=OneWay, Converter={StaticResource ConditionOperatorConverter}}"/>
-                                <Run Text=" "/>
-                                <Run Text="{Binding ComparisonValue, Mode=OneWay}"/>
-                            </TextBlock>
+                            <TextBlock Style="{StaticResource ParamText}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding Mode=OneWay, Converter={StaticResource StepConditionDisplayConverter}}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -499,15 +494,9 @@
                 <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Style="{StaticResource ParamText}" TextWrapping="Wrap">
-                                <Run Text="{Binding SourceStepDisplayName, Mode=OneWay}" FontWeight="SemiBold"/>
-                                <Run Text="."/>
-                                <Run Text="{Binding PropertyDisplayName, Mode=OneWay}"/>
-                                <Run Text=" "/>
-                                <Run Text="{Binding Operator, Mode=OneWay, Converter={StaticResource ConditionOperatorConverter}}"/>
-                                <Run Text=" "/>
-                                <Run Text="{Binding ComparisonValue, Mode=OneWay}"/>
-                            </TextBlock>
+                            <TextBlock Style="{StaticResource ParamText}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding Mode=OneWay, Converter={StaticResource StepConditionDisplayConverter}}"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
