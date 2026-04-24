@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
 using System.Collections.Generic;
+using System.Windows.Threading;
 
 namespace DesktopAutomationApp.Behaviors
 {
@@ -28,6 +29,7 @@ namespace DesktopAutomationApp.Behaviors
             ic.Drop -= OnDrop;
             ic.DragOver -= OnDragOver;
             ic.DragLeave -= OnDragLeave;
+            ic.PreviewMouseWheel -= OnPreviewMouseWheel;
             ic.GiveFeedback -= OnGiveFeedback;
             ic.QueryContinueDrag -= OnQueryContinueDrag;
             ic.AllowDrop = false;
@@ -40,6 +42,7 @@ namespace DesktopAutomationApp.Behaviors
                 ic.Drop += OnDrop;
                 ic.DragOver += OnDragOver;
                 ic.DragLeave += OnDragLeave;
+                ic.PreviewMouseWheel += OnPreviewMouseWheel;
                 ic.GiveFeedback += OnGiveFeedback;
                 ic.QueryContinueDrag += OnQueryContinueDrag;
             }
@@ -54,9 +57,18 @@ namespace DesktopAutomationApp.Behaviors
         private static bool _isDragging;
         private const double MidpointHysteresisPx = 4.0;
         private const double GhostBottomMarginPx = 6.0;
+        private const double EdgeAutoScrollZonePx = 36.0;
+        private const double MaxEdgeAutoScrollStepPx = 18.0;
+        private const double MouseWheelScrollStepPx = 56.0;
         private static double _draggedOriginalOpacity = 1.0;
         private static readonly Dictionary<FrameworkElement, Transform?> _originalContainerTransforms = new();
+        private static readonly Dictionary<FrameworkElement, double> _appliedShiftOffsets = new();
         private static int _lastShiftInsertIndex = -1;
+        private static readonly DispatcherTimer _edgeAutoScrollTimer = new() { Interval = TimeSpan.FromMilliseconds(16) };
+        private static ItemsControl? _activeDragItemsControl;
+        private static ScrollViewer? _activeDragScrollViewer;
+        private static double _lastKnownMouseY;
+        private static bool _hasLastKnownMouseY;
         private sealed class LayoutSnapshotItem
         {
             public int Index { get; init; }
@@ -65,6 +77,11 @@ namespace DesktopAutomationApp.Behaviors
         }
 
         private static readonly List<LayoutSnapshotItem> _dragLayoutSnapshot = new();
+
+        static SimpleReorderDragDrop()
+        {
+            _edgeAutoScrollTimer.Tick += (_, _) => OnAutoScrollTimerTick();
+        }
 
         private static void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -93,6 +110,11 @@ namespace DesktopAutomationApp.Behaviors
             if ((pos - _dragStart).Length <= 6) return;
 
             _isDragging = true;
+            _activeDragItemsControl = ic;
+            _activeDragScrollViewer = FindScrollViewer(ic);
+            _lastKnownMouseY = pos.Y;
+            _hasLastKnownMouseY = true;
+            _edgeAutoScrollTimer.Start();
 
             CaptureDragLayoutSnapshot(ic);
 
@@ -129,6 +151,13 @@ namespace DesktopAutomationApp.Behaviors
             e.Handled = true;
 
             var pos = e.GetPosition(ic);
+            _lastKnownMouseY = pos.Y;
+            _hasLastKnownMouseY = true;
+
+            // Auto-Scroll am oberen/unteren Rand waehrend Drag zuerst anwenden,
+            // damit die anschliessende Insert-Berechnung auf der aktuellen Scroll-Position basiert.
+            if (TryAutoScrollAtEdge(ic, pos.Y))
+                CaptureDragLayoutSnapshot(ic);
 
             // DragAdorner Position aktualisieren
             _dragAdorner?.UpdatePosition(pos);
@@ -142,6 +171,27 @@ namespace DesktopAutomationApp.Behaviors
             // Bewusst kein Reset hier:
             // Wenn die Maus die Liste kurz verlässt, bleibt die letzte gültige Ghost-Position in der Liste stehen.
             // Aufgeräumt wird beim Drop/Drag-Ende in CleanupAdorners.
+        }
+
+        private static void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (!_isDragging || sender is not ItemsControl ic) return;
+
+            var scrollViewer = _activeDragScrollViewer ?? FindScrollViewer(ic);
+            if (scrollViewer == null) return;
+            _activeDragScrollViewer ??= scrollViewer;
+
+            var deltaSteps = e.Delta / 120.0;
+            var newOffset = scrollViewer.VerticalOffset - (deltaSteps * MouseWheelScrollStepPx);
+            newOffset = Math.Max(0, Math.Min(scrollViewer.ScrollableHeight, newOffset));
+
+            if (Math.Abs(newOffset - scrollViewer.VerticalOffset) > 0.01)
+            {
+                scrollViewer.ScrollToVerticalOffset(newOffset);
+                CaptureDragLayoutSnapshot(ic);
+            }
+
+            e.Handled = true;
         }
 
         private static void OnGiveFeedback(object sender, GiveFeedbackEventArgs e)
@@ -185,7 +235,15 @@ namespace DesktopAutomationApp.Behaviors
         {
             // Wenn die Maus oberhalb/unterhalb der Liste ist, die letzte gültige Position beibehalten.
             if (mousePos.Y < 0 || mousePos.Y > ic.ActualHeight)
+            {
+                if (TrySnapGhostToVisibleBoundary(ic, mousePos.Y))
+                    return;
+
+                // Beim Auto-Scroll ausserhalb des Sichtbereichs muss der Ghost trotzdem an die
+                // neue Scroll-Position angepasst werden, sonst steht er danach sichtbar falsch.
+                RefreshGhostForCurrentInsertIndex();
                 return;
+            }
 
             int insertIndex = -1;
             double insertionY = 0;
@@ -242,6 +300,11 @@ namespace DesktopAutomationApp.Behaviors
                 return;
             }
 
+            ApplyInsertPreview(ic, insertIndex, insertionY);
+        }
+
+        private static void ApplyInsertPreview(ItemsControl ic, int insertIndex, double insertionY)
+        {
             _currentInsertIndex = insertIndex;
             UpdateDraggedContainerVisibility();
             var ghostY = insertionY;
@@ -251,6 +314,105 @@ namespace DesktopAutomationApp.Behaviors
             _ghostInsertionAdorner?.UpdatePosition(ghostY);
             _ghostInsertionAdorner?.Show();
             UpdateShiftedContainers(ic, insertIndex);
+        }
+
+        private static bool TrySnapGhostToVisibleBoundary(ItemsControl ic, double mouseY)
+        {
+            if (_dragLayoutSnapshot.Count == 0)
+                return false;
+
+            const double eps = 0.5;
+            bool wantsTop = mouseY < 0;
+
+            LayoutSnapshotItem? target = null;
+
+            if (wantsTop)
+            {
+                // Oberster komplett sichtbarer Step
+                for (int i = 0; i < _dragLayoutSnapshot.Count; i++)
+                {
+                    var s = _dragLayoutSnapshot[i];
+                    if (s.Top >= -eps && s.Bottom <= ic.ActualHeight + eps)
+                    {
+                        target = s;
+                        break;
+                    }
+                }
+
+                // Fallback: erster teilweise sichtbarer
+                if (target == null)
+                {
+                    for (int i = 0; i < _dragLayoutSnapshot.Count; i++)
+                    {
+                        var s = _dragLayoutSnapshot[i];
+                        if (s.Bottom > 0)
+                        {
+                            target = s;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Unterster komplett sichtbarer Step
+                for (int i = _dragLayoutSnapshot.Count - 1; i >= 0; i--)
+                {
+                    var s = _dragLayoutSnapshot[i];
+                    if (s.Top >= -eps && s.Bottom <= ic.ActualHeight + eps)
+                    {
+                        target = s;
+                        break;
+                    }
+                }
+
+                // Fallback: letzter teilweise sichtbarer
+                if (target == null)
+                {
+                    for (int i = _dragLayoutSnapshot.Count - 1; i >= 0; i--)
+                    {
+                        var s = _dragLayoutSnapshot[i];
+                        if (s.Top < ic.ActualHeight)
+                        {
+                            target = s;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (target == null)
+                return false;
+
+            var insertIndex = wantsTop ? target.Index : target.Index + 1;
+            var insertionY = GetInsertionYForInsertIndex(insertIndex, wantsTop ? target.Top : target.Bottom);
+
+            if (insertIndex == _fromIndex || insertIndex == _fromIndex + 1)
+            {
+                _currentInsertIndex = -1;
+                _ghostInsertionAdorner?.Hide();
+                ResetShiftedContainers();
+                UpdateDraggedContainerVisibility();
+                return true;
+            }
+
+            ApplyInsertPreview(ic, insertIndex, insertionY);
+            return true;
+        }
+
+        private static void RefreshGhostForCurrentInsertIndex()
+        {
+            if (_currentInsertIndex < 0 || _ghostInsertionAdorner == null)
+                return;
+
+            var insertionY = GetInsertionYForInsertIndex(_currentInsertIndex, 0);
+            var ghostY = insertionY;
+
+            if (_draggedContainer != null && _fromIndex >= 0 && _currentInsertIndex > _fromIndex)
+                ghostY -= _draggedContainer.ActualHeight;
+
+            _ghostInsertionAdorner.UpdatePosition(ghostY);
+            _ghostInsertionAdorner.Show();
         }
 
         private static void UpdateDraggedContainerVisibility()
@@ -374,6 +536,8 @@ namespace DesktopAutomationApp.Behaviors
                 if (!_originalContainerTransforms.ContainsKey(container))
                     _originalContainerTransforms[container] = container.RenderTransform;
 
+                _appliedShiftOffsets[container] = offset;
+
                 container.RenderTransform = Math.Abs(offset) > 0.01
                     ? new TranslateTransform(0, offset)
                     : (_originalContainerTransforms.TryGetValue(container, out var original) ? original : Transform.Identity);
@@ -393,6 +557,7 @@ namespace DesktopAutomationApp.Behaviors
                 container.RenderTransform = kvp.Value ?? Transform.Identity;
             }
             _originalContainerTransforms.Clear();
+            _appliedShiftOffsets.Clear();
             _lastShiftInsertIndex = -1;
         }
 
@@ -407,6 +572,15 @@ namespace DesktopAutomationApp.Behaviors
                 var transform = container.TransformToAncestor(ic);
                 var top = transform.Transform(new Point(0, 0)).Y;
                 var bottom = transform.Transform(new Point(0, container.ActualHeight)).Y;
+
+                // Snapshot soll die "echte" Listen-Geometrie enthalten,
+                // nicht die temporaeren Shift-Transforms fuer die Vorschau.
+                if (_appliedShiftOffsets.TryGetValue(container, out var appliedShift) && Math.Abs(appliedShift) > 0.01)
+                {
+                    top -= appliedShift;
+                    bottom -= appliedShift;
+                }
+
                 _dragLayoutSnapshot.Add(new LayoutSnapshotItem
                 {
                     Index = i,
@@ -418,6 +592,11 @@ namespace DesktopAutomationApp.Behaviors
 
         private static void CleanupAdorners(ItemsControl ic)
         {
+            _edgeAutoScrollTimer.Stop();
+            _activeDragItemsControl = null;
+            _activeDragScrollViewer = null;
+            _hasLastKnownMouseY = false;
+
             var adornerLayer = AdornerLayer.GetAdornerLayer(ic);
             if (adornerLayer != null)
             {
@@ -438,6 +617,21 @@ namespace DesktopAutomationApp.Behaviors
             _isDragging = false;
             _lastShiftInsertIndex = -1;
             _dragLayoutSnapshot.Clear();
+        }
+
+        private static void OnAutoScrollTimerTick()
+        {
+            if (!_isDragging || _activeDragItemsControl == null || !_hasLastKnownMouseY)
+                return;
+
+            var ic = _activeDragItemsControl;
+            var y = _lastKnownMouseY;
+
+            if (TryAutoScrollAtEdge(ic, y))
+            {
+                CaptureDragLayoutSnapshot(ic);
+                RefreshGhostForCurrentInsertIndex();
+            }
         }
 
         private static int ContainerIndexAt(ItemsControl ic, DependencyObject? origin)
@@ -462,6 +656,88 @@ namespace DesktopAutomationApp.Behaviors
             // Item aus dem Container ermitteln und Index bestimmen
             var item = ic.ItemContainerGenerator.ItemFromContainer(container);
             return ic.Items.IndexOf(item);
+        }
+
+        private static bool TryAutoScrollAtEdge(ItemsControl ic, double mouseY)
+        {
+            var scrollViewer = _activeDragScrollViewer ?? FindScrollViewer(ic);
+            if (scrollViewer == null || scrollViewer.ScrollableHeight <= 0)
+                return false;
+            _activeDragScrollViewer ??= scrollViewer;
+
+            double distanceToTop = mouseY;
+            double distanceToBottom = ic.ActualHeight - mouseY;
+            double delta = 0;
+
+            if (mouseY < 0)
+            {
+                delta = -MaxEdgeAutoScrollStepPx;
+            }
+            else if (mouseY > ic.ActualHeight)
+            {
+                delta = MaxEdgeAutoScrollStepPx;
+            }
+            else if (distanceToTop >= 0 && distanceToTop < EdgeAutoScrollZonePx)
+            {
+                var intensity = 1.0 - (distanceToTop / EdgeAutoScrollZonePx);
+                delta = -(2.0 + intensity * (MaxEdgeAutoScrollStepPx - 2.0));
+            }
+            else if (distanceToBottom >= 0 && distanceToBottom < EdgeAutoScrollZonePx)
+            {
+                var intensity = 1.0 - (distanceToBottom / EdgeAutoScrollZonePx);
+                delta = 2.0 + intensity * (MaxEdgeAutoScrollStepPx - 2.0);
+            }
+
+            if (Math.Abs(delta) < 0.01)
+                return false;
+
+            var oldOffset = scrollViewer.VerticalOffset;
+            var newOffset = Math.Max(0, Math.Min(scrollViewer.ScrollableHeight, oldOffset + delta));
+            if (Math.Abs(newOffset - oldOffset) < 0.01)
+                return false;
+
+            scrollViewer.ScrollToVerticalOffset(newOffset);
+            return true;
+        }
+
+        private static ScrollViewer? FindScrollViewer(ItemsControl owner)
+        {
+            owner.ApplyTemplate();
+
+            // Prefer the control's own template ScrollViewer.
+            if (owner.Template?.FindName("PART_ScrollViewer", owner) is ScrollViewer fromTemplate)
+                return fromTemplate;
+
+            // Fallback: strict search for a ScrollViewer templated by this owner.
+            var strict = FindScrollViewerRecursive(owner, owner, strictOwnerTemplate: true);
+            if (strict != null)
+                return strict;
+
+            // Last fallback: any descendant ScrollViewer.
+            return FindScrollViewerRecursive(owner, owner, strictOwnerTemplate: false);
+        }
+
+        private static ScrollViewer? FindScrollViewerRecursive(DependencyObject root, ItemsControl owner, bool strictOwnerTemplate)
+        {
+            if (root is ScrollViewer sv)
+            {
+                if (!strictOwnerTemplate)
+                    return sv;
+
+                if (ReferenceEquals(sv.TemplatedParent, owner))
+                    return sv;
+            }
+
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                var result = FindScrollViewerRecursive(child, owner, strictOwnerTemplate);
+                if (result != null)
+                    return result;
+            }
+
+            return null;
         }
 
         // ═══════════════════════════════════════════════════════════════
