@@ -190,6 +190,7 @@ namespace DesktopAutomationApp.ViewModels
                 "ElseIf"  => true,
                 "Else"    => true,
                 "EndIf"   => true,
+                "EndJob"  => true,
                 _ => false
             };
         }
@@ -218,6 +219,7 @@ namespace DesktopAutomationApp.ViewModels
                 new("ScriptExecution",    "Automatisierung"),
                 new("Timeout",            "Automatisierung"),
                 new("If",                 "Ablaufsteuerung", "If-Abfrage"),
+                new("EndJob",             "Ablaufsteuerung", "Job beenden"),
             };
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
@@ -269,6 +271,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowElseIf));
                 OnChange(nameof(ShowElse));
                 OnChange(nameof(ShowEndIf));
+                OnChange(nameof(ShowEndJob));
                 OnChange(nameof(StepTypeDescription));
                 OnChange(nameof(StepPrerequisites));
                 OnChange(nameof(StepOutput));
@@ -292,6 +295,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
         public bool ShowEndIf  => SelectedType == "EndIf";
+        public bool ShowEndJob  => SelectedType == "EndJob";
 
         public string StepTypeDescription => SelectedType switch
         {
@@ -310,6 +314,7 @@ namespace DesktopAutomationApp.ViewModels
             "ElseIf"             => "Alternatives Kriterium innerhalb eines If-Blocks. Wird geprüft, wenn die vorherige Bedingung nicht zutraf.",
             "Else"               => "Markiert den Fallback-Block eines If-Blocks. Wird ausgeführt, wenn keine vorherige Bedingung zutraf.",
             "EndIf"              => "Beendet einen If/ElseIf/Else-Block.",
+            "EndJob"             => "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen.",
             _                    => string.Empty
         };
 
@@ -1220,6 +1225,7 @@ namespace DesktopAutomationApp.ViewModels
                 },
                 "Else"  => new TaskAutomation.Jobs.ElseStep(),
                 "EndIf" => new TaskAutomation.Jobs.EndIfStep(),
+                "EndJob" => new TaskAutomation.Jobs.EndJobStep(),
                 _ => null
             };
         }

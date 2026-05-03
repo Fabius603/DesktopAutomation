@@ -694,6 +694,14 @@
                                    FontStyle="Italic" FontSize="12"/>
                     </StackPanel>
 
+                    <!-- ── EndJob ── -->
+                    <StackPanel Visibility="{Binding ShowEndJob, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Keine Konfiguration erforderlich. Beendet den Job sofort – nachfolgende Steps werden nicht mehr ausgeführt."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource App.Brush.TextMuted}"
+                                   FontStyle="Italic" FontSize="12"/>
+                    </StackPanel>
+
                 </StackPanel>
             </Border>
         </ScrollViewer>

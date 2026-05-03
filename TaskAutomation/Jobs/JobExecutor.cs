@@ -323,6 +323,7 @@ namespace TaskAutomation.Jobs
                 }
 
                 // ── Ausführungsschleife ───────────────────────────────────────
+                bool jobEndedByStep = false;
                 do
                 {
                     pipelineCtx.ResetResults();
@@ -384,6 +385,15 @@ namespace TaskAutomation.Jobs
                         // ── Regular step: execute only when current branch is active ──
                         if (!parentActive) continue;
 
+                        // ── EndJob: immediately stop the job ──────────────────────────
+                        if (step is EndJobStep)
+                        {
+                            _logger.LogInformation(
+                                "Job '{JobName}' durch EndJob-Step beendet.", job.Name);
+                            jobEndedByStep = true;
+                            break;
+                        }
+
                         try
                         {
                             await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
@@ -399,6 +409,8 @@ namespace TaskAutomation.Jobs
                             "Job '{JobName}' → Step '{StepType}' abgeschlossen.",
                             job.Name, step.GetType().Name);
                     }
+
+                    if (jobEndedByStep) break;
                 }
                 while (job.Repeating && !ct.IsCancellationRequested);
             }

@@ -23,6 +23,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ElseIfStep),   "else_if")]
     [JsonDerivedType(typeof(ElseStep),     "else")]
     [JsonDerivedType(typeof(EndIfStep),    "end_if")]
+    [JsonDerivedType(typeof(EndJobStep),   "end_job")]
     public abstract class JobStep
     {
         [JsonPropertyName("id")]
@@ -358,4 +359,7 @@ namespace TaskAutomation.Jobs
 
     /// <summary>Marks the end of an if/elseif/else block. No configuration needed.</summary>
     public sealed class EndIfStep : JobStep { }
+
+    /// <summary>Immediately ends the current job when executed.</summary>
+    public sealed class EndJobStep : JobStep { }
 }

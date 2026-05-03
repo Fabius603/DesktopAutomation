@@ -81,6 +81,7 @@ namespace TaskAutomation.Steps
             [typeof(ElseIfStep)] = new(Prerequisites: [], Output: "–"),
             [typeof(ElseStep)]   = new(Prerequisites: [], Output: "–"),
             [typeof(EndIfStep)]  = new(Prerequisites: [], Output: "–"),
+            [typeof(EndJobStep)] = new(Prerequisites: [], Output: "–"),
         };
 
         /// <summary>Gibt die Pipeline-Info für den angegebenen Step-Typ zurück.</summary>
@@ -109,6 +110,7 @@ namespace TaskAutomation.Steps
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),
             ["EndIf"]              = typeof(EndIfStep),
+            ["EndJob"]             = typeof(EndJobStep),
         };
 
         /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>
