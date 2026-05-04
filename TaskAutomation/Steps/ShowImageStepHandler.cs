@@ -33,6 +33,7 @@ namespace TaskAutomation.Steps
             if (step.Settings.ShowRawImage)
             {
                 var winName = $"{step.Settings.WindowName} - Raw Image";
+                ctx.OpenedWindowNames.Add(winName);
                 ctx.ImageDisplayService.DisplayImage(winName, rawImage, ImageDisplayType.Raw);
                 logger.LogDebug("ShowImageStepHandler: Raw image displayed in '{Win}'", winName);
             }
@@ -42,6 +43,7 @@ namespace TaskAutomation.Steps
                 var winName = $"{step.Settings.WindowName} - Processed Image";
                 var img     = (processedImage != null && processedImage.Width >= 10 && processedImage.Height >= 10)
                                   ? processedImage : rawImage;
+                ctx.OpenedWindowNames.Add(winName);
                 ctx.ImageDisplayService.DisplayImage(winName, img, ImageDisplayType.Processed);
                 logger.LogDebug("ShowImageStepHandler: Processed image displayed in '{Win}'", winName);
             }

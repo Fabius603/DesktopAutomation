@@ -185,7 +185,7 @@
                                                     Style="{StaticResource ButtonDanger}"
                                                     Command="{Binding DataContext.CancelItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip="Abbrechen">
+                                                    ToolTip="Alle Instanzen dieses Jobs beenden">
                                                 <StackPanel Orientation="Horizontal">
                                                     <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                                     <TextBlock Text="Stop" VerticalAlignment="Center"/>
@@ -207,6 +207,25 @@
                                                     </iconPacks:PackIconMaterial.Style>
                                                 </iconPacks:PackIconMaterial>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                <!-- Instanz-Zähler: nur sichtbar wenn mehr als eine Instanz läuft -->
+                                                <Border Margin="6,0,0,0" VerticalAlignment="Center"
+                                                        Background="{DynamicResource App.Brush.Surface}"
+                                                        BorderBrush="{DynamicResource App.Brush.Border}"
+                                                        BorderThickness="1" CornerRadius="8" Padding="6,2">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding InstanceCount}" Value="1">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Foreground="{DynamicResource App.Brush.Accent}" FontSize="11">
+                                                        <Run Text="×"/><Run Text="{Binding InstanceCount}"/>
+                                                    </TextBlock>
+                                                </Border>
                                             </StackPanel>
                                         </DockPanel>
                                     </Border>

@@ -1,6 +1,7 @@
 using System.Configuration;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Views;
@@ -11,6 +12,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Makros;
+using TaskAutomation.Steps;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Common.JsonRepository;
@@ -68,6 +70,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IRepositoryService, RepositoryService>();
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
+                    services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IScriptExecutor, ScriptExecutor>();
                     services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
@@ -78,7 +81,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ILabelProvider, LabelProvider>();
                     services.AddSingleton(new YoloManagerOptions());
                     services.AddSingleton<IYoloManager, YoloManager>();
-                    services.AddSingleton<IImageDisplayService, ImageDisplayService>();
+                    services.AddSingleton<IImageDisplayService, WpfImageDisplayService>();
                     services.AddSingleton<IUpdateService, UpdateService>();
 
                     // ---- ViewModels / Views ----
@@ -105,10 +108,23 @@ namespace DesktopAutomationApp
         {
             base.OnStartup(e);
 
+            // ThreadPool auf genug Threads vorheizen: verhindert Thread-Injection-Verzögerung (~500 ms/Thread)
+            // wenn MaxJobCount Jobs gleichzeitig starten. TP-Threads werden sofort bereitgestellt.
+            var minWorkers = Math.Max(JobDispatcher.MaxJobCount + 16,
+                                      Environment.ProcessorCount * 4);
+            ThreadPool.SetMinThreads(minWorkers, minWorkers);
+
             await _host.StartAsync();
 
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
             _ = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+
+            // Dispatcher-Callbacks an JobExecutor verdrahten (nach DI-Aufbau, um Zirkelabhängigkeit zu vermeiden)
+            var dispatcher  = _host.Services.GetRequiredService<IJobDispatcher>();
+            var jobExecutor = (JobExecutor)_host.Services.GetRequiredService<IJobExecutor>();
+            jobExecutor.StartJobViaDispatcher      = dispatcher.StartJob;
+            jobExecutor.CancelJobViaDispatcher     = dispatcher.CancelJob;
+            jobExecutor.StartJobViaDispatcherAsync = dispatcher.StartJobAsync;
 
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
@@ -145,8 +161,7 @@ namespace DesktopAutomationApp
             var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem("Alle Jobs stoppen");
             stopJobsItem.Click += (_, _) =>
             {
-                foreach (var id in dispatcher.RunningJobIds.ToArray())
-                    dispatcher.CancelJob(id);
+                dispatcher.CancelAllJobs();
             };
             contextMenu.Items.Add(stopJobsItem);
 

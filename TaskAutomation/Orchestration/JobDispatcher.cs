@@ -3,29 +3,37 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
-using Common.Logging;
 
 namespace TaskAutomation.Orchestration
 {
     /// <summary>
     /// Dispatcher, der auf Hotkey-Events hört und Jobs über einen IJobExecutor startet.
+    /// Unterstützt beliebig viele gleichzeitige Instanzen desselben Jobs.
     /// </summary>
     public sealed class JobDispatcher : IJobDispatcher, IDisposable
     {
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
         private readonly IGlobalHotkeyService _hotkeyService;
-        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _jobTokens;
-        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _makroTokens;
 
-        /// <summary>
-        /// Wird ausgelöst, wenn bei der Ausführung eines Jobs ein Fehler auftritt.
-        /// </summary>
+        // instanceId → (JobId, JobName, CancellationTokenSource)
+        private record RunningJobEntry(Guid JobId, string JobName, CancellationTokenSource Cts);
+        private readonly ConcurrentDictionary<Guid, RunningJobEntry> _jobInstances = new();
+
+        /// <summary>Maximale Anzahl gleichzeitig laufender Job-Instanzen.</summary>
+        public const int MaxJobCount = 100;
+
+        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _makroTokens = new();
+
+        // Debounce: maximal ein Notify-Task gleichzeitig pro Event, feuert nach 50 ms Stille.
+        private int _jobsChangedPending   = 0;
+        private int _makrosChangedPending = 0;
+
         public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
 
         /// <summary>
@@ -44,33 +52,31 @@ namespace TaskAutomation.Orchestration
         public event Action? RunningMakrosChanged;
 
         /// <summary>
-        /// IDs der aktuell laufenden Jobs.
+        /// Alle aktuell laufenden Job-Instanzen.
         /// </summary>
-        public IReadOnlyCollection<Guid> RunningJobIds => _jobTokens.Keys.ToArray();
+        public IReadOnlyCollection<RunningJobInstance> RunningJobInstances
+            => _jobInstances.Select(kvp => new RunningJobInstance(kvp.Key, kvp.Value.JobId, kvp.Value.JobName)).ToArray();
+
+        /// <summary>
+        /// Distinct Job-IDs aller laufenden Instanzen (für "läuft irgendetwas"-Prüfungen).
+        /// </summary>
+        public IReadOnlyCollection<Guid> RunningJobIds
+            => _jobInstances.Values.Select(e => e.JobId).Distinct().ToArray();
 
         /// <summary>
         /// IDs der aktuell laufenden Makros.
         /// </summary>
         public IReadOnlyCollection<Guid> RunningMakroIds => _makroTokens.Keys.ToArray();
 
-        /// <summary>
-        /// Erstellt einen neuen Dispatcher mit dem gegebenen JobExecutor.
-        /// </summary>
-        /// <param name="hotkeyService">Instanz des GlobalHotkeyService</param>
-        /// <param name="executor">Executor, der Jobs per Name ausführt</param>
-        /// <param name="logger">Logger für JobDispatcher</param>
         public JobDispatcher(IGlobalHotkeyService hotkeyService, IJobExecutor executor, ILogger<JobDispatcher> logger)
         {
-            _logger = logger;
-
+            _logger        = logger;
             _hotkeyService = hotkeyService ?? throw new ArgumentNullException(nameof(hotkeyService));
-            _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+            _executor      = executor      ?? throw new ArgumentNullException(nameof(executor));
 
-            _jobTokens = new ConcurrentDictionary<Guid, CancellationTokenSource>();
-            _makroTokens = new ConcurrentDictionary<Guid, CancellationTokenSource>();
-            _hotkeyService.HotkeyPressed += OnHotkeyPressed;
-            _executor.JobErrorOccurred += OnJobErrorOccurred;
-            _executor.JobStepErrorOccurred += OnJobStepErrorOccurred;
+            _hotkeyService.HotkeyPressed       += OnHotkeyPressed;
+            _executor.JobErrorOccurred         += OnJobErrorOccurred;
+            _executor.JobStepErrorOccurred     += OnJobStepErrorOccurred;
             _logger.LogInformation("JobDispatcher initialisiert.");
         }
 
@@ -123,42 +129,38 @@ namespace TaskAutomation.Orchestration
         private void StartJobByAction(JobReference jobRef)
         {
             var job = FindJobByAction(jobRef);
-            if (job != null)
-            {
-                StartJob(job);
-            }
-            else
+            if (job == null)
             {
                 _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
+                return;
             }
+            try   { StartJobInternal(job); }
+            catch (JobLimitExceededException ex) { JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex)); }
         }
 
         private void CancelJobByAction(JobReference jobRef)
         {
             var job = FindJobByAction(jobRef);
             if (job != null)
-            {
-                CancelJobById(job.Id);
-            }
+                CancelAllInstancesOfJob(job.Id);
             else
-            {
                 _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
-            }
         }
 
         private void ToggleJobByAction(JobReference jobRef)
         {
             var job = FindJobByAction(jobRef);
-            if (job != null)
-            {
-                if (_jobTokens.ContainsKey(job.Id))
-                    CancelJobById(job.Id);
-                else
-                    StartJob(job);
-            }
-            else
+            if (job == null)
             {
                 _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
+                return;
+            }
+            if (_jobInstances.Values.Any(e => e.JobId == job.Id))
+                CancelAllInstancesOfJob(job.Id);
+            else
+            {
+                try   { StartJobInternal(job); }
+                catch (JobLimitExceededException ex) { JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex)); }
             }
         }
 
@@ -185,21 +187,27 @@ namespace TaskAutomation.Orchestration
             }
         }
 
-        private void StartJob(Job job)
+        /// <summary>
+        /// Startet eine neue Instanz des Jobs. Mehrere parallele Instanzen desselben Jobs
+        /// sind ausdrücklich erlaubt. Gibt die Instanz-ID zurück.
+        /// </summary>
+        private Guid StartJobInternal(Job job)
         {
-            if (_jobTokens.ContainsKey(job.Id))
+            if (_jobInstances.Count >= MaxJobCount)
             {
-                _logger.LogWarning("Job '{Name}' läuft bereits.", job.Name);
-                return;
+                var ex = new JobLimitExceededException(job.Name, MaxJobCount);
+                _logger.LogWarning(ex.Message);
+                throw ex;
             }
 
-            var cts = new CancellationTokenSource();
-            if (!_jobTokens.TryAdd(job.Id, cts))
-                return;
+            var instanceId = Guid.NewGuid();
+            var cts        = new CancellationTokenSource();
+            var entry      = new RunningJobEntry(job.Id, job.Name, cts);
+            _jobInstances[instanceId] = entry;
 
-            RunningJobsChanged?.Invoke();
+            FireRunningJobsChanged();
 
-            var jobId = job.Id;
+            var jobId   = job.Id;
             var jobName = job.Name;
             _ = Task.Run(async () =>
             {
@@ -209,34 +217,88 @@ namespace TaskAutomation.Orchestration
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger.LogInformation("Job '{Name}' abgebrochen.", jobName);
+                    _logger.LogInformation("Job '{Name}' (Instanz {Id}) abgebrochen.", jobName, instanceId);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Fehler bei Job '{Name}'", jobName);
+                    _logger.LogError(ex, "Fehler bei Job '{Name}' (Instanz {Id})", jobName, instanceId);
                 }
                 finally
                 {
-                    _jobTokens.TryRemove(jobId, out _);
+                    _jobInstances.TryRemove(instanceId, out _);
                     cts.Dispose();
-                    RunningJobsChanged?.Invoke();
+                    FireRunningJobsChanged();
                 }
             });
+
+            return instanceId;
         }
 
-        private void CancelJobById(Guid id)
+        /// <summary>Bricht eine bestimmte Job-Instanz per Instanz-ID ab.</summary>
+        private void CancelJobInstance(Guid instanceId)
         {
-            if (_jobTokens.TryRemove(id, out var cts))
+            if (_jobInstances.TryRemove(instanceId, out var entry))
             {
-                _logger.LogInformation("Job (ID: {JobId}) Abbruch angefordert.", id);
-                cts.Cancel();
-                cts.Dispose();
-                RunningJobsChanged?.Invoke();
+                _logger.LogDebug("Job '{Name}' (Instanz {Id}) Abbruch.", entry.JobName, instanceId);
+                // Cancel() in Task.Run: läuft Callbacks synchron INNERHALB des Tasks, bevor
+                // irgendwas disposed wird. CTS-Disposal übernimmt StartJobInternal's finally.
+                var cts = entry.Cts;
+                _ = Task.Run(() =>
+                {
+                    try { cts.Cancel(); }
+                    catch (ObjectDisposedException) { }
+                });
+                FireRunningJobsChanged();
             }
             else
             {
-                _logger.LogWarning("Kein laufender Job mit ID '{JobId}' gefunden.", id);
+                _logger.LogWarning("Keine laufende Job-Instanz mit ID '{InstanceId}' gefunden.", instanceId);
             }
+        }
+
+        /// <summary>Bricht alle laufenden Instanzen eines Jobs per Job-ID ab.</summary>
+        private void CancelAllInstancesOfJob(Guid jobId)
+        {
+            var removed = new List<RunningJobEntry>();
+            foreach (var kvp in _jobInstances)
+            {
+                if (kvp.Value.JobId == jobId && _jobInstances.TryRemove(kvp.Key, out var entry))
+                    removed.Add(entry);
+            }
+            if (removed.Count == 0)
+            {
+                _logger.LogWarning("Kein laufender Job mit Job-ID '{JobId}' gefunden.", jobId);
+                return;
+            }
+            _logger.LogInformation("Breche {Count} Instanz(en) von Job-ID '{JobId}' ab.", removed.Count, jobId);
+            FireRunningJobsChanged();
+            // Cancel() läuft Callbacks synchron, alle parallel – kein Dispose (StartJobInternal's finally ist Eigentümer).
+            _ = Task.Run(() =>
+            {
+                foreach (var e in removed)
+                    try { e.Cts.Cancel(); }
+                    catch (ObjectDisposedException) { }
+            });
+        }
+
+        /// <summary>Bricht alle laufenden Job-Instanzen ab.</summary>
+        private void CancelAllJobsInternal()
+        {
+            var removed = new List<RunningJobEntry>();
+            foreach (var kvp in _jobInstances)
+            {
+                if (_jobInstances.TryRemove(kvp.Key, out var entry))
+                    removed.Add(entry);
+            }
+            if (removed.Count == 0) return;
+            _logger.LogInformation("Breche alle {Count} Job-Instanzen ab.", removed.Count);
+            FireRunningJobsChanged();
+            _ = Task.Run(() =>
+            {
+                foreach (var e in removed)
+                    try { e.Cts.Cancel(); }
+                    catch (ObjectDisposedException) { }
+            });
         }
 
         private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)
@@ -245,35 +307,97 @@ namespace TaskAutomation.Orchestration
             JobErrorOccurred?.Invoke(this, e);
         }
 
+        /// <summary>Feuert <see cref="RunningJobsChanged"/> maximal einmal alle 150 ms (debounced).</summary>
+        private void FireRunningJobsChanged()
+        {
+            if (Interlocked.CompareExchange(ref _jobsChangedPending, 1, 0) == 0)
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(150).ConfigureAwait(false);
+                    Interlocked.Exchange(ref _jobsChangedPending, 0);
+                    RunningJobsChanged?.Invoke();
+                });
+            }
+        }
+
+        /// <summary>Feuert <see cref="RunningMakrosChanged"/> maximal einmal alle 150 ms (debounced).</summary>
+        private void FireRunningMakrosChanged()
+        {
+            if (Interlocked.CompareExchange(ref _makrosChangedPending, 1, 0) == 0)
+            {
+                Task.Run(async () =>
+                {
+                    await Task.Delay(150).ConfigureAwait(false);
+                    Interlocked.Exchange(ref _makrosChangedPending, 0);
+                    RunningMakrosChanged?.Invoke();
+                });
+            }
+        }
+
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
             // Event an UI weiterleiten
             JobStepErrorOccurred?.Invoke(this, e);
         }
 
+        /// <summary>        /// Bricht alle laufenden Instanzen eines Jobs per Job-Definitions-ID ab (asynchron).
+        /// </summary>
+        public void CancelJobsByDefinition(Guid jobDefinitionId) => CancelAllInstancesOfJob(jobDefinitionId);
+
         /// <summary>
-        /// Fordert den Abbruch eines laufenden Jobs an.
+        /// Bricht alle laufenden Job-Instanzen ab (asynchron).
+        /// </summary>
+        public void CancelAllJobs() => CancelAllJobsInternal();
+
+        /// <summary>        /// Fordert den Abbruch aller laufenden Instanzen eines Jobs per Name an.
         /// </summary>
         public void CancelJob(string name)
         {
-            var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, name, StringComparison.OrdinalIgnoreCase));
+            var job = _executor.AllJobs.Values.FirstOrDefault(j =>
+                string.Equals(j.Name, name, StringComparison.OrdinalIgnoreCase));
             if (job == null)
             {
                 _logger.LogWarning("Kein Job mit Namen '{Name}' gefunden.", name);
                 return;
             }
-            CancelJobById(job.Id);
+            CancelAllInstancesOfJob(job.Id);
         }
 
         /// <summary>
-        /// Fordert den Abbruch eines laufenden Jobs per ID an.
+        /// Bricht eine bestimmte Job-Instanz per Instanz-ID ab.
         /// </summary>
-        public void CancelJob(Guid id) => CancelJobById(id);
+        public void CancelJob(Guid instanceId) => CancelJobInstance(instanceId);
 
         /// <summary>
-        /// Startet einen Job per ID.
+        /// Startet eine neue Instanz des Jobs per ID und gibt die Instanz-ID zurück.
         /// </summary>
-        public void StartJob(Guid id)
+        public Guid StartJob(Guid id)
+        {
+            var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
+            if (job == null)
+            {
+                _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
+                return Guid.Empty;
+            }
+            try
+            {
+                return StartJobInternal(job);
+            }
+            catch (JobLimitExceededException ex)
+            {
+                // Event an UI weiterleiten (zeigt Popup), dann weiterwerfen damit
+                // ein aufrufender JobExecutionStep den Eltern-Job abbricht.
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Registriert die Job-Instanz in RunningJobInstances, führt den Job inline aus (kein Task.Run)
+        /// und wartet auf Abschluss. CancellationToken wird mit dem internen CTS verknüpft.
+        /// </summary>
+        public async Task StartJobAsync(Guid id, CancellationToken ct)
         {
             var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
             if (job == null)
@@ -281,7 +405,37 @@ namespace TaskAutomation.Orchestration
                 _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
                 return;
             }
-            StartJob(job);
+
+            if (_jobInstances.Count >= MaxJobCount)
+            {
+                var ex = new JobLimitExceededException(job.Name, MaxJobCount);
+                _logger.LogWarning(ex.Message);
+                throw ex;
+            }
+
+            var instanceId = Guid.NewGuid();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            _jobInstances[instanceId] = new RunningJobEntry(job.Id, job.Name, linkedCts);
+            FireRunningJobsChanged();
+
+            try
+            {
+                await _executor.ExecuteJob(job.Id, linkedCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Job '{Name}' (Instanz {Id}) abgebrochen.", job.Name, instanceId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fehler bei Job '{Name}' (Instanz {Id})", job.Name, instanceId);
+            }
+            finally
+            {
+                _jobInstances.TryRemove(instanceId, out _);
+                FireRunningJobsChanged();
+            }
         }
 
         /// <summary>
@@ -295,10 +449,10 @@ namespace TaskAutomation.Orchestration
                 _logger.LogWarning("Makro mit ID '{MakroId}' nicht gefunden.", id);
                 return;
             }
-            StartMakro(makro);
+            StartMakroInternal(makro);
         }
 
-        private void StartMakro(Makro makro)
+        private void StartMakroInternal(Makro makro)
         {
             if (_makroTokens.ContainsKey(makro.Id))
             {
@@ -310,7 +464,7 @@ namespace TaskAutomation.Orchestration
             if (!_makroTokens.TryAdd(makro.Id, cts))
                 return;
 
-            RunningMakrosChanged?.Invoke();
+            FireRunningMakrosChanged();
 
             var makroId = makro.Id;
             var makroName = makro.Name;
@@ -332,7 +486,7 @@ namespace TaskAutomation.Orchestration
                 {
                     _makroTokens.TryRemove(makroId, out _);
                     cts.Dispose();
-                    RunningMakrosChanged?.Invoke();
+                    FireRunningMakrosChanged();
                 }
             });
         }
@@ -347,7 +501,7 @@ namespace TaskAutomation.Orchestration
                 _logger.LogInformation("Makro (ID: {MakroId}) Abbruch angefordert.", id);
                 cts.Cancel();
                 cts.Dispose();
-                RunningMakrosChanged?.Invoke();
+                FireRunningMakrosChanged();
             }
             else
             {

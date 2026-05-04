@@ -94,6 +94,9 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Desktop Index: "/><Run Text="{Binding Settings.DesktopIdx}"/>
                     </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Mauszeiger aufnehmen: "/><Run Text="{Binding Settings.CaptureCursor}"/>
+                    </TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>

@@ -207,17 +207,17 @@ namespace DesktopAutomationApp.ViewModels
         {
             var items = new List<StepTypeItem>
             {
-                new("DesktopDuplication", "Erfassung"),
-                new("TemplateMatching",   "Erkennung"),
-                new("YoloDetection",      "Erkennung"),
-                new("KlickOnPoint",       "Interaktion"),
-                new("KlickOnPoint3D",     "Interaktion"),
-                new("ShowImage",          "Ausgabe"),
-                new("VideoCreation",      "Ausgabe"),
-                new("MakroExecution",     "Automatisierung"),
-                new("JobExecution",       "Automatisierung"),
-                new("ScriptExecution",    "Automatisierung"),
-                new("Timeout",            "Automatisierung"),
+                new("DesktopDuplication", "Erfassung", "Desktop-Duplizierung"),
+                new("TemplateMatching",   "Erkennung", "Template Matching"),
+                new("YoloDetection",      "Erkennung", "YOLO-Erkennung"),
+                new("KlickOnPoint",       "Interaktion", "Klick auf Punkt"),
+                new("KlickOnPoint3D",     "Interaktion", "Klick auf Punkt in 3D-Umgebung"),
+                new("ShowImage",          "Ausgabe", "Bild anzeigen"),
+                new("VideoCreation",      "Ausgabe", "Video erstellen"),
+                new("MakroExecution",     "Automatisierung", "Makro ausführen"),
+                new("JobExecution",       "Automatisierung", "Job starten"),
+                new("ScriptExecution",    "Automatisierung", "Skript ausführen"),
+                new("Timeout",            "Automatisierung", "Timeout"),
                 new("If",                 "Ablaufsteuerung", "If-Abfrage"),
                 new("EndJob",             "Ablaufsteuerung", "Job beenden"),
             };
@@ -800,6 +800,9 @@ namespace DesktopAutomationApp.ViewModels
         private int _desktopDuplicationStep_DesktopIdx;
         public int DesktopDuplicationStep_DesktopIdx { get => _desktopDuplicationStep_DesktopIdx; set { _desktopDuplicationStep_DesktopIdx = value; OnChange(); } }
 
+        private bool _desktopDuplicationStep_CaptureCursor;
+        public bool DesktopDuplicationStep_CaptureCursor { get => _desktopDuplicationStep_CaptureCursor; set { _desktopDuplicationStep_CaptureCursor = value; OnChange(); } }
+
         // ===== ProcessDuplication Felder =====
         //private string _processName = string.Empty;
         //public string ProcessName { get => _processName; set { _processName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
@@ -1103,7 +1106,8 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new DesktopDuplicationSettings
                     {
-                        DesktopIdx = DesktopDuplicationStep_DesktopIdx
+                        DesktopIdx    = DesktopDuplicationStep_DesktopIdx,
+                        CaptureCursor = DesktopDuplicationStep_CaptureCursor
                     }
                 },
                 //"ProcessDuplication" => new ProcessDuplicationStep

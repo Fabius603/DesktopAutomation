@@ -77,6 +77,9 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("desktop_idx")]
         public int DesktopIdx { get; set; } = 0;
+
+        [JsonPropertyName("capture_cursor")]
+        public bool CaptureCursor { get; set; } = false;
     }
 
     // ---- ProcessDuplication ----

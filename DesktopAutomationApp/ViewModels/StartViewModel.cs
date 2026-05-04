@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
@@ -53,7 +54,12 @@ namespace DesktopAutomationApp.ViewModels
         public int RunningMakroCount { get => _runningMakroCount; private set => SetProperty(ref _runningMakroCount, value); }
 
         // --- Combined running items (jobs + makros) ---
-        public ObservableCollection<RunningItemInfo> RunningItems { get; } = new();
+        private IReadOnlyList<GroupedRunningItem> _runningItems = Array.Empty<GroupedRunningItem>();
+        public IReadOnlyList<GroupedRunningItem> RunningItems
+        {
+            get => _runningItems;
+            private set { _runningItems = value; OnPropertyChanged(); }
+        }
 
         private int _runningTotalCount;
         public int RunningTotalCount { get => _runningTotalCount; private set => SetProperty(ref _runningTotalCount, value); }
@@ -84,16 +90,17 @@ namespace DesktopAutomationApp.ViewModels
                 else if (param is string name && !string.IsNullOrEmpty(name))
                     _dispatcher.CancelJob(name);
             });
-            CancelItemCommand = new RelayCommand<RunningItemInfo?>(item =>
+            CancelItemCommand = new RelayCommand<GroupedRunningItem?>(item =>
             {
                 if (item == null) return;
-                if (item.IsMakro) _dispatcher.CancelMakro(item.Id);
-                else              _dispatcher.CancelJob(item.Id);
+                if (item.IsMakro)
+                    _dispatcher.CancelMakro(item.Id);
+                else
+                    _dispatcher.CancelJobsByDefinition(item.Id);
             });
             StopAllJobsCommand = new RelayCommand(() =>
             {
-                foreach (var id in _dispatcher.RunningJobIds.ToList())
-                    _dispatcher.CancelJob(id);
+                _dispatcher.CancelAllJobs();
                 foreach (var id in _dispatcher.RunningMakroIds.ToList())
                     _dispatcher.CancelMakro(id);
             }, () => RunningTotalCount > 0);
@@ -134,17 +141,8 @@ namespace DesktopAutomationApp.ViewModels
 
         private void RefreshRunningJobs()
         {
-            var runningIds = _dispatcher.RunningJobIds;
-            var allJobs = _executor.AllJobs;
-
-            RunningJobs.Clear();
-            foreach (var id in runningIds)
-            {
-                var job = allJobs.Values.FirstOrDefault(j => j.Id == id);
-                if (job != null)
-                    RunningJobs.Add(new RunningJobInfo { Id = id, Name = job.Name });
-            }
-            RunningJobCount = RunningJobs.Count;
+            var instances = _dispatcher.RunningJobInstances;
+            RunningJobCount = instances.Count;
             RebuildRunningItems();
         }
 
@@ -166,12 +164,13 @@ namespace DesktopAutomationApp.ViewModels
 
         private void RebuildRunningItems()
         {
-            RunningItems.Clear();
-            foreach (var j in RunningJobs)
-                RunningItems.Add(new RunningItemInfo { Id = j.Id, Name = j.Name, IsMakro = false });
-            foreach (var m in RunningMakros)
-                RunningItems.Add(new RunningItemInfo { Id = m.Id, Name = m.Name, IsMakro = true });
-            RunningTotalCount = RunningItems.Count;
+            var instances = _dispatcher.RunningJobInstances;
+            RunningItems = instances
+                .GroupBy(i => (i.JobId, i.JobName))
+                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
+                .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+                .ToList();
+            RunningTotalCount = instances.Count + RunningMakros.Count;
             (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
@@ -190,17 +189,57 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningJobsChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(RefreshRunningJobs);
+            var snapshot = _dispatcher.RunningJobInstances;
+            var grouped  = snapshot
+                .GroupBy(i => (i.JobId, i.JobName))
+                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
+                .ToList();
+            var total = snapshot.Count;
+
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                RunningJobCount = total;
+                RunningItems = grouped
+                    .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+                    .ToList();
+                RunningTotalCount = total + RunningMakros.Count;
+                (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            });
         }
 
         private void OnRunningMakrosChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(RefreshRunningMakros);
+            var runningIds  = _dispatcher.RunningMakroIds;
+            var allMakros   = _executor.AllMakros;
+            var makroItems  = runningIds
+                .Select(id => allMakros.Values.FirstOrDefault(m => m.Id == id))
+                .Where(m => m is not null)
+                .Select(m => new RunningJobInfo { Id = m!.Id, Name = m.Name })
+                .ToList();
+            var jobSnapshot = _dispatcher.RunningJobInstances;
+            var grouped     = jobSnapshot
+                .GroupBy(i => (i.JobId, i.JobName))
+                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
+                .ToList();
+            var jobTotal = jobSnapshot.Count;
+
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                RunningMakros.Clear();
+                foreach (var m in makroItems) RunningMakros.Add(m);
+                RunningMakroCount = RunningMakros.Count;
+                RunningJobCount   = jobTotal;
+                RunningItems = grouped
+                    .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+                    .ToList();
+                RunningTotalCount = jobTotal + RunningMakros.Count;
+                (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            });
         }
 
         private void OnHotkeysChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
             {
                 RefreshHotkeys();
                 RefreshCounts();
@@ -233,10 +272,12 @@ namespace DesktopAutomationApp.ViewModels
         public string Name { get; init; } = "";
     }
 
-    public sealed class RunningItemInfo
+    /// <summary>Gruppenzeile in der "Laufende Jobs"-Liste: ein Eintrag pro Job-Definition, mit Instanz-Zähler.</summary>
+    public sealed class GroupedRunningItem
     {
-        public Guid Id { get; init; }
+        public Guid Id { get; init; }           // Job-Definition-ID oder Makro-ID
         public string Name { get; init; } = "";
+        public int InstanceCount { get; set; }
         public bool IsMakro { get; init; }
     }
 }

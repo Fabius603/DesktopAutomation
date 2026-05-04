@@ -25,7 +25,13 @@ namespace DesktopAutomationApp.ViewModels
         public string Title => "Makros";
 
         public ObservableCollection<Makro> Items { get; } = new();
-        public ObservableCollection<Guid> RunningMakroIds { get; } = new();
+
+        private IReadOnlyCollection<Guid> _runningMakroIds = Array.Empty<Guid>();
+        public IReadOnlyCollection<Guid> RunningMakroIds
+        {
+            get => _runningMakroIds;
+            private set { _runningMakroIds = value; OnPropertyChanged(); }
+        }
 
         private readonly List<Makro> _selectedItems = new();
         public IReadOnlyList<Makro> SelectedItems => _selectedItems;
@@ -151,12 +157,9 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningMakrosChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
-            {
-                RunningMakroIds.Clear();
-                foreach (var id in _dispatcher.RunningMakroIds)
-                    RunningMakroIds.Add(id);
-            });
+            // Snapshot auf TP-Thread – nur das Ergebnis per InvokeAsync an UI übergeben.
+            var ids = new HashSet<Guid>(_dispatcher.RunningMakroIds);
+            Application.Current?.Dispatcher?.InvokeAsync(() => RunningMakroIds = ids);
         }
 
         protected override void Dispose(bool disposing)

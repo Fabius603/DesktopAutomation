@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using OpenCvSharp;
 using ImageCapture.ProcessDuplication;
 using ImageCapture.DesktopDuplication;
 using ImageCapture.Video;
@@ -36,6 +35,7 @@ namespace TaskAutomation.Jobs
         private readonly IMakroExecutor _makroExecutor;
         private readonly IScriptExecutor _scriptExecutor;
         private readonly IYoloManager _yoloManager;
+        private readonly IDesktopCaptureService _desktopCaptureService;
         private bool _disposed = false;
 
         private readonly DxgiResources _dxgiResources = DxgiResources.Instance;
@@ -47,15 +47,16 @@ namespace TaskAutomation.Jobs
         public event EventHandler<JobErrorEventArgs>?     JobErrorOccurred;
         public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
+        // ── Dispatcher-Callbacks (nach Konstruktion gesetzt, um Zirkelabhängigkeit zu vermeiden) ──
+        /// <summary>Starts a job via the dispatcher, returns instanceId. Set from App.xaml.cs after DI build.</summary>
+        public Func<Guid, Guid>? StartJobViaDispatcher { get; set; }
+        /// <summary>Cancels a job instance by instanceId via the dispatcher. Set from App.xaml.cs after DI build.</summary>
+        public Action<Guid>? CancelJobViaDispatcher { get; set; }
+        /// <summary>Starts a job via the dispatcher and awaits completion. Set from App.xaml.cs after DI build.</summary>
+        public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; set; }
+
         // ── Zyklus-Erkennung ───────────────────────────────────────────────────
         private static readonly AsyncLocal<ImmutableHashSet<Guid>> _executionChain = new();
-
-        // ── Exklusive Steps ────────────────────────────────────────────────────
-        private static readonly Dictionary<Type, string> _exclusiveSteps = new()
-        {
-            [typeof(DesktopDuplicationStep)] = "Desktop Duplication wird bereits von Job '{0}' verwendet.",
-        };
-        private readonly ConcurrentDictionary<Type, string> _exclusiveStepOwners = new();
 
         // ── Pipeline-Validierungs-Cache (pro Job-ID, wird bei Reload gelöscht) ──
 
@@ -96,16 +97,18 @@ namespace TaskAutomation.Jobs
             IScriptExecutor scriptExecutor,
             IRecordingIndicatorOverlay recordingOverlay,
             IYoloManager yoloManager,
-            IImageDisplayService imageDisplayService)
+            IImageDisplayService imageDisplayService,
+            IDesktopCaptureService desktopCaptureService)
         {
-            _logger            = logger;
-            _jobRepository     = jobRepo;
-            _makroRepository   = makroRepo;
-            _makroExecutor     = makroExecutor;
-            _recordingOverlay  = recordingOverlay;
-            _scriptExecutor    = scriptExecutor;
-            _yoloManager       = yoloManager;
-            _imageDisplayService = imageDisplayService;
+            _logger               = logger;
+            _jobRepository        = jobRepo;
+            _makroRepository      = makroRepo;
+            _makroExecutor        = makroExecutor;
+            _recordingOverlay     = recordingOverlay;
+            _scriptExecutor       = scriptExecutor;
+            _yoloManager          = yoloManager;
+            _imageDisplayService  = imageDisplayService;
+            _desktopCaptureService = desktopCaptureService;
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -228,28 +231,9 @@ namespace TaskAutomation.Jobs
             await PreloadYoloModelsAsync(job, ct);
 
             // ── Schritte analysieren ──────────────────────────────────────────
-            var videoStep             = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
+            var videoStep              = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
             var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
-            var showImageStep         = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
-
-            // ── Exklusive Steps reservieren ───────────────────────────────────
-            var acquiredSteps = new List<Type>();
-            foreach (var (stepType, errTemplate) in _exclusiveSteps)
-            {
-                if (!job.Steps.Any(s => s.GetType() == stepType)) continue;
-
-                if (!_exclusiveStepOwners.TryAdd(stepType, job.Name))
-                {
-                    var owner = _exclusiveStepOwners[stepType];
-                    var err   = string.Format(errTemplate, owner);
-                    _logger.LogWarning(err);
-                    JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
-                    foreach (var acquired in acquiredSteps)
-                        _exclusiveStepOwners.TryRemove(acquired, out _);
-                    return;
-                }
-                acquiredSteps.Add(stepType);
-            }
+            var showImageStep          = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             // ── Pipeline-Kontext erstellen ────────────────────────────────────
             var pipelineCtx = new StepPipelineContext(
@@ -262,7 +246,11 @@ namespace TaskAutomation.Jobs
                 _yoloManager,
                 _imageDisplayService,
                 job,
-                ExecuteJob);
+                ExecuteJob,
+                _desktopCaptureService,
+                StartJobViaDispatcher,
+                CancelJobViaDispatcher,
+                StartJobViaDispatcherAsync);
 
             bool recorderStarted = false;
 
@@ -432,10 +420,19 @@ namespace TaskAutomation.Jobs
             {
                 CurrentJob = null;
 
-                if (showImageStep != null)
+                // Fire-and-forget Sub-Jobs abbrechen wenn der Eltern-Job endet (egal ob Abbruch oder normales Ende).
+                if (pipelineCtx.ChildJobInstanceIds.Count > 0)
                 {
-                    try { Cv2.DestroyAllWindows(); } catch { /* best-effort */ }
+                    _logger.LogInformation(
+                        "Job '{JobName}' beendet: beende {Count} Kind-Job-Instanz(en).",
+                        job.Name, pipelineCtx.ChildJobInstanceIds.Count);
+                    foreach (var childId in pipelineCtx.ChildJobInstanceIds)
+                        try { CancelJobViaDispatcher?.Invoke(childId); } catch { /* best-effort */ }
                 }
+
+                // Nur die von diesem Job-Lauf geöffneten Bildvorschau-Fenster schließen.
+                foreach (var winName in pipelineCtx.OpenedWindowNames)
+                    try { _imageDisplayService.CloseWindow(winName); } catch { /* best-effort */ }
 
                 if (recorderStarted && pipelineCtx.VideoRecorder != null)
                 {
@@ -455,14 +452,10 @@ namespace TaskAutomation.Jobs
 
                 try { pipelineCtx.VideoRecorder?.Dispose(); } catch { /* best-effort */ }
                 try { pipelineCtx.Dispose(); }                catch { /* best-effort */ }
-                try { Cv2.DestroyAllWindows(); }              catch { /* best-effort */ }
 
                 await UnloadYoloModelsAsync(job);
 
                 _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
-
-                foreach (var acquired in acquiredSteps)
-                    _exclusiveStepOwners.TryRemove(acquired, out _);
 
                 _executionChain.Value = parentChain;
             }

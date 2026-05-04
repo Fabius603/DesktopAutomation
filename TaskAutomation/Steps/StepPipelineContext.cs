@@ -1,4 +1,3 @@
-using ImageCapture.DesktopDuplication;
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
 using ImageDetection.Algorithms.TemplateMatching;
@@ -38,8 +37,13 @@ namespace TaskAutomation.Steps
         public IImageDisplayService ImageDisplayService { get; }
         public Job                  CurrentJob         { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
+        public Func<Guid, Guid>?                    StartJobViaDispatcher { get; }
+        public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; }
+        public Action<Guid>?                        CancelJobViaDispatcher { get; }
 
-        public DesktopDuplicator?   DesktopDuplicator  { get; set; }
+        public IDesktopCaptureService DesktopCaptureService { get; }
+        public ISet<string>  OpenedWindowNames    { get; } = new HashSet<string>(StringComparer.Ordinal);
+        public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
         public ProcessDuplicator?   ProcessDuplicator  { get; set; }
         public TemplateMatching?    TemplateMatcher    { get; set; }
         public StreamVideoRecorder? VideoRecorder      { get; set; }
@@ -59,18 +63,26 @@ namespace TaskAutomation.Steps
             IYoloManager                       yoloManager,
             IImageDisplayService               imageDisplayService,
             Job                                currentJob,
-            Func<Guid, CancellationToken, Task> executeJob)
+            Func<Guid, CancellationToken, Task> executeJob,
+            IDesktopCaptureService             desktopCaptureService,
+            Func<Guid, Guid>?                  startJobViaDispatcher  = null,
+            Action<Guid>?                      cancelJobViaDispatcher = null,
+            Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null)
         {
-            Logger             = logger;
-            DxgiResources      = dxgiResources;
-            AllJobs            = allJobs;
-            AllMakros          = allMakros;
-            MakroExecutor      = makroExecutor;
-            ScriptExecutor     = scriptExecutor;
-            YoloManager        = yoloManager;
-            ImageDisplayService = imageDisplayService;
-            CurrentJob         = currentJob;
-            ExecuteJob         = executeJob;
+            Logger                     = logger;
+            DxgiResources              = dxgiResources;
+            AllJobs                    = allJobs;
+            AllMakros                  = allMakros;
+            MakroExecutor              = makroExecutor;
+            ScriptExecutor             = scriptExecutor;
+            YoloManager                = yoloManager;
+            ImageDisplayService        = imageDisplayService;
+            CurrentJob                 = currentJob;
+            ExecuteJob                 = executeJob;
+            DesktopCaptureService      = desktopCaptureService;
+            StartJobViaDispatcher      = startJobViaDispatcher;
+            CancelJobViaDispatcher     = cancelJobViaDispatcher;
+            StartJobViaDispatcherAsync = startJobViaDispatcherAsync;
         }
 
         // ── Iteration-Reset ────────────────────────────────────────────────────
@@ -90,11 +102,8 @@ namespace TaskAutomation.Steps
         public void Dispose()
         {
             _results.DisposeAndClear();
-
-            try { DesktopDuplicator?.Dispose(); } catch { /* best-effort */ }
-            DesktopDuplicator = null;
-
-            // ProcessDuplicator, TemplateMatcher, VideoRecorder werden vom JobExecutor verwaltet
+            // ProcessDuplicator, TemplateMatcher, VideoRecorder werden vom JobExecutor verwaltet.
+            // DesktopCaptureService ist ein Singleton und wird NICHT hier disposed.
         }
     }
 }

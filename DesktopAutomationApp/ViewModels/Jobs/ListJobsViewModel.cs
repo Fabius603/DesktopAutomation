@@ -25,7 +25,12 @@ namespace DesktopAutomationApp.ViewModels
         public string Description => "Verfügbare Jobs";
 
         public ObservableCollection<Job> Items { get; } = new();
-        public ObservableCollection<Guid> RunningJobIds { get; } = new();
+        private IReadOnlyCollection<Guid> _runningJobIds = Array.Empty<Guid>();
+        public IReadOnlyCollection<Guid> RunningJobIds
+        {
+            get => _runningJobIds;
+            private set { _runningJobIds = value; OnPropertyChanged(); }
+        }
 
         private readonly List<Job> _selectedItems = new();
         public IReadOnlyList<Job> SelectedItems => _selectedItems;
@@ -85,11 +90,14 @@ namespace DesktopAutomationApp.ViewModels
             SaveWithoutEditorCommand = new RelayCommand(async () => await SaveWithoutEditorAsync());
             StartJobCommand = new RelayCommand<object?>(param =>
             {
-                if (param is Guid id) _dispatcher.StartJob(id);
+                if (param is Guid id)
+                    try { _dispatcher.StartJob(id); }
+                    catch (JobLimitExceededException) { /* kein Popup – wird still ignoriert */ }
             });
             StopJobCommand = new RelayCommand<object?>(param =>
             {
-                if (param is Guid id) _dispatcher.CancelJob(id);
+                if (param is not Guid id) return;
+                _dispatcher.CancelJobsByDefinition(id);
             });
             OpenFolderCommand = new RelayCommand(() =>
                 Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<Job>()) { UseShellExecute = true }));
@@ -168,12 +176,9 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningJobsChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
-            {
-                RunningJobIds.Clear();
-                foreach (var id in _dispatcher.RunningJobIds)
-                    RunningJobIds.Add(id);
-            });
+            // Snapshot op ThreadPool thread – als HashSet für O(1) Contains() im Converter.
+            var ids = new HashSet<Guid>(_dispatcher.RunningJobIds);
+            Application.Current?.Dispatcher?.InvokeAsync(() => RunningJobIds = ids);
         }
 
         protected override void Dispose(bool disposing)

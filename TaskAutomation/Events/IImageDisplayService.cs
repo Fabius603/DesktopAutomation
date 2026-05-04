@@ -27,5 +27,8 @@ namespace TaskAutomation.Events
     {
         event EventHandler<ImageDisplayRequestedEventArgs>? ImageDisplayRequested;
         void DisplayImage(string windowName, Bitmap image, ImageDisplayType displayType);
+        /// <summary>Schließt ein einzelnes benanntes Fenster (nur dieses, nicht alle).</summary>
+        void CloseWindow(string windowName);
+        void CloseAllWindows();
     }
 }

@@ -1,4 +1,3 @@
-using ImageCapture.DesktopDuplication;
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
 using ImageDetection.Algorithms.TemplateMatching;
@@ -51,9 +50,44 @@ namespace TaskAutomation.Steps
         /// </summary>
         Func<Guid, CancellationToken, Task> ExecuteJob { get; }
 
+        /// <summary>
+        /// Startet einen Sub-Job über den Dispatcher (erzeugt Instanz-ID, sichtbar in RunningJobInstances).
+        /// Gibt die Instanz-ID zurück. Null wenn kein Dispatcher verdrahtet ist (z.B. in Tests).
+        /// </summary>
+        Func<Guid, Guid>? StartJobViaDispatcher { get; }
+
+        /// <summary>
+        /// Startet einen Sub-Job über den Dispatcher und wartet auf Abschluss.
+        /// Null wenn kein Dispatcher verdrahtet ist (z.B. in Tests).
+        /// </summary>
+        Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; }
+
+        /// <summary>
+        /// Bricht eine Job-Instanz per Instanz-ID über den Dispatcher ab.
+        /// </summary>
+        Action<Guid>? CancelJobViaDispatcher { get; }
+
         // ── Per-Job-Ressourcen (lazy von Handlern gesetzt) ─────────────────────
 
-        DesktopDuplicator?   DesktopDuplicator  { get; set; }
+        /// <summary>
+        /// Gemeinsamer Singleton-Dienst für den Desktop-Screenshot.
+        /// Wird von <see cref="DesktopDuplicationStepHandler"/> verwendet statt einer
+        /// eigenen <c>DesktopDuplicator</c>-Instanz.
+        /// </summary>
+        IDesktopCaptureService DesktopCaptureService { get; }
+
+        /// <summary>
+        /// Alle in diesem Job-Lauf geöffneten Bildvorschau-Fenster (WindowName).
+        /// Wird von ShowImageStepHandler befüllt; JobExecutor schließt bei Job-Ende nur diese Fenster.
+        /// </summary>
+        ISet<string> OpenedWindowNames { get; }
+
+        /// <summary>
+        /// Instanz-IDs aller fire-and-forget Sub-Jobs die von JobExecutionStep (WaitForCompletion=false)
+        /// gestartet wurden. JobExecutor bricht diese bei Abbruch des Eltern-Jobs ab.
+        /// </summary>
+        IList<Guid> ChildJobInstanceIds { get; }
+
         ProcessDuplicator?   ProcessDuplicator  { get; set; }
         TemplateMatching?    TemplateMatcher    { get; set; }
         StreamVideoRecorder? VideoRecorder      { get; set; }

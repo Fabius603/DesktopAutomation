@@ -161,8 +161,7 @@ namespace DesktopAutomationApp.ViewModels
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
             StopAllJobsCommand = new RelayCommand(() =>
             {
-                foreach (var id in _jobDispatcher.RunningJobIds.ToList())
-                    _jobDispatcher.CancelJob(id);
+                _jobDispatcher.CancelAllJobs();
                 foreach (var id in _jobDispatcher.RunningMakroIds.ToList())
                     _jobDispatcher.CancelMakro(id);
             });
@@ -292,12 +291,14 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnJobErrorOccurred(object? sender, JobErrorEventArgs e)
         {
-            // Auf dem UI-Thread ausführen, da wir ein MessageBox anzeigen
+            // Job-Limit-Überschreitung: kein Popup – der Aufrufer-Job zeigt ohnehin einen Step-Fehler an.
+            if (e.Exception is JobLimitExceededException)
+                return;
+
             Application.Current?.Dispatcher?.Invoke(() =>
             {
                 var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
                 var title = "Job-Ausführungsfehler";
-                
                 AppDialog.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
             });
         }

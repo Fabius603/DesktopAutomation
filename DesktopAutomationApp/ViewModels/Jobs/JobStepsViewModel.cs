@@ -126,8 +126,15 @@ namespace DesktopAutomationApp.ViewModels
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
             PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
 
-            StartJobCommand = new RelayCommand(() => _dispatcher.StartJob(Job.Id), () => !IsJobRunning);
-            StopJobCommand  = new RelayCommand(() => _dispatcher.CancelJob(Job.Id), () => IsJobRunning);
+            StartJobCommand = new RelayCommand(() =>
+            {
+                try { _dispatcher.StartJob(Job.Id); }
+                catch (JobLimitExceededException) { /* kein Popup – wird still ignoriert */ }
+            }, () => !IsJobRunning);
+            StopJobCommand = new RelayCommand(() =>
+            {
+                _dispatcher.CancelJobsByDefinition(Job.Id);
+            }, () => IsJobRunning);
 
             AddElseIfCommand = new RelayCommand<JobStep?>(AddElseIf, CanAddElseIf);
             AddElseCommand   = new RelayCommand<JobStep?>(AddElse, CanAddElse);
@@ -279,7 +286,8 @@ namespace DesktopAutomationApp.ViewModels
 
                 case DesktopDuplicationStep d:
                     vm.SelectedType = "DesktopDuplication";
-                    vm.DesktopDuplicationStep_DesktopIdx = d.Settings.DesktopIdx;
+                    vm.DesktopDuplicationStep_DesktopIdx    = d.Settings.DesktopIdx;
+                    vm.DesktopDuplicationStep_CaptureCursor = d.Settings.CaptureCursor;
                     break;
 
                 case ShowImageStep si:
@@ -486,9 +494,11 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningJobsChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
+            // Snapshot on ThreadPool thread – only marshal the bool result to the UI thread.
+            var isRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
             {
-                IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+                IsJobRunning = isRunning;
             });
         }
 

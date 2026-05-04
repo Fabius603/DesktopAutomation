@@ -653,7 +653,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningMakrosChanged()
         {
-            Application.Current?.Dispatcher?.Invoke(() =>
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
             {
                 IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
             });

@@ -153,6 +153,9 @@
                                     HorizontalAlignment="Left"
                                     Command="{Binding ChooseMonitorCommand}"/>
                         </Grid>
+                        <CheckBox Margin="0,6,0,0"
+                                  Content="Mauszeiger aufnehmen"
+                                  IsChecked="{Binding DesktopDuplicationStep_CaptureCursor}"/>
                     </StackPanel>
 
                     <!-- ── Show Image ── -->
