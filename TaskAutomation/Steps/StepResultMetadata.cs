@@ -18,61 +18,46 @@ namespace TaskAutomation.Steps
     {
         private static readonly ResultPropertyDescriptor[] BoolSuccess =
         [
-            new("Success",     "Erfolgreich",       ResultPropertyType.Bool),
-            new("WasExecuted", "Wurde ausgeführt",  ResultPropertyType.Bool),
+            new("Success", "Erfolgreich", ResultPropertyType.Bool),
         ];
 
         private static readonly Dictionary<string, ResultPropertyDescriptor[]> Properties = new()
         {
             ["TemplateMatchingStep"]   =
             [
-                new("Found",       "Gefunden",         ResultPropertyType.Bool),
-                new("Confidence",  "Confidence",       ResultPropertyType.Double),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
             ["YOLODetectionStep"]      =
             [
-                new("Found",       "Gefunden",         ResultPropertyType.Bool),
-                new("Confidence",  "Confidence",       ResultPropertyType.Double),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
             ["DesktopDuplicationStep"] =
             [
-                new("HasImage",    "Hat Bild",         ResultPropertyType.Bool),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new("HasImage", "Hat Bild", ResultPropertyType.Bool),
             ],
-            ["MakroExecutionStep"]     = BoolSuccess,
-            ["ScriptExecutionStep"]    = BoolSuccess,
-            ["JobExecutionStep"]       = BoolSuccess,
-            ["KlickOnPointStep"]       = BoolSuccess,
-            ["KlickOnPoint3DStep"]     = BoolSuccess,
-            ["ActiveProcessStep"]      =
+            ["MakroExecutionStep"]   = BoolSuccess,
+            ["ScriptExecutionStep"]  = BoolSuccess,
+            ["JobExecutionStep"]     = BoolSuccess,
+            ["KlickOnPointStep"]     = BoolSuccess,
+            ["KlickOnPoint3DStep"]   = BoolSuccess,
+            ["ActiveProcessStep"]    =
             [
-                new("IsRunning",    "Prozess läuft",       ResultPropertyType.Bool),
-                new("WasExecuted",  "Wurde ausgeführt",   ResultPropertyType.Bool),
+                new("IsRunning", "Prozess läuft", ResultPropertyType.Bool),
             ],
-            ["StartProcessStep"]       = BoolSuccess,
-            ["ActiveWindowStep"]       =
+            ["StartProcessStep"]     = BoolSuccess,
+            ["ActiveWindowStep"]     =
             [
-                new("IsActive",     "Fenster aktiv",      ResultPropertyType.Bool),
-                new("WasExecuted",  "Wurde ausgeführt",   ResultPropertyType.Bool),
+                new("IsActive", "Fenster aktiv", ResultPropertyType.Bool),
             ],
-            ["KeyPointMatchingStep"]   =
+            ["KeyPointMatchingStep"] =
             [
-                new("Found",       "Gefunden",         ResultPropertyType.Bool),
-                new("Confidence",  "Confidence",       ResultPropertyType.Double),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
-            ["ShowImageStep"]          =
-            [
-                new("Success",     "Erfolgreich",      ResultPropertyType.Bool),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
-            ],
-            ["VideoCreationStep"]      =
-            [
-                new("Success",     "Erfolgreich",      ResultPropertyType.Bool),
-                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
-            ],
+            ["ShowImageStep"]        = BoolSuccess,
+            ["VideoCreationStep"]    = BoolSuccess,
         };
 
 
@@ -81,34 +66,28 @@ namespace TaskAutomation.Steps
         {
             new ResultTypeDescriptor("DetectionResult", "DetectionResult",
             [
-                new ResultPropertyDescriptor("Found",       "Gefunden",         ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("Confidence",  "Confidence",       ResultPropertyType.Double),
-                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("Confidence", "Confidence", ResultPropertyType.Double),
             ]),
             new ResultTypeDescriptor("CaptureResult", "CaptureResult",
             [
-                new ResultPropertyDescriptor("HasImage",    "Hat Bild",         ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("HasImage", "Hat Bild", ResultPropertyType.Bool),
             ]),
             new ResultTypeDescriptor("TaskResult", "TaskResult",
             [
-                new ResultPropertyDescriptor("Success",     "Erfolgreich",      ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("Success", "Erfolgreich", ResultPropertyType.Bool),
             ]),
             new ResultTypeDescriptor("OutputResult", "OutputResult",
             [
-                new ResultPropertyDescriptor("Success",     "Erfolgreich",      ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("Success", "Erfolgreich", ResultPropertyType.Bool),
             ]),
             new ResultTypeDescriptor("ActiveProcessResult", "ActiveProcessResult",
             [
-                new ResultPropertyDescriptor("IsRunning",    "Prozess läuft",      ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("WasExecuted",  "Wurde ausgeführt",  ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("IsRunning", "Prozess läuft", ResultPropertyType.Bool),
             ]),
             new ResultTypeDescriptor("ActiveWindowResult", "ActiveWindowResult",
             [
-                new ResultPropertyDescriptor("IsActive",    "Fenster aktiv",     ResultPropertyType.Bool),
-                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt",  ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("IsActive", "Fenster aktiv", ResultPropertyType.Bool),
             ]),
         };
 
