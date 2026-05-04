@@ -582,8 +582,15 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Style="{StaticResource ParamText}"
-                                       TextWrapping="Wrap"
-                                       Text="{Binding Mode=OneWay, Converter={StaticResource StepConditionDisplayConverter}}"/>
+                                       TextWrapping="Wrap">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource StepConditionDisplayConverter}">
+                                        <Binding Mode="OneWay"/>
+                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                        <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -613,8 +620,15 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Style="{StaticResource ParamText}"
-                                       TextWrapping="Wrap"
-                                       Text="{Binding Mode=OneWay, Converter={StaticResource StepConditionDisplayConverter}}"/>
+                                       TextWrapping="Wrap">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource StepConditionDisplayConverter}">
+                                        <Binding Mode="OneWay"/>
+                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                        <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

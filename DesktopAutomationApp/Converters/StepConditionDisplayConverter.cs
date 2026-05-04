@@ -1,41 +1,72 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps;
 
 namespace DesktopAutomationApp.Converters
 {
     /// <summary>
     /// Builds a readable single-line text for If/ElseIf conditions in step list previews.
+    /// values[0] = StepCondition
+    /// values[1] = Steps-Collection (IList) — used to resolve current step number dynamically
+    /// values[2] = StepsVersion (int) — cache-key so the name updates on every reorder
     /// </summary>
-    public sealed class StepConditionDisplayConverter : IValueConverter
+    public sealed class StepConditionDisplayConverter : IMultiValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        private int _cacheVersion = int.MinValue;
+        private Dictionary<string, string>? _nameMap;
+
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is not StepCondition c)
+            if (values is null || values.Length < 1 || values[0] is not StepCondition c)
                 return string.Empty;
 
-            var source = !string.IsNullOrWhiteSpace(c.SourceStepDisplayName)
-                ? c.SourceStepDisplayName
-                : c.SourceStepId;
+            // Rebuild name map when version changes
+            var list    = values.Length > 1 ? values[1] as IList : null;
+            int version = values.Length > 2 && values[2] is int v ? v : 0;
+
+            if (list != null && (_nameMap is null || version != _cacheVersion))
+            {
+                _nameMap = new Dictionary<string, string>(list.Count, StringComparer.Ordinal);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i] is JobStep step)
+                    {
+                        var friendly = StepResultMetadata.GetFriendlyName(step.GetType().Name);
+                        _nameMap[step.Id] = $"{friendly} (Step {i + 1})";
+                    }
+                }
+                _cacheVersion = version;
+            }
+
+            // Resolve source name: prefer live lookup, fall back to stored display name
+            string source;
+            if (_nameMap != null && !string.IsNullOrWhiteSpace(c.SourceStepId)
+                && _nameMap.TryGetValue(c.SourceStepId, out var resolved))
+                source = resolved;
+            else
+                source = !string.IsNullOrWhiteSpace(c.SourceStepDisplayName)
+                    ? c.SourceStepDisplayName
+                    : (string.IsNullOrWhiteSpace(c.SourceStepId) ? "Unbekannter Step" : c.SourceStepId);
 
             var prop = !string.IsNullOrWhiteSpace(c.PropertyDisplayName)
                 ? c.PropertyDisplayName
                 : c.Property;
-
-            source = string.IsNullOrWhiteSpace(source) ? "Unbekannter Step" : source;
-            prop = string.IsNullOrWhiteSpace(prop) ? "Wert" : prop;
+            if (string.IsNullOrWhiteSpace(prop)) prop = "Wert";
 
             var op = c.Operator switch
             {
-                ConditionOperator.IsTrue => "ist wahr",
-                ConditionOperator.IsFalse => "ist falsch",
-                ConditionOperator.Equals => "=",
-                ConditionOperator.NotEquals => "!=",
-                ConditionOperator.GreaterThan => ">",
-                ConditionOperator.LessThan => "<",
+                ConditionOperator.IsTrue            => "ist wahr",
+                ConditionOperator.IsFalse           => "ist falsch",
+                ConditionOperator.Equals            => "=",
+                ConditionOperator.NotEquals         => "!=",
+                ConditionOperator.GreaterThan       => ">",
+                ConditionOperator.LessThan          => "<",
                 ConditionOperator.GreaterThanOrEqual => ">=",
-                ConditionOperator.LessThanOrEqual => "<=",
+                ConditionOperator.LessThanOrEqual   => "<=",
                 _ => c.Operator.ToString()
             };
 
@@ -48,7 +79,7 @@ namespace DesktopAutomationApp.Converters
             return $"{source} -> {prop} {op}";
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 }
