@@ -36,9 +36,19 @@ namespace TaskAutomation.Steps
     public sealed record DetectionResult : StepResultBase
     {
         public bool    Found          { get; init; }
-        public System.Drawing.Point?  Point          { get; init; }
+        public System.Drawing.Point?     Point         { get; init; }
+        /// <summary>BoundingBox in globalen virtuellen Desktop-Koordinaten (falls von der Erkennung geliefert).</summary>
+        public System.Drawing.Rectangle? BoundingBox   { get; init; }
         public double  Confidence     { get; init; }
         public Bitmap? ProcessedImage { get; init; }
+
+        /// <summary>
+        /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
+        /// Index 0 = bestes Ergebnis (identisch mit Point/BoundingBox).
+        /// Leer wenn nichts gefunden oder der Handler AllResults nicht befüllt.
+        /// </summary>
+        public IReadOnlyList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)> AllDetections { get; init; }
+            = System.Array.Empty<(System.Drawing.Point, System.Drawing.Rectangle?)>();
 
         public static readonly DetectionResult Default = new() { WasExecuted = false, Found = false };
     }

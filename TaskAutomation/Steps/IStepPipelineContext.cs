@@ -41,6 +41,7 @@ namespace TaskAutomation.Steps
         IScriptExecutor      ScriptExecutor     { get; }
         IYoloManager         YoloManager        { get; }
         IImageDisplayService ImageDisplayService { get; }
+        IDesktopResultOverlay DesktopResultOverlay { get; }
 
         /// <summary>Der aktuell laufende Job (für Zyklusprüfungen in JobExecutionStep).</summary>
         Job CurrentJob { get; }

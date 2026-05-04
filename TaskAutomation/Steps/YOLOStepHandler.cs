@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
@@ -80,13 +82,37 @@ namespace TaskAutomation.Steps
                 processedImg = (Bitmap)capture.Image!.Clone();
             }
 
+            System.Drawing.Rectangle? globalBoundingBox = null;
+            if (rawResult.BoundingBox.HasValue)
+            {
+                var b = rawResult.BoundingBox.Value;
+                globalBoundingBox = new System.Drawing.Rectangle(
+                    b.X + capture.Offset.X, b.Y + capture.Offset.Y, b.Width, b.Height);
+            }
+
+            var allDetections = rawResult.AllResults
+                .Select(r =>
+                {
+                    var c = new System.Drawing.Point(r.CenterPoint.X + capture.Offset.X, r.CenterPoint.Y + capture.Offset.Y);
+                    System.Drawing.Rectangle? bb = r.BoundingBox.HasValue
+                        ? new System.Drawing.Rectangle(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
+                        : null;
+                    return (Center: c, BoundingBox: bb);
+                })
+                .ToList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)>();
+
+            if (allDetections.Count == 0)
+                allDetections.Add((Center: globalPoint, BoundingBox: globalBoundingBox));
+
             return new DetectionResult
             {
                 WasExecuted    = true,
                 Found          = true,
                 Point          = globalPoint,
+                BoundingBox    = globalBoundingBox,
                 Confidence     = rawResult.Confidence,
-                ProcessedImage = processedImg
+                ProcessedImage = processedImg,
+                AllDetections  = allDetections
             };
         }
 

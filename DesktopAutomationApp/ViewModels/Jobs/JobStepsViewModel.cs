@@ -99,13 +99,21 @@ namespace DesktopAutomationApp.ViewModels
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
             // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
             // Konverter in der View (StepPrerequisiteStateConverter) neu ausgewertet werden.
-            _steps.CollectionChanged += (_, _) =>
+            _steps.CollectionChanged += (_, e) =>
             {
+                if (e.OldItems != null)
+                    foreach (JobStep s in e.OldItems) s.PropertyChanged -= OnStepPropertyChanged;
+                if (e.NewItems != null)
+                    foreach (JobStep s in e.NewItems) s.PropertyChanged += OnStepPropertyChanged;
+
                 StepsVersion++;
                 OnPropertyChanged(nameof(StepsVersion));
                 ResolveConditionDisplayNames();
                 InvalidateAllCommands();
             };
+
+            // Initiale Steps abonnieren
+            foreach (var s in _steps) s.PropertyChanged += OnStepPropertyChanged;
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
@@ -141,6 +149,13 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+        }
+
+        // ---------- Step property changes ----------
+        private void OnStepPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(JobStep.IsEnabled))
+                HasUnsavedChanges = true;
         }
 
         // ---------- Selection sync (called from code-behind) ----------
@@ -297,6 +312,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ShowImageStep_ShowProcessedImage = si.Settings.ShowProcessedImage;
                     vm.ShowImageStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceCaptureStepId);
                     vm.ShowImageStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceDetectionStepId);
+                    break;
+
+                case ShowOnDesktopStep sod:
+                    vm.SelectedType = "ShowOnDesktop";
+                    vm.ShowOnDesktopStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == sod.Settings.SourceDetectionStepId);
                     break;
 
                 case VideoCreationStep v:

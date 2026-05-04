@@ -207,6 +207,22 @@
                         </Grid>
                     </StackPanel>
 
+                    <!-- ── Show On Desktop ── -->
+                    <StackPanel Visibility="{Binding ShowShowOnDesktop, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Detection-Step" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableDetectionSteps}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedItem="{Binding ShowOnDesktopStep_SourceDetectionStep}"/>
+                        </Grid>
+                    </StackPanel>
+
                     <!-- ── Video Creation ── -->
                     <StackPanel Visibility="{Binding ShowVideoCreation, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid Margin="0,0,0,8">

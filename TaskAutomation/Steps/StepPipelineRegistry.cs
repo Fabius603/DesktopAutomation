@@ -117,6 +117,11 @@ namespace TaskAutomation.Steps
                 Output:        "OutputResult",
                 DisplayName:   "Bild anzeigen"),
 
+            [typeof(ShowOnDesktopStep)] = new(
+                Prerequisites: ["DetectionResult"],
+                Output:        "OutputResult",
+                DisplayName:   "Auf Desktop anzeigen"),
+
             [typeof(VideoCreationStep)] = new(
                 Prerequisites: ["CaptureResult"],
                 Output:        "OutputResult",
@@ -160,6 +165,7 @@ namespace TaskAutomation.Steps
             ["KlickOnPoint"]       = typeof(KlickOnPointStep),
             ["KlickOnPoint3D"]     = typeof(KlickOnPoint3DStep),
             ["ShowImage"]          = typeof(ShowImageStep),
+            ["ShowOnDesktop"]      = typeof(ShowOnDesktopStep),
             ["VideoCreation"]      = typeof(VideoCreationStep),
             ["MakroExecution"]     = typeof(MakroExecutionStep),
             ["JobExecution"]       = typeof(JobExecutionStep),

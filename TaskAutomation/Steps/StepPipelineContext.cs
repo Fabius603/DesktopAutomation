@@ -36,6 +36,7 @@ namespace TaskAutomation.Steps
         public IScriptExecutor      ScriptExecutor     { get; }
         public IYoloManager         YoloManager        { get; }
         public IImageDisplayService ImageDisplayService { get; }
+        public IDesktopResultOverlay DesktopResultOverlay { get; }
         public Job                  CurrentJob         { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
         public Func<Guid, Guid>?                    StartJobViaDispatcher { get; }
@@ -64,6 +65,7 @@ namespace TaskAutomation.Steps
             IScriptExecutor                    scriptExecutor,
             IYoloManager                       yoloManager,
             IImageDisplayService               imageDisplayService,
+            IDesktopResultOverlay              desktopResultOverlay,
             Job                                currentJob,
             Func<Guid, CancellationToken, Task> executeJob,
             IDesktopCaptureService             desktopCaptureService,
@@ -79,6 +81,7 @@ namespace TaskAutomation.Steps
             ScriptExecutor             = scriptExecutor;
             YoloManager                = yoloManager;
             ImageDisplayService        = imageDisplayService;
+            DesktopResultOverlay       = desktopResultOverlay;
             CurrentJob                 = currentJob;
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;

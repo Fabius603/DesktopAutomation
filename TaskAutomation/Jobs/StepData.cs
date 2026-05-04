@@ -11,6 +11,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
+    [JsonDerivedType(typeof(ShowOnDesktopStep), "show_on_desktop")]
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
@@ -28,10 +29,29 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
-    public abstract class JobStep
+    public abstract class JobStep : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
         [JsonPropertyName("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        private bool _isEnabled = true;
+
+        /// <summary>Gibt an, ob dieser Step beim Ausführen des Jobs berücksichtigt wird.</summary>
+        [JsonPropertyName("is_enabled")]
+        public bool IsEnabled
+        {
+            get => _isEnabled;
+            set { if (_isEnabled != value) { _isEnabled = value; OnPropertyChanged(); } }
+        }
+
+        /// <summary>Gibt an, ob der Benutzer diesen Step deaktivieren darf.
+        /// Bei Flow-Control-Steps (If/Else/EndIf) ist das nicht erlaubt.</summary>
+        [JsonIgnore]
+        public virtual bool CanBeDisabled => true;
     }
 
     // ---- TemplateMatching ----
@@ -120,6 +140,19 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
 
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
+    }
+
+    // ---- ShowOnDesktop ----
+    public sealed class ShowOnDesktopStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ShowOnDesktopSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ShowOnDesktopSettings
+    {
         [JsonPropertyName("source_detection_step_id")]
         public string SourceDetectionStepId { get; set; } = "";
     }
@@ -353,19 +386,27 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("settings")]
         public IfConditionSettings Settings { get; set; } = new();
+        public override bool CanBeDisabled => false;
     }
 
     public sealed class ElseIfStep : JobStep
     {
         [JsonPropertyName("settings")]
         public IfConditionSettings Settings { get; set; } = new();
+        public override bool CanBeDisabled => false;
     }
 
     /// <summary>Marks the start of the else block. No configuration needed.</summary>
-    public sealed class ElseStep : JobStep { }
+    public sealed class ElseStep : JobStep
+    {
+        public override bool CanBeDisabled => false;
+    }
 
     /// <summary>Marks the end of an if/elseif/else block. No configuration needed.</summary>
-    public sealed class EndIfStep : JobStep { }
+    public sealed class EndIfStep : JobStep
+    {
+        public override bool CanBeDisabled => false;
+    }
 
     /// <summary>Immediately ends the current job when executed.</summary>
     public sealed class EndJobStep : JobStep { }

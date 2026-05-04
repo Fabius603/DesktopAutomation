@@ -32,6 +32,7 @@ namespace TaskAutomation.Jobs
         private readonly IJsonRepository<Makro> _makroRepository;
         private readonly IRecordingIndicatorOverlay _recordingOverlay;
         private readonly IImageDisplayService _imageDisplayService;
+        private readonly IDesktopResultOverlay _desktopResultOverlay;
         private readonly IMakroExecutor _makroExecutor;
         private readonly IScriptExecutor _scriptExecutor;
         private readonly IYoloManager _yoloManager;
@@ -67,6 +68,7 @@ namespace TaskAutomation.Jobs
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
             { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
             { typeof(ShowImageStep),           new ShowImageStepHandler()           },
+            { typeof(ShowOnDesktopStep),        new ShowOnDesktopStepHandler()       },
             { typeof(VideoCreationStep),       new VideoCreationStepHandler()       },
             { typeof(MakroExecutionStep),      new MakroExecutionStepHandler()      },
             { typeof(ScriptExecutionStep),     new ScriptExecutionStepHandler()     },
@@ -102,6 +104,7 @@ namespace TaskAutomation.Jobs
             IRecordingIndicatorOverlay recordingOverlay,
             IYoloManager yoloManager,
             IImageDisplayService imageDisplayService,
+            IDesktopResultOverlay desktopResultOverlay,
             IDesktopCaptureService desktopCaptureService)
         {
             _logger               = logger;
@@ -112,6 +115,7 @@ namespace TaskAutomation.Jobs
             _scriptExecutor       = scriptExecutor;
             _yoloManager          = yoloManager;
             _imageDisplayService  = imageDisplayService;
+            _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
 
             _ = ReloadJobsAsync();
@@ -249,6 +253,7 @@ namespace TaskAutomation.Jobs
                 _scriptExecutor,
                 _yoloManager,
                 _imageDisplayService,
+                _desktopResultOverlay,
                 job,
                 ExecuteJob,
                 _desktopCaptureService,
@@ -377,6 +382,9 @@ namespace TaskAutomation.Jobs
                         // ── Regular step: execute only when current branch is active ──
                         if (!parentActive) continue;
 
+                        // ── Disabled step: skip without executing ─────────────────────
+                        if (!step.IsEnabled) continue;
+
                         // ── EndJob: immediately stop the job ──────────────────────────
                         if (step is EndJobStep)
                         {
@@ -437,6 +445,10 @@ namespace TaskAutomation.Jobs
                 // Nur die von diesem Job-Lauf geöffneten Bildvorschau-Fenster schließen.
                 foreach (var winName in pipelineCtx.OpenedWindowNames)
                     try { _imageDisplayService.CloseWindow(winName); } catch { /* best-effort */ }
+
+                // Desktop-Ergebnis-Overlay leeren (ShowOnDesktopStep).
+                if (job.Steps.OfType<ShowOnDesktopStep>().Any())
+                    try { _desktopResultOverlay.Clear(); } catch { /* best-effort */ }
 
                 if (recorderStarted && pipelineCtx.VideoRecorder != null)
                 {

@@ -108,6 +108,7 @@ namespace DesktopAutomationApp.ViewModels
             KlickOnPoint3DStep_SourceCaptureStep    = AvailableCaptureSteps.FirstOrDefault();
             ShowImageStep_SourceCaptureStep         = AvailableCaptureSteps.FirstOrDefault();
             ShowImageStep_SourceDetectionStep       = AvailableDetectionSteps.FirstOrDefault();
+            ShowOnDesktopStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
             VideoCreationStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
             VideoCreationStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
         }
@@ -170,6 +171,7 @@ namespace DesktopAutomationApp.ViewModels
                     && (AvailableCaptureSteps.Count == 0 || TemplateMatchingStep_SourceCaptureStep != null),
                 "ShowImage" =>
                     !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
+                "ShowOnDesktop" => true,
                 "VideoCreation" =>
                     !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath)
                     && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
@@ -237,6 +239,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird."),
                 new("ShowImage",          "Ausgabe",
                     "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an."),
+                new("ShowOnDesktop",      "Ausgabe",
+                    "Zeichnet das Erkennungsergebnis (BoundingBox + Mittelpunkt + Konfidenz) direkt als transparentes Overlay auf den Desktop."),
                 new("VideoCreation",      "Ausgabe",
                     "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte."),
                 new("MakroExecution",     "Automatisierung",
@@ -284,6 +288,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowDesktopDuplication => SelectedType == "DesktopDuplication";
         //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
+        public bool ShowShowOnDesktop => SelectedType == "ShowOnDesktop";
         public bool ShowVideoCreation => SelectedType == "VideoCreation";
         public bool ShowMakroExecution => SelectedType == "MakroExecution";
         public bool ShowJobExecution => SelectedType == "JobExecution";
@@ -875,6 +880,14 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        // ===== ShowOnDesktop Felder =====
+        private SourceStepItem? _showOnDesktopStep_SourceDetectionStep;
+        public SourceStepItem? ShowOnDesktopStep_SourceDetectionStep
+        {
+            get => _showOnDesktopStep_SourceDetectionStep;
+            set { _showOnDesktopStep_SourceDetectionStep = value; OnChange(); }
+        }
+
         // ===== VideoCreation Felder =====
         private string _videoCreationStep_SavePath = string.Empty;
         public string VideoCreationStep_SavePath { get => _videoCreationStep_SavePath; set { _videoCreationStep_SavePath = value; OnChange(); } }
@@ -1233,6 +1246,13 @@ namespace DesktopAutomationApp.ViewModels
                         ShowProcessedImage = ShowImageStep_ShowProcessedImage,
                         SourceCaptureStepId   = ShowImageStep_SourceCaptureStep?.StepId ?? "",
                         SourceDetectionStepId = ShowImageStep_SourceDetectionStep?.StepId ?? ""
+                    }
+                },
+                "ShowOnDesktop" => new ShowOnDesktopStep
+                {
+                    Settings = new ShowOnDesktopSettings
+                    {
+                        SourceDetectionStepId = ShowOnDesktopStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
                 "VideoCreation" => new VideoCreationStep
