@@ -1,5 +1,6 @@
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
+using ImageDetection.Algorithms.KeyPointMatching;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection.YOLO;
 using ImageHelperMethods;
@@ -90,6 +91,7 @@ namespace TaskAutomation.Steps
 
         ProcessDuplicator?   ProcessDuplicator  { get; set; }
         TemplateMatching?    TemplateMatcher    { get; set; }
+        KeyPointMatcher?     KeyPointMatcher    { get; set; }
         StreamVideoRecorder? VideoRecorder      { get; set; }
 
         /// <summary>Timeout-Tracking pro Step-ID (verhindert zu schnelle Wiederholungen).</summary>

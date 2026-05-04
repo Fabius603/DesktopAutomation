@@ -18,6 +18,7 @@
         <conv:StepNumberConverter x:Key="StepNumberConverter"/>
         <conv:SourceStepNameConverter x:Key="SourceStepNameConverter"/>
         <conv:StepConditionDisplayConverter x:Key="StepConditionDisplayConverter"/>
+        <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
 
         <!-- Gemeinsame Parameterzeile -->
         <Style x:Key="ParamText" TargetType="TextBlock">
@@ -35,7 +36,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Template Matching" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -88,7 +89,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Desktop Duplication" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -110,7 +111,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Process Duplication" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -129,7 +130,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Show Image" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -180,7 +181,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Video Creation" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -234,7 +235,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Makro Execution" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -252,7 +253,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Klick auf Punkt" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -289,7 +290,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Klick auf Punkt 3D" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -355,7 +356,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Script Ausführung" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -377,7 +378,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Job Ausführung" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -400,7 +401,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="YOLO Detection" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -449,7 +450,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Timeout" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -468,7 +469,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Prozess prüfen" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -487,7 +488,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Prozess starten" FontWeight="Bold" VerticalAlignment="Top"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
@@ -506,18 +507,77 @@
 
         <!-- ActiveWindowStep -->
         <DataTemplate DataType="{x:Type jobs:ActiveWindowStep}">
-            <TextBlock FontWeight="Bold" Text="Aktives Fenster abfragen"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Prozessname: "/><Run Text="{Binding Settings.ProcessName}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- KeyPointMatchingStep -->
+        <DataTemplate DataType="{x:Type jobs:KeyPointMatchingStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="TemplatePath: "/><Run Text="{Binding Settings.TemplatePath}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Min. Matches: "/><Run Text="{Binding Settings.MinMatchCount}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Lowe's Ratio: "/><Run Text="{Binding Settings.LowesRatioThreshold, StringFormat=F2}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="EnableROI: "/>
+                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="DrawResults: "/>
+                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
         </DataTemplate>
 
         <!-- EndJobStep -->
         <DataTemplate DataType="{x:Type jobs:EndJobStep}">
-            <TextBlock Text="Job beenden" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
         </DataTemplate>
 
         <!-- IfStep -->
         <DataTemplate DataType="{x:Type jobs:IfStep}">
             <StackPanel>
-                <TextBlock Text="If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
                 <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -548,7 +608,7 @@
         <!-- ElseIfStep -->
         <DataTemplate DataType="{x:Type jobs:ElseIfStep}">
             <StackPanel>
-                <TextBlock Text="Else If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
                 <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -578,12 +638,12 @@
 
         <!-- ElseStep -->
         <DataTemplate DataType="{x:Type jobs:ElseStep}">
-            <TextBlock Text="Else" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
         </DataTemplate>
 
         <!-- EndIfStep -->
         <DataTemplate DataType="{x:Type jobs:EndIfStep}">
-            <TextBlock Text="End If" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
         </DataTemplate>
 
     </UserControl.Resources>

@@ -78,6 +78,7 @@ namespace TaskAutomation.Jobs
             { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
             { typeof(StartProcessStep),        new StartProcessStepHandler()        },
             { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
+            { typeof(KeyPointMatchingStep),    new KeyPointMatchingStepHandler()    },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
@@ -453,7 +454,8 @@ namespace TaskAutomation.Jobs
                     catch (Exception ex) { _logger.LogError(ex, "Fehler beim StopRecordingOverlay."); }
                 }
 
-                try { pipelineCtx.VideoRecorder?.Dispose(); } catch { /* best-effort */ }
+                try { pipelineCtx.VideoRecorder?.Dispose();   } catch { /* best-effort */ }
+                try { pipelineCtx.KeyPointMatcher?.Dispose(); } catch { /* best-effort */ }
                 try { pipelineCtx.Dispose(); }                catch { /* best-effort */ }
 
                 await UnloadYoloModelsAsync(job);

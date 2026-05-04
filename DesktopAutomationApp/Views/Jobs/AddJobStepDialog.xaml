@@ -591,9 +591,92 @@
 
                     <!-- ── ActiveWindow ── -->
                     <StackPanel Visibility="{Binding ShowActiveWindow, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Foreground="{StaticResource App.Brush.TextMuted}" FontSize="11"
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Prozessname" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ActiveWindowStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="z. B. notepad oder notepad.exe"/>
+                        </Grid>
+                        <TextBlock Foreground="{StaticResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
                                    TextWrapping="Wrap"
-                                   Text="Dieser Step benötigt keine Konfiguration. Er ermittelt zur Laufzeit Titel und Prozessname des aktiven Vordergrundfensters. Die Werte können in nachfolgenden If-Bedingungen ausgewertet werden."/>
+                                   Text="Ergebnis (Fenster aktiv) kann in If-Bedingungen ausgewertet werden."/>
+                    </StackPanel>
+
+                    <!-- ── KeyPoint Matching ── -->
+                    <StackPanel Visibility="{Binding ShowKeyPointMatching, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Capture-Step" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableCaptureSteps}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedItem="{Binding KeyPointMatchingStep_SourceCaptureStep}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Template-Pfad" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding KeyPointMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
+                                    Command="{Binding BrowseKeyPointMatchingTemplatePathCommand}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Matches" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                                     Text="{Binding KeyPointMatchingStep_MinMatchCount, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Lowe's Ratio (0…1)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                                     Text="{Binding KeyPointMatchingStep_LowesRatioThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                        </Grid>
+                        <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding KeyPointMatchingStep_DrawResults}" Margin="0,0,0,8"/>
+                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding KeyPointMatchingStep_EnableROI}" Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ROI" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
+                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiX}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Y" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
+                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiY}" Margin="0,0,8,0"/>
+                                <TextBlock Text="B" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
+                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiW}" Margin="0,0,8,0"/>
+                                <TextBlock Text="H" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
+                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiH}"/>
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="ROI erfassen" HorizontalAlignment="Left" Padding="10,5"
+                                Style="{StaticResource ButtonSecondary}"
+                                Command="{Binding CaptureKeyPointMatchingRoiCommand}"/>
                     </StackPanel>
 
                     <!-- ── If ── -->

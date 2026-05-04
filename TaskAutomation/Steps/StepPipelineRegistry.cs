@@ -13,10 +13,14 @@ namespace TaskAutomation.Steps
     /// Gibt an, ob das Ergebnis dieses Steps in If-Bedingungen ausgewertet werden kann.
     /// Nur TemplateMatching, YOLO, ActiveProcess und ActiveWindow liefern auswertbare Ergebnisse.
     /// </param>
+    /// <param name="DisplayName">
+    /// Anzeigename des Step-Typs (einzige Quelle für den UI-Namen – wird von Dialog, Karten und Konvertern verwendet).
+    /// </param>
     public sealed record StepPipelineInfo(
         string[] Prerequisites,
         string   Output,
-        bool     IsConditionSource = false);
+        bool     IsConditionSource = false,
+        string   DisplayName       = "");
 
     /// <summary>
     /// Statisches Registry das für jeden bekannten <see cref="JobStep"/>-Typ
@@ -31,76 +35,99 @@ namespace TaskAutomation.Steps
             // ── Erfassung ──────────────────────────────────────────────────────
             [typeof(DesktopDuplicationStep)] = new(
                 Prerequisites: [],
-                Output:        "CaptureResult"),
+                Output:        "CaptureResult",
+                DisplayName:   "Desktop-Duplizierung"),
 
             [typeof(ProcessDuplicationStep)] = new(
                 Prerequisites: [],
-                Output:        "CaptureResult"),
+                Output:        "CaptureResult",
+                DisplayName:   "Prozess-Fensteraufnahme"),
 
             // ── Erkennung ──────────────────────────────────────────────────────
             [typeof(TemplateMatchingStep)] = new(
                 Prerequisites:     ["CaptureResult"],
                 Output:            "DetectionResult",
-                IsConditionSource: true),
+                IsConditionSource: true,
+                DisplayName:       "Template Matching"),
 
             [typeof(YOLODetectionStep)] = new(
                 Prerequisites:     ["CaptureResult"],
                 Output:            "DetectionResult",
-                IsConditionSource: true),
+                IsConditionSource: true,
+                DisplayName:       "YOLO-Erkennung"),
+
+            [typeof(KeyPointMatchingStep)] = new(
+                Prerequisites:     ["CaptureResult"],
+                Output:            "DetectionResult",
+                IsConditionSource: true,
+                DisplayName:       "KeyPoint Matching"),
 
             // ── Interaktion ────────────────────────────────────────────────────
             [typeof(KlickOnPointStep)] = new(
                 Prerequisites: ["DetectionResult"],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Klick auf Punkt"),
 
             [typeof(KlickOnPoint3DStep)] = new(
                 Prerequisites: ["DetectionResult"],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Klick auf Punkt in 3D-Umgebung"),
 
             // ── Automatisierung ────────────────────────────────────────────────
             [typeof(MakroExecutionStep)] = new(
                 Prerequisites: [],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Makro ausführen"),
 
             [typeof(ScriptExecutionStep)] = new(
                 Prerequisites: [],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Skript ausführen"),
 
             [typeof(JobExecutionStep)] = new(
                 Prerequisites: [],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Job starten"),
 
             [typeof(TimeoutStep)] = new(
                 Prerequisites: [],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Timeout"),
+
             [typeof(ActiveProcessStep)] = new(
                 Prerequisites:     [],
                 Output:            "ActiveProcessResult",
-                IsConditionSource: true),
+                IsConditionSource: true,
+                DisplayName:       "Ist Prozess aktiv"),
 
             [typeof(StartProcessStep)] = new(
                 Prerequisites: [],
-                Output:        "TaskResult"),
+                Output:        "TaskResult",
+                DisplayName:   "Prozess starten"),
 
             [typeof(ActiveWindowStep)] = new(
                 Prerequisites:     [],
                 Output:            "ActiveWindowResult",
-                IsConditionSource: true),
+                IsConditionSource: true,
+                DisplayName:       "Ist Fenster aktiv"),
+
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["CaptureResult"],
-                Output:        "OutputResult"),
+                Output:        "OutputResult",
+                DisplayName:   "Bild anzeigen"),
 
             [typeof(VideoCreationStep)] = new(
                 Prerequisites: ["CaptureResult"],
-                Output:        "OutputResult"),
+                Output:        "OutputResult",
+                DisplayName:   "Video erstellen"),
 
             // ── Ablaufsteuerung ────────────────────────────────────────────────
-            [typeof(IfStep)]     = new(Prerequisites: [], Output: "–"),
-            [typeof(ElseIfStep)] = new(Prerequisites: [], Output: "–"),
-            [typeof(ElseStep)]   = new(Prerequisites: [], Output: "–"),
-            [typeof(EndIfStep)]  = new(Prerequisites: [], Output: "–"),
-            [typeof(EndJobStep)] = new(Prerequisites: [], Output: "–"),
+            [typeof(IfStep)]     = new(Prerequisites: [], Output: "–", DisplayName: "If"),
+            [typeof(ElseIfStep)] = new(Prerequisites: [], Output: "–", DisplayName: "Else If"),
+            [typeof(ElseStep)]   = new(Prerequisites: [], Output: "–", DisplayName: "Else"),
+            [typeof(EndIfStep)]  = new(Prerequisites: [], Output: "–", DisplayName: "End If"),
+            [typeof(EndJobStep)] = new(Prerequisites: [], Output: "–", DisplayName: "Job beenden"),
         };
 
         /// <summary>Gibt die Pipeline-Info für den angegebenen Step-Typ zurück.</summary>
@@ -110,6 +137,19 @@ namespace TaskAutomation.Steps
         /// <summary>Gibt die Pipeline-Info für <typeparamref name="TStep"/> zurück.</summary>
         public static StepPipelineInfo? Get<TStep>() where TStep : JobStep
             => Get(typeof(TStep));
+
+        /// <summary>Gibt den Anzeigenamen für einen Step-Typ zurück (z. B. "Template Matching").</summary>
+        public static string GetDisplayName(Type stepType)
+            => Get(stepType)?.DisplayName ?? stepType.Name;
+
+        /// <summary>Gibt den Anzeigenamen anhand des C#-Klassennamens zurück (z. B. "TemplateMatchingStep").</summary>
+        public static string GetDisplayName(string classTypeName)
+        {
+            foreach (var kvp in _map)
+                if (kvp.Key.Name == classTypeName)
+                    return string.IsNullOrEmpty(kvp.Value.DisplayName) ? classTypeName : kvp.Value.DisplayName;
+            return classTypeName;
+        }
 
         // ── Name-Mapping für ViewModel-Nutzung mit String-Keys ─────────────────
         private static readonly Dictionary<string, Type> _nameMap = new(StringComparer.OrdinalIgnoreCase)
@@ -128,6 +168,7 @@ namespace TaskAutomation.Steps
             ["ActiveProcess"]      = typeof(ActiveProcessStep),
             ["StartProcess"]       = typeof(StartProcessStep),
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
+            ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),

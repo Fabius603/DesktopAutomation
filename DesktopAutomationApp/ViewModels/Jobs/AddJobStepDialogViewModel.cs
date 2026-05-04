@@ -42,6 +42,8 @@ namespace DesktopAutomationApp.ViewModels
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
             BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
             BrowseExecutablePathCommand = new RelayCommand(BrowseExecutablePath);
+            BrowseKeyPointMatchingTemplatePathCommand = new RelayCommand(BrowseKeyPointMatchingTemplatePath);
+            CaptureKeyPointMatchingRoiCommand = new RelayCommand(CaptureKeyPointMatchingRoi);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
@@ -100,6 +102,7 @@ namespace DesktopAutomationApp.ViewModels
             // Source step pre-selection (first available of the right type)
             TemplateMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
             YoloDetectionStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
+            KeyPointMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
             KlickOnPointStep_SourceDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
             KlickOnPoint3DStep_SourceDetectionStep  = AvailableDetectionSteps.FirstOrDefault();
             KlickOnPoint3DStep_SourceCaptureStep    = AvailableCaptureSteps.FirstOrDefault();
@@ -143,6 +146,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseScriptPathCommand { get; }
         public ICommand BrowseVideoSavePathCommand { get; }
         public ICommand BrowseExecutablePathCommand { get; }
+        public ICommand BrowseKeyPointMatchingTemplatePathCommand { get; }
+        public ICommand CaptureKeyPointMatchingRoiCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
@@ -190,7 +195,10 @@ namespace DesktopAutomationApp.ViewModels
                 "Timeout" => TimeoutStep_DelayMs >= 0,
                 "ActiveProcess" => !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
                 "StartProcess"  => !string.IsNullOrWhiteSpace(StartProcessStep_ExecutablePath),
-                "ActiveWindow"  => true,
+                "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName),
+                "KeyPointMatching" =>
+                    !string.IsNullOrWhiteSpace(KeyPointMatchingStep_TemplatePath)
+                    && (AvailableCaptureSteps.Count == 0 || KeyPointMatchingStep_SourceCaptureStep != null),
                 "If"      => true,
                 "ElseIf"  => true,
                 "Else"    => true,
@@ -201,60 +209,63 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ----- Step-Auswahl -----
-        public record StepTypeItem(string Name, string Category, string? Label = null)
+        /// <param name="Description">Text, der im Dialog unterhalb des Typ-Selektors angezeigt wird.</param>
+        public record StepTypeItem(string Name, string Category, string Description = "")
         {
-            public string DisplayLabel => Label ?? Name;
+            /// <summary>Liest den Anzeigenamen ausschließlich aus <see cref="TaskAutomation.Steps.StepPipelineRegistry"/>.</summary>
+            public string DisplayLabel => TaskAutomation.Steps.StepPipelineRegistry.GetByName(Name)?.DisplayName ?? Name;
         }
 
         public ListCollectionView StepTypeItems { get; } = CreateStepTypeItems();
 
+        // Zentrale Definition aller Step-Typen.
+        // Alles, was zu einem Step-Typ gehört (Anzeigename, Kategorie, Beschreibung),
+        // wird hier gepflegt – kein weiteres switch/array nötig.
         private static ListCollectionView CreateStepTypeItems()
         {
             var items = new List<StepTypeItem>
             {
-                new("DesktopDuplication", "Erfassung", "Desktop-Duplizierung"),
-                new("TemplateMatching",   "Erkennung", "Template Matching"),
-                new("YoloDetection",      "Erkennung", "YOLO-Erkennung"),
-                new("KlickOnPoint",       "Interaktion", "Klick auf Punkt"),
-                new("KlickOnPoint3D",     "Interaktion", "Klick auf Punkt in 3D-Umgebung"),
-                new("ShowImage",          "Ausgabe", "Bild anzeigen"),
-                new("VideoCreation",      "Ausgabe", "Video erstellen"),
-                new("MakroExecution",     "Automatisierung", "Makro ausführen"),
-                new("JobExecution",       "Automatisierung", "Job starten"),
-                new("ScriptExecution",    "Automatisierung", "Skript ausführen"),
-                new("Timeout",            "Automatisierung", "Timeout"),
-                new("ActiveProcess",      "Prozessautomatisierung", "Prozess prüfen"),
-                new("StartProcess",       "Prozessautomatisierung", "Prozess starten"),
-                new("ActiveWindow",       "Prozessautomatisierung", "Aktives Fenster abfragen"),
-                new("If",                 "Ablaufsteuerung", "If-Abfrage"),
-                new("EndJob",             "Ablaufsteuerung", "Job beenden"),
+                new("DesktopDuplication", "Erfassung",
+                    "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit."),
+                new("TemplateMatching",   "Erkennung",
+                    "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden."),
+                new("YoloDetection",      "Erkennung",
+                    "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint)."),
+                new("KlickOnPoint",       "Interaktion",
+                    "Klickt auf den zuletzt erkannten Bildpunkt (z. B. Ergebnis eines TemplateMatching- oder YOLO-Steps). Wartet bis zum angegebenen Timeout auf einen Fund."),
+                new("KlickOnPoint3D",     "Interaktion",
+                    "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird."),
+                new("ShowImage",          "Ausgabe",
+                    "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an."),
+                new("VideoCreation",      "Ausgabe",
+                    "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte."),
+                new("MakroExecution",     "Automatisierung",
+                    "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus."),
+                new("JobExecution",       "Automatisierung",
+                    "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird."),
+                new("ScriptExecution",    "Automatisierung",
+                    "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet."),
+                new("Timeout",            "Automatisierung",
+                    "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
+                new("StartProcess",       "Automatisierung",
+                    "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden."),
+                new("ActiveProcess",      "Abfrage",
+                    "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden."),
+                new("ActiveWindow",       "Abfrage",
+                    "Prüft, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist. Das Ergebnis (\"Fenster aktiv\") kann in If-Bedingungen ausgewertet werden."),
+                new("KeyPointMatching",   "Erkennung",
+                    "Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis (\"Gefunden\") kann von einem KlickOnPoint-Step verwendet werden."),
+                new("If",                 "Ablaufsteuerung",
+                    "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist."),
+                new("EndJob",             "Ablaufsteuerung",
+                    "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
             };
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
             return view;
         }
 
-        // kept for CanConfirm switch — still string-based
-        public string[] StepTypes { get; } =
-        {
-            "TemplateMatching",
-            "DesktopDuplication",
-            //"ProcessDuplication",
-            "ShowImage",
-            "VideoCreation",
-            "MakroExecution",
-            "JobExecution",
-            "ScriptExecution",
-            "KlickOnPoint",
-            "KlickOnPoint3D",
-            "YoloDetection",
-            "Timeout"
-        };
-
-        private static string GetFirstStepTypeName() =>
-            CreateStepTypeItems().Cast<StepTypeItem>().First().Name;
-
-        private string _selectedType = GetFirstStepTypeName();
+        private string _selectedType = "DesktopDuplication";
         public string SelectedType
         {
             get => _selectedType;
@@ -262,30 +273,9 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (_selectedType == value) return;
                 _selectedType = value;
-                OnChange();
-                OnChange(nameof(ShowTemplateMatching));
-                OnChange(nameof(ShowDesktopDuplication));
-                //OnChange(nameof(ShowProcessDuplication));
-                OnChange(nameof(ShowShowImage));
-                OnChange(nameof(ShowVideoCreation));
-                OnChange(nameof(ShowMakroExecution));
-                OnChange(nameof(ShowJobExecution));
-                OnChange(nameof(ShowScriptExecution));
-                OnChange(nameof(ShowKlickOnPoint));
-                OnChange(nameof(ShowKlickOnPoint3D));
-                OnChange(nameof(ShowYoloDetection));
-                OnChange(nameof(ShowTimeout));
-                OnChange(nameof(ShowActiveProcess));
-                OnChange(nameof(ShowStartProcess));
-                OnChange(nameof(ShowActiveWindow));
-                OnChange(nameof(ShowIf));
-                OnChange(nameof(ShowElseIf));
-                OnChange(nameof(ShowElse));
-                OnChange(nameof(ShowEndIf));
-                OnChange(nameof(ShowEndJob));
-                OnChange(nameof(StepTypeDescription));
-                OnChange(nameof(StepPrerequisites));
-                OnChange(nameof(StepOutput));
+                // string.Empty = INotifyPropertyChanged-Konvention für "alle Properties neu auswerten".
+                // Deckt alle Show*, StepTypeDescription, StepPrerequisites und StepOutput auf einmal ab.
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -305,35 +295,16 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowActiveProcess => SelectedType == "ActiveProcess";
         public bool ShowStartProcess  => SelectedType == "StartProcess";
         public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
+        public bool ShowKeyPointMatching => SelectedType == "KeyPointMatching";
         public bool ShowIf     => SelectedType == "If";
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
         public bool ShowEndIf  => SelectedType == "EndIf";
         public bool ShowEndJob  => SelectedType == "EndJob";
 
-        public string StepTypeDescription => SelectedType switch
-        {
-            "TemplateMatching"   => "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden.",
-            "DesktopDuplication" => "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit.",
-            "ShowImage"          => "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an.",
-            "VideoCreation"      => "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte.",
-            "MakroExecution"     => "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus.",
-            "JobExecution"       => "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird.",
-            "ScriptExecution"    => "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet.",
-            "KlickOnPoint"       => "Klickt auf den zuletzt erkannten Bildpunkt (z. B. Ergebnis eines TemplateMatching- oder YOLO-Steps). Wartet bis zum angegebenen Timeout auf einen Fund.",
-            "KlickOnPoint3D"     => "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird.",
-            "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
-            "Timeout"            => "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird.",
-            "ActiveProcess"      => "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden.",
-            "StartProcess"       => "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden.",
-            "ActiveWindow"       => "Ermittelt das aktuell aktive Vordergrundfenster und stellt dessen Titel und Prozessnamen für nachfolgende If-Bedingungen bereit.",
-            "If"                 => "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist.",
-            "ElseIf"             => "Alternatives Kriterium innerhalb eines If-Blocks. Wird geprüft, wenn die vorherige Bedingung nicht zutraf.",
-            "Else"               => "Markiert den Fallback-Block eines If-Blocks. Wird ausgeführt, wenn keine vorherige Bedingung zutraf.",
-            "EndIf"              => "Beendet einen If/ElseIf/Else-Block.",
-            "EndJob"             => "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen.",
-            _                    => string.Empty
-        };
+        // Beschreibung kommt direkt aus dem StepTypeItem – kein separates switch mehr nötig.
+        public string StepTypeDescription =>
+            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.Description ?? string.Empty;
 
         /// <summary>Voraussetzung eines Steps mit Information ob sie durch vorherige Steps erfüllt ist.</summary>
         public sealed record PrerequisiteItem(string Name, bool IsSatisfied);
@@ -1079,6 +1050,79 @@ namespace DesktopAutomationApp.ViewModels
             set { _startProcessStep_WaitForExit = value; OnChange(); }
         }
 
+        // ===== ActiveWindow Felder =====
+        private string _activeWindowStep_ProcessName = string.Empty;
+        public string ActiveWindowStep_ProcessName
+        {
+            get => _activeWindowStep_ProcessName;
+            set { _activeWindowStep_ProcessName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        // ===== KeyPointMatching Felder =====
+        private string _keyPointMatchingStep_TemplatePath = string.Empty;
+        public string KeyPointMatchingStep_TemplatePath
+        {
+            get => _keyPointMatchingStep_TemplatePath;
+            set { _keyPointMatchingStep_TemplatePath = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private SourceStepItem? _keyPointMatchingStep_SourceCaptureStep;
+        public SourceStepItem? KeyPointMatchingStep_SourceCaptureStep
+        {
+            get => _keyPointMatchingStep_SourceCaptureStep;
+            set { _keyPointMatchingStep_SourceCaptureStep = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _keyPointMatchingStep_MinMatchCount = 10;
+        public int KeyPointMatchingStep_MinMatchCount { get => _keyPointMatchingStep_MinMatchCount; set { _keyPointMatchingStep_MinMatchCount = value; OnChange(); } }
+
+        private double _keyPointMatchingStep_LowesRatioThreshold = 0.75;
+        public double KeyPointMatchingStep_LowesRatioThreshold { get => _keyPointMatchingStep_LowesRatioThreshold; set { _keyPointMatchingStep_LowesRatioThreshold = value; OnChange(); } }
+
+        private bool _keyPointMatchingStep_DrawResults = true;
+        public bool KeyPointMatchingStep_DrawResults { get => _keyPointMatchingStep_DrawResults; set { _keyPointMatchingStep_DrawResults = value; OnChange(); } }
+
+        private bool _keyPointMatchingStep_EnableROI;
+        public bool KeyPointMatchingStep_EnableROI { get => _keyPointMatchingStep_EnableROI; set { _keyPointMatchingStep_EnableROI = value; OnChange(); } }
+
+        private int _keyPointMatchingStep_RoiX, _keyPointMatchingStep_RoiY, _keyPointMatchingStep_RoiW, _keyPointMatchingStep_RoiH;
+        public int KeyPointMatchingStep_RoiX { get => _keyPointMatchingStep_RoiX; set { _keyPointMatchingStep_RoiX = value; OnChange(); } }
+        public int KeyPointMatchingStep_RoiY { get => _keyPointMatchingStep_RoiY; set { _keyPointMatchingStep_RoiY = value; OnChange(); } }
+        public int KeyPointMatchingStep_RoiW { get => _keyPointMatchingStep_RoiW; set { _keyPointMatchingStep_RoiW = value; OnChange(); } }
+        public int KeyPointMatchingStep_RoiH { get => _keyPointMatchingStep_RoiH; set { _keyPointMatchingStep_RoiH = value; OnChange(); } }
+
+        private void BrowseKeyPointMatchingTemplatePath()
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Template-Datei auswählen",
+                Filter = "Bilder (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|Alle Dateien (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+            if (ofd.ShowDialog() == true)
+                KeyPointMatchingStep_TemplatePath = ofd.FileName;
+        }
+
+        private async void CaptureKeyPointMatchingRoi()
+        {
+            try
+            {
+                var roiOverlay = new DesktopOverlay.RoiCaptureOverlay();
+                var rect = await roiOverlay.CaptureRoiAsync();
+                KeyPointMatchingStep_RoiX = rect.X;
+                KeyPointMatchingStep_RoiY = rect.Y;
+                KeyPointMatchingStep_RoiW = rect.Width;
+                KeyPointMatchingStep_RoiH = rect.Height;
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
         // ===== If / ElseIf Felder =====
 
         // ── MatchMode ──
@@ -1119,32 +1163,32 @@ namespace DesktopAutomationApp.ViewModels
         public System.Collections.ObjectModel.ObservableCollection<ConditionRowViewModel> ElseIfStep_Conditions { get; } = new();
 
         // ── Load from existing settings (called from Prefill) ──
+        private void LoadConditionRows(
+            ObservableCollection<ConditionRowViewModel> collection,
+            TaskAutomation.Jobs.IfConditionSettings settings)
+        {
+            collection.Clear();
+            var sources = GetConditionSourceSteps();
+            foreach (var c in settings.Conditions)
+            {
+                var row = new ConditionRowViewModel(collection, sources);
+                row.LoadFrom(c);
+                collection.Add(row);
+            }
+            if (collection.Count == 0)
+                collection.Add(new ConditionRowViewModel(collection, sources));
+        }
+
         public void LoadIfStepConditions(TaskAutomation.Jobs.IfConditionSettings settings)
         {
             IfStep_MatchMode = settings.MatchMode;
-            IfStep_Conditions.Clear();
-            foreach (var c in settings.Conditions)
-            {
-                var row = new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps());
-                row.LoadFrom(c);
-                IfStep_Conditions.Add(row);
-            }
-            if (IfStep_Conditions.Count == 0)
-                IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps()));
+            LoadConditionRows(IfStep_Conditions, settings);
         }
 
         public void LoadElseIfStepConditions(TaskAutomation.Jobs.IfConditionSettings settings)
         {
             ElseIfStep_MatchMode = settings.MatchMode;
-            ElseIfStep_Conditions.Clear();
-            foreach (var c in settings.Conditions)
-            {
-                var row = new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps());
-                row.LoadFrom(c);
-                ElseIfStep_Conditions.Add(row);
-            }
-            if (ElseIfStep_Conditions.Count == 0)
-                ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps()));
+            LoadConditionRows(ElseIfStep_Conditions, settings);
         }
 
         // ===== Fabrik =====
@@ -1290,7 +1334,26 @@ namespace DesktopAutomationApp.ViewModels
                         WaitForExit    = StartProcessStep_WaitForExit
                     }
                 },
-                "ActiveWindow" => new ActiveWindowStep(),
+                "ActiveWindow" => new ActiveWindowStep
+                {
+                    Settings = new ActiveWindowSettings
+                    {
+                        ProcessName = ActiveWindowStep_ProcessName
+                    }
+                },
+                "KeyPointMatching" => new KeyPointMatchingStep
+                {
+                    Settings = new KeyPointMatchingSettings
+                    {
+                        TemplatePath        = KeyPointMatchingStep_TemplatePath,
+                        MinMatchCount       = KeyPointMatchingStep_MinMatchCount,
+                        LowesRatioThreshold = KeyPointMatchingStep_LowesRatioThreshold,
+                        DrawResults         = KeyPointMatchingStep_DrawResults,
+                        EnableROI           = KeyPointMatchingStep_EnableROI,
+                        ROI                 = new Rect(KeyPointMatchingStep_RoiX, KeyPointMatchingStep_RoiY, KeyPointMatchingStep_RoiW, KeyPointMatchingStep_RoiH),
+                        SourceCaptureStepId = KeyPointMatchingStep_SourceCaptureStep?.StepId ?? ""
+                    }
+                },
                 "If" => new TaskAutomation.Jobs.IfStep
                 {
                     Settings = new TaskAutomation.Jobs.IfConditionSettings

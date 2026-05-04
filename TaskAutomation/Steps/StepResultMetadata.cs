@@ -54,9 +54,14 @@ namespace TaskAutomation.Steps
             ["StartProcessStep"]       = BoolSuccess,
             ["ActiveWindowStep"]       =
             [
-                new("WindowTitle",  "Fenstertitel",       ResultPropertyType.String),
-                new("ProcessName",  "Prozessname",        ResultPropertyType.String),
+                new("IsActive",     "Fenster aktiv",      ResultPropertyType.Bool),
                 new("WasExecuted",  "Wurde ausgeführt",   ResultPropertyType.Bool),
+            ],
+            ["KeyPointMatchingStep"]   =
+            [
+                new("Found",       "Gefunden",         ResultPropertyType.Bool),
+                new("Confidence",  "Confidence",       ResultPropertyType.Double),
+                new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
             ],
             ["ShowImageStep"]          =
             [
@@ -70,22 +75,7 @@ namespace TaskAutomation.Steps
             ],
         };
 
-        private static readonly Dictionary<string, string> FriendlyNames = new()
-        {
-            ["TemplateMatchingStep"]   = "Template Matching",
-            ["YOLODetectionStep"]      = "YOLO Detection",
-            ["DesktopDuplicationStep"] = "Desktop Duplication",
-            ["MakroExecutionStep"]     = "Makro",
-            ["ScriptExecutionStep"]    = "Skript",
-            ["JobExecutionStep"]       = "Job",
-            ["KlickOnPointStep"]       = "Klick auf Punkt",
-            ["KlickOnPoint3DStep"]     = "Klick auf 3D-Punkt",
-            ["ActiveProcessStep"]      = "Prozess prüfen",
-            ["StartProcessStep"]       = "Prozess starten",
-            ["ActiveWindowStep"]       = "Aktives Fenster",
-            ["ShowImageStep"]          = "Bild anzeigen",
-            ["VideoCreationStep"]      = "Video erstellen",
-        };
+
 
         public static readonly IReadOnlyList<ResultTypeDescriptor> ResultTypes = new[]
         {
@@ -117,9 +107,8 @@ namespace TaskAutomation.Steps
             ]),
             new ResultTypeDescriptor("ActiveWindowResult", "ActiveWindowResult",
             [
-                new ResultPropertyDescriptor("WindowTitle",  "Fenstertitel",      ResultPropertyType.String),
-                new ResultPropertyDescriptor("ProcessName",  "Prozessname",       ResultPropertyType.String),
-                new ResultPropertyDescriptor("WasExecuted",  "Wurde ausgeführt",  ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("IsActive",    "Fenster aktiv",     ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt",  ResultPropertyType.Bool),
             ]),
         };
 
@@ -136,7 +125,8 @@ namespace TaskAutomation.Steps
         public static bool HasResult(string stepTypeName)
             => Properties.ContainsKey(stepTypeName);
 
+        /// <summary>Liefert den Anzeigenamen eines Step-Typs. Delegiert an <see cref="StepPipelineRegistry"/> – einzige Quelle.</summary>
         public static string GetFriendlyName(string stepTypeName)
-            => FriendlyNames.TryGetValue(stepTypeName, out var n) ? n : stepTypeName;
+            => StepPipelineRegistry.GetDisplayName(stepTypeName);
     }
 }

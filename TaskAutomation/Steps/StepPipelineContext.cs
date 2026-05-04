@@ -1,5 +1,6 @@
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
+using ImageDetection.Algorithms.KeyPointMatching;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection.YOLO;
 using ImageHelperMethods;
@@ -46,6 +47,7 @@ namespace TaskAutomation.Steps
         public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
         public ProcessDuplicator?   ProcessDuplicator  { get; set; }
         public TemplateMatching?    TemplateMatcher    { get; set; }
+        public KeyPointMatcher?     KeyPointMatcher    { get; set; }
         public StreamVideoRecorder? VideoRecorder      { get; set; }
 
         public Dictionary<string, DateTime> StepTimeouts { get; } =

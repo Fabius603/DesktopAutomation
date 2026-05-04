@@ -26,7 +26,8 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
-    [JsonDerivedType(typeof(ActiveWindowStep),  "active_window")]
+    [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
+    [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
     public abstract class JobStep
     {
         [JsonPropertyName("id")]
@@ -404,6 +405,49 @@ namespace TaskAutomation.Jobs
     }
 
     // ---- ActiveWindow ----
-    /// <summary>Ermittelt das aktuell aktive (Vordergrund-)Fenster und dessen Prozessname.</summary>
-    public sealed class ActiveWindowStep : JobStep { }
+    /// <summary>Prüft, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist.</summary>
+    public sealed class ActiveWindowStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ActiveWindowSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ActiveWindowSettings
+    {
+        [JsonPropertyName("process_name")]
+        public string ProcessName { get; set; } = string.Empty;
+    }
+
+    // ---- KeyPointMatching ----
+    /// <summary>Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step.</summary>
+    public sealed class KeyPointMatchingStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public KeyPointMatchingSettings Settings { get; set; } = new();
+    }
+
+    public sealed class KeyPointMatchingSettings
+    {
+        [JsonPropertyName("template_path")]
+        public string TemplatePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("min_match_count")]
+        public int MinMatchCount { get; set; } = 10;
+
+        [JsonPropertyName("lowes_ratio_threshold")]
+        public double LowesRatioThreshold { get; set; } = 0.75;
+
+        [JsonPropertyName("draw_results")]
+        public bool DrawResults { get; set; } = true;
+
+        [JsonPropertyName("enable_roi")]
+        public bool EnableROI { get; set; } = false;
+
+        [JsonPropertyName("roi")]
+        [JsonConverter(typeof(OpenCvRectJsonConverter))]
+        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = string.Empty;
+    }
 }

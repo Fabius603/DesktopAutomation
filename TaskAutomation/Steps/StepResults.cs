@@ -77,12 +77,11 @@ namespace TaskAutomation.Steps
 
     /// <summary>
     /// Ergebnis von ActiveWindowStep.
-    /// Enthält Titel und Prozessname des aktuell aktiven Vordergrundfensters.
+    /// Gibt an, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist.
     /// </summary>
     public sealed record ActiveWindowResult : StepResultBase
     {
-        public string WindowTitle  { get; init; } = string.Empty;
-        public string ProcessName  { get; init; } = string.Empty;
+        public bool IsActive { get; init; }
 
         public static readonly ActiveWindowResult Default = new() { WasExecuted = false };
     }

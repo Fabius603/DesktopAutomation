@@ -385,8 +385,23 @@ namespace DesktopAutomationApp.ViewModels
                     vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
                     break;
 
-                case ActiveWindowStep:
+                case ActiveWindowStep aw:
                     vm.SelectedType = "ActiveWindow";
+                    vm.ActiveWindowStep_ProcessName = aw.Settings.ProcessName;
+                    break;
+
+                case KeyPointMatchingStep km:
+                    vm.SelectedType = "KeyPointMatching";
+                    vm.KeyPointMatchingStep_TemplatePath        = km.Settings.TemplatePath;
+                    vm.KeyPointMatchingStep_MinMatchCount       = km.Settings.MinMatchCount;
+                    vm.KeyPointMatchingStep_LowesRatioThreshold = km.Settings.LowesRatioThreshold;
+                    vm.KeyPointMatchingStep_DrawResults         = km.Settings.DrawResults;
+                    vm.KeyPointMatchingStep_EnableROI           = km.Settings.EnableROI;
+                    vm.KeyPointMatchingStep_RoiX = km.Settings.ROI.X;
+                    vm.KeyPointMatchingStep_RoiY = km.Settings.ROI.Y;
+                    vm.KeyPointMatchingStep_RoiW = km.Settings.ROI.Width;
+                    vm.KeyPointMatchingStep_RoiH = km.Settings.ROI.Height;
+                    vm.KeyPointMatchingStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == km.Settings.SourceCaptureStepId);
                     break;
 
                 case TaskAutomation.Jobs.IfStep ifs:
