@@ -38,7 +38,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _brush == null) return;
 
             var p = Map(_gx, _gy); // global → lokal
             double phase = (System.DateTime.UtcNow.Ticks % 300_0000) / 300_0000.0; // ~300 ms
@@ -48,6 +48,6 @@ namespace DesktopOverlay.OverlayItems
             gfx.DrawCircle(_brush, p.x, p.y, r, w);
         }
 
-        public override void Dispose() => _brush?.Dispose();
+        public override void Dispose() { _brush?.Dispose(); _brush = null; }
     }
 }

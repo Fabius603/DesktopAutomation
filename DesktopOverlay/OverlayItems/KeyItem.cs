@@ -59,7 +59,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _bg == null || _font == null) return;
 
             // Position in LOCAL berechnen
             var p = Map(_gx, _gy);
@@ -83,9 +83,9 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Dispose()
         {
-            _bg?.Dispose();
-            _fg?.Dispose();
-            _font?.Dispose();
+            _bg?.Dispose(); _bg = null;
+            _fg?.Dispose(); _fg = null;
+            _font?.Dispose(); _font = null;
         }
     }
 }

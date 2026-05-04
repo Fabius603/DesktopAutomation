@@ -38,7 +38,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _fillBrush == null) return;
 
             var p1 = Map(_gLeft, _gTop);
             var p2 = Map(_gRight, _gBottom);
@@ -55,7 +55,8 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Dispose()
         {
-            _fillBrush?.Dispose(); _strokeBrush?.Dispose();
+            _fillBrush?.Dispose(); _fillBrush = null;
+            _strokeBrush?.Dispose(); _strokeBrush = null;
         }
     }
 }

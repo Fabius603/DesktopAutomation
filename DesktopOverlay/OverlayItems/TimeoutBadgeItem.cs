@@ -39,7 +39,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _bg == null || _font == null) return;
 
             var p = Map(_gx, _gy);
             string text = $"+{_ms} ms";
@@ -51,6 +51,6 @@ namespace DesktopOverlay.OverlayItems
             gfx.DrawText(_font, _fg, p.x - size.X / 2, p.y - h + pad - 20, text);
         }
 
-        public override void Dispose() { _bg?.Dispose(); _fg?.Dispose(); _font?.Dispose(); }
+        public override void Dispose() { _bg?.Dispose(); _bg = null; _fg?.Dispose(); _fg = null; _font?.Dispose(); _font = null; }
     }
 }

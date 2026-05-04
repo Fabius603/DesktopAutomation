@@ -36,7 +36,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible || _ptsGlobal.Count < 2) return;
+            if (!Visible || _ptsGlobal.Count < 2 || _brush == null) return;
 
             // Lokale Punkte „on the fly“ mappen
             (float x, float y) P(int i) => Map(_ptsGlobal[i].x, _ptsGlobal[i].y);
@@ -89,6 +89,6 @@ namespace DesktopOverlay.OverlayItems
             }
         }
 
-        public override void Dispose() => _brush?.Dispose();
+        public override void Dispose() { _brush?.Dispose(); _brush = null; }
     }
 }

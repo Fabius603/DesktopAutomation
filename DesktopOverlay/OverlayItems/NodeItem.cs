@@ -45,7 +45,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _fillBrush == null) return;
 
             var p = Map(_gx, _gy); // global → lokal
             gfx.FillCircle(_fillBrush, p.x, p.y, _radius);
@@ -57,7 +57,10 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Dispose()
         {
-            _fillBrush?.Dispose(); _strokeBrush?.Dispose(); _textBrush?.Dispose(); _font?.Dispose();
+            _fillBrush?.Dispose(); _fillBrush = null;
+            _strokeBrush?.Dispose(); _strokeBrush = null;
+            _textBrush?.Dispose(); _textBrush = null;
+            _font?.Dispose(); _font = null;
         }
     }
 }

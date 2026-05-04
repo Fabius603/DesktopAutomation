@@ -59,10 +59,10 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Draw(Graphics gfx)
         {
-            if (!Visible) return;
+            if (!Visible || _brush == null) return;
             gfx.FillCircle(_brush, _cx, _cy, _radius);
         }
 
-        public override void Dispose() => _brush?.Dispose();
+        public override void Dispose() { _brush?.Dispose(); _brush = null; }
     }
 }

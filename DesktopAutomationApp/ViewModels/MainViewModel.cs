@@ -92,10 +92,28 @@ namespace DesktopAutomationApp.ViewModels
             get => _currentContent;
             set
             {
+                var old = _currentContent;
                 SetProperty(ref _currentContent, value);
                 CurrentContentName = value?.GetType().Name ?? "—";
+                if (old is IDisposable disposable
+                    && !ReferenceEquals(old, value)
+                    && !IsPersistedViewModel(old))
+                {
+                    // Defer disposal so WPF can fully detach the old view before cleanup runs.
+                    Application.Current?.Dispatcher?.BeginInvoke(
+                        System.Windows.Threading.DispatcherPriority.Background,
+                        new Action(() => disposable.Dispose()));
+                }
             }
         }
+
+        /// <summary>Returns true for singleton VMs that are kept alive across navigations.</summary>
+        private bool IsPersistedViewModel(object vm)
+            => ReferenceEquals(vm, _start)
+            || ReferenceEquals(vm, _listMakros)
+            || ReferenceEquals(vm, _listJobs)
+            || ReferenceEquals(vm, _listHotkeys)
+            || ReferenceEquals(vm, _yoloDownloads);
 
         public string CurrentContentName
         {

@@ -22,6 +22,7 @@ namespace DesktopOverlay
     {
         private readonly GraphicsWindow _window;
         private readonly ConcurrentDictionary<string, IOverlayItem> _items = new();
+        private readonly object _drawLock = new();
         private SolidBrush _backgroundBrush;
         public IntPtr WindowHandle => _window.Handle;
         private GameOverlay.Drawing.Graphics _gfxContext;
@@ -82,8 +83,11 @@ namespace DesktopOverlay
 
         public void ClearItems()
         {
-            foreach (var i in _items.Values) i.Dispose();
-            _items.Clear();
+            lock (_drawLock)
+            {
+                foreach (var i in _items.Values) i.Dispose();
+                _items.Clear();
+            }
         }
 
         public void AddItems(IEnumerable<IOverlayItem> items)
@@ -130,22 +134,25 @@ namespace DesktopOverlay
             // transparente Szene
             gfx.ClearScene(_backgroundBrush);
 
-            if (_playbackRunning)
+            lock (_drawLock)
             {
-                double now = _clock.Elapsed.TotalSeconds;
-                double dt = now - _lastSeconds;
-                _lastSeconds = now;
-                _playbackTime += dt * System.Math.Max(0.0, PlaybackSpeed);
+                if (_playbackRunning)
+                {
+                    double now = _clock.Elapsed.TotalSeconds;
+                    double dt = now - _lastSeconds;
+                    _lastSeconds = now;
+                    _playbackTime += dt * System.Math.Max(0.0, PlaybackSpeed);
 
+                    foreach (var item in _items.Values)
+                        if (item is ITimedOverlayItem timed)
+                            timed.Update(_playbackTime);
+                }
+
+                // Alle Items zeichnen
                 foreach (var item in _items.Values)
-                    if (item is ITimedOverlayItem timed)
-                        timed.Update(_playbackTime);
+                    if (item.Visible)
+                        item.Draw(gfx);
             }
-
-            // Alle Items zeichnen
-            foreach (var item in _items.Values)
-                if (item.Visible)
-                    item.Draw(gfx);
         }
 
         private void OnDestroy(object sender, DestroyGraphicsEventArgs e)

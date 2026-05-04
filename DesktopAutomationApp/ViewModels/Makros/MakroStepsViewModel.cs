@@ -598,7 +598,8 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Preview ----------
-        private bool CanPreview() => Steps.Count > 0;
+        private bool _previewBusy;
+        private bool CanPreview() => Steps.Count > 0 && !_previewBusy;
 
         private void EnsureOverlay()
         {
@@ -616,24 +617,37 @@ namespace DesktopAutomationApp.ViewModels
             _lastPreview = _preview.Build(tempMakro, v, v);
         }
 
-        private void ShowOverview()
+        private async void ShowOverview()
         {
+            if (_previewBusy) return;
+            _previewBusy = true;
+            InvalidateAllCommands();
+            StopPreview();
+            await System.Threading.Tasks.Task.Delay(100);
             EnsureOverlay();
             BuildPreview();
-            _overlay.StopPlayback();
-            _overlay.ClearItems();
             _overlay.AddItems(_lastPreview.StaticItems);
+            await System.Threading.Tasks.Task.Delay(400);
+            _previewBusy = false;
+            InvalidateAllCommands();
         }
 
-        private void ShowPlayback(double speed = 1.0)
+        private async void ShowPlayback(double speed = 1.0)
         {
+            if (_previewBusy) return;
+            _previewBusy = true;
+            InvalidateAllCommands();
+            StopPreview();
+            await System.Threading.Tasks.Task.Delay(100);
             EnsureOverlay();
             BuildPreview();
-            _overlay.ClearItems();
             _overlay.AddItems(_lastPreview.StaticItems);
             _overlay.AddItems(_lastPreview.TimedItems);
             _overlay.PlaybackSpeed = speed;
             _overlay.StartPlayback(0.0);
+            await System.Threading.Tasks.Task.Delay(400);
+            _previewBusy = false;
+            InvalidateAllCommands();
         }
 
         private void StopPreview()
@@ -641,6 +655,9 @@ namespace DesktopAutomationApp.ViewModels
             if (_overlay == null) return;
             _overlay.StopPlayback();
             _overlay.ClearItems();
+            _overlay.Dispose();
+            _overlay = null;
+            InvalidateAllCommands();
         }
 
         public new void Dispose()
