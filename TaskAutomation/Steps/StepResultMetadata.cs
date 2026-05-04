@@ -46,6 +46,18 @@ namespace TaskAutomation.Steps
             ["JobExecutionStep"]       = BoolSuccess,
             ["KlickOnPointStep"]       = BoolSuccess,
             ["KlickOnPoint3DStep"]     = BoolSuccess,
+            ["ActiveProcessStep"]      =
+            [
+                new("IsRunning",    "Prozess läuft",       ResultPropertyType.Bool),
+                new("WasExecuted",  "Wurde ausgeführt",   ResultPropertyType.Bool),
+            ],
+            ["StartProcessStep"]       = BoolSuccess,
+            ["ActiveWindowStep"]       =
+            [
+                new("WindowTitle",  "Fenstertitel",       ResultPropertyType.String),
+                new("ProcessName",  "Prozessname",        ResultPropertyType.String),
+                new("WasExecuted",  "Wurde ausgeführt",   ResultPropertyType.Bool),
+            ],
             ["ShowImageStep"]          =
             [
                 new("Success",     "Erfolgreich",      ResultPropertyType.Bool),
@@ -68,6 +80,9 @@ namespace TaskAutomation.Steps
             ["JobExecutionStep"]       = "Job",
             ["KlickOnPointStep"]       = "Klick auf Punkt",
             ["KlickOnPoint3DStep"]     = "Klick auf 3D-Punkt",
+            ["ActiveProcessStep"]      = "Prozess prüfen",
+            ["StartProcessStep"]       = "Prozess starten",
+            ["ActiveWindowStep"]       = "Aktives Fenster",
             ["ShowImageStep"]          = "Bild anzeigen",
             ["VideoCreationStep"]      = "Video erstellen",
         };
@@ -94,6 +109,17 @@ namespace TaskAutomation.Steps
             [
                 new ResultPropertyDescriptor("Success",     "Erfolgreich",      ResultPropertyType.Bool),
                 new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
+            ]),
+            new ResultTypeDescriptor("ActiveProcessResult", "ActiveProcessResult",
+            [
+                new ResultPropertyDescriptor("IsRunning",    "Prozess läuft",      ResultPropertyType.Bool),
+                new ResultPropertyDescriptor("WasExecuted",  "Wurde ausgeführt",  ResultPropertyType.Bool),
+            ]),
+            new ResultTypeDescriptor("ActiveWindowResult", "ActiveWindowResult",
+            [
+                new ResultPropertyDescriptor("WindowTitle",  "Fenstertitel",      ResultPropertyType.String),
+                new ResultPropertyDescriptor("ProcessName",  "Prozessname",       ResultPropertyType.String),
+                new ResultPropertyDescriptor("WasExecuted",  "Wurde ausgeführt",  ResultPropertyType.Bool),
             ]),
         };
 

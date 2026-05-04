@@ -9,9 +9,14 @@ namespace TaskAutomation.Steps
     /// Beschreibt Voraussetzungen (Eingaben) und Ausgabe eines Step-Typs
     /// in der Ausführungs-Pipeline.
     /// </summary>
+    /// <param name="IsConditionSource">
+    /// Gibt an, ob das Ergebnis dieses Steps in If-Bedingungen ausgewertet werden kann.
+    /// Nur TemplateMatching, YOLO, ActiveProcess und ActiveWindow liefern auswertbare Ergebnisse.
+    /// </param>
     public sealed record StepPipelineInfo(
         string[] Prerequisites,
-        string   Output);
+        string   Output,
+        bool     IsConditionSource = false);
 
     /// <summary>
     /// Statisches Registry das für jeden bekannten <see cref="JobStep"/>-Typ
@@ -34,12 +39,14 @@ namespace TaskAutomation.Steps
 
             // ── Erkennung ──────────────────────────────────────────────────────
             [typeof(TemplateMatchingStep)] = new(
-                Prerequisites: ["CaptureResult"],
-                Output:        "DetectionResult"),
+                Prerequisites:     ["CaptureResult"],
+                Output:            "DetectionResult",
+                IsConditionSource: true),
 
             [typeof(YOLODetectionStep)] = new(
-                Prerequisites: ["CaptureResult"],
-                Output:        "DetectionResult"),
+                Prerequisites:     ["CaptureResult"],
+                Output:            "DetectionResult",
+                IsConditionSource: true),
 
             // ── Interaktion ────────────────────────────────────────────────────
             [typeof(KlickOnPointStep)] = new(
@@ -66,7 +73,19 @@ namespace TaskAutomation.Steps
             [typeof(TimeoutStep)] = new(
                 Prerequisites: [],
                 Output:        "TaskResult"),
+            [typeof(ActiveProcessStep)] = new(
+                Prerequisites:     [],
+                Output:            "ActiveProcessResult",
+                IsConditionSource: true),
 
+            [typeof(StartProcessStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult"),
+
+            [typeof(ActiveWindowStep)] = new(
+                Prerequisites:     [],
+                Output:            "ActiveWindowResult",
+                IsConditionSource: true),
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["CaptureResult"],
@@ -106,6 +125,9 @@ namespace TaskAutomation.Steps
             ["JobExecution"]       = typeof(JobExecutionStep),
             ["ScriptExecution"]    = typeof(ScriptExecutionStep),
             ["Timeout"]            = typeof(TimeoutStep),
+            ["ActiveProcess"]      = typeof(ActiveProcessStep),
+            ["StartProcess"]       = typeof(StartProcessStep),
+            ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),

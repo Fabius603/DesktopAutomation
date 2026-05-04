@@ -63,4 +63,27 @@ namespace TaskAutomation.Steps
 
         public static readonly OutputResult Default = new() { WasExecuted = false };
     }
+
+    /// <summary>
+    /// Ergebnis von ActiveProcessStep.
+    /// Gibt an, ob der abgefragte Prozess aktuell läuft.
+    /// </summary>
+    public sealed record ActiveProcessResult : StepResultBase
+    {
+        public bool IsRunning { get; init; }
+
+        public static readonly ActiveProcessResult Default = new() { WasExecuted = false };
+    }
+
+    /// <summary>
+    /// Ergebnis von ActiveWindowStep.
+    /// Enthält Titel und Prozessname des aktuell aktiven Vordergrundfensters.
+    /// </summary>
+    public sealed record ActiveWindowResult : StepResultBase
+    {
+        public string WindowTitle  { get; init; } = string.Empty;
+        public string ProcessName  { get; init; } = string.Empty;
+
+        public static readonly ActiveWindowResult Default = new() { WasExecuted = false };
+    }
 }

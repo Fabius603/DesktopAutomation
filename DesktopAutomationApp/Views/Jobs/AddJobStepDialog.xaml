@@ -539,6 +539,63 @@
                         </Grid>
                     </StackPanel>
 
+                    <!-- ── ActiveProcess ── -->
+                    <StackPanel Visibility="{Binding ShowActiveProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Prozessname" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ActiveProcessStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="z. B. notepad oder notepad.exe"/>
+                        </Grid>
+                        <TextBlock Foreground="{StaticResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
+                                   TextWrapping="Wrap"
+                                   Text="Ergebnis (Erfolgreich = Prozess läuft) kann in If-Bedingungen ausgewertet werden."/>
+                    </StackPanel>
+
+                    <!-- ── StartProcess ── -->
+                    <StackPanel Visibility="{Binding ShowStartProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Pfad / Programm" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding StartProcessStep_ExecutablePath, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="Pfad zur .exe oder Programmname"/>
+                            <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
+                                    Command="{Binding BrowseExecutablePathCommand}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Argumente" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding StartProcessStep_Arguments, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="optional"/>
+                        </Grid>
+                        <CheckBox Content="Auf Beendigung warten"
+                                  IsChecked="{Binding StartProcessStep_WaitForExit}"
+                                  Margin="0,0,0,4"/>
+                    </StackPanel>
+
+                    <!-- ── ActiveWindow ── -->
+                    <StackPanel Visibility="{Binding ShowActiveWindow, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Foreground="{StaticResource App.Brush.TextMuted}" FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Text="Dieser Step benötigt keine Konfiguration. Er ermittelt zur Laufzeit Titel und Prozessname des aktiven Vordergrundfensters. Die Werte können in nachfolgenden If-Bedingungen ausgewertet werden."/>
+                    </StackPanel>
+
                     <!-- ── If ── -->
                     <StackPanel Visibility="{Binding ShowIf, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <!-- MatchMode -->

@@ -75,6 +75,9 @@ namespace TaskAutomation.Jobs
             { typeof(JobExecutionStep),        new JobExecutionStepHandler()        },
             { typeof(YOLODetectionStep),       new YOLOStepHandler()                },
             { typeof(TimeoutStep),             new TimeoutStepHandler()             },
+            { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
+            { typeof(StartProcessStep),        new StartProcessStepHandler()        },
+            { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────

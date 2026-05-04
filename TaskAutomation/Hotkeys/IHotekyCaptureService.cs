@@ -79,5 +79,11 @@ namespace TaskAutomation.Hotkeys
         /// Wird ausgelöst, wenn sich der Pause-Zustand geändert hat.
         /// </summary>
         event Action? PausedChanged;
+
+        /// <summary>
+        /// Wird ausgelöst, wenn F10 global gedrückt wird – unabhängig vom Pause-Zustand.
+        /// Dient als globaler Notfall-Stop für alle laufenden Jobs.
+        /// </summary>
+        event Action? EmergencyStopPressed;
     }
 }

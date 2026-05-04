@@ -373,6 +373,22 @@ namespace DesktopAutomationApp.ViewModels
                     vm.TimeoutStep_DelayMs = to.Settings.DelayMs;
                     break;
 
+                case ActiveProcessStep ap:
+                    vm.SelectedType = "ActiveProcess";
+                    vm.ActiveProcessStep_ProcessName = ap.Settings.ProcessName;
+                    break;
+
+                case StartProcessStep sp:
+                    vm.SelectedType = "StartProcess";
+                    vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
+                    vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
+                    vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
+                    break;
+
+                case ActiveWindowStep:
+                    vm.SelectedType = "ActiveWindow";
+                    break;
+
                 case TaskAutomation.Jobs.IfStep ifs:
                     vm.SelectedType = "If";
                     vm.LoadIfStepConditions(ifs.Settings);

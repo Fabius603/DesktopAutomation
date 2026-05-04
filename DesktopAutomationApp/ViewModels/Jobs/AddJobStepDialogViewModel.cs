@@ -41,6 +41,7 @@ namespace DesktopAutomationApp.ViewModels
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
             BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
+            BrowseExecutablePathCommand = new RelayCommand(BrowseExecutablePath);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
@@ -141,6 +142,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseTemplatePathCommand { get; }
         public ICommand BrowseScriptPathCommand { get; }
         public ICommand BrowseVideoSavePathCommand { get; }
+        public ICommand BrowseExecutablePathCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
@@ -186,6 +188,9 @@ namespace DesktopAutomationApp.ViewModels
                     && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1
                     && (AvailableCaptureSteps.Count == 0 || YoloDetectionStep_SourceCaptureStep != null),
                 "Timeout" => TimeoutStep_DelayMs >= 0,
+                "ActiveProcess" => !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
+                "StartProcess"  => !string.IsNullOrWhiteSpace(StartProcessStep_ExecutablePath),
+                "ActiveWindow"  => true,
                 "If"      => true,
                 "ElseIf"  => true,
                 "Else"    => true,
@@ -218,6 +223,9 @@ namespace DesktopAutomationApp.ViewModels
                 new("JobExecution",       "Automatisierung", "Job starten"),
                 new("ScriptExecution",    "Automatisierung", "Skript ausführen"),
                 new("Timeout",            "Automatisierung", "Timeout"),
+                new("ActiveProcess",      "Prozessautomatisierung", "Prozess prüfen"),
+                new("StartProcess",       "Prozessautomatisierung", "Prozess starten"),
+                new("ActiveWindow",       "Prozessautomatisierung", "Aktives Fenster abfragen"),
                 new("If",                 "Ablaufsteuerung", "If-Abfrage"),
                 new("EndJob",             "Ablaufsteuerung", "Job beenden"),
             };
@@ -267,6 +275,9 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowKlickOnPoint3D));
                 OnChange(nameof(ShowYoloDetection));
                 OnChange(nameof(ShowTimeout));
+                OnChange(nameof(ShowActiveProcess));
+                OnChange(nameof(ShowStartProcess));
+                OnChange(nameof(ShowActiveWindow));
                 OnChange(nameof(ShowIf));
                 OnChange(nameof(ShowElseIf));
                 OnChange(nameof(ShowElse));
@@ -291,6 +302,9 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
         public bool ShowTimeout => SelectedType == "Timeout";
+        public bool ShowActiveProcess => SelectedType == "ActiveProcess";
+        public bool ShowStartProcess  => SelectedType == "StartProcess";
+        public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
         public bool ShowIf     => SelectedType == "If";
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
@@ -310,6 +324,9 @@ namespace DesktopAutomationApp.ViewModels
             "KlickOnPoint3D"     => "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird.",
             "YoloDetection"      => "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint).",
             "Timeout"            => "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird.",
+            "ActiveProcess"      => "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden.",
+            "StartProcess"       => "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden.",
+            "ActiveWindow"       => "Ermittelt das aktuell aktive Vordergrundfenster und stellt dessen Titel und Prozessnamen für nachfolgende If-Bedingungen bereit.",
             "If"                 => "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist.",
             "ElseIf"             => "Alternatives Kriterium innerhalb eines If-Blocks. Wird geprüft, wenn die vorherige Bedingung nicht zutraf.",
             "Else"               => "Markiert den Fallback-Block eines If-Blocks. Wird ausgeführt, wenn keine vorherige Bedingung zutraf.",
@@ -375,7 +392,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var step = _precedingSteps[i];
                 var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
-                if (info is null || info.Output == "–") continue;
+                if (info is null || !info.IsConditionSource) continue;
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
                     .FirstOrDefault(r => r.TypeName == info.Output);
                 if (descriptor is null) continue;
@@ -614,6 +631,22 @@ namespace DesktopAutomationApp.ViewModels
             if (ofd.ShowDialog() == true)
             {
                 ScriptExecutionStep_ScriptPath = ofd.FileName;
+            }
+        }
+
+        private void BrowseExecutablePath()
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Ausführbare Datei auswählen",
+                Filter = "Programme (*.exe;*.bat;*.cmd;*.ps1)|*.exe;*.bat;*.cmd;*.ps1|Alle Dateien (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                StartProcessStep_ExecutablePath = ofd.FileName;
             }
         }
 
@@ -1016,6 +1049,36 @@ namespace DesktopAutomationApp.ViewModels
         private int _timeoutStep_DelayMs = 1000;
         public int TimeoutStep_DelayMs { get => _timeoutStep_DelayMs; set { _timeoutStep_DelayMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
+        // ===== ActiveProcess Felder =====
+        private string _activeProcessStep_ProcessName = string.Empty;
+        public string ActiveProcessStep_ProcessName
+        {
+            get => _activeProcessStep_ProcessName;
+            set { _activeProcessStep_ProcessName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        // ===== StartProcess Felder =====
+        private string _startProcessStep_ExecutablePath = string.Empty;
+        public string StartProcessStep_ExecutablePath
+        {
+            get => _startProcessStep_ExecutablePath;
+            set { _startProcessStep_ExecutablePath = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private string _startProcessStep_Arguments = string.Empty;
+        public string StartProcessStep_Arguments
+        {
+            get => _startProcessStep_Arguments;
+            set { _startProcessStep_Arguments = value; OnChange(); }
+        }
+
+        private bool _startProcessStep_WaitForExit = false;
+        public bool StartProcessStep_WaitForExit
+        {
+            get => _startProcessStep_WaitForExit;
+            set { _startProcessStep_WaitForExit = value; OnChange(); }
+        }
+
         // ===== If / ElseIf Felder =====
 
         // ── MatchMode ──
@@ -1211,6 +1274,23 @@ namespace DesktopAutomationApp.ViewModels
                         DelayMs = TimeoutStep_DelayMs
                     }
                 },
+                "ActiveProcess" => new ActiveProcessStep
+                {
+                    Settings = new ActiveProcessSettings
+                    {
+                        ProcessName = ActiveProcessStep_ProcessName
+                    }
+                },
+                "StartProcess" => new StartProcessStep
+                {
+                    Settings = new StartProcessSettings
+                    {
+                        ExecutablePath = StartProcessStep_ExecutablePath,
+                        Arguments      = StartProcessStep_Arguments,
+                        WaitForExit    = StartProcessStep_WaitForExit
+                    }
+                },
+                "ActiveWindow" => new ActiveWindowStep(),
                 "If" => new TaskAutomation.Jobs.IfStep
                 {
                     Settings = new TaskAutomation.Jobs.IfConditionSettings

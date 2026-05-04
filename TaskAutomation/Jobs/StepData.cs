@@ -24,6 +24,9 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ElseStep),     "else")]
     [JsonDerivedType(typeof(EndIfStep),    "end_if")]
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
+    [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
+    [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
+    [JsonDerivedType(typeof(ActiveWindowStep),  "active_window")]
     public abstract class JobStep
     {
         [JsonPropertyName("id")]
@@ -365,4 +368,42 @@ namespace TaskAutomation.Jobs
 
     /// <summary>Immediately ends the current job when executed.</summary>
     public sealed class EndJobStep : JobStep { }
+
+    // ---- ActiveProcess ----
+    /// <summary>Prüft, ob ein Prozess mit dem angegebenen Namen aktuell läuft.</summary>
+    public sealed class ActiveProcessStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ActiveProcessSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ActiveProcessSettings
+    {
+        [JsonPropertyName("process_name")]
+        public string ProcessName { get; set; } = string.Empty;
+    }
+
+    // ---- StartProcess ----
+    /// <summary>Startet einen Prozess / ein Programm.</summary>
+    public sealed class StartProcessStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public StartProcessSettings Settings { get; set; } = new();
+    }
+
+    public sealed class StartProcessSettings
+    {
+        [JsonPropertyName("executable_path")]
+        public string ExecutablePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("arguments")]
+        public string Arguments { get; set; } = string.Empty;
+
+        [JsonPropertyName("wait_for_exit")]
+        public bool WaitForExit { get; set; } = false;
+    }
+
+    // ---- ActiveWindow ----
+    /// <summary>Ermittelt das aktuell aktive (Vordergrund-)Fenster und dessen Prozessname.</summary>
+    public sealed class ActiveWindowStep : JobStep { }
 }

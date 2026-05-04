@@ -127,6 +127,10 @@ namespace TaskAutomation.Hotkeys
 
         public event Action? HotkeysChanged;
         public event Action? PausedChanged;
+        public event Action? EmergencyStopPressed;
+
+        // VK_F10 – globaler Notfall-Stop (bypasses Pause-Zustand)
+        private const uint VK_F10 = 0x79;
 
         // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
         private volatile bool _isHotkeyRecording;
@@ -305,6 +309,13 @@ namespace TaskAutomation.Hotkeys
                     case WM_SYSKEYDOWN:
                         if (_downKeys.Add(vk)) // erste Down-Flanke (kein Auto-Repeat)
                         {
+                            // ----- GLOBALER NOTFALL-STOP: F10 immer feuern (bypass Pause) -----
+                            if (vk == VK_F10 && !_isCapturing && !_isHotkeyRecording)
+                            {
+                                _workQueue.Add(() => EmergencyStopPressed?.Invoke());
+                                break;
+                            }
+
                             if (IsModifierVk(vk) && !_isHotkeyRecording)
                                 break;
 

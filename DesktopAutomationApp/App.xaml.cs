@@ -126,6 +126,15 @@ namespace DesktopAutomationApp
             jobExecutor.CancelJobViaDispatcher     = dispatcher.CancelJob;
             jobExecutor.StartJobViaDispatcherAsync = dispatcher.StartJobAsync;
 
+            // F10 global: alle Jobs & Makros stoppen (bypass Pause-Zustand)
+            var hotkeyServiceGlobal = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+            hotkeyServiceGlobal.EmergencyStopPressed += () =>
+            {
+                dispatcher.CancelAllJobs();
+                foreach (var id in dispatcher.RunningMakroIds.ToList())
+                    dispatcher.CancelMakro(id);
+            };
+
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
 

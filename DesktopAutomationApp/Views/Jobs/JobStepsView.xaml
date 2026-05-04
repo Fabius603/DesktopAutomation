@@ -459,6 +459,61 @@
             </Grid>
         </DataTemplate>
 
+        <!-- ActiveProcessStep -->
+        <DataTemplate DataType="{x:Type jobs:ActiveProcessStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Prozess prüfen" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Prozessname: "/><Run Text="{Binding Settings.ProcessName}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- StartProcessStep -->
+        <DataTemplate DataType="{x:Type jobs:StartProcessStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Prozess starten" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Programm: "/><Run Text="{Binding Settings.ExecutablePath}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Argumente: "/><Run Text="{Binding Settings.Arguments}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Auf Beendigung warten: "/>
+                        <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ActiveWindowStep -->
+        <DataTemplate DataType="{x:Type jobs:ActiveWindowStep}">
+            <TextBlock FontWeight="Bold" Text="Aktives Fenster abfragen"/>
+        </DataTemplate>
+
+        <!-- EndJobStep -->
+        <DataTemplate DataType="{x:Type jobs:EndJobStep}">
+            <TextBlock Text="Job beenden" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>
+        </DataTemplate>
+
         <!-- IfStep -->
         <DataTemplate DataType="{x:Type jobs:IfStep}">
             <StackPanel>
