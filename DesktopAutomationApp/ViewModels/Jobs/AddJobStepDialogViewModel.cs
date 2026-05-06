@@ -253,6 +253,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
                 new("StartProcess",       "Automatisierung",
                     "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden."),
+                new("EndJob",             "Automatisierung",
+                    "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
                 new("ActiveProcess",      "Abfrage",
                     "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden."),
                 new("ActiveWindow",       "Abfrage",
@@ -261,8 +263,6 @@ namespace DesktopAutomationApp.ViewModels
                     "Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis (\"Gefunden\") kann von einem KlickOnPoint-Step verwendet werden."),
                 new("If",                 "Ablaufsteuerung",
                     "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist."),
-                new("EndJob",             "Ablaufsteuerung",
-                    "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
             };
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));

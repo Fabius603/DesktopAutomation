@@ -109,7 +109,7 @@ namespace TaskAutomation.Steps
                 Prerequisites:     [],
                 Output:            "ActiveWindowResult",
                 IsConditionSource: true,
-                DisplayName:       "Ist Fenster aktiv"),
+                DisplayName:       "Ist Fenster im Vordergrund"),
 
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
