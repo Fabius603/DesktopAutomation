@@ -47,6 +47,8 @@ namespace TaskAutomation.Steps
                 new("IsRunning", "Prozess läuft", ResultPropertyType.Bool),
             ],
             ["StartProcessStep"]     = BoolSuccess,
+            ["FocusProcessStep"]     = BoolSuccess,
+            ["ShowTextStep"]         = BoolSuccess,
             ["ActiveWindowStep"]     =
             [
                 new("IsActive", "Fenster aktiv", ResultPropertyType.Bool),

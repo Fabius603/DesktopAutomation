@@ -219,15 +219,12 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result == true && vm.CreatedStep != null)
             {
-                // Prevent nesting: IfStep cannot be inserted inside an existing block.
+                // Prevent nesting: IfStep cannot be inside an existing block.
+                // Automatically advance to the next valid (non-nested) position.
                 if (vm.CreatedStep is TaskAutomation.Jobs.IfStep && CountOpenBlocksAt(insertIndex) > 0)
                 {
-                    MessageBox.Show(
-                        "If-Abfragen können nicht verschachtelt werden.",
-                        "Nicht erlaubt",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                    return;
+                    while (insertIndex < _steps.Count && CountOpenBlocksAt(insertIndex) > 0)
+                        insertIndex++;
                 }
 
                 _steps.Insert(insertIndex, vm.CreatedStep);
@@ -340,7 +337,7 @@ namespace DesktopAutomationApp.ViewModels
                 case ScriptExecutionStep se:
                     vm.SelectedType = "ScriptExecution";
                     vm.ScriptExecutionStep_ScriptPath = se.Settings.ScriptPath;
-                    vm.ScriptExecutionStep_FireAndForget = se.Settings.FireAndForget;
+                    vm.ScriptExecutionStep_WaitForExit = se.Settings.WaitForExit;
                     break;
 
                 case KlickOnPointStep kp:
@@ -348,6 +345,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPointStep_ClickType = kp.Settings.ClickType;
                     vm.KlickOnPointStep_DoubleClick = kp.Settings.DoubleClick;
                     vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
+                    vm.KlickOnPointStep_OffsetX = kp.Settings.OffsetX;
+                    vm.KlickOnPointStep_OffsetY = kp.Settings.OffsetY;
                     vm.KlickOnPointStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == kp.Settings.SourceDetectionStepId);
                     break;
 
@@ -403,6 +402,25 @@ namespace DesktopAutomationApp.ViewModels
                     vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
                     vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
                     vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
+                    break;
+
+                case FocusProcessStep fp:
+                    vm.SelectedType = "FocusProcess";
+                    vm.FocusProcessStep_ExecutablePath = fp.Settings.ExecutablePath;
+                    vm.FocusProcessStep_WindowMode     = fp.Settings.WindowMode;
+                    break;
+
+                case ShowTextStep st:
+                    vm.SelectedType               = "ShowText";
+                    vm.ShowTextStep_Text          = st.Settings.Text;
+                    vm.ShowTextStep_FontSize      = st.Settings.FontSize;
+                    vm.ShowTextStep_FontColorWpf  = HexToWpfColor(st.Settings.FontColor);
+                    vm.ShowTextStep_Opacity       = st.Settings.Opacity;
+                    vm.ShowTextStep_DesktopIndex  = st.Settings.DesktopIndex;
+                    vm.ShowTextStep_OffsetX       = st.Settings.OffsetX;
+                    vm.ShowTextStep_OffsetY       = st.Settings.OffsetY;
+                    vm.ShowTextStep_DurationMs    = st.Settings.DurationMs;
+                    vm.ShowTextStep_ClearOnJobEnd = st.Settings.ClearOnJobEnd;
                     break;
 
                 case ActiveWindowStep aw:
@@ -469,6 +487,26 @@ namespace DesktopAutomationApp.ViewModels
             SelectedStep = step;
             HasUnsavedChanges = true;
             InvalidateAllCommands();
+        }
+
+        private static System.Windows.Media.Color HexToWpfColor(string? hex)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(hex))
+                {
+                    var h = hex.TrimStart('#');
+                    if (h.Length == 6)
+                    {
+                        var r = Convert.ToByte(h.Substring(0, 2), 16);
+                        var g = Convert.ToByte(h.Substring(2, 2), 16);
+                        var b = Convert.ToByte(h.Substring(4, 2), 16);
+                        return System.Windows.Media.Color.FromRgb(r, g, b);
+                    }
+                }
+            }
+            catch { }
+            return System.Windows.Media.Colors.White;
         }
 
         private void MoveToIndex(int from, int to)

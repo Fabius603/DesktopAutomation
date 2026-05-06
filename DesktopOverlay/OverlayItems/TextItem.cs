@@ -30,6 +30,7 @@ namespace DesktopOverlay.OverlayItems
 
         public override void Setup(Graphics gfx, bool recreate)
         {
+            base.Setup(gfx, recreate);
             if (recreate) { _font?.Dispose(); _brush?.Dispose(); }
             _font = gfx.CreateFont(_fontName, _fontSize);
             _brush = gfx.CreateSolidBrush(_color.R, _color.G, _color.B, _color.A);
@@ -40,8 +41,13 @@ namespace DesktopOverlay.OverlayItems
             if (!Visible) return;
             if (_font == null || _brush == null) return;
 
-            var p = Map(_gx, _gy); // global → lokal
-            gfx.DrawText(_font, _brush, p.x, p.y, _text);
+            try
+            {
+                var p = Map(_gx, _gy); // global → lokal
+                gfx.DrawText(_font, _brush, p.x, p.y, _text);
+            }
+            catch (SharpDX.SharpDXException) { /* font resource stale, will be recreated on next Setup */ }
+            catch (NullReferenceException)   { /* underlying native resource disposed */ }
         }
 
         public override void Dispose()

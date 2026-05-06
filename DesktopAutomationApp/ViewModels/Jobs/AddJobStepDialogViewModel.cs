@@ -42,9 +42,11 @@ namespace DesktopAutomationApp.ViewModels
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
             BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
             BrowseExecutablePathCommand = new RelayCommand(BrowseExecutablePath);
+            BrowseFocusProcessPathCommand = new RelayCommand(BrowseFocusProcessPath);
             BrowseKeyPointMatchingTemplatePathCommand = new RelayCommand(BrowseKeyPointMatchingTemplatePath);
             CaptureKeyPointMatchingRoiCommand = new RelayCommand(CaptureKeyPointMatchingRoi);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
+            ChooseMonitorForShowTextCommand = new RelayCommand(ChooseMonitorForShowText);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
             IfStep_AddConditionCommand    = new RelayCommand(() =>
@@ -147,9 +149,11 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseScriptPathCommand { get; }
         public ICommand BrowseVideoSavePathCommand { get; }
         public ICommand BrowseExecutablePathCommand { get; }
+        public ICommand BrowseFocusProcessPathCommand { get; }
         public ICommand BrowseKeyPointMatchingTemplatePathCommand { get; }
         public ICommand CaptureKeyPointMatchingRoiCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
+        public ICommand ChooseMonitorForShowTextCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
         public ICommand IfStep_AddConditionCommand { get; }
@@ -197,6 +201,8 @@ namespace DesktopAutomationApp.ViewModels
                 "Timeout" => TimeoutStep_DelayMs >= 0,
                 "ActiveProcess" => !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
                 "StartProcess"  => !string.IsNullOrWhiteSpace(StartProcessStep_ExecutablePath),
+                "FocusProcess"  => !string.IsNullOrWhiteSpace(FocusProcessStep_ExecutablePath),
+                "ShowText"      => !string.IsNullOrWhiteSpace(ShowTextStep_Text),
                 "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName),
                 "KeyPointMatching" =>
                     !string.IsNullOrWhiteSpace(KeyPointMatchingStep_TemplatePath)
@@ -253,6 +259,10 @@ namespace DesktopAutomationApp.ViewModels
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
                 new("StartProcess",       "Automatisierung",
                     "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden."),
+                new("FocusProcess",       "Automatisierung",
+                    "Bringt das Hauptfenster eines bereits laufenden Prozesses in den Vordergrund. Wenn der Prozess nicht gefunden wird, passiert nichts."),
+                new("ShowText",            "Ausgabe",
+                    "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
                 new("EndJob",             "Automatisierung",
                     "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
                 new("ActiveProcess",      "Abfrage",
@@ -299,6 +309,8 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowTimeout => SelectedType == "Timeout";
         public bool ShowActiveProcess => SelectedType == "ActiveProcess";
         public bool ShowStartProcess  => SelectedType == "StartProcess";
+        public bool ShowFocusProcess  => SelectedType == "FocusProcess";
+        public bool ShowShowText       => SelectedType == "ShowText";
         public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
         public bool ShowKeyPointMatching => SelectedType == "KeyPointMatching";
         public bool ShowIf     => SelectedType == "If";
@@ -421,7 +433,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool TemplateMatchingStep_DrawResults { get => _templateMatchingStep_DrawResults; set { _templateMatchingStep_DrawResults = value; OnChange(); } }
 
         private string _scriptExecutionStep_ScriptPath = string.Empty;
-        private bool _scriptExecutionStep_FireAndForget = false;
+        private bool _scriptExecutionStep_WaitForExit = false;
         public string ScriptExecutionStep_ScriptPath
         {
             get => _scriptExecutionStep_ScriptPath;
@@ -433,7 +445,7 @@ namespace DesktopAutomationApp.ViewModels
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); // << wichtig
             }
         }
-        public bool ScriptExecutionStep_FireAndForget { get => _scriptExecutionStep_FireAndForget; set { _scriptExecutionStep_FireAndForget = value; OnChange(); } }
+        public bool ScriptExecutionStep_WaitForExit { get => _scriptExecutionStep_WaitForExit; set { _scriptExecutionStep_WaitForExit = value; OnChange(); } }
 
         // ===== KlickOnPointExecution Felder =====
         private bool _klickOnPointStep_DoubleClick = false;
@@ -444,6 +456,12 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _klickOnPointStep_TimeoutMs = 0;
         public int KlickOnPointStep_TimeoutMs { get => _klickOnPointStep_TimeoutMs; set { _klickOnPointStep_TimeoutMs = value; OnChange(); } }
+
+        private int _klickOnPointStep_OffsetX = 0;
+        public int KlickOnPointStep_OffsetX { get => _klickOnPointStep_OffsetX; set { _klickOnPointStep_OffsetX = value; OnChange(); } }
+
+        private int _klickOnPointStep_OffsetY = 0;
+        public int KlickOnPointStep_OffsetY { get => _klickOnPointStep_OffsetY; set { _klickOnPointStep_OffsetY = value; OnChange(); } }
 
         private SourceStepItem? _klickOnPointStep_SourceDetectionStep;
         public SourceStepItem? KlickOnPointStep_SourceDetectionStep
@@ -626,6 +644,22 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private void BrowseFocusProcessPath()
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Ausführbare Datei auswählen",
+                Filter = "Programme (*.exe;*.bat;*.cmd;*.ps1)|*.exe;*.bat;*.cmd;*.ps1|Alle Dateien (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                FocusProcessStep_ExecutablePath = ofd.FileName;
+            }
+        }
+
         private void BrowseVideoSavePath()
         {
             var folderDialog = new System.Windows.Forms.FolderBrowserDialog
@@ -649,6 +683,23 @@ namespace DesktopAutomationApp.ViewModels
                 if (selectedMonitorIndex >= 0)
                 {
                     DesktopDuplicationStep_DesktopIdx = selectedMonitorIndex;
+                }
+            }
+            catch (Exception ex)
+            {
+                AppDialog.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void ChooseMonitorForShowText()
+        {
+            try
+            {
+                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
+                if (selectedMonitorIndex >= 0)
+                {
+                    ShowTextStep_DesktopIndex = selectedMonitorIndex;
                 }
             }
             catch (Exception ex)
@@ -1063,6 +1114,89 @@ namespace DesktopAutomationApp.ViewModels
             set { _startProcessStep_WaitForExit = value; OnChange(); }
         }
 
+        // ===== FocusProcess Felder =====
+        private string _focusProcessStep_ExecutablePath = string.Empty;
+        public string FocusProcessStep_ExecutablePath
+        {
+            get => _focusProcessStep_ExecutablePath;
+            set { _focusProcessStep_ExecutablePath = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private TaskAutomation.Jobs.FocusProcessWindowMode _focusProcessStep_WindowMode = TaskAutomation.Jobs.FocusProcessWindowMode.Normal;
+        public TaskAutomation.Jobs.FocusProcessWindowMode FocusProcessStep_WindowMode
+        {
+            get => _focusProcessStep_WindowMode;
+            set { _focusProcessStep_WindowMode = value; OnChange(); }
+        }
+
+        public TaskAutomation.Jobs.FocusProcessWindowMode[] FocusProcessWindowModes { get; } =
+            Enum.GetValues(typeof(TaskAutomation.Jobs.FocusProcessWindowMode))
+                .Cast<TaskAutomation.Jobs.FocusProcessWindowMode>().ToArray();
+
+        // ===== ShowText Felder =====
+        private string _showTextStep_Text = string.Empty;
+        public string ShowTextStep_Text
+        {
+            get => _showTextStep_Text;
+            set { _showTextStep_Text = value; OnChange(); }
+        }
+
+        private float _showTextStep_FontSize = 24f;
+        public float ShowTextStep_FontSize
+        {
+            get => _showTextStep_FontSize;
+            set { _showTextStep_FontSize = value; OnChange(); }
+        }
+
+        private System.Windows.Media.Color _showTextStep_FontColorWpf = System.Windows.Media.Colors.White;
+        public System.Windows.Media.Color ShowTextStep_FontColorWpf
+        {
+            get => _showTextStep_FontColorWpf;
+            set { _showTextStep_FontColorWpf = value; OnChange(); }
+        }
+
+        private float _showTextStep_Opacity = 1.0f;
+        public float ShowTextStep_Opacity
+        {
+            get => _showTextStep_Opacity;
+            set { _showTextStep_Opacity = Math.Clamp(value, 0f, 1f); OnChange(); }
+        }
+
+        private int _showTextStep_DesktopIndex = 0;
+        public int ShowTextStep_DesktopIndex
+        {
+            get => _showTextStep_DesktopIndex;
+            set { _showTextStep_DesktopIndex = value; OnChange(); }
+        }
+
+        private int _showTextStep_OffsetX = 100;
+        public int ShowTextStep_OffsetX
+        {
+            get => _showTextStep_OffsetX;
+            set { _showTextStep_OffsetX = value; OnChange(); }
+        }
+
+        private int _showTextStep_OffsetY = 100;
+        public int ShowTextStep_OffsetY
+        {
+            get => _showTextStep_OffsetY;
+            set { _showTextStep_OffsetY = value; OnChange(); }
+        }
+
+        private int _showTextStep_DurationMs = 0;
+        public int ShowTextStep_DurationMs
+        {
+            get => _showTextStep_DurationMs;
+            set { _showTextStep_DurationMs = value; OnChange(); }
+        }
+
+        private bool _showTextStep_ClearOnJobEnd = false;
+        public bool ShowTextStep_ClearOnJobEnd
+        {
+            get => _showTextStep_ClearOnJobEnd;
+            set { _showTextStep_ClearOnJobEnd = value; OnChange(); }
+        }
+
         // ===== ActiveWindow Felder =====
         private string _activeWindowStep_ProcessName = string.Empty;
         public string ActiveWindowStep_ProcessName
@@ -1289,7 +1423,7 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new ScriptExecutionSettings
                     {
                         ScriptPath = ScriptExecutionStep_ScriptPath,
-                        FireAndForget = ScriptExecutionStep_FireAndForget
+                        WaitForExit = ScriptExecutionStep_WaitForExit
                     }
                 },
                 "KlickOnPoint" => new KlickOnPointStep
@@ -1299,6 +1433,8 @@ namespace DesktopAutomationApp.ViewModels
                         DoubleClick = KlickOnPointStep_DoubleClick,
                         ClickType = KlickOnPointStep_ClickType,
                         TimeoutMs = KlickOnPointStep_TimeoutMs,
+                        OffsetX = KlickOnPointStep_OffsetX,
+                        OffsetY = KlickOnPointStep_OffsetY,
                         SourceDetectionStepId = KlickOnPointStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
@@ -1352,6 +1488,29 @@ namespace DesktopAutomationApp.ViewModels
                         ExecutablePath = StartProcessStep_ExecutablePath,
                         Arguments      = StartProcessStep_Arguments,
                         WaitForExit    = StartProcessStep_WaitForExit
+                    }
+                },
+                "FocusProcess" => new FocusProcessStep
+                {
+                    Settings = new FocusProcessSettings
+                    {
+                        ExecutablePath = FocusProcessStep_ExecutablePath,
+                        WindowMode     = FocusProcessStep_WindowMode
+                    }
+                },
+                "ShowText" => new ShowTextStep
+                {
+                    Settings = new ShowTextSettings
+                    {
+                        Text         = ShowTextStep_Text,
+                        FontSize     = ShowTextStep_FontSize,
+                        FontColor    = $"#{ShowTextStep_FontColorWpf.R:X2}{ShowTextStep_FontColorWpf.G:X2}{ShowTextStep_FontColorWpf.B:X2}",
+                        Opacity      = ShowTextStep_Opacity,
+                        DesktopIndex = ShowTextStep_DesktopIndex,
+                        OffsetX      = ShowTextStep_OffsetX,
+                        OffsetY      = ShowTextStep_OffsetY,
+                        DurationMs   = ShowTextStep_DurationMs,
+                        ClearOnJobEnd = ShowTextStep_ClearOnJobEnd
                     }
                 },
                 "ActiveWindow" => new ActiveWindowStep

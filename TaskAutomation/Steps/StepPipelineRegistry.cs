@@ -105,6 +105,16 @@ namespace TaskAutomation.Steps
                 Output:        "TaskResult",
                 DisplayName:   "Prozess starten"),
 
+            [typeof(FocusProcessStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult",
+                DisplayName:   "Prozess in Vordergrund"),
+
+            [typeof(ShowTextStep)] = new(
+                Prerequisites: [],
+                Output:        "TaskResult",
+                DisplayName:   "Text auf Desktop anzeigen"),
+
             [typeof(ActiveWindowStep)] = new(
                 Prerequisites:     [],
                 Output:            "ActiveWindowResult",
@@ -173,6 +183,8 @@ namespace TaskAutomation.Steps
             ["Timeout"]            = typeof(TimeoutStep),
             ["ActiveProcess"]      = typeof(ActiveProcessStep),
             ["StartProcess"]       = typeof(StartProcessStep),
+            ["FocusProcess"]       = typeof(FocusProcessStep),
+            ["ShowText"]           = typeof(ShowTextStep),
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
             ["If"]                 = typeof(IfStep),

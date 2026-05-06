@@ -27,6 +27,8 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
+    [JsonDerivedType(typeof(FocusProcessStep),   "focus_process")]
+    [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
     public abstract class JobStep : INotifyPropertyChanged
@@ -211,8 +213,8 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("script_path")]
         public string ScriptPath { get; set; } = string.Empty;
-        [JsonPropertyName("fire_and_forget")]
-        public bool FireAndForget { get; set; } = false;
+        [JsonPropertyName("wait_for_exit")]
+        public bool WaitForExit { get; set; } = false;
     }
 
     public sealed class KlickOnPointStep : JobStep
@@ -229,6 +231,10 @@ namespace TaskAutomation.Jobs
         public string ClickType { get; set; } = "left";
         [JsonPropertyName("timeout_ms")]
         public int TimeoutMs { get; set; } = 1000;
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; } = 0;
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; } = 0;
 
         [JsonPropertyName("source_detection_step_id")]
         public string SourceDetectionStepId { get; set; } = "";
@@ -443,6 +449,74 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("wait_for_exit")]
         public bool WaitForExit { get; set; } = false;
+    }
+
+    // ---- FocusProcess ----
+    /// <summary>Bringt das Hauptfenster eines laufenden Prozesses in den Vordergrund.</summary>
+    public sealed class FocusProcessStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public FocusProcessSettings Settings { get; set; } = new();
+    }
+
+    // ---- ShowText ----
+    public sealed class ShowTextStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ShowTextSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ShowTextSettings
+    {
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
+
+        [JsonPropertyName("font_size")]
+        public float FontSize { get; set; } = 24f;
+
+        /// <summary>Hex-Farbe, z. B. "#FFFFFF" oder "#FF0000".</summary>
+        [JsonPropertyName("font_color")]
+        public string FontColor { get; set; } = "#FFFFFF";
+
+        /// <summary>Deckkraft von 0.0 (unsichtbar) bis 1.0 (voll opak).</summary>
+        [JsonPropertyName("opacity")]
+        public float Opacity { get; set; } = 1.0f;
+
+        /// <summary>Index des Monitors (0-basiert).</summary>
+        [JsonPropertyName("desktop_index")]
+        public int DesktopIndex { get; set; } = 0;
+
+        /// <summary>X-Offset in Pixel relativ zur linken oberen Ecke des gewählten Monitors.</summary>
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; } = 100;
+
+        /// <summary>Y-Offset in Pixel relativ zur linken oberen Ecke des gewählten Monitors.</summary>
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; } = 100;
+
+        /// <summary>Zeit in Millisekunden nach der der Text automatisch entfernt wird. 0 = dauerhaft.</summary>
+        [JsonPropertyName("duration_ms")]
+        public int DurationMs { get; set; } = 0;
+
+        /// <summary>Text wird am Ende des Jobs automatisch entfernt.</summary>
+        [JsonPropertyName("clear_on_job_end")]
+        public bool ClearOnJobEnd { get; set; } = false;
+    }
+
+    public enum FocusProcessWindowMode
+    {
+        Normal,
+        Maximized,
+        Fullscreen
+    }
+
+    public sealed class FocusProcessSettings
+    {
+        [JsonPropertyName("executable_path")]
+        public string ExecutablePath { get; set; } = string.Empty;
+        [JsonPropertyName("window_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public FocusProcessWindowMode WindowMode { get; set; } = FocusProcessWindowMode.Normal;
     }
 
     // ---- ActiveWindow ----

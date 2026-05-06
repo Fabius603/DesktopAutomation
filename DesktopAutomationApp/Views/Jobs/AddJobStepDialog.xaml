@@ -332,8 +332,8 @@
                             <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseScriptPathCommand}"/>
                         </Grid>
-                        <CheckBox Content="Fire and Forget (nicht auf Abschluss warten)"
-                                  IsChecked="{Binding ScriptExecutionStep_FireAndForget}"/>
+                        <CheckBox Content="Auf Beendigung warten"
+                                  IsChecked="{Binding ScriptExecutionStep_WaitForExit}"/>
                     </StackPanel>
 
                     <!-- ── KlickOnPoint ── -->
@@ -376,6 +376,26 @@
                                        Foreground="{StaticResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
                                      Text="{Binding KlickOnPointStep_TimeoutMs}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Offset X" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                                     Text="{Binding KlickOnPointStep_OffsetX}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Offset Y" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                                     Text="{Binding KlickOnPointStep_OffsetY}"/>
                         </Grid>
                         <CheckBox Content="Doppelklick" IsChecked="{Binding KlickOnPointStep_DoubleClick}"/>
                     </StackPanel>
@@ -603,6 +623,156 @@
                         <CheckBox Content="Auf Beendigung warten"
                                   IsChecked="{Binding StartProcessStep_WaitForExit}"
                                   Margin="0,0,0,4"/>
+                    </StackPanel>
+
+                    <!-- ── FocusProcess ── -->
+                    <StackPanel Visibility="{Binding ShowFocusProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Pfad / Programm" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding FocusProcessStep_ExecutablePath, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="Pfad zur .exe oder Programmname"/>
+                            <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
+                                    Command="{Binding BrowseFocusProcessPathCommand}"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Fenstermodus" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <ComboBox Grid.Column="1" Width="160" HorizontalAlignment="Left"
+                                      ItemsSource="{Binding FocusProcessWindowModes}"
+                                      SelectedItem="{Binding FocusProcessStep_WindowMode}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ── ShowText ── -->
+                    <StackPanel Visibility="{Binding ShowShowText, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <!-- Text -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Text" VerticalAlignment="Top" Margin="0,4,0,0"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Text="{Binding ShowTextStep_Text, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="Anzuzeigender Text (leer = entfernen)"/>
+                        </Grid>
+
+                        <!-- Schriftgröße -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="80"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Schriftgröße (pt)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ShowTextStep_FontSize, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+
+                        <!-- Schriftfarbe -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Schriftfarbe" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <mah:ColorPicker Grid.Column="1"
+                                             SelectedColor="{Binding ShowTextStep_FontColorWpf}"
+                                             HorizontalAlignment="Left"/>
+                        </Grid>
+
+                        <!-- Deckkraft -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="40"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Deckkraft" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <Slider Grid.Column="1"
+                                    Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                    Value="{Binding ShowTextStep_Opacity}"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="6,0,0,0"
+                                       Text="{Binding ShowTextStep_Opacity, StringFormat={}{0:P0}}"/>
+                        </Grid>
+
+                        <!-- Anzeigedauer -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Anzeigedauer (ms)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ShowTextStep_DurationMs, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="0 = dauerhaft"/>
+                        </Grid>
+
+                        <!-- Bei Job-Ende entfernen -->
+                        <CheckBox Content="Bei Job-Ende entfernen"
+                                  IsChecked="{Binding ShowTextStep_ClearOnJobEnd}"
+                                  Margin="0,0,0,8"/>
+
+                        <TextBlock Text="Position" FontWeight="SemiBold" Margin="0,4,0,6"
+                                   Foreground="{StaticResource App.Brush.TextSecondary}"/>
+
+                        <!-- Monitor wählen (wie DesktopDuplication) -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Desktop Index" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="60" IsReadOnly="True"
+                                     Text="{Binding ShowTextStep_DesktopIndex}"/>
+                            <Button Grid.Column="2" Content="Monitor wählen" Margin="8,0,0,0" Padding="10,5"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding ChooseMonitorForShowTextCommand}"/>
+                        </Grid>
+
+                        <!-- X-Offset -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="X-Offset (Pixel)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ShowTextStep_OffsetX, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+
+                        <!-- Y-Offset -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Y-Offset (Pixel)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ShowTextStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
                     </StackPanel>
 
                     <!-- ── ActiveWindow ── -->

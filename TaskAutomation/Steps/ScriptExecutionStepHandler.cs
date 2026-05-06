@@ -21,7 +21,7 @@ namespace TaskAutomation.Steps
             if (!File.Exists(step.Settings.ScriptPath))
                 throw new FileNotFoundException($"Script file not found: '{step.Settings.ScriptPath}'");
 
-            if (step.Settings.FireAndForget)
+            if (!step.Settings.WaitForExit)
             {
                 logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", step.Settings.ScriptPath);
                 _ = Task.Run(async () =>

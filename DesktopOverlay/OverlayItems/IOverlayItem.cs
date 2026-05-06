@@ -25,6 +25,11 @@ namespace DesktopOverlay.OverlayItems
         void Setup(Graphics gfx, bool recreate);
 
         /// <summary>
+        /// True nachdem Setup mindestens einmal erfolgreich aufgerufen wurde.
+        /// </summary>
+        bool IsSetup { get; }
+
+        /// <summary>
         /// Zeichnet das Item.
         /// </summary>
         void Draw(Graphics gfx);

@@ -79,6 +79,8 @@ namespace TaskAutomation.Jobs
             { typeof(TimeoutStep),             new TimeoutStepHandler()             },
             { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
             { typeof(StartProcessStep),        new StartProcessStepHandler()        },
+            { typeof(FocusProcessStep),         new FocusProcessStepHandler()        },
+            { typeof(ShowTextStep),             new ShowTextStepHandler()            },
             { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
             { typeof(KeyPointMatchingStep),    new KeyPointMatchingStepHandler()    },
         };
@@ -449,6 +451,9 @@ namespace TaskAutomation.Jobs
                 // Desktop-Ergebnis-Overlay leeren (ShowOnDesktopStep).
                 if (job.Steps.OfType<ShowOnDesktopStep>().Any())
                     try { _desktopResultOverlay.Clear(); } catch { /* best-effort */ }
+
+                // Text-Overlay: bei Job-Ende aufräumen (ShowTextStep mit ClearOnJobEnd).
+                try { _desktopResultOverlay.OnJobEnded(); } catch { /* best-effort */ }
 
                 if (recorderStarted && pipelineCtx.VideoRecorder != null)
                 {

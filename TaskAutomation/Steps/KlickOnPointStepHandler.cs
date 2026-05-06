@@ -43,7 +43,9 @@ namespace TaskAutomation.Steps
             }
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
-            var point = detection.Point.Value;
+            var point = new System.Drawing.Point(
+                detection.Point.Value.X + step.Settings.OffsetX,
+                detection.Point.Value.Y + step.Settings.OffsetY);
             logger.LogInformation("KlickOnPointStepHandler: Clicking at ({X},{Y})", point.X, point.Y);
 
             var macro = CreateClickMacro(step.Settings, point);

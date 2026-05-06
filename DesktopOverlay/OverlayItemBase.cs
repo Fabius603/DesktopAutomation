@@ -16,6 +16,7 @@ namespace DesktopOverlay
     {
         public string Id { get; }
         public bool Visible { get; set; } = true;
+        public bool IsSetup { get; private set; }
 
         public OverlayTransform Transform { get; set; } = OverlayTransform.Identity;
 
@@ -26,6 +27,7 @@ namespace DesktopOverlay
 
         public virtual void Setup(Graphics gfx, bool recreate)
         {
+            IsSetup = true;
             // Standard: keine Ressourcen.
             // Konkrete Items überschreiben diesen Hook.
         }

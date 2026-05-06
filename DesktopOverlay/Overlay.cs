@@ -22,6 +22,7 @@ namespace DesktopOverlay
     {
         private readonly GraphicsWindow _window;
         private readonly ConcurrentDictionary<string, IOverlayItem> _items = new();
+        private readonly System.Collections.Concurrent.ConcurrentQueue<IOverlayItem> _pendingDispose = new();
         private readonly object _drawLock = new();
         private SolidBrush _backgroundBrush;
         public IntPtr WindowHandle => _window.Handle;
@@ -62,12 +63,17 @@ namespace DesktopOverlay
 
         public void AddItem(IOverlayItem item)
         {
+            // Item registrieren; Setup erfolgt beim nächsten OnSetup- oder OnDraw-Aufruf
             _items[item.Id] = item;
 
-            // 2) Falls das Device schon steht, sofort Ressourcen anlegen
-            if (_gfxContext != null)
+            // Falls das Device schon steht, sofort Ressourcen anlegen
+            // Lock sicherstellt, dass wir nicht mitten in einem Draw-Call sind
+            lock (_drawLock)
             {
-                item.Setup(_gfxContext, recreate: false);
+                if (_gfxContext != null)
+                {
+                    item.Setup(_gfxContext, recreate: false);
+                }
             }
         }
 
@@ -75,7 +81,8 @@ namespace DesktopOverlay
         {
             if (_items.TryRemove(id, out var removed))
             {
-                removed.Dispose();
+                // Dispose auf dem Draw-Thread, damit SharpDX-Ressourcen nicht vom falschen Thread freigegeben werden
+                _pendingDispose.Enqueue(removed);
                 return true;
             }
             return false;
@@ -85,7 +92,7 @@ namespace DesktopOverlay
         {
             lock (_drawLock)
             {
-                foreach (var i in _items.Values) i.Dispose();
+                foreach (var i in _items.Values) _pendingDispose.Enqueue(i);
                 _items.Clear();
             }
         }
@@ -131,6 +138,11 @@ namespace DesktopOverlay
         private void OnDraw(object sender, DrawGraphicsEventArgs e)
         {
             var gfx = e.Graphics;
+
+            // Deferred dispose: Items, die von anderen Threads entfernt wurden, hier auf dem Draw-Thread freigeben
+            while (_pendingDispose.TryDequeue(out var stale))
+                stale.Dispose();
+
             // transparente Szene
             gfx.ClearScene(_backgroundBrush);
 
@@ -148,10 +160,14 @@ namespace DesktopOverlay
                             timed.Update(_playbackTime);
                 }
 
-                // Alle Items zeichnen
+                // Alle Items zeichnen; Setup nachholen falls ein Item nach dem letzten OnSetup hinzugekam
                 foreach (var item in _items.Values)
+                {
+                    if (!item.IsSetup)
+                        item.Setup(gfx, recreate: false);
                     if (item.Visible)
                         item.Draw(gfx);
+                }
             }
         }
 
