@@ -1,4 +1,4 @@
-using DesktopAutomationApp.Services;
+using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Services.Preview;
 using DesktopAutomationApp.Views;
 using DesktopOverlay;
@@ -21,9 +21,9 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class MakroStepsViewModel : ViewModelBase, INavigationGuard, IDisposable
     {
         private readonly ILogger<MakroStepsViewModel> _log;
-        private readonly IJobExecutor _executor;
         private readonly IMacroPreviewService _preview;
-        private readonly IRepositoryService _repositoryService;
+        private readonly IMakroApplicationService _makroAppService;
+        private readonly IDialogService _dialogService;
         private readonly IGlobalHotkeyService _hotkeys;
         private readonly IJobDispatcher _dispatcher;
 
@@ -125,18 +125,18 @@ namespace DesktopAutomationApp.ViewModels
 
         public MakroStepsViewModel(
             Makro makro,
-            IJobExecutor executor,
             ILogger<MakroStepsViewModel> log,
             IMacroPreviewService preview,
-            IRepositoryService repositoryService,
+            IMakroApplicationService makroAppService,
+            IDialogService dialogService,
             IGlobalHotkeyService hotkeys,
             IJobDispatcher dispatcher)
         {
             Makro = makro ?? throw new ArgumentNullException(nameof(makro));
-            _executor = executor;
             _log = log;
             _preview = preview;
-            _repositoryService = repositoryService;
+            _makroAppService = makroAppService;
+            _dialogService = dialogService;
             _hotkeys = hotkeys;
             _dispatcher = dispatcher;
 
@@ -152,14 +152,14 @@ namespace DesktopAutomationApp.ViewModels
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
-            RenameCommand = new RelayCommand(() => Rename());
+            RenameCommand = new RelayCommand(async () => await Rename());
 
             AddStepCommand      = new RelayCommand(async () => await OpenAddStepDialog());
             EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
             MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
             ReorderStepCommand  = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
-            DeleteStepCommand     = new RelayCommand<MakroBefehl?>(DeleteStep, s => s != null);
+            DeleteStepCommand     = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
             DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
             UndoCommand           = new RelayCommand(Undo, () => CanUndo);
             RedoCommand           = new RelayCommand(Redo, () => CanRedo);
@@ -207,8 +207,7 @@ namespace DesktopAutomationApp.ViewModels
         private async Task SaveInternal()
         {
             Makro.Befehle = new ObservableCollection<MakroBefehl>(Steps);
-            await _repositoryService.SaveAsync(Makro);
-            await _executor.ReloadMakrosAsync();
+            await _makroAppService.SaveMakroAsync(Makro);
             // Update snapshot for future cancel
             _originalSteps.Clear();
             _originalSteps.AddRange(Steps);
@@ -216,16 +215,14 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Rename ----------
-        private async void Rename()
+        private async Task Rename()
         {
-            var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", Makro.Name)
-                { Owner = Application.Current?.MainWindow };
-            if (dlg.ShowDialog() != true) return;
+            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", Makro.Name);
+            if (newName == null) return;
 
-            Makro.Name = dlg.ResultName.Trim();
+            Makro.Name = newName.Trim();
             OnPropertyChanged(nameof(Title));
-            await _repositoryService.SaveAsync(Makro);
-            await _executor.ReloadMakrosAsync();
+            await _makroAppService.SaveMakroAsync(Makro);
         }
 
         // ---------- Steps ----------
@@ -298,17 +295,12 @@ namespace DesktopAutomationApp.ViewModels
             HasUnsavedChanges = true;
         }
 
-        private void DeleteStep(MakroBefehl? step)
+        private async Task DeleteStepAsync(MakroBefehl? step)
         {
             if (step == null) return;
 
-            var result = AppDialog.Show(
-                $"Möchten Sie diesen Step wirklich löschen?",
-                "Löschen bestätigen",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result != MessageBoxResult.Yes) return;
+            var confirmed = await _dialogService.ConfirmAsync("Möchten Sie diesen Step wirklich löschen?", "Löschen bestätigen");
+            if (!confirmed) return;
 
             PushUndo();
             var idx = Steps.IndexOf(step);

@@ -651,6 +651,33 @@
             </Grid>
         </DataTemplate>
 
+        <!-- PointComparisonStep -->
+        <DataTemplate DataType="{x:Type jobs:PointComparisonStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Modus: "/>
+                        <Run Text="{Binding Settings.Mode, Mode=OneWay}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Übereinstimmung: "/>
+                        <Run Text="{Binding Settings.MatchRequirement, Mode=OneWay}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Punkte: "/><Run Text="{Binding Settings.Points.Count, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
         <!-- EndJobStep -->
         <DataTemplate DataType="{x:Type jobs:EndJobStep}">
             <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{StaticResource App.Brush.Accent}"/>

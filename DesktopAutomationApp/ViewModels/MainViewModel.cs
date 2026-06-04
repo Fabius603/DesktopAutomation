@@ -4,7 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Extensions.DependencyInjection; // ActivatorUtilities
+using DesktopAutomation.Application.Interfaces;
+using DesktopAutomationApp.Infrastructure;
 using DesktopAutomationApp.Models;
 using DesktopAutomationApp.Services;
 using TaskAutomation.Jobs;
@@ -19,9 +20,10 @@ namespace DesktopAutomationApp.ViewModels
         private object? _currentContent;
         private string _currentContentName = "—";
 
-        private readonly IServiceProvider _services;
+        private readonly IViewModelFactory _viewModelFactory;
         private readonly IJobDispatcher _jobDispatcher;
         private readonly IUpdateService _updateService;
+        private readonly IDialogService _dialogService;
 
         private bool _hasUpdate;
         private string _latestVersion = string.Empty;
@@ -129,18 +131,20 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand StopAllJobsCommand { get; }
 
         public MainViewModel(
-            IServiceProvider services,
+            IViewModelFactory viewModelFactory,
             IJobDispatcher jobDispatcher,
             IUpdateService updateService,
+            IDialogService dialogService,
             StartViewModel startViewModel,
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
             ListHotkeysViewModel listHotkeysViewModel,
             YoloDownloadsViewModel yoloDownloadsViewModel)
         {
-            _services = services;
+            _viewModelFactory = viewModelFactory;
             _jobDispatcher = jobDispatcher;
             _updateService = updateService;
+            _dialogService = dialogService;
             _start = startViewModel;
 
             OpenUpdateCommand = new RelayCommand(() =>
@@ -251,7 +255,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OpenJobDetails(Job job)
         {
-            var detailsVm = ActivatorUtilities.CreateInstance<JobStepsViewModel>(_services, job);
+            var detailsVm = _viewModelFactory.CreateJobStepsViewModel(job);
             detailsVm.RequestBack += async () =>
             {
                 if (await CheckNavigationGuardAsync())
@@ -265,7 +269,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OpenMakroDetails(Makro makro)
         {
-            var detailsVm = ActivatorUtilities.CreateInstance<MakroStepsViewModel>(_services, makro);
+            var detailsVm = _viewModelFactory.CreateMakroStepsViewModel(makro);
             detailsVm.RequestBack += async () =>
             {
                 if (await CheckNavigationGuardAsync())
@@ -279,7 +283,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OpenHotkeyDetails(EditableHotkey hotkey)
         {
-            var detailsVm = ActivatorUtilities.CreateInstance<HotkeyDetailViewModel>(_services, hotkey);
+            var detailsVm = _viewModelFactory.CreateHotkeyDetailViewModel(hotkey);
             detailsVm.RequestBack += async () =>
             {
                 if (await CheckNavigationGuardAsync())
@@ -296,14 +300,11 @@ namespace DesktopAutomationApp.ViewModels
             if (_currentContent is not INavigationGuard guard || !guard.HasUnsavedChanges)
                 return true;
 
-            var r = AppDialog.Show(
+            var r = await _dialogService.ConfirmWithCancelAsync(
                 "Es gibt ungespeicherte Änderungen. Möchten Sie speichern?",
-                "Ungespeicherte Änderungen",
-                MessageBoxButton.YesNoCancel,
-                MessageBoxImage.Warning);
-
-            if (r == MessageBoxResult.Yes)   { await guard.SaveAsync(); return true; }
-            if (r == MessageBoxResult.No)    { guard.DiscardChanges(); return true; }
+                "Ungespeicherte Änderungen");
+            if (r == true)  { await guard.SaveAsync(); return true; }
+            if (r == false) { guard.DiscardChanges(); return true; }
             return false; // Cancel
         }
 
@@ -313,27 +314,19 @@ namespace DesktopAutomationApp.ViewModels
             if (e.Exception is JobLimitExceededException)
                 return;
 
-            Application.Current?.Dispatcher?.Invoke(() =>
-            {
-                var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
-                var title = "Job-Ausführungsfehler";
-                AppDialog.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
-            });
+            var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
+            var title = "Job-Ausführungsfehler";
+            _dialogService.ShowError(message, title);
         }
 
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
-            // Auf dem UI-Thread ausführen, da wir ein AppDialog anzeigen
-            Application.Current?.Dispatcher?.Invoke(() =>
-            {
-                var message = $"Fehler beim Ausführen des Job-Steps:\n\n" +
-                             $"Job: {e.JobName}\n" +
-                             $"Step: {e.StepType}\n\n" +
-                             $"Fehlermeldung:\n{e.ErrorMessage}";
-                var title = "Job-Step-Ausführungsfehler";
-
-                AppDialog.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
-            });
+            var message = $"Fehler beim Ausführen des Job-Steps:\n\n" +
+                         $"Job: {e.JobName}\n" +
+                         $"Step: {e.StepType}\n\n" +
+                         $"Fehlermeldung:\n{e.ErrorMessage}";
+            var title = "Job-Step-Ausführungsfehler";
+            _dialogService.ShowError(message, title);
         }
     }
 }

@@ -31,6 +31,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
+    [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
     public abstract class JobStep : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -564,5 +565,103 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = string.Empty;
+    }
+
+    // ---- PointComparison ----
+
+    public enum PointComparisonMode { Offset, Expression }
+    public enum PointEntrySource { Manual, JobResult }
+    public enum PointMatchRequirement { All, Any }
+    public enum PointAxisOperator { LessThan, LessThanOrEqual, GreaterThan, GreaterThanOrEqual, Equal, NotEqual }
+    public enum ExpressionCombineMode { And, Or }
+
+    public sealed class PointEntry
+    {
+        [JsonPropertyName("source")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointEntrySource Source { get; set; } = PointEntrySource.Manual;
+
+        [JsonPropertyName("manual_x")]
+        public int ManualX { get; set; } = 0;
+
+        [JsonPropertyName("manual_y")]
+        public int ManualY { get; set; } = 0;
+
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
+
+        [JsonPropertyName("use_all_detections")]
+        public bool UseAllDetections { get; set; } = false;
+    }
+
+    public sealed class OffsetComparisonSettings
+    {
+        [JsonPropertyName("reference_source")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointEntrySource ReferenceSource { get; set; } = PointEntrySource.Manual;
+
+        [JsonPropertyName("reference_x")]
+        public int ReferenceX { get; set; } = 0;
+
+        [JsonPropertyName("reference_y")]
+        public int ReferenceY { get; set; } = 0;
+
+        [JsonPropertyName("reference_detection_step_id")]
+        public string ReferenceDetectionStepId { get; set; } = "";
+
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; } = 10;
+
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; } = 10;
+    }
+
+    public sealed class AxisExpression
+    {
+        [JsonPropertyName("axis")]
+        public string Axis { get; set; } = "X";
+
+        [JsonPropertyName("operator")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointAxisOperator Operator { get; set; } = PointAxisOperator.LessThan;
+
+        [JsonPropertyName("value")]
+        public int Value { get; set; } = 0;
+    }
+
+    public sealed class ExpressionComparisonSettings
+    {
+        [JsonPropertyName("expressions")]
+        public List<AxisExpression> Expressions { get; set; } = new();
+
+        [JsonPropertyName("combine_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ExpressionCombineMode CombineMode { get; set; } = ExpressionCombineMode.And;
+    }
+
+    public sealed class PointComparisonSettings
+    {
+        [JsonPropertyName("mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointComparisonMode Mode { get; set; } = PointComparisonMode.Offset;
+
+        [JsonPropertyName("match_requirement")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public PointMatchRequirement MatchRequirement { get; set; } = PointMatchRequirement.All;
+
+        [JsonPropertyName("points")]
+        public List<PointEntry> Points { get; set; } = new();
+
+        [JsonPropertyName("offset_settings")]
+        public OffsetComparisonSettings OffsetSettings { get; set; } = new();
+
+        [JsonPropertyName("expression_settings")]
+        public ExpressionComparisonSettings ExpressionSettings { get; set; } = new();
+    }
+
+    public sealed class PointComparisonStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public PointComparisonSettings Settings { get; set; } = new();
     }
 }

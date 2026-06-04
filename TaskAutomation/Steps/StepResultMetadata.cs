@@ -58,6 +58,10 @@ namespace TaskAutomation.Steps
                 new("Found",      "Gefunden",   ResultPropertyType.Bool),
                 new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
+            ["PointComparisonStep"] =
+            [
+                new("Matches", "Übereinstimmung", ResultPropertyType.Bool),
+            ],
             ["ShowImageStep"]        = BoolSuccess,
             ["VideoCreationStep"]    = BoolSuccess,
         };
@@ -90,6 +94,10 @@ namespace TaskAutomation.Steps
             new ResultTypeDescriptor("ActiveWindowResult", "ActiveWindowResult",
             [
                 new ResultPropertyDescriptor("IsActive", "Fenster aktiv", ResultPropertyType.Bool),
+            ]),
+            new ResultTypeDescriptor("PointComparisonResult", "PointComparisonResult",
+            [
+                new ResultPropertyDescriptor("Matches", "Übereinstimmung", ResultPropertyType.Bool),
             ]),
         };
 

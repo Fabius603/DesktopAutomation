@@ -26,6 +26,9 @@ using DesktopAutomationApp.Services;
 using ImageDetection.YOLO;
 using ImageDetection.Model;
 using TaskAutomation.Events;
+using DesktopAutomation.Application.Interfaces;
+using DesktopAutomation.Application.Services;
+using DesktopAutomationApp.Infrastructure;
 
 namespace DesktopAutomationApp
 {
@@ -85,6 +88,13 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
 
+                    services.AddSingleton<IJobApplicationService, JobApplicationService>();
+                    services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
+                    services.AddSingleton<IDialogService, WpfDialogService>();
+                    services.AddSingleton<IViewModelFactory, ViewModelFactory>();
+                    services.AddSingleton<IJobLauncher>(sp => (IJobLauncher)sp.GetRequiredService<IJobDispatcher>());
+                    services.AddSingleton(sp => new Lazy<IJobLauncher>(() => sp.GetRequiredService<IJobLauncher>()));
+
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();
                     services.AddSingleton<StartViewModel>();
@@ -120,14 +130,8 @@ namespace DesktopAutomationApp
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
             _ = _host.Services.GetRequiredService<IGlobalHotkeyService>();
 
-            // Dispatcher-Callbacks an JobExecutor verdrahten (nach DI-Aufbau, um Zirkelabhängigkeit zu vermeiden)
-            var dispatcher  = _host.Services.GetRequiredService<IJobDispatcher>();
-            var jobExecutor = (JobExecutor)_host.Services.GetRequiredService<IJobExecutor>();
-            jobExecutor.StartJobViaDispatcher      = dispatcher.StartJob;
-            jobExecutor.CancelJobViaDispatcher     = dispatcher.CancelJob;
-            jobExecutor.StartJobViaDispatcherAsync = dispatcher.StartJobAsync;
-
             // F10 global: alle Jobs & Makros stoppen (bypass Pause-Zustand)
+            var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
             var hotkeyServiceGlobal = _host.Services.GetRequiredService<IGlobalHotkeyService>();
             hotkeyServiceGlobal.EmergencyStopPressed += () =>
             {

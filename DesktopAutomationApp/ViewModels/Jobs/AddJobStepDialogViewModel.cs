@@ -53,6 +53,15 @@ namespace DesktopAutomationApp.ViewModels
                 IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps())));
             ElseIfStep_AddConditionCommand = new RelayCommand(() =>
                 ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps())));
+            PointComparisonStep_AddPointCommand = new RelayCommand(() =>
+            {
+                PointComparisonStep_Points.Add(new PointEntryViewModel(PointComparisonStep_Points, AvailableDetectionSteps));
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            });
+            PointComparisonStep_AddExpressionCommand = new RelayCommand(() =>
+                PointComparisonStep_Expressions.Add(new AxisExpressionViewModel(PointComparisonStep_Expressions)));
+            PointComparisonStep_Points.CollectionChanged += (_, _) =>
+                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             InitDefaults();
         }
@@ -113,6 +122,7 @@ namespace DesktopAutomationApp.ViewModels
             ShowOnDesktopStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
             VideoCreationStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
             VideoCreationStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
+            PointComparisonStep_RefDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
         }
 
         // ----- Dialog-Interop -----
@@ -158,6 +168,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CaptureYoloDetectionRoiCommand { get; }
         public ICommand IfStep_AddConditionCommand { get; }
         public ICommand ElseIfStep_AddConditionCommand { get; }
+        public ICommand PointComparisonStep_AddPointCommand { get; }
+        public ICommand PointComparisonStep_AddExpressionCommand { get; }
 
         private void Confirm()
         {
@@ -207,6 +219,7 @@ namespace DesktopAutomationApp.ViewModels
                 "KeyPointMatching" =>
                     !string.IsNullOrWhiteSpace(KeyPointMatchingStep_TemplatePath)
                     && (AvailableCaptureSteps.Count == 0 || KeyPointMatchingStep_SourceCaptureStep != null),
+                "PointComparison" => PointComparisonStep_Points.Count > 0,
                 "If"      => true,
                 "ElseIf"  => true,
                 "Else"    => true,
@@ -269,6 +282,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden."),
                 new("ActiveWindow",       "Abfrage",
                     "Prüft, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist. Das Ergebnis (\"Fenster aktiv\") kann in If-Bedingungen ausgewertet werden."),
+                new("PointComparison",   "Abfrage",
+                    "Vergleicht eine Liste von Punkten entweder gegen einen Referenzpunkt mit Toleranz (Offset-Modus) oder gegen Achsen-Ausdrücke wie x < 100 (Ausdrucks-Modus). Das Ergebnis (\"Übereinstimmung\") kann in If-Bedingungen ausgewertet werden."),
                 new("KeyPointMatching",   "Erkennung",
                     "Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis (\"Gefunden\") kann von einem KlickOnPoint-Step verwendet werden."),
                 new("If",                 "Ablaufsteuerung",
@@ -313,6 +328,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowShowText       => SelectedType == "ShowText";
         public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
         public bool ShowKeyPointMatching => SelectedType == "KeyPointMatching";
+        public bool ShowPointComparison => SelectedType == "PointComparison";
         public bool ShowIf     => SelectedType == "If";
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
@@ -1270,6 +1286,128 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        // ===== PointComparison Felder =====
+
+        // ── Comparison mode ──
+        private TaskAutomation.Jobs.PointComparisonMode _pointComparisonStep_Mode = TaskAutomation.Jobs.PointComparisonMode.Offset;
+        public TaskAutomation.Jobs.PointComparisonMode PointComparisonStep_Mode
+        {
+            get => _pointComparisonStep_Mode;
+            set
+            {
+                _pointComparisonStep_Mode = value;
+                OnChange();
+                OnChange(nameof(PointComparisonStep_ModeIsOffset));
+                OnChange(nameof(PointComparisonStep_ModeIsExpression));
+            }
+        }
+        public bool PointComparisonStep_ModeIsOffset
+        {
+            get => _pointComparisonStep_Mode == TaskAutomation.Jobs.PointComparisonMode.Offset;
+            set { if (value) PointComparisonStep_Mode = TaskAutomation.Jobs.PointComparisonMode.Offset; }
+        }
+        public bool PointComparisonStep_ModeIsExpression
+        {
+            get => _pointComparisonStep_Mode == TaskAutomation.Jobs.PointComparisonMode.Expression;
+            set { if (value) PointComparisonStep_Mode = TaskAutomation.Jobs.PointComparisonMode.Expression; }
+        }
+
+        // ── Match requirement ──
+        private TaskAutomation.Jobs.PointMatchRequirement _pointComparisonStep_MatchRequirement = TaskAutomation.Jobs.PointMatchRequirement.All;
+        public TaskAutomation.Jobs.PointMatchRequirement PointComparisonStep_MatchRequirement
+        {
+            get => _pointComparisonStep_MatchRequirement;
+            set
+            {
+                _pointComparisonStep_MatchRequirement = value;
+                OnChange();
+                OnChange(nameof(PointComparisonStep_MatchRequirementIsAll));
+                OnChange(nameof(PointComparisonStep_MatchRequirementIsAny));
+            }
+        }
+        public bool PointComparisonStep_MatchRequirementIsAll
+        {
+            get => _pointComparisonStep_MatchRequirement == TaskAutomation.Jobs.PointMatchRequirement.All;
+            set { if (value) PointComparisonStep_MatchRequirement = TaskAutomation.Jobs.PointMatchRequirement.All; }
+        }
+        public bool PointComparisonStep_MatchRequirementIsAny
+        {
+            get => _pointComparisonStep_MatchRequirement == TaskAutomation.Jobs.PointMatchRequirement.Any;
+            set { if (value) PointComparisonStep_MatchRequirement = TaskAutomation.Jobs.PointMatchRequirement.Any; }
+        }
+
+        // ── Offset settings: reference point ──
+        private TaskAutomation.Jobs.PointEntrySource _pointComparisonStep_RefSource = TaskAutomation.Jobs.PointEntrySource.Manual;
+        public TaskAutomation.Jobs.PointEntrySource PointComparisonStep_RefSource
+        {
+            get => _pointComparisonStep_RefSource;
+            set
+            {
+                _pointComparisonStep_RefSource = value;
+                OnChange();
+                OnChange(nameof(PointComparisonStep_RefIsManual));
+                OnChange(nameof(PointComparisonStep_RefIsJobResult));
+            }
+        }
+        public bool PointComparisonStep_RefIsManual
+        {
+            get => _pointComparisonStep_RefSource == TaskAutomation.Jobs.PointEntrySource.Manual;
+            set { if (value) PointComparisonStep_RefSource = TaskAutomation.Jobs.PointEntrySource.Manual; }
+        }
+        public bool PointComparisonStep_RefIsJobResult
+        {
+            get => _pointComparisonStep_RefSource == TaskAutomation.Jobs.PointEntrySource.JobResult;
+            set { if (value) PointComparisonStep_RefSource = TaskAutomation.Jobs.PointEntrySource.JobResult; }
+        }
+
+        private int _pointComparisonStep_RefX;
+        public int PointComparisonStep_RefX { get => _pointComparisonStep_RefX; set { _pointComparisonStep_RefX = value; OnChange(); } }
+
+        private int _pointComparisonStep_RefY;
+        public int PointComparisonStep_RefY { get => _pointComparisonStep_RefY; set { _pointComparisonStep_RefY = value; OnChange(); } }
+
+        private SourceStepItem? _pointComparisonStep_RefDetectionStep;
+        public SourceStepItem? PointComparisonStep_RefDetectionStep
+        {
+            get => _pointComparisonStep_RefDetectionStep;
+            set { _pointComparisonStep_RefDetectionStep = value; OnChange(); }
+        }
+
+        private int _pointComparisonStep_OffsetX = 10;
+        public int PointComparisonStep_OffsetX { get => _pointComparisonStep_OffsetX; set { _pointComparisonStep_OffsetX = value; OnChange(); } }
+
+        private int _pointComparisonStep_OffsetY = 10;
+        public int PointComparisonStep_OffsetY { get => _pointComparisonStep_OffsetY; set { _pointComparisonStep_OffsetY = value; OnChange(); } }
+
+        // ── Expression settings ──
+        private TaskAutomation.Jobs.ExpressionCombineMode _pointComparisonStep_ExprCombineMode = TaskAutomation.Jobs.ExpressionCombineMode.And;
+        public TaskAutomation.Jobs.ExpressionCombineMode PointComparisonStep_ExprCombineMode
+        {
+            get => _pointComparisonStep_ExprCombineMode;
+            set
+            {
+                _pointComparisonStep_ExprCombineMode = value;
+                OnChange();
+                OnChange(nameof(PointComparisonStep_ExprCombineIsAnd));
+                OnChange(nameof(PointComparisonStep_ExprCombineIsOr));
+            }
+        }
+        public bool PointComparisonStep_ExprCombineIsAnd
+        {
+            get => _pointComparisonStep_ExprCombineMode == TaskAutomation.Jobs.ExpressionCombineMode.And;
+            set { if (value) PointComparisonStep_ExprCombineMode = TaskAutomation.Jobs.ExpressionCombineMode.And; }
+        }
+        public bool PointComparisonStep_ExprCombineIsOr
+        {
+            get => _pointComparisonStep_ExprCombineMode == TaskAutomation.Jobs.ExpressionCombineMode.Or;
+            set { if (value) PointComparisonStep_ExprCombineMode = TaskAutomation.Jobs.ExpressionCombineMode.Or; }
+        }
+
+        public System.Collections.ObjectModel.ObservableCollection<AxisExpressionViewModel> PointComparisonStep_Expressions { get; } = new();
+
+        // ── Points list ──
+        public System.Collections.ObjectModel.ObservableCollection<PointEntryViewModel> PointComparisonStep_Points { get; } = new();
+
         // ===== If / ElseIf Felder =====
 
         // ── MatchMode ──
@@ -1552,6 +1690,29 @@ namespace DesktopAutomationApp.ViewModels
                 "Else"  => new TaskAutomation.Jobs.ElseStep(),
                 "EndIf" => new TaskAutomation.Jobs.EndIfStep(),
                 "EndJob" => new TaskAutomation.Jobs.EndJobStep(),
+                "PointComparison" => new TaskAutomation.Jobs.PointComparisonStep
+                {
+                    Settings = new TaskAutomation.Jobs.PointComparisonSettings
+                    {
+                        Mode             = PointComparisonStep_Mode,
+                        MatchRequirement = PointComparisonStep_MatchRequirement,
+                        Points           = PointComparisonStep_Points.Select(p => p.ToPointEntry()).ToList(),
+                        OffsetSettings   = new TaskAutomation.Jobs.OffsetComparisonSettings
+                        {
+                            ReferenceSource          = PointComparisonStep_RefSource,
+                            ReferenceX               = PointComparisonStep_RefX,
+                            ReferenceY               = PointComparisonStep_RefY,
+                            ReferenceDetectionStepId = PointComparisonStep_RefDetectionStep?.StepId ?? "",
+                            OffsetX                  = PointComparisonStep_OffsetX,
+                            OffsetY                  = PointComparisonStep_OffsetY
+                        },
+                        ExpressionSettings = new TaskAutomation.Jobs.ExpressionComparisonSettings
+                        {
+                            CombineMode = PointComparisonStep_ExprCombineMode,
+                            Expressions = PointComparisonStep_Expressions.Select(e => e.ToAxisExpression()).ToList()
+                        }
+                    }
+                },
                 _ => null
             };
         }

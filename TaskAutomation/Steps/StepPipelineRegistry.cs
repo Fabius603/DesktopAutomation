@@ -121,6 +121,13 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Ist Fenster im Vordergrund"),
 
+            // ── Abfrage ────────────────────────────────────────────────────────
+            [typeof(PointComparisonStep)] = new(
+                Prerequisites:     [],
+                Output:            "PointComparisonResult",
+                IsConditionSource: true,
+                DisplayName:       "Punkte-Vergleich"),
+
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["CaptureResult"],
@@ -187,6 +194,7 @@ namespace TaskAutomation.Steps
             ["ShowText"]           = typeof(ShowTextStep),
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
+            ["PointComparison"]    = typeof(PointComparisonStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),

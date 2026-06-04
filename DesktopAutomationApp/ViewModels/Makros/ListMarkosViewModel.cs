@@ -1,5 +1,4 @@
-using DesktopAutomationApp.Services;
-using DesktopAutomationApp.Views;
+using DesktopAutomation.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -19,7 +18,8 @@ namespace DesktopAutomationApp.ViewModels
     {
         private readonly ILogger<ListMakrosViewModel> _log;
         private readonly IJobExecutor _executor;
-        private readonly IRepositoryService _repositoryService;
+        private readonly IMakroApplicationService _makroAppService;
+        private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
 
         public string Title => "Makros";
@@ -64,12 +64,14 @@ namespace DesktopAutomationApp.ViewModels
         public ListMakrosViewModel(
             IJobExecutor executor,
             ILogger<ListMakrosViewModel> log,
-            IRepositoryService repositoryService,
+            IMakroApplicationService makroAppService,
+            IDialogService dialogService,
             IJobDispatcher dispatcher)
         {
             _executor = executor;
             _log = log;
-            _repositoryService = repositoryService;
+            _makroAppService = makroAppService;
+            _dialogService = dialogService;
             _dispatcher = dispatcher;
 
             RefreshCommand   = new RelayCommand(LoadMakros);
@@ -89,7 +91,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (param is Guid id) _dispatcher.CancelMakro(id);
             });
             OpenFolderCommand = new RelayCommand(() =>
-                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<Makro>()) { UseShellExecute = true }));
+                Process.Start(new ProcessStartInfo(_makroAppService.GetStoragePath()) { UseShellExecute = true }));
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
 
@@ -98,10 +100,10 @@ namespace DesktopAutomationApp.ViewModels
 
         private async void LoadMakros()
         {
-            await _executor.ReloadMakrosAsync();
+            await _makroAppService.ReloadAsync();
 
             Items.Clear();
-            foreach (var m in _executor.AllMakros.Values.OrderBy(m => m.Name))
+            foreach (var m in _makroAppService.Makros.Values.OrderBy(m => m.Name))
                 Items.Add(m);
 
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
@@ -109,24 +111,20 @@ namespace DesktopAutomationApp.ViewModels
 
         public async Task SaveAllAsync()
         {
-            await _repositoryService.SaveAllAsync(Items);
+            foreach (var m in Items) await _makroAppService.SaveMakroAsync(m);
             _log.LogInformation("Makros gespeichert: {Count}", Items.Count);
-            await _executor.ReloadMakrosAsync();
         }
 
         private async void CreateNewMakro()
         {
-            var dlg = new NewItemNameDialog("Neues Makro", "Name des neuen Makros:")
-                { Owner = Application.Current.MainWindow };
-            if (dlg.ShowDialog() != true) return;
+            var name = await _dialogService.AskForNameAsync("Neues Makro", "Name des neuen Makros:");
+            if (name == null) return;
 
             try
             {
-                var newMakro = new Makro { Name = dlg.ResultName, Befehle = new() };
-                await _repositoryService.SaveAsync(newMakro);
+                var newMakro = await _makroAppService.CreateMakroAsync(name);
                 Items.Add(newMakro);
                 Selected = newMakro;
-                await _executor.ReloadMakrosAsync();
             }
             catch (Exception ex)
             {
@@ -142,14 +140,14 @@ namespace DesktopAutomationApp.ViewModels
                 ? $"Möchten Sie den Makro '{_selectedItems[0].Name}' wirklich löschen?"
                 : $"Möchten Sie die {_selectedItems.Count} ausgewählten Makros wirklich löschen?";
 
-            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes) return;
+            var confirmed = await _dialogService.ConfirmAsync(message, "Löschen bestätigen");
+            if (!confirmed) return;
 
             var toDelete = _selectedItems.ToList();
             foreach (var makro in toDelete)
             {
                 Items.Remove(makro);
-                await _repositoryService.DeleteAsync<Makro>(makro.Id.ToString());
+                await _makroAppService.DeleteMakroAsync(makro.Id);
                 _log.LogInformation("Makro gelöscht: {Name}", makro.Name);
             }
             Selected = null;

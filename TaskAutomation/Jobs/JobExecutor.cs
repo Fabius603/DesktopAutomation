@@ -48,13 +48,7 @@ namespace TaskAutomation.Jobs
         public event EventHandler<JobErrorEventArgs>?     JobErrorOccurred;
         public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
-        // ── Dispatcher-Callbacks (nach Konstruktion gesetzt, um Zirkelabhängigkeit zu vermeiden) ──
-        /// <summary>Starts a job via the dispatcher, returns instanceId. Set from App.xaml.cs after DI build.</summary>
-        public Func<Guid, Guid>? StartJobViaDispatcher { get; set; }
-        /// <summary>Cancels a job instance by instanceId via the dispatcher. Set from App.xaml.cs after DI build.</summary>
-        public Action<Guid>? CancelJobViaDispatcher { get; set; }
-        /// <summary>Starts a job via the dispatcher and awaits completion. Set from App.xaml.cs after DI build.</summary>
-        public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; set; }
+        private readonly Lazy<IJobLauncher> _lazyLauncher;
 
         // ── Zyklus-Erkennung ───────────────────────────────────────────────────
         private static readonly AsyncLocal<ImmutableHashSet<Guid>> _executionChain = new();
@@ -83,6 +77,7 @@ namespace TaskAutomation.Jobs
             { typeof(ShowTextStep),             new ShowTextStepHandler()            },
             { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
             { typeof(KeyPointMatchingStep),    new KeyPointMatchingStepHandler()    },
+            { typeof(PointComparisonStep),     new PointComparisonStepHandler()     },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
@@ -107,7 +102,8 @@ namespace TaskAutomation.Jobs
             IYoloManager yoloManager,
             IImageDisplayService imageDisplayService,
             IDesktopResultOverlay desktopResultOverlay,
-            IDesktopCaptureService desktopCaptureService)
+            IDesktopCaptureService desktopCaptureService,
+            Lazy<IJobLauncher>? lazyLauncher = null)
         {
             _logger               = logger;
             _jobRepository        = jobRepo;
@@ -119,6 +115,7 @@ namespace TaskAutomation.Jobs
             _imageDisplayService  = imageDisplayService;
             _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
+            _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
 
             _ = ReloadJobsAsync();
             _ = ReloadMakrosAsync();
@@ -246,6 +243,7 @@ namespace TaskAutomation.Jobs
             var showImageStep          = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             // ── Pipeline-Kontext erstellen ────────────────────────────────────
+            var launcher    = _lazyLauncher.Value;
             var pipelineCtx = new StepPipelineContext(
                 _logger,
                 _dxgiResources,
@@ -259,9 +257,9 @@ namespace TaskAutomation.Jobs
                 job,
                 ExecuteJob,
                 _desktopCaptureService,
-                StartJobViaDispatcher,
-                CancelJobViaDispatcher,
-                StartJobViaDispatcherAsync);
+                launcher == null ? (Func<Guid, Guid>?)null : launcher.StartJob,
+                launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
+                launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
 
             bool recorderStarted = false;
 
@@ -441,7 +439,7 @@ namespace TaskAutomation.Jobs
                         "Job '{JobName}' beendet: beende {Count} Kind-Job-Instanz(en).",
                         job.Name, pipelineCtx.ChildJobInstanceIds.Count);
                     foreach (var childId in pipelineCtx.ChildJobInstanceIds)
-                        try { CancelJobViaDispatcher?.Invoke(childId); } catch { /* best-effort */ }
+                        try { pipelineCtx.CancelJobViaDispatcher?.Invoke(childId); } catch { /* best-effort */ }
                 }
 
                 // Nur die von diesem Job-Lauf geöffneten Bildvorschau-Fenster schließen.

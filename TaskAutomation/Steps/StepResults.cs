@@ -95,4 +95,17 @@ namespace TaskAutomation.Steps
 
         public static readonly ActiveWindowResult Default = new() { WasExecuted = false };
     }
+
+    /// <summary>
+    /// Ergebnis von PointComparisonStep.
+    /// Gibt an, ob die geprüften Punkte die Bedingung erfüllen.
+    /// </summary>
+    public sealed record PointComparisonResult : StepResultBase
+    {
+        public bool Matches    { get; init; }
+        public int  MatchCount { get; init; }
+        public int  TotalCount { get; init; }
+
+        public static readonly PointComparisonResult Default = new() { WasExecuted = false };
+    }
 }

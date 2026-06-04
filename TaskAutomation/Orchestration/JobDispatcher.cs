@@ -15,7 +15,7 @@ namespace TaskAutomation.Orchestration
     /// Dispatcher, der auf Hotkey-Events hört und Jobs über einen IJobExecutor startet.
     /// Unterstützt beliebig viele gleichzeitige Instanzen desselben Jobs.
     /// </summary>
-    public sealed class JobDispatcher : IJobDispatcher, IDisposable
+    public sealed class JobDispatcher : IJobDispatcher, IJobLauncher, IDisposable
     {
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;

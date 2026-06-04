@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using DesktopAutomationApp.Views;
+using DesktopAutomation.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
@@ -18,7 +18,8 @@ namespace DesktopAutomationApp.ViewModels
     {
         private readonly ILogger<ListJobsViewModel> _log;
         private readonly IJobExecutor _executor;
-        private readonly IRepositoryService _repositoryService;
+        private readonly IJobApplicationService _jobAppService;
+        private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
 
         public string Title => "Jobs";
@@ -71,12 +72,14 @@ namespace DesktopAutomationApp.ViewModels
         public ListJobsViewModel(
             IJobExecutor executor,
             ILogger<ListJobsViewModel> log,
-            IRepositoryService repositoryService,
+            IJobApplicationService jobAppService,
+            IDialogService dialogService,
             IJobDispatcher dispatcher)
         {
             _executor = executor;
             _log = log;
-            _repositoryService = repositoryService;
+            _jobAppService = jobAppService;
+            _dialogService = dialogService;
             _dispatcher = dispatcher;
 
             RefreshCommand = new RelayCommand(LoadJobs);
@@ -100,7 +103,7 @@ namespace DesktopAutomationApp.ViewModels
                 _dispatcher.CancelJobsByDefinition(id);
             });
             OpenFolderCommand = new RelayCommand(() =>
-                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<Job>()) { UseShellExecute = true }));
+                Process.Start(new ProcessStartInfo(_jobAppService.GetStoragePath()) { UseShellExecute = true }));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
 
@@ -109,10 +112,10 @@ namespace DesktopAutomationApp.ViewModels
 
         private async void LoadJobs()
         {
-            await _executor.ReloadJobsAsync();
+            await _jobAppService.ReloadAsync();
 
             Items.Clear();
-            foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
+            foreach (var j in _jobAppService.Jobs.Values.OrderBy(j => j.Name))
                 Items.Add(j);
 
 
@@ -122,8 +125,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public async Task SaveAllAsync()
         {
-            await _repositoryService.SaveAllAsync(Items);
-            await _executor.ReloadJobsAsync();
+            foreach (var j in Items) await _jobAppService.SaveJobAsync(j);
         }
 
         public async Task SaveWithoutEditorAsync()
@@ -140,33 +142,29 @@ namespace DesktopAutomationApp.ViewModels
                 ? $"Möchten Sie den Job '{_selectedItems[0].Name}' wirklich löschen?"
                 : $"Möchten Sie die {_selectedItems.Count} ausgewählten Jobs wirklich löschen?";
 
-            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes) return;
+            var confirmed = await _dialogService.ConfirmAsync(message, "Löschen bestätigen");
+            if (!confirmed) return;
 
             var toDelete = _selectedItems.ToList();
             foreach (var job in toDelete)
             {
                 Items.Remove(job);
-                await _repositoryService.DeleteAsync<Job>(job.Id.ToString());
+                await _jobAppService.DeleteJobAsync(job.Id);
                 _log.LogInformation("Job gelöscht: {Name}", job.Name);
             }
             SelectedJob = null;
-            await _executor.ReloadJobsAsync();
         }
 
         public async void CreateNewJob()
         {
-            var dlg = new NewItemNameDialog("Neuer Job", "Name des neuen Jobs:")
-                { Owner = Application.Current.MainWindow };
-            if (dlg.ShowDialog() != true) return;
+            var name = await _dialogService.AskForNameAsync("Neuer Job", "Name des neuen Jobs:");
+            if (name == null) return;
 
             try
             {
-                var newJob = new Job { Name = dlg.ResultName, Repeating = false, Steps = new() };
-                await _repositoryService.SaveAsync(newJob);
+                var newJob = await _jobAppService.CreateJobAsync(name);
                 Items.Add(newJob);
                 SelectedJob = newJob;
-                await _executor.ReloadJobsAsync();
             }
             catch (Exception ex)
             {

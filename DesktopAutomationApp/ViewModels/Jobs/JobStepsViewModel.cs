@@ -12,7 +12,7 @@ using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
-using Common.JsonRepository;
+using DesktopAutomation.Application.Interfaces;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -20,8 +20,8 @@ namespace DesktopAutomationApp.ViewModels
     {
         private readonly IJobExecutor _jobExecutionContext;
         private readonly ObservableCollection<JobStep> _steps;
-        private readonly IJsonRepository<Job> _jobRepo;
-        private readonly IJobExecutor _executor;
+        private readonly IJobApplicationService _jobAppService;
+        private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
 
         private readonly Stack<List<JobStep>> _undoStack = new();
@@ -85,12 +85,12 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobExecutor executor, IJsonRepository<Job> repo, IJobDispatcher dispatcher)
+        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
-            _executor = executor;
-            _jobRepo = repo;
+            _jobAppService = jobAppService;
+            _dialogService = dialogService;
             _dispatcher = dispatcher;
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
@@ -184,22 +184,19 @@ namespace DesktopAutomationApp.ViewModels
         private async Task Save()
         {
             Job.Steps = _steps.ToList();
-            await _jobRepo.SaveAsync(Job);
-            await _executor.ReloadJobsAsync();
+            await _jobAppService.SaveJobAsync(Job);
             HasUnsavedChanges = false;
         }
 
         // ---------- Rename ----------
         private async Task Rename()
         {
-            var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", Job.Name)
-                { Owner = Application.Current?.MainWindow };
-            if (dlg.ShowDialog() != true) return;
+            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", Job.Name);
+            if (newName == null) return;
 
-            Job.Name = dlg.ResultName.Trim();
+            Job.Name = newName.Trim();
             OnPropertyChanged(nameof(Title));
-            await _jobRepo.SaveAsync(Job);
-            await _executor.ReloadJobsAsync();
+            await _jobAppService.SaveJobAsync(Job);
         }
 
         // ---------- Add / Edit ----------
@@ -458,6 +455,34 @@ namespace DesktopAutomationApp.ViewModels
 
                 case TaskAutomation.Jobs.EndIfStep:
                     vm.SelectedType = "EndIf";
+                    break;
+
+                case TaskAutomation.Jobs.PointComparisonStep pcs:
+                    vm.SelectedType = "PointComparison";
+                    vm.PointComparisonStep_Mode             = pcs.Settings.Mode;
+                    vm.PointComparisonStep_MatchRequirement = pcs.Settings.MatchRequirement;
+                    vm.PointComparisonStep_RefSource        = pcs.Settings.OffsetSettings.ReferenceSource;
+                    vm.PointComparisonStep_RefX             = pcs.Settings.OffsetSettings.ReferenceX;
+                    vm.PointComparisonStep_RefY             = pcs.Settings.OffsetSettings.ReferenceY;
+                    vm.PointComparisonStep_RefDetectionStep = vm.AvailableDetectionSteps
+                        .FirstOrDefault(s => s.StepId == pcs.Settings.OffsetSettings.ReferenceDetectionStepId);
+                    vm.PointComparisonStep_OffsetX          = pcs.Settings.OffsetSettings.OffsetX;
+                    vm.PointComparisonStep_OffsetY          = pcs.Settings.OffsetSettings.OffsetY;
+                    vm.PointComparisonStep_ExprCombineMode  = pcs.Settings.ExpressionSettings.CombineMode;
+                    vm.PointComparisonStep_Expressions.Clear();
+                    foreach (var expr in pcs.Settings.ExpressionSettings.Expressions)
+                    {
+                        var exprVm = new AxisExpressionViewModel(vm.PointComparisonStep_Expressions);
+                        exprVm.LoadFrom(expr);
+                        vm.PointComparisonStep_Expressions.Add(exprVm);
+                    }
+                    vm.PointComparisonStep_Points.Clear();
+                    foreach (var pt in pcs.Settings.Points)
+                    {
+                        var ptVm = new PointEntryViewModel(vm.PointComparisonStep_Points, vm.AvailableDetectionSteps);
+                        ptVm.LoadFrom(pt);
+                        vm.PointComparisonStep_Points.Add(ptVm);
+                    }
                     break;
             }
         }
