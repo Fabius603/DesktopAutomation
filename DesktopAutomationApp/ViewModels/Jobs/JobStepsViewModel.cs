@@ -289,8 +289,21 @@ namespace DesktopAutomationApp.ViewModels
                     vm.TemplateMatchingStep_RoiY = t.Settings.ROI.Y;
                     vm.TemplateMatchingStep_RoiW = t.Settings.ROI.Width;
                     vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
-                    vm.TemplateMatchingStep_DrawResults = t.Settings.DrawResults;
                     vm.TemplateMatchingStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == t.Settings.SourceCaptureStepId);
+                    break;
+
+                case ColorDetectionStep cd:
+                    vm.SelectedType = "ColorDetection";
+                    vm.ColorDetectionStep_Color = HexToWpfColor(cd.Settings.ColorHex);
+                    vm.ColorDetectionStep_ConfidenceThreshold = cd.Settings.ConfidenceThreshold;
+                    vm.ColorDetectionStep_MinSize = cd.Settings.MinSize;
+                    vm.ColorDetectionStep_MaxSize = cd.Settings.MaxSize;
+                    vm.ColorDetectionStep_EnableROI = cd.Settings.EnableROI;
+                    vm.ColorDetectionStep_RoiX = cd.Settings.ROI.X;
+                    vm.ColorDetectionStep_RoiY = cd.Settings.ROI.Y;
+                    vm.ColorDetectionStep_RoiW = cd.Settings.ROI.Width;
+                    vm.ColorDetectionStep_RoiH = cd.Settings.ROI.Height;
+                    vm.ColorDetectionStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == cd.Settings.SourceCaptureStepId);
                     break;
 
                 case DesktopDuplicationStep d:
@@ -354,6 +367,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
                     vm.KlickOnPoint3DStep_OriginX = kp3d.Settings.OriginX;
                     vm.KlickOnPoint3DStep_OriginY = kp3d.Settings.OriginY;
+                    vm.KlickOnPoint3DStep_OffsetX = kp3d.Settings.OffsetX;
+                    vm.KlickOnPoint3DStep_OffsetY = kp3d.Settings.OffsetY;
                     vm.KlickOnPoint3DStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == kp3d.Settings.SourceDetectionStepId);
                     break;
 
@@ -371,7 +386,6 @@ namespace DesktopAutomationApp.ViewModels
                     vm.YoloDetectionStep_Model = yd.Settings.Model;
                     vm.YoloDetectionStep_ConfidenceThreshold = yd.Settings.ConfidenceThreshold;
                     vm.YoloDetectionStep_ClassName = yd.Settings.ClassName;
-                    vm.YoloDetectionStep_DrawResults = yd.Settings.DrawResults;
                     vm.YoloDetectionStep_EnableROI = yd.Settings.EnableROI;
                     vm.YoloDetectionStep_RoiX = yd.Settings.ROI.X;
                     vm.YoloDetectionStep_RoiY = yd.Settings.ROI.Y;
@@ -426,7 +440,6 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KeyPointMatchingStep_TemplatePath        = km.Settings.TemplatePath;
                     vm.KeyPointMatchingStep_MinMatchCount       = km.Settings.MinMatchCount;
                     vm.KeyPointMatchingStep_LowesRatioThreshold = km.Settings.LowesRatioThreshold;
-                    vm.KeyPointMatchingStep_DrawResults         = km.Settings.DrawResults;
                     vm.KeyPointMatchingStep_EnableROI           = km.Settings.EnableROI;
                     vm.KeyPointMatchingStep_RoiX = km.Settings.ROI.X;
                     vm.KeyPointMatchingStep_RoiY = km.Settings.ROI.Y;

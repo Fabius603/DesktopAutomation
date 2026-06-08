@@ -8,6 +8,7 @@ namespace TaskAutomation.Jobs
 {
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
+    [JsonDerivedType(typeof(ColorDetectionStep), "color_detection")]
     [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
@@ -86,8 +87,37 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
 
-        [JsonPropertyName("draw_results")]
-        public bool DrawResults { get; set; } = true;
+        [JsonPropertyName("source_capture_step_id")]
+        public string SourceCaptureStepId { get; set; } = "";
+    }
+
+    // ---- ColorDetection ----
+    public sealed class ColorDetectionStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public ColorDetectionSettings Settings { get; set; } = new();
+    }
+
+    public sealed class ColorDetectionSettings
+    {
+        [JsonPropertyName("color_hex")]
+        public string ColorHex { get; set; } = "#FF0000";
+
+        [JsonPropertyName("confidence_threshold")]
+        public double ConfidenceThreshold { get; set; } = 0.90;
+
+        [JsonPropertyName("min_size")]
+        public int MinSize { get; set; } = 25;
+
+        [JsonPropertyName("max_size")]
+        public int MaxSize { get; set; } = int.MaxValue;
+
+        [JsonPropertyName("roi")]
+        [JsonConverter(typeof(OpenCvRectJsonConverter))]
+        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+
+        [JsonPropertyName("enable_roi")]
+        public bool EnableROI { get; set; } = false;
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
@@ -259,6 +289,10 @@ namespace TaskAutomation.Jobs
         public int OriginX { get; set; } = 0;
         [JsonPropertyName("origin_y")]
         public int OriginY { get; set; } = 0;
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; } = 0;
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; } = 0;
         [JsonPropertyName("source_detection_step_id")]
         public string SourceDetectionStepId { get; set; } = "";
     }
@@ -314,9 +348,6 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
-
-        [JsonPropertyName("draw_results")]
-        public bool DrawResults { get; set; } = true;
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
@@ -542,9 +573,6 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("lowes_ratio_threshold")]
         public double LowesRatioThreshold { get; set; } = 0.75;
-
-        [JsonPropertyName("draw_results")]
-        public bool DrawResults { get; set; } = true;
 
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;

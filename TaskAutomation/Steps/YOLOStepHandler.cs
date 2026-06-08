@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using Microsoft.Extensions.Logging;
 using ImageHelperMethods;
-using ImageDetection;
 
 namespace TaskAutomation.Steps
 {
@@ -56,8 +55,7 @@ namespace TaskAutomation.Steps
                 return new DetectionResult
                 {
                     WasExecuted    = true,
-                    Found          = false,
-                    ProcessedImage = (Bitmap)capture.Image!.Clone()
+                    Found          = false
                 };
             }
 
@@ -68,19 +66,6 @@ namespace TaskAutomation.Steps
             logger.LogInformation(
                 "YOLOStepHandler: Found at ({X},{Y}) confidence {C:F3}",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
-
-            Bitmap processedImg;
-            if (step.Settings.DrawResults)
-            {
-                var imageToProcess = (Bitmap)capture.Image!.Clone();
-                processedImg = DrawResult.DrawDetectionResult(imageToProcess, rawResult);
-                if (!ReferenceEquals(processedImg, imageToProcess))
-                    imageToProcess.Dispose();
-            }
-            else
-            {
-                processedImg = (Bitmap)capture.Image!.Clone();
-            }
 
             System.Drawing.Rectangle? globalBoundingBox = null;
             if (rawResult.BoundingBox.HasValue)
@@ -111,7 +96,6 @@ namespace TaskAutomation.Steps
                 Point          = globalPoint,
                 BoundingBox    = globalBoundingBox,
                 Confidence     = rawResult.Confidence,
-                ProcessedImage = processedImg,
                 AllDetections  = allDetections
             };
         }

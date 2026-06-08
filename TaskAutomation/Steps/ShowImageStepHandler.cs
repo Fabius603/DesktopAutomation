@@ -21,8 +21,7 @@ namespace TaskAutomation.Steps
                 ? DetectionResult.Default
                 : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
 
-            var rawImage       = capture.Image;
-            var processedImage = detection.ProcessedImage ?? rawImage;
+            var rawImage = capture.Image;
 
             if (rawImage == null)
             {
@@ -41,8 +40,10 @@ namespace TaskAutomation.Steps
             if (step.Settings.ShowProcessedImage)
             {
                 var winName = $"{step.Settings.WindowName} - Processed Image";
-                var img     = (processedImage != null && processedImage.Width >= 10 && processedImage.Height >= 10)
-                                  ? processedImage : rawImage;
+                using var drawnImage = detection.Found
+                    ? DetectionResultDrawing.Draw(rawImage, detection, capture.Offset)
+                    : null;
+                var img = drawnImage ?? rawImage;
                 ctx.OpenedWindowNames.Add(winName);
                 ctx.ImageDisplayService.DisplayImage(winName, img, ImageDisplayType.Processed);
                 logger.LogDebug("ShowImageStepHandler: Processed image displayed in '{Win}'", winName);

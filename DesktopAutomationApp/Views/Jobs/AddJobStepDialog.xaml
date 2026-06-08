@@ -10,6 +10,62 @@
                  ResizeMode="CanResize" ShowInTaskbar="False"
                  Style="{StaticResource DialogWindowStyle}">
 
+    <mah:MetroWindow.Resources>
+        <Style x:Key="StepFieldGrid" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style x:Key="StepFieldLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{StaticResource App.Brush.TextSecondary}"/>
+        </Style>
+        <Style x:Key="StepCompactTextBox" TargetType="TextBox">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StepAxisLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource App.Brush.TextMuted}"/>
+        </Style>
+        <Style x:Key="StepGroupedFieldLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource App.Brush.TextMuted}"/>
+        </Style>
+        <Style x:Key="StepGroupedTextBox" TargetType="TextBox" BasedOn="{StaticResource StepCompactTextBox}">
+            <Setter Property="Width" Value="72"/>
+        </Style>
+        <Style x:Key="RoiFieldWrapPanel" TargetType="WrapPanel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="ItemHeight" Value="34"/>
+        </Style>
+        <Style x:Key="RoiFieldGroup" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Margin" Value="0,0,14,6"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StepInlineButton" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="TemplatePreviewBorder" TargetType="Border">
+            <Setter Property="Width" Value="96"/>
+            <Setter Property="Height" Value="64"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="Background" Value="{StaticResource App.Brush.WindowBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource App.Brush.CardBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+    </mah:MetroWindow.Resources>
+
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -66,75 +122,171 @@
 
                     <!-- ── Template Matching ── -->
                     <StackPanel Visibility="{Binding ShowTemplateMatching, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Capture-Step" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Capture-Step" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding TemplateMatchingStep_SourceCaptureStep}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Template-Pfad" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1"
-                                     Text="{Binding TemplateMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="0" Text="Template" Style="{StaticResource StepFieldLabel}"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding TemplateMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Border Style="{StaticResource TemplatePreviewBorder}"
+                                        Visibility="{Binding TemplateMatchingStep_HasTemplatePreview, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Image Source="{Binding TemplateMatchingStep_TemplatePreview}" Stretch="Uniform"/>
+                                </Border>
+                            </StackPanel>
                             <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseTemplatePathCommand}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Confidence (0…1)" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                            <TextBlock Grid.Column="0" Text="ROI" Style="{StaticResource StepFieldLabel}"/>
+                            <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="X" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Y" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Breite" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Höhe" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <Button Content="Aufnehmen" Style="{StaticResource StepInlineButton}"
+                                        Command="{Binding CaptureTemplateMatchingRoiCommand}"/>
+                            </WrapPanel>
+                        </Grid>
+                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding TemplateMatchingStep_EnableROI}" Margin="140,0,0,10"/>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Confidence (0…1)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Match Mode" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Match Mode" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding TemplateMatchModesAll}"
                                       SelectedItem="{Binding TemplateMatchingStep_TemplateMatchMode}"/>
                         </Grid>
-                        <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding TemplateMatchingStep_DrawResults}" Margin="0,0,0,8"/>
-                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding TemplateMatchingStep_EnableROI}" Margin="0,0,0,8"/>
-                        <Grid Margin="0,0,0,8">
+                    </StackPanel>
+
+                    <!-- ── Color Detection ── -->
+                    <StackPanel Visibility="{Binding ShowColorDetection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="ROI" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding TemplateMatchingStep_RoiX}" Margin="0,0,8,0"/>
-                                <TextBlock Text="Y" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding TemplateMatchingStep_RoiY}" Margin="0,0,8,0"/>
-                                <TextBlock Text="B" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding TemplateMatchingStep_RoiW}" Margin="0,0,8,0"/>
-                                <TextBlock Text="H" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding TemplateMatchingStep_RoiH}"/>
+                            <TextBlock Grid.Column="0" Text="Capture-Step" Style="{StaticResource StepFieldLabel}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableCaptureSteps}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedItem="{Binding ColorDetectionStep_SourceCaptureStep}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Farbe" Style="{StaticResource StepFieldLabel}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <mah:ColorPicker SelectedColor="{Binding ColorDetectionStep_Color}"
+                                                 HorizontalAlignment="Left"/>
+                                <Border Width="28" Height="28" Margin="8,0,0,0"
+                                        Background="{Binding ColorDetectionStep_ColorBrush}"
+                                        BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"/>
+                                <TextBlock Text="{Binding ColorDetectionStep_ColorHex}"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{StaticResource App.Brush.TextSecondary}"/>
                             </StackPanel>
                         </Grid>
-                        <Button Content="ROI erfassen" HorizontalAlignment="Left" Padding="10,5"
-                                Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding CaptureTemplateMatchingRoiCommand}"/>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ROI" Style="{StaticResource StepFieldLabel}"/>
+                            <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="X" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Y" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Breite" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Höhe" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <Button Content="Aufnehmen" Style="{StaticResource StepInlineButton}"
+                                        Command="{Binding CaptureColorDetectionRoiCommand}"/>
+                            </WrapPanel>
+                        </Grid>
+                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding ColorDetectionStep_EnableROI}" Margin="140,0,0,10"/>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Confidence (0…1)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Größe" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_MinSize, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Max. Größe" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_MaxSize, Converter={StaticResource MaxSizeDisplayConverter}, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
                     </StackPanel>
 
                     <!-- ── Desktop Duplication ── -->
@@ -338,25 +490,36 @@
 
                     <!-- ── KlickOnPoint ── -->
                     <StackPanel Visibility="{Binding ShowKlickOnPoint, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Detection-Step" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Detection-Step" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding KlickOnPointStep_SourceDetectionStep}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Klick-Typ" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Offset" Style="{StaticResource StepFieldLabel}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="X" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPointStep_OffsetX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Y" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPointStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Klick-Typ" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
                                       SelectedItem="{Binding KlickOnPointStep_ClickType}">
                                 <ComboBox.Items>
@@ -367,77 +530,66 @@
                                 </ComboBox.Items>
                             </ComboBox>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Timeout (ms)" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
-                                     Text="{Binding KlickOnPointStep_TimeoutMs}"/>
+                            <TextBlock Grid.Column="0" Text="Timeout (ms)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding KlickOnPointStep_TimeoutMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Offset X" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
-                                     Text="{Binding KlickOnPointStep_OffsetX}"/>
-                        </Grid>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Offset Y" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
-                                     Text="{Binding KlickOnPointStep_OffsetY}"/>
-                        </Grid>
-                        <CheckBox Content="Doppelklick" IsChecked="{Binding KlickOnPointStep_DoubleClick}"/>
+                        <CheckBox Content="Doppelklick" IsChecked="{Binding KlickOnPointStep_DoubleClick}" Margin="140,0,0,0"/>
                     </StackPanel>
 
                     <!-- ── KlickOnPoint3D ── -->
                     <StackPanel Visibility="{Binding ShowKlickOnPoint3D, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Detection-Step" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Detection-Step" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding KlickOnPoint3DStep_SourceDetectionStep}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Ursprung" Style="{StaticResource StepFieldLabel}"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="X" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OriginX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Y" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OriginY, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Content="Aufnehmen" Style="{StaticResource StepInlineButton}"
+                                    Command="{Binding CaptureKlickOnPoint3DOriginCommand}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Ursprung" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Offset" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="60" Text="{Binding KlickOnPoint3DStep_OriginX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                <TextBlock Text="Y" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="60" Text="{Binding KlickOnPoint3DStep_OriginY, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="X" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OffsetX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Y" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
-                        <Button Content="Punkt erfassen" HorizontalAlignment="Left" Padding="10,5" Margin="0,0,0,8"
-                                Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding CaptureKlickOnPoint3DOriginCommand}"/>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Klick-Typ" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Klick-Typ" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
                                       SelectedItem="{Binding KlickOnPoint3DStep_ClickType}">
                                 <ComboBox.Items>
@@ -448,90 +600,90 @@
                                 </ComboBox.Items>
                             </ComboBox>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Timeout (ms)" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
-                                     Text="{Binding KlickOnPoint3DStep_Timeout}"/>
+                            <TextBlock Grid.Column="0" Text="Timeout (ms)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding KlickOnPoint3DStep_Timeout, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <CheckBox Content="Doppelklick" IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}"/>
+                        <CheckBox Content="Doppelklick" IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}" Margin="140,0,0,0"/>
                     </StackPanel>
 
                     <!-- ── YOLO Detection ── -->
                     <StackPanel Visibility="{Binding ShowYoloDetection, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Capture-Step" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Capture-Step" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding YoloDetectionStep_SourceCaptureStep}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Model" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Model" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding YoloDetectionStep_AvailableModels}"
                                       SelectedItem="{Binding YoloDetectionStep_Model}"
                                       IsEditable="True"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Klassenname" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Klassenname" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding YoloDetectionStep_AvailableClasses}"
                                       SelectedItem="{Binding YoloDetectionStep_ClassName}"
                                       IsEditable="True"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Confidence (0…1)" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                            <TextBlock Grid.Column="0" Text="ROI" Style="{StaticResource StepFieldLabel}"/>
+                            <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="X" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Y" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Breite" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Höhe" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <Button Content="Aufnehmen" Style="{StaticResource StepInlineButton}"
+                                        Command="{Binding CaptureYoloDetectionRoiCommand}"/>
+                            </WrapPanel>
+                        </Grid>
+                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding YoloDetectionStep_EnableROI}" Margin="140,0,0,10"/>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Confidence (0…1)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding YoloDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
-                        <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding YoloDetectionStep_DrawResults}" Margin="0,0,0,8"/>
-                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding YoloDetectionStep_EnableROI}" Margin="0,0,0,8"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="ROI" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding YoloDetectionStep_RoiX}" Margin="0,0,8,0"/>
-                                <TextBlock Text="Y" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding YoloDetectionStep_RoiY}" Margin="0,0,8,0"/>
-                                <TextBlock Text="B" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding YoloDetectionStep_RoiW}" Margin="0,0,8,0"/>
-                                <TextBlock Text="H" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding YoloDetectionStep_RoiH}"/>
-                            </StackPanel>
-                        </Grid>
-                        <Button Content="ROI erfassen" HorizontalAlignment="Left" Padding="10,5"
-                                Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding CaptureYoloDetectionRoiCommand}"/>
                     </StackPanel>
 
                     <!-- ── Timeout ── -->
@@ -768,74 +920,80 @@
 
                     <!-- ── KeyPoint Matching ── -->
                     <StackPanel Visibility="{Binding ShowKeyPointMatching, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Capture-Step" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBlock Grid.Column="0" Text="Capture-Step" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding KeyPointMatchingStep_SourceCaptureStep}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Template-Pfad" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1"
-                                     Text="{Binding KeyPointMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="0" Text="Template" Style="{StaticResource StepFieldLabel}"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBox Text="{Binding KeyPointMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Border Style="{StaticResource TemplatePreviewBorder}"
+                                        Visibility="{Binding KeyPointMatchingStep_HasTemplatePreview, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Image Source="{Binding KeyPointMatchingStep_TemplatePreview}" Stretch="Uniform"/>
+                                </Border>
+                            </StackPanel>
                             <Button Grid.Column="2" Content="…" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseKeyPointMatchingTemplatePathCommand}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Min. Matches" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="80" HorizontalAlignment="Left"
+                            <TextBlock Grid.Column="0" Text="ROI" Style="{StaticResource StepFieldLabel}"/>
+                            <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="X" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Y" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Breite" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Style="{StaticResource RoiFieldGroup}">
+                                    <TextBlock Text="Höhe" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <Button Content="Aufnehmen" Style="{StaticResource StepInlineButton}"
+                                        Command="{Binding CaptureKeyPointMatchingRoiCommand}"/>
+                            </WrapPanel>
+                        </Grid>
+                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding KeyPointMatchingStep_EnableROI}" Margin="140,0,0,10"/>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Matches" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KeyPointMatchingStep_MinMatchCount, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Lowe's Ratio (0…1)" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="100" HorizontalAlignment="Left"
+                            <TextBlock Grid.Column="0" Text="Lowe's Ratio (0…1)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KeyPointMatchingStep_LowesRatioThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
-                        <CheckBox Content="Ergebnisse zeichnen" IsChecked="{Binding KeyPointMatchingStep_DrawResults}" Margin="0,0,0,8"/>
-                        <CheckBox Content="ROI aktivieren" IsChecked="{Binding KeyPointMatchingStep_EnableROI}" Margin="0,0,0,8"/>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="ROI" VerticalAlignment="Center"
-                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="X" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiX}" Margin="0,0,8,0"/>
-                                <TextBlock Text="Y" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiY}" Margin="0,0,8,0"/>
-                                <TextBlock Text="B" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiW}" Margin="0,0,8,0"/>
-                                <TextBlock Text="H" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource App.Brush.TextMuted}"/>
-                                <TextBox Width="54" Text="{Binding KeyPointMatchingStep_RoiH}"/>
-                            </StackPanel>
-                        </Grid>
-                        <Button Content="ROI erfassen" HorizontalAlignment="Left" Padding="10,5"
-                                Style="{StaticResource ButtonSecondary}"
-                                Command="{Binding CaptureKeyPointMatchingRoiCommand}"/>
                     </StackPanel>
 
                     <!-- ── If ── -->

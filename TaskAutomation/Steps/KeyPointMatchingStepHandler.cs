@@ -1,4 +1,3 @@
-using ImageDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
 using System;
 using System.Collections.Generic;
@@ -67,15 +66,6 @@ namespace TaskAutomation.Steps
                 "KeyPointMatchingStepHandler: Match bei ({X},{Y}), Confidence {C:F3}",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
 
-            Bitmap? processedImg = null;
-            if (step.Settings.DrawResults)
-            {
-                var clone = (Bitmap)capture.Image!.Clone();
-                processedImg = DrawResult.DrawDetectionResult(clone, rawResult);
-                if (!ReferenceEquals(processedImg, clone))
-                    clone.Dispose();
-            }
-
             System.Drawing.Rectangle? globalBoundingBox = null;
             if (rawResult.BoundingBox.HasValue)
             {
@@ -105,7 +95,6 @@ namespace TaskAutomation.Steps
                 Point          = globalPoint,
                 BoundingBox    = globalBoundingBox,
                 Confidence     = rawResult.Confidence,
-                ProcessedImage = processedImg,
                 AllDetections  = allDetections
             };
         }

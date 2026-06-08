@@ -61,6 +61,7 @@ namespace TaskAutomation.Jobs
             { typeof(ProcessDuplicationStep),  new ProcessDuplicationStepHandler()  },
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
             { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
+            { typeof(ColorDetectionStep),      new ColorDetectionStepHandler()      },
             { typeof(ShowImageStep),           new ShowImageStepHandler()           },
             { typeof(ShowOnDesktopStep),        new ShowOnDesktopStepHandler()       },
             { typeof(VideoCreationStep),       new VideoCreationStepHandler()       },
@@ -238,8 +239,8 @@ namespace TaskAutomation.Jobs
             await PreloadYoloModelsAsync(job, ct);
 
             // ── Schritte analysieren ──────────────────────────────────────────
-            var videoStep              = job.Steps.OfType<VideoCreationStep>().FirstOrDefault();
-            var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault();
+            var videoStep              = job.Steps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
+            var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
             var showImageStep          = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
 
             // ── Pipeline-Kontext erstellen ────────────────────────────────────

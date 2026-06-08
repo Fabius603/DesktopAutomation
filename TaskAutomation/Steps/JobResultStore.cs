@@ -59,9 +59,6 @@ namespace TaskAutomation.Steps
                         cr.Image?.Dispose();
                         cr.ProcessedImage?.Dispose();
                         break;
-                    case DetectionResult dr:
-                        dr.ProcessedImage?.Dispose();
-                        break;
                 }
             }
             _byType.Clear();

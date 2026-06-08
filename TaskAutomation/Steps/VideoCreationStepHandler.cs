@@ -29,21 +29,27 @@ namespace TaskAutomation.Steps
                 return new OutputResult { WasExecuted = true, Success = false };
             }
 
-            Bitmap? frameToAdd;
+            Bitmap frameToAdd;
             if (step.Settings.UseRawImage)
             {
                 frameToAdd = (Bitmap)capture.Image.Clone();
             }
             else
             {
-                var processed = detection.ProcessedImage;
-                frameToAdd = (processed != null && processed.Width > 0)
-                    ? (Bitmap)processed.Clone()
+                frameToAdd = detection.Found
+                    ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
                     : (Bitmap)capture.Image.Clone();
             }
 
             ct.ThrowIfCancellationRequested();
-            ctx.VideoRecorder.AddFrame(frameToAdd);
+            try
+            {
+                ctx.VideoRecorder.AddFrame(frameToAdd);
+            }
+            finally
+            {
+                frameToAdd.Dispose();
+            }
             logger.LogDebug("VideoCreationStepHandler: Frame added to video recorder");
 
             return new OutputResult { WasExecuted = true, Success = true };

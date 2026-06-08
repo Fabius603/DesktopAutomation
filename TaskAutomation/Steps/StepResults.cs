@@ -40,8 +40,6 @@ namespace TaskAutomation.Steps
         /// <summary>BoundingBox in globalen virtuellen Desktop-Koordinaten (falls von der Erkennung geliefert).</summary>
         public System.Drawing.Rectangle? BoundingBox   { get; init; }
         public double  Confidence     { get; init; }
-        public Bitmap? ProcessedImage { get; init; }
-
         /// <summary>
         /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
         /// Index 0 = bestes Ergebnis (identisch mit Point/BoundingBox).

@@ -72,9 +72,59 @@
                         <Run Text="ROI (X,Y,Breite,Höhe): "/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ColorDetectionStep -->
+        <DataTemplate DataType="{x:Type jobs:ColorDetectionStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="DrawResults: "/>
-                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                        <Run Text="Bildquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="Farbe: " VerticalAlignment="Center"/>
+                        <Border Width="18" Height="18"
+                                Background="{Binding Settings.ColorHex}"
+                                BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                BorderThickness="1"
+                                CornerRadius="3"/>
+                        <TextBlock Text="{Binding Settings.ColorHex}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="ConfidenceThreshold: "/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Min. Größe: "/><Run Text="{Binding Settings.MinSize}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Max. Größe: "/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="EnableROI: "/>
+                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="ROI (X,Y,Breite,Höhe): "/>
+                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -337,14 +387,20 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Doppelklick: "/>
-                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Klick-Typ: "/><Run Text="{Binding Settings.ClickType}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Ursprung: "/><Run Text="{Binding Settings.OriginX}"/><Run Text=", "/><Run Text="{Binding Settings.OriginY}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Offset: "/><Run Text="{Binding Settings.OffsetX}"/><Run Text=", "/><Run Text="{Binding Settings.OffsetY}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.TimeoutMs}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Doppelklick: "/>
+                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -434,10 +490,6 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ROI (X,Y,Breite,Höhe): "/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="DrawResults: "/>
-                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -613,10 +665,6 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="EnableROI: "/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="DrawResults: "/>
-                        <Run Text="{Binding Settings.DrawResults, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

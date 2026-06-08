@@ -28,6 +28,11 @@ namespace TaskAutomation.Steps
                 new("Found",      "Gefunden",   ResultPropertyType.Bool),
                 new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
+            ["ColorDetectionStep"]   =
+            [
+                new("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new("Confidence", "Confidence", ResultPropertyType.Double),
+            ],
             ["YOLODetectionStep"]      =
             [
                 new("Found",      "Gefunden",   ResultPropertyType.Bool),

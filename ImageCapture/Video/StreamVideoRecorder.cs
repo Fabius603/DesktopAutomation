@@ -31,6 +31,9 @@ public class StreamVideoRecorder : IDisposable
     private Stopwatch stopwatch;
     private CancellationTokenSource cts;
     private Task writerTask;
+    private readonly SemaphoreSlim stopLock = new(1, 1);
+    private bool isStarted;
+    private bool isStopped;
 
     public string OutputDirectory
     {
@@ -39,10 +42,7 @@ public class StreamVideoRecorder : IDisposable
         {
             if (string.IsNullOrEmpty(value))
                 throw new ArgumentException("Output directory cannot be null or empty.", nameof(value));
-            if (!Directory.Exists(value))
-            {
-                throw new DirectoryNotFoundException($"The directory '{value}' does not exist.");
-            }
+            Directory.CreateDirectory(value);
             _outputDirectory = value;
         }
     }
@@ -61,6 +61,13 @@ public class StreamVideoRecorder : IDisposable
 
     public StreamVideoRecorder(int width, int height, int fps, string ffmpegPath = "ffmpeg")
     {
+        if (width <= 0)
+            throw new ArgumentOutOfRangeException(nameof(width), "Width must be greater than zero.");
+        if (height <= 0)
+            throw new ArgumentOutOfRangeException(nameof(height), "Height must be greater than zero.");
+        if (fps <= 0)
+            throw new ArgumentOutOfRangeException(nameof(fps), "FPS must be greater than zero.");
+
         this.width = width;
         this.height = height;
         this.fps = fps;
@@ -89,13 +96,15 @@ public class StreamVideoRecorder : IDisposable
             RedirectStandardInput = true,
             CreateNoWindow = true
         };
-        ffmpegProcess = Process.Start(psi);
+        ffmpegProcess = Process.Start(psi)
+            ?? throw new InvalidOperationException("ffmpeg process could not be started.");
         ffmpegInput = ffmpegProcess.StandardInput.BaseStream;
 
         // Starte Timebase + CTS + WriterLoop
         stopwatch = Stopwatch.StartNew();
         cts = CancellationTokenSource.CreateLinkedTokenSource(token);
         writerTask = Task.Run(() => WriterLoopAsync(cts.Token), CancellationToken.None);
+        isStarted = true;
     }
 
     /// <summary>
@@ -213,9 +222,23 @@ public class StreamVideoRecorder : IDisposable
         {
             try
             {
+                TimedFrame? pendingFrame;
+                lock (_frameLock)
+                {
+                    pendingFrame = _latestFrame;
+                    _latestFrame = null;
+                }
+
+                var finalFrame = pendingFrame?.RawFrame ?? lastFrame;
+                if (finalFrame != null)
+                {
+                    await ffmpegInput.WriteAsync(finalFrame, 0, finalFrame.Length, CancellationToken.None)
+                                     .ConfigureAwait(false);
+                }
+
                 ffmpegInput.Flush();
                 ffmpegInput.Close();
-                await ffmpegProcess.WaitForExitAsync().ConfigureAwait(false);
+                await ffmpegProcess.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -229,14 +252,37 @@ public class StreamVideoRecorder : IDisposable
     /// </summary>
     public async Task StopAndSave()
     {
-        cts.Cancel();
-        await writerTask;
+        if (!isStarted || writerTask == null || cts == null)
+            return;
+
+        await stopLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (isStopped)
+                return;
+
+            isStopped = true;
+            cts.Cancel();
+            await writerTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            stopLock.Release();
+        }
     }
 
     public void Dispose()
     {
-        StopAndSave();
-        writerTask?.Wait();
+        try
+        {
+            StopAndSave().GetAwaiter().GetResult();
+        }
+        catch
+        {
+            // Dispose darf keine Job-Ausführung nachträglich abbrechen.
+        }
+        cts?.Dispose();
         ffmpegProcess?.Dispose();
+        stopLock.Dispose();
     }
 }

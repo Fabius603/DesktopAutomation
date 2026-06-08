@@ -50,6 +50,12 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Template Matching"),
 
+            [typeof(ColorDetectionStep)] = new(
+                Prerequisites:     ["CaptureResult"],
+                Output:            "DetectionResult",
+                IsConditionSource: true,
+                DisplayName:       "Farberkennung"),
+
             [typeof(YOLODetectionStep)] = new(
                 Prerequisites:     ["CaptureResult"],
                 Output:            "DetectionResult",
@@ -178,6 +184,7 @@ namespace TaskAutomation.Steps
         {
             ["DesktopDuplication"] = typeof(DesktopDuplicationStep),
             ["TemplateMatching"]   = typeof(TemplateMatchingStep),
+            ["ColorDetection"]     = typeof(ColorDetectionStep),
             ["YoloDetection"]      = typeof(YOLODetectionStep),
             ["KlickOnPoint"]       = typeof(KlickOnPointStep),
             ["KlickOnPoint3D"]     = typeof(KlickOnPoint3DStep),

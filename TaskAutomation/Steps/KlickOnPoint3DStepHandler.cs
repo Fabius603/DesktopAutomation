@@ -21,9 +21,13 @@ namespace TaskAutomation.Steps
             var logger = ctx.Logger;
 
             var detection = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
-            if (!detection.Found || detection.Point is null)
+            if (!detection.WasExecuted || !detection.Found || detection.Point is null)
             {
-                logger.LogInformation("KlickOnPoint3DStepHandler: No detection point available, skipping");
+                logger.LogInformation(
+                    "KlickOnPoint3DStepHandler: No detection point available, skipping. SourceStepId={SourceStepId}, WasExecuted={WasExecuted}, Found={Found}",
+                    step.Settings.SourceDetectionStepId,
+                    detection.WasExecuted,
+                    detection.Found);
                 return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
             }
 
@@ -40,7 +44,9 @@ namespace TaskAutomation.Steps
             }
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
-            var target = detection.Point.Value;
+            var target = new Point(
+                detection.Point.Value.X + step.Settings.OffsetX,
+                detection.Point.Value.Y + step.Settings.OffsetY);
 
             // Compute relative delta from configured origin to detected target.
             // Origin is the user-set reference point (e.g. screen center / crosshair).
@@ -48,10 +54,10 @@ namespace TaskAutomation.Steps
             var delta = new Point(target.X - origin.X, target.Y - origin.Y);
 
             logger.LogInformation(
-                "KlickOnPoint3DStepHandler: Moving mouse (dx:{DX}, dy:{DY}) to ({X},{Y}), click='{Click}'",
-                delta.X, delta.Y, target.X, target.Y, step.Settings.ClickType);
+                "KlickOnPoint3DStepHandler: Moving mouse from origin ({OriginX},{OriginY}) by (dx:{DX}, dy:{DY}) to detected target ({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
+                origin.X, origin.Y, delta.X, delta.Y, target.X, target.Y, detection.Confidence, step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
 
-            var macro = CreateClickMacro(step.Settings, delta);
+            var macro = CreateClickMacro(step.Settings, origin, delta);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
 
             return new TaskResult { WasExecuted = true, Success = true };
@@ -59,10 +65,11 @@ namespace TaskAutomation.Steps
 
         protected override TaskResult CreateDefault() => TaskResult.Default;
 
-        private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point delta)
+        private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point origin, Point delta)
         {
             var commands = new ObservableCollection<MakroBefehl>
             {
+                // new MouseMoveAbsoluteBefehl { X = origin.X, Y = origin.Y },
                 new MouseMoveRelativeBefehl { DeltaX = delta.X, DeltaY = delta.Y }
             };
 
