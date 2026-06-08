@@ -249,28 +249,18 @@ namespace TaskAutomation.Jobs
 
     public sealed class KlickOnPoint3DSettings
     {
-        [JsonPropertyName("fov")]
-        public float FOV { get; set; } = 90.0f;
-        [JsonPropertyName("maus_sensitivity_x")]
-        public float MausSensitivityX { get; set; } = 1.0f;
-        [JsonPropertyName("maus_sensitivity_y")]
-        public float MausSensitivityY { get; set; } = 1.0f;
         [JsonPropertyName("double_click")]
         public bool DoubleClick { get; set; } = false;
         [JsonPropertyName("click_type")]
         public string ClickType { get; set; } = "left";
         [JsonPropertyName("timeout_ms")]
         public int TimeoutMs { get; set; } = 1000;
-        [JsonPropertyName("Invert MouseMovement Y")]
-        public bool InvertMouseMovementY { get; set; } = false;
-        [JsonPropertyName("Invert MouseMovement X")]
-        public bool InvertMouseMovementX { get; set; } = false;
-
+        [JsonPropertyName("origin_x")]
+        public int OriginX { get; set; } = 0;
+        [JsonPropertyName("origin_y")]
+        public int OriginY { get; set; } = 0;
         [JsonPropertyName("source_detection_step_id")]
         public string SourceDetectionStepId { get; set; } = "";
-
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
     }
 
     public sealed class JobExecutionStep : JobStep

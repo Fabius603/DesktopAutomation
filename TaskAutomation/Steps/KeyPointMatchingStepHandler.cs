@@ -39,6 +39,10 @@ namespace TaskAutomation.Steps
                 ctx.KeyPointMatcher = new KeyPointMatcher(
                     step.Settings.MinMatchCount,
                     step.Settings.LowesRatioThreshold);
+            else
+                ctx.KeyPointMatcher.Configure(
+                    step.Settings.MinMatchCount,
+                    step.Settings.LowesRatioThreshold);
 
             ctx.KeyPointMatcher.SetROI(step.Settings.ROI);
             if (step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();

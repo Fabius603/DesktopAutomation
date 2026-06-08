@@ -69,9 +69,6 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<Makro>("Configs/Makro", options, m => m.Id.ToString());
                     services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", options, hk => hk.Id.ToString());
 
-                    // Repository-Service registrieren
-                    services.AddSingleton<IRepositoryService, RepositoryService>();
-
                     services.AddSingleton<IJobExecutor, JobExecutor>();
                     services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
@@ -90,6 +87,7 @@ namespace DesktopAutomationApp
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
+                    services.AddSingleton<IHotkeyApplicationService, HotkeyApplicationService>();
                     services.AddSingleton<IDialogService, WpfDialogService>();
                     services.AddSingleton<IViewModelFactory, ViewModelFactory>();
                     services.AddSingleton<IJobLauncher>(sp => (IJobLauncher)sp.GetRequiredService<IJobDispatcher>());

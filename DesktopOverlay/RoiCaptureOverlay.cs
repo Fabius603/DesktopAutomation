@@ -18,6 +18,7 @@ namespace DesktopOverlay
         private TaskCompletionSource<Rectangle>? _roiTcs;
         private Thread? _uiThread;
         private volatile bool _disposed;
+        private bool _pointCaptureMode;
         
         private bool _isDrawing;
         private Point _startPoint;
@@ -37,14 +38,47 @@ namespace DesktopOverlay
             }
         }
 
+        public async Task<System.Drawing.Point> CapturePointAsync(CancellationToken cancellationToken = default)
+        {
+            if (_roiTcs != null)
+                throw new InvalidOperationException("Erfassung läuft bereits.");
+
+            _roiTcs = new TaskCompletionSource<Rectangle>();
+            _pointCaptureMode = true;
+
+            _uiThread = new Thread(() =>
+            {
+                try
+                {
+                    CreateOverlays();
+                    Application.Run();
+                }
+                catch (Exception ex)
+                {
+                    _roiTcs?.TrySetException(ex);
+                }
+            })
+            {
+                IsBackground = false
+            };
+
+            _uiThread.SetApartmentState(ApartmentState.STA);
+            _uiThread.Start();
+
+            using (cancellationToken.Register(() => _roiTcs?.TrySetCanceled()))
+            {
+                var rect = await _roiTcs.Task;
+                return new System.Drawing.Point(rect.X, rect.Y);
+            }
+        }
+
         public async Task<Rectangle> CaptureRoiAsync(CancellationToken cancellationToken = default)
         {
             if (_roiTcs != null)
                 throw new InvalidOperationException("ROI-Erfassung läuft bereits.");
 
             _roiTcs = new TaskCompletionSource<Rectangle>();
-
-            // UI-Thread für Overlay erstellen
+            _pointCaptureMode = false;
             _uiThread = new Thread(() =>
             {
                 try
@@ -113,6 +147,17 @@ namespace DesktopOverlay
         {
             if (e.Button == MouseButtons.Left && sender is DoubleBufferedForm form)
             {
+                if (_pointCaptureMode)
+                {
+                    // In point capture mode: resolve immediately on single click
+                    var screen = form.Tag as Screen;
+                    var globalX = (screen?.Bounds.Left ?? 0) + e.Location.X;
+                    var globalY = (screen?.Bounds.Top  ?? 0) + e.Location.Y;
+                    _roiTcs?.TrySetResult(new Rectangle(globalX, globalY, 0, 0));
+                    CloseAllOverlays();
+                    return;
+                }
+
                 _isDrawing = true;
                 _startPoint = e.Location;
                 _currentPoint = e.Location;

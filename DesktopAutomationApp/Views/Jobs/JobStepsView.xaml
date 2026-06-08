@@ -337,27 +337,6 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Bildquelle: "/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="FOV: "/><Run Text="{Binding Settings.FOV, StringFormat=F1}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Maus Sensitivity X: "/><Run Text="{Binding Settings.MausSensitivityX, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Maus Sensitivity Y: "/><Run Text="{Binding Settings.MausSensitivityY, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Doppelklick: "/>
                         <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
@@ -366,14 +345,6 @@
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Timeout (ms): "/><Run Text="{Binding Settings.TimeoutMs}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Invert MouseMovement Y: "/>
-                        <Run Text="{Binding Settings.InvertMouseMovementY, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="Invert MouseMovement X: "/>
-                        <Run Text="{Binding Settings.InvertMouseMovementX, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

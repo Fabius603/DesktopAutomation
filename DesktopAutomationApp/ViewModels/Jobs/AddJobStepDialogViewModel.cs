@@ -49,6 +49,7 @@ namespace DesktopAutomationApp.ViewModels
             ChooseMonitorForShowTextCommand = new RelayCommand(ChooseMonitorForShowText);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
+            CaptureKlickOnPoint3DOriginCommand = new RelayCommand(CaptureKlickOnPoint3DOrigin);
             IfStep_AddConditionCommand    = new RelayCommand(() =>
                 IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps())));
             ElseIfStep_AddConditionCommand = new RelayCommand(() =>
@@ -116,7 +117,6 @@ namespace DesktopAutomationApp.ViewModels
             KeyPointMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
             KlickOnPointStep_SourceDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
             KlickOnPoint3DStep_SourceDetectionStep  = AvailableDetectionSteps.FirstOrDefault();
-            KlickOnPoint3DStep_SourceCaptureStep    = AvailableCaptureSteps.FirstOrDefault();
             ShowImageStep_SourceCaptureStep         = AvailableCaptureSteps.FirstOrDefault();
             ShowImageStep_SourceDetectionStep       = AvailableDetectionSteps.FirstOrDefault();
             ShowOnDesktopStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
@@ -166,6 +166,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ChooseMonitorForShowTextCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
+        public ICommand CaptureKlickOnPoint3DOriginCommand { get; }
         public ICommand IfStep_AddConditionCommand { get; }
         public ICommand ElseIfStep_AddConditionCommand { get; }
         public ICommand PointComparisonStep_AddPointCommand { get; }
@@ -202,9 +203,7 @@ namespace DesktopAutomationApp.ViewModels
                 "KlickOnPoint3D" =>
                     !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType)
                     && KlickOnPoint3DStep_Timeout >= 0
-                    && KlickOnPoint3DStep_FOV > 0
-                    && (AvailableDetectionSteps.Count == 0 || KlickOnPoint3DStep_SourceDetectionStep != null)
-                    && (AvailableCaptureSteps.Count == 0   || KlickOnPoint3DStep_SourceCaptureStep != null),
+                    && (AvailableDetectionSteps.Count == 0 || KlickOnPoint3DStep_SourceDetectionStep != null),
                 "YoloDetection" =>
                     !string.IsNullOrWhiteSpace(YoloDetectionStep_Model)
                     && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName)
@@ -487,15 +486,6 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== KlickOnPoint3D Felder =====
-        private float _klickOnPoint3DStep_FOV = 90.0f;
-        public float KlickOnPoint3DStep_FOV { get => _klickOnPoint3DStep_FOV; set { _klickOnPoint3DStep_FOV = value; OnChange(); } }
-
-        private float _klickOnPoint3DStep_MausSensitivityX = 1.0f;
-        public float KlickOnPoint3DStep_MausSensitivityX { get => _klickOnPoint3DStep_MausSensitivityX; set { _klickOnPoint3DStep_MausSensitivityX = value; OnChange(); } }
-
-        private float _klickOnPoint3DStep_MausSensitivityY = 1.0f;
-        public float KlickOnPoint3DStep_MausSensitivityY { get => _klickOnPoint3DStep_MausSensitivityY; set { _klickOnPoint3DStep_MausSensitivityY = value; OnChange(); } }
-
         private bool _klickOnPoint3DStep_DoubleClick = false;
         public bool KlickOnPoint3DStep_DoubleClick { get => _klickOnPoint3DStep_DoubleClick; set { _klickOnPoint3DStep_DoubleClick = value; OnChange(); } }
 
@@ -504,23 +494,18 @@ namespace DesktopAutomationApp.ViewModels
 
         private int _klickOnPoint3DStep_Timeout = 0;
         public int KlickOnPoint3DStep_Timeout { get => _klickOnPoint3DStep_Timeout; set { _klickOnPoint3DStep_Timeout = value; OnChange(); } }
-        private bool _klickOnPoint3DStep_InvertMouseMovementY = false;
-        public bool KlickOnPoint3DStep_InvertMouseMovementY { get => _klickOnPoint3DStep_InvertMouseMovementY; set { _klickOnPoint3DStep_InvertMouseMovementY = value; OnChange(); } }
-        private bool _klickOnPoint3DStep_InvertMouseMovementX = false;
-        public bool KlickOnPoint3DStep_InvertMouseMovementX { get => _klickOnPoint3DStep_InvertMouseMovementX; set { _klickOnPoint3DStep_InvertMouseMovementX = value; OnChange(); } }
+
+        private int _klickOnPoint3DStep_OriginX = (Screen.PrimaryScreen?.Bounds.Width  ?? 1920) / 2;
+        public int KlickOnPoint3DStep_OriginX { get => _klickOnPoint3DStep_OriginX; set { _klickOnPoint3DStep_OriginX = value; OnChange(); } }
+
+        private int _klickOnPoint3DStep_OriginY = (Screen.PrimaryScreen?.Bounds.Height ?? 1080) / 2;
+        public int KlickOnPoint3DStep_OriginY { get => _klickOnPoint3DStep_OriginY; set { _klickOnPoint3DStep_OriginY = value; OnChange(); } }
 
         private SourceStepItem? _klickOnPoint3DStep_SourceDetectionStep;
         public SourceStepItem? KlickOnPoint3DStep_SourceDetectionStep
         {
             get => _klickOnPoint3DStep_SourceDetectionStep;
             set { _klickOnPoint3DStep_SourceDetectionStep = value; OnChange(); }
-        }
-
-        private SourceStepItem? _klickOnPoint3DStep_SourceCaptureStep;
-        public SourceStepItem? KlickOnPoint3DStep_SourceCaptureStep
-        {
-            get => _klickOnPoint3DStep_SourceCaptureStep;
-            set { _klickOnPoint3DStep_SourceCaptureStep = value; OnChange(); }
         }
 
         // ===== YOLODetectionStep Felder =====
@@ -868,6 +853,26 @@ namespace DesktopAutomationApp.ViewModels
             {
                 // Handle actual errors
                 AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void CaptureKlickOnPoint3DOrigin()
+        {
+            try
+            {
+                var overlay = new DesktopOverlay.RoiCaptureOverlay();
+                var point = await overlay.CapturePointAsync();
+                KlickOnPoint3DStep_OriginX = point.X;
+                KlickOnPoint3DStep_OriginY = point.Y;
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                AppDialog.Show($"Error capturing point: {ex.Message}", "Fehler",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1580,16 +1585,12 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new KlickOnPoint3DSettings
                     {
-                        FOV = KlickOnPoint3DStep_FOV,
-                        MausSensitivityX = KlickOnPoint3DStep_MausSensitivityX,
-                        MausSensitivityY = KlickOnPoint3DStep_MausSensitivityY,
                         DoubleClick = KlickOnPoint3DStep_DoubleClick,
                         ClickType = KlickOnPoint3DStep_ClickType,
                         TimeoutMs = KlickOnPoint3DStep_Timeout,
-                        InvertMouseMovementY = KlickOnPoint3DStep_InvertMouseMovementY,
-                        InvertMouseMovementX = KlickOnPoint3DStep_InvertMouseMovementX,
-                        SourceDetectionStepId = KlickOnPoint3DStep_SourceDetectionStep?.StepId ?? "",
-                        SourceCaptureStepId   = KlickOnPoint3DStep_SourceCaptureStep?.StepId ?? ""
+                        OriginX = KlickOnPoint3DStep_OriginX,
+                        OriginY = KlickOnPoint3DStep_OriginY,
+                        SourceDetectionStepId = KlickOnPoint3DStep_SourceDetectionStep?.StepId ?? ""
                     }
                 },
                 "YoloDetection" => new YOLODetectionStep

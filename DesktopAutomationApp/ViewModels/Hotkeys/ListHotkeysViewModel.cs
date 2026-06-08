@@ -5,23 +5,22 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
+using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Models;
-using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
-using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
 {
     public sealed class ListHotkeysViewModel : ViewModelBase
     {
-        private readonly IRepositoryService _repositoryService;
+        private readonly IHotkeyApplicationService _hotkeyAppService;
+        private readonly IDialogService _dialogService;
+        private readonly IJobApplicationService _jobAppService;
         private readonly IGlobalHotkeyService _capture;
         private readonly ILogger<ListHotkeysViewModel> _log;
-        private readonly IJobExecutor _executor;
 
         public ObservableCollection<EditableHotkey> Items { get; } = new();
         public ObservableCollection<Job> Jobs { get; } = new();
@@ -53,15 +52,17 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenFolderCommand { get; }
 
         public ListHotkeysViewModel(
-            IRepositoryService repositoryService,
+            IHotkeyApplicationService hotkeyAppService,
+            IDialogService dialogService,
+            IJobApplicationService jobAppService,
             IGlobalHotkeyService capture,
-            IJobExecutor executor,
             ILogger<ListHotkeysViewModel> log)
         {
-            _repositoryService = repositoryService;
+            _hotkeyAppService = hotkeyAppService;
+            _dialogService = dialogService;
+            _jobAppService = jobAppService;
             _capture = capture;
             _log = log;
-            _executor = executor;
 
             RefreshCommand = new RelayCommand(async () => await RefreshAllAsync());
             NewCommand     = new RelayCommand(async () => await NewHotkeyAsync());
@@ -71,7 +72,7 @@ namespace DesktopAutomationApp.ViewModels
             }, h => h != null);
             DeleteCommand  = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
             OpenFolderCommand = new RelayCommand(() =>
-                Process.Start(new ProcessStartInfo(_repositoryService.GetDirectoryPath<HotkeyDefinition>()) { UseShellExecute = true }));
+                Process.Start(new ProcessStartInfo(_hotkeyAppService.GetStoragePath()) { UseShellExecute = true }));
 
             _ = InitialLoadAsync();
         }
@@ -80,7 +81,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             LoadJobs();
 
-            var list = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
+            var list = await _hotkeyAppService.LoadAllAsync();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
             {
@@ -96,7 +97,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             LoadJobs();
 
-            var list = await _repositoryService.LoadAllAsync<HotkeyDefinition>();
+            var list = await _hotkeyAppService.LoadAllAsync();
             Items.Clear();
             foreach (var hk in list.OrderBy(h => h.Name))
             {
@@ -110,11 +111,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task NewHotkeyAsync()
         {
-            var dlg = new NewItemNameDialog("Neuer Hotkey", "Name des neuen Hotkeys:")
-                { Owner = System.Windows.Application.Current?.MainWindow };
-            if (dlg.ShowDialog() != true) return;
-
-            var name = dlg.ResultName.Trim();
+            var name = await _dialogService.AskForNameAsync("Neuer Hotkey", "Name des neuen Hotkeys:");
             if (string.IsNullOrWhiteSpace(name)) return;
 
             var e = new EditableHotkey
@@ -140,15 +137,14 @@ namespace DesktopAutomationApp.ViewModels
                 ? $"Möchten Sie den Hotkey '{_selectedItems[0].Name}' wirklich löschen?"
                 : $"Möchten Sie die {_selectedItems.Count} ausgewählten Hotkeys wirklich löschen?";
 
-            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes) return;
+            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen")) return;
 
             var toDelete = _selectedItems.ToList();
             foreach (var hotkey in toDelete)
             {
                 _capture.UnregisterHotkey(hotkey.Id);
                 Items.Remove(hotkey);
-                await _repositoryService.DeleteAsync<HotkeyDefinition>(hotkey.Id.ToString());
+                await _hotkeyAppService.DeleteAsync(hotkey.Id);
                 _log.LogInformation("Hotkey gelöscht und Registrierung aufgehoben: {Name}", hotkey.Name);
             }
             Selected = null;
@@ -172,17 +168,15 @@ namespace DesktopAutomationApp.ViewModels
                     hk.Job.Name = currentJobName;
             }
 
-            await _repositoryService.SaveAsync(hk.ToDomain());
+            await _hotkeyAppService.SaveAsync(hk.ToDomain());
             _log.LogInformation("Hotkey Active-Status gespeichert");
             await _capture.ReloadFromRepositoryAsync();
         }
 
-        private async void LoadJobs()
+        private void LoadJobs()
         {
-            await _executor.ReloadJobsAsync();
-
             Jobs.Clear();
-            foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
+            foreach (var j in _jobAppService.Jobs.Values.OrderBy(j => j.Name))
                 Jobs.Add(j);
 
             foreach (var hotkey in Items)

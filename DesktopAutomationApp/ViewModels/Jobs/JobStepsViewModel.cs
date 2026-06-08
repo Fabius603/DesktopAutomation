@@ -127,8 +127,8 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
             MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
             ReorderStepCommand = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
-            DeleteStepCommand    = new RelayCommand<JobStep?>(DeleteStep, s => (s ?? SelectedStep) != null);
-            DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            DeleteStepCommand    = new RelayCommand<JobStep?>(async s => await DeleteStepAsync(s), s => (s ?? SelectedStep) != null);
+            DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
             UndoCommand           = new RelayCommand(Undo, () => CanUndo);
             RedoCommand           = new RelayCommand(Redo, () => CanRedo);
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
@@ -349,16 +349,12 @@ namespace DesktopAutomationApp.ViewModels
 
                 case KlickOnPoint3DStep kp3d:
                     vm.SelectedType = "KlickOnPoint3D";
-                    vm.KlickOnPoint3DStep_FOV = kp3d.Settings.FOV;
-                    vm.KlickOnPoint3DStep_MausSensitivityX = kp3d.Settings.MausSensitivityX;
-                    vm.KlickOnPoint3DStep_MausSensitivityY = kp3d.Settings.MausSensitivityY;
                     vm.KlickOnPoint3DStep_DoubleClick = kp3d.Settings.DoubleClick;
                     vm.KlickOnPoint3DStep_ClickType = kp3d.Settings.ClickType;
                     vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
-                    vm.KlickOnPoint3DStep_InvertMouseMovementY = kp3d.Settings.InvertMouseMovementY;
-                    vm.KlickOnPoint3DStep_InvertMouseMovementX = kp3d.Settings.InvertMouseMovementX;
+                    vm.KlickOnPoint3DStep_OriginX = kp3d.Settings.OriginX;
+                    vm.KlickOnPoint3DStep_OriginY = kp3d.Settings.OriginY;
                     vm.KlickOnPoint3DStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == kp3d.Settings.SourceDetectionStepId);
-                    vm.KlickOnPoint3DStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == kp3d.Settings.SourceCaptureStepId);
                     break;
 
                 case JobExecutionStep je:
@@ -547,7 +543,7 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateAllCommands();
         }
 
-        private void DeleteStep(JobStep? step)
+        private async Task DeleteStepAsync(JobStep? step)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
@@ -557,8 +553,7 @@ namespace DesktopAutomationApp.ViewModels
                 ? "Möchten Sie den If-Block löschen (If, Else-If, Else und End-If werden entfernt, die Steps innerhalb bleiben erhalten)?"
                 : "Möchten Sie den Step wirklich löschen?";
 
-            var result = AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result != MessageBoxResult.Yes) return;
+            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen")) return;
 
             PushUndo();
             var idx = _steps.IndexOf(target);
@@ -682,7 +677,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Delete selected ----------
-        private void DeleteSelected()
+        private async Task DeleteSelectedAsync()
         {
             var targets = SelectedSteps.Count > 0
                 ? SelectedSteps.ToList()
@@ -695,7 +690,7 @@ namespace DesktopAutomationApp.ViewModels
                     : "Möchten Sie den Step wirklich löschen?")
                 : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
 
-            if (AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen"))
                 return;
 
             PushUndo();

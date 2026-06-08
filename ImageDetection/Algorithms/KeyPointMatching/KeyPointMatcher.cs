@@ -14,8 +14,8 @@ namespace ImageDetection.Algorithms.KeyPointMatching
     /// </summary>
     public class KeyPointMatcher : IDisposable
     {
-        private readonly int    _minMatchCount;
-        private readonly double _lowesRatioThreshold;
+        private int    _minMatchCount;
+        private double _lowesRatioThreshold;
 
         private bool _useROI;
         private Rect _roi;
@@ -31,9 +31,20 @@ namespace ImageDetection.Algorithms.KeyPointMatching
 
         public KeyPointMatcher(int minMatchCount = 10, double lowesRatioThreshold = 0.75)
         {
+            Configure(minMatchCount, lowesRatioThreshold);
+            _sift = SIFT.Create();
+        }
+
+        public void Configure(int minMatchCount, double lowesRatioThreshold)
+        {
+            if (minMatchCount < 1)
+                throw new ArgumentOutOfRangeException(nameof(minMatchCount), "MinMatchCount muss mindestens 1 sein.");
+
+            if (lowesRatioThreshold <= 0 || lowesRatioThreshold >= 1)
+                throw new ArgumentOutOfRangeException(nameof(lowesRatioThreshold), "LowesRatioThreshold muss zwischen 0 und 1 liegen.");
+
             _minMatchCount       = minMatchCount;
             _lowesRatioThreshold = lowesRatioThreshold;
-            _sift = SIFT.Create();
         }
 
         /// <summary>
@@ -93,9 +104,9 @@ namespace ImageDetection.Algorithms.KeyPointMatching
 
             try
             {
-                graySource = rawSource.Channels() == 1
-                    ? rawSource.Clone()
-                    : rawSource.CvtColor(ColorConversionCodes.BGR2GRAY);
+                graySource = NormalizeToGray(rawSource);
+                if (graySource.Empty())
+                    return new DetectionResult { Success = false, Confidence = 0 };
 
                 Mat imageForDetection = graySource;
 
@@ -127,7 +138,15 @@ namespace ImageDetection.Algorithms.KeyPointMatching
                     return new DetectionResult { Success = false, Confidence = 0 };
 
                 // KNN match (k=2) against the pre-built FLANN index
-                var knnMatches = _flannMatcher.KnnMatch(queryDescriptors, _trainDescriptors, 2);
+                DMatch[][] knnMatches;
+                try
+                {
+                    knnMatches = _flannMatcher.KnnMatch(queryDescriptors, _trainDescriptors, 2);
+                }
+                catch (OpenCVException)
+                {
+                    return new DetectionResult { Success = false, Confidence = 0 };
+                }
 
                 // Lowe's ratio test
                 var goodMatches = new List<DMatch>();
@@ -137,7 +156,8 @@ namespace ImageDetection.Algorithms.KeyPointMatching
                         goodMatches.Add(m[0]);
                 }
 
-                if (goodMatches.Count < _minMatchCount)
+                int requiredMatchCount = Math.Max(_minMatchCount, 4);
+                if (goodMatches.Count < requiredMatchCount)
                     return new DetectionResult { Success = false, Confidence = 0 };
 
                 // Corresponding points: template (train) → query image
@@ -163,7 +183,7 @@ namespace ImageDetection.Algorithms.KeyPointMatching
 
                 // Only RANSAC-consistent inliers count – this filters accidental Lowe-matches
                 int inlierCount = inlierMask.Empty() ? 0 : Cv2.CountNonZero(inlierMask);
-                if (inlierCount < _minMatchCount)
+                if (inlierCount < requiredMatchCount)
                     return new DetectionResult { Success = false, Confidence = 0 };
 
                 // Project template corners into the query image
@@ -228,6 +248,24 @@ namespace ImageDetection.Algorithms.KeyPointMatching
                 subRegion ?.Dispose();
                 graySource?.Dispose();
             }
+        }
+
+        private static Mat NormalizeToGray(Mat input)
+        {
+            if (input.Depth() != MatType.CV_8U)
+            {
+                using var depthConverted = new Mat();
+                input.ConvertTo(depthConverted, MatType.CV_8U);
+                return NormalizeToGray(depthConverted);
+            }
+
+            return input.Channels() switch
+            {
+                1 => input.Clone(),
+                3 => input.CvtColor(ColorConversionCodes.BGR2GRAY),
+                4 => input.CvtColor(ColorConversionCodes.BGRA2GRAY),
+                _ => new Mat()
+            };
         }
 
         public void Dispose()

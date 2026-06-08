@@ -4,12 +4,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Models;
-using DesktopAutomationApp.Services;
-using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
@@ -22,9 +20,11 @@ namespace DesktopAutomationApp.ViewModels
         public record ActionItem(string Name, Guid Id, string Category);
 
         // ── DI ──────────────────────────────────────────────────────────────────
-        private readonly IRepositoryService _repositoryService;
+        private readonly IHotkeyApplicationService _hotkeyAppService;
+        private readonly IDialogService _dialogService;
+        private readonly IJobApplicationService _jobAppService;
+        private readonly IMakroApplicationService _makroAppService;
         private readonly IGlobalHotkeyService _capture;
-        private readonly IJobExecutor _executor;
         private readonly ILogger<HotkeyDetailViewModel> _log;
 
         private readonly EditableHotkey _snapshot;
@@ -100,15 +100,19 @@ namespace DesktopAutomationApp.ViewModels
         // ── ctor ────────────────────────────────────────────────────────────────
         public HotkeyDetailViewModel(
             EditableHotkey hotkey,
-            IRepositoryService repositoryService,
+            IHotkeyApplicationService hotkeyAppService,
+            IDialogService dialogService,
+            IJobApplicationService jobAppService,
+            IMakroApplicationService makroAppService,
             IGlobalHotkeyService capture,
-            IJobExecutor executor,
             ILogger<HotkeyDetailViewModel> log)
         {
             EditedHotkey = hotkey ?? throw new ArgumentNullException(nameof(hotkey));
-            _repositoryService = repositoryService;
+            _hotkeyAppService = hotkeyAppService;
+            _dialogService = dialogService;
+            _jobAppService = jobAppService;
+            _makroAppService = makroAppService;
             _capture = capture;
-            _executor = executor;
             _log = log;
             _isNew = hotkey.VirtualKeyCode == 0 && string.IsNullOrWhiteSpace(hotkey.Job?.Name);
 
@@ -128,7 +132,7 @@ namespace DesktopAutomationApp.ViewModels
             BackCommand         = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand         = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
             CancelCommand       = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
-            RenameCommand       = new RelayCommand(Rename);
+            RenameCommand       = new RelayCommand(async () => await Rename());
             StartCaptureCommand = new RelayCommand(async () => await CaptureAsync(), () => !IsCapturing);
             CancelCaptureCommand = new RelayCommand(() => _captureCts?.Cancel(), () => IsCapturing);
 
@@ -141,15 +145,11 @@ namespace DesktopAutomationApp.ViewModels
         // ── loading ─────────────────────────────────────────────────────────────
         private void LoadActions()
         {
-            _executor.ReloadJobsAsync().GetAwaiter().GetResult();
             Actions.Clear();
-
-            foreach (var j in _executor.AllJobs.Values.OrderBy(j => j.Name))
+            foreach (var j in _jobAppService.Jobs.Values.OrderBy(j => j.Name))
                 Actions.Add(new ActionItem(j.Name, j.Id, "Job"));
-
-            foreach (var m in _executor.AllMakros.Values.OrderBy(m => m.Name))
+            foreach (var m in _makroAppService.Makros.Values.OrderBy(m => m.Name))
                 Actions.Add(new ActionItem(m.Name, m.Id, "Makro"));
-
             EditedHotkey.Job.SetJobNameResolver(GetCurrentActionName);
         }
 
@@ -214,21 +214,20 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ── rename ───────────────────────────────────────────────────────────────
-        private async void Rename()
+        private async Task Rename()
         {
-            var dlg = new NewItemNameDialog("Umbenennen", "Neuer Name:", EditedHotkey.Name)
-                { Owner = Application.Current?.MainWindow };
-            if (dlg.ShowDialog() != true) return;
+            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", EditedHotkey.Name);
+            if (newName == null) return;
 
             var hadChanges = HasUnsavedChanges;
-            EditedHotkey.Name = dlg.ResultName.Trim();
+            EditedHotkey.Name = newName.Trim();
             OnPropertyChanged(nameof(Title));
             _snapshot.Name = EditedHotkey.Name;
             HasUnsavedChanges = hadChanges;
 
             if (!_isNew)
             {
-                await _repositoryService.SaveAsync(EditedHotkey.ToDomain());
+                await _hotkeyAppService.SaveAsync(EditedHotkey.ToDomain());
                 await _capture.ReloadFromRepositoryAsync();
                 _log.LogInformation("Hotkey umbenannt: {Name}", EditedHotkey.Name);
             }
@@ -241,7 +240,7 @@ namespace DesktopAutomationApp.ViewModels
             if (error != null)
             {
                 _log.LogWarning("Hotkey ungueltig: {Error}", error);
-                AppDialog.Show(error, "Validierungsfehler", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _dialogService.ShowError(error, "Validierungsfehler");
                 return;
             }
 
@@ -252,7 +251,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (!name.StartsWith("[")) EditedHotkey.Job.Name = name;
             }
 
-            await _repositoryService.SaveAsync(EditedHotkey.ToDomain());
+            await _hotkeyAppService.SaveAsync(EditedHotkey.ToDomain());
             await _capture.ReloadFromRepositoryAsync();
             _log.LogInformation("Hotkey gespeichert: {Name}", EditedHotkey.Name);
             HasUnsavedChanges = false;

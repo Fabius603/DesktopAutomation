@@ -160,7 +160,7 @@ namespace DesktopAutomationApp.ViewModels
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
             ReorderStepCommand  = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
             DeleteStepCommand     = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
-            DeleteSelectedCommand = new RelayCommand(DeleteSelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
             UndoCommand           = new RelayCommand(Undo, () => CanUndo);
             RedoCommand           = new RelayCommand(Redo, () => CanRedo);
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
@@ -398,7 +398,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Delete selected ----------
-        private void DeleteSelected()
+        private async Task DeleteSelectedAsync()
         {
             var targets = SelectedSteps.Count > 0
                 ? SelectedSteps.ToList()
@@ -409,7 +409,7 @@ namespace DesktopAutomationApp.ViewModels
                 ? "Möchten Sie den Step wirklich löschen?"
                 : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
 
-            if (AppDialog.Show(message, "Löschen bestätigen", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen"))
                 return;
 
             PushUndo();

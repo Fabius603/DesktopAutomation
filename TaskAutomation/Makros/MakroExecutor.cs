@@ -7,7 +7,6 @@ using WindowsInput.Native;
 using ImageHelperMethods;
 using Common.Logging;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
 
 namespace TaskAutomation.Makros
 {
@@ -29,15 +28,6 @@ namespace TaskAutomation.Makros
             _sim = new InputSimulator();
         }
 
-        [DllImport("user32.dll")]
-        private static extern bool GetCursorPos(out POINT lpPoint);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct POINT
-        {
-            public int X;
-            public int Y;
-        }
 
         public async Task ExecuteMakro(Makro makro, DxgiResources dxgi, CancellationToken ct)
         {
