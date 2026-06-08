@@ -89,22 +89,38 @@ namespace TaskAutomation.Steps
                 }
 
                 DesktopFrame? frame = null;
+                DesktopFrame? cachedFallbackFrame = null;
                 int retryCount  = 0;
-                const int maxRetries = 3;
+                const int maxRetries = 6;
 
-                while (frame?.DesktopImage == null && retryCount < maxRetries)
+                while (frame == null && retryCount < maxRetries)
                 {
                     ct.ThrowIfCancellationRequested();
                     try
                     {
-                        frame?.Dispose();
                         frame = duplicator.GetLatestFrame();
                         if (frame?.DesktopImage == null)
                         {
+                            frame?.Dispose();
+                            frame = null;
                             retryCount++;
                             _logger.LogWarning(
                                 "DesktopCaptureService: Kein Bild in Versuch {Attempt}/{Max} (Monitor {MonitorIndex})",
                                 retryCount, maxRetries, monitorIdx);
+                            await Task.Delay(16, ct).ConfigureAwait(false);
+                            continue;
+                        }
+
+                        if (!frame.IsFresh)
+                        {
+                            cachedFallbackFrame?.Dispose();
+                            cachedFallbackFrame = frame;
+                            frame = null;
+                            retryCount++;
+                            _logger.LogDebug(
+                                "DesktopCaptureService: Gecachten Frame in Versuch {Attempt}/{Max} erhalten, warte auf frischen Frame (Monitor {MonitorIndex})",
+                                retryCount, maxRetries, monitorIdx);
+                            await Task.Delay(16, ct).ConfigureAwait(false);
                         }
                     }
                     catch (Exception ex) when (retryCount < maxRetries - 1)
@@ -117,6 +133,19 @@ namespace TaskAutomation.Steps
                             retryCount, maxRetries, monitorIdx);
                         await Task.Delay(50, ct).ConfigureAwait(false);
                     }
+                }
+
+                if (frame == null && cachedFallbackFrame != null)
+                {
+                    frame = cachedFallbackFrame;
+                    cachedFallbackFrame = null;
+                    _logger.LogWarning(
+                        "DesktopCaptureService: Kein frischer Frame nach {Max} Versuchen, verwende letzten gecachten Frame (Monitor {MonitorIndex})",
+                        maxRetries, monitorIdx);
+                }
+                else
+                {
+                    cachedFallbackFrame?.Dispose();
                 }
 
                 if (frame?.DesktopImage == null)
@@ -147,7 +176,8 @@ namespace TaskAutomation.Steps
                         WasExecuted = true,
                         Image       = bitmap,
                         Bounds      = screenBounds,
-                        Offset      = offset
+                        Offset      = offset,
+                        IsFresh     = frame.IsFresh
                     };
                 }
             }

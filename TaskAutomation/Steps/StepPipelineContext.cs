@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Events;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 using TaskAutomation.Makros;
 using TaskAutomation.Scripts;
 
@@ -37,6 +38,7 @@ namespace TaskAutomation.Steps
         public IYoloManager         YoloManager        { get; }
         public IImageDisplayService ImageDisplayService { get; }
         public IDesktopResultOverlay DesktopResultOverlay { get; }
+        public ExecutionLogSession? ExecutionLogSession { get; }
         public Job                  CurrentJob         { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
         public Func<Guid, Guid>?                    StartJobViaDispatcher { get; }
@@ -69,6 +71,7 @@ namespace TaskAutomation.Steps
             Job                                currentJob,
             Func<Guid, CancellationToken, Task> executeJob,
             IDesktopCaptureService             desktopCaptureService,
+            ExecutionLogSession?                executionLogSession = null,
             Func<Guid, Guid>?                  startJobViaDispatcher  = null,
             Action<Guid>?                      cancelJobViaDispatcher = null,
             Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null)
@@ -82,6 +85,7 @@ namespace TaskAutomation.Steps
             YoloManager                = yoloManager;
             ImageDisplayService        = imageDisplayService;
             DesktopResultOverlay       = desktopResultOverlay;
+            ExecutionLogSession        = executionLogSession;
             CurrentJob                 = currentJob;
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;

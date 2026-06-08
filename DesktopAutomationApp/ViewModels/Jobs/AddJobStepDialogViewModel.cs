@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using TaskAutomation.Steps;
 using System.ComponentModel;
 using System.Linq;
@@ -23,8 +24,16 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class AddJobStepDialogViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnChange([CallerMemberName] string? p = null) =>
+        private void OnChange([CallerMemberName] string? p = null)
+        {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
+            RaiseConfirmCanExecuteChanged();
+        }
+
+        private void RaiseConfirmCanExecuteChanged()
+        {
+            (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
 
         private readonly IJobExecutor _ctx;
         private readonly IReadOnlyList<JobStep> _precedingSteps;
@@ -64,11 +73,41 @@ namespace DesktopAutomationApp.ViewModels
             });
             PointComparisonStep_AddExpressionCommand = new RelayCommand(() =>
                 PointComparisonStep_Expressions.Add(new AxisExpressionViewModel(PointComparisonStep_Expressions)));
-            PointComparisonStep_Points.CollectionChanged += (_, _) =>
-                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            TrackValidationCollection(PointComparisonStep_Points);
+            TrackValidationCollection(PointComparisonStep_Expressions);
+            TrackValidationCollection(IfStep_Conditions);
+            TrackValidationCollection(ElseIfStep_Conditions);
 
             InitDefaults();
         }
+
+        private void TrackValidationCollection<T>(ObservableCollection<T> collection)
+            where T : INotifyPropertyChanged
+        {
+            collection.CollectionChanged += OnValidationCollectionChanged;
+            foreach (var item in collection)
+                item.PropertyChanged += OnValidationItemChanged;
+        }
+
+        private void OnValidationCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+            {
+                foreach (INotifyPropertyChanged item in e.OldItems)
+                    item.PropertyChanged -= OnValidationItemChanged;
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (INotifyPropertyChanged item in e.NewItems)
+                    item.PropertyChanged += OnValidationItemChanged;
+            }
+
+            RaiseConfirmCanExecuteChanged();
+        }
+
+        private void OnValidationItemChanged(object? sender, PropertyChangedEventArgs e)
+            => RaiseConfirmCanExecuteChanged();
 
         private void InitDefaults()
         {
@@ -185,59 +224,150 @@ namespace DesktopAutomationApp.ViewModels
 
         private bool CanConfirm()
         {
+            if (!StepPrerequisites.All(p => p.IsSatisfied))
+                return false;
+
             return SelectedType switch
             {
                 "TemplateMatching" =>
-                    !string.IsNullOrWhiteSpace(TemplateMatchingStep_TemplatePath)
+                    IsExistingFile(TemplateMatchingStep_TemplatePath)
                     && TemplateMatchingStep_ConfidenceThreshold is >= 0 and <= 1
-                    && (AvailableCaptureSteps.Count == 0 || TemplateMatchingStep_SourceCaptureStep != null),
+                    && HasCaptureSource(TemplateMatchingStep_SourceCaptureStep)
+                    && HasValidRoi(TemplateMatchingStep_EnableROI, TemplateMatchingStep_RoiX, TemplateMatchingStep_RoiY, TemplateMatchingStep_RoiW, TemplateMatchingStep_RoiH),
                 "ColorDetection" =>
                     ColorDetectionStep_ConfidenceThreshold is >= 0 and <= 1
                     && ColorDetectionStep_MinSize > 0
                     && ColorDetectionStep_MaxSize > 0
                     && ColorDetectionStep_MaxSize >= ColorDetectionStep_MinSize
-                    && (AvailableCaptureSteps.Count == 0 || ColorDetectionStep_SourceCaptureStep != null),
+                    && ColorDetectionStep_MinWidth > 0
+                    && ColorDetectionStep_MinHeight > 0
+                    && HasCaptureSource(ColorDetectionStep_SourceCaptureStep)
+                    && HasValidRoi(ColorDetectionStep_EnableROI, ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
                 "ShowImage" =>
-                    !string.IsNullOrWhiteSpace(ShowImageStep_WindowName),
-                "ShowOnDesktop" => true,
+                    !string.IsNullOrWhiteSpace(ShowImageStep_WindowName)
+                    && HasCaptureSource(ShowImageStep_SourceCaptureStep)
+                    && (ShowImageStep_ShowRawImage || ShowImageStep_ShowProcessedImage),
+                "ShowOnDesktop" =>
+                    HasDetectionSource(ShowOnDesktopStep_SourceDetectionStep),
                 "VideoCreation" =>
-                    !string.IsNullOrWhiteSpace(VideoCreationStep_SavePath)
-                    && !string.IsNullOrWhiteSpace(VideoCreationStep_FileName),
+                    IsValidDirectoryPath(VideoCreationStep_SavePath)
+                    && IsValidFileName(VideoCreationStep_FileName)
+                    && HasCaptureSource(VideoCreationStep_SourceCaptureStep)
+                    && (VideoCreationStep_UseRawImage || VideoCreationStep_UseProcessedImage),
                 "MakroExecution" => MakroExecutionStep_SelectedMakro != null,
                 "JobExecution"   => JobExecutionStep_SelectedJob != null,
-                "DesktopDuplication" => true,
-                "ScriptExecution" => !string.IsNullOrWhiteSpace(ScriptExecutionStep_ScriptPath),
+                "DesktopDuplication" => DesktopDuplicationStep_DesktopIdx >= 0,
+                "ScriptExecution" => IsExistingFile(ScriptExecutionStep_ScriptPath),
                 "KlickOnPoint" =>
                     !string.IsNullOrWhiteSpace(KlickOnPointStep_ClickType)
                     && KlickOnPointStep_TimeoutMs >= 0
-                    && (AvailableDetectionSteps.Count == 0 || KlickOnPointStep_SourceDetectionStep != null),
+                    && HasDetectionSource(KlickOnPointStep_SourceDetectionStep),
                 "KlickOnPoint3D" =>
                     !string.IsNullOrWhiteSpace(KlickOnPoint3DStep_ClickType)
                     && KlickOnPoint3DStep_Timeout >= 0
-                    && (AvailableDetectionSteps.Count == 0 || KlickOnPoint3DStep_SourceDetectionStep != null),
+                    && HasDetectionSource(KlickOnPoint3DStep_SourceDetectionStep),
                 "YoloDetection" =>
                     !string.IsNullOrWhiteSpace(YoloDetectionStep_Model)
                     && !string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName)
                     && YoloDetectionStep_ConfidenceThreshold is >= 0 and <= 1
-                    && (AvailableCaptureSteps.Count == 0 || YoloDetectionStep_SourceCaptureStep != null),
+                    && HasCaptureSource(YoloDetectionStep_SourceCaptureStep)
+                    && HasValidRoi(YoloDetectionStep_EnableROI, YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH),
                 "Timeout" => TimeoutStep_DelayMs >= 0,
                 "ActiveProcess" => !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
-                "StartProcess"  => !string.IsNullOrWhiteSpace(StartProcessStep_ExecutablePath),
-                "FocusProcess"  => !string.IsNullOrWhiteSpace(FocusProcessStep_ExecutablePath),
-                "ShowText"      => !string.IsNullOrWhiteSpace(ShowTextStep_Text),
+                "StartProcess"  => IsExistingFile(StartProcessStep_ExecutablePath),
+                "FocusProcess"  => IsExistingFile(FocusProcessStep_ExecutablePath),
+                "ShowText"      =>
+                    !string.IsNullOrWhiteSpace(ShowTextStep_Text)
+                    && ShowTextStep_FontSize > 0
+                    && ShowTextStep_Opacity is >= 0 and <= 1
+                    && ShowTextStep_DesktopIndex >= 0
+                    && ShowTextStep_DurationMs >= 0,
                 "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName),
                 "KeyPointMatching" =>
-                    !string.IsNullOrWhiteSpace(KeyPointMatchingStep_TemplatePath)
-                    && (AvailableCaptureSteps.Count == 0 || KeyPointMatchingStep_SourceCaptureStep != null),
-                "PointComparison" => PointComparisonStep_Points.Count > 0,
-                "If"      => true,
-                "ElseIf"  => true,
+                    IsExistingFile(KeyPointMatchingStep_TemplatePath)
+                    && KeyPointMatchingStep_MinMatchCount > 0
+                    && KeyPointMatchingStep_LowesRatioThreshold is > 0 and <= 1
+                    && HasCaptureSource(KeyPointMatchingStep_SourceCaptureStep)
+                    && HasValidRoi(KeyPointMatchingStep_EnableROI, KeyPointMatchingStep_RoiX, KeyPointMatchingStep_RoiY, KeyPointMatchingStep_RoiW, KeyPointMatchingStep_RoiH),
+                "PointComparison" => CanConfirmPointComparison(),
+                "If"      => IfStep_Conditions.All(IsValidConditionRow),
+                "ElseIf"  => ElseIfStep_Conditions.All(IsValidConditionRow),
                 "Else"    => true,
                 "EndIf"   => true,
                 "EndJob"  => true,
                 _ => false
             };
         }
+
+        private static bool IsExistingFile(string? path)
+            => !string.IsNullOrWhiteSpace(path) && System.IO.File.Exists(path);
+
+        private static bool IsValidFileName(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            return fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0
+                && string.Equals(System.IO.Path.GetFileName(fileName), fileName, StringComparison.Ordinal);
+        }
+
+        private static bool IsValidDirectoryPath(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            try
+            {
+                _ = System.IO.Path.GetFullPath(path);
+                return path.IndexOfAny(System.IO.Path.GetInvalidPathChars()) < 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool HasValidRoi(bool enabled, int x, int y, int width, int height)
+            => !enabled || (x >= 0 && y >= 0 && width > 0 && height > 0);
+
+        private static bool HasCaptureSource(SourceStepItem? source)
+            => source != null;
+
+        private static bool HasDetectionSource(SourceStepItem? source)
+            => source != null;
+
+        private bool CanConfirmPointComparison()
+        {
+            if (PointComparisonStep_Points.Count == 0)
+                return false;
+
+            if (!PointComparisonStep_Points.All(IsValidPointEntry))
+                return false;
+
+            if (PointComparisonStep_Mode == TaskAutomation.Jobs.PointComparisonMode.Offset)
+            {
+                if (PointComparisonStep_RefSource == TaskAutomation.Jobs.PointEntrySource.JobResult
+                    && PointComparisonStep_RefDetectionStep == null)
+                    return false;
+
+                return PointComparisonStep_OffsetX >= 0 && PointComparisonStep_OffsetY >= 0;
+            }
+
+            return PointComparisonStep_Expressions.Count > 0
+                && PointComparisonStep_Expressions.All(IsValidAxisExpression);
+        }
+
+        private static bool IsValidPointEntry(PointEntryViewModel point)
+            => point.Source == TaskAutomation.Jobs.PointEntrySource.Manual
+                || point.SelectedDetectionStep != null;
+
+        private static bool IsValidAxisExpression(AxisExpressionViewModel expression)
+            => expression.Axis is "X" or "Y";
+
+        private static bool IsValidConditionRow(ConditionRowViewModel row)
+            => row.SelectedSourceStep != null
+                && row.SelectedProperty != null
+                && (!row.ShowComparisonValue || !string.IsNullOrWhiteSpace(row.ComparisonValue));
 
         // ----- Step-Auswahl -----
         /// <param name="Description">Text, der im Dialog unterhalb des Typ-Selektors angezeigt wird.</param>
@@ -519,6 +649,20 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _colorDetectionStep_MaxSize;
             set { _colorDetectionStep_MaxSize = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _colorDetectionStep_MinWidth = 1;
+        public int ColorDetectionStep_MinWidth
+        {
+            get => _colorDetectionStep_MinWidth;
+            set { _colorDetectionStep_MinWidth = value; OnChange(); }
+        }
+
+        private int _colorDetectionStep_MinHeight = 1;
+        public int ColorDetectionStep_MinHeight
+        {
+            get => _colorDetectionStep_MinHeight;
+            set { _colorDetectionStep_MinHeight = value; OnChange(); }
         }
 
         private bool _colorDetectionStep_EnableROI;
@@ -1649,6 +1793,8 @@ namespace DesktopAutomationApp.ViewModels
                         ConfidenceThreshold = ColorDetectionStep_ConfidenceThreshold,
                         MinSize = ColorDetectionStep_MinSize,
                         MaxSize = ColorDetectionStep_MaxSize,
+                        MinWidth = ColorDetectionStep_MinWidth,
+                        MinHeight = ColorDetectionStep_MinHeight,
                         EnableROI = ColorDetectionStep_EnableROI,
                         ROI = new Rect(ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
                         SourceCaptureStepId = ColorDetectionStep_SourceCaptureStep?.StepId ?? ""

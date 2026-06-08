@@ -23,6 +23,7 @@ namespace TaskAutomation.Steps
         public Bitmap?              ProcessedImage { get; init; }
         public System.Drawing.Rectangle Bounds    { get; init; }
         public System.Drawing.Point                Offset         { get; init; }
+        public bool IsFresh { get; init; } = true;
 
         public bool HasImage => Image is not null;
 
@@ -40,6 +41,7 @@ namespace TaskAutomation.Steps
         /// <summary>BoundingBox in globalen virtuellen Desktop-Koordinaten (falls von der Erkennung geliefert).</summary>
         public System.Drawing.Rectangle? BoundingBox   { get; init; }
         public double  Confidence     { get; init; }
+        public bool SourceCaptureIsFresh { get; init; } = true;
         /// <summary>
         /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
         /// Index 0 = bestes Ergebnis (identisch mit Point/BoundingBox).

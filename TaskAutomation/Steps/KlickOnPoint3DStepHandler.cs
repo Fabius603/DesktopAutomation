@@ -31,6 +31,15 @@ namespace TaskAutomation.Steps
                 return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
             }
 
+            if (!detection.SourceCaptureIsFresh)
+            {
+                logger.LogInformation(
+                    "KlickOnPoint3DStepHandler: Detection came from a cached capture frame, skipping. SourceStepId={SourceStepId}, Confidence={Confidence:F3}",
+                    step.Settings.SourceDetectionStepId,
+                    detection.Confidence);
+                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "Detection came from a cached capture frame" };
+            }
+
             var stepKey = $"KlickOnPoint3D_{step.Id}";
             if (ctx.StepTimeouts.TryGetValue(stepKey, out var last))
             {
@@ -42,7 +51,6 @@ namespace TaskAutomation.Steps
                     return new TaskResult { WasExecuted = true, Success = true };
                 }
             }
-            ctx.StepTimeouts[stepKey] = DateTime.Now;
 
             var target = new Point(
                 detection.Point.Value.X + step.Settings.OffsetX,
@@ -59,6 +67,7 @@ namespace TaskAutomation.Steps
 
             var macro = CreateClickMacro(step.Settings, origin, delta);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
+            ctx.StepTimeouts[stepKey] = DateTime.Now;
 
             return new TaskResult { WasExecuted = true, Success = true };
         }
@@ -69,7 +78,6 @@ namespace TaskAutomation.Steps
         {
             var commands = new ObservableCollection<MakroBefehl>
             {
-                // new MouseMoveAbsoluteBefehl { X = origin.X, Y = origin.Y },
                 new MouseMoveRelativeBefehl { DeltaX = delta.X, DeltaY = delta.Y }
             };
 

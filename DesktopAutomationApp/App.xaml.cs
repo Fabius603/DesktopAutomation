@@ -29,6 +29,7 @@ using TaskAutomation.Events;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomation.Application.Services;
 using DesktopAutomationApp.Infrastructure;
+using TaskAutomation.Logging;
 
 namespace DesktopAutomationApp
 {
@@ -84,6 +85,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IImageDisplayService, WpfImageDisplayService>();
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
+                    services.AddSingleton<IExecutionLogService, ExecutionLogService>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
@@ -100,6 +102,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListJobsViewModel>();
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
+                    services.AddSingleton<ExecutionLogsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
                     services.AddTransient<HotkeyDetailViewModel>();
 
@@ -109,6 +112,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListJobsView>();
                     services.AddSingleton<ListMakrosView>();
                     services.AddSingleton<YoloDownloadsView>();
+                    services.AddSingleton<ExecutionLogsView>();
                 })
                 .Build();
         }

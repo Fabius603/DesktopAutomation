@@ -32,6 +32,8 @@ namespace TaskAutomation.Steps
                     ConfidenceThreshold = step.Settings.ConfidenceThreshold,
                     MinSize = step.Settings.MinSize,
                     MaxSize = step.Settings.MaxSize,
+                    MinWidth = step.Settings.MinWidth,
+                    MinHeight = step.Settings.MinHeight,
                     EnableROI = step.Settings.EnableROI,
                     ROI = new Rect(
                         step.Settings.ROI.X,
@@ -95,6 +97,7 @@ namespace TaskAutomation.Steps
                 Point = globalPoint,
                 BoundingBox = globalBoundingBox,
                 Confidence = rawResult.Confidence,
+                SourceCaptureIsFresh = capture.IsFresh,
                 AllDetections = allDetections
             };
         }

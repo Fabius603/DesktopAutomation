@@ -65,6 +65,9 @@
             <DataTemplate DataType="{x:Type vm:YoloDownloadsViewModel}">
                 <views:YoloDownloadsView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ExecutionLogsViewModel}">
+                <views:ExecutionLogsView/>
+            </DataTemplate>
 
         </ResourceDictionary>
     </Application.Resources>

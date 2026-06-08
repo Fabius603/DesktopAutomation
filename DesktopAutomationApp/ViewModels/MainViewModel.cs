@@ -88,6 +88,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListJobsViewModel _listJobs;
         private readonly ListHotkeysViewModel _listHotkeys;
         private readonly YoloDownloadsViewModel _yoloDownloads;
+        private readonly ExecutionLogsViewModel _executionLogs;
 
         public object? CurrentContent
         {
@@ -115,7 +116,8 @@ namespace DesktopAutomationApp.ViewModels
             || ReferenceEquals(vm, _listMakros)
             || ReferenceEquals(vm, _listJobs)
             || ReferenceEquals(vm, _listHotkeys)
-            || ReferenceEquals(vm, _yoloDownloads);
+            || ReferenceEquals(vm, _yoloDownloads)
+            || ReferenceEquals(vm, _executionLogs);
 
         public string CurrentContentName
         {
@@ -128,6 +130,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListJobs { get; }
         public ICommand ShowListHotkeys { get; }
         public ICommand ShowYoloDownloads { get; }
+        public ICommand ShowExecutionLogs { get; }
         public ICommand StopAllJobsCommand { get; }
 
         public MainViewModel(
@@ -139,7 +142,8 @@ namespace DesktopAutomationApp.ViewModels
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
             ListHotkeysViewModel listHotkeysViewModel,
-            YoloDownloadsViewModel yoloDownloadsViewModel)
+            YoloDownloadsViewModel yoloDownloadsViewModel,
+            ExecutionLogsViewModel executionLogsViewModel)
         {
             _viewModelFactory = viewModelFactory;
             _jobDispatcher = jobDispatcher;
@@ -162,6 +166,7 @@ namespace DesktopAutomationApp.ViewModels
             _listJobs = listJobsViewModel;
             _listHotkeys = listHotkeysViewModel;
             _yoloDownloads = yoloDownloadsViewModel;
+            _executionLogs = executionLogsViewModel;
 
             // Events für Job-Fehler abonnieren
             _jobDispatcher.JobErrorOccurred += OnJobErrorOccurred;
@@ -181,6 +186,7 @@ namespace DesktopAutomationApp.ViewModels
             ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
             ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listHotkeys; _listHotkeys.RefreshCommand.Execute(null); } });
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
+            ShowExecutionLogs = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _executionLogs; _executionLogs.RefreshCommand.Execute(null); } });
             StopAllJobsCommand = new RelayCommand(() =>
             {
                 _jobDispatcher.CancelAllJobs();

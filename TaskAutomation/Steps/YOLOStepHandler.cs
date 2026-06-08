@@ -96,6 +96,7 @@ namespace TaskAutomation.Steps
                 Point          = globalPoint,
                 BoundingBox    = globalBoundingBox,
                 Confidence     = rawResult.Confidence,
+                SourceCaptureIsFresh = capture.IsFresh,
                 AllDetections  = allDetections
             };
         }

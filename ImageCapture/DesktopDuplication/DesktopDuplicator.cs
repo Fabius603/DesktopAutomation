@@ -148,6 +148,7 @@ namespace ImageCapture.DesktopDuplication
                 RetrieveCursorMetadata(frame);
 
                 bool frameWasUpdated = (desktopResource != null || frameInfo.LastPresentTime > 0 || frameInfo.AccumulatedFrames > 0);
+                frame.IsFresh = !retrievalTimedOut && frameWasUpdated;
 
                 if (frameWasUpdated)
                 {

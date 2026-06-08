@@ -298,6 +298,8 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ColorDetectionStep_ConfidenceThreshold = cd.Settings.ConfidenceThreshold;
                     vm.ColorDetectionStep_MinSize = cd.Settings.MinSize;
                     vm.ColorDetectionStep_MaxSize = cd.Settings.MaxSize;
+                    vm.ColorDetectionStep_MinWidth = cd.Settings.MinWidth;
+                    vm.ColorDetectionStep_MinHeight = cd.Settings.MinHeight;
                     vm.ColorDetectionStep_EnableROI = cd.Settings.EnableROI;
                     vm.ColorDetectionStep_RoiX = cd.Settings.ROI.X;
                     vm.ColorDetectionStep_RoiY = cd.Settings.ROI.Y;

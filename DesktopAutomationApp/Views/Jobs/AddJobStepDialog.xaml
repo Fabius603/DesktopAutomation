@@ -287,6 +287,24 @@
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MaxSize, Converter={StaticResource MaxSizeDisplayConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Breite" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_MinWidth, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Höhe" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_MinHeight, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
                     </StackPanel>
 
                     <!-- ── Desktop Duplication ── -->

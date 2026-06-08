@@ -44,7 +44,8 @@ namespace TaskAutomation.Steps
                 WasExecuted = true,
                 Image       = bitmap,
                 Bounds      = bounds,
-                Offset      = new System.Drawing.Point(offset.X, offset.Y)
+                Offset      = new System.Drawing.Point(offset.X, offset.Y),
+                IsFresh     = true
             };
         }
 

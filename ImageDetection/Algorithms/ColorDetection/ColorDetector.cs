@@ -19,6 +19,8 @@ namespace ImageDetection.Algorithms.ColorDetection
         public double ConfidenceThreshold { get; set; } = 0.90;
         public int MinSize { get; set; } = 25;
         public int MaxSize { get; set; } = int.MaxValue;
+        public int MinWidth { get; set; } = 1;
+        public int MinHeight { get; set; } = 1;
         public CvRect ROI { get; set; } = new(0, 0, 0, 0);
         public bool EnableROI { get; set; }
     }
@@ -79,6 +81,12 @@ namespace ImageDetection.Algorithms.ColorDetection
             
             if (options.MaxSize < options.MinSize)
                 throw new InvalidOperationException("ColorDetection MaxSize must be greater than or equal to MinSize.");
+
+            if (options.MinWidth <= 0)
+                throw new InvalidOperationException("ColorDetection MinWidth must be greater than 0.");
+
+            if (options.MinHeight <= 0)
+                throw new InvalidOperationException("ColorDetection MinHeight must be greater than 0.");
         }
 
         private static CvRect ResolveRoi(ColorDetectionOptions options, int imageWidth, int imageHeight)
@@ -142,6 +150,9 @@ namespace ImageDetection.Algorithms.ColorDetection
                 var boundsLocal = Cv2.BoundingRect(contour);
 
                 if (boundsLocal.Width <= 0 || boundsLocal.Height <= 0)
+                    continue;
+
+                if (boundsLocal.Width < options.MinWidth || boundsLocal.Height < options.MinHeight)
                     continue;
 
                 using var componentMask = new Mat(mask, boundsLocal);

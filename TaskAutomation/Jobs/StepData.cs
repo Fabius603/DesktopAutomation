@@ -112,6 +112,12 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("max_size")]
         public int MaxSize { get; set; } = int.MaxValue;
 
+        [JsonPropertyName("min_width")]
+        public int MinWidth { get; set; } = 1;
+
+        [JsonPropertyName("min_height")]
+        public int MinHeight { get; set; } = 1;
+
         [JsonPropertyName("roi")]
         [JsonConverter(typeof(OpenCvRectJsonConverter))]
         public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);

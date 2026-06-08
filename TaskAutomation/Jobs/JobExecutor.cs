@@ -11,6 +11,7 @@ using System.Drawing;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection;
 using System.Text;
+using System.Diagnostics;
 using ImageHelperMethods;
 using TaskAutomation.Makros;
 using System.Linq;
@@ -22,6 +23,7 @@ using TaskAutomation.Orchestration;
 using Common.JsonRepository;
 using ImageDetection.YOLO;
 using TaskAutomation.Events;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Jobs
 {
@@ -37,6 +39,7 @@ namespace TaskAutomation.Jobs
         private readonly IScriptExecutor _scriptExecutor;
         private readonly IYoloManager _yoloManager;
         private readonly IDesktopCaptureService _desktopCaptureService;
+        private readonly IExecutionLogService _executionLogService;
         private bool _disposed = false;
 
         private readonly DxgiResources _dxgiResources = DxgiResources.Instance;
@@ -104,6 +107,7 @@ namespace TaskAutomation.Jobs
             IImageDisplayService imageDisplayService,
             IDesktopResultOverlay desktopResultOverlay,
             IDesktopCaptureService desktopCaptureService,
+            IExecutionLogService executionLogService,
             Lazy<IJobLauncher>? lazyLauncher = null)
         {
             _logger               = logger;
@@ -116,6 +120,7 @@ namespace TaskAutomation.Jobs
             _imageDisplayService  = imageDisplayService;
             _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
+            _executionLogService = executionLogService;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
 
             _ = ReloadJobsAsync();
@@ -220,7 +225,15 @@ namespace TaskAutomation.Jobs
             }
 
             CurrentJob = job;
+            var jobRunStopwatch = Stopwatch.StartNew();
+            var executionLog = _executionLogService.BeginJob(job.Id, job.Name);
+            bool jobCompletedSuccessfully = false;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
+            _executionLogService.Write(
+                executionLog,
+                ExecutionLogLevel.Information,
+                "Job-Ausführung gestartet.",
+                $"Steps={job.Steps.Count}, Repeating={job.Repeating}");
 
             // ── Zyklus-Erkennung ──────────────────────────────────────────────
             var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
@@ -230,13 +243,37 @@ namespace TaskAutomation.Jobs
                     _allJobs.Values.FirstOrDefault(j => j.Id == id)?.Name ?? id.ToString()));
                 var err = $"Zirkuläre Abhängigkeit erkannt: Job '{job.Name}' ist bereits in [{chain}].";
                 _logger.LogError(err);
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung abgebrochen.", err);
+                _executionLogService.Complete(executionLog, false, err);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
                 return;
             }
             _executionChain.Value = parentChain.Add(job.Id);
 
             // ── YOLO-Modelle vorladen ─────────────────────────────────────────
-            await PreloadYoloModelsAsync(job, ct);
+            try
+            {
+                await PreloadYoloModelsAsync(job, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Job '{JobName}' vor Ausführung abgebrochen.", job.Name);
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Job vor Ausführung abgebrochen.");
+                _executionLogService.Complete(executionLog, false, "Abgebrochen während YOLO-Preload.");
+                _executionChain.Value = parentChain;
+                CurrentJob = null;
+                return;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Job '{JobName}' vor Ausführung fehlgeschlagen: {Message}", job.Name, ex.Message);
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung fehlgeschlagen.", ex.ToString());
+                _executionLogService.Complete(executionLog, false, ex.Message);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                _executionChain.Value = parentChain;
+                CurrentJob = null;
+                return;
+            }
 
             // ── Schritte analysieren ──────────────────────────────────────────
             var videoStep              = job.Steps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
@@ -258,6 +295,7 @@ namespace TaskAutomation.Jobs
                 job,
                 ExecuteJob,
                 _desktopCaptureService,
+                executionLog,
                 launcher == null ? (Func<Guid, Guid>?)null : launcher.StartJob,
                 launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
                 launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
@@ -322,9 +360,16 @@ namespace TaskAutomation.Jobs
 
                 // ── Ausführungsschleife ───────────────────────────────────────
                 bool jobEndedByStep = false;
+                int iteration = 0;
                 do
                 {
+                    iteration++;
+                    var iterationStopwatch = Stopwatch.StartNew();
                     pipelineCtx.ResetResults();
+                    _executionLogService.Write(
+                        executionLog,
+                        ExecutionLogLevel.Debug,
+                        $"Job-Runde {iteration} gestartet.");
 
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
@@ -384,13 +429,28 @@ namespace TaskAutomation.Jobs
                         if (!parentActive) continue;
 
                         // ── Disabled step: skip without executing ─────────────────────
-                        if (!step.IsEnabled) continue;
+                        if (!step.IsEnabled)
+                        {
+                            _executionLogService.Write(
+                                executionLog,
+                                ExecutionLogLevel.Debug,
+                                "Step übersprungen, weil er deaktiviert ist.",
+                                stepId: step.Id,
+                                stepType: step.GetType().Name);
+                            continue;
+                        }
 
                         // ── EndJob: immediately stop the job ──────────────────────────
                         if (step is EndJobStep)
                         {
                             _logger.LogInformation(
                                 "Job '{JobName}' durch EndJob-Step beendet.", job.Name);
+                            _executionLogService.Write(
+                                executionLog,
+                                ExecutionLogLevel.Information,
+                                "Job durch EndJob-Step beendet.",
+                                stepId: step.Id,
+                                stepType: step.GetType().Name);
                             jobEndedByStep = true;
                             break;
                         }
@@ -402,6 +462,13 @@ namespace TaskAutomation.Jobs
                         catch (OperationCanceledException) { throw; }
                         catch (Exception ex)
                         {
+                            _executionLogService.Write(
+                                executionLog,
+                                ExecutionLogLevel.Error,
+                                "Step fehlgeschlagen.",
+                                ex.ToString(),
+                                step.Id,
+                                step.GetType().Name);
                             JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, step.GetType().Name, ex));
                             // StepException verhindert, dass der äußere catch ein zweites Event feuert.
                             throw new StepException(ex);
@@ -411,13 +478,23 @@ namespace TaskAutomation.Jobs
                             job.Name, step.GetType().Name);
                     }
 
+                    iterationStopwatch.Stop();
+                    _executionLogService.Write(
+                        executionLog,
+                        ExecutionLogLevel.Information,
+                        $"Job-Runde {iteration} beendet.",
+                        $"Durchgangsdauer={iterationStopwatch.ElapsedMilliseconds} ms",
+                        durationMs: iterationStopwatch.ElapsedMilliseconds);
+
                     if (jobEndedByStep) break;
                 }
                 while (job.Repeating && !ct.IsCancellationRequested);
+                jobCompletedSuccessfully = true;
             }
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Job abgebrochen.");
             }
             catch (StepException)
             {
@@ -427,10 +504,12 @@ namespace TaskAutomation.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job fehlgeschlagen.", ex.ToString());
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
             }
             finally
             {
+                jobRunStopwatch.Stop();
                 CurrentJob = null;
 
                 // Fire-and-forget Sub-Jobs abbrechen wenn der Eltern-Job endet (egal ob Abbruch oder normales Ende).
@@ -477,6 +556,10 @@ namespace TaskAutomation.Jobs
                 await UnloadYoloModelsAsync(job);
 
                 _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
+                _executionLogService.Complete(
+                    executionLog,
+                    jobCompletedSuccessfully && !ct.IsCancellationRequested,
+                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms");
 
                 _executionChain.Value = parentChain;
             }
@@ -494,7 +577,32 @@ namespace TaskAutomation.Jobs
 
             try
             {
+                var stopwatch = Stopwatch.StartNew();
+                if (ctx.ExecutionLogSession != null)
+                {
+                    _executionLogService.Write(
+                        ctx.ExecutionLogSession,
+                        ExecutionLogLevel.Debug,
+                        "Step gestartet.",
+                        stepId: step.Id,
+                        stepType: step.GetType().Name);
+                }
+
                 await handler.ExecuteAsync(step, ctx, ct);
+
+                stopwatch.Stop();
+                if (ctx.ExecutionLogSession != null)
+                {
+                    var result = ctx.Results.GetRaw(step.Id);
+                    _executionLogService.Write(
+                        ctx.ExecutionLogSession,
+                        ExecutionLogLevel.Information,
+                        "Step abgeschlossen.",
+                        BuildStepResultDetails(result),
+                        step.Id,
+                        step.GetType().Name,
+                        stopwatch.ElapsedMilliseconds);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -505,6 +613,24 @@ namespace TaskAutomation.Jobs
                 _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", step.GetType().Name, ex.Message);
                 throw;
             }
+        }
+
+        private static string? BuildStepResultDetails(object? result)
+        {
+            if (result == null) return null;
+
+            var parts = new List<string>();
+            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "ErrorMessage", "SourceCaptureIsFresh" })
+            {
+                var property = result.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+                if (property == null) continue;
+
+                var value = property.GetValue(result);
+                if (value != null)
+                    parts.Add($"{name}={value}");
+            }
+
+            return parts.Count == 0 ? result.GetType().Name : string.Join(", ", parts);
         }
 
         /// <summary>

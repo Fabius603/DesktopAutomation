@@ -119,6 +119,12 @@
                         <Run Text="Max. Größe: "/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Min. Breite: "/><Run Text="{Binding Settings.MinWidth}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Min. Höhe: "/><Run Text="{Binding Settings.MinHeight}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="EnableROI: "/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>

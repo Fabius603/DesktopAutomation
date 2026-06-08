@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Events;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 using TaskAutomation.Makros;
 using TaskAutomation.Scripts;
 
@@ -42,6 +43,7 @@ namespace TaskAutomation.Steps
         IYoloManager         YoloManager        { get; }
         IImageDisplayService ImageDisplayService { get; }
         IDesktopResultOverlay DesktopResultOverlay { get; }
+        ExecutionLogSession? ExecutionLogSession { get; }
 
         /// <summary>Der aktuell laufende Job (für Zyklusprüfungen in JobExecutionStep).</summary>
         Job CurrentJob { get; }

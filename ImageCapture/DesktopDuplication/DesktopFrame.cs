@@ -14,6 +14,7 @@ namespace ImageCapture.DesktopDuplication
         public Rectangle[] UpdatedRegions { get; set; }
         public bool CursorVisible { get; set; }
         public Point CursorLocation { get; set; }
+        public bool IsFresh { get; set; }
 
         public void Dispose()
         {
@@ -32,7 +33,8 @@ namespace ImageCapture.DesktopDuplication
                 MovedRegions = MovedRegions != null ? (MovedRegion[])MovedRegions.Clone() : null,
                 UpdatedRegions = UpdatedRegions != null ? (Rectangle[])UpdatedRegions.Clone() : null,
                 CursorVisible = CursorVisible,
-                CursorLocation = CursorLocation
+                CursorLocation = CursorLocation,
+                IsFresh = IsFresh
             };
         }
     }

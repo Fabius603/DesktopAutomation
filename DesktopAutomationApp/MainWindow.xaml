@@ -171,6 +171,17 @@
                             <TextBlock Text="YOLO Downloads" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
+
+                    <!-- Logs -->
+                    <Button Command="{Binding ShowExecutionLogs}"
+                            Tag="ExecutionLogsViewModel"
+                            Style="{DynamicResource SidebarNavButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="TextBoxSearchOutline" Width="18" Height="18"
+                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock Text="Logs" VerticalAlignment="Center" FontSize="14"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </DockPanel>
         </Border>
