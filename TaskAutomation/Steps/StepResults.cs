@@ -1,5 +1,6 @@
 using System.Drawing;
 using OpenCvSharp;
+using System;
 
 namespace TaskAutomation.Steps
 {
@@ -24,6 +25,7 @@ namespace TaskAutomation.Steps
         public System.Drawing.Rectangle Bounds    { get; init; }
         public System.Drawing.Point                Offset         { get; init; }
         public bool IsFresh { get; init; } = true;
+        public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
 
         public bool HasImage => Image is not null;
 
@@ -42,6 +44,9 @@ namespace TaskAutomation.Steps
         public System.Drawing.Rectangle? BoundingBox   { get; init; }
         public double  Confidence     { get; init; }
         public bool SourceCaptureIsFresh { get; init; } = true;
+        public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+        public bool IsPredicted { get; init; }
+        public DateTime? PredictedForUtc { get; init; }
         /// <summary>
         /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
         /// Index 0 = bestes Ergebnis (identisch mit Point/BoundingBox).

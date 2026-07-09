@@ -1,5 +1,6 @@
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
+using ImageDetection.Algorithms.ColorDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection.YOLO;
@@ -94,10 +95,17 @@ namespace TaskAutomation.Steps
 
         ProcessDuplicator?   ProcessDuplicator  { get; set; }
         TemplateMatching?    TemplateMatcher    { get; set; }
+        ColorDetector?       ColorDetector      { get; set; }
         KeyPointMatcher?     KeyPointMatcher    { get; set; }
         StreamVideoRecorder? VideoRecorder      { get; set; }
 
         /// <summary>Timeout-Tracking pro Step-ID (verhindert zu schnelle Wiederholungen).</summary>
         Dictionary<string, DateTime> StepTimeouts { get; }
+
+        /// <summary>Bewegungshistorie pro PredictMovement-Step-ID.</summary>
+        Dictionary<string, PredictMovementState> PredictMovementStates { get; }
+
+        /// <summary>Optionaler ActiveWindow-Cache pro Step-ID.</summary>
+        Dictionary<string, ActiveWindowCacheEntry> ActiveWindowCache { get; }
     }
 }

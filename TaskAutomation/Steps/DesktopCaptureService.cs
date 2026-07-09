@@ -79,9 +79,8 @@ namespace TaskAutomation.Steps
                 {
                     _logger.LogDebug(
                         "DesktopCaptureService: Erstelle DesktopDuplicator für Monitor {MonitorIndex}", monitorIdx);
-                    duplicator = new DesktopDuplicator(monitorIdx);
+                    duplicator = CreateDuplicator(monitorIdx);
                     // 16 ms ≈ 60 fps: DXGI blockiert intern bis ein neuer Frame verfügbar ist.
-                    duplicator.SetFrameTimeout(16);
                     _duplicators[monitorIdx] = duplicator;
                     // Warm-up-Pause: DXGI braucht ~100 ms bis der erste Frame bereit ist.
                     await Task.Delay(100, ct).ConfigureAwait(false);
@@ -131,6 +130,13 @@ namespace TaskAutomation.Steps
                         _logger.LogWarning(ex,
                             "DesktopCaptureService: Capture fehlgeschlagen in Versuch {Attempt}/{Max} (Monitor {MonitorIndex})",
                             retryCount, maxRetries, monitorIdx);
+
+                        if (ex is ObjectDisposedException || ex is DesktopDuplicationException)
+                        {
+                            duplicator = RecreateDuplicator(monitorIdx);
+                            await Task.Delay(100, ct).ConfigureAwait(false);
+                        }
+
                         await Task.Delay(50, ct).ConfigureAwait(false);
                     }
                 }
@@ -177,7 +183,10 @@ namespace TaskAutomation.Steps
                         Image       = bitmap,
                         Bounds      = screenBounds,
                         Offset      = offset,
-                        IsFresh     = frame.IsFresh
+                        IsFresh     = frame.IsFresh,
+                        CaptureTimestampUtc = frame.CaptureTimestampUtc == DateTime.MinValue
+                            ? DateTime.UtcNow
+                            : frame.CaptureTimestampUtc
                     };
                 }
             }
@@ -185,6 +194,32 @@ namespace TaskAutomation.Steps
             {
                 sem.Release();
             }
+        }
+
+        private DesktopDuplicator CreateDuplicator(int monitorIdx)
+        {
+            _logger.LogDebug(
+                "DesktopCaptureService: Erstelle DesktopDuplicator fÃ¼r Monitor {MonitorIndex}", monitorIdx);
+
+            var duplicator = new DesktopDuplicator(monitorIdx);
+            duplicator.SetFrameTimeout(16);
+            return duplicator;
+        }
+
+        private DesktopDuplicator RecreateDuplicator(int monitorIdx)
+        {
+            if (_duplicators.TryRemove(monitorIdx, out var oldDuplicator))
+            {
+                try { oldDuplicator.Dispose(); } catch { /* best-effort */ }
+            }
+
+            _logger.LogWarning(
+                "DesktopCaptureService: DesktopDuplicator fÃ¼r Monitor {MonitorIndex} wird neu erstellt.",
+                monitorIdx);
+
+            var duplicator = CreateDuplicator(monitorIdx);
+            _duplicators[monitorIdx] = duplicator;
+            return duplicator;
         }
 
         public void Dispose()

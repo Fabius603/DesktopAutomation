@@ -38,6 +38,12 @@ namespace TaskAutomation.Steps
                 new("Found",      "Gefunden",   ResultPropertyType.Bool),
                 new("Confidence", "Confidence", ResultPropertyType.Double),
             ],
+            ["PredictMovementStep"]   =
+            [
+                new("Found",      "Gefunden",   ResultPropertyType.Bool),
+                new("Confidence", "Confidence", ResultPropertyType.Double),
+                new("IsPredicted", "Vorhergesagt", ResultPropertyType.Bool),
+            ],
             ["DesktopDuplicationStep"] =
             [
                 new("HasImage", "Hat Bild", ResultPropertyType.Bool),
@@ -79,6 +85,7 @@ namespace TaskAutomation.Steps
             [
                 new ResultPropertyDescriptor("Found",      "Gefunden",   ResultPropertyType.Bool),
                 new ResultPropertyDescriptor("Confidence", "Confidence", ResultPropertyType.Double),
+                new ResultPropertyDescriptor("IsPredicted", "Vorhergesagt", ResultPropertyType.Bool),
             ]),
             new ResultTypeDescriptor("CaptureResult", "CaptureResult",
             [

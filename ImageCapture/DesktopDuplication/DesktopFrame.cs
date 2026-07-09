@@ -15,6 +15,7 @@ namespace ImageCapture.DesktopDuplication
         public bool CursorVisible { get; set; }
         public Point CursorLocation { get; set; }
         public bool IsFresh { get; set; }
+        public DateTime CaptureTimestampUtc { get; set; }
 
         public void Dispose()
         {
@@ -34,7 +35,8 @@ namespace ImageCapture.DesktopDuplication
                 UpdatedRegions = UpdatedRegions != null ? (Rectangle[])UpdatedRegions.Clone() : null,
                 CursorVisible = CursorVisible,
                 CursorLocation = CursorLocation,
-                IsFresh = IsFresh
+                IsFresh = IsFresh,
+                CaptureTimestampUtc = CaptureTimestampUtc
             };
         }
     }

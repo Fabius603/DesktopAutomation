@@ -41,6 +41,8 @@ namespace TaskAutomation.Steps
                     return new TaskResult { WasExecuted = true, Success = true };
                 }
             }
+
+            await PredictionTimingHelper.WaitUntilPredictionTimeAsync(detection, logger, ct).ConfigureAwait(false);
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
             var point = new System.Drawing.Point(

@@ -305,6 +305,66 @@
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MinHeight, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Downscale" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_DownscaleFactor, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ── Predict Movement ── -->
+                    <StackPanel Visibility="{Binding ShowPredictMovement, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Detection-Step" Style="{StaticResource StepFieldLabel}"/>
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableDetectionSteps}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedItem="{Binding PredictMovementStep_SourceDetectionStep}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Min. Werte" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding PredictMovementStep_MinSamples, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Vorhersage (ms)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding PredictMovementStep_PredictionMs, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Reset ab Distanz" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding PredictMovementStep_ResetDistanceThreshold, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Max. Alter (ms)" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding PredictMovementStep_MaxSampleAgeMs, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
                     </StackPanel>
 
                     <!-- ── Desktop Duplication ── -->
@@ -930,6 +990,16 @@
                             <TextBox Grid.Column="1"
                                      Text="{Binding ActiveWindowStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
                                      mah:TextBoxHelper.Watermark="z. B. notepad oder notepad.exe"/>
+                        </Grid>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Cache (ms)" VerticalAlignment="Center"
+                                       Foreground="{StaticResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ActiveWindowStep_CacheMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                         <TextBlock Foreground="{StaticResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
                                    TextWrapping="Wrap"

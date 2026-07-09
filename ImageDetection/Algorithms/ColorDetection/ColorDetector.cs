@@ -21,12 +21,19 @@ namespace ImageDetection.Algorithms.ColorDetection
         public int MaxSize { get; set; } = int.MaxValue;
         public int MinWidth { get; set; } = 1;
         public int MinHeight { get; set; } = 1;
+        public int DownscaleFactor { get; set; } = 1;
         public CvRect ROI { get; set; } = new(0, 0, 0, 0);
         public bool EnableROI { get; set; }
     }
 
-    public sealed class ColorDetector
+    public sealed class ColorDetector : IDisposable
     {
+        private readonly Mat _bgr = new();
+        private readonly Mat _scaled = new();
+        private readonly Mat _mask = new();
+        private readonly List<ColorDetectionMatch> _matches = new();
+        private bool _disposed;
+
         public IDetectionResult Detect(Bitmap bitmap, ColorDetectionOptions options, CancellationToken ct = default)
         {
             if (bitmap is null)
@@ -43,9 +50,9 @@ namespace ImageDetection.Algorithms.ColorDetection
 
             ValidateOptions(options);
 
-            using var sourceBgr = ToBgr(sourceMat);
-            var roi = ResolveRoi(options, sourceBgr.Width, sourceBgr.Height);
-            using var roiMat = new Mat(sourceBgr, roi);
+            ToBgr(sourceMat, _bgr);
+            var roi = ResolveRoi(options, _bgr.Width, _bgr.Height);
+            using var roiMat = new Mat(_bgr, roi);
 
             var matches = DetectColor(roiMat, roi, options);
 
@@ -87,6 +94,9 @@ namespace ImageDetection.Algorithms.ColorDetection
 
             if (options.MinHeight <= 0)
                 throw new InvalidOperationException("ColorDetection MinHeight must be greater than 0.");
+
+            if (options.DownscaleFactor <= 0)
+                throw new InvalidOperationException("ColorDetection DownscaleFactor must be greater than 0.");
         }
 
         private static CvRect ResolveRoi(ColorDetectionOptions options, int imageWidth, int imageHeight)
@@ -101,53 +111,71 @@ namespace ImageDetection.Algorithms.ColorDetection
             return new CvRect(x, y, right - x, bottom - y);
         }
 
-        private static Mat ToBgr(Mat source)
+        private static void ToBgr(Mat source, Mat destination)
         {
-            var bgr = new Mat();
-
             switch (source.Channels())
             {
                 case 1:
-                    Cv2.CvtColor(source, bgr, ColorConversionCodes.GRAY2BGR);
+                    Cv2.CvtColor(source, destination, ColorConversionCodes.GRAY2BGR);
                     break;
 
                 case 3:
-                    source.CopyTo(bgr);
+                    source.CopyTo(destination);
                     break;
 
                 case 4:
-                    Cv2.CvtColor(source, bgr, ColorConversionCodes.BGRA2BGR);
+                    Cv2.CvtColor(source, destination, ColorConversionCodes.BGRA2BGR);
                     break;
 
                 default:
                     throw new InvalidOperationException($"Unsupported image channel count: {source.Channels()}");
             }
-
-            return bgr;
         }
 
-        private static IReadOnlyList<ColorDetectionMatch> DetectColor(
+        private IReadOnlyList<ColorDetectionMatch> DetectColor(
             Mat roiMat,
             CvRect roi,
             ColorDetectionOptions options)
         {
             var target = ParseColor(options.ColorHex);
             var maxDistance = Math.Sqrt(3 * 255 * 255);
+            var workingMat = roiMat;
+            var scaleX = 1.0;
+            var scaleY = 1.0;
 
-            using var mask = BuildFastColorMask(roiMat, target, options.ConfidenceThreshold);
+            if (options.DownscaleFactor > 1 &&
+                roiMat.Width >= options.DownscaleFactor * 2 &&
+                roiMat.Height >= options.DownscaleFactor * 2)
+            {
+                var scaledWidth = Math.Max(1, roiMat.Width / options.DownscaleFactor);
+                var scaledHeight = Math.Max(1, roiMat.Height / options.DownscaleFactor);
+                Cv2.Resize(
+                    roiMat,
+                    _scaled,
+                    new OpenCvSharp.Size(scaledWidth, scaledHeight),
+                    0,
+                    0,
+                    InterpolationFlags.Nearest);
+                workingMat = _scaled;
+                scaleX = roiMat.Width / (double)workingMat.Width;
+                scaleY = roiMat.Height / (double)workingMat.Height;
+            }
+
+            BuildFastColorMask(workingMat, target, options.ConfidenceThreshold, _mask);
 
             Cv2.FindContours(
-                mask,
+                _mask,
                 out OpenCvSharp.Point[][] contours,
                 out _,
                 RetrievalModes.External,
                 ContourApproximationModes.ApproxSimple);
 
-            var matches = new List<ColorDetectionMatch>();
+            _matches.Clear();
 
             foreach (var contour in contours)
             {
-                var boundsLocal = Cv2.BoundingRect(contour);
+                var boundsScaled = Cv2.BoundingRect(contour);
+                var boundsLocal = ScaleBounds(boundsScaled, roiMat.Width, roiMat.Height, scaleX, scaleY);
 
                 if (boundsLocal.Width <= 0 || boundsLocal.Height <= 0)
                     continue;
@@ -155,8 +183,8 @@ namespace ImageDetection.Algorithms.ColorDetection
                 if (boundsLocal.Width < options.MinWidth || boundsLocal.Height < options.MinHeight)
                     continue;
 
-                using var componentMask = new Mat(mask, boundsLocal);
-                var area = Cv2.CountNonZero(componentMask);
+                using var componentMask = new Mat(_mask, boundsScaled);
+                var area = (int)Math.Round(Cv2.CountNonZero(componentMask) * scaleX * scaleY);
 
                 if (area < options.MinSize)
                     continue;
@@ -164,7 +192,7 @@ namespace ImageDetection.Algorithms.ColorDetection
                 if (area > options.MaxSize)
                     continue;
 
-                using var componentImage = new Mat(roiMat, boundsLocal);
+                using var componentImage = new Mat(workingMat, boundsScaled);
                 var mean = Cv2.Mean(componentImage, componentMask);
                 var confidence = CalculateColorConfidence(mean, target, maxDistance);
                 var moments = Cv2.Moments(contour);
@@ -177,22 +205,37 @@ namespace ImageDetection.Algorithms.ColorDetection
 
                 var center = moments.M00 > 0
                     ? new DrawingPoint(
-                        (int)Math.Round(moments.M10 / moments.M00) + roi.X,
-                        (int)Math.Round(moments.M01 / moments.M00) + roi.Y)
+                        (int)Math.Round((moments.M10 / moments.M00) * scaleX) + roi.X,
+                        (int)Math.Round((moments.M01 / moments.M00) * scaleY) + roi.Y)
                     : new DrawingPoint(
                         bounds.X + bounds.Width / 2,
                         bounds.Y + bounds.Height / 2);
 
-                matches.Add(new ColorDetectionMatch(center, bounds, confidence, area));
+                _matches.Add(new ColorDetectionMatch(center, bounds, confidence, area));
             }
 
-            return matches
+            return _matches
                 .OrderByDescending(m => m.Confidence)
                 .ThenByDescending(m => m.Area)
                 .ToList();
         }
 
-        private static Mat BuildFastColorMask(Mat image, DrawingColor target, double threshold)
+        private static DrawingRectangle ScaleBounds(CvRect bounds, int maxWidth, int maxHeight, double scaleX, double scaleY)
+        {
+            var x = (int)Math.Floor(bounds.X * scaleX);
+            var y = (int)Math.Floor(bounds.Y * scaleY);
+            var right = (int)Math.Ceiling((bounds.X + bounds.Width) * scaleX);
+            var bottom = (int)Math.Ceiling((bounds.Y + bounds.Height) * scaleY);
+
+            x = Math.Clamp(x, 0, maxWidth - 1);
+            y = Math.Clamp(y, 0, maxHeight - 1);
+            right = Math.Clamp(right, x + 1, maxWidth);
+            bottom = Math.Clamp(bottom, y + 1, maxHeight);
+
+            return new DrawingRectangle(x, y, right - x, bottom - y);
+        }
+
+        private static void BuildFastColorMask(Mat image, DrawingColor target, double threshold, Mat mask)
         {
             var tolerance = (int)Math.Round((1.0 - threshold) * 255);
 
@@ -206,9 +249,7 @@ namespace ImageDetection.Algorithms.ColorDetection
                 Math.Min(255, target.G + tolerance),
                 Math.Min(255, target.R + tolerance));
 
-            var mask = new Mat();
             Cv2.InRange(image, lower, upper, mask);
-            return mask;
         }
 
         private static double CalculateColorConfidence(Scalar mean, DrawingColor target, double maxDistance)
@@ -249,5 +290,16 @@ namespace ImageDetection.Algorithms.ColorDetection
             DrawingRectangle BoundingBox,
             double Confidence,
             int Area);
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _bgr.Dispose();
+            _scaled.Dispose();
+            _mask.Dispose();
+        }
     }
 }

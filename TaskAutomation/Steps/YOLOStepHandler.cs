@@ -97,6 +97,7 @@ namespace TaskAutomation.Steps
                 BoundingBox    = globalBoundingBox,
                 Confidence     = rawResult.Confidence,
                 SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections  = allDetections
             };
         }

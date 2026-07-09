@@ -156,6 +156,7 @@ namespace DesktopAutomationApp.ViewModels
             // Source step pre-selection (first available of the right type)
             TemplateMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
             ColorDetectionStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
+            PredictMovementStep_SourceDetectionStep  = AvailableDetectionSteps.FirstOrDefault();
             YoloDetectionStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
             KeyPointMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
             KlickOnPointStep_SourceDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
@@ -241,8 +242,15 @@ namespace DesktopAutomationApp.ViewModels
                     && ColorDetectionStep_MaxSize >= ColorDetectionStep_MinSize
                     && ColorDetectionStep_MinWidth > 0
                     && ColorDetectionStep_MinHeight > 0
+                    && ColorDetectionStep_DownscaleFactor > 0
                     && HasCaptureSource(ColorDetectionStep_SourceCaptureStep)
                     && HasValidRoi(ColorDetectionStep_EnableROI, ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
+                "PredictMovement" =>
+                    HasDetectionSource(PredictMovementStep_SourceDetectionStep)
+                    && PredictMovementStep_MinSamples >= 2
+                    && PredictMovementStep_PredictionMs >= 0
+                    && PredictMovementStep_ResetDistanceThreshold >= 0
+                    && PredictMovementStep_MaxSampleAgeMs >= 0,
                 "ShowImage" =>
                     !string.IsNullOrWhiteSpace(ShowImageStep_WindowName)
                     && HasCaptureSource(ShowImageStep_SourceCaptureStep)
@@ -282,7 +290,8 @@ namespace DesktopAutomationApp.ViewModels
                     && ShowTextStep_Opacity is >= 0 and <= 1
                     && ShowTextStep_DesktopIndex >= 0
                     && ShowTextStep_DurationMs >= 0,
-                "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName),
+                "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName)
+                                   && ActiveWindowStep_CacheMs >= 0,
                 "KeyPointMatching" =>
                     IsExistingFile(KeyPointMatchingStep_TemplatePath)
                     && KeyPointMatchingStep_MinMatchCount > 0
@@ -392,6 +401,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden."),
                 new("ColorDetection",     "Erkennung",
                     "Erkennt eine bestimmte Farbe in einer Bildquelle. Threshold und MindestgrÃ¶ÃŸe bestimmen, ab wann ein Treffer gilt."),
+                new("PredictMovement",    "Erkennung",
+                    "Berechnet aus den letzten Erkennungspunkten eine vorhergesagte Zielposition fuer Klick- und Anzeige-Steps."),
                 new("YoloDetection",      "Erkennung",
                     "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint)."),
                 new("KlickOnPoint",       "Interaktion",
@@ -453,6 +464,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public bool ShowTemplateMatching => SelectedType == "TemplateMatching";
         public bool ShowColorDetection => SelectedType == "ColorDetection";
+        public bool ShowPredictMovement => SelectedType == "PredictMovement";
         public bool ShowDesktopDuplication => SelectedType == "DesktopDuplication";
         //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
@@ -655,18 +667,25 @@ namespace DesktopAutomationApp.ViewModels
         public int ColorDetectionStep_MinWidth
         {
             get => _colorDetectionStep_MinWidth;
-            set { _colorDetectionStep_MinWidth = value; OnChange(); }
+            set { _colorDetectionStep_MinWidth = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         private int _colorDetectionStep_MinHeight = 1;
         public int ColorDetectionStep_MinHeight
         {
             get => _colorDetectionStep_MinHeight;
-            set { _colorDetectionStep_MinHeight = value; OnChange(); }
+            set { _colorDetectionStep_MinHeight = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _colorDetectionStep_DownscaleFactor = 1;
+        public int ColorDetectionStep_DownscaleFactor
+        {
+            get => _colorDetectionStep_DownscaleFactor;
+            set { _colorDetectionStep_DownscaleFactor = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         private bool _colorDetectionStep_EnableROI;
-        public bool ColorDetectionStep_EnableROI { get => _colorDetectionStep_EnableROI; set { _colorDetectionStep_EnableROI = value; OnChange(); } }
+        public bool ColorDetectionStep_EnableROI { get => _colorDetectionStep_EnableROI; set { _colorDetectionStep_EnableROI = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         private int _colorDetectionStep_RoiX, _colorDetectionStep_RoiY, _colorDetectionStep_RoiW, _colorDetectionStep_RoiH;
         public int ColorDetectionStep_RoiX { get => _colorDetectionStep_RoiX; set { _colorDetectionStep_RoiX = value; OnChange(); } }
@@ -710,6 +729,42 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _klickOnPointStep_SourceDetectionStep;
             set { _klickOnPointStep_SourceDetectionStep = value; OnChange(); }
+        }
+
+        // ===== PredictMovement Felder =====
+        private SourceStepItem? _predictMovementStep_SourceDetectionStep;
+        public SourceStepItem? PredictMovementStep_SourceDetectionStep
+        {
+            get => _predictMovementStep_SourceDetectionStep;
+            set { _predictMovementStep_SourceDetectionStep = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _predictMovementStep_MinSamples = 3;
+        public int PredictMovementStep_MinSamples
+        {
+            get => _predictMovementStep_MinSamples;
+            set { _predictMovementStep_MinSamples = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _predictMovementStep_PredictionMs = 100;
+        public int PredictMovementStep_PredictionMs
+        {
+            get => _predictMovementStep_PredictionMs;
+            set { _predictMovementStep_PredictionMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private double _predictMovementStep_ResetDistanceThreshold = 250;
+        public double PredictMovementStep_ResetDistanceThreshold
+        {
+            get => _predictMovementStep_ResetDistanceThreshold;
+            set { _predictMovementStep_ResetDistanceThreshold = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private int _predictMovementStep_MaxSampleAgeMs = 500;
+        public int PredictMovementStep_MaxSampleAgeMs
+        {
+            get => _predictMovementStep_MaxSampleAgeMs;
+            set { _predictMovementStep_MaxSampleAgeMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         // ===== KlickOnPoint3D Felder =====
@@ -1502,6 +1557,13 @@ namespace DesktopAutomationApp.ViewModels
             set { _activeWindowStep_ProcessName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
+        private int _activeWindowStep_CacheMs = 0;
+        public int ActiveWindowStep_CacheMs
+        {
+            get => _activeWindowStep_CacheMs;
+            set { _activeWindowStep_CacheMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
         // ===== KeyPointMatching Felder =====
         private string _keyPointMatchingStep_TemplatePath = string.Empty;
         public string KeyPointMatchingStep_TemplatePath
@@ -1795,9 +1857,21 @@ namespace DesktopAutomationApp.ViewModels
                         MaxSize = ColorDetectionStep_MaxSize,
                         MinWidth = ColorDetectionStep_MinWidth,
                         MinHeight = ColorDetectionStep_MinHeight,
+                        DownscaleFactor = ColorDetectionStep_DownscaleFactor,
                         EnableROI = ColorDetectionStep_EnableROI,
                         ROI = new Rect(ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
                         SourceCaptureStepId = ColorDetectionStep_SourceCaptureStep?.StepId ?? ""
+                    }
+                },
+                "PredictMovement" => new PredictMovementStep
+                {
+                    Settings = new PredictMovementSettings
+                    {
+                        SourceDetectionStepId = PredictMovementStep_SourceDetectionStep?.StepId ?? "",
+                        MinSamples = PredictMovementStep_MinSamples,
+                        PredictionMs = PredictMovementStep_PredictionMs,
+                        ResetDistanceThreshold = PredictMovementStep_ResetDistanceThreshold,
+                        MaxSampleAgeMs = PredictMovementStep_MaxSampleAgeMs
                     }
                 },
                 "DesktopDuplication" => new DesktopDuplicationStep
@@ -1958,7 +2032,8 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new ActiveWindowSettings
                     {
-                        ProcessName = ActiveWindowStep_ProcessName
+                        ProcessName = ActiveWindowStep_ProcessName,
+                        CacheMs = ActiveWindowStep_CacheMs
                     }
                 },
                 "KeyPointMatching" => new KeyPointMatchingStep

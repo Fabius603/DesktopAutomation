@@ -23,24 +23,10 @@ namespace TaskAutomation.Steps
                 return new DetectionResult { WasExecuted = true, Found = false };
             }
 
-            var detector = new ColorDetector();
+            var detector = ctx.ColorDetector ??= new ColorDetector();
             var rawResult = detector.Detect(
                 capture.Image!,
-                new ColorDetectionOptions
-                {
-                    ColorHex = step.Settings.ColorHex,
-                    ConfidenceThreshold = step.Settings.ConfidenceThreshold,
-                    MinSize = step.Settings.MinSize,
-                    MaxSize = step.Settings.MaxSize,
-                    MinWidth = step.Settings.MinWidth,
-                    MinHeight = step.Settings.MinHeight,
-                    EnableROI = step.Settings.EnableROI,
-                    ROI = new Rect(
-                        step.Settings.ROI.X,
-                        step.Settings.ROI.Y,
-                        step.Settings.ROI.Width,
-                        step.Settings.ROI.Height)
-                },
+                CreateOptions(step.Settings),
                 ct);
 
             if (!rawResult.Success)
@@ -98,10 +84,29 @@ namespace TaskAutomation.Steps
                 BoundingBox = globalBoundingBox,
                 Confidence = rawResult.Confidence,
                 SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
             };
         }
 
         protected override DetectionResult CreateDefault() => DetectionResult.Default;
+
+        private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings)
+            => new()
+            {
+                ColorHex = settings.ColorHex,
+                ConfidenceThreshold = settings.ConfidenceThreshold,
+                MinSize = settings.MinSize,
+                MaxSize = settings.MaxSize,
+                MinWidth = settings.MinWidth,
+                MinHeight = settings.MinHeight,
+                DownscaleFactor = settings.DownscaleFactor,
+                EnableROI = settings.EnableROI,
+                ROI = new Rect(
+                    settings.ROI.X,
+                    settings.ROI.Y,
+                    settings.ROI.Width,
+                    settings.ROI.Height)
+            };
     }
 }

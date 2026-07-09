@@ -27,6 +27,7 @@ namespace ImageCapture.DesktopDuplication
         private Bitmap _currentCachedBitmap = null;
         private int _currentCachedBitmapWidth = 0;
         private int _currentCachedBitmapHeight = 0;
+        private DateTime _currentCachedBitmapTimestampUtc = DateTime.MinValue;
 
         private OutputDuplicateFrameInformation frameInfo = new OutputDuplicateFrameInformation();
         private int mWhichOutputDevice = -1;
@@ -153,11 +154,15 @@ namespace ImageCapture.DesktopDuplication
                 if (frameWasUpdated)
                 {
                     ProcessFrameIntoInternalBitmap();
+                    _currentCachedBitmapTimestampUtc = DateTime.UtcNow;
                 }
 
                 if (_currentCachedBitmap != null)
                 {
                     frame.DesktopImage = (Bitmap)_currentCachedBitmap.Clone();
+                    frame.CaptureTimestampUtc = _currentCachedBitmapTimestampUtc == DateTime.MinValue
+                        ? DateTime.UtcNow
+                        : _currentCachedBitmapTimestampUtc;
                 }
                 else
                 {

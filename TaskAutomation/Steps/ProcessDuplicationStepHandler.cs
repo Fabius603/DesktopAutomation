@@ -15,6 +15,7 @@ namespace TaskAutomation.Steps
         {
             var logger = ctx.Logger;
             logger.LogDebug("ProcessDuplicationStepHandler: Capturing process '{ProcessName}'", step.Settings.ProcessName);
+            var captureTimestampUtc = DateTime.UtcNow;
 
             if (string.IsNullOrWhiteSpace(step.Settings.ProcessName))
                 throw new InvalidOperationException("No process name specified");
@@ -45,7 +46,8 @@ namespace TaskAutomation.Steps
                 Image       = bitmap,
                 Bounds      = bounds,
                 Offset      = new System.Drawing.Point(offset.X, offset.Y),
-                IsFresh     = true
+                IsFresh     = true,
+                CaptureTimestampUtc = captureTimestampUtc
             };
         }
 

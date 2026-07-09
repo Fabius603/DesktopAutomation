@@ -65,6 +65,7 @@ namespace TaskAutomation.Jobs
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
             { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
             { typeof(ColorDetectionStep),      new ColorDetectionStepHandler()      },
+            { typeof(PredictMovementStep),     new PredictMovementStepHandler()     },
             { typeof(ShowImageStep),           new ShowImageStepHandler()           },
             { typeof(ShowOnDesktopStep),        new ShowOnDesktopStepHandler()       },
             { typeof(VideoCreationStep),       new VideoCreationStepHandler()       },
@@ -158,7 +159,6 @@ namespace TaskAutomation.Jobs
         public void StopRecordingOverlay()
         {
             _recordingOverlay.Stop();
-            _recordingOverlay.Dispose();
         }
 
         public async Task ReloadMakrosAsync()
@@ -224,6 +224,14 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
+            if (job.ActiveStepCount == 0)
+            {
+                var err = $"Job '{job.Name}' kann nicht ausgeführt werden, weil er keine aktiven Steps hat.";
+                _logger.LogWarning(err);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
+                return;
+            }
+
             CurrentJob = job;
             var jobRunStopwatch = Stopwatch.StartNew();
             var executionLog = _executionLogService.BeginJob(job.Id, job.Name);
@@ -233,7 +241,7 @@ namespace TaskAutomation.Jobs
                 executionLog,
                 ExecutionLogLevel.Information,
                 "Job-Ausführung gestartet.",
-                $"Steps={job.Steps.Count}, Repeating={job.Repeating}");
+                $"Steps={job.ActiveStepCount}, Repeating={job.Repeating}");
 
             // ── Zyklus-Erkennung ──────────────────────────────────────────────
             var parentChain = _executionChain.Value ?? ImmutableHashSet<Guid>.Empty;
@@ -246,6 +254,9 @@ namespace TaskAutomation.Jobs
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung abgebrochen.", err);
                 _executionLogService.Complete(executionLog, false, err);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
+                await UnloadYoloModelsAsync(job);
+                _executionChain.Value = parentChain;
+                CurrentJob = null;
                 return;
             }
             _executionChain.Value = parentChain.Add(job.Id);
@@ -260,6 +271,7 @@ namespace TaskAutomation.Jobs
                 _logger.LogInformation("Job '{JobName}' vor Ausführung abgebrochen.", job.Name);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Job vor Ausführung abgebrochen.");
                 _executionLogService.Complete(executionLog, false, "Abgebrochen während YOLO-Preload.");
+                await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
                 return;
@@ -270,6 +282,7 @@ namespace TaskAutomation.Jobs
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung fehlgeschlagen.", ex.ToString());
                 _executionLogService.Complete(executionLog, false, ex.Message);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
                 return;
@@ -620,7 +633,7 @@ namespace TaskAutomation.Jobs
             if (result == null) return null;
 
             var parts = new List<string>();
-            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "ErrorMessage", "SourceCaptureIsFresh" })
+            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "IsPredicted", "PredictedForUtc", "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc", "CaptureTimestampUtc" })
             {
                 var property = result.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
                 if (property == null) continue;

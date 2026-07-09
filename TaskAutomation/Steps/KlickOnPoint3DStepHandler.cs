@@ -52,20 +52,20 @@ namespace TaskAutomation.Steps
                 }
             }
 
+            await PredictionTimingHelper.WaitUntilPredictionTimeAsync(detection, logger, ct).ConfigureAwait(false);
+
             var target = new Point(
                 detection.Point.Value.X + step.Settings.OffsetX,
                 detection.Point.Value.Y + step.Settings.OffsetY);
 
-            // Compute relative delta from configured origin to detected target.
-            // Origin is the user-set reference point (e.g. screen center / crosshair).
-            var origin = new Point(step.Settings.OriginX, step.Settings.OriginY);
-            var delta = new Point(target.X - origin.X, target.Y - origin.Y);
+            // Calculate the delta from the screen center position (or user set position) to the target point
+            var delta = new Point(target.X - step.Settings.OriginX, target.Y - step.Settings.OriginY);
 
             logger.LogInformation(
-                "KlickOnPoint3DStepHandler: Moving mouse from origin ({OriginX},{OriginY}) by (dx:{DX}, dy:{DY}) to detected target ({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
-                origin.X, origin.Y, delta.X, delta.Y, target.X, target.Y, detection.Confidence, step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
+                "KlickOnPoint3DStepHandler: Moving mouse by (dx:{DX}, dy:{DY}) to detected target ({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
+                delta.X, delta.Y, target.X, target.Y, detection.Confidence, step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
 
-            var macro = CreateClickMacro(step.Settings, origin, delta);
+            var macro = CreateClickMacro(step.Settings, delta);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
@@ -74,7 +74,7 @@ namespace TaskAutomation.Steps
 
         protected override TaskResult CreateDefault() => TaskResult.Default;
 
-        private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point origin, Point delta)
+        private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point delta)
         {
             var commands = new ObservableCollection<MakroBefehl>
             {

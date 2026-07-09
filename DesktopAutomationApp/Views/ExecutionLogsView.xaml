@@ -3,13 +3,86 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              Style="{StaticResource ContentViewBase}">
+    <UserControl.Resources>
+        <Style x:Key="LogListBoxStyle" TargetType="ListBox">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+
+        <Style x:Key="LogSessionItemContainerStyle" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Chrome"
+                                Background="{DynamicResource App.Brush.RowOdd}"
+                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12,10"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.TextMuted}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LogEntryItemContainerStyle" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Chrome"
+                                Background="{DynamicResource App.Brush.RowOdd}"
+                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="10,6"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.TextMuted}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Margin="0,0,0,12">
+        <DockPanel Margin="0,0,0,14">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}" Margin="0,0,8,0">
                     <StackPanel Orientation="Horizontal">
@@ -30,38 +103,35 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="340"/>
-                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="16"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                <DockPanel Margin="12">
-                    <TextBlock DockPanel.Dock="Top" Text="Ausführungen" Style="{StaticResource Heading2}" Margin="0,0,0,8"/>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Ausführungen" Style="{StaticResource Heading2}" Margin="0,0,0,10"/>
                     <ListBox ItemsSource="{Binding Sessions}"
                              SelectedItem="{Binding SelectedSession}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                             Style="{StaticResource LogListBoxStyle}"
+                             ItemContainerStyle="{StaticResource LogSessionItemContainerStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource CardBox}" Margin="0,0,0,6">
-                                    <StackPanel Margin="10,8">
-                                        <DockPanel LastChildFill="True">
-                                            <TextBlock DockPanel.Dock="Right"
-                                                       Text="{Binding StatusText}"
-                                                       Foreground="{DynamicResource App.Brush.Accent}"
-                                                       FontSize="11"
-                                                       Margin="8,0,0,0"/>
-                                            <TextBlock Text="{Binding Name}"
-                                                       FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                        </DockPanel>
-                                        <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
-                                                   Foreground="{DynamicResource App.Brush.TextMuted}"
+                                <StackPanel>
+                                    <DockPanel LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Right"
+                                                   Text="{Binding StatusText}"
+                                                   Foreground="{DynamicResource App.Brush.Accent}"
                                                    FontSize="11"
-                                                   Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                </Border>
+                                                   Margin="8,1,0,0"/>
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               FontSize="11"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -69,8 +139,8 @@
             </Border>
 
             <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
-                <DockPanel Margin="12">
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Level" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding AvailableLevels}"
@@ -79,55 +149,53 @@
                         </StackPanel>
                         <TextBlock Text="Live-Log" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
                     </DockPanel>
+
                     <ListBox x:Name="LogEntriesList"
                              ItemsSource="{Binding Entries}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             Style="{StaticResource LogListBoxStyle}"
+                             ItemContainerStyle="{StaticResource LogEntryItemContainerStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource CardBox}" Margin="0,0,0,6">
-                                    <Grid Margin="10,8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="130"/>
-                                            <ColumnDefinition Width="110"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                   Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}"
-                                                   Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                   FontFamily="Consolas"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding Level}"
-                                                   Foreground="{DynamicResource App.Brush.Accent}"
-                                                   FontWeight="SemiBold"/>
-                                        <TextBlock Grid.Row="0" Grid.Column="2"
-                                                   Text="{Binding StepType}"
-                                                   Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0"
+                                               Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               FontFamily="Consolas"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1"
+                                               Text="{Binding Level}"
+                                               Foreground="{DynamicResource App.Brush.Accent}"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2"
+                                               Text="{Binding StepType}"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               TextTrimming="CharacterEllipsis"/>
 
-                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
-                                                   Text="{Binding Message}"
-                                                   FontWeight="SemiBold"
-                                                   Margin="0,5,0,0"
-                                                   TextWrapping="Wrap"/>
-                                        <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
-                                                   Text="{Binding DisplayDetails}"
-                                                   Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                   FontFamily="Consolas"
-                                                   FontSize="12"
-                                                   Margin="0,4,0,0"
-                                                   TextWrapping="Wrap"/>
-                                    </Grid>
-                                </Border>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                               Text="{Binding Message}"
+                                               FontWeight="SemiBold"
+                                               Margin="0,2,0,0"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                                               Text="{Binding DisplayDetails}"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               FontFamily="Consolas"
+                                               FontSize="12"
+                                               Margin="0,2,0,0"
+                                               TextWrapping="Wrap"/>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

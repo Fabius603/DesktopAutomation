@@ -1,5 +1,6 @@
 using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
+using ImageDetection.Algorithms.ColorDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
 using ImageDetection.Algorithms.TemplateMatching;
 using ImageDetection.YOLO;
@@ -50,10 +51,17 @@ namespace TaskAutomation.Steps
         public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
         public ProcessDuplicator?   ProcessDuplicator  { get; set; }
         public TemplateMatching?    TemplateMatcher    { get; set; }
+        public ColorDetector?       ColorDetector      { get; set; }
         public KeyPointMatcher?     KeyPointMatcher    { get; set; }
         public StreamVideoRecorder? VideoRecorder      { get; set; }
 
         public Dictionary<string, DateTime> StepTimeouts { get; } =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public Dictionary<string, PredictMovementState> PredictMovementStates { get; } =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public Dictionary<string, ActiveWindowCacheEntry> ActiveWindowCache { get; } =
             new(StringComparer.OrdinalIgnoreCase);
 
         // ── Konstruktor ────────────────────────────────────────────────────────
@@ -111,8 +119,10 @@ namespace TaskAutomation.Steps
         public void Dispose()
         {
             _results.DisposeAndClear();
-            // ProcessDuplicator, TemplateMatcher, VideoRecorder werden vom JobExecutor verwaltet.
+            ProcessDuplicator?.Dispose();
+            TemplateMatcher?.Dispose();
             // DesktopCaptureService ist ein Singleton und wird NICHT hier disposed.
+            ColorDetector?.Dispose();
         }
     }
 }

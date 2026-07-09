@@ -9,6 +9,7 @@ namespace TaskAutomation.Jobs
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
     [JsonDerivedType(typeof(ColorDetectionStep), "color_detection")]
+    [JsonDerivedType(typeof(PredictMovementStep), "predict_movement")]
     [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
@@ -118,6 +119,9 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("min_height")]
         public int MinHeight { get; set; } = 1;
 
+        [JsonPropertyName("downscale_factor")]
+        public int DownscaleFactor { get; set; } = 1;
+
         [JsonPropertyName("roi")]
         [JsonConverter(typeof(OpenCvRectJsonConverter))]
         public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
@@ -127,6 +131,31 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
+    }
+
+    // ---- PredictMovement ----
+    public sealed class PredictMovementStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public PredictMovementSettings Settings { get; set; } = new();
+    }
+
+    public sealed class PredictMovementSettings
+    {
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = "";
+
+        [JsonPropertyName("min_samples")]
+        public int MinSamples { get; set; } = 3;
+
+        [JsonPropertyName("prediction_ms")]
+        public int PredictionMs { get; set; } = 100;
+
+        [JsonPropertyName("reset_distance_threshold")]
+        public double ResetDistanceThreshold { get; set; } = 250;
+
+        [JsonPropertyName("max_sample_age_ms")]
+        public int MaxSampleAgeMs { get; set; } = 500;
     }
 
     // ---- DesktopDuplication ----
@@ -559,6 +588,9 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("process_name")]
         public string ProcessName { get; set; } = string.Empty;
+
+        [JsonPropertyName("cache_ms")]
+        public int CacheMs { get; set; } = 0;
     }
 
     // ---- KeyPointMatching ----

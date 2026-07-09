@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace TaskAutomation.Logging
 {
@@ -76,12 +78,18 @@ namespace TaskAutomation.Logging
         void ReloadSessions();
     }
 
-    public sealed class ExecutionLogService : IExecutionLogService
+    public sealed class ExecutionLogService : IExecutionLogService, IDisposable
     {
         private readonly object _gate = new();
         private readonly List<ExecutionLogSession> _sessions = new();
         private readonly Dictionary<Guid, List<ExecutionLogEntry>> _entries = new();
         private readonly string _rootDirectory;
+        private readonly BlockingCollection<PendingLogWrite> _writeQueue;
+        private readonly Thread _writerThread;
+        private bool _disposed;
+        private const int MaxInMemorySessions = 200;
+        private const int MaxEntriesPerSession = 2000;
+        private const int MaxPendingLogWrites = 8192;
 
         public event EventHandler<ExecutionLogEntry>? EntryWritten;
         public event EventHandler<ExecutionLogSession>? SessionChanged;
@@ -90,6 +98,13 @@ namespace TaskAutomation.Logging
         {
             _rootDirectory = Path.Combine(AppContext.BaseDirectory, "Logs", "Executions");
             Directory.CreateDirectory(_rootDirectory);
+            _writeQueue = new BlockingCollection<PendingLogWrite>(MaxPendingLogWrites);
+            _writerThread = new Thread(WriteLogFiles)
+            {
+                IsBackground = true,
+                Name = "ExecutionLogWriter"
+            };
+            _writerThread.Start();
             ReloadSessions();
         }
 
@@ -135,9 +150,12 @@ namespace TaskAutomation.Logging
                 }
 
                 list.Add(entry);
-                File.AppendAllText(session.FilePath, FormatEntry(entry), Encoding.UTF8);
+                if (list.Count > MaxEntriesPerSession)
+                    list.RemoveRange(0, list.Count - MaxEntriesPerSession);
             }
 
+            if (!_disposed && !_writeQueue.IsAddingCompleted)
+                _writeQueue.TryAdd(new PendingLogWrite(session.FilePath, FormatEntry(entry)));
             EntryWritten?.Invoke(this, entry);
         }
 
@@ -200,6 +218,7 @@ namespace TaskAutomation.Logging
                 }
 
                 _sessions.Sort((a, b) => b.StartedAt.CompareTo(a.StartedAt));
+                TrimInMemorySessionsLocked();
             }
         }
 
@@ -211,11 +230,13 @@ namespace TaskAutomation.Logging
 
             var fileName = $"{DateTime.Now:yyyyMMdd-HHmmss-fff}_{SafeFileName(name)}_{sessionId:N}.log";
             var session = new ExecutionLogSession(sessionId, kind, sourceId, name, Path.Combine(directory, fileName));
+            File.WriteAllText(session.FilePath, string.Empty, Encoding.UTF8);
 
             lock (_gate)
             {
                 _sessions.Insert(0, session);
                 _entries[session.Id] = new List<ExecutionLogEntry>();
+                TrimInMemorySessionsLocked();
             }
 
             SessionChanged?.Invoke(this, session);
@@ -362,6 +383,22 @@ namespace TaskAutomation.Logging
         private static IReadOnlyList<ExecutionLogEntry> Tail(List<ExecutionLogEntry> entries, int maxEntries)
             => entries.Count <= maxEntries ? entries.ToArray() : entries.Skip(entries.Count - maxEntries).ToArray();
 
+        private void TrimInMemorySessionsLocked()
+        {
+            if (_sessions.Count <= MaxInMemorySessions)
+                return;
+
+            var retained = _sessions
+                .Take(MaxInMemorySessions)
+                .Select(s => s.Id)
+                .ToHashSet();
+
+            _sessions.RemoveRange(MaxInMemorySessions, _sessions.Count - MaxInMemorySessions);
+
+            foreach (var sessionId in _entries.Keys.Where(id => !retained.Contains(id)).ToList())
+                _entries.Remove(sessionId);
+        }
+
         private static IEnumerable<string> ReadLastLines(string filePath, int maxLines)
         {
             var queue = new Queue<string>(maxLines);
@@ -383,5 +420,35 @@ namespace TaskAutomation.Logging
             var safe = new string(chars).Trim();
             return string.IsNullOrWhiteSpace(safe) ? "unnamed" : safe;
         }
+
+        private void WriteLogFiles()
+        {
+            foreach (var pending in _writeQueue.GetConsumingEnumerable())
+            {
+                try
+                {
+                    File.AppendAllText(pending.FilePath, pending.Text, Encoding.UTF8);
+                }
+                catch
+                {
+                    // Logging must never break job execution. In-memory live logs still contain the entry.
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _writeQueue.CompleteAdding();
+            if (!_writerThread.Join(TimeSpan.FromSeconds(2)))
+                return;
+
+            _writeQueue.Dispose();
+        }
+
+        private readonly record struct PendingLogWrite(string FilePath, string Text);
     }
 }

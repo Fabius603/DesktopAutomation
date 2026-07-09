@@ -62,7 +62,7 @@
                 CanUserDeleteRows="False"
                 SelectionMode="Extended"
                 SelectedItem="{Binding SelectedJob, Mode=TwoWay}"
-                ScrollViewer.CanContentScroll="False"
+                ScrollViewer.CanContentScroll="True"
                 SelectionChanged="JobGrid_SelectionChanged"
                 PreviewMouseLeftButtonDown="JobGrid_PreviewMouseDown">
 
@@ -88,7 +88,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTextColumn
                         Header="#Steps"
-                        Binding="{Binding Steps.Count}"
+                        Binding="{Binding ActiveStepCount}"
                         IsReadOnly="True"
                         Width="*"/>
                     <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto">

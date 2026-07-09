@@ -365,3 +365,7 @@ FodyWeavers.xsd
 # YOLO
 *.pt
 *.onnx
+
+# AI
+.agents/
+.codex-output/

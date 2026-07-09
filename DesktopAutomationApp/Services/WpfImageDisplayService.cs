@@ -51,7 +51,11 @@ namespace DesktopAutomationApp.Services
             var state = _states.GetOrAdd(windowName, _ => new WindowState());
 
             // Nach CloseAllWindows keine neuen Frames mehr einreihen.
-            if (state.IsClosed) return;
+            if (state.IsClosed)
+            {
+                clone.Dispose();
+                return;
+            }
 
             // Altes pending Bitmap durch das neue ersetzen; altes freigeben.
             var old = Interlocked.Exchange(ref state.PendingBitmap, clone);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TaskAutomation.Jobs;
 
@@ -51,7 +52,7 @@ namespace TaskAutomation.Steps
         /// </summary>
         internal void DisposeAndClear()
         {
-            foreach (var result in _byType.Values)
+            foreach (var result in _byType.Values.Concat(_byId.Values).Distinct(ReferenceEqualityComparer.Instance))
             {
                 switch (result)
                 {
@@ -63,6 +64,17 @@ namespace TaskAutomation.Steps
             }
             _byType.Clear();
             _byId.Clear();
+        }
+
+        private sealed class ReferenceEqualityComparer : IEqualityComparer<StepResultBase>
+        {
+            public static readonly ReferenceEqualityComparer Instance = new();
+
+            public bool Equals(StepResultBase? x, StepResultBase? y)
+                => ReferenceEquals(x, y);
+
+            public int GetHashCode(StepResultBase obj)
+                => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
         }
 
         // ── Default-Wert per Reflection (gecacht pro Typ) ──────────────────────

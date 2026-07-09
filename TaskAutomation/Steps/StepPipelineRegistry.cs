@@ -68,6 +68,12 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "KeyPoint Matching"),
 
+            [typeof(PredictMovementStep)] = new(
+                Prerequisites:     ["DetectionResult"],
+                Output:            "DetectionResult",
+                IsConditionSource: true,
+                DisplayName:       "Bewegung vorhersagen"),
+
             // ── Interaktion ────────────────────────────────────────────────────
             [typeof(KlickOnPointStep)] = new(
                 Prerequisites: ["DetectionResult"],
@@ -185,6 +191,7 @@ namespace TaskAutomation.Steps
             ["DesktopDuplication"] = typeof(DesktopDuplicationStep),
             ["TemplateMatching"]   = typeof(TemplateMatchingStep),
             ["ColorDetection"]     = typeof(ColorDetectionStep),
+            ["PredictMovement"]    = typeof(PredictMovementStep),
             ["YoloDetection"]      = typeof(YOLODetectionStep),
             ["KlickOnPoint"]       = typeof(KlickOnPointStep),
             ["KlickOnPoint3D"]     = typeof(KlickOnPoint3DStep),

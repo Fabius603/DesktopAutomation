@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Data;
@@ -15,6 +16,7 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class ExecutionLogsViewModel : ViewModelBase
     {
         private const int MaxBufferedEntries = 3000;
+        private const int MaxBufferedSessions = 200;
 
         private readonly IExecutionLogService _logService;
         private readonly ObservableRangeCollection<ExecutionLogEntryItem> _entryBuffer = new();
@@ -80,6 +82,7 @@ namespace DesktopAutomationApp.ViewModels
                 Sessions.Clear();
                 foreach (var session in _logService.Sessions.OrderByDescending(s => s.StartedAt))
                     Sessions.Add(new ExecutionLogSessionItem(session));
+                TrimSessions();
 
                 SelectedSession = selectedId.HasValue
                     ? Sessions.FirstOrDefault(s => s.Id == selectedId.Value) ?? Sessions.FirstOrDefault()
@@ -104,6 +107,13 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (SelectedSession == null) return;
 
+            var directory = Path.GetDirectoryName(SelectedSession.FilePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+                Directory.CreateDirectory(directory);
+
+            if (!File.Exists(SelectedSession.FilePath))
+                File.WriteAllText(SelectedSession.FilePath, string.Empty);
+
             Process.Start(new ProcessStartInfo(SelectedSession.FilePath)
             {
                 UseShellExecute = true
@@ -117,8 +127,11 @@ namespace DesktopAutomationApp.ViewModels
                 var existing = Sessions.FirstOrDefault(s => s.Id == session.Id);
                 if (existing == null)
                 {
-                    Sessions.Insert(0, new ExecutionLogSessionItem(session));
-                    SelectedSession ??= Sessions[0];
+                    var item = new ExecutionLogSessionItem(session);
+                    Sessions.Insert(0, item);
+                    TrimSessions();
+                    if (SelectedSession == null || item.IsRunning && !SelectedSession.IsRunning)
+                        SelectedSession = item;
                     return;
                 }
 
@@ -141,6 +154,17 @@ namespace DesktopAutomationApp.ViewModels
 
         private bool IsVisibleItem(object item)
             => item is ExecutionLogEntryItem entry && entry.Level >= SelectedMinimumLevel;
+
+        private void TrimSessions()
+        {
+            while (Sessions.Count > MaxBufferedSessions)
+            {
+                var removed = Sessions[^1];
+                if (SelectedSession?.Id == removed.Id)
+                    SelectedSession = Sessions.Count > 1 ? Sessions[0] : null;
+                Sessions.RemoveAt(Sessions.Count - 1);
+            }
+        }
 
         private static void RunOnUi(Action action)
         {

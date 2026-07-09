@@ -72,7 +72,7 @@
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       IsReadOnly="False"
-                      ScrollViewer.CanContentScroll="False"
+                      ScrollViewer.CanContentScroll="True"
                       SelectionChanged="HotkeyGrid_SelectionChanged"
                       PreviewMouseLeftButtonDown="HotkeyGrid_PreviewMouseDown">
 

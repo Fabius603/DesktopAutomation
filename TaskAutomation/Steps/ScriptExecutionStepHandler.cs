@@ -23,10 +23,13 @@ namespace TaskAutomation.Steps
 
             if (!step.Settings.WaitForExit)
             {
-                logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", step.Settings.ScriptPath);
+                var scriptPath = step.Settings.ScriptPath;
+                var scriptExecutor = ctx.ScriptExecutor;
+
+                logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", scriptPath);
                 _ = Task.Run(async () =>
                 {
-                    try { await ctx.ScriptExecutor.ExecuteScriptFile(step.Settings.ScriptPath, CancellationToken.None); }
+                    try { await scriptExecutor.ExecuteScriptFile(scriptPath, CancellationToken.None); }
                     catch (Exception ex) { logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
                 });
             }

@@ -125,12 +125,55 @@
                         <Run Text="Min. Höhe: "/><Run Text="{Binding Settings.MinHeight}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Downscale: "/><Run Text="{Binding Settings.DownscaleFactor}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="EnableROI: "/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="ROI (X,Y,Breite,Höhe): "/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- PredictMovementStep -->
+        <DataTemplate DataType="{x:Type jobs:PredictMovementStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Erkennungsquelle: "/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Min. Werte: "/><Run Text="{Binding Settings.MinSamples}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Vorhersage (ms): "/><Run Text="{Binding Settings.PredictionMs}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Reset ab Distanz: "/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Max. Alter (ms): "/><Run Text="{Binding Settings.MaxSampleAgeMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -534,6 +577,9 @@
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="Prozessname: "/><Run Text="{Binding Settings.ProcessName}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="Cache (ms): "/><Run Text="{Binding Settings.CacheMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

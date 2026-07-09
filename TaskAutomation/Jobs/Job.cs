@@ -14,5 +14,8 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("name")] public string Name { get; set; } = "";
         [JsonPropertyName("repeating")] public bool Repeating { get; set; }
         [JsonPropertyName("steps")] public List<JobStep> Steps { get; set; } = new();
+
+        [JsonIgnore]
+        public int ActiveStepCount => Steps?.Count(s => s.IsEnabled) ?? 0;
     }
 }

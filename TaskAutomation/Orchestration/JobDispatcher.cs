@@ -193,6 +193,14 @@ namespace TaskAutomation.Orchestration
         /// </summary>
         private Guid StartJobInternal(Job job)
         {
+            if (job.ActiveStepCount == 0)
+            {
+                var ex = new InvalidOperationException($"Job '{job.Name}' kann nicht gestartet werden, weil er keine aktiven Steps hat.");
+                _logger.LogWarning(ex.Message);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                return Guid.Empty;
+            }
+
             if (_jobInstances.Count >= MaxJobCount)
             {
                 var ex = new JobLimitExceededException(job.Name, MaxJobCount);
@@ -237,7 +245,7 @@ namespace TaskAutomation.Orchestration
         /// <summary>Bricht eine bestimmte Job-Instanz per Instanz-ID ab.</summary>
         private void CancelJobInstance(Guid instanceId)
         {
-            if (_jobInstances.TryRemove(instanceId, out var entry))
+            if (_jobInstances.TryGetValue(instanceId, out var entry))
             {
                 _logger.LogDebug("Job '{Name}' (Instanz {Id}) Abbruch.", entry.JobName, instanceId);
                 // Cancel() in Task.Run: läuft Callbacks synchron INNERHALB des Tasks, bevor
@@ -259,23 +267,23 @@ namespace TaskAutomation.Orchestration
         /// <summary>Bricht alle laufenden Instanzen eines Jobs per Job-ID ab.</summary>
         private void CancelAllInstancesOfJob(Guid jobId)
         {
-            var removed = new List<RunningJobEntry>();
+            var matches = new List<RunningJobEntry>();
             foreach (var kvp in _jobInstances)
             {
-                if (kvp.Value.JobId == jobId && _jobInstances.TryRemove(kvp.Key, out var entry))
-                    removed.Add(entry);
+                if (kvp.Value.JobId == jobId)
+                    matches.Add(kvp.Value);
             }
-            if (removed.Count == 0)
+            if (matches.Count == 0)
             {
                 _logger.LogWarning("Kein laufender Job mit Job-ID '{JobId}' gefunden.", jobId);
                 return;
             }
-            _logger.LogInformation("Breche {Count} Instanz(en) von Job-ID '{JobId}' ab.", removed.Count, jobId);
+            _logger.LogInformation("Breche {Count} Instanz(en) von Job-ID '{JobId}' ab.", matches.Count, jobId);
             FireRunningJobsChanged();
             // Cancel() läuft Callbacks synchron, alle parallel – kein Dispose (StartJobInternal's finally ist Eigentümer).
             _ = Task.Run(() =>
             {
-                foreach (var e in removed)
+                foreach (var e in matches)
                     try { e.Cts.Cancel(); }
                     catch (ObjectDisposedException) { }
             });
@@ -284,18 +292,17 @@ namespace TaskAutomation.Orchestration
         /// <summary>Bricht alle laufenden Job-Instanzen ab.</summary>
         private void CancelAllJobsInternal()
         {
-            var removed = new List<RunningJobEntry>();
+            var matches = new List<RunningJobEntry>();
             foreach (var kvp in _jobInstances)
             {
-                if (_jobInstances.TryRemove(kvp.Key, out var entry))
-                    removed.Add(entry);
+                matches.Add(kvp.Value);
             }
-            if (removed.Count == 0) return;
-            _logger.LogInformation("Breche alle {Count} Job-Instanzen ab.", removed.Count);
+            if (matches.Count == 0) return;
+            _logger.LogInformation("Breche alle {Count} Job-Instanzen ab.", matches.Count);
             FireRunningJobsChanged();
             _ = Task.Run(() =>
             {
-                foreach (var e in removed)
+                foreach (var e in matches)
                     try { e.Cts.Cancel(); }
                     catch (ObjectDisposedException) { }
             });
@@ -403,6 +410,14 @@ namespace TaskAutomation.Orchestration
             if (job == null)
             {
                 _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
+                return;
+            }
+
+            if (job.ActiveStepCount == 0)
+            {
+                var ex = new InvalidOperationException($"Job '{job.Name}' kann nicht gestartet werden, weil er keine aktiven Steps hat.");
+                _logger.LogWarning(ex.Message);
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 return;
             }
 

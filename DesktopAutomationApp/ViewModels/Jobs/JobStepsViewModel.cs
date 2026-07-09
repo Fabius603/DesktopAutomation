@@ -138,7 +138,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 try { _dispatcher.StartJob(Job.Id); }
                 catch (JobLimitExceededException) { /* kein Popup – wird still ignoriert */ }
-            }, () => !IsJobRunning);
+            }, () => !IsJobRunning && _steps.Any(s => s.IsEnabled));
             StopJobCommand = new RelayCommand(() =>
             {
                 _dispatcher.CancelJobsByDefinition(Job.Id);
@@ -155,7 +155,10 @@ namespace DesktopAutomationApp.ViewModels
         private void OnStepPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(JobStep.IsEnabled))
+            {
                 HasUnsavedChanges = true;
+                InvalidateAllCommands();
+            }
         }
 
         // ---------- Selection sync (called from code-behind) ----------
@@ -300,12 +303,22 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ColorDetectionStep_MaxSize = cd.Settings.MaxSize;
                     vm.ColorDetectionStep_MinWidth = cd.Settings.MinWidth;
                     vm.ColorDetectionStep_MinHeight = cd.Settings.MinHeight;
+                    vm.ColorDetectionStep_DownscaleFactor = cd.Settings.DownscaleFactor;
                     vm.ColorDetectionStep_EnableROI = cd.Settings.EnableROI;
                     vm.ColorDetectionStep_RoiX = cd.Settings.ROI.X;
                     vm.ColorDetectionStep_RoiY = cd.Settings.ROI.Y;
                     vm.ColorDetectionStep_RoiW = cd.Settings.ROI.Width;
                     vm.ColorDetectionStep_RoiH = cd.Settings.ROI.Height;
                     vm.ColorDetectionStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == cd.Settings.SourceCaptureStepId);
+                    break;
+
+                case PredictMovementStep pm:
+                    vm.SelectedType = "PredictMovement";
+                    vm.PredictMovementStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == pm.Settings.SourceDetectionStepId);
+                    vm.PredictMovementStep_MinSamples = pm.Settings.MinSamples;
+                    vm.PredictMovementStep_PredictionMs = pm.Settings.PredictionMs;
+                    vm.PredictMovementStep_ResetDistanceThreshold = pm.Settings.ResetDistanceThreshold;
+                    vm.PredictMovementStep_MaxSampleAgeMs = pm.Settings.MaxSampleAgeMs;
                     break;
 
                 case DesktopDuplicationStep d:
@@ -435,6 +448,7 @@ namespace DesktopAutomationApp.ViewModels
                 case ActiveWindowStep aw:
                     vm.SelectedType = "ActiveWindow";
                     vm.ActiveWindowStep_ProcessName = aw.Settings.ProcessName;
+                    vm.ActiveWindowStep_CacheMs = aw.Settings.CacheMs;
                     break;
 
                 case KeyPointMatchingStep km:

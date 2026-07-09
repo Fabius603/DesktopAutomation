@@ -22,6 +22,8 @@ namespace DesktopAutomationApp.Services
         private Overlay? _overlay;
         private readonly object _lock = new();
         private readonly List<string> _currentItemIds = new();
+        private long _renderVersion;
+        private const int MaxDisplayedDetections = 200;
 
         // ── Pro-Step Text-Tracking ────────────────────────────────────────────────
         private sealed class TextEntry
@@ -57,10 +59,12 @@ namespace DesktopAutomationApp.Services
                 var vd = ScreenHelper.GetVirtualDesktopBounds();
                 var tr = OverlayTransform.FromVirtualToOverlayLocal(
                     vd, new Rectangle(0, 0, vd.Width, vd.Height));
+                var version = unchecked(++_renderVersion);
+                var visibleDetections = allDetections.Take(MaxDisplayedDetections).ToList();
 
-                for (int i = 0; i < allDetections.Count; i++)
+                for (int i = 0; i < visibleDetections.Count; i++)
                 {
-                    var det    = allDetections[i];
+                    var det    = visibleDetections[i];
                     bool isBest = i == 0;
                     var fillColor   = ColorTransparent;
                     var strokeColor = isBest ? ColorBestStroke  : ColorOtherStroke;
@@ -69,7 +73,7 @@ namespace DesktopAutomationApp.Services
                     if (det.BoundingBox.HasValue)
                     {
                         var bb  = det.BoundingBox.Value;
-                        var bbId = $"det_bbox_{i}";
+                        var bbId = $"det_bbox_{version}_{i}";
                         overlay.AddItem(new RectangleItem(
                             id:           bbId,
                             globalLeft:   bb.Left,
@@ -83,7 +87,7 @@ namespace DesktopAutomationApp.Services
                         _currentItemIds.Add(bbId);
                     }
 
-                    var cpId = $"det_center_{i}";
+                    var cpId = $"det_center_{version}_{i}";
                     overlay.AddItem(new NodeItem(
                         id:          cpId,
                         globalX:     det.Center.X,

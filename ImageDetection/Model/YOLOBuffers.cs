@@ -2,7 +2,7 @@ using Microsoft.ML.OnnxRuntime;
 
 namespace ImageDetection.Model
 {
-    public sealed class YoloBuffers
+    public sealed class YoloBuffers : IDisposable
     {
         public readonly int Size;
         public readonly float[] Input;          // NCHW float32 (Preprocessing immer in float32)
@@ -22,6 +22,12 @@ namespace ImageDetection.Model
             Size = size;
             Input = new float[1 * 3 * size * size];
             InputShape = new long[] { 1, 3, size, size };
+        }
+
+        public void Dispose()
+        {
+            Binding?.Dispose();
+            Binding = null;
         }
     }
 }

@@ -79,14 +79,16 @@ namespace TaskAutomation.Steps
                 {
                     // Fallback (z.B. in Tests): direkter Aufruf mit verknüpftem CancellationToken
                     var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    var executeJob = ctx.ExecuteJob;
+                    var targetJobName = targetJob.Name;
                     _ = Task.Run(async () =>
                     {
-                        try   { await ctx.ExecuteJob(id, linkedCts.Token).ConfigureAwait(false); }
+                        try   { await executeJob(id, linkedCts.Token).ConfigureAwait(false); }
                         catch (OperationCanceledException) { /* expected when parent stops */ }
                         catch (Exception ex)
                         {
                             logger.LogError(ex,
-                                "JobExecutionStepHandler: Fire-and-forget job '{Name}' failed", targetJob.Name);
+                                "JobExecutionStepHandler: Fire-and-forget job '{Name}' failed", targetJobName);
                         }
                         finally { linkedCts.Dispose(); }
                     });

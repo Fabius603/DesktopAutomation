@@ -42,6 +42,7 @@ namespace ImageDetection.YOLO
         private readonly ILogger<YoloManager> _logger;
         private readonly YoloManagerOptions _opt;
         private readonly ILabelProvider _labels;
+        private readonly EventHandler<ModelDownloadProgressEventArgs> _downloadProgressHandler;
         private readonly ConcurrentDictionary<string, YoloBuffers> _yolobufferCache = new();
 
         private readonly ConcurrentDictionary<string, Lazy<Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)>>> _cache
@@ -76,8 +77,9 @@ namespace ImageDetection.YOLO
             }
 
             // Progress vom Downloader nach außen weiterreichen
-            _downloader.DownloadProgressChanged += (sender, e)
+            _downloadProgressHandler = (sender, e)
                 => DownloadProgressChanged?.Invoke(e.ModelName, e.Status, e.ProgressPercent, e.Message);
+            _downloader.DownloadProgressChanged += _downloadProgressHandler;
         }
 
         public async Task EnsureModelAsync(string modelKey, CancellationToken ct = default)
@@ -673,6 +675,8 @@ namespace ImageDetection.YOLO
 
         public void Dispose()
         {
+            _downloader.DownloadProgressChanged -= _downloadProgressHandler;
+
             foreach (var kv in _cache)
             {
                 if (kv.Value.IsValueCreated)
@@ -690,17 +694,25 @@ namespace ImageDetection.YOLO
             {
                 try
                 {
-                    kv.Value.Binding?.Dispose();
-                    // float[] werden vom GC eingesammelt
+                    kv.Value.Dispose();
+                    // float[] werden vom GC eingesammelt, sobald der Cache geleert ist.
                 }
                 catch { /* ignore */ }
             }
 
+            _cache.Clear();
+            _yolobufferCache.Clear();
             GC.SuppressFinalize(this);
         }
 
         public bool UnloadModel(string modelKey)
         {
+            if (_yolobufferCache.TryRemove(modelKey, out var buffers))
+            {
+                try { buffers.Dispose(); }
+                catch { /* optional: loggen */ }
+            }
+
             if (_cache.TryRemove(modelKey, out var lazy) && lazy.IsValueCreated)
             {
                 try
