@@ -16,6 +16,9 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("steps")] public List<JobStep> Steps { get; set; } = new();
 
         [JsonIgnore]
-        public int ActiveStepCount => Steps?.Count(s => s.IsEnabled) ?? 0;
+        public int ActiveStepCount => Steps?.Count(s => s.IsEnabled && !IsFlowControlStep(s)) ?? 0;
+
+        private static bool IsFlowControlStep(JobStep step)
+            => step is IfStep or ElseIfStep or ElseStep or EndIfStep;
     }
 }

@@ -540,17 +540,7 @@ namespace TaskAutomation.Hotkeys
 
         public string FormatKey(KeyModifiers mods, uint vk)
         {
-            var parts = new List<string>(4);
-            if (mods.HasFlag(KeyModifiers.Control)) parts.Add("Ctrl");
-            if (mods.HasFlag(KeyModifiers.Shift)) parts.Add("Shift");
-            if (mods.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
-            if (mods.HasFlag(KeyModifiers.Windows)) parts.Add("Win");
-
-            // VK → WPF Key-Name
-            var key = System.Windows.Input.KeyInterop.KeyFromVirtualKey(unchecked((int)vk));
-            parts.Add(key.ToString());
-
-            return string.Join("+", parts);
+            return HotkeyTextFormatter.Format(mods, vk, "+");
         }
 
 

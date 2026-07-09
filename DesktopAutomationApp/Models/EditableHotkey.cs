@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using TaskAutomation.Hotkeys;
 
 namespace DesktopAutomationApp.Models
@@ -75,7 +71,7 @@ namespace DesktopAutomationApp.Models
         public bool Active { get => _active; set { if (_active != value) { _active = value; OnPropertyChanged(); } } }
 
         // Anzeige-Property: sofort aktualisiert ohne Converter
-        public string DisplayTrigger => BuildTriggerText(Modifiers, VirtualKeyCode);
+        public string DisplayTrigger => HotkeyTextFormatter.Format(Modifiers, VirtualKeyCode);
 
         public EditableHotkey Clone()
         {
@@ -118,53 +114,6 @@ namespace DesktopAutomationApp.Models
             VirtualKeyCode = d.VirtualKeyCode,
             Job = EditableJobReference.FromDomain(d.Job),
             Active = d.Active
-        };
-
-        private static string BuildTriggerText(KeyModifiers mods, uint vk)
-        {
-            var parts = new System.Collections.Generic.List<string>();
-            if (mods.HasFlag(KeyModifiers.Control)) parts.Add("Ctrl");
-            if (mods.HasFlag(KeyModifiers.Shift)) parts.Add("Shift");
-            if (mods.HasFlag(KeyModifiers.Alt)) parts.Add("Alt");
-            if (mods.HasFlag(KeyModifiers.Windows)) parts.Add("Win");
-
-            string keyText = VkToText(vk);
-            if (!string.IsNullOrWhiteSpace(keyText))
-                parts.Add(keyText);
-
-            return string.Join(" + ", parts);
-        }
-
-        private static string VkToText(uint vk)
-        {
-            try
-            {
-                var key = System.Windows.Input.KeyInterop.KeyFromVirtualKey((int)vk);
-                if (key != System.Windows.Input.Key.None) return KeyToPrettyString(key);
-            }
-            catch { /* ignore */ }
-
-            if ((vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5A))
-                return ((char)vk).ToString().ToUpperInvariant();
-            if (vk >= 0x70 && vk <= 0x7B)
-                return $"F{vk - 0x6F}";
-            return $"0x{vk:X2}";
-        }
-
-        private static string KeyToPrettyString(System.Windows.Input.Key key) => key switch
-        {
-            System.Windows.Input.Key.Space => "Space",
-            System.Windows.Input.Key.Return => "Enter",
-            System.Windows.Input.Key.Escape => "Esc",
-            System.Windows.Input.Key.Tab => "Tab",
-            System.Windows.Input.Key.Back => "Backspace",
-            System.Windows.Input.Key.Delete => "Delete",
-            System.Windows.Input.Key.Insert => "Insert",
-            System.Windows.Input.Key.Left => "Left",
-            System.Windows.Input.Key.Right => "Right",
-            System.Windows.Input.Key.Up => "Up",
-            System.Windows.Input.Key.Down => "Down",
-            _ => key.ToString()
         };
 
         public event PropertyChangedEventHandler? PropertyChanged;
