@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -13,8 +14,8 @@ namespace DesktopAutomationApp.Converters
             {
                 return mode switch
                 {
-                    ConditionMatchMode.All => "Alle Bedingungen müssen erfüllt sein",
-                    ConditionMatchMode.Any => "Mindestens eine Bedingung muss erfüllt sein",
+                    ConditionMatchMode.All => Loc.Get("Condition.Match.All"),
+                    ConditionMatchMode.Any => Loc.Get("Condition.Match.Any"),
                     _                      => mode.ToString()
                 };
             }

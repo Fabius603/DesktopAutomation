@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -15,7 +16,11 @@ namespace DesktopAutomationApp.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is JobStep step)
-                return StepPipelineRegistry.GetDisplayName(step.GetType());
+            {
+                var key = $"Step.Type.{step.GetType().Name}";
+                var translated = LocalizationService.Instance[key];
+                return translated == $"[{key}]" ? StepPipelineRegistry.GetDisplayName(step.GetType()) : translated;
+            }
             return string.Empty;
         }
 

@@ -13,6 +13,7 @@ using TaskAutomation.Steps;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
 using DesktopAutomation.Application.Interfaces;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -194,7 +195,7 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Rename ----------
         private async Task Rename()
         {
-            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", Job.Name);
+            var newName = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), Job.Name);
             if (newName == null) return;
 
             Job.Name = newName.Trim();
@@ -578,11 +579,9 @@ namespace DesktopAutomationApp.ViewModels
             if (target == null) return;
 
             bool isIfOrEndIf = target is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep;
-            string message = isIfOrEndIf
-                ? "Möchten Sie den If-Block löschen (If, Else-If, Else und End-If werden entfernt, die Steps innerhalb bleiben erhalten)?"
-                : "Möchten Sie den Step wirklich löschen?";
+            string message = isIfOrEndIf ? Loc.Get("Step.Delete.IfBlock") : Loc.Get("Step.Delete.One");
 
-            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen")) return;
+            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title"))) return;
 
             PushUndo();
             var idx = _steps.IndexOf(target);
@@ -715,11 +714,11 @@ namespace DesktopAutomationApp.ViewModels
 
             string message = targets.Count == 1
                 ? (targets[0] is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep
-                    ? "Möchten Sie den If-Block löschen (If, Else-If, Else und End-If werden entfernt, die Steps innerhalb bleiben erhalten)?"
-                    : "Möchten Sie den Step wirklich löschen?")
-                : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
+                    ? Loc.Get("Step.Delete.IfBlock")
+                    : Loc.Get("Step.Delete.One"))
+                : Loc.Format("Step.Delete.Many", targets.Count);
 
-            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen"))
+            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title")))
                 return;
 
             PushUndo();
@@ -998,7 +997,11 @@ namespace DesktopAutomationApp.ViewModels
         protected override void Dispose(bool disposing)
         {
             if (disposing)
+            {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+                foreach (var step in _steps)
+                    step.PropertyChanged -= OnStepPropertyChanged;
+            }
             base.Dispose(disposing);
         }
 

@@ -122,7 +122,7 @@ public class StreamVideoRecorder : IDisposable
                 return;
 
             // Ensure BGR format for FFmpeg
-            Mat bgrMat = new Mat();
+            using var bgrMat = new Mat();
             if (mat.Channels() == 4) // BGRA or RGBA
             {
                 Cv2.CvtColor(mat, bgrMat, ColorConversionCodes.BGRA2BGR);
@@ -150,14 +150,10 @@ public class StreamVideoRecorder : IDisposable
 
             int length = (int)(bgrMat.Total() * bgrMat.ElemSize());
             if (length <= 0)
-            {
-                bgrMat.Dispose();
                 return;
-            }
 
             byte[] raw = new byte[length];
             Marshal.Copy(bgrMat.Data, raw, 0, length);
-            bgrMat.Dispose();
 
             if (stopwatch == null || raw == null)
             {

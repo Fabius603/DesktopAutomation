@@ -1,12 +1,12 @@
-name: Release (Windows self-contained)
+name: Release (Windows / Velopack)
 
 on:
   push:
     branches:
-      - master              # läuft bei jedem Push auf master
+      - master
     paths:
-      - 'DesktopAutomationApp/DesktopAutomationApp.csproj'   # nur wenn csproj geändert wurde
-  workflow_dispatch:        # manuell im Actions-Tab startbar
+      - 'DesktopAutomationApp/DesktopAutomationApp.csproj'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,18 +19,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Version aus der csproj lesen (z. B. "1.2.3" → Tag "v1.2.3")
       - name: Read version from csproj
         id: ver
         shell: pwsh
         run: |
           [xml]$csproj = Get-Content "DesktopAutomationApp/DesktopAutomationApp.csproj"
           $version = $csproj.Project.PropertyGroup.Version | Select-Object -First 1
-          "VERSION=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "TAG=v$version"      | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "TAG=v$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Detected version: $version"
 
-      # Prüfen ob für diesen Tag schon ein Release existiert → wenn ja, abbrechen
       - name: Check if release already exists
         id: check
         shell: pwsh
@@ -40,32 +38,18 @@ jobs:
           $tag = "${{ steps.ver.outputs.TAG }}"
           $isManual = "${{ github.event_name }}" -eq "workflow_dispatch"
 
-          if ($isManual) {
-            Write-Host "Manual run detected - forcing release recreation for $tag."
-            gh release view $tag 2>$null
-            if ($LASTEXITCODE -eq 0) {
-              gh release delete $tag --yes --cleanup-tag
-              if ($LASTEXITCODE -ne 0) {
-                throw "Failed to delete existing release/tag $tag"
-              }
-              Write-Host "Deleted existing release and tag: $tag"
-            } else {
-              Write-Host "No existing release for $tag - creating a fresh one."
-            }
-
-            "EXISTS=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-            exit 0
-          }
-
           gh release view $tag 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Release $tag already exists – skipping."
-            "EXISTS=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          } else {
-            Write-Host "Release $tag not found – will create."
-            "EXISTS=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $exists = $LASTEXITCODE -eq 0
+
+          if ($isManual -and $exists) {
+            Write-Host "Manual run: recreating $tag."
+            gh release delete $tag --yes --cleanup-tag
+            if ($LASTEXITCODE -ne 0) { throw "Failed to delete existing release/tag $tag" }
+            $exists = $false
           }
-          exit 0
+
+          "EXISTS=$($exists.ToString().ToLowerInvariant())" |
+            Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Setup .NET
         if: steps.check.outputs.EXISTS == 'false'
@@ -84,13 +68,12 @@ jobs:
 
       - name: Restore
         if: steps.check.outputs.EXISTS == 'false'
-        run: dotnet restore
+        run: dotnet restore DesktopAutomationApp/DesktopAutomationApp.csproj
 
-      # NUR das Startprojekt publishen (nicht die .sln)
       - name: Publish self-contained (win-x64)
         if: steps.check.outputs.EXISTS == 'false'
         run: >
-          dotnet publish ./DesktopAutomationApp/DesktopAutomationApp.csproj
+          dotnet publish DesktopAutomationApp/DesktopAutomationApp.csproj
           -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true
           -p:EnableCompressionInSingleFile=true
@@ -98,26 +81,75 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o out/win-x64
 
-      - name: Archive ZIP
+      - name: Install Velopack CLI
         if: steps.check.outputs.EXISTS == 'false'
-        run: |
-          powershell Compress-Archive -Path out/win-x64\* -DestinationPath DesktopAutomation-${{ steps.ver.outputs.TAG }}-win-x64.zip
+        run: dotnet tool install vpk --tool-path ./.tools --version 1.2.0
 
-      # Release anlegen (Tag wird von der Action automatisch erstellt)
-      - name: Create GitHub Release
+      - name: Download previous Velopack release
         if: steps.check.outputs.EXISTS == 'false'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.ver.outputs.TAG }}
-          name: ${{ steps.ver.outputs.TAG }}
-          files: DesktopAutomation-${{ steps.ver.outputs.TAG }}-win-x64.zip
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./.tools/vpk download github `
+            --repoUrl "https://github.com/${{ github.repository }}" `
+            --token "$env:GITHUB_TOKEN" `
+            --outputDir Releases
 
-      # Bei manuellem Lauf/ohne Tag: ZIP als Build-Artifact hochladen
-      - name: Upload artifact (manual/debug)
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      - name: Build Velopack packages and installer
+        if: steps.check.outputs.EXISTS == 'false'
+        shell: pwsh
+        run: |
+          ./.tools/vpk pack `
+            --packId "DesktopAutomation" `
+            --packVersion "${{ steps.ver.outputs.VERSION }}" `
+            --packDir "out/win-x64" `
+            --mainExe "DesktopAutomationApp.exe" `
+            --packTitle "DesktopAutomation" `
+            --packAuthors "Fabius603" `
+            --runtime "win-x64" `
+            --icon "DesktopAutomationApp/Assets/App.ico" `
+            --outputDir Releases
+
+      - name: Upload draft GitHub release
+        if: steps.check.outputs.EXISTS == 'false'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./.tools/vpk upload github `
+            --repoUrl "https://github.com/${{ github.repository }}" `
+            --token "$env:GITHUB_TOKEN" `
+            --outputDir Releases `
+            --releaseName "DesktopAutomation ${{ steps.ver.outputs.VERSION }}" `
+            --tag "${{ steps.ver.outputs.TAG }}"
+
+      - name: Rename installer and publish release
+        if: steps.check.outputs.EXISTS == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $originalName = "DesktopAutomation-win-Setup.exe"
+          $installerName = "DesktopAutomation-Setup.exe"
+          $installerPath = Join-Path "Releases" $installerName
+
+          Copy-Item `
+            -LiteralPath (Join-Path "Releases" $originalName) `
+            -Destination $installerPath
+
+          gh release upload "${{ steps.ver.outputs.TAG }}" $installerPath --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Failed to upload renamed installer." }
+
+          gh release delete-asset "${{ steps.ver.outputs.TAG }}" $originalName --yes
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove original installer asset." }
+
+          gh release edit "${{ steps.ver.outputs.TAG }}" --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw "Failed to publish release." }
+
+      - name: Upload Velopack build artifacts
+        if: steps.check.outputs.EXISTS == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: DesktopAutomation-win-x64
-          path: DesktopAutomation-${{ github.ref_name || 'manual' }}-win-x64.zip
+          name: DesktopAutomation-${{ steps.ver.outputs.VERSION }}-win-x64
+          path: Releases

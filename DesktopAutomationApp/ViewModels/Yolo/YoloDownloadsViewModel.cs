@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using ImageDetection.YOLO;
 using ImageDetection.Model;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -302,10 +303,10 @@ namespace DesktopAutomationApp.ViewModels
         {
             get
             {
-                if (IsDownloading) return $"Downloading... {DownloadProgress}%";
-                if (IsLocal) return "Lokal";
-                if (IsInstalled) return "Installiert";
-                return "Nicht installiert";
+                if (IsDownloading) return Loc.Format("Yolo.Downloading", DownloadProgress);
+                if (IsLocal) return Loc.Get("Yolo.Local");
+                if (IsInstalled) return Loc.Get("Yolo.Installed");
+                return Loc.Get("Yolo.NotInstalled");
             }
         }
 

@@ -177,6 +177,9 @@ namespace DesktopOverlay
             _backgroundBrush?.Dispose();
             foreach (var item in _items.Values)
                 item.Dispose();
+            _items.Clear();
+            while (_pendingDispose.TryDequeue(out var stale))
+                stale.Dispose();
         }
 
         public void CreateWindow()

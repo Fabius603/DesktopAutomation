@@ -15,6 +15,7 @@ using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -70,7 +71,7 @@ namespace DesktopAutomationApp.ViewModels
             get => _isRecording;
             private set { if (_isRecording == value) return; _isRecording = value; OnPropertyChanged(); OnPropertyChanged(nameof(RecordButtonText)); InvalidateAllCommands(); }
         }
-        public string RecordButtonText => IsRecording ? "Aufnahme stoppen" : "Aufnahme starten";
+        public string RecordButtonText => Loc.Get(IsRecording ? "Macro.Record.Stop" : "Macro.Record.Start");
 
         private bool _isCapturingClick;
         public bool IsCapturingClick
@@ -78,7 +79,7 @@ namespace DesktopAutomationApp.ViewModels
             get => _isCapturingClick;
             private set { if (_isCapturingClick == value) return; _isCapturingClick = value; OnPropertyChanged(); OnPropertyChanged(nameof(CaptureClickButtonText)); InvalidateAllCommands(); }
         }
-        public string CaptureClickButtonText => IsCapturingClick ? "Klick-Erfassung läuft..." : "Einzelnen Klick erfassen";
+        public string CaptureClickButtonText => Loc.Get(IsCapturingClick ? "Macro.CaptureClick.Running" : "Macro.CaptureClick.Start");
 
         private bool _recordMousePath;
         public bool RecordMousePath
@@ -217,7 +218,7 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Rename ----------
         private async Task Rename()
         {
-            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", Makro.Name);
+            var newName = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), Makro.Name);
             if (newName == null) return;
 
             Makro.Name = newName.Trim();
@@ -299,7 +300,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (step == null) return;
 
-            var confirmed = await _dialogService.ConfirmAsync("Möchten Sie diesen Step wirklich löschen?", "Löschen bestätigen");
+            var confirmed = await _dialogService.ConfirmAsync(Loc.Get("Step.Delete.One"), Loc.Get("Dialog.Delete.Title"));
             if (!confirmed) return;
 
             PushUndo();
@@ -406,10 +407,10 @@ namespace DesktopAutomationApp.ViewModels
             if (targets == null || targets.Count == 0) return;
 
             string message = targets.Count == 1
-                ? "Möchten Sie den Step wirklich löschen?"
-                : $"Möchten Sie die {targets.Count} ausgewählten Steps löschen?";
+                ? Loc.Get("Step.Delete.One")
+                : Loc.Format("Step.Delete.Many", targets.Count);
 
-            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen"))
+            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title")))
                 return;
 
             PushUndo();

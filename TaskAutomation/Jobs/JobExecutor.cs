@@ -288,30 +288,51 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            // ── Schritte analysieren ──────────────────────────────────────────
-            var videoStep              = job.Steps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
-            var desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
-            var showImageStep          = job.Steps.OfType<ShowImageStep>().FirstOrDefault();
+            VideoCreationStep? videoStep;
+            DesktopDuplicationStep? desktopDuplicationStep;
+            StepPipelineContext pipelineCtx;
+            try
+            {
+                // ── Schritte analysieren ──────────────────────────────────────
+                videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
+                desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
 
-            // ── Pipeline-Kontext erstellen ────────────────────────────────────
-            var launcher    = _lazyLauncher.Value;
-            var pipelineCtx = new StepPipelineContext(
-                _logger,
-                _dxgiResources,
-                _allJobs,
-                _allMakros,
-                _makroExecutor,
-                _scriptExecutor,
-                _yoloManager,
-                _imageDisplayService,
-                _desktopResultOverlay,
-                job,
-                ExecuteJob,
-                _desktopCaptureService,
-                executionLog,
-                launcher == null ? (Func<Guid, Guid>?)null : launcher.StartJob,
-                launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
-                launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
+                // ── Pipeline-Kontext erstellen ────────────────────────────────
+                var launcher = _lazyLauncher.Value;
+                pipelineCtx = new StepPipelineContext(
+                    _logger,
+                    _dxgiResources,
+                    _allJobs,
+                    _allMakros,
+                    _makroExecutor,
+                    _scriptExecutor,
+                    _yoloManager,
+                    _imageDisplayService,
+                    _desktopResultOverlay,
+                    job,
+                    ExecuteJob,
+                    _desktopCaptureService,
+                    executionLog,
+                    launcher == null ? (Func<Guid, Guid>?)null : launcher.StartJob,
+                    launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
+                    launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Job '{JobName}' konnte den Pipeline-Kontext nicht initialisieren.", job.Name);
+                _executionLogService.Write(
+                    executionLog,
+                    ex is OperationCanceledException ? ExecutionLogLevel.Warning : ExecutionLogLevel.Error,
+                    "Job vor der Step-Ausführung abgebrochen.",
+                    ex.ToString());
+                _executionLogService.Complete(executionLog, false, ex.Message);
+                if (ex is not OperationCanceledException)
+                    JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                await UnloadYoloModelsAsync(job);
+                _executionChain.Value = parentChain;
+                CurrentJob = null;
+                return;
+            }
 
             bool recorderStarted = false;
 

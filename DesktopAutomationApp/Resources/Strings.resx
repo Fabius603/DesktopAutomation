@@ -1,0 +1,1463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Settings.Title" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Settings.Language" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Settings.Language.Description" xml:space="preserve">
+    <value>Legt Sprache sowie Datums-, Zeit- und Zahlenformat fest.</value>
+  </data>
+  <data name="Settings.Appearance" xml:space="preserve">
+    <value>Darstellung</value>
+  </data>
+  <data name="Settings.Theme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings.Accent" xml:space="preserve">
+    <value>Akzentfarbe</value>
+  </data>
+  <data name="Settings.Theme.System" xml:space="preserve">
+    <value>Systemeinstellung</value>
+  </data>
+  <data name="Settings.Theme.Light" xml:space="preserve">
+    <value>Hell</value>
+  </data>
+  <data name="Settings.Theme.Dark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="Navigation.Settings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Ui.1AE7FEC55BD2" xml:space="preserve">
+    <value>DesktopAutomation</value>
+  </data>
+  <data name="Ui.9BD88F2485AC" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="Ui.D909750B1BBB" xml:space="preserve">
+    <value>Automation</value>
+  </data>
+  <data name="Ui.EB19BE2C2707" xml:space="preserve">
+    <value>Update verfügbar</value>
+  </data>
+  <data name="Ui.6ACAE8FA1F57" xml:space="preserve">
+    <value>Jetzt updaten</value>
+  </data>
+  <data name="Ui.93E41A83723A" xml:space="preserve">
+    <value>Neu starten um Update zu installieren</value>
+  </data>
+  <data name="Ui.E4BB9F1ECE9A" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Ui.1A221929D4C5" xml:space="preserve">
+    <value>Automationen</value>
+  </data>
+  <data name="Ui.68D83EF61EDE" xml:space="preserve">
+    <value>Makros</value>
+  </data>
+  <data name="Ui.2F17A0F8D518" xml:space="preserve">
+    <value>Jobs</value>
+  </data>
+  <data name="Ui.C08179253DA5" xml:space="preserve">
+    <value>YOLO Downloads</value>
+  </data>
+  <data name="Ui.EA2100DC89AE" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Ui.4B223C706F03" xml:space="preserve">
+    <value>WidthAndHeight</value>
+  </data>
+  <data name="Ui.90EBC1BDE6F3" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="Ui.F7FF1178AF20" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Ui.96BF0098166F" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="Ui.C2D56AFF317E" xml:space="preserve">
+    <value>Datei öffnen</value>
+  </data>
+  <data name="Ui.E3ABC0ADA1B7" xml:space="preserve">
+    <value>Job-Logs</value>
+  </data>
+  <data name="Ui.B6CA096F830F" xml:space="preserve">
+    <value>Ausführungen</value>
+  </data>
+  <data name="Ui.1709305C9FA9" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="Ui.1178E1C9B589" xml:space="preserve">
+    <value>Live-Log</value>
+  </data>
+  <data name="Ui.2683CAD48A14" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="Ui.5CA419548155" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="Ui.1368BE38DB6D" xml:space="preserve">
+    <value>Dashboard aktualisieren</value>
+  </data>
+  <data name="Ui.005E1574A2B5" xml:space="preserve">
+    <value> / </value>
+  </data>
+  <data name="Ui.9D1F99EFB6B7" xml:space="preserve">
+    <value>aktiv / gesamt</value>
+  </data>
+  <data name="Ui.B5FCA4A8E299" xml:space="preserve">
+    <value>gesamt</value>
+  </data>
+  <data name="Ui.3E833A240A1C" xml:space="preserve">
+    <value>Aktive Automationen</value>
+  </data>
+  <data name="Ui.DCD1D5223F73" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Ui.8B9C643731C9" xml:space="preserve">
+    <value>Trigger</value>
+  </data>
+  <data name="Ui.A4AD259E71CB" xml:space="preserve">
+    <value>Aktion</value>
+  </data>
+  <data name="Ui.A541A83738A7" xml:space="preserve">
+    <value>Letzter Lauf</value>
+  </data>
+  <data name="Ui.B5561425E2EE" xml:space="preserve">
+    <value>Nächste Ausführung</value>
+  </data>
+  <data name="Ui.9FD62C286678" xml:space="preserve">
+    <value>Keine aktive Automation</value>
+  </data>
+  <data name="Ui.ED59E5772B4B" xml:space="preserve">
+    <value>Alle laufenden Jobs &amp; Makros beenden (F10)</value>
+  </data>
+  <data name="Ui.D3F7409AD75E" xml:space="preserve">
+    <value>Stop All</value>
+  </data>
+  <data name="Ui.76E5B150C51E" xml:space="preserve">
+    <value># Ausführungen</value>
+  </data>
+  <data name="Ui.DE5625143C5C" xml:space="preserve">
+    <value>Laufende Jobs &amp; Makros</value>
+  </data>
+  <data name="Ui.42615FA2525B" xml:space="preserve">
+    <value>Alle Instanzen dieses Jobs beenden</value>
+  </data>
+  <data name="Ui.CAE7D57BC067" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Ui.8DB71ED28B0F" xml:space="preserve">
+    <value>×</value>
+  </data>
+  <data name="Ui.8D7C64BB0998" xml:space="preserve">
+    <value>Kein aktiver Job/Makro</value>
+  </data>
+  <data name="Ui.7BB37DF5CB36" xml:space="preserve">
+    <value>›</value>
+  </data>
+  <data name="Ui.548611CE58F7" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="Ui.F6B2FF39F540" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="Ui.594CA889C442" xml:space="preserve">
+    <value>Verwerfen</value>
+  </data>
+  <data name="Ui.83E07ED1F359" xml:space="preserve">
+    <value>Umbenennen</value>
+  </data>
+  <data name="Ui.E9262F007DFB" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Ui.8163454F378F" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="Ui.15CE2119C2DA" xml:space="preserve">
+    <value>Trigger-Typ</value>
+  </data>
+  <data name="Ui.6A6485AF02CA" xml:space="preserve">
+    <value>Hotkey</value>
+  </data>
+  <data name="Ui.D0F2D9E1CC3B" xml:space="preserve">
+    <value>Hotkey erfassen</value>
+  </data>
+  <data name="Ui.63D6160302C5" xml:space="preserve">
+    <value>Ausführung</value>
+  </data>
+  <data name="Ui.619BE40DDBBF" xml:space="preserve">
+    <value>Uhrzeit und Tage</value>
+  </data>
+  <data name="Ui.D23E867E38E8" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="Ui.16AB72874809" xml:space="preserve">
+    <value>Di</value>
+  </data>
+  <data name="Ui.D8F33A13AE6E" xml:space="preserve">
+    <value>Mi</value>
+  </data>
+  <data name="Ui.30094E0BEC00" xml:space="preserve">
+    <value>Do</value>
+  </data>
+  <data name="Ui.EED8F901692D" xml:space="preserve">
+    <value>Fr</value>
+  </data>
+  <data name="Ui.A951EFC79DEB" xml:space="preserve">
+    <value>Sa</value>
+  </data>
+  <data name="Ui.FB1DF1A24E3F" xml:space="preserve">
+    <value>So</value>
+  </data>
+  <data name="Ui.21FBABA024F7" xml:space="preserve">
+    <value>Intervall</value>
+  </data>
+  <data name="Ui.778A744FBFB5" xml:space="preserve">
+    <value>Sofort nach App-Start</value>
+  </data>
+  <data name="Ui.CD9BB3B40997" xml:space="preserve">
+    <value>Prozessauslöser</value>
+  </data>
+  <data name="Ui.C2C6BC77B873" xml:space="preserve">
+    <value>Prozessname</value>
+  </data>
+  <data name="Ui.19C114F5BB77" xml:space="preserve">
+    <value>z. B. chrome.exe</value>
+  </data>
+  <data name="Ui.68C6E91706D3" xml:space="preserve">
+    <value>Fenstertitel enthält (optional)</value>
+  </data>
+  <data name="Ui.2B5AAA3CF344" xml:space="preserve">
+    <value>Verzögerung (s)</value>
+  </data>
+  <data name="Ui.66036A4014DD" xml:space="preserve">
+    <value>Job oder Makro</value>
+  </data>
+  <data name="Ui.B3ECF7CD4BE6" xml:space="preserve">
+    <value>Ausführungsregeln</value>
+  </data>
+  <data name="Ui.A3E13215000C" xml:space="preserve">
+    <value>Wenn bereits aktiv</value>
+  </data>
+  <data name="Ui.0924A671165F" xml:space="preserve">
+    <value>Cooldown</value>
+  </data>
+  <data name="Ui.137B664AD5FB" xml:space="preserve">
+    <value>Sekunden</value>
+  </data>
+  <data name="Ui.FB5DEA1268EA" xml:space="preserve">
+    <value>Aktiv von</value>
+  </data>
+  <data name="Ui.A1C8E14A1EEE" xml:space="preserve">
+    <value>Aktiv bis</value>
+  </data>
+  <data name="Ui.A0D222667945" xml:space="preserve">
+    <value>Zeitfenster über Mitternacht werden unterstützt</value>
+  </data>
+  <data name="Ui.40E06B5F6DAB" xml:space="preserve">
+    <value>Neue Automation</value>
+  </data>
+  <data name="Ui.E085C5651744" xml:space="preserve">
+    <value>Automation löschen</value>
+  </data>
+  <data name="Ui.93553A3A38EF" xml:space="preserve">
+    <value>Ordner im Explorer öffnen</value>
+  </data>
+  <data name="Ui.119B406F6AEE" xml:space="preserve">
+    <value>Jetzt ausführen</value>
+  </data>
+  <data name="Ui.BC385A30B537" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="Ui.F75469E8027F" xml:space="preserve">
+    <value>STEP-TYP</value>
+  </data>
+  <data name="Ui.6D8CFA868050" xml:space="preserve">
+    <value>Capture-Step</value>
+  </data>
+  <data name="Ui.0575F29DF888" xml:space="preserve">
+    <value>Template</value>
+  </data>
+  <data name="Ui.B4935894C8CE" xml:space="preserve">
+    <value>…</value>
+  </data>
+  <data name="Ui.5BB1092E45D1" xml:space="preserve">
+    <value>ROI</value>
+  </data>
+  <data name="Ui.4B68AB3847FE" xml:space="preserve">
+    <value>X</value>
+  </data>
+  <data name="Ui.18F5384D58BC" xml:space="preserve">
+    <value>Y</value>
+  </data>
+  <data name="Ui.28240C279DF6" xml:space="preserve">
+    <value>Breite</value>
+  </data>
+  <data name="Ui.A4D8C3470CA7" xml:space="preserve">
+    <value>Höhe</value>
+  </data>
+  <data name="Ui.0D413232C63A" xml:space="preserve">
+    <value>Aufnehmen</value>
+  </data>
+  <data name="Ui.4294D815517A" xml:space="preserve">
+    <value>ROI aktivieren</value>
+  </data>
+  <data name="Ui.D4DF25A1EAE5" xml:space="preserve">
+    <value>Confidence (0…1)</value>
+  </data>
+  <data name="Ui.8CA2E465EEDB" xml:space="preserve">
+    <value>Match Mode</value>
+  </data>
+  <data name="Ui.A952C8F76F58" xml:space="preserve">
+    <value>Farbe</value>
+  </data>
+  <data name="Ui.B22C38403F9C" xml:space="preserve">
+    <value>Min. Größe</value>
+  </data>
+  <data name="Ui.8CE3C103A257" xml:space="preserve">
+    <value>Max. Größe</value>
+  </data>
+  <data name="Ui.642C845C97A3" xml:space="preserve">
+    <value>Min. Breite</value>
+  </data>
+  <data name="Ui.702339DAAEF2" xml:space="preserve">
+    <value>Min. Höhe</value>
+  </data>
+  <data name="Ui.58B8499463DF" xml:space="preserve">
+    <value>Downscale</value>
+  </data>
+  <data name="Ui.9B4B6F6A789D" xml:space="preserve">
+    <value>Detection-Step</value>
+  </data>
+  <data name="Ui.0EFCC3B140C9" xml:space="preserve">
+    <value>Min. Werte</value>
+  </data>
+  <data name="Ui.F0E72827BFC3" xml:space="preserve">
+    <value>Vorhersage (ms)</value>
+  </data>
+  <data name="Ui.86A7D5A27D96" xml:space="preserve">
+    <value>Reset ab Distanz</value>
+  </data>
+  <data name="Ui.1E096C34E7FD" xml:space="preserve">
+    <value>Max. Alter (ms)</value>
+  </data>
+  <data name="Ui.26F7D6A5E121" xml:space="preserve">
+    <value>Desktop Index</value>
+  </data>
+  <data name="Ui.7448C10623C8" xml:space="preserve">
+    <value>Monitor wählen</value>
+  </data>
+  <data name="Ui.70490573F6E7" xml:space="preserve">
+    <value>Mauszeiger aufnehmen</value>
+  </data>
+  <data name="Ui.AE8D1BDC4EAB" xml:space="preserve">
+    <value>Detection-Step (opt.)</value>
+  </data>
+  <data name="Ui.66269928F653" xml:space="preserve">
+    <value>Fenstername</value>
+  </data>
+  <data name="Ui.F2D20D83F8C5" xml:space="preserve">
+    <value>Bildquelle</value>
+  </data>
+  <data name="Ui.0F26F4ED7864" xml:space="preserve">
+    <value>Speicherpfad</value>
+  </data>
+  <data name="Ui.9B5378EFC9FC" xml:space="preserve">
+    <value>Dateiname</value>
+  </data>
+  <data name="Ui.EEA1C34AE773" xml:space="preserve">
+    <value>Makro</value>
+  </data>
+  <data name="Ui.AD617A0FDD57" xml:space="preserve">
+    <value>Job</value>
+  </data>
+  <data name="Ui.51DAE3D4CA42" xml:space="preserve">
+    <value>Auf Beendigung warten</value>
+  </data>
+  <data name="Ui.E09AD4D0276E" xml:space="preserve">
+    <value>Script-Pfad</value>
+  </data>
+  <data name="Ui.B1A1E8E3CF7C" xml:space="preserve">
+    <value>Offset</value>
+  </data>
+  <data name="Ui.439FB5CFB084" xml:space="preserve">
+    <value>Klick-Typ</value>
+  </data>
+  <data name="Ui.3B453BC8BD28" xml:space="preserve">
+    <value>Timeout (ms)</value>
+  </data>
+  <data name="Ui.4FE3118BFDEC" xml:space="preserve">
+    <value>Doppelklick</value>
+  </data>
+  <data name="Ui.DA45A7C12EDF" xml:space="preserve">
+    <value>Ursprung</value>
+  </data>
+  <data name="Ui.5E2C614C23F0" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="Ui.FEB9FFF9C7F0" xml:space="preserve">
+    <value>Klassenname</value>
+  </data>
+  <data name="Ui.054A29A3F5E5" xml:space="preserve">
+    <value>Wartezeit (ms)</value>
+  </data>
+  <data name="Ui.E98512CAC80D" xml:space="preserve">
+    <value>z. B. notepad oder notepad.exe</value>
+  </data>
+  <data name="Ui.7C6F46FBF3E0" xml:space="preserve">
+    <value>Ergebnis (Erfolgreich = Prozess läuft) kann in If-Bedingungen ausgewertet werden.</value>
+  </data>
+  <data name="Ui.5DED984A9AD6" xml:space="preserve">
+    <value>Pfad / Programm</value>
+  </data>
+  <data name="Ui.CF2A0A45DFBA" xml:space="preserve">
+    <value>Pfad zur .exe oder Programmname</value>
+  </data>
+  <data name="Ui.63A5229CED33" xml:space="preserve">
+    <value>Argumente</value>
+  </data>
+  <data name="Ui.EC91FDD9256C" xml:space="preserve">
+    <value>optional</value>
+  </data>
+  <data name="Ui.213DF92864E7" xml:space="preserve">
+    <value>Fenstermodus</value>
+  </data>
+  <data name="Ui.71988C4D8E08" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Ui.2C5DB34BB7E8" xml:space="preserve">
+    <value>Anzuzeigender Text (leer = entfernen)</value>
+  </data>
+  <data name="Ui.0FF77CA7838A" xml:space="preserve">
+    <value>Schriftgröße (pt)</value>
+  </data>
+  <data name="Ui.CC31DCCC2813" xml:space="preserve">
+    <value>Schriftfarbe</value>
+  </data>
+  <data name="Ui.2E24FA375030" xml:space="preserve">
+    <value>Deckkraft</value>
+  </data>
+  <data name="Ui.761C1A6D6FCE" xml:space="preserve">
+    <value>Anzeigedauer (ms)</value>
+  </data>
+  <data name="Ui.1999CAA2CA38" xml:space="preserve">
+    <value>0 = dauerhaft</value>
+  </data>
+  <data name="Ui.1B720A358064" xml:space="preserve">
+    <value>Bei Job-Ende entfernen</value>
+  </data>
+  <data name="Ui.6D031AF10DA7" xml:space="preserve">
+    <value>Position</value>
+  </data>
+  <data name="Ui.DD28B7CB2962" xml:space="preserve">
+    <value>X-Offset (Pixel)</value>
+  </data>
+  <data name="Ui.5069D9B55A54" xml:space="preserve">
+    <value>Y-Offset (Pixel)</value>
+  </data>
+  <data name="Ui.DA34047E4D4E" xml:space="preserve">
+    <value>Cache (ms)</value>
+  </data>
+  <data name="Ui.B7A0AA8464FD" xml:space="preserve">
+    <value>Ergebnis (Fenster aktiv) kann in If-Bedingungen ausgewertet werden.</value>
+  </data>
+  <data name="Ui.C3B98AA17F9B" xml:space="preserve">
+    <value>Min. Matches</value>
+  </data>
+  <data name="Ui.A1502CB234BF" xml:space="preserve">
+    <value>Lowe's Ratio (0…1)</value>
+  </data>
+  <data name="Ui.B486EB1E1768" xml:space="preserve">
+    <value>Verknüpfung:</value>
+  </data>
+  <data name="Ui.C2E1330B15A3" xml:space="preserve">
+    <value>Alle (AND)</value>
+  </data>
+  <data name="Ui.D7C1657C8E65" xml:space="preserve">
+    <value>Eine (OR)</value>
+  </data>
+  <data name="Ui.AFB2DC1C61DB" xml:space="preserve">
+    <value>Quell-Step</value>
+  </data>
+  <data name="Ui.F854EEB77D90" xml:space="preserve">
+    <value>Eigenschaft</value>
+  </data>
+  <data name="Ui.291101A07FE9" xml:space="preserve">
+    <value>Operator</value>
+  </data>
+  <data name="Ui.7E347DAA5EC7" xml:space="preserve">
+    <value>Wert</value>
+  </data>
+  <data name="Ui.C509EAB78B6B" xml:space="preserve">
+    <value>+ Bedingung hinzufügen</value>
+  </data>
+  <data name="Ui.6DDA9E0A9BE1" xml:space="preserve">
+    <value>Keine Konfiguration erforderlich. Dieser Block wird ausgeführt, wenn keine vorherige Bedingung zutraf.</value>
+  </data>
+  <data name="Ui.FEC1A19E077C" xml:space="preserve">
+    <value>Keine Konfiguration erforderlich. Beendet den vorherigen If/ElseIf/Else-Block.</value>
+  </data>
+  <data name="Ui.A93645F20E89" xml:space="preserve">
+    <value>Keine Konfiguration erforderlich. Beendet den Job sofort – nachfolgende Steps werden nicht mehr ausgeführt.</value>
+  </data>
+  <data name="Ui.9249B6DAC3BF" xml:space="preserve">
+    <value>GRUNDEINSTELLUNGEN</value>
+  </data>
+  <data name="Ui.45517C77E57E" xml:space="preserve">
+    <value>Modus</value>
+  </data>
+  <data name="Ui.A21971410217" xml:space="preserve">
+    <value>Offset / Toleranz</value>
+  </data>
+  <data name="Ui.F5405899C6B6" xml:space="preserve">
+    <value>Nah an Referenzpunkt</value>
+  </data>
+  <data name="Ui.BFFED431DF37" xml:space="preserve">
+    <value>Ausdruck</value>
+  </data>
+  <data name="Ui.BD979A0AD20E" xml:space="preserve">
+    <value>X/Y-Vergleich (X &gt; 100)</value>
+  </data>
+  <data name="Ui.A95C09CFC410" xml:space="preserve">
+    <value>Auswertung</value>
+  </data>
+  <data name="Ui.9DE9605B6EAC" xml:space="preserve">
+    <value>Mindestens einer (OR)</value>
+  </data>
+  <data name="Ui.1998773AA58B" xml:space="preserve">
+    <value>REFERENZPUNKT &amp; TOLERANZ</value>
+  </data>
+  <data name="Ui.86A5AF24996C" xml:space="preserve">
+    <value>Referenzquelle</value>
+  </data>
+  <data name="Ui.27DE415D1ADC" xml:space="preserve">
+    <value>Manuell eingeben</value>
+  </data>
+  <data name="Ui.D49CE8527566" xml:space="preserve">
+    <value>Aus Detection-Ergebnis</value>
+  </data>
+  <data name="Ui.CE15D7073D8A" xml:space="preserve">
+    <value>Koordinaten (X / Y)</value>
+  </data>
+  <data name="Ui.6A7E735DE6CF" xml:space="preserve">
+    <value>Toleranz (Pixel)</value>
+  </data>
+  <data name="Ui.76673266BEA8" xml:space="preserve">
+    <value>Maximale Abweichung</value>
+  </data>
+  <data name="Ui.E6E11D3FBDAE" xml:space="preserve">
+    <value>ACHSEN-AUSDRÜCKE</value>
+  </data>
+  <data name="Ui.184DAA43DB90" xml:space="preserve">
+    <value>Verknüpfen mit:</value>
+  </data>
+  <data name="Ui.48EEA2E52D13" xml:space="preserve">
+    <value>AND (alle)</value>
+  </data>
+  <data name="Ui.51B3C8047947" xml:space="preserve">
+    <value>OR (einer)</value>
+  </data>
+  <data name="Ui.1B85AAC5FB65" xml:space="preserve">
+    <value>Achse</value>
+  </data>
+  <data name="Ui.B6E7150FF3A7" xml:space="preserve">
+    <value>Vergleichswert</value>
+  </data>
+  <data name="Ui.00EC3A8014FF" xml:space="preserve">
+    <value>Ausdruck entfernen</value>
+  </data>
+  <data name="Ui.7ADB833B38AD" xml:space="preserve">
+    <value>+ Ausdruck hinzufügen</value>
+  </data>
+  <data name="Ui.64E40C59A743" xml:space="preserve">
+    <value>ZU PRÜFENDE PUNKTE</value>
+  </data>
+  <data name="Ui.0672EEA8B758" xml:space="preserve">
+    <value>Diese Punkte werden gegen die Bedingung geprüft</value>
+  </data>
+  <data name="Ui.CBEE86870F04" xml:space="preserve">
+    <value>+ Punkt hinzufügen</value>
+  </data>
+  <data name="Ui.0656690ADC4E" xml:space="preserve">
+    <value>Punktquelle</value>
+  </data>
+  <data name="Ui.961CACAA6E41" xml:space="preserve">
+    <value>Manuell</value>
+  </data>
+  <data name="Ui.678B9820E6D3" xml:space="preserve">
+    <value>× Entfernen</value>
+  </data>
+  <data name="Ui.666105122F20" xml:space="preserve">
+    <value>Koordinaten</value>
+  </data>
+  <data name="Ui.46EC484A28FD" xml:space="preserve">
+    <value>Alle gefundenen Punkte dieses Steps verwenden</value>
+  </data>
+  <data name="Ui.93ADA26B51D5" xml:space="preserve">
+    <value>Bildquelle: </value>
+  </data>
+  <data name="Ui.3CD82F1C6B83" xml:space="preserve">
+    <value>TemplatePath: </value>
+  </data>
+  <data name="Ui.2B41DB799940" xml:space="preserve">
+    <value>MatchMode: </value>
+  </data>
+  <data name="Ui.8CB7ECF52C9E" xml:space="preserve">
+    <value>Mehrere Treffer: </value>
+  </data>
+  <data name="Ui.38262E5E41A2" xml:space="preserve">
+    <value>ConfidenceThreshold: </value>
+  </data>
+  <data name="Ui.47A9974F5B0F" xml:space="preserve">
+    <value>EnableROI: </value>
+  </data>
+  <data name="Ui.8B45B1C082CD" xml:space="preserve">
+    <value>ROI (X,Y,Breite,Höhe): </value>
+  </data>
+  <data name="Ui.2A335761AAB2" xml:space="preserve">
+    <value>Farbe: </value>
+  </data>
+  <data name="Ui.7FA9DD08AA11" xml:space="preserve">
+    <value>Min. Größe: </value>
+  </data>
+  <data name="Ui.CA13C12F5A18" xml:space="preserve">
+    <value>Max. Größe: </value>
+  </data>
+  <data name="Ui.0FA280F27F7B" xml:space="preserve">
+    <value>Min. Breite: </value>
+  </data>
+  <data name="Ui.76ED92CDAEEE" xml:space="preserve">
+    <value>Min. Höhe: </value>
+  </data>
+  <data name="Ui.F3E9D043C2B6" xml:space="preserve">
+    <value>Downscale: </value>
+  </data>
+  <data name="Ui.74D86E22EA75" xml:space="preserve">
+    <value>Erkennungsquelle: </value>
+  </data>
+  <data name="Ui.DA97809EF62F" xml:space="preserve">
+    <value>Min. Werte: </value>
+  </data>
+  <data name="Ui.7A4B0CC43AB3" xml:space="preserve">
+    <value>Vorhersage (ms): </value>
+  </data>
+  <data name="Ui.6943487226FA" xml:space="preserve">
+    <value>Reset ab Distanz: </value>
+  </data>
+  <data name="Ui.E03AEC74F1B9" xml:space="preserve">
+    <value>Max. Alter (ms): </value>
+  </data>
+  <data name="Ui.6734AA111988" xml:space="preserve">
+    <value>Desktop Index: </value>
+  </data>
+  <data name="Ui.7C0849E451F6" xml:space="preserve">
+    <value>Mauszeiger aufnehmen: </value>
+  </data>
+  <data name="Ui.D8C81A0D4458" xml:space="preserve">
+    <value>ProcessName: </value>
+  </data>
+  <data name="Ui.7E9B7C2EAC11" xml:space="preserve">
+    <value>WindowName: </value>
+  </data>
+  <data name="Ui.AF583CB5042D" xml:space="preserve">
+    <value>ShowRawImage: </value>
+  </data>
+  <data name="Ui.87056125F1E6" xml:space="preserve">
+    <value>ShowProcessedImage: </value>
+  </data>
+  <data name="Ui.B970B4A304ED" xml:space="preserve">
+    <value>SavePath: </value>
+  </data>
+  <data name="Ui.71E32574EE93" xml:space="preserve">
+    <value>FileName: </value>
+  </data>
+  <data name="Ui.00CCADEACCAA" xml:space="preserve">
+    <value>UseRawImage: </value>
+  </data>
+  <data name="Ui.6542054E91DE" xml:space="preserve">
+    <value>UseProcessedImage: </value>
+  </data>
+  <data name="Ui.961040D0FDD7" xml:space="preserve">
+    <value>MakroName: </value>
+  </data>
+  <data name="Ui.0F508E57DE2E" xml:space="preserve">
+    <value>Doppelklick: </value>
+  </data>
+  <data name="Ui.7096AB1FD106" xml:space="preserve">
+    <value>Klick-Typ: </value>
+  </data>
+  <data name="Ui.16841653131E" xml:space="preserve">
+    <value>Timeout (ms): </value>
+  </data>
+  <data name="Ui.87D9C38998EF" xml:space="preserve">
+    <value>Offset: </value>
+  </data>
+  <data name="Ui.0A07F6594619" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Ui.48CCF781EF35" xml:space="preserve">
+    <value>Ursprung: </value>
+  </data>
+  <data name="Ui.AE1F63E2EBFF" xml:space="preserve">
+    <value>Script-Pfad: </value>
+  </data>
+  <data name="Ui.F4ED7B6FCD39" xml:space="preserve">
+    <value>Auf Beendigung warten: </value>
+  </data>
+  <data name="Ui.A62513DCFC88" xml:space="preserve">
+    <value>Job-Name: </value>
+  </data>
+  <data name="Ui.33F4E5313C6B" xml:space="preserve">
+    <value>Model: </value>
+  </data>
+  <data name="Ui.0215AD9159F2" xml:space="preserve">
+    <value>Klassenname: </value>
+  </data>
+  <data name="Ui.C3155FB48A52" xml:space="preserve">
+    <value>Wartezeit (ms): </value>
+  </data>
+  <data name="Ui.02025AAAE68D" xml:space="preserve">
+    <value>Prozessname: </value>
+  </data>
+  <data name="Ui.306CE48C326B" xml:space="preserve">
+    <value>Cache (ms): </value>
+  </data>
+  <data name="Ui.A254BBEC8D3E" xml:space="preserve">
+    <value>Programm: </value>
+  </data>
+  <data name="Ui.3326CB784823" xml:space="preserve">
+    <value>Argumente: </value>
+  </data>
+  <data name="Ui.A8711FB9ABFC" xml:space="preserve">
+    <value>Fenstermodus: </value>
+  </data>
+  <data name="Ui.21784F40B344" xml:space="preserve">
+    <value>Text: </value>
+  </data>
+  <data name="Ui.4D63C26749CD" xml:space="preserve">
+    <value>Größe: </value>
+  </data>
+  <data name="Ui.5246B589AE29" xml:space="preserve">
+    <value>  Farbe: </value>
+  </data>
+  <data name="Ui.97AE949B3516" xml:space="preserve">
+    <value>  Deckkraft: </value>
+  </data>
+  <data name="Ui.B3B162C81455" xml:space="preserve">
+    <value>Monitor: </value>
+  </data>
+  <data name="Ui.B56E76FF5BCD" xml:space="preserve">
+    <value>  Offset: </value>
+  </data>
+  <data name="Ui.620FA885F4DE" xml:space="preserve">
+    <value>Min. Matches: </value>
+  </data>
+  <data name="Ui.1A5BC61D15A9" xml:space="preserve">
+    <value>Lowe's Ratio: </value>
+  </data>
+  <data name="Ui.6184930C0027" xml:space="preserve">
+    <value>Modus: </value>
+  </data>
+  <data name="Ui.58211F265E02" xml:space="preserve">
+    <value>Übereinstimmung: </value>
+  </data>
+  <data name="Ui.8A281BB051BC" xml:space="preserve">
+    <value>Punkte: </value>
+  </data>
+  <data name="Ui.32EBB1ABCC1C" xml:space="preserve">
+    <value>(</value>
+  </data>
+  <data name="Ui.BA5EC51D07A4" xml:space="preserve">
+    <value>)</value>
+  </data>
+  <data name="Ui.D6EDAD2578E6" xml:space="preserve">
+    <value>+ Else If</value>
+  </data>
+  <data name="Ui.D8EB27E75875" xml:space="preserve">
+    <value>+ Else</value>
+  </data>
+  <data name="Ui.0350F3D0CCA2" xml:space="preserve">
+    <value>Job starten</value>
+  </data>
+  <data name="Ui.19DE6A8914E1" xml:space="preserve">
+    <value>Job stoppen</value>
+  </data>
+  <data name="Ui.BCE6416D5166" xml:space="preserve">
+    <value>Neuer Step</value>
+  </data>
+  <data name="Ui.1EB53A3CD78C" xml:space="preserve">
+    <value>Step aktivieren / deaktivieren</value>
+  </data>
+  <data name="Ui.7EF60356A568" xml:space="preserve">
+    <value>Step bearbeiten</value>
+  </data>
+  <data name="Ui.A1F3260D6E77" xml:space="preserve">
+    <value>Schritt nach oben</value>
+  </data>
+  <data name="Ui.85C50F7FB3AD" xml:space="preserve">
+    <value>Schritt nach unten</value>
+  </data>
+  <data name="Ui.EE13D7722C34" xml:space="preserve">
+    <value>Step löschen</value>
+  </data>
+  <data name="Ui.4C14D44ED12D" xml:space="preserve">
+    <value>Neuer Job</value>
+  </data>
+  <data name="Ui.FD479D328E5F" xml:space="preserve">
+    <value>Job löschen</value>
+  </data>
+  <data name="Ui.ADDCD5FB5AE1" xml:space="preserve">
+    <value>Wiederholend</value>
+  </data>
+  <data name="Ui.44360075D722" xml:space="preserve">
+    <value>#Steps</value>
+  </data>
+  <data name="Ui.DE88EF58FFF7" xml:space="preserve">
+    <value>Typ:</value>
+  </data>
+  <data name="Ui.939FC7D24107" xml:space="preserve">
+    <value>X:</value>
+  </data>
+  <data name="Ui.AA42AFF154F7" xml:space="preserve">
+    <value>  Y:</value>
+  </data>
+  <data name="Ui.8DB7223CBFB1" xml:space="preserve">
+    <value>DeltaX:</value>
+  </data>
+  <data name="Ui.AB8627EEEB44" xml:space="preserve">
+    <value>  DeltaY:</value>
+  </data>
+  <data name="Ui.8D6013DA1B65" xml:space="preserve">
+    <value>Button:</value>
+  </data>
+  <data name="Ui.58EB9032E3BB" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="Ui.883361D5D682" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="Ui.D93006EC2E43" xml:space="preserve">
+    <value>Middle</value>
+  </data>
+  <data name="Ui.0311526BCC69" xml:space="preserve">
+    <value>Key:</value>
+  </data>
+  <data name="Ui.8E8B8256770E" xml:space="preserve">
+    <value>Duration (ms):</value>
+  </data>
+  <data name="Ui.023F8B8D25DA" xml:space="preserve">
+    <value>Neues Makro</value>
+  </data>
+  <data name="Ui.7C53E9E37D47" xml:space="preserve">
+    <value>Makro Löschen</value>
+  </data>
+  <data name="Ui.6EA1AF65A792" xml:space="preserve">
+    <value># Befehle</value>
+  </data>
+  <data name="Ui.E11D185246D3" xml:space="preserve">
+    <value>Makro starten</value>
+  </data>
+  <data name="Ui.B2A01C33CE5E" xml:space="preserve">
+    <value>Makro stoppen</value>
+  </data>
+  <data name="Ui.C8953130476F" xml:space="preserve">
+    <value>MouseMove Absolute</value>
+  </data>
+  <data name="Ui.841CEEE9C2D2" xml:space="preserve">
+    <value>Y:</value>
+  </data>
+  <data name="Ui.E3F81F0CC275" xml:space="preserve">
+    <value>MouseMove Relative</value>
+  </data>
+  <data name="Ui.FB703D18EF10" xml:space="preserve">
+    <value>DeltaY:</value>
+  </data>
+  <data name="Ui.D0A2E84A48E7" xml:space="preserve">
+    <value>MouseDown</value>
+  </data>
+  <data name="Ui.948733B154DC" xml:space="preserve">
+    <value>MouseUp</value>
+  </data>
+  <data name="Ui.27E2B6A3354B" xml:space="preserve">
+    <value>KeyDown</value>
+  </data>
+  <data name="Ui.38C39AE3360C" xml:space="preserve">
+    <value>KeyUp</value>
+  </data>
+  <data name="Ui.70594D932950" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="Ui.6C02A4779CDC" xml:space="preserve">
+    <value>Umschalten: Mauspfad aufzeichnen oder nur bei Klicks</value>
+  </data>
+  <data name="Ui.4D2BB368F919" xml:space="preserve">
+    <value>Übersicht</value>
+  </data>
+  <data name="Ui.9FE440FA4DBE" xml:space="preserve">
+    <value>Ablauf</value>
+  </data>
+  <data name="Ui.FC8E3D914982" xml:space="preserve">
+    <value>Schritt duplizieren</value>
+  </data>
+  <data name="Ui.F3B167747CA7" xml:space="preserve">
+    <value>Step loeschen</value>
+  </data>
+  <data name="Ui.30BE1AF45E48" xml:space="preserve">
+    <value>ONNX-Datei hinzufügen</value>
+  </data>
+  <data name="Ui.86C38B0A00E4" xml:space="preserve">
+    <value>Ordner öffnen</value>
+  </data>
+  <data name="Ui.D50D9C56A94E" xml:space="preserve">
+    <value>Model Key:</value>
+  </data>
+  <data name="Ui.C987F668D963" xml:space="preserve">
+    <value>Size:</value>
+  </data>
+  <data name="Ui.D6EAFE823591" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="Ui.22D6C6ECBE84" xml:space="preserve">
+    <value>Deinstallieren</value>
+  </data>
+  <data name="Common.Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common.Yes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="Common.No" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Common.Rename" xml:space="preserve">
+    <value>Umbenennen</value>
+  </data>
+  <data name="Common.Create" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="Common.Apply" xml:space="preserve">
+    <value>Übernehmen</value>
+  </data>
+  <data name="Common.Add" xml:space="preserve">
+    <value>Hinzufügen</value>
+  </data>
+  <data name="Common.Job" xml:space="preserve">
+    <value>Job</value>
+  </data>
+  <data name="Common.Macro" xml:space="preserve">
+    <value>Makro</value>
+  </data>
+  <data name="Common.NotSet" xml:space="preserve">
+    <value>nicht gesetzt</value>
+  </data>
+  <data name="Common.Value" xml:space="preserve">
+    <value>Wert</value>
+  </data>
+  <data name="Tray.Open" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="Tray.StopAllJobs" xml:space="preserve">
+    <value>Alle Jobs stoppen</value>
+  </data>
+  <data name="Tray.Exit" xml:space="preserve">
+    <value>Beenden</value>
+  </data>
+  <data name="Tray.ResumeAutomations" xml:space="preserve">
+    <value>Automationen fortsetzen</value>
+  </data>
+  <data name="Tray.PauseAutomations" xml:space="preserve">
+    <value>Automationen pausieren</value>
+  </data>
+  <data name="Dialog.Unsaved.Title" xml:space="preserve">
+    <value>Ungespeicherte Änderungen</value>
+  </data>
+  <data name="Dialog.Unsaved.Message" xml:space="preserve">
+    <value>Es gibt ungespeicherte Änderungen. Möchten Sie speichern?</value>
+  </data>
+  <data name="Dialog.Delete.Title" xml:space="preserve">
+    <value>Löschen bestätigen</value>
+  </data>
+  <data name="Dialog.NewName" xml:space="preserve">
+    <value>Neuer Name:</value>
+  </data>
+  <data name="Validation.Title" xml:space="preserve">
+    <value>Validierungsfehler</value>
+  </data>
+  <data name="Validation.NameRequired" xml:space="preserve">
+    <value>Name ist erforderlich.</value>
+  </data>
+  <data name="Validation.ActionRequired" xml:space="preserve">
+    <value>Bitte eine Aktion (Job oder Makro) auswählen.</value>
+  </data>
+  <data name="Validation.HotkeyRequired" xml:space="preserve">
+    <value>Bitte einen Hotkey erfassen.</value>
+  </data>
+  <data name="Validation.ProcessNameRequired" xml:space="preserve">
+    <value>Bitte einen Prozessnamen angeben.</value>
+  </data>
+  <data name="Validation.WeekdayRequired" xml:space="preserve">
+    <value>Bitte mindestens einen Wochentag auswählen.</value>
+  </data>
+  <data name="Validation.IntervalPositive" xml:space="preserve">
+    <value>Das Intervall muss größer als 0 sein.</value>
+  </data>
+  <data name="Validation.ActiveWindowPair" xml:space="preserve">
+    <value>„Aktiv von“ und „Aktiv bis“ müssen entweder beide ausgefüllt oder beide leer sein.</value>
+  </data>
+  <data name="Automation.Hotkey.NotSet" xml:space="preserve">
+    <value>Hotkey nicht gesetzt</value>
+  </data>
+  <data name="Automation.Hotkey.CaptureTitle" xml:space="preserve">
+    <value>Hotkey-Erfassung</value>
+  </data>
+  <data name="Automation.Hotkey.CapturePrompt" xml:space="preserve">
+    <value>Bitte gewünschte Tastenkombination drücken …</value>
+  </data>
+  <data name="Automation.Hotkey.CaptureError" xml:space="preserve">
+    <value>Der Hotkey konnte nicht erfasst werden.</value>
+  </data>
+  <data name="Automation.Trigger.OnceAt" xml:space="preserve">
+    <value>Einmalig am {0}</value>
+  </data>
+  <data name="Automation.Trigger.Daily" xml:space="preserve">
+    <value>täglich</value>
+  </data>
+  <data name="Automation.Trigger.Schedule" xml:space="preserve">
+    <value>{0} um {1}</value>
+  </data>
+  <data name="Automation.Trigger.Interval" xml:space="preserve">
+    <value>Alle {0}</value>
+  </data>
+  <data name="Automation.Trigger.ProcessStarted" xml:space="preserve">
+    <value>App startet: {0}</value>
+  </data>
+  <data name="Automation.Trigger.ProcessExited" xml:space="preserve">
+    <value>App schließt: {0}</value>
+  </data>
+  <data name="Automation.Trigger.WindowTitle" xml:space="preserve">
+    <value> · Titel enthält „{0}“</value>
+  </data>
+  <data name="Automation.Trigger.AfterSeconds" xml:space="preserve">
+    <value> · nach {0:0} s</value>
+  </data>
+  <data name="Automation.Interval.Hours" xml:space="preserve">
+    <value>{0:0} Stunden</value>
+  </data>
+  <data name="Automation.Interval.Minutes" xml:space="preserve">
+    <value>{0:0} Minuten</value>
+  </data>
+  <data name="Automation.Interval.Seconds" xml:space="preserve">
+    <value>{0:0} Sekunden</value>
+  </data>
+  <data name="Automation.EventBased" xml:space="preserve">
+    <value>Ereignisbasiert</value>
+  </data>
+  <data name="Automation.NotScheduled" xml:space="preserve">
+    <value>Nicht geplant</value>
+  </data>
+  <data name="Automation.NeverRun" xml:space="preserve">
+    <value>Noch nie</value>
+  </data>
+  <data name="Automation.New.Title" xml:space="preserve">
+    <value>Neue Automation</value>
+  </data>
+  <data name="Automation.New.Prompt" xml:space="preserve">
+    <value>Name der neuen Automation:</value>
+  </data>
+  <data name="Automation.Delete.One" xml:space="preserve">
+    <value>Möchten Sie die Automation „{0}“ wirklich löschen?</value>
+  </data>
+  <data name="Automation.Delete.Many" xml:space="preserve">
+    <value>Möchten Sie die {0} ausgewählten Automationen wirklich löschen?</value>
+  </data>
+  <data name="Job.New.Title" xml:space="preserve">
+    <value>Neuer Job</value>
+  </data>
+  <data name="Job.New.Prompt" xml:space="preserve">
+    <value>Name des neuen Jobs:</value>
+  </data>
+  <data name="Job.Delete.One" xml:space="preserve">
+    <value>Möchten Sie den Job „{0}“ wirklich löschen?</value>
+  </data>
+  <data name="Job.Delete.Many" xml:space="preserve">
+    <value>Möchten Sie die {0} ausgewählten Jobs wirklich löschen?</value>
+  </data>
+  <data name="Macro.New.Title" xml:space="preserve">
+    <value>Neues Makro</value>
+  </data>
+  <data name="Macro.New.Prompt" xml:space="preserve">
+    <value>Name des neuen Makros:</value>
+  </data>
+  <data name="Macro.Delete.One" xml:space="preserve">
+    <value>Möchten Sie das Makro „{0}“ wirklich löschen?</value>
+  </data>
+  <data name="Macro.Delete.Many" xml:space="preserve">
+    <value>Möchten Sie die {0} ausgewählten Makros wirklich löschen?</value>
+  </data>
+  <data name="Step.Delete.One" xml:space="preserve">
+    <value>Möchten Sie diesen Step wirklich löschen?</value>
+  </data>
+  <data name="Step.Delete.Many" xml:space="preserve">
+    <value>Möchten Sie die {0} ausgewählten Steps löschen?</value>
+  </data>
+  <data name="Step.Delete.IfBlock" xml:space="preserve">
+    <value>Möchten Sie den If-Block löschen? If, Else-If, Else und End-If werden entfernt; die enthaltenen Steps bleiben erhalten.</value>
+  </data>
+  <data name="Step.Unknown" xml:space="preserve">
+    <value>Unbekannter Step</value>
+  </data>
+  <data name="Step.Edit" xml:space="preserve">
+    <value>Step bearbeiten</value>
+  </data>
+  <data name="Step.Add" xml:space="preserve">
+    <value>Step hinzufügen</value>
+  </data>
+  <data name="Step.ElseIf.Edit" xml:space="preserve">
+    <value>Else-If bearbeiten</value>
+  </data>
+  <data name="Step.ElseIf.Add" xml:space="preserve">
+    <value>Else-If hinzufügen</value>
+  </data>
+  <data name="JobStep.Edit" xml:space="preserve">
+    <value>Job-Step bearbeiten</value>
+  </data>
+  <data name="JobStep.Add" xml:space="preserve">
+    <value>Neuen Job-Step hinzufügen</value>
+  </data>
+  <data name="Execution.Running" xml:space="preserve">
+    <value>läuft</value>
+  </data>
+  <data name="Execution.Finished" xml:space="preserve">
+    <value>beendet</value>
+  </data>
+  <data name="Update.Downloading" xml:space="preserve">
+    <value>Wird heruntergeladen …</value>
+  </data>
+  <data name="Update.DownloadingProgress" xml:space="preserve">
+    <value>Wird heruntergeladen … {0} %</value>
+  </data>
+  <data name="Update.DownloadError" xml:space="preserve">
+    <value>Fehler beim Download oder Entpacken.</value>
+  </data>
+  <data name="Update.Ready" xml:space="preserve">
+    <value>Update bereit. Bitte neu starten.</value>
+  </data>
+  <data name="Update.Error" xml:space="preserve">
+    <value>Fehler beim Update.</value>
+  </data>
+  <data name="Error.JobExecution.Title" xml:space="preserve">
+    <value>Job-Ausführungsfehler</value>
+  </data>
+  <data name="Error.JobExecution.Message" xml:space="preserve">
+    <value>Fehler beim Ausführen des Jobs „{0}“:
+
+{1}</value>
+  </data>
+  <data name="Error.JobStepExecution.Title" xml:space="preserve">
+    <value>Job-Step-Ausführungsfehler</value>
+  </data>
+  <data name="Error.JobStepExecution.Message" xml:space="preserve">
+    <value>Fehler beim Ausführen des Job-Steps:
+
+Job: {0}
+Step: {1}
+
+Fehlermeldung:
+{2}</value>
+  </data>
+  <data name="Condition.Match.All" xml:space="preserve">
+    <value>Alle Bedingungen müssen erfüllt sein</value>
+  </data>
+  <data name="Condition.Match.Any" xml:space="preserve">
+    <value>Mindestens eine Bedingung muss erfüllt sein</value>
+  </data>
+  <data name="Condition.IsTrue" xml:space="preserve">
+    <value>Ist wahr</value>
+  </data>
+  <data name="Condition.IsFalse" xml:space="preserve">
+    <value>Ist falsch</value>
+  </data>
+  <data name="Condition.IsTrue.Lower" xml:space="preserve">
+    <value>ist wahr</value>
+  </data>
+  <data name="Condition.IsFalse.Lower" xml:space="preserve">
+    <value>ist falsch</value>
+  </data>
+  <data name="FilePicker.Template" xml:space="preserve">
+    <value>Template-Datei auswählen</value>
+  </data>
+  <data name="FilePicker.Script" xml:space="preserve">
+    <value>Script-Datei auswählen</value>
+  </data>
+  <data name="FilePicker.Executable" xml:space="preserve">
+    <value>Ausführbare Datei auswählen</value>
+  </data>
+  <data name="FolderPicker.Video" xml:space="preserve">
+    <value>Ordner für Video-Speicherung auswählen</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.Hotkey" xml:space="preserve">
+    <value>Hotkey</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.OnceAt" xml:space="preserve">
+    <value>Einmalig</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.Schedule" xml:space="preserve">
+    <value>Zeitplan</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.Interval" xml:space="preserve">
+    <value>Intervall</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.ProcessStarted" xml:space="preserve">
+    <value>Prozess gestartet</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.ProcessExited" xml:space="preserve">
+    <value>Prozess beendet</value>
+  </data>
+  <data name="Enum.IntervalUnit.Seconds" xml:space="preserve">
+    <value>Sekunden</value>
+  </data>
+  <data name="Enum.IntervalUnit.Minutes" xml:space="preserve">
+    <value>Minuten</value>
+  </data>
+  <data name="Enum.IntervalUnit.Hours" xml:space="preserve">
+    <value>Stunden</value>
+  </data>
+  <data name="Enum.AutomationAlreadyRunningBehavior.StartParallel" xml:space="preserve">
+    <value>Parallel starten</value>
+  </data>
+  <data name="Enum.AutomationAlreadyRunningBehavior.Stop" xml:space="preserve">
+    <value>Stoppen</value>
+  </data>
+  <data name="Enum.AutomationAlreadyRunningBehavior.Ignore" xml:space="preserve">
+    <value>Ignorieren</value>
+  </data>
+  <data name="Enum.AutomationAlreadyRunningBehavior.Restart" xml:space="preserve">
+    <value>Neu starten</value>
+  </data>
+  <data name="Step.Category.Erfassung" xml:space="preserve">
+    <value>Erfassung</value>
+  </data>
+  <data name="Step.Category.Erkennung" xml:space="preserve">
+    <value>Erkennung</value>
+  </data>
+  <data name="Step.Category.Interaktion" xml:space="preserve">
+    <value>Interaktion</value>
+  </data>
+  <data name="Step.Category.Ausgabe" xml:space="preserve">
+    <value>Ausgabe</value>
+  </data>
+  <data name="Step.Category.Automatisierung" xml:space="preserve">
+    <value>Automatisierung</value>
+  </data>
+  <data name="Step.Category.Abfrage" xml:space="preserve">
+    <value>Abfrage</value>
+  </data>
+  <data name="Step.Category.Ablaufsteuerung" xml:space="preserve">
+    <value>Ablaufsteuerung</value>
+  </data>
+  <data name="Step.Type.DesktopDuplication" xml:space="preserve">
+    <value>Desktop-Duplizierung</value>
+  </data>
+  <data name="Step.Type.ProcessCapture" xml:space="preserve">
+    <value>Prozess-Fensteraufnahme</value>
+  </data>
+  <data name="Step.Type.TemplateMatching" xml:space="preserve">
+    <value>Template Matching</value>
+  </data>
+  <data name="Step.Type.ColorDetection" xml:space="preserve">
+    <value>Farberkennung</value>
+  </data>
+  <data name="Step.Type.YoloDetection" xml:space="preserve">
+    <value>YOLO-Erkennung</value>
+  </data>
+  <data name="Step.Type.KeyPointMatching" xml:space="preserve">
+    <value>KeyPoint Matching</value>
+  </data>
+  <data name="Step.Type.PredictMovement" xml:space="preserve">
+    <value>Bewegung vorhersagen</value>
+  </data>
+  <data name="Step.Type.KlickOnPoint" xml:space="preserve">
+    <value>Klick auf Punkt</value>
+  </data>
+  <data name="Step.Type.KlickOnPoint3D" xml:space="preserve">
+    <value>Klick auf Punkt in 3D-Umgebung</value>
+  </data>
+  <data name="Step.Type.MakroExecution" xml:space="preserve">
+    <value>Makro ausführen</value>
+  </data>
+  <data name="Step.Type.ScriptExecution" xml:space="preserve">
+    <value>Skript ausführen</value>
+  </data>
+  <data name="Step.Type.JobExecution" xml:space="preserve">
+    <value>Job starten</value>
+  </data>
+  <data name="Step.Type.Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="Step.Type.ActiveProcess" xml:space="preserve">
+    <value>Ist Prozess aktiv</value>
+  </data>
+  <data name="Step.Type.StartProcess" xml:space="preserve">
+    <value>Prozess starten</value>
+  </data>
+  <data name="Step.Type.FocusProcess" xml:space="preserve">
+    <value>Prozess in Vordergrund</value>
+  </data>
+  <data name="Step.Type.ShowText" xml:space="preserve">
+    <value>Text auf Desktop anzeigen</value>
+  </data>
+  <data name="Step.Type.ActiveWindow" xml:space="preserve">
+    <value>Ist Fenster im Vordergrund</value>
+  </data>
+  <data name="Step.Type.PointComparison" xml:space="preserve">
+    <value>Punkte-Vergleich</value>
+  </data>
+  <data name="Step.Type.ShowImage" xml:space="preserve">
+    <value>Bild anzeigen</value>
+  </data>
+  <data name="Step.Type.ShowOnDesktop" xml:space="preserve">
+    <value>Auf Desktop anzeigen</value>
+  </data>
+  <data name="Step.Type.VideoCreation" xml:space="preserve">
+    <value>Video erstellen</value>
+  </data>
+  <data name="Step.Type.If" xml:space="preserve">
+    <value>If</value>
+  </data>
+  <data name="Step.Type.ElseIf" xml:space="preserve">
+    <value>Else If</value>
+  </data>
+  <data name="Step.Type.Else" xml:space="preserve">
+    <value>Else</value>
+  </data>
+  <data name="Step.Type.EndIf" xml:space="preserve">
+    <value>End If</value>
+  </data>
+  <data name="Step.Type.EndJob" xml:space="preserve">
+    <value>Job beenden</value>
+  </data>
+  <data name="Step.Description.DesktopDuplication" xml:space="preserve">
+    <value>Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle bereit.</value>
+  </data>
+  <data name="Step.Description.TemplateMatching" xml:space="preserve">
+    <value>Vergleicht ein Bild-Template mit der Bildquelle eines Erfassungs-Steps.</value>
+  </data>
+  <data name="Step.Description.ColorDetection" xml:space="preserve">
+    <value>Erkennt eine bestimmte Farbe in einer Bildquelle.</value>
+  </data>
+  <data name="Step.Description.PredictMovement" xml:space="preserve">
+    <value>Berechnet aus vorherigen Erkennungspunkten eine vorhergesagte Zielposition.</value>
+  </data>
+  <data name="Step.Description.YoloDetection" xml:space="preserve">
+    <value>Erkennt Objekte mithilfe eines YOLO-Modells und speichert ihre Position.</value>
+  </data>
+  <data name="Step.Description.KlickOnPoint" xml:space="preserve">
+    <value>Klickt auf den zuletzt erkannten Bildpunkt.</value>
+  </data>
+  <data name="Step.Description.KlickOnPoint3D" xml:space="preserve">
+    <value>Bewegt die Maus per FOV-Berechnung auf ein Zielobjekt und klickt es an.</value>
+  </data>
+  <data name="Step.Description.ShowImage" xml:space="preserve">
+    <value>Zeigt das aktuelle Bild in einem Vorschaufenster an.</value>
+  </data>
+  <data name="Step.Description.ShowOnDesktop" xml:space="preserve">
+    <value>Zeichnet das Erkennungsergebnis als Overlay auf den Desktop.</value>
+  </data>
+  <data name="Step.Description.VideoCreation" xml:space="preserve">
+    <value>Speichert den aktuellen Bildstrom als Videodatei.</value>
+  </data>
+  <data name="Step.Description.MakroExecution" xml:space="preserve">
+    <value>Führt ein zuvor aufgezeichnetes Makro aus.</value>
+  </data>
+  <data name="Step.Description.JobExecution" xml:space="preserve">
+    <value>Startet einen anderen Job und wartet optional auf dessen Abschluss.</value>
+  </data>
+  <data name="Step.Description.ScriptExecution" xml:space="preserve">
+    <value>Führt ein externes PowerShell-, Python- oder Batch-Skript aus.</value>
+  </data>
+  <data name="Step.Description.Timeout" xml:space="preserve">
+    <value>Wartet eine konfigurierbare Zeit, bevor der nächste Step ausgeführt wird.</value>
+  </data>
+  <data name="Step.Description.StartProcess" xml:space="preserve">
+    <value>Startet ein Programm oder eine ausführbare Datei.</value>
+  </data>
+  <data name="Step.Description.FocusProcess" xml:space="preserve">
+    <value>Bringt das Hauptfenster eines laufenden Prozesses in den Vordergrund.</value>
+  </data>
+  <data name="Step.Description.ShowText" xml:space="preserve">
+    <value>Zeigt konfigurierbaren Text auf dem Desktop an.</value>
+  </data>
+  <data name="Step.Description.EndJob" xml:space="preserve">
+    <value>Beendet den aktuellen Job sofort.</value>
+  </data>
+  <data name="Step.Description.ActiveProcess" xml:space="preserve">
+    <value>Prüft, ob ein Prozess aktuell ausgeführt wird.</value>
+  </data>
+  <data name="Step.Description.ActiveWindow" xml:space="preserve">
+    <value>Prüft, ob ein Prozessfenster im Vordergrund ist.</value>
+  </data>
+  <data name="Step.Description.PointComparison" xml:space="preserve">
+    <value>Vergleicht Punkte mit einem Referenzpunkt oder Achsen-Ausdrücken.</value>
+  </data>
+  <data name="Step.Description.KeyPointMatching" xml:space="preserve">
+    <value>Vergleicht SIFT-Keypoints eines Templates mit einer Bildquelle.</value>
+  </data>
+  <data name="Step.Description.If" xml:space="preserve">
+    <value>Beginnt einen bedingten Block.</value>
+  </data>
+  <data name="Error.Title" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="Error.MonitorSelection" xml:space="preserve">
+    <value>Fehler bei der Monitor-Auswahl: {0}</value>
+  </data>
+  <data name="Error.CaptureRoi" xml:space="preserve">
+    <value>Fehler beim Erfassen des Bereichs: {0}</value>
+  </data>
+  <data name="Error.CapturePoint" xml:space="preserve">
+    <value>Fehler beim Erfassen des Punktes: {0}</value>
+  </data>
+  <data name="Macro.Record.Stop" xml:space="preserve">
+    <value>Aufnahme stoppen</value>
+  </data>
+  <data name="Macro.Record.Start" xml:space="preserve">
+    <value>Aufnahme starten</value>
+  </data>
+  <data name="Macro.CaptureClick.Running" xml:space="preserve">
+    <value>Klick-Erfassung läuft …</value>
+  </data>
+  <data name="Macro.CaptureClick.Start" xml:space="preserve">
+    <value>Einzelnen Klick erfassen</value>
+  </data>
+  <data name="Yolo.Downloading" xml:space="preserve">
+    <value>Wird heruntergeladen … {0} %</value>
+  </data>
+  <data name="Yolo.Local" xml:space="preserve">
+    <value>Lokal</value>
+  </data>
+  <data name="Yolo.Installed" xml:space="preserve">
+    <value>Installiert</value>
+  </data>
+  <data name="Yolo.NotInstalled" xml:space="preserve">
+    <value>Nicht installiert</value>
+  </data>
+</root>

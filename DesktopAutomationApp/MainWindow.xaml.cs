@@ -13,6 +13,10 @@ namespace DesktopAutomationApp
 
         private void RestartToUpdate_Click(object sender, RoutedEventArgs e)
         {
+            if (DataContext is not ViewModels.MainViewModel viewModel
+                || !viewModel.PrepareUpdateAndRestart())
+                return;
+
             _allowClose = true;
             Application.Current.Shutdown();
         }

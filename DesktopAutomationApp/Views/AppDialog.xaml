@@ -1,4 +1,4 @@
-<mah:MetroWindow x:Class="DesktopAutomationApp.Views.AppDialog"
+<mah:MetroWindow xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.AppDialog"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
@@ -52,7 +52,7 @@
                     Margin="8,0,0,0"
                     Click="No_Click"
                     Visibility="Collapsed">
-                <TextBlock Text="Nein"/>
+                <TextBlock Text="{loc:Translate Key=Ui.90EBC1BDE6F3}"/>
             </Button>
             <!-- Cancel -->
             <Button x:Name="CancelButton"
@@ -62,7 +62,7 @@
                     Click="Cancel_Click"
                     IsCancel="True"
                     Visibility="Collapsed">
-                <TextBlock Text="Abbrechen"/>
+                <TextBlock Text="{loc:Translate Key=Ui.F7FF1178AF20}"/>
             </Button>
         </StackPanel>
     </Grid>

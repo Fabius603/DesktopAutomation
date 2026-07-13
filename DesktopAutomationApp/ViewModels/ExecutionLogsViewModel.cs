@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using TaskAutomation.Logging;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -221,7 +222,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         public bool IsRunning => EndedAt is null;
-        public string StatusText => IsRunning ? "läuft" : "beendet";
+        public string StatusText => Loc.Get(IsRunning ? "Execution.Running" : "Execution.Finished");
 
         public void Update(ExecutionLogSession session)
         {

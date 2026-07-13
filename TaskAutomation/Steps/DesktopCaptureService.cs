@@ -70,6 +70,8 @@ namespace TaskAutomation.Steps
         {
             var sem = _semaphores.GetOrAdd(monitorIdx, _ => new SemaphoreSlim(1, 1));
             await sem.WaitAsync(ct).ConfigureAwait(false);
+            DesktopFrame? frame = null;
+            DesktopFrame? cachedFallbackFrame = null;
             try
             {
                 ct.ThrowIfCancellationRequested();
@@ -87,8 +89,6 @@ namespace TaskAutomation.Steps
                     ct.ThrowIfCancellationRequested();
                 }
 
-                DesktopFrame? frame = null;
-                DesktopFrame? cachedFallbackFrame = null;
                 int retryCount  = 0;
                 const int maxRetries = 6;
 
@@ -192,6 +192,8 @@ namespace TaskAutomation.Steps
             }
             finally
             {
+                frame?.Dispose();
+                cachedFallbackFrame?.Dispose();
                 sem.Release();
             }
         }

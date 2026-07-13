@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows.Input;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Models;
+using DesktopAutomationApp.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace DesktopAutomationApp.ViewModels
@@ -30,6 +31,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand RunNowCommand { get; }
         public ICommand OpenFolderCommand { get; }
 
         public event Action<EditableAutomation>? RequestOpenAutomation;
@@ -50,6 +52,11 @@ namespace DesktopAutomationApp.ViewModels
                 if (a != null) RequestOpenAutomation?.Invoke(a);
             }, a => a != null);
             DeleteCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
+            RunNowCommand = new RelayCommand<EditableAutomation?>(async automation =>
+            {
+                if (automation != null) await _automationAppService.TriggerAsync(automation.Id);
+                await RefreshAllAsync();
+            }, automation => automation != null && automation.Active);
             OpenFolderCommand = new RelayCommand(() =>
                 Process.Start(new ProcessStartInfo(_automationAppService.GetStoragePath()) { UseShellExecute = true }));
 
@@ -83,7 +90,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task NewAutomationAsync()
         {
-            var name = await _dialogService.AskForNameAsync("Neue Automation", "Name der neuen Automation:");
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Automation.New.Title"), Loc.Get("Automation.New.Prompt"));
             if (string.IsNullOrWhiteSpace(name)) return;
 
             var automation = new EditableAutomation
@@ -102,10 +109,10 @@ namespace DesktopAutomationApp.ViewModels
             if (_selectedItems.Count == 0) return;
 
             var message = _selectedItems.Count == 1
-                ? $"Möchten Sie die Automation '{_selectedItems[0].Name}' wirklich löschen?"
-                : $"Möchten Sie die {_selectedItems.Count} ausgewählten Automationen wirklich löschen?";
+                ? Loc.Format("Automation.Delete.One", _selectedItems[0].Name)
+                : Loc.Format("Automation.Delete.Many", _selectedItems.Count);
 
-            if (!await _dialogService.ConfirmAsync(message, "Löschen bestätigen")) return;
+            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title"))) return;
 
             var toDelete = _selectedItems.ToList();
             foreach (var automation in toDelete)
@@ -123,7 +130,6 @@ namespace DesktopAutomationApp.ViewModels
             if (e.PropertyName != nameof(EditableAutomation.Active)) return;
             if (sender is not EditableAutomation automation) return;
 
-            // TODO Automation: Bei echter Runtime nach Active-Änderung die AutomationEngine neu laden.
             await _automationAppService.SaveAsync(automation.ToDomain());
             _log.LogInformation("Automation Active-Status gespeichert: {Name}", automation.Name);
         }
@@ -132,6 +138,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
+            (RunNowCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
         }
     }
 }

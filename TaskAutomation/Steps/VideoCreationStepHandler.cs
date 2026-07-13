@@ -29,26 +29,21 @@ namespace TaskAutomation.Steps
                 return new OutputResult { WasExecuted = true, Success = false };
             }
 
-            Bitmap frameToAdd;
-            if (step.Settings.UseRawImage)
-            {
-                frameToAdd = (Bitmap)capture.Image.Clone();
-            }
-            else
-            {
-                frameToAdd = detection.Found
-                    ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
-                    : (Bitmap)capture.Image.Clone();
-            }
-
-            ct.ThrowIfCancellationRequested();
+            Bitmap? frameToAdd = null;
             try
             {
+                frameToAdd = step.Settings.UseRawImage
+                    ? (Bitmap)capture.Image.Clone()
+                    : detection.Found
+                        ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
+                        : (Bitmap)capture.Image.Clone();
+
+                ct.ThrowIfCancellationRequested();
                 ctx.VideoRecorder.AddFrame(frameToAdd);
             }
             finally
             {
-                frameToAdd.Dispose();
+                frameToAdd?.Dispose();
             }
             logger.LogDebug("VideoCreationStepHandler: Frame added to video recorder");
 

@@ -2,44 +2,36 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
-using TaskAutomation.Hotkeys;
+using DesktopAutomation.Application.Interfaces;
+using TaskAutomation.Automations;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
     public sealed class StartViewModel : ViewModelBase
     {
-        private readonly IGlobalHotkeyService _hotkeyService;
         private readonly IJobExecutor _executor;
         private readonly IJobDispatcher _dispatcher;
+        private readonly IAutomationApplicationService _automationService;
 
         // --- Stat cards ---
-        private int _activeHotkeyCount;
-        public int ActiveHotkeyCount { get => _activeHotkeyCount; private set => SetProperty(ref _activeHotkeyCount, value); }
-
-        private int _totalHotkeyCount;
-        public int TotalHotkeyCount { get => _totalHotkeyCount; private set => SetProperty(ref _totalHotkeyCount, value); }
-
         private int _totalJobCount;
         public int TotalJobCount { get => _totalJobCount; private set => SetProperty(ref _totalJobCount, value); }
 
         private int _totalMakroCount;
         public int TotalMakroCount { get => _totalMakroCount; private set => SetProperty(ref _totalMakroCount, value); }
 
-        // --- Hotkeys ---
-        public ObservableCollection<HotkeyInfo> ActiveHotkeys { get; } = new();
+        private int _totalAutomationCount;
+        public int TotalAutomationCount { get => _totalAutomationCount; private set => SetProperty(ref _totalAutomationCount, value); }
 
-        private bool _isHotkeysPaused;
-        public bool IsHotkeysPaused
-        {
-            get => _isHotkeysPaused;
-            private set { _isHotkeysPaused = value; OnPropertyChanged(); OnPropertyChanged(nameof(PauseButtonText)); }
-        }
-        public string PauseButtonText => IsHotkeysPaused ? "Hotkeys fortsetzen" : "Hotkeys pausieren";
+        private int _activeAutomationCount;
+        public int ActiveAutomationCount { get => _activeAutomationCount; private set => SetProperty(ref _activeAutomationCount, value); }
+
+        public ObservableCollection<AutomationDashboardInfo> ActiveAutomations { get; } = new();
 
         // --- Running Jobs ---
         public ObservableCollection<RunningJobInfo> RunningJobs { get; } = new();
@@ -65,24 +57,20 @@ namespace DesktopAutomationApp.ViewModels
         public int RunningTotalCount { get => _runningTotalCount; private set => SetProperty(ref _runningTotalCount, value); }
 
         // --- Commands ---
-        public ICommand ToggleHotkeyPauseCommand { get; }
         public ICommand CancelJobCommand { get; }
         public ICommand CancelItemCommand { get; }
         public ICommand StopAllJobsCommand { get; }
         public ICommand RefreshCommand { get; }
 
         public StartViewModel(
-            IGlobalHotkeyService hotkeyService,
             IJobExecutor executor,
-            IJobDispatcher dispatcher)
+            IJobDispatcher dispatcher,
+            IAutomationApplicationService automationService)
         {
-            _hotkeyService = hotkeyService;
             _executor = executor;
             _dispatcher = dispatcher;
+            _automationService = automationService;
 
-            var assembly = Assembly.GetEntryAssembly();
-
-            ToggleHotkeyPauseCommand = new RelayCommand(TogglePause);
             CancelJobCommand = new RelayCommand<object?>(param =>
             {
                 if (param is Guid id)
@@ -104,39 +92,43 @@ namespace DesktopAutomationApp.ViewModels
                 foreach (var id in _dispatcher.RunningMakroIds.ToList())
                     _dispatcher.CancelMakro(id);
             }, () => RunningTotalCount > 0);
-            RefreshCommand = new RelayCommand(Refresh);
+            RefreshCommand = new RelayCommand(async () => await RefreshAsync());
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
-            _hotkeyService.HotkeysChanged += OnHotkeysChanged;
 
-            Refresh();
+            _ = RefreshAsync();
         }
 
-        public void Refresh()
+        public async Task RefreshAsync()
         {
-            RefreshHotkeys();
             RefreshRunningJobs();
             RefreshRunningMakros();
             RefreshCounts();
+            await RefreshAutomationsAsync();
         }
 
-        private void RefreshHotkeys()
+        private async Task RefreshAutomationsAsync()
         {
-            IsHotkeysPaused = _hotkeyService.IsPaused;
+            var automations = await _automationService.LoadAllAsync();
+            TotalAutomationCount = automations.Count;
+            ActiveAutomationCount = automations.Count(a => a.Active);
 
-            ActiveHotkeys.Clear();
-            foreach (var hk in _hotkeyService.Hotkeys.Values.OrderBy(h => h.Name))
+            ActiveAutomations.Clear();
+            foreach (var automation in automations
+                         .Where(a => a.Active)
+                         .OrderBy(a => a.Runtime.NextRunAt ?? DateTimeOffset.MaxValue)
+                         .ThenBy(a => a.Name))
             {
-                ActiveHotkeys.Add(new HotkeyInfo
+                ActiveAutomations.Add(new AutomationDashboardInfo
                 {
-                    Name = hk.Name,
-                    Trigger = _hotkeyService.FormatKey(hk.Modifiers, hk.VirtualKeyCode),
-                    ActionName = hk.Job?.Name ?? "",
-                    Command = hk.Job?.Command.ToString() ?? ""
+                    Name = automation.Name,
+                    Trigger = AutomationDisplayFormatter.Trigger(automation.Trigger),
+                    Action = AutomationDisplayFormatter.Action(automation.Action),
+                    LastRun = automation.Runtime.LastRunAt?.LocalDateTime.ToString("g", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.NeverRun"),
+                    NextRun = automation.Runtime.NextRunAt?.LocalDateTime.ToString("g", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.EventBased")
                 });
             }
-            ActiveHotkeyCount = ActiveHotkeys.Count;
         }
 
         private void RefreshRunningJobs()
@@ -176,15 +168,8 @@ namespace DesktopAutomationApp.ViewModels
 
         private void RefreshCounts()
         {
-            TotalHotkeyCount = _hotkeyService.Hotkeys.Count;
             TotalJobCount = _executor.AllJobs.Count;
             TotalMakroCount = _executor.AllMakros.Count;
-        }
-
-        private void TogglePause()
-        {
-            _hotkeyService.SetPaused(!_hotkeyService.IsPaused);
-            IsHotkeysPaused = _hotkeyService.IsPaused;
         }
 
         private void OnRunningJobsChanged()
@@ -237,39 +222,30 @@ namespace DesktopAutomationApp.ViewModels
             });
         }
 
-        private void OnHotkeysChanged()
-        {
-            Application.Current?.Dispatcher?.InvokeAsync(() =>
-            {
-                RefreshHotkeys();
-                RefreshCounts();
-            });
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
                 _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
-                _hotkeyService.HotkeysChanged -= OnHotkeysChanged;
             }
             base.Dispose(disposing);
         }
-    }
-
-    public sealed class HotkeyInfo
-    {
-        public string Name { get; init; } = "";
-        public string Trigger { get; init; } = "";
-        public string ActionName { get; init; } = "";
-        public string Command { get; init; } = "";
     }
 
     public sealed class RunningJobInfo
     {
         public Guid Id { get; init; }
         public string Name { get; init; } = "";
+    }
+
+    public sealed class AutomationDashboardInfo
+    {
+        public string Name { get; init; } = string.Empty;
+        public string Trigger { get; init; } = string.Empty;
+        public string Action { get; init; } = string.Empty;
+        public string LastRun { get; init; } = string.Empty;
+        public string NextRun { get; init; } = string.Empty;
     }
 
     /// <summary>Gruppenzeile in der "Laufende Jobs"-Liste: ein Eintrag pro Job-Definition, mit Instanz-Zähler.</summary>

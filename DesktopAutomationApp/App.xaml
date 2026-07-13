@@ -27,7 +27,6 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converter -->
-            <conv:HotkeyDisplayConverter x:Key="HotkeyDisplayConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
             <conv:InverseBooleanToContentConverter x:Key="InverseBooleanToContentConverter" />
@@ -39,6 +38,7 @@
             <conv:ConditionMatchModeConverter x:Key="ConditionMatchModeConverter" />
             <conv:PointAxisOperatorConverter x:Key="PointAxisOperatorConverter" />
             <conv:MaxSizeDisplayConverter x:Key="MaxSizeDisplayConverter" />
+            <conv:LocalizedEnumConverter x:Key="LocalizedEnumConverter" />
 
             <!-- ViewModel -> View Mapping -->
             <DataTemplate DataType="{x:Type vm:StartViewModel}">
@@ -67,6 +67,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ExecutionLogsViewModel}">
                 <views:ExecutionLogsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <views:SettingsView/>
             </DataTemplate>
 
         </ResourceDictionary>

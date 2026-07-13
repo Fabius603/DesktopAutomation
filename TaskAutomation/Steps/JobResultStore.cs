@@ -37,8 +37,15 @@ namespace TaskAutomation.Steps
         public void Set<TStep>(StepResultBase result, string stepId)
             where TStep : JobStep
         {
+            _byType.TryGetValue(typeof(TStep), out var previousByType);
+            _byId.TryGetValue(stepId, out var previousById);
+
             _byType[typeof(TStep)] = result;
             _byId[stepId]         = result;
+
+            DisposeIfUnreferenced(previousByType, result);
+            if (!ReferenceEquals(previousById, previousByType))
+                DisposeIfUnreferenced(previousById, result);
         }
 
         public StepResultBase? GetRaw(string stepId)
@@ -53,17 +60,30 @@ namespace TaskAutomation.Steps
         internal void DisposeAndClear()
         {
             foreach (var result in _byType.Values.Concat(_byId.Values).Distinct(ReferenceEqualityComparer.Instance))
-            {
-                switch (result)
-                {
-                    case CaptureResult cr:
-                        cr.Image?.Dispose();
-                        cr.ProcessedImage?.Dispose();
-                        break;
-                }
-            }
+                DisposeResult(result);
             _byType.Clear();
             _byId.Clear();
+        }
+
+        private void DisposeIfUnreferenced(StepResultBase? previous, StepResultBase replacement)
+        {
+            if (previous == null || ReferenceEquals(previous, replacement))
+                return;
+
+            bool stillReferenced = _byType.Values.Any(value => ReferenceEquals(value, previous))
+                || _byId.Values.Any(value => ReferenceEquals(value, previous));
+            if (!stillReferenced)
+                DisposeResult(previous);
+        }
+
+        private static void DisposeResult(StepResultBase result)
+        {
+            if (result is not CaptureResult capture)
+                return;
+
+            capture.Image?.Dispose();
+            if (!ReferenceEquals(capture.ProcessedImage, capture.Image))
+                capture.ProcessedImage?.Dispose();
         }
 
         private sealed class ReferenceEqualityComparer : IEqualityComparer<StepResultBase>

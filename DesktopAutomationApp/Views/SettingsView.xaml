@@ -1,0 +1,48 @@
+<UserControl x:Class="DesktopAutomationApp.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             Style="{StaticResource ContentViewBase}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="{loc:Translate Settings.Title}" Style="{StaticResource PageTitle}" Margin="0,0,0,18"/>
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Translate Settings.Language}" Style="{StaticResource Heading2}"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
+                              ItemsSource="{Binding Languages}" DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                    <TextBlock Grid.Row="1" Text="{loc:Translate Settings.Language.Description}" Margin="0,16,16,0"
+                               Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap"/>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{loc:Translate Settings.Appearance}" Style="{StaticResource Heading2}"/>
+                    <TextBlock Grid.Row="1" Text="{loc:Translate Settings.Theme}" Margin="0,16,16,0" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
+                              ItemsSource="{Binding Themes}" DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"/>
+                    <TextBlock Grid.Row="2" Text="{loc:Translate Settings.Accent}" Margin="0,16,16,0" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Accents}" SelectedItem="{Binding SelectedAccent, Mode=TwoWay}"
+                              Width="180" HorizontalAlignment="Left" Margin="0,12,0,0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="18" Height="18" Fill="{Binding Color}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -2,6 +2,7 @@ using MahApps.Metro.Controls;
 using MahApps.Metro.IconPacks;
 using System.Windows;
 using System.Windows.Input;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Views
 {
@@ -17,7 +18,7 @@ namespace DesktopAutomationApp.Views
             NameBox.Text = initialValue ?? string.Empty;
 
             bool isRename = !string.IsNullOrWhiteSpace(initialValue);
-            OkText.Text = isRename ? "Umbenennen" : "Erstellen";
+            OkText.Text = isRename ? Loc.Get("Common.Rename") : Loc.Get("Common.Create");
             OkIcon.Kind = isRename ? PackIconMaterialKind.Pencil : PackIconMaterialKind.Plus;
 
             Loaded += (_, _) => { NameBox.Focus(); NameBox.SelectAll(); };

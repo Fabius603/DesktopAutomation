@@ -11,7 +11,6 @@ using Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskAutomation.Jobs;
-using Common.JsonRepository;
 
 namespace TaskAutomation.Hotkeys
 {
@@ -87,13 +86,12 @@ namespace TaskAutomation.Hotkeys
 
         // DI
         private readonly ILogger<GlobalHotkeyService> _logger;
-        private readonly IJsonRepository<HotkeyDefinition> _repository;
 
         // Maximale Anzahl an Worker-Threads
         private const int _maxWorkerThreads = 4;
 
         // Datenstrukturen
-        private readonly Dictionary<Guid, HotkeyDefinition> _definitions;
+        private readonly ConcurrentDictionary<Guid, (KeyModifiers Modifiers, uint VirtualKeyCode)> _automationHotkeys = new();
         private readonly BlockingCollection<Action> _workQueue = new();
         private readonly Thread[] _workers;
 
@@ -104,7 +102,7 @@ namespace TaskAutomation.Hotkeys
         private readonly LowLevelMouseProc _mouseHookCallback;
         private IntPtr _mouseHookId = IntPtr.Zero;
 
-        public event EventHandler<HotkeyPressedEventArgs>? HotkeyPressed;
+        public event Action<Guid>? AutomationHotkeyPressed;
 
         // Captured Input Events für Makro-Aufnahme
         public event Action<MouseDownCaptured>? MouseDownCaptured;
@@ -113,8 +111,6 @@ namespace TaskAutomation.Hotkeys
 
         // Edge-Only: welche VKs sind aktuell gedrückt (um Auto-Repeat zu ignorieren)
         private readonly HashSet<uint> _downKeys = new();
-
-        public IReadOnlyDictionary<Guid, HotkeyDefinition> Hotkeys => _definitions;
 
         public bool IsPaused => _isPaused;
 
@@ -125,7 +121,6 @@ namespace TaskAutomation.Hotkeys
             PausedChanged?.Invoke();
         }
 
-        public event Action? HotkeysChanged;
         public event Action? PausedChanged;
         public event Action? EmergencyStopPressed;
 
@@ -143,11 +138,9 @@ namespace TaskAutomation.Hotkeys
         private (int x, int y) _lastMousePos = (-1, -1);
         private const int MouseMoveThreshold = 5; // Mindestabstand in Pixeln
 
-        public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger, IJsonRepository<HotkeyDefinition> repo)
+        public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger)
         {
             _logger = logger;
-            _repository = repo;
-            _definitions = new();
             _hookCallback = HookCallback;
             _mouseHookCallback = MouseHookCallback;
             _workers = new Thread[_maxWorkerThreads];
@@ -165,7 +158,6 @@ namespace TaskAutomation.Hotkeys
 
             // Message Loop starten
             StartWithMessageLoop();
-            _ = ReloadFromRepositoryAsync();
 
             _logger.LogInformation("GlobalHotkeyService initialisiert mit {WorkerCount} Worker-Threads.", _maxWorkerThreads);
         }
@@ -196,55 +188,20 @@ namespace TaskAutomation.Hotkeys
             return _captureTcs!.Task;
         }
 
-        /// <summary>
-        /// Registriert einen Hotkey mit zugehörigem Action-Namen.
-        /// </summary>
-        public void RegisterHotkey(string name, KeyModifiers modifiers, uint virtualKeyCode, JobReference job, Guid? id = null)
+        public void RegisterAutomationHotkey(Guid automationId, KeyModifiers modifiers, uint virtualKeyCode)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Name darf nicht leer sein.", nameof(name));
-            if (string.IsNullOrWhiteSpace(job.Name))
-                throw new ArgumentException("ActionName darf nicht leer sein.", nameof(job.Name));
-
+            if (virtualKeyCode == 0)
+                throw new ArgumentException("Ein Automation-Hotkey benötigt eine Taste.", nameof(virtualKeyCode));
             if (IsModifierVk(virtualKeyCode) && modifiers == KeyModifiers.None)
                 throw new ArgumentException("Ein Modifier darf nicht allein als Hotkey registriert werden.", nameof(virtualKeyCode));
 
-            var def = new HotkeyDefinition(name, modifiers, virtualKeyCode, job);
-            if (id.HasValue) def.Id = id.Value;
-            _definitions[def.Id] = def;
-            _logger.LogInformation("Hotkey registriert: {Name} (ID: {Id}) => Job '{JobName}', Command '{JobCommand}'",
-                name, def.Id, job.Name, job.Command);
+            _automationHotkeys[automationId] = (modifiers, virtualKeyCode);
+            _logger.LogInformation("Automation-Hotkey registriert: {AutomationId}", automationId);
         }
 
-        public void UnregisterHotkey(Guid id)
+        public void UnregisterAutomationHotkey(Guid automationId)
         {
-            _definitions.Remove(id);
-            _logger.LogInformation("Hotkey (ID: {Id}) entfernt.", id);
-        }
-
-        public void UnregisterAllHotkeys()
-        {
-            _definitions.Clear();
-            _logger.LogInformation("Alle Hotkeys entfernt.");
-        }
-
-        public async Task ReloadFromRepositoryAsync()
-        {
-            try
-            {
-                var entries = await _repository.LoadAllAsync().ConfigureAwait(false);
-
-                UnregisterAllHotkeys();
-                foreach (var e in entries)
-                    if (e.Active)
-                        RegisterHotkey(e.Name, e.Modifiers, e.VirtualKeyCode, e.Job, e.Id);
-
-                HotkeysChanged?.Invoke();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fehler beim Laden der Hotkeys aus dem Repository.");
-            }
+            _automationHotkeys.TryRemove(automationId, out _);
         }
 
         /// <summary>
@@ -405,24 +362,18 @@ namespace TaskAutomation.Hotkeys
         {
             if (_isPaused) return false;
 
-            foreach (var def in _definitions.Values)
+            var matched = false;
+            foreach (var automation in _automationHotkeys)
             {
-                if (!def.Active) continue;
-                if (def.VirtualKeyCode != vk) continue;
+                if (automation.Value.VirtualKeyCode != vk || automation.Value.Modifiers != mods)
+                    continue;
 
-                // exakte Mod-Kongruenz
-                if (def.Modifiers == mods)
-                {
-                    _workQueue.Add(() =>
-                        HotkeyPressed?.Invoke(this, new HotkeyPressedEventArgs(def.Job))
-                    );
-
-                    _logger.LogDebug("Hotkey erkannt: {Name} (Job: {JobName}, Command: {Command})",
-                        def.Name, def.Job.Name, def.Job.Command);
-                    return true;
-                }
+                var automationId = automation.Key;
+                _workQueue.Add(() => AutomationHotkeyPressed?.Invoke(automationId));
+                matched = true;
             }
-            return false;
+
+            return matched;
         }
 
         /// <summary>

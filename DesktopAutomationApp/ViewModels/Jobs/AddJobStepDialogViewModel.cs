@@ -18,6 +18,7 @@ using Microsoft.Win32;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -191,10 +192,10 @@ namespace DesktopAutomationApp.ViewModels
         public string DialogTitle =>
             IsTypeLocked
                 ? (SelectedType == "ElseIf"
-                    ? (Mode == StepDialogMode.Edit ? "Else-If bearbeiten" : "Else-If hinzufügen")
-                    : (Mode == StepDialogMode.Edit ? "Step bearbeiten" : "Step hinzufügen"))
-                : (Mode == StepDialogMode.Edit ? "Job-Step bearbeiten" : "Neuen Job-Step hinzufügen");
-        public string ConfirmButtonText => Mode == StepDialogMode.Edit ? "Übernehmen" : "Hinzufügen";
+                    ? Loc.Get(Mode == StepDialogMode.Edit ? "Step.ElseIf.Edit" : "Step.ElseIf.Add")
+                    : Loc.Get(Mode == StepDialogMode.Edit ? "Step.Edit" : "Step.Add"))
+                : Loc.Get(Mode == StepDialogMode.Edit ? "JobStep.Edit" : "JobStep.Add");
+        public string ConfirmButtonText => Loc.Get(Mode == StepDialogMode.Edit ? "Common.Apply" : "Common.Add");
 
         // ----- Commands -----
         public ICommand ConfirmCommand { get; }
@@ -380,10 +381,23 @@ namespace DesktopAutomationApp.ViewModels
 
         // ----- Step-Auswahl -----
         /// <param name="Description">Text, der im Dialog unterhalb des Typ-Selektors angezeigt wird.</param>
-        public record StepTypeItem(string Name, string Category, string Description = "")
+        public sealed class StepTypeItem
         {
-            /// <summary>Liest den Anzeigenamen ausschließlich aus <see cref="TaskAutomation.Steps.StepPipelineRegistry"/>.</summary>
-            public string DisplayLabel => TaskAutomation.Steps.StepPipelineRegistry.GetByName(Name)?.DisplayName ?? Name;
+            private readonly string _category;
+            private readonly string _description;
+            public string Name { get; }
+            public string Category => LocalizedOrFallback($"Step.Category.{_category}", _category);
+            public string Description => LocalizedOrFallback($"Step.Description.{Name}", _description);
+            public string DisplayLabel => LocalizedOrFallback($"Step.Type.{Name}", TaskAutomation.Steps.StepPipelineRegistry.GetByName(Name)?.DisplayName ?? Name);
+
+            public StepTypeItem(string name, string category, string description = "")
+                { Name = name; _category = category; _description = description; }
+
+            private static string LocalizedOrFallback(string key, string fallback)
+            {
+                var value = LocalizationService.Instance[key];
+                return value == $"[{key}]" ? fallback : value;
+            }
         }
 
         public ListCollectionView StepTypeItems { get; } = CreateStepTypeItems();
@@ -907,7 +921,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Template-Datei auswählen",
+                Title = Loc.Get("FilePicker.Template"),
                 Filter = "Bilder (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|Alle Dateien (*.*)|*.*",
                 CheckFileExists = true,
                 Multiselect = false
@@ -923,7 +937,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Script-Datei auswählen",
+                Title = Loc.Get("FilePicker.Script"),
                 Filter =
                     "Skripte (*.ps1;*.bat;*.cmd;*.sh;*.py;*.js;*.vbs;*.wsf;*.exe)|*.ps1;*.bat;*.cmd;*.sh;*.py;*.js;*.vbs;*.wsf;*.exe|" +
                     "Alle Dateien (*.*)|*.*",
@@ -941,7 +955,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Ausführbare Datei auswählen",
+                Title = Loc.Get("FilePicker.Executable"),
                 Filter = "Programme (*.exe;*.bat;*.cmd;*.ps1)|*.exe;*.bat;*.cmd;*.ps1|Alle Dateien (*.*)|*.*",
                 CheckFileExists = true,
                 Multiselect = false
@@ -957,7 +971,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Ausführbare Datei auswählen",
+                Title = Loc.Get("FilePicker.Executable"),
                 Filter = "Programme (*.exe;*.bat;*.cmd;*.ps1)|*.exe;*.bat;*.cmd;*.ps1|Alle Dateien (*.*)|*.*",
                 CheckFileExists = true,
                 Multiselect = false
@@ -973,7 +987,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var folderDialog = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "Ordner für Video-Speicherung auswählen",
+                Description = Loc.Get("FolderPicker.Video"),
                 UseDescriptionForTitle = true,
                 ShowNewFolderButton = true
             };
@@ -996,7 +1010,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             catch (Exception ex)
             {
-                AppDialog.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.MonitorSelection", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1013,7 +1027,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             catch (Exception ex)
             {
-                AppDialog.Show($"Fehler bei der Monitor-Auswahl: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.MonitorSelection", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1135,7 +1149,7 @@ namespace DesktopAutomationApp.ViewModels
             catch (Exception ex)
             {
                 // Handle actual errors
-                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.CaptureRoi", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1160,7 +1174,7 @@ namespace DesktopAutomationApp.ViewModels
             catch (Exception ex)
             {
                 // Handle actual errors
-                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.CaptureRoi", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1183,7 +1197,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             catch (Exception ex)
             {
-                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.CaptureRoi", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1203,7 +1217,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             catch (Exception ex)
             {
-                AppDialog.Show($"Error capturing point: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.CapturePoint", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -1612,7 +1626,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
-                Title = "Template-Datei auswählen",
+                Title = Loc.Get("FilePicker.Template"),
                 Filter = "Bilder (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|Alle Dateien (*.*)|*.*",
                 CheckFileExists = true,
                 Multiselect = false
@@ -1635,7 +1649,7 @@ namespace DesktopAutomationApp.ViewModels
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                AppDialog.Show($"Error capturing ROI: {ex.Message}", "Fehler",
+                AppDialog.Show(Loc.Format("Error.CaptureRoi", ex.Message), Loc.Get("Error.Title"),
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }

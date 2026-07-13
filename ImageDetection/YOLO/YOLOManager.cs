@@ -163,7 +163,7 @@ namespace ImageDetection.YOLO
                 // CPU direkt, falls ausdrücklich gewünscht
                 if (_opt.GpuBackend == YoloGpuBackend.Cpu)
                 {
-                    var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    using var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
                     _logger.LogInformation("CPU requested explicitly.");
                     return CreateWith(soCpu, "CPUExecutionProvider");
                 }
@@ -184,7 +184,7 @@ namespace ImageDetection.YOLO
                 {
                     try
                     {
-                        var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                        using var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
                         soCuda.AppendExecutionProvider_CUDA();
                         _logger.LogInformation("Using CUDAExecutionProvider (detected as available)");
                         return CreateWith(soCuda, "CUDAExecutionProvider");
@@ -222,7 +222,7 @@ namespace ImageDetection.YOLO
                             try
                             {
                                 _logger.LogInformation("Trying CUDA as fallback for DirectML failure");
-                                var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                                using var soCuda = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
                                 soCuda.AppendExecutionProvider_CUDA();
                                 return CreateWith(soCuda, "CUDAExecutionProvider (DirectML fallback)");
                             }
@@ -242,7 +242,7 @@ namespace ImageDetection.YOLO
                 // 3) CPU (Fallback)
                 try
                 {
-                    var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
+                    using var soCpu = new SessionOptions { GraphOptimizationLevel = _opt.Optimization };
                     _logger.LogInformation("Using CPUExecutionProvider (fallback)");
                     return CreateWith(soCpu, "CPUExecutionProvider");
                 }
@@ -425,8 +425,16 @@ namespace ImageDetection.YOLO
             var model = await _downloader.DownloadModelAsync(modelKey, ct).ConfigureAwait(false);
 
             var session = await CreateSessionAsync(model, ct).ConfigureAwait(false);
-            var labelList = _labels.GetLabels(modelKey, model.OnnxPath);
-            return (model, session, labelList);
+            try
+            {
+                var labelList = _labels.GetLabels(modelKey, model.OnnxPath);
+                return (model, session, labelList);
+            }
+            catch
+            {
+                session.Dispose();
+                throw;
+            }
         }
 
         // ------------ Utilities ------------
@@ -683,8 +691,7 @@ namespace ImageDetection.YOLO
                 {
                     try
                     {
-                        var t = kv.Value.Value;
-                        if (t.IsCompletedSuccessfully) t.Result.session.Dispose();
+                        DisposeSessionWhenReady(kv.Value.Value);
                     }
                     catch { /* ignore */ }
                 }
@@ -717,12 +724,8 @@ namespace ImageDetection.YOLO
             {
                 try
                 {
-                    var task = lazy.Value;
-                    if (task.IsCompletedSuccessfully)
-                    {
-                        task.Result.session.Dispose();
-                        return true;
-                    }
+                    DisposeSessionWhenReady(lazy.Value);
+                    return true;
                 }
                 catch
                 {
@@ -730,6 +733,27 @@ namespace ImageDetection.YOLO
                 }
             }
             return false;
+        }
+
+        private static void DisposeSessionWhenReady(
+            Task<(YOLOModel model, InferenceSession session, IReadOnlyList<string> labels)> task)
+        {
+            if (task.IsCompleted)
+            {
+                if (task.IsCompletedSuccessfully)
+                    task.Result.session.Dispose();
+                return;
+            }
+
+            _ = task.ContinueWith(
+                static completed =>
+                {
+                    if (completed.IsCompletedSuccessfully)
+                        completed.Result.session.Dispose();
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
 
         public ValueTask DisposeAsync()

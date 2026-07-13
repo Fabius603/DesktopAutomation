@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -16,8 +17,8 @@ namespace DesktopAutomationApp.Converters
             {
                 return op switch
                 {
-                    ConditionOperator.IsTrue             => "Ist wahr",
-                    ConditionOperator.IsFalse            => "Ist falsch",
+                    ConditionOperator.IsTrue             => Loc.Get("Condition.IsTrue"),
+                    ConditionOperator.IsFalse            => Loc.Get("Condition.IsFalse"),
                     ConditionOperator.Equals             => "=",
                     ConditionOperator.NotEquals          => "≠",
                     ConditionOperator.GreaterThan        => ">",

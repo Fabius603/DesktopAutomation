@@ -7,6 +7,7 @@ using DesktopAutomationApp.Models;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -18,6 +19,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IJobApplicationService _jobAppService;
         private readonly IMakroApplicationService _makroAppService;
+        private readonly IGlobalHotkeyService _hotkeyService;
         private readonly ILogger<AutomationDetailViewModel> _log;
         private readonly EditableAutomation _snapshot;
         private readonly bool _isNew;
@@ -28,7 +30,6 @@ namespace DesktopAutomationApp.ViewModels
         public EditableAutomation EditedAutomation { get; }
         public string Title => EditedAutomation.Name;
         public ObservableCollection<AutomationTriggerKind> TriggerKinds { get; } = new();
-        public ObservableCollection<ActionCommand> AvailableCommands { get; } = new();
         public ObservableCollection<AutomationAlreadyRunningBehavior> RunningBehaviors { get; } = new();
         public ObservableCollection<IntervalUnit> IntervalUnits { get; } = new();
         public ObservableCollection<ActionItem> Actions { get; } = new();
@@ -44,13 +45,13 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     if (value.Category == "Makro")
                     {
-                        EditedAutomation.Action.ActionType = HotkeyActionType.Makro;
+                        EditedAutomation.Action.ActionType = AutomationActionTarget.Makro;
                         EditedAutomation.Action.MakroId = value.Id;
                         EditedAutomation.Action.JobId = null;
                     }
                     else
                     {
-                        EditedAutomation.Action.ActionType = HotkeyActionType.Job;
+                        EditedAutomation.Action.ActionType = AutomationActionTarget.Job;
                         EditedAutomation.Action.JobId = value.Id;
                         EditedAutomation.Action.MakroId = null;
                     }
@@ -70,6 +71,20 @@ namespace DesktopAutomationApp.ViewModels
             private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
+        private bool _isCapturingHotkey;
+        public bool IsCapturingHotkey
+        {
+            get => _isCapturingHotkey;
+            private set
+            {
+                if (_isCapturingHotkey == value) return;
+                SetProperty(ref _isCapturingHotkey, value);
+                OnPropertyChanged(nameof(HotkeyCaptureStatus));
+                (CaptureHotkeyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+        public string HotkeyCaptureStatus => IsCapturingHotkey ? Loc.Get("Automation.Hotkey.CapturePrompt") : string.Empty;
+
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -84,6 +99,7 @@ namespace DesktopAutomationApp.ViewModels
             IDialogService dialogService,
             IJobApplicationService jobAppService,
             IMakroApplicationService makroAppService,
+            IGlobalHotkeyService hotkeyService,
             ILogger<AutomationDetailViewModel> log)
         {
             EditedAutomation = automation ?? throw new ArgumentNullException(nameof(automation));
@@ -91,18 +107,18 @@ namespace DesktopAutomationApp.ViewModels
             _dialogService = dialogService;
             _jobAppService = jobAppService;
             _makroAppService = makroAppService;
+            _hotkeyService = hotkeyService;
             _log = log;
             _isNew = automation.CreatedAt == automation.UpdatedAt && string.IsNullOrWhiteSpace(automation.Action.Name);
             _snapshot = automation.Clone();
 
             foreach (AutomationTriggerKind kind in Enum.GetValues(typeof(AutomationTriggerKind)))
                 TriggerKinds.Add(kind);
-            foreach (ActionCommand command in Enum.GetValues(typeof(ActionCommand)))
-                AvailableCommands.Add(command);
-            foreach (AutomationAlreadyRunningBehavior behavior in Enum.GetValues(typeof(AutomationAlreadyRunningBehavior)))
-                RunningBehaviors.Add(behavior);
             foreach (IntervalUnit unit in Enum.GetValues(typeof(IntervalUnit)))
                 IntervalUnits.Add(unit);
+
+            foreach (AutomationAlreadyRunningBehavior behavior in Enum.GetValues(typeof(AutomationAlreadyRunningBehavior)))
+                RunningBehaviors.Add(behavior);
 
             ActionsView = new ListCollectionView(Actions);
             ActionsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ActionItem.Category)));
@@ -111,7 +127,7 @@ namespace DesktopAutomationApp.ViewModels
             SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await RenameAsync());
-            CaptureHotkeyCommand = new RelayCommand(CaptureHotkeyDummy);
+            CaptureHotkeyCommand = new RelayCommand(async () => await CaptureHotkeyAsync(), () => !IsCapturingHotkey);
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
             EditedAutomation.Action.PropertyChanged += OnEditedActionChanged;
@@ -129,12 +145,11 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var makro in _makroAppService.Makros.Values.OrderBy(m => m.Name))
                 Actions.Add(new ActionItem(makro.Name, makro.Id, "Makro"));
 
-            EditedAutomation.Action.SetJobNameResolver(GetCurrentActionName);
         }
 
         private void ResolveSelectedAction()
         {
-            if (EditedAutomation.Action.ActionType == HotkeyActionType.Makro && EditedAutomation.Action.MakroId.HasValue)
+            if (EditedAutomation.Action.ActionType == AutomationActionTarget.Makro && EditedAutomation.Action.MakroId.HasValue)
             {
                 _selectedAction = Actions.FirstOrDefault(a => a.Category == "Makro" && a.Id == EditedAutomation.Action.MakroId.Value);
             }
@@ -151,34 +166,30 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(SelectedAction));
         }
 
-        private string GetCurrentActionName(EditableJobReference action)
+        private async Task CaptureHotkeyAsync()
         {
-            if (action.ActionType == HotkeyActionType.Makro && action.MakroId.HasValue)
+            try
             {
-                var makro = Actions.FirstOrDefault(a => a.Category == "Makro" && a.Id == action.MakroId.Value);
-                return makro?.Name ?? $"[Makro nicht gefunden: {action.MakroId}]";
+                IsCapturingHotkey = true;
+                var captured = await _hotkeyService.CaptureNextAsync();
+                EditedAutomation.Modifiers = captured.Modifiers;
+                EditedAutomation.VirtualKeyCode = captured.VirtualKeyCode;
+                HasUnsavedChanges = true;
             }
-
-            if (action.JobId.HasValue)
+            catch (Exception ex)
             {
-                var job = Actions.FirstOrDefault(a => a.Category == "Job" && a.Id == action.JobId.Value);
-                return job?.Name ?? $"[Job nicht gefunden: {action.JobId}]";
+                _log.LogError(ex, "Hotkey konnte nicht erfasst werden.");
+                _dialogService.ShowError(Loc.Get("Automation.Hotkey.CaptureError"), Loc.Get("Automation.Hotkey.CaptureTitle"));
             }
-
-            return action.Name;
-        }
-
-        private void CaptureHotkeyDummy()
-        {
-            // TODO Automation: Durch echte Hotkey-Erfassung über GlobalHotkeyService.CaptureNextAsync ersetzen.
-            EditedAutomation.Modifiers = KeyModifiers.Control | KeyModifiers.Alt;
-            EditedAutomation.VirtualKeyCode = 0x41;
-            HasUnsavedChanges = true;
+            finally
+            {
+                IsCapturingHotkey = false;
+            }
         }
 
         private async Task RenameAsync()
         {
-            var newName = await _dialogService.AskForNameAsync("Umbenennen", "Neuer Name:", EditedAutomation.Name);
+            var newName = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), EditedAutomation.Name);
             if (newName == null) return;
 
             EditedAutomation.Name = newName.Trim();
@@ -191,11 +202,10 @@ namespace DesktopAutomationApp.ViewModels
             var error = ValidateEdited();
             if (error != null)
             {
-                _dialogService.ShowError(error, "Validierungsfehler");
+                _dialogService.ShowError(error, Loc.Get("Validation.Title"));
                 return;
             }
 
-            // TODO Automation: Speichern ruft aktuell nur den Dummy-/Repository-Service auf, keine Runtime-Registrierung.
             await _automationAppService.SaveAsync(EditedAutomation.ToDomain());
             _log.LogInformation("Automation gespeichert: {Name}", EditedAutomation.Name);
             HasUnsavedChanges = false;
@@ -210,17 +220,20 @@ namespace DesktopAutomationApp.ViewModels
 
         private string? ValidateEdited()
         {
-            if (string.IsNullOrWhiteSpace(EditedAutomation.Name)) return "Name ist erforderlich.";
-            if (SelectedAction == null) return "Bitte eine Aktion (Job oder Makro) auswählen.";
+            if (string.IsNullOrWhiteSpace(EditedAutomation.Name)) return Loc.Get("Validation.NameRequired");
+            if (SelectedAction == null) return Loc.Get("Validation.ActionRequired");
             if (EditedAutomation.TriggerKind == AutomationTriggerKind.Hotkey && EditedAutomation.VirtualKeyCode == 0)
-                return "Bitte einen Hotkey erfassen.";
+                return Loc.Get("Validation.HotkeyRequired");
             if (EditedAutomation.IsProcessTrigger && string.IsNullOrWhiteSpace(EditedAutomation.ProcessName))
-                return "Bitte einen Prozessnamen angeben.";
-            if ((EditedAutomation.IsOnceAtTrigger && string.IsNullOrWhiteSpace(EditedAutomation.RunAtTime))
-                || (EditedAutomation.IsScheduleTrigger && string.IsNullOrWhiteSpace(EditedAutomation.ScheduleTime)))
-                return "Bitte eine Uhrzeit angeben.";
+                return Loc.Get("Validation.ProcessNameRequired");
+            if (EditedAutomation.IsScheduleTrigger && !(EditedAutomation.Monday || EditedAutomation.Tuesday
+                || EditedAutomation.Wednesday || EditedAutomation.Thursday || EditedAutomation.Friday
+                || EditedAutomation.Saturday || EditedAutomation.Sunday))
+                return Loc.Get("Validation.WeekdayRequired");
             if (EditedAutomation.IsIntervalTrigger && EditedAutomation.IntervalValue <= 0)
-                return "Das Intervall muss größer als 0 sein.";
+                return Loc.Get("Validation.IntervalPositive");
+            if (EditedAutomation.EnabledFrom.HasValue != EditedAutomation.EnabledUntil.HasValue)
+                return Loc.Get("Validation.ActiveWindowPair");
             return null;
         }
 
@@ -234,8 +247,7 @@ namespace DesktopAutomationApp.ViewModels
                 or nameof(EditableAutomation.WindowTitleContains)
                 or nameof(EditableAutomation.IntervalValue)
                 or nameof(EditableAutomation.IntervalUnit)
-                or nameof(EditableAutomation.RunAtDate)
-                or nameof(EditableAutomation.RunAtTime)
+                or nameof(EditableAutomation.RunAt)
                 or nameof(EditableAutomation.ScheduleTime))
             {
                 OnPropertyChanged(nameof(EditedAutomation.DisplayTrigger));
@@ -256,9 +268,11 @@ namespace DesktopAutomationApp.ViewModels
             target.TriggerKind = source.TriggerKind;
             target.Modifiers = source.Modifiers;
             target.VirtualKeyCode = source.VirtualKeyCode;
-            target.RunAtDate = source.RunAtDate;
-            target.RunAtTime = source.RunAtTime;
+            target.RunAt = source.RunAt;
             target.ScheduleTime = source.ScheduleTime;
+            target.Monday = source.Monday; target.Tuesday = source.Tuesday; target.Wednesday = source.Wednesday;
+            target.Thursday = source.Thursday; target.Friday = source.Friday;
+            target.Saturday = source.Saturday; target.Sunday = source.Sunday;
             target.IntervalValue = source.IntervalValue;
             target.IntervalUnit = source.IntervalUnit;
             target.StartImmediately = source.StartImmediately;
@@ -268,10 +282,11 @@ namespace DesktopAutomationApp.ViewModels
             target.Action.Name = source.Action.Name;
             target.Action.JobId = source.Action.JobId;
             target.Action.MakroId = source.Action.MakroId;
-            target.Action.Command = source.Action.Command;
             target.Action.ActionType = source.Action.ActionType;
             target.AlreadyRunningBehavior = source.AlreadyRunningBehavior;
             target.CooldownSeconds = source.CooldownSeconds;
+            target.EnabledFrom = source.EnabledFrom;
+            target.EnabledUntil = source.EnabledUntil;
         }
 
         private void InvalidateAllCommands()

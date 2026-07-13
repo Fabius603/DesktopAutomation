@@ -55,27 +55,32 @@ namespace ImageDetection.YOLO
             var configurations = CreateDirectMLConfigurations(optimization);
             Exception? lastException = null;
 
-            for (int i = 0; i < configurations.Length; i++)
+            try
             {
-                try
+                for (int i = 0; i < configurations.Length; i++)
                 {
-                    using var config = configurations[i];
-                    var session = new InferenceSession(modelPath, config);
-                    logger.LogDebug("DirectML session created with configuration {ConfigIndex}", i + 1);
-                    return session;
+                    try
+                    {
+                        var session = new InferenceSession(modelPath, configurations[i]);
+                        logger.LogDebug("DirectML session created with configuration {ConfigIndex}", i + 1);
+                        return session;
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
+                        logger.LogDebug("DirectML configuration {ConfigIndex} failed, trying next", i + 1);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    logger.LogDebug("DirectML configuration {ConfigIndex} failed, trying next", i + 1);
-                    continue;
-                }
-            }
 
-            // Alle Konfigurationen fehlgeschlagen
-            throw new InvalidOperationException(
-                "DirectML konnte nicht initialisiert werden. Möglicherweise sind die GPU-Treiber veraltet.", 
-                lastException);
+                throw new InvalidOperationException(
+                    "DirectML konnte nicht initialisiert werden. Möglicherweise sind die GPU-Treiber veraltet.",
+                    lastException);
+            }
+            finally
+            {
+                foreach (var configuration in configurations)
+                    configuration.Dispose();
+            }
         }
 
         /// <summary>

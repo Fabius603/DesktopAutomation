@@ -31,6 +31,12 @@ namespace TaskAutomation.Automations
 
         [JsonPropertyName("updated_at")]
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.Now;
+
+        [JsonPropertyName("last_run_at")]
+        public DateTimeOffset? LastRunAt { get; set; }
+
+        [JsonIgnore]
+        public AutomationRuntimeInfo Runtime { get; set; } = new();
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -179,32 +185,35 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("makro_id")]
         public Guid? MakroId { get; set; }
 
-        [JsonPropertyName("command")]
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public ActionCommand Command { get; set; } = ActionCommand.Start;
-
         [JsonPropertyName("action_type")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public HotkeyActionType ActionType { get; set; } = HotkeyActionType.Job;
+        public AutomationActionTarget ActionType { get; set; } = AutomationActionTarget.Job;
 
         public string DisplayText
         {
             get
             {
-                var type = ActionType == HotkeyActionType.Makro ? "Makro" : "Job";
+                var type = ActionType == AutomationActionTarget.Makro ? "Makro" : "Job";
                 var name = string.IsNullOrWhiteSpace(Name) ? "nicht gesetzt" : Name;
-                return $"{type} \"{name}\" {Command}";
+                return $"{type} \"{name}\"";
             }
         }
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum AutomationActionTarget
+    {
+        Job,
+        Makro
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AutomationAlreadyRunningBehavior
     {
         StartParallel,
+        Stop,
         Ignore,
-        Restart,
-        Toggle
+        Restart
     }
 
     public sealed class AutomationRunPolicy

@@ -1,4 +1,4 @@
-<UserControl x:Class="DesktopAutomationApp.Views.ListMakrosView"
+<UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.ListMakrosView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -18,23 +18,23 @@
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding NewMakroCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Neues Makro" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.023F8B8D25DA}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteMakroCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Makro Löschen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.7C53E9E37D47}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="Ordner im Explorer öffnen">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.93553A3A38EF}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
                     </StackPanel>
@@ -67,11 +67,11 @@
                 </DataGrid.InputBindings>
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name"
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.DCD1D5223F73}"
                         Binding="{Binding Name}"
                         IsReadOnly="True"
                         Width="2*"/>
-                    <DataGridTextColumn Header="# Befehle"
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.6EA1AF65A792}"
                         Binding="{Binding Befehle.Count}"
                         IsReadOnly="True" Width="*"/>
                     <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto">
@@ -82,7 +82,7 @@
                                     <Button Style="{StaticResource ButtonPrimary}"
                                             Command="{Binding DataContext.StartMakroCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="Makro starten">
+                                            ToolTip="{loc:Translate Key=Ui.E11D185246D3}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}" ConverterParameter="Invert">
                                                 <Binding Path="Id"/>
@@ -92,14 +92,14 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Start" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                     <!-- Stop Button: sichtbar wenn Makro läuft -->
                                     <Button Style="{StaticResource ButtonDanger}"
                                             Command="{Binding DataContext.StopMakroCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="Makro stoppen">
+                                            ToolTip="{loc:Translate Key=Ui.B2A01C33CE5E}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
                                                 <Binding Path="Id"/>
@@ -109,7 +109,7 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -124,7 +124,7 @@
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.BC385A30B537}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </DataTemplate>

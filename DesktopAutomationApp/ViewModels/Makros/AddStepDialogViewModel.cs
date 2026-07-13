@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Makros;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -50,8 +51,8 @@ namespace DesktopAutomationApp.ViewModels
             set { _mode = value; OnChange(); OnChange(nameof(DialogTitle)); OnChange(nameof(ConfirmButtonText)); }
         }
 
-        public string DialogTitle => Mode == StepDialogMode.Edit ? "Step anpassen" : "Neuen Step hinzufügen";
-        public string ConfirmButtonText => Mode == StepDialogMode.Edit ? "Anpassen" : "Hinzufügen";
+        public string DialogTitle => Loc.Get(Mode == StepDialogMode.Edit ? "Step.Edit" : "Step.Add");
+        public string ConfirmButtonText => Loc.Get(Mode == StepDialogMode.Edit ? "Common.Apply" : "Common.Add");
 
         // Sichtbarkeiten
         public bool ShowMouseXY => SelectedType is "MouseMoveAbsolute";

@@ -1,4 +1,4 @@
-<UserControl x:Class="DesktopAutomationApp.Views.YoloDownloadsView"
+<UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.YoloDownloadsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
@@ -27,7 +27,7 @@
                         Margin="0,0,8,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="ONNX-Datei hinzufügen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.30BE1AF45E48}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}"
@@ -35,18 +35,18 @@
                         Margin="0,0,8,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Folder" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Ordner öffnen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.86C38B0A00E4}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}"
                         Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
-            <TextBlock Text="YOLO Downloads" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
+            <TextBlock Text="{loc:Translate Key=Ui.C08179253DA5}" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- Modelliste -->
@@ -89,7 +89,7 @@
                                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                                                 Orientation="Horizontal"
                                                 Margin="0,0,0,8">
-                                        <TextBlock Text="Model Key:"
+                                        <TextBlock Text="{loc:Translate Key=Ui.D50D9C56A94E}"
                                                    Style="{StaticResource CaptionText}"
                                                    Margin="0,0,8,0"/>
                                         <TextBlock Text="{Binding ModelKey}"
@@ -97,7 +97,7 @@
                                                    FontFamily="Consolas"
                                                    Margin="0,0,16,0"/>
 
-                                        <TextBlock Text="Size:"
+                                        <TextBlock Text="{loc:Translate Key=Ui.C987F668D963}"
                                                    Style="{StaticResource CaptionText}"
                                                    Margin="0,0,8,0"
                                                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"/>
@@ -117,7 +117,7 @@
                                                 Visibility="{Binding IsInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal">
                                                 <iconPacks:PackIconMaterial Kind="Download" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="Download" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{loc:Translate Key=Ui.D6EAFE823591}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
 
@@ -127,7 +127,7 @@
                                                 Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}">
                                             <StackPanel Orientation="Horizontal">
                                                 <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="Deinstallieren" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{loc:Translate Key=Ui.22D6C6ECBE84}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>

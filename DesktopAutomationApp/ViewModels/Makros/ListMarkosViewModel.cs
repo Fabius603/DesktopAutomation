@@ -11,6 +11,7 @@ using System.Windows.Input;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -117,7 +118,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async void CreateNewMakro()
         {
-            var name = await _dialogService.AskForNameAsync("Neues Makro", "Name des neuen Makros:");
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Macro.New.Title"), Loc.Get("Macro.New.Prompt"));
             if (name == null) return;
 
             try
@@ -137,10 +138,10 @@ namespace DesktopAutomationApp.ViewModels
             if (_selectedItems.Count == 0) return;
 
             var message = _selectedItems.Count == 1
-                ? $"Möchten Sie den Makro '{_selectedItems[0].Name}' wirklich löschen?"
-                : $"Möchten Sie die {_selectedItems.Count} ausgewählten Makros wirklich löschen?";
+                ? Loc.Format("Macro.Delete.One", _selectedItems[0].Name)
+                : Loc.Format("Macro.Delete.Many", _selectedItems.Count);
 
-            var confirmed = await _dialogService.ConfirmAsync(message, "Löschen bestätigen");
+            var confirmed = await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title"));
             if (!confirmed) return;
 
             var toDelete = _selectedItems.ToList();

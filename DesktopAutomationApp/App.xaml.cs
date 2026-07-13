@@ -31,6 +31,10 @@ using DesktopAutomation.Application.Interfaces;
 using DesktopAutomation.Application.Services;
 using DesktopAutomationApp.Infrastructure;
 using TaskAutomation.Logging;
+using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Settings;
+using DesktopAutomationApp.Theming;
+using Velopack;
 
 namespace DesktopAutomationApp
 {
@@ -39,18 +43,32 @@ namespace DesktopAutomationApp
         private IHost _host = null!;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
 
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            VelopackApp.Build().Run();
+
+            var app = new App();
+            app.Run();
+        }
+
         public App()
         {
             InitializeComponent();
 
-            // Serilog global konfigurieren (Rolling Files im ./Logs)
+            var logDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DesktopAutomation",
+                "Logs");
+
+            // Logs must live outside Velopack's replaceable application directory.
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.Debug()
                 .WriteTo.File(
-                    path: Path.Combine(AppContext.BaseDirectory, "Logs", "desktop-automation-.log"),
+                    path: Path.Combine(logDirectory, "desktop-automation-.log"),
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
                     rollOnFileSizeLimit: true,
@@ -69,7 +87,6 @@ namespace DesktopAutomationApp
                 {
                     services.AddJsonRepository<Job>("Configs/Job", options, j => j.Id.ToString());
                     services.AddJsonRepository<Makro>("Configs/Makro", options, m => m.Id.ToString());
-                    services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", options, hk => hk.Id.ToString());
                     services.AddJsonRepository<AutomationDefinition>("Configs/Automation", options, a => a.Id.ToString());
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
@@ -89,7 +106,6 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
                     services.AddSingleton<IAutomationEngine, AutomationEngine>();
-                    services.AddSingleton<IAutomationMigrationService, AutomationMigrationService>();
                     services.AddSingleton<IAutomationTriggerProvider, HotkeyAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, ScheduleAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, IntervalAutomationTriggerProvider>();
@@ -97,9 +113,11 @@ namespace DesktopAutomationApp
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
-                    services.AddSingleton<IHotkeyApplicationService, HotkeyApplicationService>();
                     services.AddSingleton<IAutomationApplicationService, AutomationApplicationService>();
                     services.AddSingleton<IDialogService, WpfDialogService>();
+                    services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+                    services.AddSingleton<ILocalizationService>(LocalizationService.Instance);
+                    services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<IViewModelFactory, ViewModelFactory>();
                     services.AddSingleton<IJobLauncher>(sp => (IJobLauncher)sp.GetRequiredService<IJobDispatcher>());
                     services.AddSingleton(sp => new Lazy<IJobLauncher>(() => sp.GetRequiredService<IJobLauncher>()));
@@ -107,19 +125,17 @@ namespace DesktopAutomationApp
                     // ---- ViewModels / Views ----
                     services.AddSingleton<MainViewModel>();
                     services.AddSingleton<StartViewModel>();
-                    services.AddSingleton<ListHotkeysViewModel>();
                     services.AddSingleton<ListAutomationsViewModel>();
                     services.AddSingleton<ListJobsViewModel>();
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
                     services.AddSingleton<ExecutionLogsViewModel>();
+                    services.AddSingleton<SettingsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
-                    services.AddTransient<HotkeyDetailViewModel>();
                     services.AddTransient<AutomationDetailViewModel>();
 
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<StartView>();
-                    services.AddSingleton<ListHotkeysView>();
                     services.AddSingleton<ListAutomationsView>();
                     services.AddSingleton<ListJobsView>();
                     services.AddSingleton<ListMakrosView>();
@@ -141,8 +157,16 @@ namespace DesktopAutomationApp
 
             await _host.StartAsync();
 
+            var preferences = _host.Services.GetRequiredService<IUserPreferencesService>();
+            await preferences.LoadAsync();
+            _host.Services.GetRequiredService<ILocalizationService>().SetCulture(preferences.Current.Culture);
+            _host.Services.GetRequiredService<IThemeService>().Apply(preferences.Current.ThemeMode, preferences.Current.Accent);
+
+            await _host.Services.GetRequiredService<IJobApplicationService>().ReloadAsync();
+            await _host.Services.GetRequiredService<IMakroApplicationService>().ReloadAsync();
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
             _ = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+            await _host.Services.GetRequiredService<IAutomationEngine>().StartAsync();
 
             // F10 global: alle Jobs & Makros stoppen (bypass Pause-Zustand)
             var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
@@ -167,6 +191,7 @@ namespace DesktopAutomationApp
             _trayIcon?.Dispose();
             _trayIcon = null;
 
+            await _host.Services.GetRequiredService<IAutomationEngine>().StopAsync();
             Log.CloseAndFlush();
 
             await _host.StopAsync();
@@ -177,41 +202,54 @@ namespace DesktopAutomationApp
         private void SetupTrayIcon(MainWindow mainWindow)
         {
             var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
-            var hotkeyService = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+            var automationEngine = _host.Services.GetRequiredService<IAutomationEngine>();
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
 
-            var openItem = contextMenu.Items.Add("Öffnen");
+            var openItem = contextMenu.Items.Add(Loc.Get("Tray.Open"));
             openItem.Click += (_, _) => ShowMainWindow(mainWindow);
 
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
-            var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem("Alle Jobs stoppen");
+            var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem(Loc.Get("Tray.StopAllJobs"));
             stopJobsItem.Click += (_, _) =>
             {
                 dispatcher.CancelAllJobs();
             };
             contextMenu.Items.Add(stopJobsItem);
 
-            var toggleHotkeysItem = new System.Windows.Forms.ToolStripMenuItem();
-            toggleHotkeysItem.Click += (_, _) =>
-                hotkeyService.SetPaused(!hotkeyService.IsPaused);
-            contextMenu.Items.Add(toggleHotkeysItem);
+            var toggleAutomationsItem = new System.Windows.Forms.ToolStripMenuItem();
+            toggleAutomationsItem.Click += async (_, _) =>
+            {
+                try
+                {
+                    await automationEngine.SetPausedAsync(!automationEngine.IsPaused);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Automationen konnten nicht pausiert oder fortgesetzt werden.");
+                }
+            };
+            contextMenu.Items.Add(toggleAutomationsItem);
 
             contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
 
-            var exitItem = contextMenu.Items.Add("Beenden");
+            var exitItem = contextMenu.Items.Add(Loc.Get("Tray.Exit"));
             exitItem.Click += (_, _) => Shutdown();
 
             contextMenu.Opening += (_, _) =>
             {
                 var hasRunningJobs = dispatcher.RunningJobIds.Count > 0;
                 stopJobsItem.Visible = hasRunningJobs;
-                toggleHotkeysItem.Text = hotkeyService.IsPaused ? "Hotkeys fortsetzen" : "Hotkeys pausieren";
+                toggleAutomationsItem.Text = automationEngine.IsPaused ? Loc.Get("Tray.ResumeAutomations") : Loc.Get("Tray.PauseAutomations");
             };
-
-            hotkeyService.PausedChanged += () =>
-                toggleHotkeysItem.Text = hotkeyService.IsPaused ? "Hotkeys fortsetzen" : "Hotkeys pausieren";
+            LocalizationService.Instance.CultureChanged += (_, _) =>
+            {
+                openItem.Text = Loc.Get("Tray.Open");
+                stopJobsItem.Text = Loc.Get("Tray.StopAllJobs");
+                exitItem.Text = Loc.Get("Tray.Exit");
+                toggleAutomationsItem.Text = automationEngine.IsPaused ? Loc.Get("Tray.ResumeAutomations") : Loc.Get("Tray.PauseAutomations");
+            };
 
             _trayIcon = new System.Windows.Forms.NotifyIcon
             {

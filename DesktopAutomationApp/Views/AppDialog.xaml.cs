@@ -2,6 +2,7 @@ using MahApps.Metro.Controls;
 using MahApps.Metro.IconPacks;
 using System.Windows;
 using System.Windows.Media;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Views
 {
@@ -69,21 +70,21 @@ namespace DesktopAutomationApp.Views
                 case MessageBoxButton.OK:
                     YesButton.Style = (Style)FindResource("ButtonPrimary");
                     YesIcon.Kind = PackIconMaterialKind.Check;
-                    YesText.Text = "OK";
+                    YesText.Text = Loc.Get("Common.Ok");
                     _result = MessageBoxResult.OK; // default if closed via X
                     break;
 
                 case MessageBoxButton.YesNo:
                     YesButton.Style = (Style)FindResource("ButtonPrimary");
                     YesIcon.Kind = PackIconMaterialKind.Check;
-                    YesText.Text = "Ja";
+                    YesText.Text = Loc.Get("Common.Yes");
                     NoButton.Visibility = Visibility.Visible;
                     break;
 
                 case MessageBoxButton.YesNoCancel:
                     YesButton.Style = (Style)FindResource("ButtonPrimary");
                     YesIcon.Kind = PackIconMaterialKind.Check;
-                    YesText.Text = "Ja";
+                    YesText.Text = Loc.Get("Common.Yes");
                     NoButton.Visibility = Visibility.Visible;
                     CancelButton.Visibility = Visibility.Visible;
                     break;
@@ -94,7 +95,7 @@ namespace DesktopAutomationApp.Views
 
         private void Yes_Click(object sender, RoutedEventArgs e)
         {
-            _result = YesText.Text == "OK" ? MessageBoxResult.OK : MessageBoxResult.Yes;
+            _result = _result == MessageBoxResult.OK ? MessageBoxResult.OK : MessageBoxResult.Yes;
             DialogResult = true;
             Close();
         }

@@ -236,25 +236,24 @@ namespace ImageCapture.ProcessDuplication
 
         private void SetTargetProcess(string name)
         {
-            Process foundProcess = null;
-            foreach (var p in Process.GetProcessesByName(name))
+            var processes = Process.GetProcessesByName(name);
+            try
             {
-                if (p.MainWindowHandle != IntPtr.Zero)
+                foreach (var process in processes)
                 {
-                    targetProcess = p.MainWindowHandle;
-                    foundProcess = p; // Keep track of the process to dispose it
-                    break; // Found the main window handle, exit loop
-                }
-                p.Dispose(); // Dispose processes that don't have a main window handle
-            }
+                    if (process.MainWindowHandle == IntPtr.Zero)
+                        continue;
 
-            if (foundProcess == null)
-            {
+                    targetProcess = process.MainWindowHandle;
+                    return;
+                }
+
                 throw new Exception("Prozess nicht gefunden");
             }
-            else
+            finally
             {
-                foundProcess.Dispose(); // Dispose the found process object
+                foreach (var process in processes)
+                    process.Dispose();
             }
         }
 

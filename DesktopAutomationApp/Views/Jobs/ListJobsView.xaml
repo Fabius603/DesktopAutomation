@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DesktopAutomationApp.Views.ListJobsView"
+<UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.ListJobsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
@@ -19,30 +19,30 @@
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding CreateNewJobCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Neuer Job" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.4C14D44ED12D}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Job löschen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.FD479D328E5F}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="Ordner im Explorer öffnen">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.93553A3A38EF}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Jobs" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <TextBlock Text="{loc:Translate Key=Ui.2F17A0F8D518}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
                 <Border Style="{StaticResource CountBadge}"
                         VerticalAlignment="Center">
                     <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
@@ -72,11 +72,11 @@
 
                 <DataGrid.Columns>
                     <DataGridTextColumn
-                        Header="Name"
+                        Header="{loc:Translate Key=Ui.DCD1D5223F73}"
                         Binding="{Binding Name}"
                         IsReadOnly="True"
                         Width="3*"/>
-                    <DataGridTemplateColumn Header="Wiederholend" Width="*">
+                    <DataGridTemplateColumn Header="{loc:Translate Key=Ui.ADDCD5FB5AE1}" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox
@@ -87,7 +87,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTextColumn
-                        Header="#Steps"
+                        Header="{loc:Translate Key=Ui.44360075D722}"
                         Binding="{Binding ActiveStepCount}"
                         IsReadOnly="True"
                         Width="*"/>
@@ -99,7 +99,7 @@
                                     <Button Style="{StaticResource ButtonPrimary}"
                                             Command="{Binding DataContext.StartJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="Job starten">
+                                            ToolTip="{loc:Translate Key=Ui.0350F3D0CCA2}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}" ConverterParameter="Invert">
                                                 <Binding Path="Id"/>
@@ -109,14 +109,14 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Start" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                     <!-- Stop Button: sichtbar wenn Job läuft -->
                                     <Button Style="{StaticResource ButtonDanger}"
                                             Command="{Binding DataContext.StopJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="Job stoppen">
+                                            ToolTip="{loc:Translate Key=Ui.19DE6A8914E1}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
                                                 <Binding Path="Id"/>
@@ -126,7 +126,7 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="Stop" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -144,7 +144,7 @@
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.BC385A30B537}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </DataTemplate>

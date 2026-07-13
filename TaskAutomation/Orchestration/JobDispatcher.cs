@@ -5,21 +5,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TaskAutomation.Hotkeys;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 
 namespace TaskAutomation.Orchestration
 {
     /// <summary>
-    /// Dispatcher, der auf Hotkey-Events hört und Jobs über einen IJobExecutor startet.
+    /// Zentraler Dispatcher für Jobs und Makros.
     /// Unterstützt beliebig viele gleichzeitige Instanzen desselben Jobs.
     /// </summary>
     public sealed class JobDispatcher : IJobDispatcher, IJobLauncher, IDisposable
     {
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
-        private readonly IGlobalHotkeyService _hotkeyService;
 
         // instanceId → (JobId, JobName, CancellationTokenSource)
         private record RunningJobEntry(Guid JobId, string JobName, CancellationTokenSource Cts);
@@ -28,7 +26,8 @@ namespace TaskAutomation.Orchestration
         /// <summary>Maximale Anzahl gleichzeitig laufender Job-Instanzen.</summary>
         public const int MaxJobCount = 100;
 
-        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _makroTokens = new();
+        private sealed record RunningMakroEntry(Guid MakroId, CancellationTokenSource Cts);
+        private readonly ConcurrentDictionary<Guid, RunningMakroEntry> _makroInstances = new();
 
         // Debounce: maximal ein Notify-Task gleichzeitig pro Event, feuert nach 50 ms Stille.
         private int _jobsChangedPending   = 0;
@@ -66,125 +65,17 @@ namespace TaskAutomation.Orchestration
         /// <summary>
         /// IDs der aktuell laufenden Makros.
         /// </summary>
-        public IReadOnlyCollection<Guid> RunningMakroIds => _makroTokens.Keys.ToArray();
+        public IReadOnlyCollection<Guid> RunningMakroIds
+            => _makroInstances.Values.Select(entry => entry.MakroId).Distinct().ToArray();
 
-        public JobDispatcher(IGlobalHotkeyService hotkeyService, IJobExecutor executor, ILogger<JobDispatcher> logger)
+        public JobDispatcher(IJobExecutor executor, ILogger<JobDispatcher> logger)
         {
             _logger        = logger;
-            _hotkeyService = hotkeyService ?? throw new ArgumentNullException(nameof(hotkeyService));
             _executor      = executor      ?? throw new ArgumentNullException(nameof(executor));
 
-            _hotkeyService.HotkeyPressed       += OnHotkeyPressed;
             _executor.JobErrorOccurred         += OnJobErrorOccurred;
             _executor.JobStepErrorOccurred     += OnJobStepErrorOccurred;
             _logger.LogInformation("JobDispatcher initialisiert.");
-        }
-
-        private void OnHotkeyPressed(object? sender, HotkeyPressedEventArgs e)
-        {
-            if (e?.Job is null)
-                return;
-
-            var jobRef = e.Job;
-
-            if (jobRef.ActionType == HotkeyActionType.Makro)
-            {
-                var cmd = jobRef.Command;
-                switch (cmd)
-                {
-                    case ActionCommand.Stop:
-                        if (jobRef.MakroId.HasValue) CancelMakro(jobRef.MakroId.Value);
-                        break;
-                    case ActionCommand.Toggle:
-                        if (jobRef.MakroId.HasValue)
-                        {
-                            if (_makroTokens.ContainsKey(jobRef.MakroId.Value))
-                                CancelMakro(jobRef.MakroId.Value);
-                            else
-                                StartMakro(jobRef.MakroId.Value);
-                        }
-                        break;
-                    default: // Start
-                        if (jobRef.MakroId.HasValue) StartMakro(jobRef.MakroId.Value);
-                        break;
-                }
-                return;
-            }
-
-            var jobCmd = jobRef.Command;
-            switch (jobCmd)
-            {
-                case ActionCommand.Start:
-                    StartJobByAction(jobRef);
-                    break;
-                case ActionCommand.Stop:
-                    CancelJobByAction(jobRef);
-                    break;
-                case ActionCommand.Toggle:
-                    ToggleJobByAction(jobRef);
-                    break;
-            }
-        }
-
-        private void StartJobByAction(JobReference jobRef)
-        {
-            var job = FindJobByAction(jobRef);
-            if (job == null)
-            {
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
-                return;
-            }
-            try   { StartJobInternal(job); }
-            catch (JobLimitExceededException ex) { JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex)); }
-        }
-
-        private void CancelJobByAction(JobReference jobRef)
-        {
-            var job = FindJobByAction(jobRef);
-            if (job != null)
-                CancelAllInstancesOfJob(job.Id);
-            else
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
-        }
-
-        private void ToggleJobByAction(JobReference jobRef)
-        {
-            var job = FindJobByAction(jobRef);
-            if (job == null)
-            {
-                _logger.LogWarning("No job found for action: Name='{ActionName}', ID='{JobId}'", jobRef.Name, jobRef.JobId);
-                return;
-            }
-            if (_jobInstances.Values.Any(e => e.JobId == job.Id))
-                CancelAllInstancesOfJob(job.Id);
-            else
-            {
-                try   { StartJobInternal(job); }
-                catch (JobLimitExceededException ex) { JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex)); }
-            }
-        }
-
-        private Job? FindJobByAction(JobReference jobRef)
-        {
-            if (jobRef.JobId.HasValue)
-            {
-                var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == jobRef.JobId.Value);
-                if (job == null)
-                    _logger.LogWarning("Job with ID '{JobId}' not found", jobRef.JobId);
-                return job;
-            }
-            else if (!string.IsNullOrWhiteSpace(jobRef.Name))
-            {
-                var job = _executor.AllJobs.Values.FirstOrDefault(j => string.Equals(j.Name, jobRef.Name, StringComparison.OrdinalIgnoreCase));
-                if (job == null)
-                    _logger.LogWarning("Job with name '{JobName}' not found", jobRef.Name);
-                return job;
-            }
-            else
-            {
-                _logger.LogWarning("Action has neither JobId nor valid Name");
-                return null;
-            }
         }
 
         /// <summary>
@@ -469,19 +360,16 @@ namespace TaskAutomation.Orchestration
 
         private void StartMakroInternal(Makro makro)
         {
-            if (_makroTokens.ContainsKey(makro.Id))
+            var cts = new CancellationTokenSource();
+            var instanceId = Guid.NewGuid();
+            if (!_makroInstances.TryAdd(instanceId, new RunningMakroEntry(makro.Id, cts)))
             {
-                _logger.LogWarning("Makro '{Name}' läuft bereits.", makro.Name);
+                cts.Dispose();
                 return;
             }
 
-            var cts = new CancellationTokenSource();
-            if (!_makroTokens.TryAdd(makro.Id, cts))
-                return;
-
             FireRunningMakrosChanged();
 
-            var makroId = makro.Id;
             var makroName = makro.Name;
             _ = Task.Run(async () =>
             {
@@ -499,7 +387,7 @@ namespace TaskAutomation.Orchestration
                 }
                 finally
                 {
-                    _makroTokens.TryRemove(makroId, out _);
+                    _makroInstances.TryRemove(instanceId, out _);
                     cts.Dispose();
                     FireRunningMakrosChanged();
                 }
@@ -511,12 +399,12 @@ namespace TaskAutomation.Orchestration
         /// </summary>
         public void CancelMakro(Guid id)
         {
-            if (_makroTokens.TryRemove(id, out var cts))
+            var matches = _makroInstances.Values.Where(entry => entry.MakroId == id).ToArray();
+            if (matches.Length > 0)
             {
-                _logger.LogInformation("Makro (ID: {MakroId}) Abbruch angefordert.", id);
-                cts.Cancel();
-                cts.Dispose();
-                FireRunningMakrosChanged();
+                _logger.LogInformation("Abbruch für {Count} Makro-Instanz(en) (ID: {MakroId}) angefordert.", matches.Length, id);
+                foreach (var entry in matches)
+                    entry.Cts.Cancel();
             }
             else
             {
@@ -529,7 +417,6 @@ namespace TaskAutomation.Orchestration
         /// </summary>
         public void Dispose()
         {
-            _hotkeyService.HotkeyPressed -= OnHotkeyPressed;
             _executor.JobErrorOccurred -= OnJobErrorOccurred;
             _executor.JobStepErrorOccurred -= OnJobStepErrorOccurred;
         }

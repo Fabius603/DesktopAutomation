@@ -1,0 +1,172 @@
+Common.Ok	OK	OK
+Common.Yes	Ja	Yes
+Common.No	Nein	No
+Common.Cancel	Abbrechen	Cancel
+Common.Rename	Umbenennen	Rename
+Common.Create	Erstellen	Create
+Common.Apply	Übernehmen	Apply
+Common.Add	Hinzufügen	Add
+Common.Job	Job	Job
+Common.Macro	Makro	Macro
+Common.NotSet	nicht gesetzt	not set
+Common.Value	Wert	Value
+Tray.Open	Öffnen	Open
+Tray.StopAllJobs	Alle Jobs stoppen	Stop all jobs
+Tray.Exit	Beenden	Exit
+Tray.ResumeAutomations	Automationen fortsetzen	Resume automations
+Tray.PauseAutomations	Automationen pausieren	Pause automations
+Dialog.Unsaved.Title	Ungespeicherte Änderungen	Unsaved changes
+Dialog.Unsaved.Message	Es gibt ungespeicherte Änderungen. Möchten Sie speichern?	There are unsaved changes. Do you want to save them?
+Dialog.Delete.Title	Löschen bestätigen	Confirm deletion
+Dialog.NewName	Neuer Name:	New name:
+Validation.Title	Validierungsfehler	Validation error
+Validation.NameRequired	Name ist erforderlich.	A name is required.
+Validation.ActionRequired	Bitte eine Aktion (Job oder Makro) auswählen.	Select an action (job or macro).
+Validation.HotkeyRequired	Bitte einen Hotkey erfassen.	Capture a hotkey.
+Validation.ProcessNameRequired	Bitte einen Prozessnamen angeben.	Enter a process name.
+Validation.WeekdayRequired	Bitte mindestens einen Wochentag auswählen.	Select at least one weekday.
+Validation.IntervalPositive	Das Intervall muss größer als 0 sein.	The interval must be greater than 0.
+Validation.ActiveWindowPair	„Aktiv von“ und „Aktiv bis“ müssen entweder beide ausgefüllt oder beide leer sein.	“Active from” and “Active until” must either both be set or both be empty.
+Automation.Hotkey.NotSet	Hotkey nicht gesetzt	Hotkey not set
+Automation.Hotkey.CaptureTitle	Hotkey-Erfassung	Hotkey capture
+Automation.Hotkey.CapturePrompt	Bitte gewünschte Tastenkombination drücken …	Press the desired key combination …
+Automation.Hotkey.CaptureError	Der Hotkey konnte nicht erfasst werden.	The hotkey could not be captured.
+Automation.Trigger.OnceAt	Einmalig am {0}	Once at {0}
+Automation.Trigger.Daily	täglich	daily
+Automation.Trigger.Schedule	{0} um {1}	{0} at {1}
+Automation.Trigger.Interval	Alle {0}	Every {0}
+Automation.Trigger.ProcessStarted	App startet: {0}	App starts: {0}
+Automation.Trigger.ProcessExited	App schließt: {0}	App exits: {0}
+Automation.Trigger.WindowTitle	 · Titel enthält „{0}“	 · title contains “{0}”
+Automation.Trigger.AfterSeconds	 · nach {0:0} s	 · after {0:0} s
+Automation.Interval.Hours	{0:0} Stunden	{0:0} hours
+Automation.Interval.Minutes	{0:0} Minuten	{0:0} minutes
+Automation.Interval.Seconds	{0:0} Sekunden	{0:0} seconds
+Automation.EventBased	Ereignisbasiert	Event-based
+Automation.NotScheduled	Nicht geplant	Not scheduled
+Automation.NeverRun	Noch nie	Never
+Automation.New.Title	Neue Automation	New automation
+Automation.New.Prompt	Name der neuen Automation:	Name of the new automation:
+Automation.Delete.One	Möchten Sie die Automation „{0}“ wirklich löschen?	Do you really want to delete the automation “{0}”?
+Automation.Delete.Many	Möchten Sie die {0} ausgewählten Automationen wirklich löschen?	Do you really want to delete the {0} selected automations?
+Job.New.Title	Neuer Job	New job
+Job.New.Prompt	Name des neuen Jobs:	Name of the new job:
+Job.Delete.One	Möchten Sie den Job „{0}“ wirklich löschen?	Do you really want to delete the job “{0}”?
+Job.Delete.Many	Möchten Sie die {0} ausgewählten Jobs wirklich löschen?	Do you really want to delete the {0} selected jobs?
+Macro.New.Title	Neues Makro	New macro
+Macro.New.Prompt	Name des neuen Makros:	Name of the new macro:
+Macro.Delete.One	Möchten Sie das Makro „{0}“ wirklich löschen?	Do you really want to delete the macro “{0}”?
+Macro.Delete.Many	Möchten Sie die {0} ausgewählten Makros wirklich löschen?	Do you really want to delete the {0} selected macros?
+Step.Delete.One	Möchten Sie diesen Step wirklich löschen?	Do you really want to delete this step?
+Step.Delete.Many	Möchten Sie die {0} ausgewählten Steps löschen?	Do you want to delete the {0} selected steps?
+Step.Delete.IfBlock	Möchten Sie den If-Block löschen? If, Else-If, Else und End-If werden entfernt; die enthaltenen Steps bleiben erhalten.	Do you want to delete the if block? If, else-if, else, and end-if are removed; the contained steps remain.
+Step.Unknown	Unbekannter Step	Unknown step
+Step.Edit	Step bearbeiten	Edit step
+Step.Add	Step hinzufügen	Add step
+Step.ElseIf.Edit	Else-If bearbeiten	Edit else-if
+Step.ElseIf.Add	Else-If hinzufügen	Add else-if
+JobStep.Edit	Job-Step bearbeiten	Edit job step
+JobStep.Add	Neuen Job-Step hinzufügen	Add new job step
+Execution.Running	läuft	running
+Execution.Finished	beendet	finished
+Macro.Record.Stop	Aufnahme stoppen	Stop recording
+Macro.Record.Start	Aufnahme starten	Start recording
+Macro.CaptureClick.Running	Klick-Erfassung läuft …	Capturing click …
+Macro.CaptureClick.Start	Einzelnen Klick erfassen	Capture single click
+Yolo.Downloading	Wird heruntergeladen … {0} %	Downloading … {0}%
+Yolo.Local	Lokal	Local
+Yolo.Installed	Installiert	Installed
+Yolo.NotInstalled	Nicht installiert	Not installed
+Update.Downloading	Wird heruntergeladen …	Downloading …
+Update.DownloadingProgress	Wird heruntergeladen … {0} %	Downloading … {0}%
+Update.DownloadError	Fehler beim Download oder Entpacken.	Download or extraction failed.
+Update.Ready	Update bereit. Bitte neu starten.	Update ready. Please restart.
+Update.Error	Fehler beim Update.	Update failed.
+Error.JobExecution.Title	Job-Ausführungsfehler	Job execution error
+Error.JobExecution.Message	Fehler beim Ausführen des Jobs „{0}“:\n\n{1}	Error while running job “{0}”:\n\n{1}
+Error.JobStepExecution.Title	Job-Step-Ausführungsfehler	Job step execution error
+Error.JobStepExecution.Message	Fehler beim Ausführen des Job-Steps:\n\nJob: {0}\nStep: {1}\n\nFehlermeldung:\n{2}	Error while running the job step:\n\nJob: {0}\nStep: {1}\n\nError:\n{2}
+Error.Title	Fehler	Error
+Error.MonitorSelection	Fehler bei der Monitor-Auswahl: {0}	Monitor selection failed: {0}
+Error.CaptureRoi	Fehler beim Erfassen des Bereichs: {0}	Failed to capture the region: {0}
+Error.CapturePoint	Fehler beim Erfassen des Punktes: {0}	Failed to capture the point: {0}
+Condition.Match.All	Alle Bedingungen müssen erfüllt sein	All conditions must be met
+Condition.Match.Any	Mindestens eine Bedingung muss erfüllt sein	At least one condition must be met
+Condition.IsTrue	Ist wahr	Is true
+Condition.IsFalse	Ist falsch	Is false
+Condition.IsTrue.Lower	ist wahr	is true
+Condition.IsFalse.Lower	ist falsch	is false
+FilePicker.Template	Template-Datei auswählen	Select template file
+FilePicker.Script	Script-Datei auswählen	Select script file
+FilePicker.Executable	Ausführbare Datei auswählen	Select executable file
+FolderPicker.Video	Ordner für Video-Speicherung auswählen	Select video output folder
+Enum.AutomationTriggerKind.Hotkey	Hotkey	Hotkey
+Enum.AutomationTriggerKind.OnceAt	Einmalig	Once
+Enum.AutomationTriggerKind.Schedule	Zeitplan	Schedule
+Enum.AutomationTriggerKind.Interval	Intervall	Interval
+Enum.AutomationTriggerKind.ProcessStarted	Prozess gestartet	Process started
+Enum.AutomationTriggerKind.ProcessExited	Prozess beendet	Process exited
+Enum.IntervalUnit.Seconds	Sekunden	Seconds
+Enum.IntervalUnit.Minutes	Minuten	Minutes
+Enum.IntervalUnit.Hours	Stunden	Hours
+Enum.AutomationAlreadyRunningBehavior.StartParallel	Parallel starten	Start in parallel
+Enum.AutomationAlreadyRunningBehavior.Stop	Stoppen	Stop
+Enum.AutomationAlreadyRunningBehavior.Ignore	Ignorieren	Ignore
+Enum.AutomationAlreadyRunningBehavior.Restart	Neu starten	Restart
+Step.Category.Erfassung	Erfassung	Capture
+Step.Category.Erkennung	Erkennung	Detection
+Step.Category.Interaktion	Interaktion	Interaction
+Step.Category.Ausgabe	Ausgabe	Output
+Step.Category.Automatisierung	Automatisierung	Automation
+Step.Category.Abfrage	Abfrage	Query
+Step.Category.Ablaufsteuerung	Ablaufsteuerung	Flow control
+Step.Type.DesktopDuplication	Desktop-Duplizierung	Desktop duplication
+Step.Type.ProcessCapture	Prozess-Fensteraufnahme	Process window capture
+Step.Type.TemplateMatching	Template Matching	Template matching
+Step.Type.ColorDetection	Farberkennung	Color detection
+Step.Type.YoloDetection	YOLO-Erkennung	YOLO detection
+Step.Type.KeyPointMatching	KeyPoint Matching	Keypoint matching
+Step.Type.PredictMovement	Bewegung vorhersagen	Predict movement
+Step.Type.KlickOnPoint	Klick auf Punkt	Click point
+Step.Type.KlickOnPoint3D	Klick auf Punkt in 3D-Umgebung	Click point in 3D environment
+Step.Type.MakroExecution	Makro ausführen	Run macro
+Step.Type.ScriptExecution	Skript ausführen	Run script
+Step.Type.JobExecution	Job starten	Start job
+Step.Type.Timeout	Timeout	Timeout
+Step.Type.ActiveProcess	Ist Prozess aktiv	Is process active
+Step.Type.StartProcess	Prozess starten	Start process
+Step.Type.FocusProcess	Prozess in Vordergrund	Bring process to foreground
+Step.Type.ShowText	Text auf Desktop anzeigen	Show text on desktop
+Step.Type.ActiveWindow	Ist Fenster im Vordergrund	Is window in foreground
+Step.Type.PointComparison	Punkte-Vergleich	Point comparison
+Step.Type.ShowImage	Bild anzeigen	Show image
+Step.Type.ShowOnDesktop	Auf Desktop anzeigen	Show on desktop
+Step.Type.VideoCreation	Video erstellen	Create video
+Step.Type.If	If	If
+Step.Type.ElseIf	Else If	Else if
+Step.Type.Else	Else	Else
+Step.Type.EndIf	End If	End if
+Step.Type.EndJob	Job beenden	End job
+Step.Description.DesktopDuplication	Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle bereit.	Captures the selected monitor and provides the screenshot as an image source.
+Step.Description.TemplateMatching	Vergleicht ein Bild-Template mit der Bildquelle eines Erfassungs-Steps.	Compares an image template with the image source of a capture step.
+Step.Description.ColorDetection	Erkennt eine bestimmte Farbe in einer Bildquelle.	Detects a specific color in an image source.
+Step.Description.PredictMovement	Berechnet aus vorherigen Erkennungspunkten eine vorhergesagte Zielposition.	Predicts a target position from previous detection points.
+Step.Description.YoloDetection	Erkennt Objekte mithilfe eines YOLO-Modells und speichert ihre Position.	Detects objects with a YOLO model and stores their position.
+Step.Description.KlickOnPoint	Klickt auf den zuletzt erkannten Bildpunkt.	Clicks the most recently detected image point.
+Step.Description.KlickOnPoint3D	Bewegt die Maus per FOV-Berechnung auf ein Zielobjekt und klickt es an.	Moves the pointer to a target using an FOV calculation and clicks it.
+Step.Description.ShowImage	Zeigt das aktuelle Bild in einem Vorschaufenster an.	Shows the current image in a preview window.
+Step.Description.ShowOnDesktop	Zeichnet das Erkennungsergebnis als Overlay auf den Desktop.	Draws the detection result as a desktop overlay.
+Step.Description.VideoCreation	Speichert den aktuellen Bildstrom als Videodatei.	Saves the current image stream as a video file.
+Step.Description.MakroExecution	Führt ein zuvor aufgezeichnetes Makro aus.	Runs a previously recorded macro.
+Step.Description.JobExecution	Startet einen anderen Job und wartet optional auf dessen Abschluss.	Starts another job and optionally waits for it to finish.
+Step.Description.ScriptExecution	Führt ein externes PowerShell-, Python- oder Batch-Skript aus.	Runs an external PowerShell, Python, or batch script.
+Step.Description.Timeout	Wartet eine konfigurierbare Zeit, bevor der nächste Step ausgeführt wird.	Waits for a configured duration before running the next step.
+Step.Description.StartProcess	Startet ein Programm oder eine ausführbare Datei.	Starts a program or executable file.
+Step.Description.FocusProcess	Bringt das Hauptfenster eines laufenden Prozesses in den Vordergrund.	Brings the main window of a running process to the foreground.
+Step.Description.ShowText	Zeigt konfigurierbaren Text auf dem Desktop an.	Shows configurable text on the desktop.
+Step.Description.EndJob	Beendet den aktuellen Job sofort.	Stops the current job immediately.
+Step.Description.ActiveProcess	Prüft, ob ein Prozess aktuell ausgeführt wird.	Checks whether a process is currently running.
+Step.Description.ActiveWindow	Prüft, ob ein Prozessfenster im Vordergrund ist.	Checks whether a process window is in the foreground.
+Step.Description.PointComparison	Vergleicht Punkte mit einem Referenzpunkt oder Achsen-Ausdrücken.	Compares points with a reference point or axis expressions.
+Step.Description.KeyPointMatching	Vergleicht SIFT-Keypoints eines Templates mit einer Bildquelle.	Compares SIFT keypoints from a template with an image source.
+Step.Description.If	Beginnt einen bedingten Block.	Starts a conditional block.

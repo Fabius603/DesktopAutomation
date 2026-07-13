@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Services;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -139,10 +140,10 @@ namespace DesktopAutomationApp.ViewModels
             if (_selectedItems.Count == 0) return;
 
             var message = _selectedItems.Count == 1
-                ? $"Möchten Sie den Job '{_selectedItems[0].Name}' wirklich löschen?"
-                : $"Möchten Sie die {_selectedItems.Count} ausgewählten Jobs wirklich löschen?";
+                ? Loc.Format("Job.Delete.One", _selectedItems[0].Name)
+                : Loc.Format("Job.Delete.Many", _selectedItems.Count);
 
-            var confirmed = await _dialogService.ConfirmAsync(message, "Löschen bestätigen");
+            var confirmed = await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title"));
             if (!confirmed) return;
 
             var toDelete = _selectedItems.ToList();
@@ -157,7 +158,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public async void CreateNewJob()
         {
-            var name = await _dialogService.AskForNameAsync("Neuer Job", "Name des neuen Jobs:");
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Job.New.Title"), Loc.Get("Job.New.Prompt"));
             if (name == null) return;
 
             try

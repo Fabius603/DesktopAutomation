@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -50,17 +51,17 @@ namespace DesktopAutomationApp.Converters
             else
                 source = !string.IsNullOrWhiteSpace(c.SourceStepDisplayName)
                     ? c.SourceStepDisplayName
-                    : (string.IsNullOrWhiteSpace(c.SourceStepId) ? "Unbekannter Step" : c.SourceStepId);
+                    : (string.IsNullOrWhiteSpace(c.SourceStepId) ? Loc.Get("Step.Unknown") : c.SourceStepId);
 
             var prop = !string.IsNullOrWhiteSpace(c.PropertyDisplayName)
                 ? c.PropertyDisplayName
                 : c.Property;
-            if (string.IsNullOrWhiteSpace(prop)) prop = "Wert";
+            if (string.IsNullOrWhiteSpace(prop)) prop = Loc.Get("Common.Value");
 
             var op = c.Operator switch
             {
-                ConditionOperator.IsTrue            => "ist wahr",
-                ConditionOperator.IsFalse           => "ist falsch",
+                ConditionOperator.IsTrue            => Loc.Get("Condition.IsTrue.Lower"),
+                ConditionOperator.IsFalse           => Loc.Get("Condition.IsFalse.Lower"),
                 ConditionOperator.Equals            => "=",
                 ConditionOperator.NotEquals         => "!=",
                 ConditionOperator.GreaterThan       => ">",

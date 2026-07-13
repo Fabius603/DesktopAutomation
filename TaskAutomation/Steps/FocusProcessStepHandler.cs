@@ -44,50 +44,53 @@ namespace TaskAutomation.Steps
 
             var processName = Path.GetFileNameWithoutExtension(executablePath);
             var processes = Process.GetProcessesByName(processName);
-
-            if (processes.Length == 0)
+            try
             {
-                logger.LogInformation(
-                    "FocusProcessStepHandler: Kein laufender Prozess mit dem Namen '{Name}' gefunden.",
-                    processName);
-                foreach (var p in processes) p.Dispose();
+                if (processes.Length == 0)
+                {
+                    logger.LogInformation(
+                        "FocusProcessStepHandler: Kein laufender Prozess mit dem Namen '{Name}' gefunden.",
+                        processName);
+                    return Task.FromResult(new TaskResult { WasExecuted = true, Success = true });
+                }
+
+                var target = processes[0];
+                var hwnd = target.MainWindowHandle;
+
+                if (hwnd == IntPtr.Zero)
+                {
+                    logger.LogInformation(
+                        "FocusProcessStepHandler: Prozess '{Name}' hat kein sichtbares Hauptfenster.",
+                        processName);
+                }
+                else
+                {
+                    switch (step.Settings.WindowMode)
+                    {
+                        case FocusProcessWindowMode.Maximized:
+                            ShowWindow(hwnd, SW_MAXIMIZE);
+                            break;
+                        case FocusProcessWindowMode.Fullscreen:
+                            ShowWindow(hwnd, SW_MAXIMIZE);
+                            break;
+                        default:
+                            if (IsIconic(hwnd))
+                                ShowWindow(hwnd, SW_RESTORE);
+                            break;
+                    }
+                    SetForegroundWindow(hwnd);
+                    logger.LogInformation(
+                        "FocusProcessStepHandler: Prozess '{Name}' in den Vordergrund gebracht.",
+                        processName);
+                }
+
                 return Task.FromResult(new TaskResult { WasExecuted = true, Success = true });
             }
-
-            var target = processes[0];
-            var hwnd = target.MainWindowHandle;
-
-            if (hwnd == IntPtr.Zero)
+            finally
             {
-                logger.LogInformation(
-                    "FocusProcessStepHandler: Prozess '{Name}' hat kein sichtbares Hauptfenster.",
-                    processName);
+                foreach (var process in processes)
+                    process.Dispose();
             }
-            else
-            {
-                switch (step.Settings.WindowMode)
-                {
-                    case FocusProcessWindowMode.Maximized:
-                        ShowWindow(hwnd, SW_MAXIMIZE);
-                        break;
-                    case FocusProcessWindowMode.Fullscreen:
-                        // Vollbild: maximieren und dann in den Vordergrund bringen
-                        ShowWindow(hwnd, SW_MAXIMIZE);
-                        break;
-                    default:
-                        // Normal: nur wiederherstellen wenn minimiert
-                        if (IsIconic(hwnd))
-                            ShowWindow(hwnd, SW_RESTORE);
-                        break;
-                }
-                SetForegroundWindow(hwnd);
-                logger.LogInformation(
-                    "FocusProcessStepHandler: Prozess '{Name}' in den Vordergrund gebracht.",
-                    processName);
-            }
-
-            foreach (var p in processes) p.Dispose();
-            return Task.FromResult(new TaskResult { WasExecuted = true, Success = true });
         }
 
         protected override TaskResult CreateDefault() => TaskResult.Default;

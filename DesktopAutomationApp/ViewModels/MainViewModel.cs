@@ -12,6 +12,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Views;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -28,7 +29,6 @@ namespace DesktopAutomationApp.ViewModels
         private bool _hasUpdate;
         private string _latestVersion = string.Empty;
         private string _updateUrl = string.Empty;
-        private string _assetDownloadUrl = string.Empty;
         private bool _isUpdating;
         private bool _isUpdateReady;
         private int _updateProgress;
@@ -57,7 +57,7 @@ namespace DesktopAutomationApp.ViewModels
             private set { SetProperty(ref _isUpdating, value); OnPropertyChanged(nameof(ShowDownloadButton)); }
         }
 
-        /// <summary>True once the ZIP has been downloaded and the PS1 script is ready — shows the Restart button.</summary>
+        /// <summary>True once Velopack has downloaded and verified the update.</summary>
         public bool IsUpdateReady
         {
             get => _isUpdateReady;
@@ -80,7 +80,6 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         public ICommand InstallUpdateCommand { get; }
-        public ICommand RestartToUpdateCommand { get; }
         public ICommand OpenUpdateCommand { get; }  // fallback: browser
 
         private readonly StartViewModel _start;
@@ -89,6 +88,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListAutomationsViewModel _listAutomations;
         private readonly YoloDownloadsViewModel _yoloDownloads;
         private readonly ExecutionLogsViewModel _executionLogs;
+        private readonly SettingsViewModel _settings;
 
         public object? CurrentContent
         {
@@ -117,7 +117,8 @@ namespace DesktopAutomationApp.ViewModels
             || ReferenceEquals(vm, _listJobs)
             || ReferenceEquals(vm, _listAutomations)
             || ReferenceEquals(vm, _yoloDownloads)
-            || ReferenceEquals(vm, _executionLogs);
+            || ReferenceEquals(vm, _executionLogs)
+            || ReferenceEquals(vm, _settings);
 
         public string CurrentContentName
         {
@@ -131,6 +132,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListAutomations { get; }
         public ICommand ShowYoloDownloads { get; }
         public ICommand ShowExecutionLogs { get; }
+        public ICommand ShowSettings { get; }
         public ICommand StopAllJobsCommand { get; }
 
         public MainViewModel(
@@ -143,7 +145,8 @@ namespace DesktopAutomationApp.ViewModels
             ListJobsViewModel listJobsViewModel,
             ListAutomationsViewModel listAutomationsViewModel,
             YoloDownloadsViewModel yoloDownloadsViewModel,
-            ExecutionLogsViewModel executionLogsViewModel)
+            ExecutionLogsViewModel executionLogsViewModel,
+            SettingsViewModel settingsViewModel)
         {
             _viewModelFactory = viewModelFactory;
             _jobDispatcher = jobDispatcher;
@@ -160,13 +163,12 @@ namespace DesktopAutomationApp.ViewModels
             InstallUpdateCommand = new RelayCommand(
                 async () => await InstallUpdateAsync(),
                 () => HasUpdate && !IsUpdating && !IsUpdateReady);
-            RestartToUpdateCommand = new RelayCommand(
-                () => Application.Current.Shutdown());
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listAutomations = listAutomationsViewModel;
             _yoloDownloads = yoloDownloadsViewModel;
             _executionLogs = executionLogsViewModel;
+            _settings = settingsViewModel;
 
             // Events für Job-Fehler abonnieren
             _jobDispatcher.JobErrorOccurred += OnJobErrorOccurred;
@@ -181,12 +183,13 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Automationsliste in die Details:
             _listAutomations.RequestOpenAutomation += OpenAutomationDetails;
 
-            ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _start; });
+            ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _start; _start.RefreshCommand.Execute(null); } });
             ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listMakros; _listMakros.RefreshCommand.Execute(null); } });
             ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
             ShowListAutomations = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listAutomations; _listAutomations.RefreshCommand.Execute(null); } });
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
             ShowExecutionLogs = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _executionLogs; _executionLogs.RefreshCommand.Execute(null); } });
+            ShowSettings = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _settings; });
             StopAllJobsCommand = new RelayCommand(() =>
             {
                 _jobDispatcher.CancelAllJobs();
@@ -208,9 +211,8 @@ namespace DesktopAutomationApp.ViewModels
                 var result = await _updateService.CheckForUpdateAsync();
                 if (!result.HasUpdate) return;
 
-                _updateUrl = result.HtmlUrl;
-                _assetDownloadUrl = result.AssetDownloadUrl;
-                LatestVersion = result.LatestTag;
+                _updateUrl = result.ReleaseUrl;
+                LatestVersion = result.LatestVersion;
                 HasUpdate = true;
             }
             catch
@@ -224,38 +226,51 @@ namespace DesktopAutomationApp.ViewModels
             IsUpdating = true;
             IsUpdateReady = false;
             UpdateProgress = 0;
-            UpdateStatusText = "Wird heruntergeladen…";
+            UpdateStatusText = Loc.Get("Update.Downloading");
             (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             var progress = new Progress<int>(p =>
             {
                 UpdateProgress = p;
-                UpdateStatusText = $"Wird heruntergeladen… {p} %";
+                UpdateStatusText = Loc.Format("Update.DownloadingProgress", p);
             });
 
             try
             {
-                var ok = await _updateService.DownloadAndInstallAsync(_assetDownloadUrl, progress);
+                var ok = await _updateService.DownloadUpdateAsync(progress);
                 if (!ok)
                 {
-                    UpdateStatusText = "Fehler beim Download oder Entpacken.";
+                    UpdateStatusText = Loc.Get("Update.DownloadError");
                     IsUpdating = false;
                     (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
                     return;
                 }
 
-                // Download + PS1 script ready — show the Restart button
+                // The verified package is staged; show the restart button.
                 UpdateProgress = 100;
-                UpdateStatusText = "Update bereit. Bitte neu starten.";
+                UpdateStatusText = Loc.Get("Update.Ready");
                 IsUpdating = false;
                 IsUpdateReady = true;
                 (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
             catch
             {
-                UpdateStatusText = "Fehler beim Update.";
+                UpdateStatusText = Loc.Get("Update.Error");
                 IsUpdating = false;
                 (InstallUpdateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public bool PrepareUpdateAndRestart()
+        {
+            try
+            {
+                return _updateService.PrepareUpdateAndRestart();
+            }
+            catch
+            {
+                UpdateStatusText = Loc.Get("Update.Error");
+                return false;
             }
         }
 
@@ -307,8 +322,8 @@ namespace DesktopAutomationApp.ViewModels
                 return true;
 
             var r = await _dialogService.ConfirmWithCancelAsync(
-                "Es gibt ungespeicherte Änderungen. Möchten Sie speichern?",
-                "Ungespeicherte Änderungen");
+                Loc.Get("Dialog.Unsaved.Message"),
+                Loc.Get("Dialog.Unsaved.Title"));
             if (r == true)  { await guard.SaveAsync(); return true; }
             if (r == false) { guard.DiscardChanges(); return true; }
             return false; // Cancel
@@ -320,18 +335,15 @@ namespace DesktopAutomationApp.ViewModels
             if (e.Exception is JobLimitExceededException)
                 return;
 
-            var message = $"Fehler beim Ausführen des Jobs '{e.JobName}':\n\n{e.ErrorMessage}";
-            var title = "Job-Ausführungsfehler";
+            var message = Loc.Format("Error.JobExecution.Message", e.JobName, e.ErrorMessage);
+            var title = Loc.Get("Error.JobExecution.Title");
             _dialogService.ShowError(message, title);
         }
 
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
-            var message = $"Fehler beim Ausführen des Job-Steps:\n\n" +
-                         $"Job: {e.JobName}\n" +
-                         $"Step: {e.StepType}\n\n" +
-                         $"Fehlermeldung:\n{e.ErrorMessage}";
-            var title = "Job-Step-Ausführungsfehler";
+            var message = Loc.Format("Error.JobStepExecution.Message", e.JobName, e.StepType, e.ErrorMessage);
+            var title = Loc.Get("Error.JobStepExecution.Title");
             _dialogService.ShowError(message, title);
         }
     }

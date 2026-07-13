@@ -2,9 +2,27 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Models
 {
+    public sealed class EditableAutomationAction : INotifyPropertyChanged
+    {
+        private string _name = string.Empty;
+        private Guid? _jobId;
+        private AutomationActionTarget _actionType = AutomationActionTarget.Job;
+        private Guid? _makroId;
+
+        public string Name { get => _name; set { if (_name != value) { _name = value; OnPropertyChanged(); } } }
+        public Guid? JobId { get => _jobId; set { if (_jobId != value) { _jobId = value; OnPropertyChanged(); } } }
+        public AutomationActionTarget ActionType { get => _actionType; set { if (_actionType != value) { _actionType = value; OnPropertyChanged(); } } }
+        public Guid? MakroId { get => _makroId; set { if (_makroId != value) { _makroId = value; OnPropertyChanged(); } } }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public sealed class EditableAutomation : INotifyPropertyChanged
     {
         private Guid _id = Guid.NewGuid();
@@ -14,18 +32,24 @@ namespace DesktopAutomationApp.Models
         private AutomationTriggerKind _triggerKind = AutomationTriggerKind.Hotkey;
         private KeyModifiers _modifiers;
         private uint _virtualKeyCode;
-        private DateTime _runAtDate = DateTime.Today;
-        private string _runAtTime = "08:00";
-        private string _scheduleTime = "08:00";
+        private DateTime _runAt = DateTime.Today.AddHours(8);
+        private DateTime _scheduleTime = DateTime.Today.AddHours(8);
+        private HashSet<DayOfWeek> _scheduleDays =
+            [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
         private int _intervalValue = 15;
         private IntervalUnit _intervalUnit = IntervalUnit.Minutes;
         private bool _startImmediately = true;
         private string _processName = string.Empty;
         private string _windowTitleContains = string.Empty;
         private int _delayAfterEventSeconds;
-        private EditableJobReference _action = new();
+        private EditableAutomationAction _action = new();
         private AutomationAlreadyRunningBehavior _alreadyRunningBehavior = AutomationAlreadyRunningBehavior.Ignore;
         private int _cooldownSeconds;
+        private DateTime? _enabledFrom;
+        private DateTime? _enabledUntil;
+        private DateTimeOffset? _lastRunAt;
+        private DateTimeOffset? _nextRunAt;
+        private string? _lastError;
         private DateTimeOffset _createdAt = DateTimeOffset.Now;
         private DateTimeOffset _updatedAt = DateTimeOffset.Now;
 
@@ -59,9 +83,15 @@ namespace DesktopAutomationApp.Models
 
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _virtualKeyCode; set { if (_virtualKeyCode != value) { _virtualKeyCode = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
-        public DateTime RunAtDate { get => _runAtDate; set { if (_runAtDate != value) { _runAtDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
-        public string RunAtTime { get => _runAtTime; set { if (_runAtTime != value) { _runAtTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
-        public string ScheduleTime { get => _scheduleTime; set { if (_scheduleTime != value) { _scheduleTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public DateTime RunAt { get => _runAt; set { if (_runAt != value) { _runAt = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public DateTime ScheduleTime { get => _scheduleTime; set { if (_scheduleTime != value) { _scheduleTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public bool Monday { get => HasDay(DayOfWeek.Monday); set => SetDay(DayOfWeek.Monday, value); }
+        public bool Tuesday { get => HasDay(DayOfWeek.Tuesday); set => SetDay(DayOfWeek.Tuesday, value); }
+        public bool Wednesday { get => HasDay(DayOfWeek.Wednesday); set => SetDay(DayOfWeek.Wednesday, value); }
+        public bool Thursday { get => HasDay(DayOfWeek.Thursday); set => SetDay(DayOfWeek.Thursday, value); }
+        public bool Friday { get => HasDay(DayOfWeek.Friday); set => SetDay(DayOfWeek.Friday, value); }
+        public bool Saturday { get => HasDay(DayOfWeek.Saturday); set => SetDay(DayOfWeek.Saturday, value); }
+        public bool Sunday { get => HasDay(DayOfWeek.Sunday); set => SetDay(DayOfWeek.Sunday, value); }
         public int IntervalValue { get => _intervalValue; set { if (_intervalValue != value) { _intervalValue = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public IntervalUnit IntervalUnit { get => _intervalUnit; set { if (_intervalUnit != value) { _intervalUnit = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public bool StartImmediately { get => _startImmediately; set { if (_startImmediately != value) { _startImmediately = value; OnPropertyChanged(); } } }
@@ -69,18 +99,21 @@ namespace DesktopAutomationApp.Models
         public string WindowTitleContains { get => _windowTitleContains; set { if (_windowTitleContains != value) { _windowTitleContains = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public int DelayAfterEventSeconds { get => _delayAfterEventSeconds; set { if (_delayAfterEventSeconds != value) { _delayAfterEventSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
 
-        public EditableJobReference Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayAction)); } } }
+        public EditableAutomationAction Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayAction)); } } }
         public AutomationAlreadyRunningBehavior AlreadyRunningBehavior { get => _alreadyRunningBehavior; set { if (_alreadyRunningBehavior != value) { _alreadyRunningBehavior = value; OnPropertyChanged(); } } }
         public int CooldownSeconds { get => _cooldownSeconds; set { if (_cooldownSeconds != value) { _cooldownSeconds = value; OnPropertyChanged(); } } }
+        public DateTime? EnabledFrom { get => _enabledFrom; set { if (_enabledFrom != value) { _enabledFrom = value; OnPropertyChanged(); } } }
+        public DateTime? EnabledUntil { get => _enabledUntil; set { if (_enabledUntil != value) { _enabledUntil = value; OnPropertyChanged(); } } }
         public DateTimeOffset CreatedAt { get => _createdAt; set { _createdAt = value; OnPropertyChanged(); } }
         public DateTimeOffset UpdatedAt { get => _updatedAt; set { _updatedAt = value; OnPropertyChanged(); } }
 
-        public string DisplayTrigger => ToDomain().Trigger.GetDisplayText();
-        public string DisplayAction => ToDomain().Action.DisplayText;
-        public string NextRunDisplay => TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited
-            ? "Ereignisbasiert"
-            : "Dummy: nicht berechnet";
-        public string LastRunDisplay => "Dummy: nie";
+        public string DisplayTrigger => AutomationDisplayFormatter.Trigger(ToDomain().Trigger);
+        public string DisplayAction => AutomationDisplayFormatter.Action(ToDomain().Action);
+        public string NextRunDisplay => _nextRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture)
+            ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited
+                ? Loc.Get("Automation.EventBased") : Loc.Get("Automation.NotScheduled"));
+        public string LastRunDisplay => _lastRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.NeverRun");
+        public string RuntimeError => _lastError ?? string.Empty;
 
         public AutomationDefinition ToDomain()
         {
@@ -94,19 +127,20 @@ namespace DesktopAutomationApp.Models
                 Action = Action.ToAutomationAction(),
                 RunPolicy = new AutomationRunPolicy
                 {
+                    Cooldown = TimeSpan.FromSeconds(Math.Max(0, CooldownSeconds)),
                     AlreadyRunningBehavior = AlreadyRunningBehavior,
-                    Cooldown = TimeSpan.FromSeconds(Math.Max(0, CooldownSeconds))
+                    EnabledFrom = EnabledFrom.HasValue ? TimeOnly.FromDateTime(EnabledFrom.Value) : null,
+                    EnabledUntil = EnabledUntil.HasValue ? TimeOnly.FromDateTime(EnabledUntil.Value) : null
                 },
                 CreatedAt = CreatedAt,
-                UpdatedAt = UpdatedAt
+                UpdatedAt = UpdatedAt,
+                LastRunAt = _lastRunAt
             };
         }
 
         public EditableAutomation Clone()
         {
-            var clone = FromDomain(ToDomain());
-            clone.Action.CopyJobNameResolverFrom(Action);
-            return clone;
+            return FromDomain(ToDomain());
         }
 
         public static EditableAutomation FromDomain(AutomationDefinition definition)
@@ -118,9 +152,14 @@ namespace DesktopAutomationApp.Models
                 Description = definition.Description,
                 Active = definition.Active,
                 TriggerKind = definition.Trigger.Kind,
-                Action = AutomationEditableJobReferenceExtensions.FromAutomationAction(definition.Action),
+                Action = AutomationEditableActionExtensions.FromAutomationAction(definition.Action),
                 AlreadyRunningBehavior = definition.RunPolicy.AlreadyRunningBehavior,
                 CooldownSeconds = (int)Math.Max(0, definition.RunPolicy.Cooldown.TotalSeconds),
+                EnabledFrom = definition.RunPolicy.EnabledFrom.HasValue ? DateTime.Today + definition.RunPolicy.EnabledFrom.Value.ToTimeSpan() : null,
+                EnabledUntil = definition.RunPolicy.EnabledUntil.HasValue ? DateTime.Today + definition.RunPolicy.EnabledUntil.Value.ToTimeSpan() : null,
+                _lastRunAt = definition.LastRunAt,
+                _nextRunAt = definition.Runtime.NextRunAt,
+                _lastError = definition.Runtime.LastError,
                 CreatedAt = definition.CreatedAt,
                 UpdatedAt = definition.UpdatedAt
             };
@@ -140,11 +179,12 @@ namespace DesktopAutomationApp.Models
                 },
                 AutomationTriggerKind.OnceAt => new OnceAtAutomationTrigger
                 {
-                    RunAt = BuildRunAtDateTime()
+                    RunAt = new DateTimeOffset(RunAt)
                 },
                 AutomationTriggerKind.Schedule => new ScheduleAutomationTrigger
                 {
-                    TimeOfDay = ParseTimeOrDefault(ScheduleTime, new TimeOnly(8, 0))
+                    TimeOfDay = TimeOnly.FromDateTime(ScheduleTime),
+                    Days = new HashSet<DayOfWeek>(_scheduleDays)
                 },
                 AutomationTriggerKind.Interval => new IntervalAutomationTrigger
                 {
@@ -175,11 +215,12 @@ namespace DesktopAutomationApp.Models
                     VirtualKeyCode = hotkey.VirtualKeyCode;
                     break;
                 case OnceAtAutomationTrigger once:
-                    RunAtDate = once.RunAt.LocalDateTime.Date;
-                    RunAtTime = once.RunAt.ToString("HH:mm");
+                    RunAt = once.RunAt.LocalDateTime;
                     break;
                 case ScheduleAutomationTrigger schedule:
-                    ScheduleTime = schedule.TimeOfDay.ToString("HH:mm");
+                    ScheduleTime = DateTime.Today + schedule.TimeOfDay.ToTimeSpan();
+                    _scheduleDays = new HashSet<DayOfWeek>(schedule.Days);
+                    NotifyDayProperties();
                     break;
                 case IntervalAutomationTrigger interval:
                     ApplyInterval(interval.Interval);
@@ -191,12 +232,6 @@ namespace DesktopAutomationApp.Models
                     DelayAfterEventSeconds = (int)process.DelayAfterEvent.TotalSeconds;
                     break;
             }
-        }
-
-        private DateTimeOffset BuildRunAtDateTime()
-        {
-            var time = ParseTimeOrDefault(RunAtTime, new TimeOnly(8, 0));
-            return new DateTimeOffset(RunAtDate.Date + time.ToTimeSpan());
         }
 
         private TimeSpan BuildInterval()
@@ -229,8 +264,22 @@ namespace DesktopAutomationApp.Models
             }
         }
 
-        private static TimeOnly ParseTimeOrDefault(string value, TimeOnly fallback)
-            => TimeOnly.TryParse(value, out var parsed) ? parsed : fallback;
+        private bool HasDay(DayOfWeek day) => _scheduleDays.Contains(day);
+
+        private void SetDay(DayOfWeek day, bool enabled)
+        {
+            var changed = enabled ? _scheduleDays.Add(day) : _scheduleDays.Remove(day);
+            if (!changed) return;
+            NotifyDayProperties();
+            OnPropertyChanged(nameof(DisplayTrigger));
+        }
+
+        private void NotifyDayProperties()
+        {
+            OnPropertyChanged(nameof(Monday)); OnPropertyChanged(nameof(Tuesday));
+            OnPropertyChanged(nameof(Wednesday)); OnPropertyChanged(nameof(Thursday));
+            OnPropertyChanged(nameof(Friday)); OnPropertyChanged(nameof(Saturday)); OnPropertyChanged(nameof(Sunday));
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -244,29 +293,27 @@ namespace DesktopAutomationApp.Models
         Hours
     }
 
-    public static class AutomationEditableJobReferenceExtensions
+    public static class AutomationEditableActionExtensions
     {
-        public static AutomationAction ToAutomationAction(this EditableJobReference reference)
+        public static AutomationAction ToAutomationAction(this EditableAutomationAction reference)
         {
             return new AutomationAction
             {
                 Name = reference.Name,
                 JobId = reference.JobId,
                 MakroId = reference.MakroId,
-                Command = reference.Command,
                 ActionType = reference.ActionType
             };
         }
 
-        public static EditableJobReference FromAutomationAction(AutomationAction? action)
+        public static EditableAutomationAction FromAutomationAction(AutomationAction? action)
         {
-            return new EditableJobReference
+            return new EditableAutomationAction
             {
                 Name = action?.Name ?? string.Empty,
                 JobId = action?.JobId,
                 MakroId = action?.MakroId,
-                Command = action?.Command ?? ActionCommand.Start,
-                ActionType = action?.ActionType ?? HotkeyActionType.Job
+                ActionType = action?.ActionType ?? AutomationActionTarget.Job
             };
         }
     }

@@ -171,9 +171,11 @@ namespace ImageDetection.Algorithms.KeyPointMatching
 
                 // Homography with RANSAC – returns inlier mask for each point
                 using var inlierMask = new Mat();
+                using var templateInput = InputArray.Create(templatePts.ToArray());
+                using var queryInput = InputArray.Create(queryPts.ToArray());
                 using var H = Cv2.FindHomography(
-                    InputArray.Create(templatePts.ToArray()),
-                    InputArray.Create(queryPts   .ToArray()),
+                    templateInput,
+                    queryInput,
                     HomographyMethods.Ransac,
                     5.0,
                     inlierMask);

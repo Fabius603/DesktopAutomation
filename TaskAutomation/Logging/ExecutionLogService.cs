@@ -96,7 +96,11 @@ namespace TaskAutomation.Logging
 
         public ExecutionLogService()
         {
-            _rootDirectory = Path.Combine(AppContext.BaseDirectory, "Logs", "Executions");
+            _rootDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DesktopAutomation",
+                "Logs",
+                "Executions");
             Directory.CreateDirectory(_rootDirectory);
             _writeQueue = new BlockingCollection<PendingLogWrite>(MaxPendingLogWrites);
             _writerThread = new Thread(WriteLogFiles)

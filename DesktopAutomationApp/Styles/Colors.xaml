@@ -11,16 +11,16 @@
     <Color x:Key="App.Color.AccentDark">#FF0090B0</Color>
     <Color x:Key="App.Color.AccentSubtle">#2600B4D8</Color>
 
-    <SolidColorBrush x:Key="App.Brush.Accent" Color="{StaticResource App.Color.Accent}" />
-    <SolidColorBrush x:Key="App.Brush.AccentLight" Color="{StaticResource App.Color.AccentLight}" />
-    <SolidColorBrush x:Key="App.Brush.AccentDark" Color="{StaticResource App.Color.AccentDark}" />
-    <SolidColorBrush x:Key="App.Brush.AccentSubtle" Color="{StaticResource App.Color.AccentSubtle}" />
+    <SolidColorBrush x:Key="App.Brush.Accent" Color="{DynamicResource App.Color.Accent}" />
+    <SolidColorBrush x:Key="App.Brush.AccentLight" Color="{DynamicResource App.Color.AccentLight}" />
+    <SolidColorBrush x:Key="App.Brush.AccentDark" Color="{DynamicResource App.Color.AccentDark}" />
+    <SolidColorBrush x:Key="App.Brush.AccentSubtle" Color="{DynamicResource App.Color.AccentSubtle}" />
 
     <!-- Danger -->
     <Color x:Key="App.Color.Danger">#FFE63946</Color>
     <Color x:Key="App.Color.DangerLight">#FFEF5A65</Color>
-    <SolidColorBrush x:Key="App.Brush.Danger" Color="{StaticResource App.Color.Danger}" />
-    <SolidColorBrush x:Key="App.Brush.DangerLight" Color="{StaticResource App.Color.DangerLight}" />
+    <SolidColorBrush x:Key="App.Brush.Danger" Color="{DynamicResource App.Color.Danger}" />
+    <SolidColorBrush x:Key="App.Brush.DangerLight" Color="{DynamicResource App.Color.DangerLight}" />
 
     <!-- Surfaces (dunkles Theme) -->
     <Color x:Key="App.Color.WindowBackground">#FF1E1E2E</Color>
@@ -31,34 +31,34 @@
     <Color x:Key="App.Color.RowEven">#FF212133</Color>
     <Color x:Key="App.Color.RowOdd">#FF2A2A3D</Color>
 
-    <SolidColorBrush x:Key="App.Brush.WindowBackground" Color="{StaticResource App.Color.WindowBackground}" />
-    <SolidColorBrush x:Key="App.Brush.Surface" Color="{StaticResource App.Color.Surface}" />
-    <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{StaticResource App.Color.SurfaceHover}" />
-    <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{StaticResource App.Color.SidebarBackground}" />
-    <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{StaticResource App.Color.CardBorder}" />
-    <SolidColorBrush x:Key="App.Brush.RowEven" Color="{StaticResource App.Color.RowEven}" />
-    <SolidColorBrush x:Key="App.Brush.RowOdd"  Color="{StaticResource App.Color.RowOdd}" />
+    <SolidColorBrush x:Key="App.Brush.WindowBackground" Color="{DynamicResource App.Color.WindowBackground}" />
+    <SolidColorBrush x:Key="App.Brush.Surface" Color="{DynamicResource App.Color.Surface}" />
+    <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{DynamicResource App.Color.SurfaceHover}" />
+    <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{DynamicResource App.Color.SidebarBackground}" />
+    <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{DynamicResource App.Color.CardBorder}" />
+    <SolidColorBrush x:Key="App.Brush.RowEven" Color="{DynamicResource App.Color.RowEven}" />
+    <SolidColorBrush x:Key="App.Brush.RowOdd"  Color="{DynamicResource App.Color.RowOdd}" />
 
     <!-- Text -->
     <Color x:Key="App.Color.TextPrimary">#FFE4E4EF</Color>
     <Color x:Key="App.Color.TextSecondary">#FFB0B0C8</Color>
     <Color x:Key="App.Color.TextMuted">#FF6E6E88</Color>
 
-    <SolidColorBrush x:Key="App.Brush.TextPrimary" Color="{StaticResource App.Color.TextPrimary}" />
-    <SolidColorBrush x:Key="App.Brush.TextSecondary" Color="{StaticResource App.Color.TextSecondary}" />
-    <SolidColorBrush x:Key="App.Brush.TextMuted" Color="{StaticResource App.Color.TextMuted}" />
+    <SolidColorBrush x:Key="App.Brush.TextPrimary" Color="{DynamicResource App.Color.TextPrimary}" />
+    <SolidColorBrush x:Key="App.Brush.TextSecondary" Color="{DynamicResource App.Color.TextSecondary}" />
+    <SolidColorBrush x:Key="App.Brush.TextMuted" Color="{DynamicResource App.Color.TextMuted}" />
 
     <!-- ═══════════════════════════════════════════════════════════════
          MahApps-Overrides — Damit alle MahApps-Controls den neuen Akzent nutzen
          ═══════════════════════════════════════════════════════════════ -->
-    <SolidColorBrush x:Key="MahApps.Brushes.Accent" Color="{StaticResource App.Color.Accent}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.Accent2" Color="{StaticResource App.Color.AccentLight}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.Accent3" Color="{StaticResource App.Color.AccentDark}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.Accent4" Color="{StaticResource App.Color.AccentSubtle}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.Highlight" Color="{StaticResource App.Color.Accent}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.AccentBase" Color="{StaticResource App.Color.Accent}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.Accent" Color="{DynamicResource App.Color.Accent}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.Accent2" Color="{DynamicResource App.Color.AccentLight}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.Accent3" Color="{DynamicResource App.Color.AccentDark}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.Accent4" Color="{DynamicResource App.Color.AccentSubtle}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.Highlight" Color="{DynamicResource App.Color.Accent}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.AccentBase" Color="{DynamicResource App.Color.Accent}" />
 
-    <SolidColorBrush x:Key="MahApps.Brushes.ThemeBackground" Color="{StaticResource App.Color.WindowBackground}" />
-    <SolidColorBrush x:Key="MahApps.Brushes.ThemeForeground" Color="{StaticResource App.Color.TextPrimary}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.ThemeBackground" Color="{DynamicResource App.Color.WindowBackground}" />
+    <SolidColorBrush x:Key="MahApps.Brushes.ThemeForeground" Color="{DynamicResource App.Color.TextPrimary}" />
 
 </ResourceDictionary>

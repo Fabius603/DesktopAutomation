@@ -1,4 +1,4 @@
-<UserControl x:Class="DesktopAutomationApp.Views.ListAutomationsView"
+<UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.ListAutomationsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -18,7 +18,7 @@
                         Command="{Binding NewCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Neue Automation" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.40E06B5F6DAB}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}"
@@ -26,7 +26,7 @@
                         Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Automation löschen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.E085C5651744}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -34,19 +34,19 @@
                         Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}"
                         Command="{Binding OpenFolderCommand}"
                         Margin="8,0,0,0"
-                        ToolTip="Ordner im Explorer öffnen">
+                        ToolTip="{loc:Translate Key=Ui.93553A3A38EF}">
                     <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center"/>
                 </Button>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Automationen" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <TextBlock Text="{loc:Translate Key=Ui.1A221929D4C5}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
                 <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
                                Foreground="{DynamicResource App.Brush.Accent}"
@@ -72,7 +72,7 @@
                 </DataGrid.InputBindings>
 
                 <DataGrid.Columns>
-                    <DataGridTemplateColumn Header="Aktiv" Width="60" CanUserResize="False">
+                    <DataGridTemplateColumn Header="{loc:Translate Key=Ui.8163454F378F}" Width="60" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox IsChecked="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -81,22 +81,31 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="3*"/>
-                    <DataGridTextColumn Header="Aktion" Binding="{Binding DisplayAction}" IsReadOnly="True" Width="3*"/>
-                    <DataGridTextColumn Header="Nächste Ausführung" Binding="{Binding NextRunDisplay}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTextColumn Header="Letzter Lauf" Binding="{Binding LastRunDisplay}" IsReadOnly="True" Width="2*"/>
-                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="150">
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.DCD1D5223F73}" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.8B9C643731C9}" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="3*"/>
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.A4AD259E71CB}" Binding="{Binding DisplayAction}" IsReadOnly="True" Width="3*"/>
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.B5561425E2EE}" Binding="{Binding NextRunDisplay}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="{loc:Translate Key=Ui.A541A83738A7}" Binding="{Binding LastRunDisplay}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="240">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ButtonSecondary}"
+                                        Command="{Binding DataContext.RunNowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="0,0,8,0"
+                                        ToolTip="{loc:Translate Key=Ui.119B406F6AEE}">
+                                    <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12"/>
+                                </Button>
                                 <Button Style="{StaticResource ButtonPrimary}"
                                         Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.BC385A30B537}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
