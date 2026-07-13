@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'DesktopAutomationApp/DesktopAutomationApp.csproj'
+      - '.github/workflows/release.yml'
   workflow_dispatch:
 
 permissions:
@@ -38,8 +39,9 @@ jobs:
           $tag = "${{ steps.ver.outputs.TAG }}"
           $isManual = "${{ github.event_name }}" -eq "workflow_dispatch"
 
-          gh release view $tag 2>$null
-          $exists = $LASTEXITCODE -eq 0
+          $releases = gh release list --limit 100 --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Failed to list GitHub releases." }
+          $exists = $releases.tagName -contains $tag
 
           if ($isManual -and $exists) {
             Write-Host "Manual run: recreating $tag."
@@ -132,6 +134,7 @@ jobs:
         run: |
           $originalName = "DesktopAutomation-win-Setup.exe"
           $installerName = "DesktopAutomation-Setup.exe"
+          $portableName = "DesktopAutomation-win-Portable.zip"
           $installerPath = Join-Path "Releases" $installerName
 
           Copy-Item `
@@ -144,7 +147,22 @@ jobs:
           gh release delete-asset "${{ steps.ver.outputs.TAG }}" $originalName --yes
           if ($LASTEXITCODE -ne 0) { throw "Failed to remove original installer asset." }
 
-          gh release edit "${{ steps.ver.outputs.TAG }}" --draft=false --latest
+          gh release delete-asset "${{ steps.ver.outputs.TAG }}" $portableName --yes
+          if ($LASTEXITCODE -ne 0) { throw "Failed to remove portable release asset." }
+
+          $releaseNotes = @"
+          ## Installation
+
+          Bitte ausschließlich **DesktopAutomation-Setup.exe** herunterladen und ausführen.
+
+          Die übrigen Dateien sind technische Velopack-Dateien für automatische Updates
+          und nicht für die manuelle Installation vorgesehen.
+          "@
+
+          gh release edit "${{ steps.ver.outputs.TAG }}" `
+            --notes $releaseNotes `
+            --draft=false `
+            --latest
           if ($LASTEXITCODE -ne 0) { throw "Failed to publish release." }
 
       - name: Upload Velopack build artifacts
