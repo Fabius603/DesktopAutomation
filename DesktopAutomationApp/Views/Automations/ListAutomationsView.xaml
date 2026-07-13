@@ -1,0 +1,107 @@
+<UserControl x:Class="DesktopAutomationApp.Views.ListAutomationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Style="{StaticResource ContentViewBase}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}"
+                        Command="{Binding NewCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Neue Automation" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonDanger}"
+                        Command="{Binding DeleteCommand}"
+                        Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Automation löschen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource ToolbarSeparator}"/>
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Aktualisieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Command="{Binding OpenFolderCommand}"
+                        Margin="8,0,0,0"
+                        ToolTip="Ordner im Explorer öffnen">
+                    <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center"/>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Automationen" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
+                               Foreground="{DynamicResource App.Brush.Accent}"
+                               FontSize="13"/>
+                </Border>
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
+            <DataGrid x:Name="AutomationGrid"
+                      ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding Selected, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="False"
+                      SelectionMode="Extended"
+                      ScrollViewer.CanContentScroll="True"
+                      SelectionChanged="AutomationGrid_SelectionChanged"
+                      PreviewMouseLeftButtonDown="AutomationGrid_PreviewMouseDown">
+                <DataGrid.InputBindings>
+                    <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
+                </DataGrid.InputBindings>
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Aktiv" Width="60" CanUserResize="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Trigger" Binding="{Binding DisplayTrigger}" IsReadOnly="True" Width="3*"/>
+                    <DataGridTextColumn Header="Aktion" Binding="{Binding DisplayAction}" IsReadOnly="True" Width="3*"/>
+                    <DataGridTextColumn Header="Nächste Ausführung" Binding="{Binding NextRunDisplay}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTextColumn Header="Letzter Lauf" Binding="{Binding LastRunDisplay}" IsReadOnly="True" Width="2*"/>
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="150">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ButtonPrimary}"
+                                        Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="Öffnen" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

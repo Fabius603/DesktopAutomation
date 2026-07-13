@@ -50,8 +50,8 @@
             <DataTemplate DataType="{x:Type vm:ListMakrosViewModel}">
                 <views:ListMakrosView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:ListHotkeysViewModel}">
-                <views:ListHotkeysView/>
+            <DataTemplate DataType="{x:Type vm:ListAutomationsViewModel}">
+                <views:ListAutomationsView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:JobStepsViewModel}">
                 <views:JobStepsView/>
@@ -59,8 +59,8 @@
             <DataTemplate DataType="{x:Type vm:MakroStepsViewModel}">
                 <views:MakroStepsView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:HotkeyDetailViewModel}">
-                <views:HotkeyDetailView/>
+            <DataTemplate DataType="{x:Type vm:AutomationDetailViewModel}">
+                <views:AutomationDetailView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:YoloDownloadsViewModel}">
                 <views:YoloDownloadsView/>

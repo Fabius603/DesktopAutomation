@@ -10,5 +10,6 @@ namespace DesktopAutomationApp.Infrastructure
         JobStepsViewModel CreateJobStepsViewModel(Job job);
         MakroStepsViewModel CreateMakroStepsViewModel(Makro makro);
         HotkeyDetailViewModel CreateHotkeyDetailViewModel(EditableHotkey hotkey);
+        AutomationDetailViewModel CreateAutomationDetailViewModel(EditableAutomation automation);
     }
 }

@@ -128,14 +128,14 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- Hotkeys -->
-                    <Button Command="{Binding ShowListHotkeys}"
-                            Tag="ListHotkeysViewModel"
+                    <!-- Automationen -->
+                    <Button Command="{Binding ShowListAutomations}"
+                            Tag="ListAutomationsViewModel"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="Keyboard" Width="18" Height="18"
+                            <iconPacks:PackIconMaterial Kind="CalendarClock" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="Hotkeys" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="Automationen" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 

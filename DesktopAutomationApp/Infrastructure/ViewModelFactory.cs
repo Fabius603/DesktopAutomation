@@ -23,5 +23,8 @@ namespace DesktopAutomationApp.Infrastructure
 
         public HotkeyDetailViewModel CreateHotkeyDetailViewModel(EditableHotkey hotkey)
             => ActivatorUtilities.CreateInstance<HotkeyDetailViewModel>(_services, hotkey);
+
+        public AutomationDetailViewModel CreateAutomationDetailViewModel(EditableAutomation automation)
+            => ActivatorUtilities.CreateInstance<AutomationDetailViewModel>(_services, automation);
     }
 }

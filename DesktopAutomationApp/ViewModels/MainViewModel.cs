@@ -86,7 +86,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly StartViewModel _start;
         private readonly ListMakrosViewModel _listMakros;
         private readonly ListJobsViewModel _listJobs;
-        private readonly ListHotkeysViewModel _listHotkeys;
+        private readonly ListAutomationsViewModel _listAutomations;
         private readonly YoloDownloadsViewModel _yoloDownloads;
         private readonly ExecutionLogsViewModel _executionLogs;
 
@@ -111,11 +111,11 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         /// <summary>Returns true for singleton VMs that are kept alive across navigations.</summary>
-        private bool IsPersistedViewModel(object vm)
+            private bool IsPersistedViewModel(object vm)
             => ReferenceEquals(vm, _start)
             || ReferenceEquals(vm, _listMakros)
             || ReferenceEquals(vm, _listJobs)
-            || ReferenceEquals(vm, _listHotkeys)
+            || ReferenceEquals(vm, _listAutomations)
             || ReferenceEquals(vm, _yoloDownloads)
             || ReferenceEquals(vm, _executionLogs);
 
@@ -128,7 +128,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowStart { get; }
         public ICommand ShowListMakros { get; }
         public ICommand ShowListJobs { get; }
-        public ICommand ShowListHotkeys { get; }
+        public ICommand ShowListAutomations { get; }
         public ICommand ShowYoloDownloads { get; }
         public ICommand ShowExecutionLogs { get; }
         public ICommand StopAllJobsCommand { get; }
@@ -141,7 +141,7 @@ namespace DesktopAutomationApp.ViewModels
             StartViewModel startViewModel,
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
-            ListHotkeysViewModel listHotkeysViewModel,
+            ListAutomationsViewModel listAutomationsViewModel,
             YoloDownloadsViewModel yoloDownloadsViewModel,
             ExecutionLogsViewModel executionLogsViewModel)
         {
@@ -164,7 +164,7 @@ namespace DesktopAutomationApp.ViewModels
                 () => Application.Current.Shutdown());
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
-            _listHotkeys = listHotkeysViewModel;
+            _listAutomations = listAutomationsViewModel;
             _yoloDownloads = yoloDownloadsViewModel;
             _executionLogs = executionLogsViewModel;
 
@@ -178,13 +178,13 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Makroliste in die Details:
             _listMakros.RequestOpenMakro += OpenMakroDetails;
 
-            // Navigation aus der Hotkeyliste in die Details:
-            _listHotkeys.RequestOpenHotkey += OpenHotkeyDetails;
+            // Navigation aus der Automationsliste in die Details:
+            _listAutomations.RequestOpenAutomation += OpenAutomationDetails;
 
             ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _start; });
             ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listMakros; _listMakros.RefreshCommand.Execute(null); } });
             ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
-            ShowListHotkeys   = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listHotkeys; _listHotkeys.RefreshCommand.Execute(null); } });
+            ShowListAutomations = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listAutomations; _listAutomations.RefreshCommand.Execute(null); } });
             ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
             ShowExecutionLogs = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _executionLogs; _executionLogs.RefreshCommand.Execute(null); } });
             StopAllJobsCommand = new RelayCommand(() =>
@@ -287,15 +287,15 @@ namespace DesktopAutomationApp.ViewModels
             CurrentContent = detailsVm;
         }
 
-        private void OpenHotkeyDetails(EditableHotkey hotkey)
+        private void OpenAutomationDetails(EditableAutomation automation)
         {
-            var detailsVm = _viewModelFactory.CreateHotkeyDetailViewModel(hotkey);
+            var detailsVm = _viewModelFactory.CreateAutomationDetailViewModel(automation);
             detailsVm.RequestBack += async () =>
             {
                 if (await CheckNavigationGuardAsync())
                 {
-                    CurrentContent = _listHotkeys;
-                    _listHotkeys.RefreshCommand.Execute(null);
+                    CurrentContent = _listAutomations;
+                    _listAutomations.RefreshCommand.Execute(null);
                 }
             };
             CurrentContent = detailsVm;

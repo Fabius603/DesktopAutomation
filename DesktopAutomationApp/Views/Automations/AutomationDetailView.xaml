@@ -1,0 +1,246 @@
+<UserControl x:Class="DesktopAutomationApp.Views.AutomationDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Style="{StaticResource ContentViewBase}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Speichern" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Verwerfen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Zurück" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="Umbenennen">
+                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                </Button>
+            </StackPanel>
+        </DockPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="1"
+                                 Text="{Binding EditedAutomation.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 MinWidth="280"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Beschreibung" VerticalAlignment="Top" Margin="0,10,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Text="{Binding EditedAutomation.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,10,0,0"
+                                 MinHeight="54"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Aktiv" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                        <CheckBox Grid.Row="2" Grid.Column="1"
+                                  IsChecked="{Binding EditedAutomation.Active, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Margin="0,10,0,0"
+                                  VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Trigger-Typ" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding TriggerKinds}"
+                                  SelectedItem="{Binding EditedAutomation.TriggerKind, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  MinWidth="240"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Hotkey" VerticalAlignment="Center" Margin="0,10,0,0"
+                                   Visibility="{Binding EditedAutomation.IsHotkeyTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
+                                    Visibility="{Binding EditedAutomation.IsHotkeyTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBox IsReadOnly="True" Width="240" Text="{Binding EditedAutomation.DisplayTrigger}"/>
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Command="{Binding CaptureHotkeyCommand}"
+                                    Margin="8,0,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <iconPacks:PackIconMaterial Kind="Keyboard" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Dummy erfassen" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Ausführen am" VerticalAlignment="Center" Margin="0,10,0,0"
+                                   Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
+                                    Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <DatePicker SelectedDate="{Binding EditedAutomation.RunAtDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                            <TextBox Text="{Binding EditedAutomation.RunAtTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="80"
+                                     Margin="8,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Uhrzeit" VerticalAlignment="Center" Margin="0,10,0,0"
+                                   Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"
+                                 Text="{Binding EditedAutomation.ScheduleTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="80"
+                                 HorizontalAlignment="Left"
+                                 Margin="0,10,0,0"
+                                 Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Intervall" VerticalAlignment="Center" Margin="0,10,0,0"
+                                   Visibility="{Binding EditedAutomation.IsIntervalTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
+                                    Visibility="{Binding EditedAutomation.IsIntervalTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBox Text="{Binding EditedAutomation.IntervalValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="70"/>
+                            <ComboBox ItemsSource="{Binding IntervalUnits}"
+                                      SelectedItem="{Binding EditedAutomation.IntervalUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Width="140"
+                                      Margin="8,0,0,0"/>
+                            <CheckBox Content="Sofort nach App-Start"
+                                      IsChecked="{Binding EditedAutomation.StartImmediately, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Margin="14,0,0,0"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Prozess" VerticalAlignment="Center" Margin="0,10,0,0"
+                                   Visibility="{Binding EditedAutomation.IsProcessTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Grid Grid.Row="4" Grid.Column="1" Margin="0,10,0,0"
+                              Visibility="{Binding EditedAutomation.IsProcessTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="120"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="z. B. chrome.exe"/>
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Optional: Fenstertitel enthält"/>
+                            <TextBox Grid.Column="4"
+                                     Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Verzögerung in Sekunden"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Aktion" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding ActionsView}"
+                                  DisplayMemberPath="Name"
+                                  SelectedItem="{Binding SelectedAction, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  MinWidth="280">
+                            <ComboBox.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="{StaticResource App.Brush.CardBorder}"
+                                                    BorderThickness="0,1,0,0"
+                                                    Margin="0,4,0,0" Padding="4,6,4,2">
+                                                <TextBlock Text="{Binding Name}"
+                                                           Foreground="{StaticResource App.Brush.Accent}"
+                                                           FontSize="10"
+                                                           FontWeight="SemiBold"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ComboBox.GroupStyle>
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Command" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1"
+                                  ItemsSource="{Binding AvailableCommands}"
+                                  SelectedItem="{Binding EditedAutomation.Action.Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Width="180"
+                                  HorizontalAlignment="Left"
+                                  Margin="0,10,0,0"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource CardBorderStyle}">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Wenn bereits aktiv" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding RunningBehaviors}"
+                                  SelectedItem="{Binding EditedAutomation.AlreadyRunningBehavior, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Width="220"
+                                  HorizontalAlignment="Left"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Cooldown" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBox Text="{Binding EditedAutomation.CooldownSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                            <TextBlock Text="Sekunden" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

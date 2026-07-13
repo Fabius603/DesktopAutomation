@@ -13,6 +13,7 @@ using TaskAutomation.Hotkeys;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Makros;
 using TaskAutomation.Steps;
+using TaskAutomation.Automations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Common.JsonRepository;
@@ -69,6 +70,7 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<Job>("Configs/Job", options, j => j.Id.ToString());
                     services.AddJsonRepository<Makro>("Configs/Makro", options, m => m.Id.ToString());
                     services.AddJsonRepository<HotkeyDefinition>("Configs/Hotkey", options, hk => hk.Id.ToString());
+                    services.AddJsonRepository<AutomationDefinition>("Configs/Automation", options, a => a.Id.ToString());
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
                     services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
@@ -86,10 +88,17 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
+                    services.AddSingleton<IAutomationEngine, AutomationEngine>();
+                    services.AddSingleton<IAutomationMigrationService, AutomationMigrationService>();
+                    services.AddSingleton<IAutomationTriggerProvider, HotkeyAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, ScheduleAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, IntervalAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, ProcessAutomationTriggerProvider>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
                     services.AddSingleton<IHotkeyApplicationService, HotkeyApplicationService>();
+                    services.AddSingleton<IAutomationApplicationService, AutomationApplicationService>();
                     services.AddSingleton<IDialogService, WpfDialogService>();
                     services.AddSingleton<IViewModelFactory, ViewModelFactory>();
                     services.AddSingleton<IJobLauncher>(sp => (IJobLauncher)sp.GetRequiredService<IJobDispatcher>());
@@ -99,16 +108,19 @@ namespace DesktopAutomationApp
                     services.AddSingleton<MainViewModel>();
                     services.AddSingleton<StartViewModel>();
                     services.AddSingleton<ListHotkeysViewModel>();
+                    services.AddSingleton<ListAutomationsViewModel>();
                     services.AddSingleton<ListJobsViewModel>();
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
                     services.AddSingleton<ExecutionLogsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
                     services.AddTransient<HotkeyDetailViewModel>();
+                    services.AddTransient<AutomationDetailViewModel>();
 
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<StartView>();
                     services.AddSingleton<ListHotkeysView>();
+                    services.AddSingleton<ListAutomationsView>();
                     services.AddSingleton<ListJobsView>();
                     services.AddSingleton<ListMakrosView>();
                     services.AddSingleton<YoloDownloadsView>();
