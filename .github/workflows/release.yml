@@ -103,7 +103,7 @@ jobs:
         shell: pwsh
         run: |
           ./.tools/vpk pack `
-            --packId "DesktopAutomation" `
+            --packId "Fabius603.DesktopAutomation" `
             --packVersion "${{ steps.ver.outputs.VERSION }}" `
             --packDir "out/win-x64" `
             --mainExe "DesktopAutomationApp.exe" `
@@ -132,9 +132,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $originalName = "DesktopAutomation-win-Setup.exe"
+          $originalName = "Fabius603.DesktopAutomation-win-Setup.exe"
           $installerName = "DesktopAutomation-Setup.exe"
-          $portableName = "DesktopAutomation-win-Portable.zip"
+          $portableName = "Fabius603.DesktopAutomation-win-Portable.zip"
           $installerPath = Join-Path "Releases" $installerName
 
           Copy-Item `
