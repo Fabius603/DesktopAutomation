@@ -5,7 +5,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaskAutomation.Logging
 {
@@ -75,6 +78,7 @@ namespace TaskAutomation.Logging
         void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null);
         void Complete(ExecutionLogSession session, bool success, string? details = null);
         IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000);
+        Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000, CancellationToken cancellationToken = default);
         void ReloadSessions();
     }
 
@@ -88,8 +92,19 @@ namespace TaskAutomation.Logging
         private readonly Thread _writerThread;
         private bool _disposed;
         private const int MaxInMemorySessions = 200;
-        private const int MaxEntriesPerSession = 2000;
+        private const int MaxEntriesPerSession = 3000;
         private const int MaxPendingLogWrites = 8192;
+        private const int MaxWritesPerBatch = 256;
+        private const int MaxStoredLogFiles = 1000;
+        private const long MaxLogFileBytes = 50L * 1024 * 1024;
+        private const long RetainedLogFileBytes = 25L * 1024 * 1024;
+        private const long MaxStoredLogBytes = 500L * 1024 * 1024;
+        private static readonly TimeSpan MaxLogAge = TimeSpan.FromDays(30);
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            Converters = { new JsonStringEnumConverter() }
+        };
+        private long _droppedWrites;
 
         public event EventHandler<ExecutionLogEntry>? EntryWritten;
         public event EventHandler<ExecutionLogSession>? SessionChanged;
@@ -158,8 +173,11 @@ namespace TaskAutomation.Logging
                     list.RemoveRange(0, list.Count - MaxEntriesPerSession);
             }
 
-            if (!_disposed && !_writeQueue.IsAddingCompleted)
-                _writeQueue.TryAdd(new PendingLogWrite(session.FilePath, FormatEntry(entry)));
+            if (!_disposed && !_writeQueue.IsAddingCompleted
+                && !_writeQueue.TryAdd(new PendingLogWrite(session.FilePath, entry)))
+            {
+                Interlocked.Increment(ref _droppedWrites);
+            }
             EntryWritten?.Invoke(this, entry);
         }
 
@@ -199,10 +217,26 @@ namespace TaskAutomation.Logging
                 .ToArray();
         }
 
+        public Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(
+            Guid sessionId,
+            int maxEntries = 2000,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var result = ReadEntries(sessionId, maxEntries);
+                cancellationToken.ThrowIfCancellationRequested();
+                return result;
+            }, cancellationToken);
+        }
+
         public void ReloadSessions()
         {
             var jobDirectory = Path.Combine(_rootDirectory, ExecutionLogKind.Job.ToString());
             Directory.CreateDirectory(jobDirectory);
+            ApplyRetentionPolicy(jobDirectory);
 
             var sessions = Directory.EnumerateFiles(jobDirectory, "*.log")
                 .Select(TryCreateSessionFromFile)
@@ -212,6 +246,9 @@ namespace TaskAutomation.Logging
 
             lock (_gate)
             {
+                var discoveredPaths = new HashSet<string>(sessions.Select(s => s.FilePath), StringComparer.OrdinalIgnoreCase);
+                _sessions.RemoveAll(session => !session.IsRunning && !discoveredPaths.Contains(session.FilePath));
+
                 var existingPaths = new HashSet<string>(_sessions.Select(s => s.FilePath), StringComparer.OrdinalIgnoreCase);
                 foreach (var session in sessions)
                 {
@@ -223,6 +260,10 @@ namespace TaskAutomation.Logging
 
                 _sessions.Sort((a, b) => b.StartedAt.CompareTo(a.StartedAt));
                 TrimInMemorySessionsLocked();
+
+                var retainedSessionIds = _sessions.Select(session => session.Id).ToHashSet();
+                foreach (var sessionId in _entries.Keys.Where(id => !retainedSessionIds.Contains(id)).ToList())
+                    _entries.Remove(sessionId);
             }
         }
 
@@ -278,30 +319,23 @@ namespace TaskAutomation.Logging
 
         private static string FormatEntry(ExecutionLogEntry entry)
         {
-            var sb = new StringBuilder();
-            sb.Append(entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture));
-            sb.Append(" [").Append(entry.Level).Append(']');
-
-            if (!string.IsNullOrWhiteSpace(entry.StepType))
-                sb.Append(" [").Append(entry.StepType).Append(']');
-
-            if (entry.DurationMs.HasValue)
-                sb.Append(" [").Append(entry.DurationMs.Value).Append(" ms]");
-
-            sb.Append(' ').Append(entry.Message);
-
-            if (!string.IsNullOrWhiteSpace(entry.StepId))
-                sb.Append(" StepId=").Append(entry.StepId);
-
-            if (!string.IsNullOrWhiteSpace(entry.Details))
-                sb.Append(" | ").Append(entry.Details);
-
-            sb.AppendLine();
-            return sb.ToString();
+            return JsonSerializer.Serialize(entry, JsonOptions) + Environment.NewLine;
         }
 
         private static ExecutionLogEntry? TryParseEntry(Guid sessionId, string line)
         {
+            if (line.StartsWith('{'))
+            {
+                try
+                {
+                    return JsonSerializer.Deserialize<ExecutionLogEntry>(line, JsonOptions);
+                }
+                catch (JsonException)
+                {
+                    return null;
+                }
+            }
+
             if (line.Length < 27)
                 return null;
 
@@ -405,16 +439,139 @@ namespace TaskAutomation.Logging
 
         private static IEnumerable<string> ReadLastLines(string filePath, int maxLines)
         {
-            var queue = new Queue<string>(maxLines);
-            foreach (var line in File.ReadLines(filePath, Encoding.UTF8))
-            {
-                if (queue.Count == maxLines)
-                    queue.Dequeue();
+            if (maxLines <= 0)
+                return Array.Empty<string>();
 
-                queue.Enqueue(line);
+            const int blockSize = 64 * 1024;
+            using var stream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete,
+                blockSize,
+                FileOptions.RandomAccess);
+
+            if (stream.Length == 0)
+                return Array.Empty<string>();
+
+            var chunks = new List<byte[]>();
+            var remaining = stream.Length;
+            var newlineCount = 0;
+            while (remaining > 0 && newlineCount <= maxLines)
+            {
+                var count = (int)Math.Min(blockSize, remaining);
+                remaining -= count;
+                stream.Position = remaining;
+
+                var buffer = new byte[count];
+                stream.ReadExactly(buffer);
+                chunks.Add(buffer);
+                newlineCount += buffer.Count(value => value == (byte)'\n');
             }
 
-            return queue.ToArray();
+            var totalLength = chunks.Sum(chunk => chunk.Length);
+            var bytes = new byte[totalLength];
+            var offset = 0;
+            for (var index = chunks.Count - 1; index >= 0; index--)
+            {
+                Buffer.BlockCopy(chunks[index], 0, bytes, offset, chunks[index].Length);
+                offset += chunks[index].Length;
+            }
+
+            var text = Encoding.UTF8.GetString(bytes);
+            var lines = text.Split('\n');
+            var end = lines.Length;
+            while (end > 0 && string.IsNullOrEmpty(lines[end - 1]))
+                end--;
+
+            var start = Math.Max(0, end - maxLines);
+            return lines[start..end]
+                .Select(line => line.TrimStart('\uFEFF').TrimEnd('\r'))
+                .ToArray();
+        }
+
+        private static void ApplyRetentionPolicy(string directory)
+        {
+            try
+            {
+                var cutoff = DateTime.UtcNow - MaxLogAge;
+                var files = Directory.EnumerateFiles(directory, "*.log")
+                    .Select(path => new FileInfo(path))
+                    .OrderByDescending(file => file.LastWriteTimeUtc)
+                    .ToList();
+
+                foreach (var expired in files.Where(file => file.LastWriteTimeUtc < cutoff).ToList())
+                {
+                    TryDelete(expired);
+                    files.Remove(expired);
+                }
+
+                var retainedBytes = 0L;
+                for (var index = 0; index < files.Count; index++)
+                {
+                    var file = files[index];
+                    retainedBytes += file.Exists ? file.Length : 0;
+                    if (index >= MaxStoredLogFiles || retainedBytes > MaxStoredLogBytes)
+                        TryDelete(file);
+                }
+            }
+            catch (IOException)
+            {
+                // Retention must not prevent the application from starting.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Retention must not prevent the application from starting.
+            }
+        }
+
+        private static void TryDelete(FileInfo file)
+        {
+            try
+            {
+                file.Delete();
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        private static void CompactIfNecessary(string filePath)
+        {
+            var file = new FileInfo(filePath);
+            if (!file.Exists || file.Length <= MaxLogFileBytes)
+                return;
+
+            var tempPath = filePath + ".compact";
+            try
+            {
+                using (var source = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                {
+                    source.Position = Math.Max(0, source.Length - RetainedLogFileBytes);
+                    if (source.Position > 0)
+                    {
+                        while (source.Position < source.Length && source.ReadByte() != '\n')
+                        {
+                        }
+                    }
+
+                    using var target = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    source.CopyTo(target);
+                }
+
+                File.Move(tempPath, filePath, true);
+            }
+            catch (IOException)
+            {
+                TryDelete(new FileInfo(tempPath));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                TryDelete(new FileInfo(tempPath));
+            }
         }
 
         private static string SafeFileName(string value)
@@ -427,13 +584,46 @@ namespace TaskAutomation.Logging
 
         private void WriteLogFiles()
         {
-            foreach (var pending in _writeQueue.GetConsumingEnumerable())
+            while (!_writeQueue.IsCompleted)
             {
                 try
                 {
-                    File.AppendAllText(pending.FilePath, pending.Text, Encoding.UTF8);
+                    if (!_writeQueue.TryTake(out var first, Timeout.Infinite))
+                        continue;
+
+                    var batch = new List<PendingLogWrite>(MaxWritesPerBatch) { first };
+                    while (batch.Count < MaxWritesPerBatch && _writeQueue.TryTake(out var next, 20))
+                        batch.Add(next);
+
+                    var dropped = Interlocked.Exchange(ref _droppedWrites, 0);
+                    if (dropped > 0)
+                    {
+                        var marker = new ExecutionLogEntry
+                        {
+                            SessionId = first.Entry.SessionId,
+                            Timestamp = DateTimeOffset.Now,
+                            Level = ExecutionLogLevel.Warning,
+                            Message = $"{dropped} Logeinträge wurden wegen Überlastung nicht in die Datei geschrieben."
+                        };
+                        batch.Insert(0, new PendingLogWrite(first.FilePath, marker));
+                    }
+
+                    foreach (var group in batch.GroupBy(item => item.FilePath, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var text = string.Concat(group.Select(item => FormatEntry(item.Entry)));
+                        File.AppendAllText(group.Key, text, Encoding.UTF8);
+                        CompactIfNecessary(group.Key);
+                    }
                 }
-                catch
+                catch (InvalidOperationException) when (_writeQueue.IsCompleted)
+                {
+                    break;
+                }
+                catch (IOException)
+                {
+                    // Logging must never break job execution. In-memory live logs still contain the entry.
+                }
+                catch (UnauthorizedAccessException)
                 {
                     // Logging must never break job execution. In-memory live logs still contain the entry.
                 }
@@ -447,12 +637,12 @@ namespace TaskAutomation.Logging
 
             _disposed = true;
             _writeQueue.CompleteAdding();
-            if (!_writerThread.Join(TimeSpan.FromSeconds(2)))
+            if (!_writerThread.Join(TimeSpan.FromSeconds(5)))
                 return;
 
             _writeQueue.Dispose();
         }
 
-        private readonly record struct PendingLogWrite(string FilePath, string Text);
+        private readonly record struct PendingLogWrite(string FilePath, ExecutionLogEntry Entry);
     }
 }

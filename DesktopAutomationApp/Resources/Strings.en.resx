@@ -1149,6 +1149,18 @@
   <data name="Execution.Finished" xml:space="preserve">
     <value>finished</value>
   </data>
+  <data name="Execution.LogsLoading" xml:space="preserve">
+    <value>Loading logs...</value>
+  </data>
+  <data name="Execution.LogEntryCount" xml:space="preserve">
+    <value>{0:N0} entries in memory</value>
+  </data>
+  <data name="Execution.LogEntryCountTruncated" xml:space="preserve">
+    <value>Latest {0:N0} entries (older entries hidden)</value>
+  </data>
+  <data name="Execution.LogSearch" xml:space="preserve">
+    <value>Search logs</value>
+  </data>
   <data name="Update.Downloading" xml:space="preserve">
     <value>Downloading …</value>
   </data>

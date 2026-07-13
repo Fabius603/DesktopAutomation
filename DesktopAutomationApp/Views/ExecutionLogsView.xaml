@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              Style="{StaticResource ContentViewBase}">
     <UserControl.Resources>
         <Style x:Key="LogListBoxStyle" TargetType="ListBox">
@@ -113,7 +114,10 @@
                     <ListBox ItemsSource="{Binding Sessions}"
                              SelectedItem="{Binding SelectedSession}"
                              Style="{StaticResource LogListBoxStyle}"
-                             ItemContainerStyle="{StaticResource LogSessionItemContainerStyle}">
+                             ItemContainerStyle="{StaticResource LogSessionItemContainerStyle}"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.CanContentScroll="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
@@ -142,12 +146,27 @@
                 <DockPanel>
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     MinWidth="180"
+                                     Margin="0,0,12,0"
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Execution.LogSearch}"
+                                     ToolTip="{loc:Translate Key=Execution.LogSearch}"/>
                             <TextBlock Text="{loc:Translate Key=Ui.1709305C9FA9}" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding AvailableLevels}"
                                       SelectedItem="{Binding SelectedMinimumLevel}"
                                       MinWidth="150"/>
                         </StackPanel>
-                        <TextBlock Text="{loc:Translate Key=Ui.1178E1C9B589}" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Translate Key=Ui.1178E1C9B589}" Style="{StaticResource Heading2}"/>
+                            <TextBlock Text="{Binding EntryStatusText}"
+                                       Foreground="{DynamicResource App.Brush.TextMuted}"
+                                       FontSize="11"
+                                       Margin="0,3,0,0"/>
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="2"
+                                         Margin="0,5,0,0"
+                                         Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </StackPanel>
                     </DockPanel>
 
                     <ListBox x:Name="LogEntriesList"
@@ -155,7 +174,9 @@
                              Style="{StaticResource LogListBoxStyle}"
                              ItemContainerStyle="{StaticResource LogEntryItemContainerStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
-                             VirtualizingPanel.VirtualizationMode="Recycling">
+                             VirtualizingPanel.VirtualizationMode="Recycling"
+                             VirtualizingPanel.CacheLength="1"
+                             ScrollViewer.CanContentScroll="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -187,6 +208,7 @@
                                                Text="{Binding Message}"
                                                FontWeight="SemiBold"
                                                Margin="0,2,0,0"
+                                               MaxHeight="60"
                                                TextWrapping="Wrap"/>
                                     <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                                                Text="{Binding DisplayDetails}"
@@ -194,6 +216,7 @@
                                                FontFamily="Consolas"
                                                FontSize="12"
                                                Margin="0,2,0,0"
+                                               MaxHeight="120"
                                                TextWrapping="Wrap"/>
                                 </Grid>
                             </DataTemplate>
