@@ -164,10 +164,3 @@ jobs:
             --draft=false `
             --latest
           if ($LASTEXITCODE -ne 0) { throw "Failed to publish release." }
-
-      - name: Upload Velopack build artifacts
-        if: steps.check.outputs.EXISTS == 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: DesktopAutomation-${{ steps.ver.outputs.VERSION }}-win-x64
-          path: Releases
