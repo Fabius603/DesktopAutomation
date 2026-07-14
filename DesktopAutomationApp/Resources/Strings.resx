@@ -345,6 +345,18 @@
   <data name="Ui.Automation.Details.WindowTitleContainsOptional" xml:space="preserve">
     <value>Fenstertitel enthält (optional)</value>
   </data>
+  <data name="Ui.Automation.Details.WindowTitlePlaceholder" xml:space="preserve">
+    <value>z. B. YouTube oder Dokumentname</value>
+  </data>
+  <data name="Ui.Automation.Details.General" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="Ui.Automation.Details.ClearActiveWindow" xml:space="preserve">
+    <value>Zeitfenster entfernen</value>
+  </data>
+  <data name="Validation.DateTimeFormat" xml:space="preserve">
+    <value>Ungültiges Datum- oder Uhrzeitformat.</value>
+  </data>
   <data name="Ui.Automation.Details.DelayS" xml:space="preserve">
     <value>Verzögerung (s)</value>
   </data>

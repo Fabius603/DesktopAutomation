@@ -30,6 +30,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly bool _isNew;
 
         private bool _hasUnsavedChanges;
+        private readonly HashSet<string> _invalidDateTimeInputs = new();
         private ActionItem? _selectedAction;
 
         public EditableAutomation EditedAutomation { get; }
@@ -107,6 +108,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenFileCommand { get; }
         public ICommand CaptureHotkeyCommand { get; }
         public ICommand BrowseFileSystemFolderCommand { get; }
+        public ICommand ClearActiveWindowCommand { get; }
 
         public event Action? RequestBack;
 
@@ -147,12 +149,19 @@ namespace DesktopAutomationApp.ViewModels
             ActionsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ActionItem.DisplayCategory)));
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
+            SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges && _invalidDateTimeInputs.Count == 0);
             CancelCommand = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await RenameAsync());
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
             CaptureHotkeyCommand = new RelayCommand(async () => await CaptureHotkeyAsync(), () => !IsCapturingHotkey);
             BrowseFileSystemFolderCommand = new RelayCommand(BrowseFileSystemFolder);
+            ClearActiveWindowCommand = new RelayCommand(() =>
+            {
+                EditedAutomation.EnabledFrom = null;
+                EditedAutomation.EnabledUntil = null;
+                ReportDateTimeInputValidity("EnabledFrom", true);
+                ReportDateTimeInputValidity("EnabledUntil", true);
+            });
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
             EditedAutomation.Action.PropertyChanged += OnEditedActionChanged;
@@ -169,6 +178,13 @@ namespace DesktopAutomationApp.ViewModels
             var path = Path.Combine(directory, $"{EditedAutomation.Id}.json");
             Directory.CreateDirectory(directory);
             Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+        }
+
+        public void ReportDateTimeInputValidity(string inputId, bool isValid)
+        {
+            if (isValid) _invalidDateTimeInputs.Remove(inputId);
+            else _invalidDateTimeInputs.Add(inputId);
+            (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void LoadActions()

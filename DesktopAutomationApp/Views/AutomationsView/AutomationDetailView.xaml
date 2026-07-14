@@ -94,8 +94,12 @@
         </DockPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
+            <StackPanel Margin="0,0,12,0">
+                <Expander Style="{StaticResource AutomationExpanderStyle}" IsExpanded="True" Margin="0,0,0,12">
+                    <Expander.Header>
+                        <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.General}" Style="{StaticResource Heading2}" Margin="4,6"/>
+                    </Expander.Header>
+                    <Border Style="{StaticResource CardBorderStyle}">
                     <Grid Margin="12">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -113,7 +117,8 @@
                         <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding EditedAutomation.Active, Mode=TwoWay}"
                                   Margin="0,10,0,0" VerticalAlignment="Center"/>
                     </Grid>
-                </Border>
+                    </Border>
+                </Expander>
 
                 <Expander Style="{StaticResource AutomationExpanderStyle}" IsExpanded="True" Margin="0,0,0,12">
                     <Expander.Header>
@@ -170,14 +175,14 @@
                             <mah:DateTimePicker Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Width="230" HorizontalAlignment="Left"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateFormat="Short" SelectedTimeFormat="Short" IsClockVisible="False"
-                                                PreviewKeyDown="Picker_PreviewKeyDown" SelectedDateTime="{Binding EditedAutomation.RunAt, Mode=TwoWay}"
+                                                LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="RunAt|Required" SelectedDateTime="{Binding EditedAutomation.RunAt, Mode=TwoWay}"
                                                 Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                             <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.TimeAndDays}" VerticalAlignment="Top" Margin="0,16,0,0"
                                        Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
                                         Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <mah:TimePicker PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
+                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="ScheduleTime|Required" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateTime="{Binding EditedAutomation.ScheduleTime, Mode=TwoWay}"
                                                 Width="150" HorizontalAlignment="Left"/>
@@ -218,15 +223,17 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{loc:Translate Key=Ui.Common.ProcessName}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
+                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
+                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.WindowTitleContainsOptional}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
+                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.WindowTitlePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="4">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.DelayS}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay}"/>
+                                    <TextBox Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay}" Height="34"/>
                                 </StackPanel>
                             </Grid>
 
@@ -241,25 +248,27 @@
                                     <ColumnDefinition Width="16"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="16"/>
-                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="120"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.Event}" Margin="0,0,0,4"/>
-                                    <ComboBox ItemsSource="{Binding WindowEventKinds}" SelectedItem="{Binding EditedAutomation.WindowEventKind, Mode=TwoWay}">
+                                    <ComboBox ItemsSource="{Binding WindowEventKinds}" SelectedItem="{Binding EditedAutomation.WindowEventKind, Mode=TwoWay}" Height="34">
                                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource LocalizedEnumConverter}}"/></DataTemplate></ComboBox.ItemTemplate>
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.ProcessNameOptional}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
+                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="4">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.WindowTitleContainsOptional}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
+                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.WindowTitlePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="6">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.DelayS}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay}"/>
+                                    <TextBox Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay}" Height="34"/>
                                 </StackPanel>
                             </Grid>
 
@@ -351,16 +360,20 @@
                                 <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.Seconds}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                             </StackPanel>
                             <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.Automation.Details.ActiveFrom}" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                            <mah:TimePicker Grid.Row="2" Grid.Column="1" PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
-                                            Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
-                                            SelectedDateTime="{Binding EditedAutomation.EnabledFrom, Mode=TwoWay}"
-                                            Width="150" HorizontalAlignment="Left" Margin="0,10,0,0"/>
-                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.ActiveUntil}" VerticalAlignment="Center" Margin="0,10,0,0"/>
-                            <mah:TimePicker Grid.Row="3" Grid.Column="1" PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
-                                            Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
-                                            SelectedDateTime="{Binding EditedAutomation.EnabledUntil, Mode=TwoWay}"
-                                            Width="150" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                            ToolTip="{loc:Translate Key=Ui.Automation.Details.TimeWindowsSpanningMidnightAreSupported}"/>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledFrom|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
+                                                Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
+                                                SelectedDateTime="{Binding EditedAutomation.EnabledFrom, Mode=TwoWay}" Width="150"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.ActiveUntil}" VerticalAlignment="Center" Margin="14,0,8,0"/>
+                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledUntil|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
+                                                Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
+                                                SelectedDateTime="{Binding EditedAutomation.EnabledUntil, Mode=TwoWay}" Width="150"
+                                                ToolTip="{loc:Translate Key=Ui.Automation.Details.TimeWindowsSpanningMidnightAreSupported}"/>
+                                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding ClearActiveWindowCommand}" Margin="8,0,0,0"
+                                        ToolTip="{loc:Translate Key=Ui.Automation.Details.ClearActiveWindow}">
+                                    <iconPacks:PackIconMaterial Kind="Close" Width="14" Height="14"/>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Expander>

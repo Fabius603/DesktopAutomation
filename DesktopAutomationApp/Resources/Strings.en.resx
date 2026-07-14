@@ -360,6 +360,18 @@
   <data name="Ui.Automation.Details.WindowTitleContainsOptional" xml:space="preserve">
     <value>Window title contains (optional)</value>
   </data>
+  <data name="Ui.Automation.Details.WindowTitlePlaceholder" xml:space="preserve">
+    <value>e.g. YouTube or document name</value>
+  </data>
+  <data name="Ui.Automation.Details.General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Ui.Automation.Details.ClearActiveWindow" xml:space="preserve">
+    <value>Clear active time window</value>
+  </data>
+  <data name="Validation.DateTimeFormat" xml:space="preserve">
+    <value>Invalid date or time format.</value>
+  </data>
   <data name="Ui.Automation.Details.DelayS" xml:space="preserve">
     <value>Delay (s)</value>
   </data>
