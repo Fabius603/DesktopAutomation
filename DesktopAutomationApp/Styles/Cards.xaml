@@ -34,6 +34,14 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
+    <!-- Tabellenkarte ohne inneren Abstand, damit Header und Zeilen eine Fläche bilden -->
+    <Style x:Key="TableCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+        <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+
     <!-- Item-Karte für ItemsControl-Einträge (z. B. YOLO Model-Cards) -->
     <Style x:Key="ItemCardStyle" TargetType="Border">
         <Setter Property="CornerRadius" Value="8"/>

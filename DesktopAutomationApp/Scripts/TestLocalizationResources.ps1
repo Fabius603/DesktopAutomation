@@ -5,6 +5,23 @@ $ErrorActionPreference = 'Stop'
 [xml]$en = [IO.File]::ReadAllText((Join-Path $ProjectRoot 'Resources\Strings.en.resx'))
 $deKeys = @($de.root.data | ForEach-Object { [string]$_.name })
 $enKeys = @($en.root.data | ForEach-Object { [string]$_.name })
+$hashedKeys = @($deKeys | Where-Object { $_ -match '^Ui\.[A-F0-9]{12}$' })
+if ($hashedKeys.Count) {
+    throw "Hashed localization keys are not allowed: $($hashedKeys -join ', ')"
+}
+
+$duplicateGerman = @($deKeys | Group-Object | Where-Object Count -gt 1 | ForEach-Object Name)
+$duplicateEnglish = @($enKeys | Group-Object | Where-Object Count -gt 1 | ForEach-Object Name)
+if ($duplicateGerman.Count -or $duplicateEnglish.Count) {
+    throw "Duplicate translation keys. DE: $($duplicateGerman -join ', '); EN: $($duplicateEnglish -join ', ')"
+}
+
+$emptyGerman = @($de.root.data | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.value) } | ForEach-Object { [string]$_.name })
+$emptyEnglish = @($en.root.data | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.value) } | ForEach-Object { [string]$_.name })
+if ($emptyGerman.Count -or $emptyEnglish.Count) {
+    throw "Empty translations. DE: $($emptyGerman -join ', '); EN: $($emptyEnglish -join ', ')"
+}
+
 $missingEnglish = @($deKeys | Where-Object { $_ -notin $enKeys })
 $missingGerman = @($enKeys | Where-Object { $_ -notin $deKeys })
 if ($missingEnglish.Count -or $missingGerman.Count) {

@@ -5,7 +5,8 @@
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
-                 Title="{loc:Translate Key=Ui.1AE7FEC55BD2}"
+                 xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+                 Title="{loc:Translate Key=Ui.App.Title}"
                  MinWidth="1300" MinHeight="600"
                  Background="{DynamicResource App.Brush.WindowBackground}"
                  GlowBrush="{DynamicResource App.Brush.AccentDark}"
@@ -29,9 +30,9 @@
                                                     VerticalAlignment="Center"
                                                     Margin="0,0,10,0"/>
                         <StackPanel>
-                            <TextBlock Text="{loc:Translate Key=Ui.9BD88F2485AC}" FontSize="20" FontWeight="Bold"
+                            <TextBlock Text="{loc:Translate Key=Ui.App.BrandDesktop}" FontSize="20" FontWeight="Bold"
                                        Foreground="{DynamicResource App.Brush.Accent}"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.D909750B1BBB}" FontSize="14" FontWeight="Light"
+                            <TextBlock Text="{loc:Translate Key=Ui.App.BrandAutomation}" FontSize="14" FontWeight="Light"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"
                                        Margin="0,-2,0,0"/>
                         </StackPanel>
@@ -54,7 +55,7 @@
                                                         Foreground="{DynamicResource App.Brush.Accent}"
                                                         VerticalAlignment="Center"
                                                         Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.EB19BE2C2707}"
+                            <TextBlock Text="{loc:Translate Key=Ui.App.UpdateAvailable}"
                                        FontWeight="SemiBold" FontSize="12"
                                        Foreground="{DynamicResource App.Brush.Accent}"
                                        VerticalAlignment="Center"/>
@@ -94,7 +95,7 @@
                                                             Width="12" Height="12"
                                                             VerticalAlignment="Center"
                                                             Margin="0,0,5,0"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.6ACAE8FA1F57}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.App.UpdateNow}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
 
@@ -110,7 +111,7 @@
                                                             Width="12" Height="12"
                                                             VerticalAlignment="Center"
                                                             Margin="0,0,5,0"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.93E41A83723A}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.App.RestartToInstallUpdate}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -125,7 +126,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Home" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.App.Home}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -136,7 +137,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="CalendarClock" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.1A221929D4C5}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Automation.List.Automations}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -147,7 +148,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="RepeatVariant" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.68D83EF61EDE}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Makros}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -158,7 +159,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="PlaylistPlay" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.2F17A0F8D518}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -169,7 +170,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Download" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.C08179253DA5}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Yolo.YOLODownloads}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -180,7 +181,7 @@
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="TextBoxSearchOutline" Width="18" Height="18"
                                                         VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.EA2100DC89AE}" VerticalAlignment="Center" FontSize="14"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.App.Logs}" VerticalAlignment="Center" FontSize="14"/>
                         </StackPanel>
                     </Button>
 
@@ -205,7 +206,7 @@
         <Border Grid.Column="2"
                 Background="{DynamicResource App.Brush.WindowBackground}"
                 Padding="24,16">
-            <ContentControl Content="{Binding CurrentContent}"/>
+            <controls:PageTransitionContentControl Content="{Binding CurrentContent}"/>
         </Border>
     </Grid>
 </mah:MetroWindow>

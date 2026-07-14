@@ -40,7 +40,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -52,24 +52,24 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.3CD82F1C6B83}"/><Run Text="{Binding Settings.TemplatePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TemplatePath}"/><Run Text="{Binding Settings.TemplatePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.2B41DB799940}"/><Run Text="{Binding Settings.TemplateMatchMode}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MatchMode}"/><Run Text="{Binding Settings.TemplateMatchMode}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.8CB7ECF52C9E}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MultipleMatches}"/>
                         <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.38262E5E41A2}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.47A9974F5B0F}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.8B45B1C082CD}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                 </StackPanel>
@@ -89,7 +89,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -101,7 +101,7 @@
                         </Run>
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="{loc:Translate Key=Ui.2A335761AAB2}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Color}" VerticalAlignment="Center"/>
                         <Border Width="18" Height="18"
                                 Background="{Binding Settings.ColorHex}"
                                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
@@ -110,29 +110,29 @@
                         <TextBlock Text="{Binding Settings.ColorHex}" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.38262E5E41A2}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7FA9DD08AA11}"/><Run Text="{Binding Settings.MinSize}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinSize}"/><Run Text="{Binding Settings.MinSize}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.CA13C12F5A18}"/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MaxSize}"/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.0FA280F27F7B}"/><Run Text="{Binding Settings.MinWidth}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinWidth}"/><Run Text="{Binding Settings.MinWidth}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.76ED92CDAEEE}"/><Run Text="{Binding Settings.MinHeight}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinHeight}"/><Run Text="{Binding Settings.MinHeight}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.F3E9D043C2B6}"/><Run Text="{Binding Settings.DownscaleFactor}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Downscale}"/><Run Text="{Binding Settings.DownscaleFactor}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.47A9974F5B0F}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.8B45B1C082CD}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                 </StackPanel>
@@ -152,7 +152,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -164,16 +164,16 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.DA97809EF62F}"/><Run Text="{Binding Settings.MinSamples}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinValues}"/><Run Text="{Binding Settings.MinSamples}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7A4B0CC43AB3}"/><Run Text="{Binding Settings.PredictionMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PredictionMs}"/><Run Text="{Binding Settings.PredictionMs}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.6943487226FA}"/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ResetAtDistance}"/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.E03AEC74F1B9}"/><Run Text="{Binding Settings.MaxSampleAgeMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MaxAgeMs}"/><Run Text="{Binding Settings.MaxSampleAgeMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -192,10 +192,10 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.6734AA111988}"/><Run Text="{Binding Settings.DesktopIdx}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DesktopIndex}"/><Run Text="{Binding Settings.DesktopIdx}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7C0849E451F6}"/><Run Text="{Binding Settings.CaptureCursor}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CaptureMousePointer}"/><Run Text="{Binding Settings.CaptureCursor}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -214,7 +214,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.D8C81A0D4458}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessName}"/><Run Text="{Binding Settings.ProcessName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -233,7 +233,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -245,7 +245,7 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -257,14 +257,14 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7E9B7C2EAC11}"/><Run Text="{Binding Settings.WindowName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowName}"/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.AF583CB5042D}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowRawImage}"/>
                         <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.87056125F1E6}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowProcessedImage}"/>
                         <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -284,7 +284,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -312,7 +312,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -324,7 +324,7 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -336,17 +336,17 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.B970B4A304ED}"/><Run Text="{Binding Settings.SavePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.SavePath}"/><Run Text="{Binding Settings.SavePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.71E32574EE93}"/><Run Text="{Binding Settings.FileName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.FileName}"/><Run Text="{Binding Settings.FileName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.00CCADEACCAA}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseRawImage}"/>
                         <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.6542054E91DE}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseProcessedImage}"/>
                         <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -366,7 +366,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.961040D0FDD7}"/><Run Text="{Binding Settings.MakroName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MacroName}"/><Run Text="{Binding Settings.MakroName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -384,7 +384,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -396,17 +396,17 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.0F508E57DE2E}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DoubleClick}"/>
                         <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7096AB1FD106}"/><Run Text="{Binding Settings.ClickType}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClickType}"/><Run Text="{Binding Settings.ClickType}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.16841653131E}"/><Run Text="{Binding Settings.TimeoutMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TimeoutMs}"/><Run Text="{Binding Settings.TimeoutMs}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.87D9C38998EF}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.0A07F6594619}"/><Run Text="{Binding Settings.OffsetY}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Offset}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -424,7 +424,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.74D86E22EA75}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -436,19 +436,19 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.7096AB1FD106}"/><Run Text="{Binding Settings.ClickType}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClickType}"/><Run Text="{Binding Settings.ClickType}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.48CCF781EF35}"/><Run Text="{Binding Settings.OriginX}"/><Run Text="{loc:Translate Key=Ui.0A07F6594619}"/><Run Text="{Binding Settings.OriginY}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Origin}"/><Run Text="{Binding Settings.OriginX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OriginY}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.87D9C38998EF}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.0A07F6594619}"/><Run Text="{Binding Settings.OffsetY}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Offset}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.16841653131E}"/><Run Text="{Binding Settings.TimeoutMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TimeoutMs}"/><Run Text="{Binding Settings.TimeoutMs}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.0F508E57DE2E}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DoubleClick}"/>
                         <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -467,10 +467,10 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.AE1F63E2EBFF}"/><Run Text="{Binding Settings.ScriptPath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ScriptPath}"/><Run Text="{Binding Settings.ScriptPath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.F4ED7B6FCD39}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
                         <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -489,10 +489,10 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.A62513DCFC88}"/><Run Text="{Binding Settings.JobName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.JobName}"/><Run Text="{Binding Settings.JobName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.F4ED7B6FCD39}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
                         <Run Text="{Binding Settings.WaitForCompletion, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -512,7 +512,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -524,20 +524,20 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.33F4E5313C6B}"/><Run Text="{Binding Settings.Model}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Model}"/><Run Text="{Binding Settings.Model}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.0215AD9159F2}"/><Run Text="{Binding Settings.ClassName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClassName}"/><Run Text="{Binding Settings.ClassName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.38262E5E41A2}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.47A9974F5B0F}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.8B45B1C082CD}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                 </StackPanel>
@@ -557,7 +557,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.C3155FB48A52}"/><Run Text="{Binding Settings.DelayMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitTimeMs}"/><Run Text="{Binding Settings.DelayMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -576,10 +576,10 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.02025AAAE68D}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.306CE48C326B}"/><Run Text="{Binding Settings.CacheMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CacheMs}"/><Run Text="{Binding Settings.CacheMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -598,13 +598,13 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.A254BBEC8D3E}"/><Run Text="{Binding Settings.ExecutablePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.3326CB784823}"/><Run Text="{Binding Settings.Arguments}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Arguments}"/><Run Text="{Binding Settings.Arguments}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.F4ED7B6FCD39}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
                         <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -624,10 +624,10 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.A254BBEC8D3E}"/><Run Text="{Binding Settings.ExecutablePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.A8711FB9ABFC}"/><Run Text="{Binding Settings.WindowMode}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -646,17 +646,17 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.21784F40B344}"/><Run Text="{Binding Settings.Text}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Text}"/><Run Text="{Binding Settings.Text}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.4D63C26749CD}"/><Run Text="{Binding Settings.FontSize}"/>
-                        <Run Text="{loc:Translate Key=Ui.5246B589AE29}"/><Run Text="{Binding Settings.FontColor}"/>
-                        <Run Text="{loc:Translate Key=Ui.97AE949B3516}"/><Run Text="{Binding Settings.Opacity, StringFormat={}{0:P0}}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Size}"/><Run Text="{Binding Settings.FontSize}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.FontColor}"/><Run Text="{Binding Settings.FontColor}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Opacity}"/><Run Text="{Binding Settings.Opacity, StringFormat={}{0:P0}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.B3B162C81455}"/><Run Text="{Binding Settings.DesktopIndex}"/>
-                        <Run Text="{loc:Translate Key=Ui.B56E76FF5BCD}"/><Run Text="{Binding Settings.OffsetX}"/>
-                        <Run Text="{loc:Translate Key=Ui.0A07F6594619}"/><Run Text="{Binding Settings.OffsetY}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Monitor}"/><Run Text="{Binding Settings.DesktopIndex}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PositionOffset}"/><Run Text="{Binding Settings.OffsetX}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -675,7 +675,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.02025AAAE68D}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -694,7 +694,7 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.93ADA26B51D5}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
@@ -706,16 +706,16 @@
                         </Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.3CD82F1C6B83}"/><Run Text="{Binding Settings.TemplatePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TemplatePath}"/><Run Text="{Binding Settings.TemplatePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.620FA885F4DE}"/><Run Text="{Binding Settings.MinMatchCount}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinMatches}"/><Run Text="{Binding Settings.MinMatchCount}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.1A5BC61D15A9}"/><Run Text="{Binding Settings.LowesRatioThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.LoweSRatio}"/><Run Text="{Binding Settings.LowesRatioThreshold, StringFormat=F2}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.47A9974F5B0F}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
                         <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
@@ -735,15 +735,15 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.6184930C0027}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Mode}"/>
                         <Run Text="{Binding Settings.Mode, Mode=OneWay}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.58211F265E02}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Matches}"/>
                         <Run Text="{Binding Settings.MatchRequirement, Mode=OneWay}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.8A281BB051BC}"/><Run Text="{Binding Settings.Points.Count, Mode=OneWay}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Points}"/><Run Text="{Binding Settings.Points.Count, Mode=OneWay}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -775,15 +775,15 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
-                    <Run Text="{loc:Translate Key=Ui.32EBB1ABCC1C}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.BA5EC51D07A4}"/>
+                    <Run Text="{loc:Translate Key=Ui.Job.Steps.OpenParenthesis}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CloseParenthesis}"/>
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button Content="{loc:Translate Key=Ui.D6EDAD2578E6}"
+                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
                             Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}"
                             Style="{StaticResource ButtonSecondary}"
                             Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
-                    <Button Content="{loc:Translate Key=Ui.D8EB27E75875}"
+                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElse}"
                             Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}"
                             Style="{StaticResource ButtonSecondary}"
@@ -813,15 +813,15 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
-                    <Run Text="{loc:Translate Key=Ui.32EBB1ABCC1C}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.BA5EC51D07A4}"/>
+                    <Run Text="{loc:Translate Key=Ui.Job.Steps.OpenParenthesis}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CloseParenthesis}"/>
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button Content="{loc:Translate Key=Ui.D6EDAD2578E6}"
+                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
                             Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}"
                             Style="{StaticResource ButtonSecondary}"
                             Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
-                    <Button Content="{loc:Translate Key=Ui.D8EB27E75875}"
+                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElse}"
                             Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}"
                             Style="{StaticResource ButtonSecondary}"
@@ -853,31 +853,31 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding StartJobCommand}"
                         Visibility="{Binding IsJobRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.0350F3D0CCA2}">
+                        ToolTip="{loc:Translate Key=Ui.Job.Steps.StartJob}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Translate Common.Execute}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding StopJobCommand}"
                         Visibility="{Binding IsJobRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.19DE6A8914E1}">
+                        ToolTip="{loc:Translate Key=Ui.Job.Steps.StopJob}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.F6B2FF39F540}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Save}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.F7FF1178AF20}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Cancel}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -885,7 +885,7 @@
                         Command="{Binding AddStepCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.BCE6416D5166}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.NewStep}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -895,11 +895,11 @@
                         Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.548611CE58F7}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Back}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.83E07ED1F359}">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.Common.Rename}">
                     <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
                 </Button>
             </StackPanel>
@@ -1018,13 +1018,13 @@
                                     <CheckBox
                                         IsChecked="{Binding IsEnabled, Mode=TwoWay}"
                                         Visibility="{Binding CanBeDisabled, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        ToolTip="{loc:Translate Key=Ui.1EB53A3CD78C}"
+                                        ToolTip="{loc:Translate Key=Ui.Job.Steps.EnableDisableStep}"
                                         VerticalAlignment="Center"
                                         Margin="0,0,8,0"/>
                                     <!-- Bearbeiten -->
                                     <Button Style="{StaticResource ButtonIcon}"
                                             Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.7EF60356A568}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.EditStep}"
                                             Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="Pencil"/>
@@ -1032,7 +1032,7 @@
                                     <!-- Nach oben -->
                                     <Button Style="{StaticResource ButtonIcon}"
                                             Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.A1F3260D6E77}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepUp}"
                                             Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="ArrowUp"/>
@@ -1040,14 +1040,14 @@
                                     <!-- Nach unten -->
                                     <Button Style="{StaticResource ButtonIcon}"
                                             Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.85C50F7FB3AD}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepDown}"
                                             Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="ArrowDown"/>
                                     </Button>
                                     <!-- Löschen -->
                                     <Button Style="{StaticResource ButtonIconDanger}"
-                                            ToolTip="{loc:Translate Key=Ui.EE13D7722C34}"
+                                            ToolTip="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
                                             Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="Delete"/>

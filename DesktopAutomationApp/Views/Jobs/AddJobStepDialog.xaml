@@ -84,7 +84,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.F75469E8027F}"
+                <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.Step.Settings.StepType}"
                            Foreground="{DynamicResource App.Brush.TextMuted}"
                            FontSize="11" FontWeight="SemiBold"
                            Margin="0,0,0,6"/>
@@ -127,7 +127,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -139,7 +139,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0575F29DF888}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Template}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1">
                                 <TextBox Text="{Binding TemplateMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Border Style="{StaticResource TemplatePreviewBorder}"
@@ -147,7 +147,7 @@
                                     <Image Source="{Binding TemplateMatchingStep_TemplatePreview}" Stretch="Uniform"/>
                                 </Border>
                             </StackPanel>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseTemplatePathCommand}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
@@ -155,35 +155,35 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5BB1092E45D1}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ROI}" Style="{StaticResource StepFieldLabel}"/>
                             <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.28240C279DF6}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.A4D8C3470CA7}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding TemplateMatchingStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
-                                <Button Content="{loc:Translate Key=Ui.0D413232C63A}" Style="{StaticResource StepInlineButton}"
+                                <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Style="{StaticResource StepInlineButton}"
                                         Command="{Binding CaptureTemplateMatchingRoiCommand}"/>
                             </WrapPanel>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4294D815517A}" IsChecked="{Binding TemplateMatchingStep_EnableROI}" Margin="140,0,0,10"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" IsChecked="{Binding TemplateMatchingStep_EnableROI}" Margin="140,0,0,10"/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.D4DF25A1EAE5}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
@@ -192,7 +192,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.8CA2E465EEDB}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MatchMode}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding TemplateMatchModesAll}"
                                       SelectedItem="{Binding TemplateMatchingStep_TemplateMatchMode}"/>
@@ -206,7 +206,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -217,7 +217,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.A952C8F76F58}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Color}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <mah:ColorPicker SelectedColor="{Binding ColorDetectionStep_Color}"
                                                  HorizontalAlignment="Left"/>
@@ -237,35 +237,35 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5BB1092E45D1}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ROI}" Style="{StaticResource StepFieldLabel}"/>
                             <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.28240C279DF6}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.A4D8C3470CA7}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding ColorDetectionStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
-                                <Button Content="{loc:Translate Key=Ui.0D413232C63A}" Style="{StaticResource StepInlineButton}"
+                                <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Style="{StaticResource StepInlineButton}"
                                         Command="{Binding CaptureColorDetectionRoiCommand}"/>
                             </WrapPanel>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4294D815517A}" IsChecked="{Binding ColorDetectionStep_EnableROI}" Margin="140,0,0,10"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" IsChecked="{Binding ColorDetectionStep_EnableROI}" Margin="140,0,0,10"/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.D4DF25A1EAE5}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
@@ -274,7 +274,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.B22C38403F9C}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinSize}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MinSize, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -283,7 +283,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.8CE3C103A257}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxSize}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MaxSize, Converter={StaticResource MaxSizeDisplayConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -292,7 +292,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.642C845C97A3}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinWidth}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MinWidth, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -301,7 +301,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.702339DAAEF2}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinHeight}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_MinHeight, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -310,7 +310,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.58B8499463DF}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Downscale}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_DownscaleFactor, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -323,7 +323,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -334,7 +334,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0EFCC3B140C9}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinValues}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding PredictMovementStep_MinSamples, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -343,7 +343,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.F0E72827BFC3}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PredictionMs}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding PredictMovementStep_PredictionMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -352,7 +352,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.86A7D5A27D96}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ResetAtDistance}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding PredictMovementStep_ResetDistanceThreshold, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -361,7 +361,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.1E096C34E7FD}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxAgeMs}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding PredictMovementStep_MaxSampleAgeMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -375,16 +375,16 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.26F7D6A5E121}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" Width="60" IsReadOnly="True"
                                      Text="{Binding DesktopDuplicationStep_DesktopIdx}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.7448C10623C8}" Margin="8,0,0,0" Padding="10,5"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}" Margin="8,0,0,0" Padding="10,5"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ChooseMonitorCommand}"/>
                         </Grid>
                         <CheckBox Margin="0,6,0,0"
-                                  Content="{loc:Translate Key=Ui.70490573F6E7}"
+                                  Content="{loc:Translate Key=Ui.Step.Settings.CaptureMousePointer}"
                                   IsChecked="{Binding DesktopDuplicationStep_CaptureCursor}"/>
                     </StackPanel>
 
@@ -395,7 +395,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
@@ -407,7 +407,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.AE8D1BDC4EAB}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
@@ -419,7 +419,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.66269928F653}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.WindowName}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowImageStep_WindowName, UpdateSourceTrigger=PropertyChanged}"/>
@@ -429,7 +429,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.F2D20D83F8C5}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ImageSource}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
                                       ItemsSource="{Binding ImageModeOptions}"
@@ -444,7 +444,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
@@ -460,7 +460,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
@@ -472,7 +472,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.AE8D1BDC4EAB}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
@@ -485,10 +485,10 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0F26F4ED7864}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.SavePath}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" Text="{Binding VideoCreationStep_SavePath}" IsReadOnly="True"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseVideoSavePathCommand}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
@@ -496,7 +496,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B5378EFC9FC}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.FileName}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding VideoCreationStep_FileName, UpdateSourceTrigger=PropertyChanged}"/>
@@ -506,7 +506,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.F2D20D83F8C5}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ImageSource}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
                                       ItemsSource="{Binding ImageModeOptions}"
@@ -521,7 +521,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.EEA1C34AE773}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Macro}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableMakros}"
@@ -537,14 +537,14 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.AD617A0FDD57}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Job}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableJobs}"
                                       DisplayMemberPath="Name"
                                       SelectedItem="{Binding JobExecutionStep_SelectedJob}"/>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.51DAE3D4CA42}" IsChecked="{Binding JobExecutionStep_WaitForCompletion}"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.WaitForCompletion}" IsChecked="{Binding JobExecutionStep_WaitForCompletion}"/>
                     </StackPanel>
 
                     <!-- ── Script Execution ── -->
@@ -555,14 +555,14 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.E09AD4D0276E}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ScriptPath}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ScriptExecutionStep_ScriptPath, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseScriptPathCommand}"/>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.51DAE3D4CA42}"
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.WaitForCompletion}"
                                   IsChecked="{Binding ScriptExecutionStep_WaitForExit}"/>
                     </StackPanel>
 
@@ -573,7 +573,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -584,11 +584,11 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.B1A1E8E3CF7C}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Offset}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPointStep_OffsetX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPointStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
@@ -597,7 +597,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.439FB5CFB084}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ClickType}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
                                       SelectedItem="{Binding KlickOnPointStep_ClickType}">
                                 <ComboBox.Items>
@@ -613,11 +613,11 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.3B453BC8BD28}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.TimeoutMs}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KlickOnPointStep_TimeoutMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4FE3118BFDEC}" IsChecked="{Binding KlickOnPointStep_DoubleClick}" Margin="140,0,0,0"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.DoubleClick}" IsChecked="{Binding KlickOnPointStep_DoubleClick}" Margin="140,0,0,0"/>
                     </StackPanel>
 
                     <!-- ── KlickOnPoint3D ── -->
@@ -627,7 +627,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -639,14 +639,14 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.DA45A7C12EDF}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Origin}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OriginX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OriginY, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.0D413232C63A}" Style="{StaticResource StepInlineButton}"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Style="{StaticResource StepInlineButton}"
                                     Command="{Binding CaptureKlickOnPoint3DOriginCommand}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
@@ -654,11 +654,11 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.B1A1E8E3CF7C}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Offset}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OffsetX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Style="{StaticResource StepAxisLabel}"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
                                 <TextBox Style="{StaticResource StepCompactTextBox}" Text="{Binding KlickOnPoint3DStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
@@ -667,7 +667,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.439FB5CFB084}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ClickType}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
                                       SelectedItem="{Binding KlickOnPoint3DStep_ClickType}">
                                 <ComboBox.Items>
@@ -683,11 +683,11 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.3B453BC8BD28}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.TimeoutMs}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KlickOnPoint3DStep_Timeout, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4FE3118BFDEC}" IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}" Margin="140,0,0,0"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.DoubleClick}" IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}" Margin="140,0,0,0"/>
                     </StackPanel>
 
                     <!-- ── YOLO Detection ── -->
@@ -697,7 +697,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -708,7 +708,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5E2C614C23F0}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Model}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding YoloDetectionStep_AvailableModels}"
                                       SelectedItem="{Binding YoloDetectionStep_Model}"
@@ -719,7 +719,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.FEB9FFF9C7F0}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ClassName}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding YoloDetectionStep_AvailableClasses}"
                                       SelectedItem="{Binding YoloDetectionStep_ClassName}"
@@ -730,35 +730,35 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5BB1092E45D1}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ROI}" Style="{StaticResource StepFieldLabel}"/>
                             <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.28240C279DF6}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.A4D8C3470CA7}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding YoloDetectionStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
-                                <Button Content="{loc:Translate Key=Ui.0D413232C63A}" Style="{StaticResource StepInlineButton}"
+                                <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Style="{StaticResource StepInlineButton}"
                                         Command="{Binding CaptureYoloDetectionRoiCommand}"/>
                             </WrapPanel>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4294D815517A}" IsChecked="{Binding YoloDetectionStep_EnableROI}" Margin="140,0,0,10"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" IsChecked="{Binding YoloDetectionStep_EnableROI}" Margin="140,0,0,10"/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.D4DF25A1EAE5}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding YoloDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
@@ -771,7 +771,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.054A29A3F5E5}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.WaitTimeMs}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
                                      Text="{Binding TimeoutStep_DelayMs, UpdateSourceTrigger=PropertyChanged}"/>
@@ -785,15 +785,15 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.C2C6BC77B873}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Common.ProcessName}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ActiveProcessStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.E98512CAC80D}"/>
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.ProcessNamePlaceholder}"/>
                         </Grid>
                         <TextBlock Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
                                    TextWrapping="Wrap"
-                                   Text="{loc:Translate Key=Ui.7C6F46FBF3E0}"/>
+                                   Text="{loc:Translate Key=Ui.Step.Settings.ProcessResultHint}"/>
                     </StackPanel>
 
                     <!-- ── StartProcess ── -->
@@ -804,12 +804,12 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5DED984A9AD6}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PathProgram}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding StartProcessStep_ExecutablePath, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.CF2A0A45DFBA}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.PathToExeOrProgramName}"/>
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseExecutablePathCommand}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
@@ -817,13 +817,13 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.63A5229CED33}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Arguments}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding StartProcessStep_Arguments, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.EC91FDD9256C}"/>
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.Optional}"/>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.51DAE3D4CA42}"
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.WaitForCompletion}"
                                   IsChecked="{Binding StartProcessStep_WaitForExit}"
                                   Margin="0,0,0,4"/>
                     </StackPanel>
@@ -836,12 +836,12 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5DED984A9AD6}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PathProgram}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding FocusProcessStep_ExecutablePath, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.CF2A0A45DFBA}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.PathToExeOrProgramName}"/>
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseFocusProcessPathCommand}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
@@ -849,7 +849,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.213DF92864E7}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.WindowMode}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1" Width="160" HorizontalAlignment="Left"
                                       ItemsSource="{Binding FocusProcessWindowModes}"
@@ -866,12 +866,12 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.71988C4D8E08}" VerticalAlignment="Top" Margin="0,4,0,0"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DisplayText}" VerticalAlignment="Top" Margin="0,4,0,0"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"
                                      VerticalScrollBarVisibility="Auto"
                                      Text="{Binding ShowTextStep_Text, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.2C5DB34BB7E8}"/>
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.TextToDisplayEmptyRemove}"/>
                         </Grid>
 
                         <!-- Schriftgröße -->
@@ -880,7 +880,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0FF77CA7838A}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.FontSizePt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowTextStep_FontSize, UpdateSourceTrigger=PropertyChanged}"/>
@@ -892,7 +892,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.CC31DCCC2813}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.FontColor}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <mah:ColorPicker Grid.Column="1"
                                              SelectedColor="{Binding ShowTextStep_FontColorWpf}"
@@ -906,7 +906,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="40"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.2E24FA375030}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Opacity}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <Slider Grid.Column="1"
                                     Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
@@ -922,19 +922,19 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.761C1A6D6FCE}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DisplayDurationMs}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowTextStep_DurationMs, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.1999CAA2CA38}"/>
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.Value0Permanent}"/>
                         </Grid>
 
                         <!-- Bei Job-Ende entfernen -->
-                        <CheckBox Content="{loc:Translate Key=Ui.1B720A358064}"
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.RemoveWhenJobEnds}"
                                   IsChecked="{Binding ShowTextStep_ClearOnJobEnd}"
                                   Margin="0,0,0,8"/>
 
-                        <TextBlock Text="{loc:Translate Key=Ui.6D031AF10DA7}" FontWeight="SemiBold" Margin="0,4,0,6"
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Position}" FontWeight="SemiBold" Margin="0,4,0,6"
                                    Foreground="{DynamicResource App.Brush.TextSecondary}"/>
 
                         <!-- Monitor wählen (wie DesktopDuplication) -->
@@ -944,11 +944,11 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.26F7D6A5E121}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1" Width="60" IsReadOnly="True"
                                      Text="{Binding ShowTextStep_DesktopIndex}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.7448C10623C8}" Margin="8,0,0,0" Padding="10,5"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}" Margin="8,0,0,0" Padding="10,5"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ChooseMonitorForShowTextCommand}"/>
                         </Grid>
@@ -959,7 +959,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.DD28B7CB2962}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.XOffsetPixels}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowTextStep_OffsetX, UpdateSourceTrigger=PropertyChanged}"/>
@@ -971,7 +971,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="100"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5069D9B55A54}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.YOffsetPixels}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowTextStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
@@ -985,25 +985,25 @@
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.C2C6BC77B873}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Common.ProcessName}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ActiveWindowStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
-                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.E98512CAC80D}"/>
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.ProcessNamePlaceholder}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="110"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.DA34047E4D4E}" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CacheMs}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ActiveWindowStep_CacheMs, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                         <TextBlock Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
                                    TextWrapping="Wrap"
-                                   Text="{loc:Translate Key=Ui.B7A0AA8464FD}"/>
+                                   Text="{loc:Translate Key=Ui.Step.Settings.ActiveWindowResultHint}"/>
                     </StackPanel>
 
                     <!-- ── KeyPoint Matching ── -->
@@ -1013,7 +1013,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.6D8CFA868050}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding AvailableCaptureSteps}"
                                       DisplayMemberPath="DisplayName"
@@ -1025,7 +1025,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0575F29DF888}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Template}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1">
                                 <TextBox Text="{Binding KeyPointMatchingStep_TemplatePath, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Border Style="{StaticResource TemplatePreviewBorder}"
@@ -1033,7 +1033,7 @@
                                     <Image Source="{Binding KeyPointMatchingStep_TemplatePreview}" Stretch="Uniform"/>
                                 </Border>
                             </StackPanel>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.B4935894C8CE}" Width="32" Height="28" Margin="6,0,0,0"
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseKeyPointMatchingTemplatePathCommand}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
@@ -1041,35 +1041,35 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.5BB1092E45D1}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ROI}" Style="{StaticResource StepFieldLabel}"/>
                             <WrapPanel Grid.Column="1" Style="{StaticResource RoiFieldWrapPanel}">
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiX, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiY, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.28240C279DF6}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiW, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Style="{StaticResource RoiFieldGroup}">
-                                    <TextBlock Text="{loc:Translate Key=Ui.A4D8C3470CA7}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Width="52" Style="{StaticResource StepGroupedFieldLabel}"/>
                                     <TextBox Style="{StaticResource StepGroupedTextBox}" Text="{Binding KeyPointMatchingStep_RoiH, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
-                                <Button Content="{loc:Translate Key=Ui.0D413232C63A}" Style="{StaticResource StepInlineButton}"
+                                <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Style="{StaticResource StepInlineButton}"
                                         Command="{Binding CaptureKeyPointMatchingRoiCommand}"/>
                             </WrapPanel>
                         </Grid>
-                        <CheckBox Content="{loc:Translate Key=Ui.4294D815517A}" IsChecked="{Binding KeyPointMatchingStep_EnableROI}" Margin="140,0,0,10"/>
+                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" IsChecked="{Binding KeyPointMatchingStep_EnableROI}" Margin="140,0,0,10"/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.C3B98AA17F9B}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinMatches}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KeyPointMatchingStep_MinMatchCount, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
@@ -1078,7 +1078,7 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.A1502CB234BF}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.LoweSRatio01}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KeyPointMatchingStep_LowesRatioThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
@@ -1088,11 +1088,11 @@
                     <StackPanel Visibility="{Binding ShowIf, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <!-- MatchMode -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="{loc:Translate Key=Ui.B486EB1E1768}" VerticalAlignment="Center" Margin="0,0,8,0"
+                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ConditionMatchMode}" VerticalAlignment="Center" Margin="0,0,8,0"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <RadioButton Content="{loc:Translate Key=Ui.C2E1330B15A3}" VerticalAlignment="Center"
+                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.AllAND}" VerticalAlignment="Center"
                                          IsChecked="{Binding IfStep_MatchModeIsAll}" Margin="0,0,12,0"/>
-                            <RadioButton Content="{loc:Translate Key=Ui.D7C1657C8E65}" VerticalAlignment="Center"
+                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.OneOR}" VerticalAlignment="Center"
                                          IsChecked="{Binding IfStep_MatchModeIsAny}"/>
                         </StackPanel>
                         <!-- Condition rows -->
@@ -1108,21 +1108,21 @@
                                             <ColumnDefinition Width="26"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.AFB2DC1C61DB}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.SourceStep}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox ItemsSource="{Binding AvailableSourceSteps}"
                                                       DisplayMemberPath="DisplayName"
                                                       SelectedItem="{Binding SelectedSourceStep}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.F854EEB77D90}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Property}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox ItemsSource="{Binding AvailableProperties}"
                                                       DisplayMemberPath="DisplayName"
                                                       SelectedItem="{Binding SelectedProperty}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.291101A07FE9}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Operator}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox MinWidth="90"
                                                       ItemsSource="{Binding AvailableOperators}"
@@ -1136,19 +1136,19 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="3" Margin="0,0,4,0"
                                                     Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="{loc:Translate Key=Ui.7E347DAA5EC7}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <TextBox Text="{Binding ComparisonValue, UpdateSourceTrigger=PropertyChanged}"
                                                      VerticalContentAlignment="Center"/>
                                         </StackPanel>
-                                        <Button Grid.Column="4" Content="{loc:Translate Key=Ui.8DB71ED28B0F}" VerticalAlignment="Bottom"
+                                        <Button Grid.Column="4" Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" VerticalAlignment="Bottom"
                                                 Command="{Binding RemoveCommand}"
                                                 FontSize="14" Padding="4,2" Margin="0,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button Content="{loc:Translate Key=Ui.C509EAB78B6B}"
+                        <Button Content="{loc:Translate Key=Ui.Step.Settings.AddCondition}"
                                 Command="{Binding IfStep_AddConditionCommand}"
                                 HorizontalAlignment="Left" Margin="0,6,0,0"
                                 Style="{StaticResource ButtonSecondary}"
@@ -1159,11 +1159,11 @@
                     <StackPanel Visibility="{Binding ShowElseIf, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <!-- MatchMode -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="{loc:Translate Key=Ui.B486EB1E1768}" VerticalAlignment="Center" Margin="0,0,8,0"
+                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ConditionMatchMode}" VerticalAlignment="Center" Margin="0,0,8,0"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <RadioButton Content="{loc:Translate Key=Ui.C2E1330B15A3}" VerticalAlignment="Center"
+                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.AllAND}" VerticalAlignment="Center"
                                          IsChecked="{Binding ElseIfStep_MatchModeIsAll}" Margin="0,0,12,0"/>
-                            <RadioButton Content="{loc:Translate Key=Ui.D7C1657C8E65}" VerticalAlignment="Center"
+                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.OneOR}" VerticalAlignment="Center"
                                          IsChecked="{Binding ElseIfStep_MatchModeIsAny}"/>
                         </StackPanel>
                         <!-- Condition rows -->
@@ -1179,21 +1179,21 @@
                                             <ColumnDefinition Width="26"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.AFB2DC1C61DB}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.SourceStep}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox ItemsSource="{Binding AvailableSourceSteps}"
                                                       DisplayMemberPath="DisplayName"
                                                       SelectedItem="{Binding SelectedSourceStep}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.F854EEB77D90}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Property}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox ItemsSource="{Binding AvailableProperties}"
                                                       DisplayMemberPath="DisplayName"
                                                       SelectedItem="{Binding SelectedProperty}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Margin="0,0,4,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.291101A07FE9}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Operator}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <ComboBox MinWidth="90"
                                                       ItemsSource="{Binding AvailableOperators}"
@@ -1207,19 +1207,19 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="3" Margin="0,0,4,0"
                                                     Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="{loc:Translate Key=Ui.7E347DAA5EC7}" FontSize="10"
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,0,2"/>
                                             <TextBox Text="{Binding ComparisonValue, UpdateSourceTrigger=PropertyChanged}"
                                                      VerticalContentAlignment="Center"/>
                                         </StackPanel>
-                                        <Button Grid.Column="4" Content="{loc:Translate Key=Ui.8DB71ED28B0F}" VerticalAlignment="Bottom"
+                                        <Button Grid.Column="4" Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" VerticalAlignment="Bottom"
                                                 Command="{Binding RemoveCommand}"
                                                 FontSize="14" Padding="4,2" Margin="0,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button Content="{loc:Translate Key=Ui.C509EAB78B6B}"
+                        <Button Content="{loc:Translate Key=Ui.Step.Settings.AddCondition}"
                                 Command="{Binding ElseIfStep_AddConditionCommand}"
                                 HorizontalAlignment="Left" Margin="0,6,0,0"
                                 Style="{StaticResource ButtonSecondary}"
@@ -1228,7 +1228,7 @@
 
                     <!-- ── Else ── -->
                     <StackPanel Visibility="{Binding ShowElse, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{loc:Translate Key=Ui.6DDA9E0A9BE1}"
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ElseDescription}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" FontSize="12"/>
@@ -1236,7 +1236,7 @@
 
                     <!-- ── EndIf ── -->
                     <StackPanel Visibility="{Binding ShowEndIf, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{loc:Translate Key=Ui.FEC1A19E077C}"
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.EndIfDescription}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" FontSize="12"/>
@@ -1244,7 +1244,7 @@
 
                     <!-- ── EndJob ── -->
                     <StackPanel Visibility="{Binding ShowEndJob, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{loc:Translate Key=Ui.A93645F20E89}"
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.EndJobDescription}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" FontSize="12"/>
@@ -1259,7 +1259,7 @@
                                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
                                 BorderThickness="1" CornerRadius="6" Padding="10,10" Margin="0,0,0,10">
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.9249B6DAC3BF}" FontSize="10" FontWeight="SemiBold"
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.BasicSettings}" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,0,8"/>
 
                                 <!-- Vergleichsmodus als gleichmäßige 2-Spalten-Auswahl -->
@@ -1268,7 +1268,7 @@
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.45517C77E57E}" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Mode}" VerticalAlignment="Center"
                                                FontSize="12" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                     <Grid Grid.Column="1">
                                         <Grid.ColumnDefinitions>
@@ -1291,9 +1291,9 @@
                                             </Border.Style>
                                             <RadioButton IsChecked="{Binding PointComparisonStep_ModeIsOffset}">
                                                 <StackPanel>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.A21971410217}" FontSize="11" FontWeight="Medium"
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.OffsetTolerance}" FontSize="11" FontWeight="Medium"
                                                                TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.F5405899C6B6}" FontSize="10"
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.NearReferencePoint}" FontSize="10"
                                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                                TextWrapping="Wrap"/>
                                                 </StackPanel>
@@ -1314,9 +1314,9 @@
                                             </Border.Style>
                                             <RadioButton IsChecked="{Binding PointComparisonStep_ModeIsExpression}">
                                                 <StackPanel>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.BFFED431DF37}" FontSize="11" FontWeight="Medium"
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Expression}" FontSize="11" FontWeight="Medium"
                                                                TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.BD979A0AD20E}" FontSize="10"
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.XYComparisonX100}" FontSize="10"
                                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                                TextWrapping="Wrap"/>
                                                 </StackPanel>
@@ -1332,12 +1332,12 @@
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.A95C09CFC410}" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Evaluation}" VerticalAlignment="Center"
                                                FontSize="12" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <RadioButton Content="{loc:Translate Key=Ui.C2E1330B15A3}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.AllAND}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_MatchRequirementIsAll}" Margin="0,0,16,0"/>
-                                        <RadioButton Content="{loc:Translate Key=Ui.9DE9605B6EAC}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.AtLeastOneOR}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_MatchRequirementIsAny}"/>
                                     </StackPanel>
                                 </Grid>
@@ -1350,19 +1350,19 @@
                                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
                                 BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,10">
                             <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.1998773AA58B}" FontSize="10" FontWeight="SemiBold"
+                                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ReferencePointTolerance}" FontSize="10" FontWeight="SemiBold"
                                            Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,0,10"/>
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.86A5AF24996C}" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ReferenceSource}" VerticalAlignment="Center"
                                                Foreground="{DynamicResource App.Brush.TextSecondary}" FontSize="12"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <RadioButton Content="{loc:Translate Key=Ui.27DE415D1ADC}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.EnterManually}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_RefIsManual}" Margin="0,0,20,0"/>
-                                        <RadioButton Content="{loc:Translate Key=Ui.D49CE8527566}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.FromDetectionResult}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_RefIsJobResult}"/>
                                     </StackPanel>
                                 </Grid>
@@ -1372,13 +1372,13 @@
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.CE15D7073D8A}" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CoordinatesXY}" VerticalAlignment="Center"
                                                Foreground="{DynamicResource App.Brush.TextSecondary}" FontSize="12"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" VerticalAlignment="Center" Width="16"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" VerticalAlignment="Center" Width="16"
                                                    FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                         <TextBox Width="80" Text="{Binding PointComparisonStep_RefX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,16,0"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" VerticalAlignment="Center" Width="16"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" VerticalAlignment="Center" Width="16"
                                                    FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                         <TextBox Width="80" Text="{Binding PointComparisonStep_RefY, UpdateSourceTrigger=PropertyChanged}"/>
                                     </StackPanel>
@@ -1389,7 +1389,7 @@
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" VerticalAlignment="Center"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                                Foreground="{DynamicResource App.Brush.TextSecondary}" FontSize="12"/>
                                     <ComboBox Grid.Column="1"
                                               ItemsSource="{Binding AvailableDetectionSteps}"
@@ -1403,16 +1403,16 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Translate Key=Ui.6A7E735DE6CF}" FontSize="12"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.TolerancePixels}" FontSize="12"
                                                    Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.76673266BEA8}" FontSize="10"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.MaximumDeviation}" FontSize="10"
                                                    Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,1,0,0"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" VerticalAlignment="Center" Width="16"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" VerticalAlignment="Center" Width="16"
                                                    FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                         <TextBox Width="80" Text="{Binding PointComparisonStep_OffsetX, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,16,0"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" VerticalAlignment="Center" Width="16"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" VerticalAlignment="Center" Width="16"
                                                    FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                         <TextBox Width="80" Text="{Binding PointComparisonStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
                                     </StackPanel>
@@ -1431,14 +1431,14 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.E6E11D3FBDAE}" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.AxisExpressions}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource App.Brush.TextMuted}" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Translate Key=Ui.184DAA43DB90}" FontSize="11"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.CombineWith}" FontSize="11"
                                                    Foreground="{DynamicResource App.Brush.TextSecondary}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                        <RadioButton Content="{loc:Translate Key=Ui.48EEA2E52D13}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.ANDAll}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_ExprCombineIsAnd}" Margin="0,0,12,0"/>
-                                        <RadioButton Content="{loc:Translate Key=Ui.51B3C8047947}" VerticalAlignment="Center"
+                                        <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.ORAny}" VerticalAlignment="Center"
                                                      IsChecked="{Binding PointComparisonStep_ExprCombineIsOr}"/>
                                     </StackPanel>
                                 </Grid>
@@ -1449,11 +1449,11 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="30"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.1B85AAC5FB65}" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Axis}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                    <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.291101A07FE9}" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.Step.Settings.Operator}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                    <TextBlock Grid.Column="2" Text="{loc:Translate Key=Ui.B6E7150FF3A7}" FontSize="10" FontWeight="SemiBold"
+                                    <TextBlock Grid.Column="2" Text="{loc:Translate Key=Ui.Step.Settings.ComparisonValue}" FontSize="10" FontWeight="SemiBold"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                 </Grid>
                                 <ItemsControl ItemsSource="{Binding PointComparisonStep_Expressions}">
@@ -1481,15 +1481,15 @@
                                                 <TextBox Grid.Column="2" Margin="0,0,6,0"
                                                          Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
                                                          VerticalContentAlignment="Center"/>
-                                                <Button Grid.Column="3" Content="{loc:Translate Key=Ui.8DB71ED28B0F}"
+                                                <Button Grid.Column="3" Content="{loc:Translate Key=Ui.Common.RemoveSymbol}"
                                                         Command="{Binding RemoveCommand}"
                                                         FontSize="13" Padding="4,2"
-                                                        ToolTip="{loc:Translate Key=Ui.00EC3A8014FF}"/>
+                                                        ToolTip="{loc:Translate Key=Ui.Step.Settings.RemoveExpression}"/>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <Button Content="{loc:Translate Key=Ui.7ADB833B38AD}"
+                                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}"
                                         Command="{Binding PointComparisonStep_AddExpressionCommand}"
                                         HorizontalAlignment="Left" Margin="0,8,0,0"
                                         Style="{StaticResource ButtonSecondary}"
@@ -1508,12 +1508,12 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{loc:Translate Key=Ui.64E40C59A743}" FontSize="10" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.PointsToCheck}" FontSize="10" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.0672EEA8B758}" FontSize="11"
+                                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ThesePointsAreCheckedAgainstTheCondition}" FontSize="11"
                                                    Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="{loc:Translate Key=Ui.CBEE86870F04}"
+                                    <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}"
                                             Command="{Binding PointComparisonStep_AddPointCommand}"
                                             Style="{StaticResource ButtonSecondary}"
                                             Padding="10,5" FontSize="11" VerticalAlignment="Top"/>
@@ -1532,15 +1532,15 @@
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.0656690ADC4E}" VerticalAlignment="Center"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PointSource}" VerticalAlignment="Center"
                                                                    FontSize="11" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <RadioButton Content="{loc:Translate Key=Ui.961CACAA6E41}" VerticalAlignment="Center"
+                                                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.Manual}" VerticalAlignment="Center"
                                                                          IsChecked="{Binding IsManual}" Margin="0,0,16,0"/>
-                                                            <RadioButton Content="{loc:Translate Key=Ui.D49CE8527566}" VerticalAlignment="Center"
+                                                            <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.FromDetectionResult}" VerticalAlignment="Center"
                                                                          IsChecked="{Binding IsJobResult}"/>
                                                         </StackPanel>
-                                                        <Button Grid.Column="2" Content="{loc:Translate Key=Ui.678B9820E6D3}"
+                                                        <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.RemovePoint}"
                                                                 Command="{Binding RemoveCommand}"
                                                                 FontSize="11" Padding="8,3"/>
                                                     </Grid>
@@ -1549,14 +1549,14 @@
                                                             <ColumnDefinition Width="90"/>
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.666105122F20}" VerticalAlignment="Center"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Coordinates}" VerticalAlignment="Center"
                                                                    FontSize="11" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                            <TextBlock Text="{loc:Translate Key=Ui.4B68AB3847FE}" VerticalAlignment="Center" Width="16"
+                                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" VerticalAlignment="Center" Width="16"
                                                                        FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                                             <TextBox Width="90" Margin="0,0,16,0"
                                                                      Text="{Binding ManualX, UpdateSourceTrigger=PropertyChanged}"/>
-                                                            <TextBlock Text="{loc:Translate Key=Ui.18F5384D58BC}" VerticalAlignment="Center" Width="16"
+                                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" VerticalAlignment="Center" Width="16"
                                                                        FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                                             <TextBox Width="90"
                                                                      Text="{Binding ManualY, UpdateSourceTrigger=PropertyChanged}"/>
@@ -1568,14 +1568,14 @@
                                                                 <ColumnDefinition Width="90"/>
                                                                 <ColumnDefinition Width="*"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.9B4B6F6A789D}" VerticalAlignment="Center"
+                                                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                                                        FontSize="11" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                                             <ComboBox Grid.Column="1"
                                                                       ItemsSource="{Binding AvailableDetectionSteps}"
                                                                       DisplayMemberPath="DisplayName"
                                                                       SelectedItem="{Binding SelectedDetectionStep}"/>
                                                         </Grid>
-                                                        <CheckBox Content="{loc:Translate Key=Ui.46EC484A28FD}"
+                                                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.UseAllPointsFoundByThisStep}"
                                                                   IsChecked="{Binding UseAllDetections}"
                                                                   Margin="90,0,0,0" FontSize="11"/>
                                                     </StackPanel>
@@ -1617,7 +1617,7 @@
 
         <!-- Buttons -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="{loc:Translate Key=Ui.F7FF1178AF20}" IsCancel="True" Margin="0,0,8,0"
+            <Button Content="{loc:Translate Key=Ui.Common.Cancel}" IsCancel="True" Margin="0,0,8,0"
                     Click="Cancel_Click" Style="{StaticResource ButtonSecondary}"/>
             <Button Content="{Binding ConfirmButtonText}" IsDefault="True"
                     Command="{Binding ConfirmCommand}" Style="{StaticResource ButtonPrimary}"/>

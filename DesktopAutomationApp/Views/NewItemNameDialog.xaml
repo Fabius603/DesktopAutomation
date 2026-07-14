@@ -4,7 +4,7 @@
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  WindowStartupLocation="CenterOwner"
-                 SizeToContent="{loc:Translate Key=Ui.4B223C706F03}"
+                 SizeToContent="{loc:Translate Key=Ui.Dialog.WidthAndHeight}"
                  ResizeMode="NoResize"
                  ShowInTaskbar="False"
                  MinWidth="340"
@@ -21,7 +21,7 @@
 
         <TextBlock Grid.Row="0"
                    x:Name="PromptText"
-                   Text="{loc:Translate Key=Ui.2683CAD48A14}"
+                   Text="{loc:Translate Key=Ui.Dialog.Name}"
                    FontSize="13"
                    Foreground="{DynamicResource App.Brush.TextSecondary}"/>
 
@@ -40,7 +40,7 @@
                     MinWidth="90">
                 <StackPanel Orientation="Horizontal">
                     <iconPacks:PackIconMaterial x:Name="OkIcon" Kind="Plus" Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock x:Name="OkText" Text="{loc:Translate Key=Ui.5CA419548155}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="OkText" Text="{loc:Translate Key=Ui.Dialog.Create}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
             <Button Style="{StaticResource ButtonSecondary}"
@@ -48,7 +48,7 @@
                     IsCancel="True"
                     Margin="8,0,0,0"
                     MinWidth="80">
-                <TextBlock Text="{loc:Translate Key=Ui.F7FF1178AF20}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Common.Cancel}"/>
             </Button>
         </StackPanel>
     </Grid>

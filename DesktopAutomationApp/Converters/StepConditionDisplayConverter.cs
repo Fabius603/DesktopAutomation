@@ -36,8 +36,7 @@ namespace DesktopAutomationApp.Converters
                 {
                     if (list[i] is JobStep step)
                     {
-                        var friendly = StepResultMetadata.GetFriendlyName(step.GetType().Name);
-                        _nameMap[step.Id] = $"{friendly} (Step {i + 1})";
+                        _nameMap[step.Id] = StepLocalization.NumberedName(step.GetType(), i + 1);
                     }
                 }
                 _cacheVersion = version;
@@ -53,9 +52,9 @@ namespace DesktopAutomationApp.Converters
                     ? c.SourceStepDisplayName
                     : (string.IsNullOrWhiteSpace(c.SourceStepId) ? Loc.Get("Step.Unknown") : c.SourceStepId);
 
-            var prop = !string.IsNullOrWhiteSpace(c.PropertyDisplayName)
-                ? c.PropertyDisplayName
-                : c.Property;
+            var prop = !string.IsNullOrWhiteSpace(c.Property)
+                ? StepLocalization.Property(c.Property, c.PropertyDisplayName)
+                : c.PropertyDisplayName;
             if (string.IsNullOrWhiteSpace(prop)) prop = Loc.Get("Common.Value");
 
             var op = c.Operator switch

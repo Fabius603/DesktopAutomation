@@ -551,8 +551,8 @@ namespace DesktopAutomationApp.ViewModels
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
                     .FirstOrDefault(r => r.TypeName == resultTypeName);
                 if (descriptor is null) continue;
-                var name = $"{TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name)} (Step {i + 1})";
-                items.Add(new SourceStepItem(step.Id, name, descriptor));
+                var name = StepLocalization.NumberedName(step.GetType(), i + 1);
+                items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
             }
             return items;
         }
@@ -569,8 +569,8 @@ namespace DesktopAutomationApp.ViewModels
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
                     .FirstOrDefault(r => r.TypeName == info.Output);
                 if (descriptor is null) continue;
-                var name = $"{TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name)} (Step {i + 1})";
-                items.Add(new SourceStepItem(step.Id, name, descriptor));
+                var name = StepLocalization.NumberedName(step.GetType(), i + 1);
+                items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
             }
             return items;
         }

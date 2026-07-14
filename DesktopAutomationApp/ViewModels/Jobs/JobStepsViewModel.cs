@@ -1038,8 +1038,7 @@ namespace DesktopAutomationApp.ViewModels
             for (int i = 0; i < _steps.Count; i++)
             {
                 var step = _steps[i];
-                var friendly = TaskAutomation.Steps.StepResultMetadata.GetFriendlyName(step.GetType().Name);
-                idToName[step.Id] = $"{friendly} (Step {i + 1})";
+                idToName[step.Id] = StepLocalization.NumberedName(step.GetType(), i + 1);
             }
 
             foreach (var step in _steps)

@@ -88,17 +88,17 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}" Margin="0,0,8,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenLogFileCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FileDocumentOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.C2D56AFF317E}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Logs.OpenFile}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
-            <TextBlock Text="{loc:Translate Key=Ui.E3ABC0ADA1B7}" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="{loc:Translate Key=Ui.Logs.JobLogs}" Style="{StaticResource PageTitle}"/>
         </DockPanel>
 
         <Grid Grid.Row="1">
@@ -110,7 +110,7 @@
 
             <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="{loc:Translate Key=Ui.B6CA096F830F}" Style="{StaticResource Heading2}" Margin="0,0,0,10"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{loc:Translate Key=Ui.Logs.Executions}" Style="{StaticResource Heading2}" Margin="0,0,0,10"/>
                     <ListBox ItemsSource="{Binding Sessions}"
                              SelectedItem="{Binding SelectedSession}"
                              Style="{StaticResource LogListBoxStyle}"
@@ -131,7 +131,7 @@
                                                    FontWeight="SemiBold"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </DockPanel>
-                                    <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"
+                                    <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:G}'}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontSize="11"
                                                Margin="0,4,0,0"/>
@@ -151,13 +151,19 @@
                                      Margin="0,0,12,0"
                                      mah:TextBoxHelper.Watermark="{loc:Translate Key=Execution.LogSearch}"
                                      ToolTip="{loc:Translate Key=Execution.LogSearch}"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.1709305C9FA9}" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,8,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Logs.Level}" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,0,8,0"/>
                             <ComboBox ItemsSource="{Binding AvailableLevels}"
                                       SelectedItem="{Binding SelectedMinimumLevel}"
-                                      MinWidth="150"/>
+                                      MinWidth="150">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource LocalizedEnumConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
                         <StackPanel>
-                            <TextBlock Text="{loc:Translate Key=Ui.1178E1C9B589}" Style="{StaticResource Heading2}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Logs.LiveLog}" Style="{StaticResource Heading2}"/>
                             <TextBlock Text="{Binding EntryStatusText}"
                                        Foreground="{DynamicResource App.Brush.TextMuted}"
                                        FontSize="11"
@@ -192,11 +198,11 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}"
+                                               Text="{Binding Timestamp, StringFormat='{}{0:T}'}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontFamily="Consolas"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding Level}"
+                                               Text="{Binding Level, Converter={StaticResource LocalizedEnumConverter}}"
                                                Foreground="{DynamicResource App.Brush.Accent}"
                                                FontWeight="SemiBold"/>
                                     <TextBlock Grid.Row="0" Grid.Column="2"

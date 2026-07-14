@@ -15,7 +15,7 @@
                     <ControlTemplate TargetType="ToggleButton">
                         <Border x:Name="HeaderBorder" Background="Transparent" CornerRadius="4" Padding="6,5">
                             <DockPanel>
-                                <TextBlock x:Name="Arrow" Text="{loc:Translate Key=Ui.7BB37DF5CB36}" FontSize="20" Margin="0,0,8,0"
+                                <TextBlock x:Name="Arrow" Text="{loc:Translate Key=Ui.Common.ChevronRight}" FontSize="20" Margin="0,0,8,0"
                                            VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                                     <TextBlock.RenderTransform><RotateTransform Angle="0"/></TextBlock.RenderTransform>
                                 </TextBlock>
@@ -66,13 +66,13 @@
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.548611CE58F7}"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Save}"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.F6B2FF39F540}"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -80,11 +80,11 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.594CA889C442}"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Back}"/>
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.83E07ED1F359}">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.Common.Rename}">
                     <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
                 </Button>
             </StackPanel>
@@ -102,10 +102,11 @@
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.E9262F007DFB}" VerticalAlignment="Top"/>
+                        <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.Automation.Details.Description}" VerticalAlignment="Top"/>
                         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding EditedAutomation.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 MinHeight="54" TextWrapping="Wrap" AcceptsReturn="True"/>
-                        <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.8163454F378F}" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                                 MinHeight="54" MaxHeight="120" MaxLength="500" TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.Automation.Details.Active}" VerticalAlignment="Center" Margin="0,10,0,0"/>
                         <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding EditedAutomation.Active, Mode=TwoWay}"
                                   Margin="0,10,0,0" VerticalAlignment="Center"/>
                     </Grid>
@@ -113,11 +114,12 @@
 
                 <Expander Style="{StaticResource AutomationExpanderStyle}" IsExpanded="True" Margin="0,0,0,12">
                     <Expander.Header>
-                        <TextBlock Text="{loc:Translate Key=Ui.8B9C643731C9}" Style="{StaticResource Heading2}" Margin="4,6"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.Trigger}" Style="{StaticResource Heading2}" Margin="4,6"/>
                     </Expander.Header>
                     <Border Style="{StaticResource CardBorderStyle}">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -129,21 +131,25 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.15CE2119C2DA}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="0" Text="{loc:Translate Key=Ui.Automation.Details.TriggerType}" VerticalAlignment="Center"/>
                             <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding TriggerKinds}"
                                       SelectedItem="{Binding EditedAutomation.TriggerKind, Mode=TwoWay}" MinWidth="240">
                                 <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource LocalizedEnumConverter}}"/></DataTemplate></ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.6A6485AF02CA}" VerticalAlignment="Center" Margin="0,10,0,0"
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TriggerDescription}"
+                                       TextWrapping="Wrap" MaxWidth="720" HorizontalAlignment="Left"
+                                       Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,7,0,2"/>
+
+                            <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.Automation.Details.Hotkey}" VerticalAlignment="Center" Margin="0,10,0,0"
                                        Visibility="{Binding EditedAutomation.IsHotkeyTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
                                         Visibility="{Binding EditedAutomation.IsHotkeyTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBox IsReadOnly="True" Width="240" Text="{Binding EditedAutomation.DisplayTrigger, Mode=OneWay}"/>
                                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CaptureHotkeyCommand}" Margin="8,0,0,0">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="Keyboard" Width="14" Height="14" Margin="0,0,6,0"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.D0F2D9E1CC3B}"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.CaptureHotkey}"/>
                                     </StackPanel>
                                 </Button>
                                 <mah:ProgressRing IsActive="{Binding IsCapturingHotkey}" Width="20" Height="20" Margin="10,0,0,0"
@@ -153,47 +159,49 @@
                                            Visibility="{Binding IsCapturingHotkey, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.63D6160302C5}" VerticalAlignment="Center" Margin="0,10,0,0"
+                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.Execution}" VerticalAlignment="Center" Margin="0,10,0,0"
                                        Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <mah:DateTimePicker Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" Width="230" HorizontalAlignment="Left"
+                            <mah:DateTimePicker Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Width="230" HorizontalAlignment="Left"
+                                                Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateFormat="Short" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 PreviewKeyDown="Picker_PreviewKeyDown" SelectedDateTime="{Binding EditedAutomation.RunAt, Mode=TwoWay}"
                                                 Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                            <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.619BE40DDBBF}" VerticalAlignment="Top" Margin="0,16,0,0"
+                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.TimeAndDays}" VerticalAlignment="Top" Margin="0,16,0,0"
                                        Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
+                            <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
                                         Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <mah:TimePicker PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
+                                                Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateTime="{Binding EditedAutomation.ScheduleTime, Mode=TwoWay}"
                                                 Width="150" HorizontalAlignment="Left"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <CheckBox Content="{loc:Translate Key=Ui.D23E867E38E8}" IsChecked="{Binding EditedAutomation.Monday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.16AB72874809}" IsChecked="{Binding EditedAutomation.Tuesday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.D8F33A13AE6E}" IsChecked="{Binding EditedAutomation.Wednesday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.30094E0BEC00}" IsChecked="{Binding EditedAutomation.Thursday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.EED8F901692D}" IsChecked="{Binding EditedAutomation.Friday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.A951EFC79DEB}" IsChecked="{Binding EditedAutomation.Saturday}" Margin="0,0,10,0"/>
-                                    <CheckBox Content="{loc:Translate Key=Ui.FB1DF1A24E3F}" IsChecked="{Binding EditedAutomation.Sunday}"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Mon}" IsChecked="{Binding EditedAutomation.Monday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Tue}" IsChecked="{Binding EditedAutomation.Tuesday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Wed}" IsChecked="{Binding EditedAutomation.Wednesday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Thu}" IsChecked="{Binding EditedAutomation.Thursday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Fri}" IsChecked="{Binding EditedAutomation.Friday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Sat}" IsChecked="{Binding EditedAutomation.Saturday}" Margin="0,0,10,0"/>
+                                    <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.Sun}" IsChecked="{Binding EditedAutomation.Sunday}"/>
                                 </StackPanel>
                             </StackPanel>
 
-                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.21FBABA024F7}" VerticalAlignment="Center" Margin="0,10,0,0"
+                            <TextBlock Grid.Row="4" Text="{loc:Translate Key=Ui.Automation.Details.Interval}" VerticalAlignment="Center" Margin="0,10,0,0"
                                        Visibility="{Binding EditedAutomation.IsIntervalTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0"
                                         Visibility="{Binding EditedAutomation.IsIntervalTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBox Text="{Binding EditedAutomation.IntervalValue, Mode=TwoWay}" Width="70"/>
                                 <ComboBox ItemsSource="{Binding IntervalUnits}" SelectedItem="{Binding EditedAutomation.IntervalUnit, Mode=TwoWay}"
                                           Width="140" Margin="8,0,0,0">
                                     <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource LocalizedEnumConverter}}"/></DataTemplate></ComboBox.ItemTemplate>
                                 </ComboBox>
-                                <CheckBox Content="{loc:Translate Key=Ui.778A744FBFB5}" IsChecked="{Binding EditedAutomation.StartImmediately, Mode=TwoWay}"
+                                <CheckBox Content="{loc:Translate Key=Ui.Automation.Details.ImmediatelyAfterAppStart}" IsChecked="{Binding EditedAutomation.StartImmediately, Mode=TwoWay}"
                                           Margin="14,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Row="4" Text="{loc:Translate Key=Ui.CD9BB3B40997}" VerticalAlignment="Top" Margin="0,16,0,0"
+                            <TextBlock Grid.Row="5" Text="{loc:Translate Key=Ui.Automation.Details.ProcessTrigger}" VerticalAlignment="Top" Margin="0,16,0,0"
                                        Visibility="{Binding EditedAutomation.IsProcessTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <Grid Grid.Row="4" Grid.Column="1" Margin="0,10,0,0"
+                            <Grid Grid.Row="5" Grid.Column="1" Margin="0,10,0,0"
                                   Visibility="{Binding EditedAutomation.IsProcessTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -203,15 +211,15 @@
                                     <ColumnDefinition Width="130"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{loc:Translate Key=Ui.C2C6BC77B873}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:Translate Key=Ui.19C114F5BB77}"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Common.ProcessName}" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
-                                    <TextBlock Text="{loc:Translate Key=Ui.68C6E91706D3}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.WindowTitleContainsOptional}" Margin="0,0,0,4"/>
                                     <TextBox Text="{Binding EditedAutomation.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="4">
-                                    <TextBlock Text="{loc:Translate Key=Ui.2B5AAA3CF344}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.DelayS}" Margin="0,0,0,4"/>
                                     <TextBox Text="{Binding EditedAutomation.DelayAfterEventSeconds, Mode=TwoWay}"/>
                                 </StackPanel>
                             </Grid>
@@ -221,13 +229,13 @@
 
                 <Expander Style="{StaticResource AutomationExpanderStyle}" IsExpanded="True" Margin="0,0,0,12">
                     <Expander.Header>
-                        <TextBlock Text="{loc:Translate Key=Ui.A4AD259E71CB}" Style="{StaticResource Heading2}" Margin="4,6"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.Action}" Style="{StaticResource Heading2}" Margin="4,6"/>
                     </Expander.Header>
                     <Border Style="{StaticResource CardBorderStyle}">
                         <Grid Margin="12">
                             <Grid.RowDefinitions><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="{loc:Translate Key=Ui.66036A4014DD}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.JobOrMacro}" VerticalAlignment="Center"/>
                             <ComboBox Grid.Column="1" ItemsSource="{Binding ActionsView}" DisplayMemberPath="Name"
                                       SelectedItem="{Binding SelectedAction, Mode=TwoWay}" MinWidth="280">
                                 <ComboBox.GroupStyle>
@@ -242,32 +250,34 @@
 
                 <Expander Style="{StaticResource AutomationExpanderStyle}" IsExpanded="True">
                     <Expander.Header>
-                        <TextBlock Text="{loc:Translate Key=Ui.B3ECF7CD4BE6}" Style="{StaticResource Heading2}" Margin="4,6"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.ExecutionRules}" Style="{StaticResource Heading2}" Margin="4,6"/>
                     </Expander.Header>
                     <Border Style="{StaticResource CardBorderStyle}">
                         <Grid Margin="12">
                             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="{loc:Translate Key=Ui.A3E13215000C}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.IfAlreadyActive}" VerticalAlignment="Center"/>
                             <ComboBox Grid.Column="1" ItemsSource="{Binding RunningBehaviors}"
                                       SelectedItem="{Binding EditedAutomation.AlreadyRunningBehavior, Mode=TwoWay}"
                                       Width="200" HorizontalAlignment="Left">
                                 <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource LocalizedEnumConverter}}"/></DataTemplate></ComboBox.ItemTemplate>
                             </ComboBox>
-                            <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.0924A671165F}" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                            <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.Automation.Details.Cooldown}" VerticalAlignment="Center" Margin="0,10,0,0"/>
                             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
                                 <TextBox Text="{Binding EditedAutomation.CooldownSeconds, Mode=TwoWay}" Width="80"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.137B664AD5FB}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.Seconds}" VerticalAlignment="Center" Margin="8,0,0,0"/>
                             </StackPanel>
-                            <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.FB5DEA1268EA}" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                            <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.Automation.Details.ActiveFrom}" VerticalAlignment="Center" Margin="0,10,0,0"/>
                             <mah:TimePicker Grid.Row="2" Grid.Column="1" PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
+                                            Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                             SelectedDateTime="{Binding EditedAutomation.EnabledFrom, Mode=TwoWay}"
                                             Width="150" HorizontalAlignment="Left" Margin="0,10,0,0"/>
-                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.A1C8E14A1EEE}" VerticalAlignment="Center" Margin="0,10,0,0"/>
+                            <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.ActiveUntil}" VerticalAlignment="Center" Margin="0,10,0,0"/>
                             <mah:TimePicker Grid.Row="3" Grid.Column="1" PreviewKeyDown="Picker_PreviewKeyDown" SelectedTimeFormat="Short" IsClockVisible="False"
+                                            Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                             SelectedDateTime="{Binding EditedAutomation.EnabledUntil, Mode=TwoWay}"
                                             Width="150" HorizontalAlignment="Left" Margin="0,10,0,0"
-                                            ToolTip="{loc:Translate Key=Ui.A0D222667945}"/>
+                                            ToolTip="{loc:Translate Key=Ui.Automation.Details.TimeWindowsSpanningMidnightAreSupported}"/>
                         </Grid>
                     </Border>
                 </Expander>

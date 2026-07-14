@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DesktopAutomation.Application.Interfaces;
 using TaskAutomation.Automations;
 using TaskAutomation.Jobs;
@@ -17,6 +18,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobExecutor _executor;
         private readonly IJobDispatcher _dispatcher;
         private readonly IAutomationApplicationService _automationService;
+        private readonly DispatcherTimer _relativeTimeTimer;
 
         // --- Stat cards ---
         private int _totalJobCount;
@@ -96,6 +98,11 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
+            LocalizationService.Instance.CultureChanged += OnCultureChanged;
+
+            _relativeTimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _relativeTimeTimer.Tick += OnRelativeTimeTick;
+            _relativeTimeTimer.Start();
 
             _ = RefreshAsync();
         }
@@ -125,11 +132,19 @@ namespace DesktopAutomationApp.ViewModels
                     Name = automation.Name,
                     Trigger = AutomationDisplayFormatter.Trigger(automation.Trigger),
                     Action = AutomationDisplayFormatter.Action(automation.Action),
-                    LastRun = automation.Runtime.LastRunAt?.LocalDateTime.ToString("g", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.NeverRun"),
+                    LastRunAt = automation.Runtime.LastRunAt,
                     NextRun = automation.Runtime.NextRunAt?.LocalDateTime.ToString("g", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.EventBased")
                 });
             }
         }
+
+        private void OnRelativeTimeTick(object? sender, EventArgs e)
+        {
+            foreach (var automation in ActiveAutomations)
+                automation.RefreshLastRun();
+        }
+
+        private async void OnCultureChanged(object? sender, EventArgs e) => await RefreshAutomationsAsync();
 
         private void RefreshRunningJobs()
         {
@@ -228,6 +243,9 @@ namespace DesktopAutomationApp.ViewModels
             {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
                 _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
+                LocalizationService.Instance.CultureChanged -= OnCultureChanged;
+                _relativeTimeTimer.Stop();
+                _relativeTimeTimer.Tick -= OnRelativeTimeTick;
             }
             base.Dispose(disposing);
         }
@@ -239,13 +257,16 @@ namespace DesktopAutomationApp.ViewModels
         public string Name { get; init; } = "";
     }
 
-    public sealed class AutomationDashboardInfo
+    public sealed class AutomationDashboardInfo : ViewModelBase
     {
         public string Name { get; init; } = string.Empty;
         public string Trigger { get; init; } = string.Empty;
         public string Action { get; init; } = string.Empty;
-        public string LastRun { get; init; } = string.Empty;
+        public DateTimeOffset? LastRunAt { get; init; }
+        public string LastRun => AutomationDisplayFormatter.LastRun(LastRunAt);
         public string NextRun { get; init; } = string.Empty;
+
+        public void RefreshLastRun() => OnPropertyChanged(nameof(LastRun));
     }
 
     /// <summary>Gruppenzeile in der "Laufende Jobs"-Liste: ein Eintrag pro Job-Definition, mit Instanz-Zähler.</summary>

@@ -1,5 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
@@ -7,10 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Settings.Title" xml:space="preserve">
     <value>Settings</value>
@@ -42,898 +147,895 @@
   <data name="Navigation.Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
-  <data name="Ui.1AE7FEC55BD2" xml:space="preserve">
+  <data name="Ui.App.Title" xml:space="preserve">
     <value>DesktopAutomation</value>
   </data>
-  <data name="Ui.9BD88F2485AC" xml:space="preserve">
+  <data name="Ui.App.BrandDesktop" xml:space="preserve">
     <value>Desktop</value>
   </data>
-  <data name="Ui.D909750B1BBB" xml:space="preserve">
+  <data name="Ui.App.BrandAutomation" xml:space="preserve">
     <value>Automation</value>
   </data>
-  <data name="Ui.EB19BE2C2707" xml:space="preserve">
-    <value>Update verfügbar</value>
+  <data name="Ui.App.UpdateAvailable" xml:space="preserve">
+    <value>Update available</value>
   </data>
-  <data name="Ui.6ACAE8FA1F57" xml:space="preserve">
+  <data name="Ui.App.UpdateNow" xml:space="preserve">
     <value>Update now</value>
   </data>
-  <data name="Ui.93E41A83723A" xml:space="preserve">
+  <data name="Ui.App.RestartToInstallUpdate" xml:space="preserve">
     <value>Restart to install update</value>
   </data>
-  <data name="Ui.E4BB9F1ECE9A" xml:space="preserve">
+  <data name="Ui.App.Home" xml:space="preserve">
     <value>Home</value>
   </data>
-  <data name="Ui.1A221929D4C5" xml:space="preserve">
+  <data name="Ui.Automation.List.Automations" xml:space="preserve">
     <value>Automations</value>
   </data>
-  <data name="Ui.68D83EF61EDE" xml:space="preserve">
+  <data name="Ui.Dashboard.Makros" xml:space="preserve">
     <value>Makros</value>
   </data>
-  <data name="Ui.2F17A0F8D518" xml:space="preserve">
+  <data name="Ui.Job.List.Jobs" xml:space="preserve">
     <value>Jobs</value>
   </data>
-  <data name="Ui.C08179253DA5" xml:space="preserve">
+  <data name="Ui.Yolo.YOLODownloads" xml:space="preserve">
     <value>YOLO Downloads</value>
   </data>
-  <data name="Ui.EA2100DC89AE" xml:space="preserve">
+  <data name="Ui.App.Logs" xml:space="preserve">
     <value>Logs</value>
   </data>
-  <data name="Ui.4B223C706F03" xml:space="preserve">
+  <data name="Ui.Dialog.WidthAndHeight" xml:space="preserve">
     <value>WidthAndHeight</value>
   </data>
-  <data name="Ui.90EBC1BDE6F3" xml:space="preserve">
+  <data name="Ui.Dialog.No" xml:space="preserve">
     <value>No</value>
   </data>
-  <data name="Ui.F7FF1178AF20" xml:space="preserve">
+  <data name="Ui.Common.Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="Ui.96BF0098166F" xml:space="preserve">
+  <data name="Ui.Common.Refresh" xml:space="preserve">
     <value>Refresh</value>
   </data>
-  <data name="Ui.C2D56AFF317E" xml:space="preserve">
-    <value>Datei öffnen</value>
+  <data name="Ui.Logs.OpenFile" xml:space="preserve">
+    <value>Open file</value>
   </data>
-  <data name="Ui.E3ABC0ADA1B7" xml:space="preserve">
+  <data name="Ui.Logs.JobLogs" xml:space="preserve">
     <value>Job logs</value>
   </data>
-  <data name="Ui.B6CA096F830F" xml:space="preserve">
-    <value>Ausführungen</value>
+  <data name="Ui.Logs.Executions" xml:space="preserve">
+    <value>Executions</value>
   </data>
-  <data name="Ui.1709305C9FA9" xml:space="preserve">
+  <data name="Ui.Logs.Level" xml:space="preserve">
     <value>Level</value>
   </data>
-  <data name="Ui.1178E1C9B589" xml:space="preserve">
+  <data name="Ui.Logs.LiveLog" xml:space="preserve">
     <value>Live-Log</value>
   </data>
-  <data name="Ui.2683CAD48A14" xml:space="preserve">
+  <data name="Ui.Dialog.Name" xml:space="preserve">
     <value>Name:</value>
   </data>
-  <data name="Ui.5CA419548155" xml:space="preserve">
+  <data name="Ui.Dialog.Create" xml:space="preserve">
     <value>Create</value>
   </data>
-  <data name="Ui.1368BE38DB6D" xml:space="preserve">
+  <data name="Ui.Dashboard.RefreshDashboard" xml:space="preserve">
     <value>Refresh dashboard</value>
   </data>
-  <data name="Ui.005E1574A2B5" xml:space="preserve">
+  <data name="Ui.Dashboard.Separator" xml:space="preserve">
     <value> / </value>
   </data>
-  <data name="Ui.9D1F99EFB6B7" xml:space="preserve">
+  <data name="Ui.Dashboard.ActiveTotal" xml:space="preserve">
     <value>active / total</value>
   </data>
-  <data name="Ui.B5FCA4A8E299" xml:space="preserve">
+  <data name="Ui.Dashboard.Total" xml:space="preserve">
     <value>total</value>
   </data>
-  <data name="Ui.3E833A240A1C" xml:space="preserve">
+  <data name="Ui.Dashboard.ActiveAutomations" xml:space="preserve">
     <value>Active automations</value>
   </data>
-  <data name="Ui.DCD1D5223F73" xml:space="preserve">
+  <data name="Ui.Common.Name" xml:space="preserve">
     <value>Name</value>
   </data>
-  <data name="Ui.8B9C643731C9" xml:space="preserve">
+  <data name="Ui.Automation.Details.Trigger" xml:space="preserve">
     <value>Trigger</value>
   </data>
-  <data name="Ui.A4AD259E71CB" xml:space="preserve">
+  <data name="Ui.Automation.Details.Action" xml:space="preserve">
     <value>Action</value>
   </data>
-  <data name="Ui.A541A83738A7" xml:space="preserve">
+  <data name="Ui.Automation.List.LastRun" xml:space="preserve">
     <value>Last run</value>
   </data>
-  <data name="Ui.B5561425E2EE" xml:space="preserve">
-    <value>Nächste Ausführung</value>
+  <data name="Ui.Automation.List.NextRun" xml:space="preserve">
+    <value>Next run</value>
   </data>
-  <data name="Ui.9FD62C286678" xml:space="preserve">
+  <data name="Ui.Dashboard.NoActiveAutomation" xml:space="preserve">
     <value>No active automation</value>
   </data>
-  <data name="Ui.ED59E5772B4B" xml:space="preserve">
+  <data name="Ui.Dashboard.StopAllRunningJobsMacrosF10" xml:space="preserve">
     <value>Stop all running jobs &amp; macros (F10)</value>
   </data>
-  <data name="Ui.D3F7409AD75E" xml:space="preserve">
+  <data name="Ui.Dashboard.StopAll" xml:space="preserve">
     <value>Stop All</value>
   </data>
-  <data name="Ui.76E5B150C51E" xml:space="preserve">
-    <value># Ausführungen</value>
+  <data name="Ui.Dashboard.CountExecutions" xml:space="preserve">
+    <value># Executions</value>
   </data>
-  <data name="Ui.DE5625143C5C" xml:space="preserve">
+  <data name="Ui.Dashboard.RunningJobsMacros" xml:space="preserve">
     <value>Running jobs &amp; macros</value>
   </data>
-  <data name="Ui.42615FA2525B" xml:space="preserve">
+  <data name="Ui.Dashboard.StopAllInstancesOfThisJob" xml:space="preserve">
     <value>Stop all instances of this job</value>
   </data>
-  <data name="Ui.CAE7D57BC067" xml:space="preserve">
+  <data name="Ui.Common.Stop" xml:space="preserve">
     <value>Stop</value>
   </data>
-  <data name="Ui.8DB71ED28B0F" xml:space="preserve">
+  <data name="Ui.Common.RemoveSymbol" xml:space="preserve">
     <value>×</value>
   </data>
-  <data name="Ui.8D7C64BB0998" xml:space="preserve">
+  <data name="Ui.Dashboard.NoActiveJobMacro" xml:space="preserve">
     <value>No active job/macro</value>
   </data>
-  <data name="Ui.7BB37DF5CB36" xml:space="preserve">
+  <data name="Ui.Common.ChevronRight" xml:space="preserve">
     <value>›</value>
   </data>
-  <data name="Ui.548611CE58F7" xml:space="preserve">
-    <value>Zurück</value>
+  <data name="Ui.Common.Back" xml:space="preserve">
+    <value>Back</value>
   </data>
-  <data name="Ui.F6B2FF39F540" xml:space="preserve">
+  <data name="Ui.Common.Save" xml:space="preserve">
     <value>Save</value>
   </data>
-  <data name="Ui.594CA889C442" xml:space="preserve">
-    <value>Discard</value>
-  </data>
-  <data name="Ui.83E07ED1F359" xml:space="preserve">
+  <data name="Ui.Common.Rename" xml:space="preserve">
     <value>Rename</value>
   </data>
-  <data name="Ui.E9262F007DFB" xml:space="preserve">
+  <data name="Ui.Automation.Details.Description" xml:space="preserve">
     <value>Description</value>
   </data>
-  <data name="Ui.8163454F378F" xml:space="preserve">
+  <data name="Ui.Automation.Details.Active" xml:space="preserve">
     <value>Active</value>
   </data>
-  <data name="Ui.15CE2119C2DA" xml:space="preserve">
+  <data name="Ui.Automation.Details.TriggerType" xml:space="preserve">
     <value>Trigger type</value>
   </data>
-  <data name="Ui.6A6485AF02CA" xml:space="preserve">
+  <data name="Ui.Automation.Details.Hotkey" xml:space="preserve">
     <value>Hotkey</value>
   </data>
-  <data name="Ui.D0F2D9E1CC3B" xml:space="preserve">
+  <data name="Ui.Automation.Details.CaptureHotkey" xml:space="preserve">
     <value>Capture hotkey</value>
   </data>
-  <data name="Ui.63D6160302C5" xml:space="preserve">
-    <value>Ausführung</value>
+  <data name="Ui.Automation.Details.Execution" xml:space="preserve">
+    <value>Execution</value>
   </data>
-  <data name="Ui.619BE40DDBBF" xml:space="preserve">
+  <data name="Ui.Automation.Details.TimeAndDays" xml:space="preserve">
     <value>Time and days</value>
   </data>
-  <data name="Ui.D23E867E38E8" xml:space="preserve">
-    <value>Mo</value>
+  <data name="Ui.Automation.Details.Mon" xml:space="preserve">
+    <value>Mon</value>
   </data>
-  <data name="Ui.16AB72874809" xml:space="preserve">
-    <value>Di</value>
+  <data name="Ui.Automation.Details.Tue" xml:space="preserve">
+    <value>Tue</value>
   </data>
-  <data name="Ui.D8F33A13AE6E" xml:space="preserve">
-    <value>Mi</value>
+  <data name="Ui.Automation.Details.Wed" xml:space="preserve">
+    <value>Wed</value>
   </data>
-  <data name="Ui.30094E0BEC00" xml:space="preserve">
-    <value>Do</value>
+  <data name="Ui.Automation.Details.Thu" xml:space="preserve">
+    <value>Thu</value>
   </data>
-  <data name="Ui.EED8F901692D" xml:space="preserve">
-    <value>Fr</value>
+  <data name="Ui.Automation.Details.Fri" xml:space="preserve">
+    <value>Fri</value>
   </data>
-  <data name="Ui.A951EFC79DEB" xml:space="preserve">
-    <value>Sa</value>
+  <data name="Ui.Automation.Details.Sat" xml:space="preserve">
+    <value>Sat</value>
   </data>
-  <data name="Ui.FB1DF1A24E3F" xml:space="preserve">
-    <value>So</value>
+  <data name="Ui.Automation.Details.Sun" xml:space="preserve">
+    <value>Sun</value>
   </data>
-  <data name="Ui.21FBABA024F7" xml:space="preserve">
+  <data name="Ui.Automation.Details.Interval" xml:space="preserve">
     <value>Interval</value>
   </data>
-  <data name="Ui.778A744FBFB5" xml:space="preserve">
+  <data name="Ui.Automation.Details.ImmediatelyAfterAppStart" xml:space="preserve">
     <value>Immediately after app start</value>
   </data>
-  <data name="Ui.CD9BB3B40997" xml:space="preserve">
-    <value>Prozessauslöser</value>
+  <data name="Ui.Automation.Details.ProcessTrigger" xml:space="preserve">
+    <value>Process trigger</value>
   </data>
-  <data name="Ui.C2C6BC77B873" xml:space="preserve">
+  <data name="Ui.Common.ProcessName" xml:space="preserve">
     <value>Process name</value>
   </data>
-  <data name="Ui.19C114F5BB77" xml:space="preserve">
-    <value>z. B. chrome.exe</value>
+  <data name="Ui.Automation.Details.ProcessNamePlaceholder" xml:space="preserve">
+    <value>e.g. chrome.exe</value>
   </data>
-  <data name="Ui.68C6E91706D3" xml:space="preserve">
-    <value>Fenstertitel enthält (optional)</value>
+  <data name="Ui.Automation.Details.WindowTitleContainsOptional" xml:space="preserve">
+    <value>Window title contains (optional)</value>
   </data>
-  <data name="Ui.2B5AAA3CF344" xml:space="preserve">
-    <value>Verzögerung (s)</value>
+  <data name="Ui.Automation.Details.DelayS" xml:space="preserve">
+    <value>Delay (s)</value>
   </data>
-  <data name="Ui.66036A4014DD" xml:space="preserve">
+  <data name="Ui.Automation.Details.JobOrMacro" xml:space="preserve">
     <value>Job or macro</value>
   </data>
-  <data name="Ui.B3ECF7CD4BE6" xml:space="preserve">
-    <value>Ausführungsregeln</value>
+  <data name="Ui.Automation.Details.ExecutionRules" xml:space="preserve">
+    <value>Execution rules</value>
   </data>
-  <data name="Ui.A3E13215000C" xml:space="preserve">
+  <data name="Ui.Automation.Details.IfAlreadyActive" xml:space="preserve">
     <value>If already active</value>
   </data>
-  <data name="Ui.0924A671165F" xml:space="preserve">
+  <data name="Ui.Automation.Details.Cooldown" xml:space="preserve">
     <value>Cooldown</value>
   </data>
-  <data name="Ui.137B664AD5FB" xml:space="preserve">
+  <data name="Ui.Automation.Details.Seconds" xml:space="preserve">
     <value>Seconds</value>
   </data>
-  <data name="Ui.FB5DEA1268EA" xml:space="preserve">
+  <data name="Ui.Automation.Details.ActiveFrom" xml:space="preserve">
     <value>Active from</value>
   </data>
-  <data name="Ui.A1C8E14A1EEE" xml:space="preserve">
+  <data name="Ui.Automation.Details.ActiveUntil" xml:space="preserve">
     <value>Active until</value>
   </data>
-  <data name="Ui.A0D222667945" xml:space="preserve">
-    <value>Zeitfenster über Mitternacht werden unterstützt</value>
+  <data name="Ui.Automation.Details.TimeWindowsSpanningMidnightAreSupported" xml:space="preserve">
+    <value>Time windows spanning midnight are supported</value>
   </data>
-  <data name="Ui.40E06B5F6DAB" xml:space="preserve">
+  <data name="Ui.Automation.List.NewAutomation" xml:space="preserve">
     <value>New automation</value>
   </data>
-  <data name="Ui.E085C5651744" xml:space="preserve">
-    <value>Automation löschen</value>
+  <data name="Ui.Automation.List.DeleteAutomation" xml:space="preserve">
+    <value>Delete automation</value>
   </data>
-  <data name="Ui.93553A3A38EF" xml:space="preserve">
-    <value>Ordner im Explorer öffnen</value>
+  <data name="Ui.Common.OpenFolderInExplorer" xml:space="preserve">
+    <value>Open folder in Explorer</value>
   </data>
-  <data name="Ui.119B406F6AEE" xml:space="preserve">
-    <value>Jetzt ausführen</value>
+  <data name="Ui.Automation.List.RunNow" xml:space="preserve">
+    <value>Run now</value>
   </data>
-  <data name="Ui.BC385A30B537" xml:space="preserve">
-    <value>Öffnen</value>
+  <data name="Ui.Common.Open" xml:space="preserve">
+    <value>Open</value>
   </data>
-  <data name="Ui.F75469E8027F" xml:space="preserve">
+  <data name="Ui.Step.Settings.StepType" xml:space="preserve">
     <value>STEP TYPE</value>
   </data>
-  <data name="Ui.6D8CFA868050" xml:space="preserve">
+  <data name="Ui.Step.Settings.CaptureStep" xml:space="preserve">
     <value>Capture-Step</value>
   </data>
-  <data name="Ui.0575F29DF888" xml:space="preserve">
+  <data name="Ui.Step.Settings.Template" xml:space="preserve">
     <value>Template</value>
   </data>
-  <data name="Ui.B4935894C8CE" xml:space="preserve">
+  <data name="Ui.Common.Ellipsis" xml:space="preserve">
     <value>…</value>
   </data>
-  <data name="Ui.5BB1092E45D1" xml:space="preserve">
+  <data name="Ui.Step.Settings.ROI" xml:space="preserve">
     <value>ROI</value>
   </data>
-  <data name="Ui.4B68AB3847FE" xml:space="preserve">
+  <data name="Ui.Step.Settings.X" xml:space="preserve">
     <value>X</value>
   </data>
-  <data name="Ui.18F5384D58BC" xml:space="preserve">
+  <data name="Ui.Step.Settings.Y" xml:space="preserve">
     <value>Y</value>
   </data>
-  <data name="Ui.28240C279DF6" xml:space="preserve">
+  <data name="Ui.Step.Settings.Width" xml:space="preserve">
     <value>Width</value>
   </data>
-  <data name="Ui.A4D8C3470CA7" xml:space="preserve">
-    <value>Höhe</value>
+  <data name="Ui.Step.Settings.Height" xml:space="preserve">
+    <value>Height</value>
   </data>
-  <data name="Ui.0D413232C63A" xml:space="preserve">
+  <data name="Ui.Step.Settings.Capture" xml:space="preserve">
     <value>Capture</value>
   </data>
-  <data name="Ui.4294D815517A" xml:space="preserve">
+  <data name="Ui.Step.Settings.EnableROI" xml:space="preserve">
     <value>Enable ROI</value>
   </data>
-  <data name="Ui.D4DF25A1EAE5" xml:space="preserve">
+  <data name="Ui.Step.Settings.Confidence01" xml:space="preserve">
     <value>Confidence (0…1)</value>
   </data>
-  <data name="Ui.8CA2E465EEDB" xml:space="preserve">
+  <data name="Ui.Step.Settings.MatchMode" xml:space="preserve">
     <value>Match Mode</value>
   </data>
-  <data name="Ui.A952C8F76F58" xml:space="preserve">
+  <data name="Ui.Step.Settings.Color" xml:space="preserve">
     <value>Color</value>
   </data>
-  <data name="Ui.B22C38403F9C" xml:space="preserve">
-    <value>Min. Größe</value>
+  <data name="Ui.Step.Settings.MinSize" xml:space="preserve">
+    <value>Min. size</value>
   </data>
-  <data name="Ui.8CE3C103A257" xml:space="preserve">
-    <value>Max. Größe</value>
+  <data name="Ui.Step.Settings.MaxSize" xml:space="preserve">
+    <value>Max. size</value>
   </data>
-  <data name="Ui.642C845C97A3" xml:space="preserve">
+  <data name="Ui.Step.Settings.MinWidth" xml:space="preserve">
     <value>Min. width</value>
   </data>
-  <data name="Ui.702339DAAEF2" xml:space="preserve">
-    <value>Min. Höhe</value>
+  <data name="Ui.Step.Settings.MinHeight" xml:space="preserve">
+    <value>Min. height</value>
   </data>
-  <data name="Ui.58B8499463DF" xml:space="preserve">
+  <data name="Ui.Step.Settings.Downscale" xml:space="preserve">
     <value>Downscale</value>
   </data>
-  <data name="Ui.9B4B6F6A789D" xml:space="preserve">
+  <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
     <value>Detection-Step</value>
   </data>
-  <data name="Ui.0EFCC3B140C9" xml:space="preserve">
+  <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Min. values</value>
   </data>
-  <data name="Ui.F0E72827BFC3" xml:space="preserve">
+  <data name="Ui.Step.Settings.PredictionMs" xml:space="preserve">
     <value>Prediction (ms)</value>
   </data>
-  <data name="Ui.86A7D5A27D96" xml:space="preserve">
+  <data name="Ui.Step.Settings.ResetAtDistance" xml:space="preserve">
     <value>Reset at distance</value>
   </data>
-  <data name="Ui.1E096C34E7FD" xml:space="preserve">
+  <data name="Ui.Step.Settings.MaxAgeMs" xml:space="preserve">
     <value>Max. age (ms)</value>
   </data>
-  <data name="Ui.26F7D6A5E121" xml:space="preserve">
+  <data name="Ui.Step.Settings.DesktopIndex" xml:space="preserve">
     <value>Desktop Index</value>
   </data>
-  <data name="Ui.7448C10623C8" xml:space="preserve">
-    <value>Monitor wählen</value>
+  <data name="Ui.Step.Settings.SelectMonitor" xml:space="preserve">
+    <value>Select monitor</value>
   </data>
-  <data name="Ui.70490573F6E7" xml:space="preserve">
+  <data name="Ui.Step.Settings.CaptureMousePointer" xml:space="preserve">
     <value>Capture mouse pointer</value>
   </data>
-  <data name="Ui.AE8D1BDC4EAB" xml:space="preserve">
+  <data name="Ui.Step.Settings.DetectionStepOpt" xml:space="preserve">
     <value>Detection-Step (opt.)</value>
   </data>
-  <data name="Ui.66269928F653" xml:space="preserve">
+  <data name="Ui.Step.Settings.WindowName" xml:space="preserve">
     <value>Window name</value>
   </data>
-  <data name="Ui.F2D20D83F8C5" xml:space="preserve">
+  <data name="Ui.Step.Settings.ImageSource" xml:space="preserve">
     <value>Image source</value>
   </data>
-  <data name="Ui.0F26F4ED7864" xml:space="preserve">
+  <data name="Ui.Step.Settings.SavePath" xml:space="preserve">
     <value>Save path</value>
   </data>
-  <data name="Ui.9B5378EFC9FC" xml:space="preserve">
+  <data name="Ui.Step.Settings.FileName" xml:space="preserve">
     <value>File name</value>
   </data>
-  <data name="Ui.EEA1C34AE773" xml:space="preserve">
-    <value>Makro</value>
+  <data name="Ui.Step.Settings.Macro" xml:space="preserve">
+    <value>Macro</value>
   </data>
-  <data name="Ui.AD617A0FDD57" xml:space="preserve">
+  <data name="Ui.Step.Settings.Job" xml:space="preserve">
     <value>Job</value>
   </data>
-  <data name="Ui.51DAE3D4CA42" xml:space="preserve">
+  <data name="Ui.Step.Settings.WaitForCompletion" xml:space="preserve">
     <value>Wait for completion</value>
   </data>
-  <data name="Ui.E09AD4D0276E" xml:space="preserve">
+  <data name="Ui.Step.Settings.ScriptPath" xml:space="preserve">
     <value>Script path</value>
   </data>
-  <data name="Ui.B1A1E8E3CF7C" xml:space="preserve">
+  <data name="Ui.Step.Settings.Offset" xml:space="preserve">
     <value>Offset</value>
   </data>
-  <data name="Ui.439FB5CFB084" xml:space="preserve">
+  <data name="Ui.Step.Settings.ClickType" xml:space="preserve">
     <value>Click type</value>
   </data>
-  <data name="Ui.3B453BC8BD28" xml:space="preserve">
+  <data name="Ui.Step.Settings.TimeoutMs" xml:space="preserve">
     <value>Timeout (ms)</value>
   </data>
-  <data name="Ui.4FE3118BFDEC" xml:space="preserve">
+  <data name="Ui.Step.Settings.DoubleClick" xml:space="preserve">
     <value>Double-click</value>
   </data>
-  <data name="Ui.DA45A7C12EDF" xml:space="preserve">
+  <data name="Ui.Step.Settings.Origin" xml:space="preserve">
     <value>Origin</value>
   </data>
-  <data name="Ui.5E2C614C23F0" xml:space="preserve">
+  <data name="Ui.Step.Settings.Model" xml:space="preserve">
     <value>Model</value>
   </data>
-  <data name="Ui.FEB9FFF9C7F0" xml:space="preserve">
+  <data name="Ui.Step.Settings.ClassName" xml:space="preserve">
     <value>Class name</value>
   </data>
-  <data name="Ui.054A29A3F5E5" xml:space="preserve">
+  <data name="Ui.Step.Settings.WaitTimeMs" xml:space="preserve">
     <value>Wait time (ms)</value>
   </data>
-  <data name="Ui.E98512CAC80D" xml:space="preserve">
-    <value>z. B. notepad oder notepad.exe</value>
+  <data name="Ui.Step.Settings.ProcessNamePlaceholder" xml:space="preserve">
+    <value>e.g. notepad or notepad.exe</value>
   </data>
-  <data name="Ui.7C6F46FBF3E0" xml:space="preserve">
-    <value>Ergebnis (Erfolgreich = Prozess läuft) kann in If-Bedingungen ausgewertet werden.</value>
+  <data name="Ui.Step.Settings.ProcessResultHint" xml:space="preserve">
+    <value>The result (successful = process is running) can be evaluated in if conditions.</value>
   </data>
-  <data name="Ui.5DED984A9AD6" xml:space="preserve">
+  <data name="Ui.Step.Settings.PathProgram" xml:space="preserve">
     <value>Path / program</value>
   </data>
-  <data name="Ui.CF2A0A45DFBA" xml:space="preserve">
+  <data name="Ui.Step.Settings.PathToExeOrProgramName" xml:space="preserve">
     <value>Path to .exe or program name</value>
   </data>
-  <data name="Ui.63A5229CED33" xml:space="preserve">
+  <data name="Ui.Step.Settings.Arguments" xml:space="preserve">
     <value>Arguments</value>
   </data>
-  <data name="Ui.EC91FDD9256C" xml:space="preserve">
+  <data name="Ui.Step.Settings.Optional" xml:space="preserve">
     <value>optional</value>
   </data>
-  <data name="Ui.213DF92864E7" xml:space="preserve">
+  <data name="Ui.Step.Settings.WindowMode" xml:space="preserve">
     <value>Window mode</value>
   </data>
-  <data name="Ui.71988C4D8E08" xml:space="preserve">
+  <data name="Ui.Step.Settings.DisplayText" xml:space="preserve">
     <value>Text</value>
   </data>
-  <data name="Ui.2C5DB34BB7E8" xml:space="preserve">
+  <data name="Ui.Step.Settings.TextToDisplayEmptyRemove" xml:space="preserve">
     <value>Text to display (empty = remove)</value>
   </data>
-  <data name="Ui.0FF77CA7838A" xml:space="preserve">
-    <value>Schriftgröße (pt)</value>
+  <data name="Ui.Step.Settings.FontSizePt" xml:space="preserve">
+    <value>Font size (pt)</value>
   </data>
-  <data name="Ui.CC31DCCC2813" xml:space="preserve">
+  <data name="Ui.Step.Settings.FontColor" xml:space="preserve">
     <value>Font color</value>
   </data>
-  <data name="Ui.2E24FA375030" xml:space="preserve">
+  <data name="Ui.Step.Settings.Opacity" xml:space="preserve">
     <value>Opacity</value>
   </data>
-  <data name="Ui.761C1A6D6FCE" xml:space="preserve">
+  <data name="Ui.Step.Settings.DisplayDurationMs" xml:space="preserve">
     <value>Display duration (ms)</value>
   </data>
-  <data name="Ui.1999CAA2CA38" xml:space="preserve">
-    <value>0 = dauerhaft</value>
+  <data name="Ui.Step.Settings.Value0Permanent" xml:space="preserve">
+    <value>0 = permanent</value>
   </data>
-  <data name="Ui.1B720A358064" xml:space="preserve">
+  <data name="Ui.Step.Settings.RemoveWhenJobEnds" xml:space="preserve">
     <value>Remove when job ends</value>
   </data>
-  <data name="Ui.6D031AF10DA7" xml:space="preserve">
+  <data name="Ui.Step.Settings.Position" xml:space="preserve">
     <value>Position</value>
   </data>
-  <data name="Ui.DD28B7CB2962" xml:space="preserve">
+  <data name="Ui.Step.Settings.XOffsetPixels" xml:space="preserve">
     <value>X offset (pixels)</value>
   </data>
-  <data name="Ui.5069D9B55A54" xml:space="preserve">
+  <data name="Ui.Step.Settings.YOffsetPixels" xml:space="preserve">
     <value>Y offset (pixels)</value>
   </data>
-  <data name="Ui.DA34047E4D4E" xml:space="preserve">
+  <data name="Ui.Step.Settings.CacheMs" xml:space="preserve">
     <value>Cache (ms)</value>
   </data>
-  <data name="Ui.B7A0AA8464FD" xml:space="preserve">
+  <data name="Ui.Step.Settings.ActiveWindowResultHint" xml:space="preserve">
     <value>The result (window active) can be evaluated in if conditions.</value>
   </data>
-  <data name="Ui.C3B98AA17F9B" xml:space="preserve">
+  <data name="Ui.Step.Settings.MinMatches" xml:space="preserve">
     <value>Min. matches</value>
   </data>
-  <data name="Ui.A1502CB234BF" xml:space="preserve">
+  <data name="Ui.Step.Settings.LoweSRatio01" xml:space="preserve">
     <value>Lowe's Ratio (0…1)</value>
   </data>
-  <data name="Ui.B486EB1E1768" xml:space="preserve">
-    <value>Verknüpfung:</value>
+  <data name="Ui.Step.Settings.ConditionMatchMode" xml:space="preserve">
+    <value>Match mode:</value>
   </data>
-  <data name="Ui.C2E1330B15A3" xml:space="preserve">
+  <data name="Ui.Step.Settings.AllAND" xml:space="preserve">
     <value>All (AND)</value>
   </data>
-  <data name="Ui.D7C1657C8E65" xml:space="preserve">
+  <data name="Ui.Step.Settings.OneOR" xml:space="preserve">
     <value>One (OR)</value>
   </data>
-  <data name="Ui.AFB2DC1C61DB" xml:space="preserve">
+  <data name="Ui.Step.Settings.SourceStep" xml:space="preserve">
     <value>Source step</value>
   </data>
-  <data name="Ui.F854EEB77D90" xml:space="preserve">
+  <data name="Ui.Step.Settings.Property" xml:space="preserve">
     <value>Property</value>
   </data>
-  <data name="Ui.291101A07FE9" xml:space="preserve">
+  <data name="Ui.Step.Settings.Operator" xml:space="preserve">
     <value>Operator</value>
   </data>
-  <data name="Ui.7E347DAA5EC7" xml:space="preserve">
+  <data name="Ui.Step.Settings.Value" xml:space="preserve">
     <value>Value</value>
   </data>
-  <data name="Ui.C509EAB78B6B" xml:space="preserve">
-    <value>+ Bedingung hinzufügen</value>
+  <data name="Ui.Step.Settings.AddCondition" xml:space="preserve">
+    <value>+ Add condition</value>
   </data>
-  <data name="Ui.6DDA9E0A9BE1" xml:space="preserve">
-    <value>Keine Konfiguration erforderlich. Dieser Block wird ausgeführt, wenn keine vorherige Bedingung zutraf.</value>
+  <data name="Ui.Step.Settings.ElseDescription" xml:space="preserve">
+    <value>No configuration required. This block runs when no previous condition matched.</value>
   </data>
-  <data name="Ui.FEC1A19E077C" xml:space="preserve">
+  <data name="Ui.Step.Settings.EndIfDescription" xml:space="preserve">
     <value>No configuration required. Ends the previous If/ElseIf/Else block.</value>
   </data>
-  <data name="Ui.A93645F20E89" xml:space="preserve">
-    <value>Keine Konfiguration erforderlich. Beendet den Job sofort – nachfolgende Steps werden nicht mehr ausgeführt.</value>
+  <data name="Ui.Step.Settings.EndJobDescription" xml:space="preserve">
+    <value>No configuration required. Ends the job immediately; subsequent steps are not executed.</value>
   </data>
-  <data name="Ui.9249B6DAC3BF" xml:space="preserve">
+  <data name="Ui.Step.Settings.BasicSettings" xml:space="preserve">
     <value>BASIC SETTINGS</value>
   </data>
-  <data name="Ui.45517C77E57E" xml:space="preserve">
+  <data name="Ui.Step.Settings.Mode" xml:space="preserve">
     <value>Mode</value>
   </data>
-  <data name="Ui.A21971410217" xml:space="preserve">
+  <data name="Ui.Step.Settings.OffsetTolerance" xml:space="preserve">
     <value>Offset / tolerance</value>
   </data>
-  <data name="Ui.F5405899C6B6" xml:space="preserve">
+  <data name="Ui.Step.Settings.NearReferencePoint" xml:space="preserve">
     <value>Near reference point</value>
   </data>
-  <data name="Ui.BFFED431DF37" xml:space="preserve">
+  <data name="Ui.Step.Settings.Expression" xml:space="preserve">
     <value>Expression</value>
   </data>
-  <data name="Ui.BD979A0AD20E" xml:space="preserve">
+  <data name="Ui.Step.Settings.XYComparisonX100" xml:space="preserve">
     <value>X/Y comparison (X &gt; 100)</value>
   </data>
-  <data name="Ui.A95C09CFC410" xml:space="preserve">
+  <data name="Ui.Step.Settings.Evaluation" xml:space="preserve">
     <value>Evaluation</value>
   </data>
-  <data name="Ui.9DE9605B6EAC" xml:space="preserve">
+  <data name="Ui.Step.Settings.AtLeastOneOR" xml:space="preserve">
     <value>At least one (OR)</value>
   </data>
-  <data name="Ui.1998773AA58B" xml:space="preserve">
+  <data name="Ui.Step.Settings.ReferencePointTolerance" xml:space="preserve">
     <value>REFERENCE POINT &amp; TOLERANCE</value>
   </data>
-  <data name="Ui.86A5AF24996C" xml:space="preserve">
+  <data name="Ui.Step.Settings.ReferenceSource" xml:space="preserve">
     <value>Reference source</value>
   </data>
-  <data name="Ui.27DE415D1ADC" xml:space="preserve">
+  <data name="Ui.Step.Settings.EnterManually" xml:space="preserve">
     <value>Enter manually</value>
   </data>
-  <data name="Ui.D49CE8527566" xml:space="preserve">
+  <data name="Ui.Step.Settings.FromDetectionResult" xml:space="preserve">
     <value>From detection result</value>
   </data>
-  <data name="Ui.CE15D7073D8A" xml:space="preserve">
+  <data name="Ui.Step.Settings.CoordinatesXY" xml:space="preserve">
     <value>Coordinates (X / Y)</value>
   </data>
-  <data name="Ui.6A7E735DE6CF" xml:space="preserve">
+  <data name="Ui.Step.Settings.TolerancePixels" xml:space="preserve">
     <value>Tolerance (pixels)</value>
   </data>
-  <data name="Ui.76673266BEA8" xml:space="preserve">
+  <data name="Ui.Step.Settings.MaximumDeviation" xml:space="preserve">
     <value>Maximum deviation</value>
   </data>
-  <data name="Ui.E6E11D3FBDAE" xml:space="preserve">
-    <value>ACHSEN-AUSDRÜCKE</value>
+  <data name="Ui.Step.Settings.AxisExpressions" xml:space="preserve">
+    <value>AXIS EXPRESSIONS</value>
   </data>
-  <data name="Ui.184DAA43DB90" xml:space="preserve">
-    <value>Verknüpfen mit:</value>
+  <data name="Ui.Step.Settings.CombineWith" xml:space="preserve">
+    <value>Combine with:</value>
   </data>
-  <data name="Ui.48EEA2E52D13" xml:space="preserve">
+  <data name="Ui.Step.Settings.ANDAll" xml:space="preserve">
     <value>AND (all)</value>
   </data>
-  <data name="Ui.51B3C8047947" xml:space="preserve">
-    <value>OR (einer)</value>
+  <data name="Ui.Step.Settings.ORAny" xml:space="preserve">
+    <value>OR (any)</value>
   </data>
-  <data name="Ui.1B85AAC5FB65" xml:space="preserve">
+  <data name="Ui.Step.Settings.Axis" xml:space="preserve">
     <value>Axis</value>
   </data>
-  <data name="Ui.B6E7150FF3A7" xml:space="preserve">
+  <data name="Ui.Step.Settings.ComparisonValue" xml:space="preserve">
     <value>Comparison value</value>
   </data>
-  <data name="Ui.00EC3A8014FF" xml:space="preserve">
+  <data name="Ui.Step.Settings.RemoveExpression" xml:space="preserve">
     <value>Remove expression</value>
   </data>
-  <data name="Ui.7ADB833B38AD" xml:space="preserve">
-    <value>+ Ausdruck hinzufügen</value>
+  <data name="Ui.Step.Settings.AddExpression" xml:space="preserve">
+    <value>+ Add expression</value>
   </data>
-  <data name="Ui.64E40C59A743" xml:space="preserve">
-    <value>ZU PRÜFENDE PUNKTE</value>
+  <data name="Ui.Step.Settings.PointsToCheck" xml:space="preserve">
+    <value>POINTS TO CHECK</value>
   </data>
-  <data name="Ui.0672EEA8B758" xml:space="preserve">
-    <value>Diese Punkte werden gegen die Bedingung geprüft</value>
+  <data name="Ui.Step.Settings.ThesePointsAreCheckedAgainstTheCondition" xml:space="preserve">
+    <value>These points are checked against the condition</value>
   </data>
-  <data name="Ui.CBEE86870F04" xml:space="preserve">
-    <value>+ Punkt hinzufügen</value>
+  <data name="Ui.Step.Settings.AddPoint" xml:space="preserve">
+    <value>+ Add point</value>
   </data>
-  <data name="Ui.0656690ADC4E" xml:space="preserve">
+  <data name="Ui.Step.Settings.PointSource" xml:space="preserve">
     <value>Point source</value>
   </data>
-  <data name="Ui.961CACAA6E41" xml:space="preserve">
+  <data name="Ui.Step.Settings.Manual" xml:space="preserve">
     <value>Manual</value>
   </data>
-  <data name="Ui.678B9820E6D3" xml:space="preserve">
-    <value>× Entfernen</value>
+  <data name="Ui.Step.Settings.RemovePoint" xml:space="preserve">
+    <value>× Remove</value>
   </data>
-  <data name="Ui.666105122F20" xml:space="preserve">
+  <data name="Ui.Step.Settings.Coordinates" xml:space="preserve">
     <value>Coordinates</value>
   </data>
-  <data name="Ui.46EC484A28FD" xml:space="preserve">
+  <data name="Ui.Step.Settings.UseAllPointsFoundByThisStep" xml:space="preserve">
     <value>Use all points found by this step</value>
   </data>
-  <data name="Ui.93ADA26B51D5" xml:space="preserve">
+  <data name="Ui.Job.Steps.ImageSource" xml:space="preserve">
     <value>Image source: </value>
   </data>
-  <data name="Ui.3CD82F1C6B83" xml:space="preserve">
+  <data name="Ui.Job.Steps.TemplatePath" xml:space="preserve">
     <value>TemplatePath: </value>
   </data>
-  <data name="Ui.2B41DB799940" xml:space="preserve">
+  <data name="Ui.Job.Steps.MatchMode" xml:space="preserve">
     <value>MatchMode: </value>
   </data>
-  <data name="Ui.8CB7ECF52C9E" xml:space="preserve">
+  <data name="Ui.Job.Steps.MultipleMatches" xml:space="preserve">
     <value>Multiple matches: </value>
   </data>
-  <data name="Ui.38262E5E41A2" xml:space="preserve">
+  <data name="Ui.Job.Steps.ConfidenceThreshold" xml:space="preserve">
     <value>ConfidenceThreshold: </value>
   </data>
-  <data name="Ui.47A9974F5B0F" xml:space="preserve">
+  <data name="Ui.Job.Steps.EnableROI" xml:space="preserve">
     <value>EnableROI: </value>
   </data>
-  <data name="Ui.8B45B1C082CD" xml:space="preserve">
-    <value>ROI (X,Y,Breite,Höhe): </value>
+  <data name="Ui.Job.Steps.ROIXYWidthHeight" xml:space="preserve">
+    <value>ROI (X,Y,width,height): </value>
   </data>
-  <data name="Ui.2A335761AAB2" xml:space="preserve">
+  <data name="Ui.Job.Steps.Color" xml:space="preserve">
     <value>Color: </value>
   </data>
-  <data name="Ui.7FA9DD08AA11" xml:space="preserve">
-    <value>Min. Größe: </value>
+  <data name="Ui.Job.Steps.MinSize" xml:space="preserve">
+    <value>Min. size: </value>
   </data>
-  <data name="Ui.CA13C12F5A18" xml:space="preserve">
-    <value>Max. Größe: </value>
+  <data name="Ui.Job.Steps.MaxSize" xml:space="preserve">
+    <value>Max. size: </value>
   </data>
-  <data name="Ui.0FA280F27F7B" xml:space="preserve">
+  <data name="Ui.Job.Steps.MinWidth" xml:space="preserve">
     <value>Min. width: </value>
   </data>
-  <data name="Ui.76ED92CDAEEE" xml:space="preserve">
-    <value>Min. Höhe: </value>
+  <data name="Ui.Job.Steps.MinHeight" xml:space="preserve">
+    <value>Min. height: </value>
   </data>
-  <data name="Ui.F3E9D043C2B6" xml:space="preserve">
+  <data name="Ui.Job.Steps.Downscale" xml:space="preserve">
     <value>Downscale: </value>
   </data>
-  <data name="Ui.74D86E22EA75" xml:space="preserve">
+  <data name="Ui.Job.Steps.DetectionSource" xml:space="preserve">
     <value>Detection source: </value>
   </data>
-  <data name="Ui.DA97809EF62F" xml:space="preserve">
+  <data name="Ui.Job.Steps.MinValues" xml:space="preserve">
     <value>Min. values: </value>
   </data>
-  <data name="Ui.7A4B0CC43AB3" xml:space="preserve">
+  <data name="Ui.Job.Steps.PredictionMs" xml:space="preserve">
     <value>Prediction (ms): </value>
   </data>
-  <data name="Ui.6943487226FA" xml:space="preserve">
+  <data name="Ui.Job.Steps.ResetAtDistance" xml:space="preserve">
     <value>Reset at distance: </value>
   </data>
-  <data name="Ui.E03AEC74F1B9" xml:space="preserve">
+  <data name="Ui.Job.Steps.MaxAgeMs" xml:space="preserve">
     <value>Max. age (ms): </value>
   </data>
-  <data name="Ui.6734AA111988" xml:space="preserve">
+  <data name="Ui.Job.Steps.DesktopIndex" xml:space="preserve">
     <value>Desktop Index: </value>
   </data>
-  <data name="Ui.7C0849E451F6" xml:space="preserve">
+  <data name="Ui.Job.Steps.CaptureMousePointer" xml:space="preserve">
     <value>Capture mouse pointer: </value>
   </data>
-  <data name="Ui.D8C81A0D4458" xml:space="preserve">
+  <data name="Ui.Job.Steps.ProcessName" xml:space="preserve">
     <value>ProcessName: </value>
   </data>
-  <data name="Ui.7E9B7C2EAC11" xml:space="preserve">
+  <data name="Ui.Job.Steps.WindowName" xml:space="preserve">
     <value>WindowName: </value>
   </data>
-  <data name="Ui.AF583CB5042D" xml:space="preserve">
+  <data name="Ui.Job.Steps.ShowRawImage" xml:space="preserve">
     <value>ShowRawImage: </value>
   </data>
-  <data name="Ui.87056125F1E6" xml:space="preserve">
+  <data name="Ui.Job.Steps.ShowProcessedImage" xml:space="preserve">
     <value>ShowProcessedImage: </value>
   </data>
-  <data name="Ui.B970B4A304ED" xml:space="preserve">
+  <data name="Ui.Job.Steps.SavePath" xml:space="preserve">
     <value>SavePath: </value>
   </data>
-  <data name="Ui.71E32574EE93" xml:space="preserve">
+  <data name="Ui.Job.Steps.FileName" xml:space="preserve">
     <value>FileName: </value>
   </data>
-  <data name="Ui.00CCADEACCAA" xml:space="preserve">
+  <data name="Ui.Job.Steps.UseRawImage" xml:space="preserve">
     <value>UseRawImage: </value>
   </data>
-  <data name="Ui.6542054E91DE" xml:space="preserve">
+  <data name="Ui.Job.Steps.UseProcessedImage" xml:space="preserve">
     <value>UseProcessedImage: </value>
   </data>
-  <data name="Ui.961040D0FDD7" xml:space="preserve">
-    <value>MakroName: </value>
+  <data name="Ui.Job.Steps.MacroName" xml:space="preserve">
+    <value>Macro name: </value>
   </data>
-  <data name="Ui.0F508E57DE2E" xml:space="preserve">
+  <data name="Ui.Job.Steps.DoubleClick" xml:space="preserve">
     <value>Double-click: </value>
   </data>
-  <data name="Ui.7096AB1FD106" xml:space="preserve">
+  <data name="Ui.Job.Steps.ClickType" xml:space="preserve">
     <value>Click type: </value>
   </data>
-  <data name="Ui.16841653131E" xml:space="preserve">
+  <data name="Ui.Job.Steps.TimeoutMs" xml:space="preserve">
     <value>Timeout (ms): </value>
   </data>
-  <data name="Ui.87D9C38998EF" xml:space="preserve">
+  <data name="Ui.Job.Steps.Offset" xml:space="preserve">
     <value>Offset: </value>
   </data>
-  <data name="Ui.0A07F6594619" xml:space="preserve">
+  <data name="Ui.Job.Steps.CommaSeparator" xml:space="preserve">
     <value>, </value>
   </data>
-  <data name="Ui.48CCF781EF35" xml:space="preserve">
+  <data name="Ui.Job.Steps.Origin" xml:space="preserve">
     <value>Origin: </value>
   </data>
-  <data name="Ui.AE1F63E2EBFF" xml:space="preserve">
+  <data name="Ui.Job.Steps.ScriptPath" xml:space="preserve">
     <value>Script path: </value>
   </data>
-  <data name="Ui.F4ED7B6FCD39" xml:space="preserve">
+  <data name="Ui.Job.Steps.WaitForCompletion" xml:space="preserve">
     <value>Wait for completion: </value>
   </data>
-  <data name="Ui.A62513DCFC88" xml:space="preserve">
-    <value>Job-Name: </value>
+  <data name="Ui.Job.Steps.JobName" xml:space="preserve">
+    <value>Job name: </value>
   </data>
-  <data name="Ui.33F4E5313C6B" xml:space="preserve">
+  <data name="Ui.Job.Steps.Model" xml:space="preserve">
     <value>Model: </value>
   </data>
-  <data name="Ui.0215AD9159F2" xml:space="preserve">
+  <data name="Ui.Job.Steps.ClassName" xml:space="preserve">
     <value>Class name: </value>
   </data>
-  <data name="Ui.C3155FB48A52" xml:space="preserve">
+  <data name="Ui.Job.Steps.WaitTimeMs" xml:space="preserve">
     <value>Wait time (ms): </value>
   </data>
-  <data name="Ui.02025AAAE68D" xml:space="preserve">
+  <data name="Ui.Job.Steps.ProcessNameLabel" xml:space="preserve">
     <value>Process name: </value>
   </data>
-  <data name="Ui.306CE48C326B" xml:space="preserve">
+  <data name="Ui.Job.Steps.CacheMs" xml:space="preserve">
     <value>Cache (ms): </value>
   </data>
-  <data name="Ui.A254BBEC8D3E" xml:space="preserve">
-    <value>Programm: </value>
+  <data name="Ui.Job.Steps.Program" xml:space="preserve">
+    <value>Program: </value>
   </data>
-  <data name="Ui.3326CB784823" xml:space="preserve">
+  <data name="Ui.Job.Steps.Arguments" xml:space="preserve">
     <value>Arguments: </value>
   </data>
-  <data name="Ui.A8711FB9ABFC" xml:space="preserve">
+  <data name="Ui.Job.Steps.WindowMode" xml:space="preserve">
     <value>Window mode: </value>
   </data>
-  <data name="Ui.21784F40B344" xml:space="preserve">
+  <data name="Ui.Job.Steps.Text" xml:space="preserve">
     <value>Text: </value>
   </data>
-  <data name="Ui.4D63C26749CD" xml:space="preserve">
-    <value>Größe: </value>
+  <data name="Ui.Job.Steps.Size" xml:space="preserve">
+    <value>Size: </value>
   </data>
-  <data name="Ui.5246B589AE29" xml:space="preserve">
-    <value>  Farbe: </value>
+  <data name="Ui.Job.Steps.FontColor" xml:space="preserve">
+    <value>  Color: </value>
   </data>
-  <data name="Ui.97AE949B3516" xml:space="preserve">
-    <value>  Deckkraft: </value>
+  <data name="Ui.Job.Steps.Opacity" xml:space="preserve">
+    <value>  Opacity: </value>
   </data>
-  <data name="Ui.B3B162C81455" xml:space="preserve">
+  <data name="Ui.Job.Steps.Monitor" xml:space="preserve">
     <value>Monitor: </value>
   </data>
-  <data name="Ui.B56E76FF5BCD" xml:space="preserve">
+  <data name="Ui.Job.Steps.PositionOffset" xml:space="preserve">
     <value>  Offset: </value>
   </data>
-  <data name="Ui.620FA885F4DE" xml:space="preserve">
+  <data name="Ui.Job.Steps.MinMatches" xml:space="preserve">
     <value>Min. matches: </value>
   </data>
-  <data name="Ui.1A5BC61D15A9" xml:space="preserve">
+  <data name="Ui.Job.Steps.LoweSRatio" xml:space="preserve">
     <value>Lowe's Ratio: </value>
   </data>
-  <data name="Ui.6184930C0027" xml:space="preserve">
+  <data name="Ui.Job.Steps.Mode" xml:space="preserve">
     <value>Mode: </value>
   </data>
-  <data name="Ui.58211F265E02" xml:space="preserve">
-    <value>Übereinstimmung: </value>
+  <data name="Ui.Job.Steps.Matches" xml:space="preserve">
+    <value>Matches: </value>
   </data>
-  <data name="Ui.8A281BB051BC" xml:space="preserve">
+  <data name="Ui.Job.Steps.Points" xml:space="preserve">
     <value>Points: </value>
   </data>
-  <data name="Ui.32EBB1ABCC1C" xml:space="preserve">
+  <data name="Ui.Job.Steps.OpenParenthesis" xml:space="preserve">
     <value>(</value>
   </data>
-  <data name="Ui.BA5EC51D07A4" xml:space="preserve">
+  <data name="Ui.Job.Steps.CloseParenthesis" xml:space="preserve">
     <value>)</value>
   </data>
-  <data name="Ui.D6EDAD2578E6" xml:space="preserve">
+  <data name="Ui.Job.Steps.AddElseIf" xml:space="preserve">
     <value>+ Else If</value>
   </data>
-  <data name="Ui.D8EB27E75875" xml:space="preserve">
+  <data name="Ui.Job.Steps.AddElse" xml:space="preserve">
     <value>+ Else</value>
   </data>
-  <data name="Ui.0350F3D0CCA2" xml:space="preserve">
+  <data name="Ui.Job.Steps.StartJob" xml:space="preserve">
     <value>Start job</value>
   </data>
-  <data name="Ui.19DE6A8914E1" xml:space="preserve">
+  <data name="Ui.Job.Steps.StopJob" xml:space="preserve">
     <value>Stop job</value>
   </data>
-  <data name="Ui.BCE6416D5166" xml:space="preserve">
+  <data name="Ui.Common.NewStep" xml:space="preserve">
     <value>New step</value>
   </data>
-  <data name="Ui.1EB53A3CD78C" xml:space="preserve">
+  <data name="Ui.Job.Steps.EnableDisableStep" xml:space="preserve">
     <value>Enable / disable step</value>
   </data>
-  <data name="Ui.7EF60356A568" xml:space="preserve">
+  <data name="Ui.Common.EditStep" xml:space="preserve">
     <value>Edit step</value>
   </data>
-  <data name="Ui.A1F3260D6E77" xml:space="preserve">
+  <data name="Ui.Common.MoveStepUp" xml:space="preserve">
     <value>Move step up</value>
   </data>
-  <data name="Ui.85C50F7FB3AD" xml:space="preserve">
+  <data name="Ui.Common.MoveStepDown" xml:space="preserve">
     <value>Move step down</value>
   </data>
-  <data name="Ui.EE13D7722C34" xml:space="preserve">
-    <value>Step löschen</value>
-  </data>
-  <data name="Ui.4C14D44ED12D" xml:space="preserve">
-    <value>New job</value>
-  </data>
-  <data name="Ui.FD479D328E5F" xml:space="preserve">
-    <value>Job löschen</value>
-  </data>
-  <data name="Ui.ADDCD5FB5AE1" xml:space="preserve">
-    <value>Recurring</value>
-  </data>
-  <data name="Ui.44360075D722" xml:space="preserve">
-    <value>#Steps</value>
-  </data>
-  <data name="Ui.DE88EF58FFF7" xml:space="preserve">
-    <value>Typ:</value>
-  </data>
-  <data name="Ui.939FC7D24107" xml:space="preserve">
-    <value>X:</value>
-  </data>
-  <data name="Ui.AA42AFF154F7" xml:space="preserve">
-    <value>  Y:</value>
-  </data>
-  <data name="Ui.8DB7223CBFB1" xml:space="preserve">
-    <value>DeltaX:</value>
-  </data>
-  <data name="Ui.AB8627EEEB44" xml:space="preserve">
-    <value>  DeltaY:</value>
-  </data>
-  <data name="Ui.8D6013DA1B65" xml:space="preserve">
-    <value>Button:</value>
-  </data>
-  <data name="Ui.58EB9032E3BB" xml:space="preserve">
-    <value>Left</value>
-  </data>
-  <data name="Ui.883361D5D682" xml:space="preserve">
-    <value>Right</value>
-  </data>
-  <data name="Ui.D93006EC2E43" xml:space="preserve">
-    <value>Middle</value>
-  </data>
-  <data name="Ui.0311526BCC69" xml:space="preserve">
-    <value>Key:</value>
-  </data>
-  <data name="Ui.8E8B8256770E" xml:space="preserve">
-    <value>Duration (ms):</value>
-  </data>
-  <data name="Ui.023F8B8D25DA" xml:space="preserve">
-    <value>New macro</value>
-  </data>
-  <data name="Ui.7C53E9E37D47" xml:space="preserve">
-    <value>Makro Löschen</value>
-  </data>
-  <data name="Ui.6EA1AF65A792" xml:space="preserve">
-    <value># Befehle</value>
-  </data>
-  <data name="Ui.E11D185246D3" xml:space="preserve">
-    <value>Makro starten</value>
-  </data>
-  <data name="Ui.B2A01C33CE5E" xml:space="preserve">
-    <value>Makro stoppen</value>
-  </data>
-  <data name="Ui.C8953130476F" xml:space="preserve">
-    <value>MouseMove Absolute</value>
-  </data>
-  <data name="Ui.841CEEE9C2D2" xml:space="preserve">
-    <value>Y:</value>
-  </data>
-  <data name="Ui.E3F81F0CC275" xml:space="preserve">
-    <value>MouseMove Relative</value>
-  </data>
-  <data name="Ui.FB703D18EF10" xml:space="preserve">
-    <value>DeltaY:</value>
-  </data>
-  <data name="Ui.D0A2E84A48E7" xml:space="preserve">
-    <value>MouseDown</value>
-  </data>
-  <data name="Ui.948733B154DC" xml:space="preserve">
-    <value>MouseUp</value>
-  </data>
-  <data name="Ui.27E2B6A3354B" xml:space="preserve">
-    <value>KeyDown</value>
-  </data>
-  <data name="Ui.38C39AE3360C" xml:space="preserve">
-    <value>KeyUp</value>
-  </data>
-  <data name="Ui.70594D932950" xml:space="preserve">
-    <value>Timeout</value>
-  </data>
-  <data name="Ui.6C02A4779CDC" xml:space="preserve">
-    <value>Toggle: record mouse path or clicks only</value>
-  </data>
-  <data name="Ui.4D2BB368F919" xml:space="preserve">
-    <value>Übersicht</value>
-  </data>
-  <data name="Ui.9FE440FA4DBE" xml:space="preserve">
-    <value>Sequence</value>
-  </data>
-  <data name="Ui.FC8E3D914982" xml:space="preserve">
-    <value>Duplicate step</value>
-  </data>
-  <data name="Ui.F3B167747CA7" xml:space="preserve">
+  <data name="Ui.Job.Steps.DeleteStep" xml:space="preserve">
     <value>Delete step</value>
   </data>
-  <data name="Ui.30BE1AF45E48" xml:space="preserve">
-    <value>ONNX-Datei hinzufügen</value>
+  <data name="Ui.Job.List.NewJob" xml:space="preserve">
+    <value>New job</value>
   </data>
-  <data name="Ui.86C38B0A00E4" xml:space="preserve">
-    <value>Ordner öffnen</value>
+  <data name="Ui.Job.List.DeleteJob" xml:space="preserve">
+    <value>Delete job</value>
   </data>
-  <data name="Ui.D50D9C56A94E" xml:space="preserve">
+  <data name="Ui.Job.List.Recurring" xml:space="preserve">
+    <value>Recurring</value>
+  </data>
+  <data name="Ui.Job.List.CountSteps" xml:space="preserve">
+    <value>#Steps</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Type" xml:space="preserve">
+    <value>Type:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.X" xml:space="preserve">
+    <value>X:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Y" xml:space="preserve">
+    <value>  Y:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.DeltaX" xml:space="preserve">
+    <value>DeltaX:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.DeltaY" xml:space="preserve">
+    <value>  DeltaY:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Button" xml:space="preserve">
+    <value>Button:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Left" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Right" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Middle" xml:space="preserve">
+    <value>Middle</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.Key" xml:space="preserve">
+    <value>Key:</value>
+  </data>
+  <data name="Ui.Macro.StepEditor.DurationMs" xml:space="preserve">
+    <value>Duration (ms):</value>
+  </data>
+  <data name="Ui.Macro.List.NewMacro" xml:space="preserve">
+    <value>New macro</value>
+  </data>
+  <data name="Ui.Macro.List.DeleteMacro" xml:space="preserve">
+    <value>Delete macro</value>
+  </data>
+  <data name="Ui.Macro.List.CountCommands" xml:space="preserve">
+    <value># Commands</value>
+  </data>
+  <data name="Ui.Macro.Steps.RunMacro" xml:space="preserve">
+    <value>Run macro</value>
+  </data>
+  <data name="Ui.Macro.Steps.StopMacro" xml:space="preserve">
+    <value>Stop macro</value>
+  </data>
+  <data name="Ui.Macro.Steps.MouseMoveAbsolute" xml:space="preserve">
+    <value>MouseMove Absolute</value>
+  </data>
+  <data name="Ui.Macro.Steps.Y" xml:space="preserve">
+    <value>Y:</value>
+  </data>
+  <data name="Ui.Macro.Steps.MouseMoveRelative" xml:space="preserve">
+    <value>MouseMove Relative</value>
+  </data>
+  <data name="Ui.Macro.Steps.DeltaY" xml:space="preserve">
+    <value>DeltaY:</value>
+  </data>
+  <data name="Ui.Macro.Steps.MouseDown" xml:space="preserve">
+    <value>MouseDown</value>
+  </data>
+  <data name="Ui.Macro.Steps.MouseUp" xml:space="preserve">
+    <value>MouseUp</value>
+  </data>
+  <data name="Ui.Macro.Steps.KeyDown" xml:space="preserve">
+    <value>KeyDown</value>
+  </data>
+  <data name="Ui.Macro.Steps.KeyUp" xml:space="preserve">
+    <value>KeyUp</value>
+  </data>
+  <data name="Ui.Macro.Steps.Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="Ui.Macro.Steps.ToggleRecordMousePathOrClicksOnly" xml:space="preserve">
+    <value>Toggle: record mouse path or clicks only</value>
+  </data>
+  <data name="Ui.Macro.Steps.Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Ui.Macro.Steps.Sequence" xml:space="preserve">
+    <value>Sequence</value>
+  </data>
+  <data name="Ui.Macro.Steps.DuplicateStep" xml:space="preserve">
+    <value>Duplicate step</value>
+  </data>
+  <data name="Ui.Macro.Steps.DeleteStep" xml:space="preserve">
+    <value>Delete step</value>
+  </data>
+  <data name="Ui.Yolo.AddONNXFile" xml:space="preserve">
+    <value>Add ONNX file</value>
+  </data>
+  <data name="Ui.Yolo.OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Ui.Yolo.ModelKey" xml:space="preserve">
     <value>Model Key:</value>
   </data>
-  <data name="Ui.C987F668D963" xml:space="preserve">
+  <data name="Ui.Yolo.Size" xml:space="preserve">
     <value>Size:</value>
   </data>
-  <data name="Ui.D6EAFE823591" xml:space="preserve">
+  <data name="Ui.Yolo.Download" xml:space="preserve">
     <value>Download</value>
   </data>
-  <data name="Ui.22D6C6ECBE84" xml:space="preserve">
+  <data name="Ui.Yolo.Uninstall" xml:space="preserve">
     <value>Uninstall</value>
   </data>
   <data name="Common.Ok" xml:space="preserve">
@@ -959,6 +1061,9 @@
   </data>
   <data name="Common.Add" xml:space="preserve">
     <value>Add</value>
+  </data>
+  <data name="Common.Execute" xml:space="preserve">
+    <value>Execute</value>
   </data>
   <data name="Common.Job" xml:space="preserve">
     <value>Job</value>
@@ -1229,6 +1334,18 @@ Error:
   <data name="Enum.AutomationTriggerKind.Hotkey" xml:space="preserve">
     <value>Hotkey</value>
   </data>
+  <data name="Enum.ExecutionLogLevel.Debug" xml:space="preserve">
+    <value>Debug</value>
+  </data>
+  <data name="Enum.ExecutionLogLevel.Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="Enum.ExecutionLogLevel.Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Enum.ExecutionLogLevel.Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
   <data name="Enum.AutomationTriggerKind.OnceAt" xml:space="preserve">
     <value>Once</value>
   </data>
@@ -1451,6 +1568,54 @@ Error:
   <data name="Macro.Record.Stop" xml:space="preserve">
     <value>Stop recording</value>
   </data>
+  <data name="Macro.Step.Type.MouseMoveAbsolute" xml:space="preserve">
+    <value>Move mouse (absolute)</value>
+  </data>
+  <data name="Macro.Step.Type.MouseMoveRelative" xml:space="preserve">
+    <value>Move mouse (relative)</value>
+  </data>
+  <data name="Macro.Step.Type.MouseDown" xml:space="preserve">
+    <value>Press mouse button</value>
+  </data>
+  <data name="Macro.Step.Type.MouseUp" xml:space="preserve">
+    <value>Release mouse button</value>
+  </data>
+  <data name="Macro.Step.Type.KeyDown" xml:space="preserve">
+    <value>Press key</value>
+  </data>
+  <data name="Macro.Step.Type.KeyUp" xml:space="preserve">
+    <value>Release key</value>
+  </data>
+  <data name="Macro.Step.Type.Timeout" xml:space="preserve">
+    <value>Wait</value>
+  </data>
+  <data name="Step.Number" xml:space="preserve">
+    <value>Step {0}</value>
+  </data>
+  <data name="Step.ResultProperty.Success" xml:space="preserve">
+    <value>Successful</value>
+  </data>
+  <data name="Step.ResultProperty.Found" xml:space="preserve">
+    <value>Found</value>
+  </data>
+  <data name="Step.ResultProperty.Confidence" xml:space="preserve">
+    <value>Confidence</value>
+  </data>
+  <data name="Step.ResultProperty.IsPredicted" xml:space="preserve">
+    <value>Predicted</value>
+  </data>
+  <data name="Step.ResultProperty.HasImage" xml:space="preserve">
+    <value>Has image</value>
+  </data>
+  <data name="Step.ResultProperty.IsRunning" xml:space="preserve">
+    <value>Process is running</value>
+  </data>
+  <data name="Step.ResultProperty.IsActive" xml:space="preserve">
+    <value>Window is active</value>
+  </data>
+  <data name="Step.ResultProperty.Matches" xml:space="preserve">
+    <value>Matches</value>
+  </data>
   <data name="Macro.Record.Start" xml:space="preserve">
     <value>Start recording</value>
   </data>
@@ -1471,5 +1636,68 @@ Error:
   </data>
   <data name="Yolo.NotInstalled" xml:space="preserve">
     <value>Not installed</value>
+  </data>
+  <data name="Automation.Trigger.Description.Hotkey" xml:space="preserve">
+    <value>Starts the automation when the configured keyboard shortcut is pressed.</value>
+  </data>
+  <data name="Automation.Trigger.Description.OnceAt" xml:space="preserve">
+    <value>Runs the automation once at the selected date and time.</value>
+  </data>
+  <data name="Automation.Trigger.Description.Schedule" xml:space="preserve">
+    <value>Runs the automation on the selected weekdays at the configured time.</value>
+  </data>
+  <data name="Automation.Trigger.Description.Interval" xml:space="preserve">
+    <value>Repeats the automation regularly using the configured time interval.</value>
+  </data>
+  <data name="Automation.Trigger.Description.ProcessStarted" xml:space="preserve">
+    <value>Starts the automation when the specified process is opened.</value>
+  </data>
+  <data name="Automation.Trigger.Description.ProcessExited" xml:space="preserve">
+    <value>Starts the automation when the specified process exits.</value>
+  </data>
+  <data name="Automation.Relative.Seconds.One" xml:space="preserve">
+    <value>{0} second ago</value>
+  </data>
+  <data name="Automation.Relative.Seconds.Many" xml:space="preserve">
+    <value>{0} seconds ago</value>
+  </data>
+  <data name="Automation.Relative.Minutes.One" xml:space="preserve">
+    <value>{0} minute ago</value>
+  </data>
+  <data name="Automation.Relative.Minutes.Many" xml:space="preserve">
+    <value>{0} minutes ago</value>
+  </data>
+  <data name="Automation.Relative.Hours.One" xml:space="preserve">
+    <value>{0} hour ago</value>
+  </data>
+  <data name="Automation.Relative.Hours.Many" xml:space="preserve">
+    <value>{0} hours ago</value>
+  </data>
+  <data name="Automation.Relative.Days.One" xml:space="preserve">
+    <value>{0} day ago</value>
+  </data>
+  <data name="Automation.Relative.Days.Many" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="Automation.Relative.Weeks.One" xml:space="preserve">
+    <value>{0} week ago</value>
+  </data>
+  <data name="Automation.Relative.Weeks.Many" xml:space="preserve">
+    <value>{0} weeks ago</value>
+  </data>
+  <data name="Automation.Relative.Months.One" xml:space="preserve">
+    <value>{0} month ago</value>
+  </data>
+  <data name="Automation.Relative.Months.Many" xml:space="preserve">
+    <value>{0} months ago</value>
+  </data>
+  <data name="Automation.Relative.Years.One" xml:space="preserve">
+    <value>{0} year ago</value>
+  </data>
+  <data name="Automation.Relative.Years.Many" xml:space="preserve">
+    <value>{0} years ago</value>
+  </data>
+  <data name="Ui.Common.Discard" xml:space="preserve">
+    <value>Discard</value>
   </data>
 </root>

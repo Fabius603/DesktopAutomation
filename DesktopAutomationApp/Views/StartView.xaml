@@ -16,15 +16,15 @@
         <!-- Header -->
         <DockPanel Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}" ToolTip="{loc:Translate Key=Ui.1368BE38DB6D}">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}" ToolTip="{loc:Translate Key=Ui.Dashboard.RefreshDashboard}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{loc:Translate Key=Ui.1AE7FEC55BD2}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
+                <TextBlock Text="{loc:Translate Key=Ui.App.Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
             </StackPanel>
         </DockPanel>
 
@@ -43,17 +43,17 @@
                     <!-- Automationen -->
                     <Border Grid.Column="0" Style="{StaticResource CardBox}" Margin="0,0,6,0">
                         <StackPanel Margin="16,12" HorizontalAlignment="Center">
-                            <TextBlock Text="{loc:Translate Key=Ui.1A221929D4C5}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Automation.List.Automations}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="12"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
                                 <TextBlock Text="{Binding ActiveAutomationCount}" FontSize="28" FontWeight="Bold"
                                            Foreground="{DynamicResource App.Brush.Accent}"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.005E1574A2B5}" FontSize="20" VerticalAlignment="Bottom" Margin="2,0"
+                                <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Separator}" FontSize="20" VerticalAlignment="Bottom" Margin="2,0"
                                            Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                 <TextBlock Text="{Binding TotalAutomationCount}" FontSize="20" VerticalAlignment="Bottom"
                                            Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             </StackPanel>
-                            <TextBlock Text="{loc:Translate Key=Ui.9D1F99EFB6B7}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.ActiveTotal}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                         </StackPanel>
                     </Border>
@@ -61,12 +61,12 @@
                     <!-- Jobs -->
                     <Border Grid.Column="1" Style="{StaticResource CardBox}" Margin="3,0">
                         <StackPanel Margin="16,12" HorizontalAlignment="Center">
-                            <TextBlock Text="{loc:Translate Key=Ui.2F17A0F8D518}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="12"/>
                             <TextBlock Text="{Binding TotalJobCount}" HorizontalAlignment="Center"
                                        FontSize="28" FontWeight="Bold" Margin="0,4,0,0"
                                        Foreground="{DynamicResource App.Brush.Accent}"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.B5FCA4A8E299}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Total}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                         </StackPanel>
                     </Border>
@@ -74,12 +74,12 @@
                     <!-- Makros -->
                     <Border Grid.Column="2" Style="{StaticResource CardBox}" Margin="6,0,0,0">
                         <StackPanel Margin="16,12" HorizontalAlignment="Center">
-                            <TextBlock Text="{loc:Translate Key=Ui.68D83EF61EDE}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Makros}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="12"/>
                             <TextBlock Text="{Binding TotalMakroCount}" HorizontalAlignment="Center"
                                        FontSize="28" FontWeight="Bold" Margin="0,4,0,0"
                                        Foreground="{DynamicResource App.Brush.Accent}"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.B5FCA4A8E299}" HorizontalAlignment="Center"
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Total}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                         </StackPanel>
                     </Border>
@@ -89,7 +89,7 @@
                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
                     <StackPanel Margin="12">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Style="{StaticResource Heading2}" Text="{loc:Translate Key=Ui.3E833A240A1C}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Style="{StaticResource Heading2}" Text="{loc:Translate Key=Ui.Dashboard.ActiveAutomations}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding ActiveAutomationCount}" Foreground="{DynamicResource App.Brush.Accent}" FontSize="13"/>
                             </Border>
@@ -98,14 +98,14 @@
                                   CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                                   HeadersVisibility="Column" MaxHeight="240">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="{loc:Translate Key=Ui.DCD1D5223F73}" Binding="{Binding Name}" Width="2*"/>
-                                <DataGridTextColumn Header="{loc:Translate Key=Ui.8B9C643731C9}" Binding="{Binding Trigger}" Width="3*"/>
-                                <DataGridTextColumn Header="{loc:Translate Key=Ui.A4AD259E71CB}" Binding="{Binding Action}" Width="2*"/>
-                                <DataGridTextColumn Header="{loc:Translate Key=Ui.A541A83738A7}" Binding="{Binding LastRun}" Width="2*"/>
-                                <DataGridTextColumn Header="{loc:Translate Key=Ui.B5561425E2EE}" Binding="{Binding NextRun}" Width="2*"/>
+                                <DataGridTextColumn Header="{loc:Translate Key=Ui.Common.Name}" Binding="{Binding Name}" Width="2*"/>
+                                <DataGridTextColumn Header="{loc:Translate Key=Ui.Automation.Details.Trigger}" Binding="{Binding Trigger}" Width="3*"/>
+                                <DataGridTextColumn Header="{loc:Translate Key=Ui.Automation.Details.Action}" Binding="{Binding Action}" Width="2*"/>
+                                <DataGridTextColumn Header="{loc:Translate Key=Ui.Automation.List.LastRun}" Binding="{Binding LastRun}" Width="2*"/>
+                                <DataGridTextColumn Header="{loc:Translate Key=Ui.Automation.List.NextRun}" Binding="{Binding NextRun}" Width="2*"/>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <TextBlock Text="{loc:Translate Key=Ui.9FD62C286678}" Foreground="{DynamicResource App.Brush.TextMuted}"
+                        <TextBlock Text="{loc:Translate Key=Ui.Dashboard.NoActiveAutomation}" Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" Margin="0,8,0,0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -127,18 +127,18 @@
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Style="{StaticResource ButtonDanger}"
                                         Command="{Binding StopAllJobsCommand}"
-                                        ToolTip="{loc:Translate Key=Ui.ED59E5772B4B}">
+                                        ToolTip="{loc:Translate Key=Ui.Dashboard.StopAllRunningJobsMacrosF10}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="StopCircleOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.D3F7409AD75E}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Dashboard.StopAll}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
-                                <TextBlock Text="{loc:Translate Key=Ui.76E5B150C51E}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                <TextBlock Text="{loc:Translate Key=Ui.Dashboard.CountExecutions}" Margin="8,0,0,0" VerticalAlignment="Center"
                                            Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                             </StackPanel>
                             <!-- Links: Titel + Zähler -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource Heading2}" Text="{loc:Translate Key=Ui.DE5625143C5C}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Style="{StaticResource Heading2}" Text="{loc:Translate Key=Ui.Dashboard.RunningJobsMacros}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding RunningTotalCount, Mode=OneWay}"
                                                Foreground="{DynamicResource App.Brush.Accent}" FontSize="13"/>
@@ -156,10 +156,10 @@
                                                     Style="{StaticResource ButtonDanger}"
                                                     Command="{Binding DataContext.CancelItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip="{loc:Translate Key=Ui.42615FA2525B}">
+                                                    ToolTip="{loc:Translate Key=Ui.Dashboard.StopAllInstancesOfThisJob}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -194,7 +194,7 @@
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock Foreground="{DynamicResource App.Brush.Accent}" FontSize="11">
-                                                        <Run Text="{loc:Translate Key=Ui.8DB71ED28B0F}"/><Run Text="{Binding InstanceCount}"/>
+                                                        <Run Text="{loc:Translate Key=Ui.Common.RemoveSymbol}"/><Run Text="{Binding InstanceCount}"/>
                                                     </TextBlock>
                                                 </Border>
                                             </StackPanel>
@@ -205,7 +205,7 @@
                         </ItemsControl>
 
                         <!-- Fallback wenn nichts läuft -->
-                        <TextBlock Text="{loc:Translate Key=Ui.8D7C64BB0998}"
+                        <TextBlock Text="{loc:Translate Key=Ui.Dashboard.NoActiveJobMacro}"
                                    Foreground="{DynamicResource App.Brush.TextMuted}"
                                    FontStyle="Italic" Margin="0,4,0,0">
                             <TextBlock.Style>

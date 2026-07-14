@@ -41,7 +41,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.C8953130476F}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.MouseMoveAbsolute}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -52,9 +52,9 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.939FC7D24107}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.X}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding X}" Style="{StaticResource ParamValue}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Translate Key=Ui.841CEEE9C2D2}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.Y}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Y}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -68,7 +68,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.E3F81F0CC275}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.MouseMoveRelative}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -79,9 +79,9 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.8DB7223CBFB1}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.DeltaX}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding DeltaX}" Style="{StaticResource ParamValue}"/>
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Translate Key=Ui.FB703D18EF10}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.DeltaY}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DeltaY}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -95,7 +95,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.D0A2E84A48E7}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.MouseDown}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -105,7 +105,7 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.8D6013DA1B65}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.Button}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -119,7 +119,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.948733B154DC}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.MouseUp}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -129,7 +129,7 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.8D6013DA1B65}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.Button}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Button}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -143,7 +143,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.27E2B6A3354B}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.KeyDown}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -153,7 +153,7 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.0311526BCC69}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.Key}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -167,7 +167,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.38C39AE3360C}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.KeyUp}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -177,7 +177,7 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.0311526BCC69}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.Key}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Key}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -191,7 +191,7 @@
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.70594D932950}" Style="{StaticResource TypeLabel}"/>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.Timeout}" Style="{StaticResource TypeLabel}"/>
                 <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -201,7 +201,7 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.8E8B8256770E}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.DurationMs}" Style="{StaticResource ParamLabel}"/>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Duration}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
@@ -219,31 +219,31 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding StartMakroCommand}"
                         Visibility="{Binding IsMakroRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.E11D185246D3}">
+                        ToolTip="{loc:Translate Key=Ui.Macro.Steps.RunMacro}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{loc:Translate Common.Execute}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding StopMakroCommand}"
                         Visibility="{Binding IsMakroRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.B2A01C33CE5E}">
+                        ToolTip="{loc:Translate Key=Ui.Macro.Steps.StopMacro}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.F6B2FF39F540}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Save}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.F7FF1178AF20}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -251,11 +251,11 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.548611CE58F7}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Back}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" Margin="0,0,12,0" ToolTip="{loc:Translate Key=Ui.83E07ED1F359}">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" Margin="0,0,12,0" ToolTip="{loc:Translate Key=Ui.Common.Rename}">
                     <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
                 </Button>
                 <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
@@ -276,7 +276,7 @@
                     <Button Style="{StaticResource ButtonPrimary}" Command="{Binding AddStepCommand}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.BCE6416D5166}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Common.NewStep}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
@@ -335,7 +335,7 @@
                             Content="{Binding RecordMousePathText}"
                             Margin="0,0,0,0"
                             FontSize="13"
-                            ToolTip="{loc:Translate Key=Ui.6C02A4779CDC}">
+                            ToolTip="{loc:Translate Key=Ui.Macro.Steps.ToggleRecordMousePathOrClicksOnly}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource ButtonToolbar}">
                                 <Style.Triggers>
@@ -357,19 +357,19 @@
                     <Button Style="{StaticResource ButtonToolbar}" Command="{Binding PreviewOverviewCommand}" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Eye" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.4D2BB368F919}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Macro.Steps.Overview}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource ButtonToolbar}" Command="{Binding PreviewPlaybackCommand}" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.9FE440FA4DBE}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Macro.Steps.Sequence}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource ButtonToolbar}" Command="{Binding PreviewStopCommand}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -430,31 +430,31 @@
                                             HorizontalAlignment="Right" VerticalAlignment="Center"
                                             Margin="8,0,0,0">
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.7EF60356A568}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.EditStep}"
                                             Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="Pencil"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.A1F3260D6E77}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepUp}"
                                             Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="ArrowUp"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.85C50F7FB3AD}"
+                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepDown}"
                                             Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="ArrowDown"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.FC8E3D914982}"
+                                            ToolTip="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}"
                                             Command="{Binding DataContext.DuplicateStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="ContentDuplicate"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIconDanger}"
-                                            ToolTip="{loc:Translate Key=Ui.F3B167747CA7}"
+                                            ToolTip="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}"
                                             Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}">
                                         <iconPacks:PackIconMaterial Kind="Delete"/>

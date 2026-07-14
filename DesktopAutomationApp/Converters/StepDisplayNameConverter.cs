@@ -17,9 +17,7 @@ namespace DesktopAutomationApp.Converters
         {
             if (value is JobStep step)
             {
-                var key = $"Step.Type.{step.GetType().Name}";
-                var translated = LocalizationService.Instance[key];
-                return translated == $"[{key}]" ? StepPipelineRegistry.GetDisplayName(step.GetType()) : translated;
+                return StepLocalization.Type(step.GetType());
             }
             return string.Empty;
         }

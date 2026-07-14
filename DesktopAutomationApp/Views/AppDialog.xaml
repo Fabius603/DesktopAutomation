@@ -52,7 +52,7 @@
                     Margin="8,0,0,0"
                     Click="No_Click"
                     Visibility="Collapsed">
-                <TextBlock Text="{loc:Translate Key=Ui.90EBC1BDE6F3}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Dialog.No}"/>
             </Button>
             <!-- Cancel -->
             <Button x:Name="CancelButton"
@@ -62,7 +62,7 @@
                     Click="Cancel_Click"
                     IsCancel="True"
                     Visibility="Collapsed">
-                <TextBlock Text="{loc:Translate Key=Ui.F7FF1178AF20}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Common.Cancel}"/>
             </Button>
         </StackPanel>
     </Grid>

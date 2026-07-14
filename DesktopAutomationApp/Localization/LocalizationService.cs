@@ -41,6 +41,7 @@ public sealed class LocalizationService : ILocalizationService
         if (changed)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentCulture)));
             CultureChanged?.Invoke(this, EventArgs.Empty);
         }
     }

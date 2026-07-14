@@ -13,17 +13,23 @@
         <Setter Property="CanUserResizeRows" Value="False"/>
         <Setter Property="SelectionUnit" Value="FullRow"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="RowHeight" Value="48"/>
+        <Setter Property="RowHeight" Value="52"/>
+        <Setter Property="ColumnHeaderHeight" Value="42"/>
         <Setter Property="AlternationCount" Value="2"/>
+        <Setter Property="RowBackground" Value="{DynamicResource App.Brush.RowEven}"/>
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource App.Brush.RowOdd}"/>
+        <Setter Property="EnableRowVirtualization" Value="True"/>
+        <Setter Property="EnableColumnVirtualization" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
     <!-- ═══ DataGrid Column Header ═══ -->
     <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MahApps.Styles.DataGridColumnHeader}">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.RowOdd}"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Padding" Value="8,8"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="SeparatorBrush" Value="Transparent"/>
@@ -32,7 +38,8 @@
     <!-- ═══ DataGrid Row ═══ -->
     <Style TargetType="DataGridRow" BasedOn="{StaticResource MahApps.Styles.DataGridRow}">
         <Setter Property="Background" Value="{DynamicResource App.Brush.RowEven}"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="Margin" Value="0"/>
         <Style.Triggers>
             <!-- Alternierende Zeile (ungerade) -->
@@ -50,7 +57,7 @@
 
     <!-- ═══ DataGrid Cell ═══ -->
     <Style TargetType="DataGridCell" BasedOn="{StaticResource MahApps.Styles.DataGridCell}">
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="Padding" Value="12,6"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>

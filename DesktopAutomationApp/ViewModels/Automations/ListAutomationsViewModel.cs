@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Models;
 using DesktopAutomationApp.Localization;
@@ -14,6 +15,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IAutomationApplicationService _automationAppService;
         private readonly IDialogService _dialogService;
         private readonly ILogger<ListAutomationsViewModel> _log;
+        private readonly DispatcherTimer _relativeTimeTimer;
 
         private readonly List<EditableAutomation> _selectedItems = new();
         private EditableAutomation? _selected;
@@ -60,7 +62,25 @@ namespace DesktopAutomationApp.ViewModels
             OpenFolderCommand = new RelayCommand(() =>
                 Process.Start(new ProcessStartInfo(_automationAppService.GetStoragePath()) { UseShellExecute = true }));
 
+            LocalizationService.Instance.CultureChanged += OnCultureChanged;
+
+            _relativeTimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _relativeTimeTimer.Tick += OnRelativeTimeTick;
+            _relativeTimeTimer.Start();
+
             _ = InitialLoadAsync();
+        }
+
+        private void OnCultureChanged(object? sender, EventArgs e)
+        {
+            foreach (var automation in Items)
+                automation.RefreshLocalizedDisplayProperties();
+        }
+
+        private void OnRelativeTimeTick(object? sender, EventArgs e)
+        {
+            foreach (var automation in Items)
+                automation.RefreshLocalizedDisplayProperties();
         }
 
         public void SetSelectedItems(IEnumerable<EditableAutomation> items)
@@ -139,6 +159,17 @@ namespace DesktopAutomationApp.ViewModels
             (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
             (RunNowCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                LocalizationService.Instance.CultureChanged -= OnCultureChanged;
+                _relativeTimeTimer.Stop();
+                _relativeTimeTimer.Tick -= OnRelativeTimeTick;
+            }
+            base.Dispose(disposing);
         }
     }
 }

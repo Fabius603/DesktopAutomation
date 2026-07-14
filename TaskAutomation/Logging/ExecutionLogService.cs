@@ -76,7 +76,7 @@ namespace TaskAutomation.Logging
 
         ExecutionLogSession BeginJob(Guid jobId, string jobName);
         void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null);
-        void Complete(ExecutionLogSession session, bool success, string? details = null);
+        void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false);
         IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000);
         Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000, CancellationToken cancellationToken = default);
         void ReloadSessions();
@@ -181,14 +181,22 @@ namespace TaskAutomation.Logging
             EntryWritten?.Invoke(this, entry);
         }
 
-        public void Complete(ExecutionLogSession session, bool success, string? details = null)
+        public void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false)
         {
             session.EndedAt = DateTimeOffset.Now;
             var duration = session.EndedAt.Value - session.StartedAt;
+            var level = success || cancelled
+                ? ExecutionLogLevel.Information
+                : ExecutionLogLevel.Error;
+            var message = cancelled
+                ? "Ausführung gestoppt."
+                : success
+                    ? "Ausführung beendet."
+                    : "Ausführung fehlerhaft beendet.";
             Write(
                 session,
-                success ? ExecutionLogLevel.Information : ExecutionLogLevel.Error,
-                success ? "Ausführung beendet." : "Ausführung fehlerhaft beendet.",
+                level,
+                message,
                 details,
                 durationMs: (long)duration.TotalMilliseconds);
             SessionChanged?.Invoke(this, session);

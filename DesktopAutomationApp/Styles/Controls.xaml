@@ -18,6 +18,21 @@
         <Setter Property="MinHeight" Value="34"/>
     </Style>
 
+    <!-- Größere, modernere Checkboxen mit abgerundetem Indikator -->
+    <Style TargetType="CheckBox" BasedOn="{StaticResource MahApps.Styles.CheckBox}">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="mah:CheckBoxHelper.CheckSize" Value="20"/>
+        <Setter Property="mah:CheckBoxHelper.CheckCornerRadius" Value="5"/>
+        <Setter Property="mah:CheckBoxHelper.CheckStrokeThickness" Value="1.5"/>
+        <Setter Property="mah:CheckBoxHelper.CheckBackgroundFillChecked" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="mah:CheckBoxHelper.CheckBackgroundStrokeChecked" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="mah:CheckBoxHelper.CheckGlyphForegroundChecked" Value="White"/>
+        <Setter Property="mah:CheckBoxHelper.CheckBackgroundStrokeUnchecked" Value="{DynamicResource App.Brush.TextMuted}"/>
+    </Style>
+
     <!-- ═══ ProgressBar — Accent, abgerundet ═══ -->
     <Style TargetType="ProgressBar" BasedOn="{StaticResource MahApps.Styles.ProgressBar}">
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>

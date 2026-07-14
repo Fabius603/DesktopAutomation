@@ -151,7 +151,7 @@ namespace TaskAutomation.Orchestration
             }
             else
             {
-                _logger.LogWarning("Keine laufende Job-Instanz mit ID '{InstanceId}' gefunden.", instanceId);
+                _logger.LogDebug("Keine laufende Job-Instanz mit ID '{InstanceId}' gefunden.", instanceId);
             }
         }
 
@@ -166,7 +166,7 @@ namespace TaskAutomation.Orchestration
             }
             if (matches.Count == 0)
             {
-                _logger.LogWarning("Kein laufender Job mit Job-ID '{JobId}' gefunden.", jobId);
+                _logger.LogDebug("Kein laufender Job mit Job-ID '{JobId}' gefunden.", jobId);
                 return;
             }
             _logger.LogInformation("Breche {Count} Instanz(en) von Job-ID '{JobId}' ab.", matches.Count, jobId);

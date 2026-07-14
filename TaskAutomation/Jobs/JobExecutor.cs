@@ -236,6 +236,7 @@ namespace TaskAutomation.Jobs
             var jobRunStopwatch = Stopwatch.StartNew();
             var executionLog = _executionLogService.BeginJob(job.Id, job.Name);
             bool jobCompletedSuccessfully = false;
+            bool jobWasCancelled = false;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
             _executionLogService.Write(
                 executionLog,
@@ -269,8 +270,8 @@ namespace TaskAutomation.Jobs
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Job '{JobName}' vor Ausführung abgebrochen.", job.Name);
-                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Job vor Ausführung abgebrochen.");
-                _executionLogService.Complete(executionLog, false, "Abgebrochen während YOLO-Preload.");
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Information, "Job vor Ausführung gestoppt.");
+                _executionLogService.Complete(executionLog, false, "Gestoppt während YOLO-Preload.", cancelled: true);
                 await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
@@ -317,17 +318,29 @@ namespace TaskAutomation.Jobs
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
                     launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
             }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogInformation("Job '{JobName}' vor der Step-Ausführung gestoppt.", job.Name);
+                _executionLogService.Write(
+                    executionLog,
+                    ExecutionLogLevel.Information,
+                    "Job vor der Step-Ausführung gestoppt.");
+                _executionLogService.Complete(executionLog, false, ex.Message, cancelled: true);
+                await UnloadYoloModelsAsync(job);
+                _executionChain.Value = parentChain;
+                CurrentJob = null;
+                return;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Job '{JobName}' konnte den Pipeline-Kontext nicht initialisieren.", job.Name);
                 _executionLogService.Write(
                     executionLog,
-                    ex is OperationCanceledException ? ExecutionLogLevel.Warning : ExecutionLogLevel.Error,
-                    "Job vor der Step-Ausführung abgebrochen.",
+                    ExecutionLogLevel.Error,
+                    "Job vor der Step-Ausführung fehlgeschlagen.",
                     ex.ToString());
                 _executionLogService.Complete(executionLog, false, ex.Message);
-                if (ex is not OperationCanceledException)
-                    JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
@@ -527,8 +540,9 @@ namespace TaskAutomation.Jobs
             }
             catch (OperationCanceledException)
             {
+                jobWasCancelled = true;
                 _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
-                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Job abgebrochen.");
+                _executionLogService.Write(executionLog, ExecutionLogLevel.Information, "Job gestoppt.");
             }
             catch (StepException)
             {
@@ -592,8 +606,9 @@ namespace TaskAutomation.Jobs
                 _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
                 _executionLogService.Complete(
                     executionLog,
-                    jobCompletedSuccessfully && !ct.IsCancellationRequested,
-                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms");
+                    jobCompletedSuccessfully,
+                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms",
+                    cancelled: jobWasCancelled);
 
                 _executionChain.Value = parentChain;
             }

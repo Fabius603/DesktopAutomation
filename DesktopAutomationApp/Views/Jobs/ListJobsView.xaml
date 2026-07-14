@@ -19,41 +19,35 @@
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding CreateNewJobCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.4C14D44ED12D}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.List.NewJob}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonDanger}" Command="{Binding DeleteJobCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.FD479D328E5F}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.List.DeleteJob}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.96BF0098166F}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.93553A3A38EF}">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{loc:Translate Key=Ui.2F17A0F8D518}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Border Style="{StaticResource CountBadge}"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Items.Count, StringFormat='({0})'}"
-                               Foreground="{DynamicResource App.Brush.Accent}"
-                               FontSize="13"/>
-                </Border>
+                <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
             </StackPanel>
         </DockPanel>
 
         <!-- Tabelle -->
-        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
+        <Border Grid.Row="1" Style="{StaticResource TableCardStyle}">
             <DataGrid x:Name="JobGrid"
                       ItemsSource="{Binding Items}"
                 AutoGenerateColumns="False"
@@ -72,34 +66,37 @@
 
                 <DataGrid.Columns>
                     <DataGridTextColumn
-                        Header="{loc:Translate Key=Ui.DCD1D5223F73}"
+                        Header="{loc:Translate Key=Ui.Common.Name}"
                         Binding="{Binding Name}"
                         IsReadOnly="True"
                         Width="3*"/>
-                    <DataGridTemplateColumn Header="{loc:Translate Key=Ui.ADDCD5FB5AE1}" Width="*">
+                    <DataGridTemplateColumn Header="{loc:Translate Key=Ui.Job.List.Recurring}" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox
                                     IsChecked="{Binding Repeating, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     Command="{Binding DataContext.SaveAllCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    CommandParameter="{Binding}" />
+                                    CommandParameter="{Binding}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTextColumn
-                        Header="{loc:Translate Key=Ui.44360075D722}"
+                        Header="{loc:Translate Key=Ui.Job.List.CountSteps}"
                         Binding="{Binding ActiveStepCount}"
                         IsReadOnly="True"
                         Width="*"/>
-                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="Auto">
+                    <DataGridTemplateColumn Header="" IsReadOnly="True" Width="230" CanUserResize="False">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Grid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Grid Margin="0,0,8,0">
                                     <!-- Play Button: sichtbar wenn Job NICHT läuft -->
-                                    <Button Style="{StaticResource ButtonPrimary}"
+                                    <Button Style="{StaticResource ButtonTablePrimary}"
                                             Command="{Binding DataContext.StartJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="{loc:Translate Key=Ui.0350F3D0CCA2}">
+                                            ToolTip="{loc:Translate Key=Ui.Job.Steps.StartJob}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}" ConverterParameter="Invert">
                                                 <Binding Path="Id"/>
@@ -109,14 +106,14 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Play" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="{loc:Translate Key=Ui.E4BB9F1ECE9A}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Common.Execute}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                     <!-- Stop Button: sichtbar wenn Job läuft -->
-                                    <Button Style="{StaticResource ButtonDanger}"
+                                    <Button Style="{StaticResource ButtonTableDanger}"
                                             Command="{Binding DataContext.StopJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                             CommandParameter="{Binding Id}"
-                                            ToolTip="{loc:Translate Key=Ui.19DE6A8914E1}">
+                                            ToolTip="{loc:Translate Key=Ui.Job.Steps.StopJob}">
                                         <Button.Visibility>
                                             <MultiBinding Converter="{StaticResource CollectionContainsConverter}">
                                                 <Binding Path="Id"/>
@@ -126,27 +123,19 @@
                                         </Button.Visibility>
                                         <StackPanel Orientation="Horizontal">
                                             <iconPacks:PackIconMaterial Kind="Stop" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <TextBlock Text="{loc:Translate Key=Ui.CAE7D57BC067}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn
-                        Header=""
-                        IsReadOnly="True"
-                        Width="200">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Style="{StaticResource ButtonPrimary}"
+                                <Button Style="{StaticResource ButtonTableSecondary}"
                                         Command="{Binding DataContext.OpenJobCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">
                                         <iconPacks:PackIconMaterial Kind="ArrowRight" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.BC385A30B537}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Common.Open}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

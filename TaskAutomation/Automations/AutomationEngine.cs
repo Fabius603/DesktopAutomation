@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using Common.JsonRepository;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
@@ -48,7 +49,7 @@ namespace TaskAutomation.Automations
         private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _executionGates = new();
         private readonly SemaphoreSlim _reloadGate = new(1, 1);
         private readonly SemaphoreSlim _pauseGate = new(1, 1);
-        private bool _started;
+        private volatile bool _started;
         private volatile bool _isPaused;
 
         public event Action<Guid>? RuntimeChanged;
@@ -176,7 +177,7 @@ namespace TaskAutomation.Automations
 
         public async Task TriggerAsync(Guid automationId, CancellationToken ct = default)
         {
-            if (_isPaused)
+            if (!_started || _isPaused)
                 return;
 
             if (!_automations.TryGetValue(automationId, out var automation) || !automation.Active)
@@ -186,7 +187,7 @@ namespace TaskAutomation.Automations
             await gate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                if (_isPaused)
+                if (!_started || _isPaused)
                     return;
 
                 var now = DateTimeOffset.Now;
@@ -314,67 +315,137 @@ namespace TaskAutomation.Automations
         private void OnHotkeyPressed(Guid id) => Triggered?.Invoke(id);
     }
 
-    public sealed class ScheduleAutomationTriggerProvider : IAutomationTriggerProvider
+    public sealed class TimeAutomationTriggerProvider : IAutomationTriggerProvider
     {
-        private sealed record Entry(AutomationDefinition Definition, DateTimeOffset? NextRun);
-        private readonly ConcurrentDictionary<Guid, Entry> _entries = new();
-        private CancellationTokenSource? _cts;
-        private Task? _loop;
+        private sealed record Entry(AutomationTrigger Trigger, DateTimeOffset? NextRun, TimeSpan? Interval = null);
+        private static readonly TimeSpan MaximumTimerDelay = TimeSpan.FromHours(1);
+        private readonly Dictionary<Guid, Entry> _entries = new();
+        private readonly object _gate = new();
+        private Timer? _timer;
+        private bool _started;
 
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } =
-            [AutomationTriggerKind.OnceAt, AutomationTriggerKind.Schedule];
+            [AutomationTriggerKind.OnceAt, AutomationTriggerKind.Schedule, AutomationTriggerKind.Interval];
         public event Action<Guid>? Triggered;
 
         public Task StartAsync(CancellationToken ct = default)
         {
-            if (_loop != null) return Task.CompletedTask;
-            _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            _loop = RunAsync(_cts.Token);
+            lock (_gate)
+            {
+                if (_started) return Task.CompletedTask;
+                _started = true;
+                _timer = new Timer(OnTimerElapsed);
+                ArmTimerLocked(DateTimeOffset.Now);
+            }
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken ct = default)
+        public Task StopAsync(CancellationToken ct = default)
         {
-            if (_cts == null) return;
-            _cts.Cancel();
-            try { if (_loop != null) await _loop.ConfigureAwait(false); } catch (OperationCanceledException) { }
-            _cts.Dispose();
-            _cts = null;
-            _loop = null;
-            _entries.Clear();
+            lock (_gate)
+            {
+                _started = false;
+                _timer?.Dispose();
+                _timer = null;
+                _entries.Clear();
+            }
+            return Task.CompletedTask;
         }
 
         public Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default)
         {
-            _entries[automation.Id] = new Entry(automation, CalculateNext(automation.Trigger, DateTimeOffset.Now));
+            var now = DateTimeOffset.Now;
+            Entry entry;
+            if (automation.Trigger is IntervalAutomationTrigger intervalTrigger)
+            {
+                var interval = intervalTrigger.Interval < TimeSpan.FromSeconds(1)
+                    ? TimeSpan.FromSeconds(1)
+                    : intervalTrigger.Interval;
+                entry = new Entry(
+                    automation.Trigger,
+                    intervalTrigger.StartImmediately ? now : now + interval,
+                    interval);
+            }
+            else
+            {
+                entry = new Entry(automation.Trigger, CalculateNext(automation.Trigger, now));
+            }
+
+            lock (_gate)
+            {
+                _entries[automation.Id] = entry;
+                ArmTimerLocked(now);
+            }
             return Task.CompletedTask;
         }
 
         public Task UnregisterAsync(Guid automationId, CancellationToken ct = default)
         {
-            _entries.TryRemove(automationId, out _);
+            lock (_gate)
+            {
+                _entries.Remove(automationId);
+                ArmTimerLocked(DateTimeOffset.Now);
+            }
             return Task.CompletedTask;
         }
 
         public DateTimeOffset? GetNextRun(Guid automationId)
-            => _entries.TryGetValue(automationId, out var entry) ? entry.NextRun : null;
-
-        private async Task RunAsync(CancellationToken ct)
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
-            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+            lock (_gate)
+                return _entries.TryGetValue(automationId, out var entry) ? entry.NextRun : null;
+        }
+
+        private void OnTimerElapsed(object? state)
+        {
+            List<Guid> dueIds = new();
+            lock (_gate)
             {
+                if (!_started) return;
                 var now = DateTimeOffset.Now;
                 foreach (var pair in _entries.ToArray())
                 {
                     if (pair.Value.NextRun is not { } next || next > now) continue;
-                    var following = pair.Value.Definition.Trigger is OnceAtAutomationTrigger
-                        ? null
-                        : CalculateNext(pair.Value.Definition.Trigger, now.AddSeconds(1));
+                    DateTimeOffset? following;
+                    if (pair.Value.Interval is { } interval)
+                    {
+                        do next += interval; while (next <= now);
+                        following = next;
+                    }
+                    else
+                    {
+                        following = pair.Value.Trigger is OnceAtAutomationTrigger
+                            ? null
+                            : CalculateNext(pair.Value.Trigger, now);
+                    }
+
                     _entries[pair.Key] = pair.Value with { NextRun = following };
-                    Triggered?.Invoke(pair.Key);
+                    dueIds.Add(pair.Key);
                 }
+                ArmTimerLocked(now);
             }
+
+            foreach (var id in dueIds)
+                Triggered?.Invoke(id);
+        }
+
+        private void ArmTimerLocked(DateTimeOffset now)
+        {
+            if (!_started || _timer == null) return;
+            var next = _entries.Values
+                .Where(entry => entry.NextRun.HasValue)
+                .Select(entry => entry.NextRun!.Value)
+                .DefaultIfEmpty(DateTimeOffset.MaxValue)
+                .Min();
+            if (next == DateTimeOffset.MaxValue)
+            {
+                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                return;
+            }
+
+            var delay = next - now;
+            if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+            if (delay > MaximumTimerDelay) delay = MaximumTimerDelay;
+            _timer.Change(delay, Timeout.InfiniteTimeSpan);
         }
 
         internal static DateTimeOffset? CalculateNext(AutomationTrigger trigger, DateTimeOffset after)
@@ -396,94 +467,59 @@ namespace TaskAutomation.Automations
         }
     }
 
-    public sealed class IntervalAutomationTriggerProvider : IAutomationTriggerProvider
-    {
-        private sealed record Entry(TimeSpan Interval, DateTimeOffset NextRun);
-        private readonly ConcurrentDictionary<Guid, Entry> _entries = new();
-        private CancellationTokenSource? _cts;
-        private Task? _loop;
-        public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Interval];
-        public event Action<Guid>? Triggered;
-
-        public Task StartAsync(CancellationToken ct = default)
-        {
-            if (_loop != null) return Task.CompletedTask;
-            _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            _loop = RunAsync(_cts.Token);
-            return Task.CompletedTask;
-        }
-
-        public async Task StopAsync(CancellationToken ct = default)
-        {
-            if (_cts == null) return;
-            _cts.Cancel();
-            try { if (_loop != null) await _loop.ConfigureAwait(false); } catch (OperationCanceledException) { }
-            _cts.Dispose(); _cts = null; _loop = null; _entries.Clear();
-        }
-
-        public Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default)
-        {
-            if (automation.Trigger is IntervalAutomationTrigger trigger)
-            {
-                var interval = trigger.Interval < TimeSpan.FromSeconds(1) ? TimeSpan.FromSeconds(1) : trigger.Interval;
-                _entries[automation.Id] = new Entry(interval, trigger.StartImmediately ? DateTimeOffset.Now : DateTimeOffset.Now + interval);
-            }
-            return Task.CompletedTask;
-        }
-
-        public Task UnregisterAsync(Guid automationId, CancellationToken ct = default)
-        {
-            _entries.TryRemove(automationId, out _);
-            return Task.CompletedTask;
-        }
-
-        public DateTimeOffset? GetNextRun(Guid automationId)
-            => _entries.TryGetValue(automationId, out var entry) ? entry.NextRun : null;
-
-        private async Task RunAsync(CancellationToken ct)
-        {
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(250));
-            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
-            {
-                var now = DateTimeOffset.Now;
-                foreach (var pair in _entries.ToArray())
-                {
-                    if (pair.Value.NextRun > now) continue;
-                    var next = pair.Value.NextRun;
-                    do next += pair.Value.Interval; while (next <= now);
-                    _entries[pair.Key] = pair.Value with { NextRun = next };
-                    Triggered?.Invoke(pair.Key);
-                }
-            }
-        }
-    }
-
     public sealed class ProcessAutomationTriggerProvider : IAutomationTriggerProvider
     {
         private sealed record ProcessInfo(string Name, string WindowTitle);
         private readonly ConcurrentDictionary<Guid, AutomationDefinition> _entries = new();
-        private Dictionary<int, ProcessInfo> _snapshot = new();
+        private readonly ConcurrentDictionary<uint, ProcessInfo> _processes = new();
+        private readonly ILogger<ProcessAutomationTriggerProvider> _log;
         private CancellationTokenSource? _cts;
-        private Task? _loop;
+        private ManagementEventWatcher? _startWatcher;
+        private ManagementEventWatcher? _stopWatcher;
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } =
             [AutomationTriggerKind.ProcessStarted, AutomationTriggerKind.ProcessExited];
         public event Action<Guid>? Triggered;
 
+        public ProcessAutomationTriggerProvider(ILogger<ProcessAutomationTriggerProvider> log) => _log = log;
+
         public Task StartAsync(CancellationToken ct = default)
         {
-            if (_loop != null) return Task.CompletedTask;
-            _snapshot = CaptureProcesses();
+            if (_cts != null) return Task.CompletedTask;
             _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            _loop = RunAsync(_cts.Token);
+            _processes.Clear();
+            foreach (var process in CaptureProcesses())
+                _processes[process.Key] = process.Value;
+
+            try
+            {
+                _startWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace"));
+                _stopWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStopTrace"));
+                _startWatcher.EventArrived += OnProcessStarted;
+                _stopWatcher.EventArrived += OnProcessExited;
+                _startWatcher.Start();
+                _stopWatcher.Start();
+                _log.LogInformation("Windows-Prozessereignisse für Automationen registriert.");
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Windows-Prozessereignisse konnten nicht registriert werden.");
+                DisposeWatchers();
+                _cts.Dispose();
+                _cts = null;
+            }
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken ct = default)
+        public Task StopAsync(CancellationToken ct = default)
         {
-            if (_cts == null) return;
+            if (_cts == null) return Task.CompletedTask;
             _cts.Cancel();
-            try { if (_loop != null) await _loop.ConfigureAwait(false); } catch (OperationCanceledException) { }
-            _cts.Dispose(); _cts = null; _loop = null; _entries.Clear();
+            DisposeWatchers();
+            _cts.Dispose();
+            _cts = null;
+            _entries.Clear();
+            _processes.Clear();
+            return Task.CompletedTask;
         }
 
         public Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default)
@@ -500,54 +536,175 @@ namespace TaskAutomation.Automations
 
         public DateTimeOffset? GetNextRun(Guid automationId) => null;
 
-        private async Task RunAsync(CancellationToken ct)
+        private void OnProcessStarted(object sender, EventArrivedEventArgs args)
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+            var token = _cts?.Token;
+            if (!token.HasValue || token.Value.IsCancellationRequested) return;
+            try
             {
-                var current = CaptureProcesses();
-                var started = current.Where(p => !_snapshot.ContainsKey(p.Key)).Select(p => p.Value).ToArray();
-                var exited = _snapshot.Where(p => !current.ContainsKey(p.Key)).Select(p => p.Value).ToArray();
-                _snapshot = current;
-
-                foreach (var pair in _entries.ToArray())
-                {
-                    if (pair.Value.Trigger is not ProcessAutomationTrigger trigger) continue;
-                    var candidates = trigger.Kind == AutomationTriggerKind.ProcessStarted ? started : exited;
-                    if (!candidates.Any(process => Matches(trigger, process))) continue;
-                    _ = FireAfterDelayAsync(pair.Key, trigger.DelayAfterEvent, ct);
-                }
+                var processId = Convert.ToUInt32(args.NewEvent.Properties["ProcessID"].Value);
+                var processName = NormalizeProcessName(Convert.ToString(args.NewEvent.Properties["ProcessName"].Value));
+                var info = new ProcessInfo(processName, string.Empty);
+                _processes[processId] = info;
+                _ = HandleStartedProcessAsync(processId, info, token.Value);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Ein Prozessstart-Ereignis konnte nicht verarbeitet werden.");
             }
         }
 
-        private async Task FireAfterDelayAsync(Guid id, TimeSpan delay, CancellationToken ct)
+        private void OnProcessExited(object sender, EventArrivedEventArgs args)
+        {
+            var token = _cts?.Token;
+            if (!token.HasValue || token.Value.IsCancellationRequested) return;
+            try
+            {
+                var processId = Convert.ToUInt32(args.NewEvent.Properties["ProcessID"].Value);
+                var eventName = NormalizeProcessName(Convert.ToString(args.NewEvent.Properties["ProcessName"].Value));
+                if (!_processes.TryRemove(processId, out var process))
+                    process = new ProcessInfo(eventName, string.Empty);
+
+                foreach (var pair in _entries.ToArray())
+                {
+                    if (pair.Value.Trigger is not ProcessExitedAutomationTrigger trigger || !Matches(trigger, process))
+                        continue;
+                    _ = FireAfterDelayAsync(pair.Key, pair.Value, trigger.DelayAfterEvent, token.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Ein Prozessende-Ereignis konnte nicht verarbeitet werden.");
+            }
+        }
+
+        private async Task HandleStartedProcessAsync(uint processId, ProcessInfo process, CancellationToken ct)
+        {
+            try
+            {
+                var matching = _entries.ToArray()
+                    .Where(pair => pair.Value.Trigger is ProcessStartedAutomationTrigger trigger
+                                   && ProcessNameMatches(trigger, process))
+                    .ToArray();
+                var fired = new HashSet<Guid>();
+
+                foreach (var pair in matching)
+                {
+                    var trigger = (ProcessStartedAutomationTrigger)pair.Value.Trigger;
+                    if (!string.IsNullOrWhiteSpace(trigger.WindowTitleContains)) continue;
+                    fired.Add(pair.Key);
+                    _ = FireAfterDelayAsync(pair.Key, pair.Value, trigger.DelayAfterEvent, ct);
+                }
+
+                // Ein neues Hauptfenster steht beim Windows-Startsignal meist noch nicht bereit.
+                // Deshalb wird ausschließlich dieser neue Prozess kurz und gezielt nachgeprüft.
+                for (var attempt = 0; attempt < 40; attempt++)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (!TryReadWindowTitle(processId, out var windowTitle)) return;
+                    process = process with { WindowTitle = windowTitle };
+                    _processes[processId] = process;
+
+                    foreach (var pair in matching)
+                    {
+                        if (fired.Contains(pair.Key)) continue;
+                        var trigger = (ProcessStartedAutomationTrigger)pair.Value.Trigger;
+                        if (!Matches(trigger, process)) continue;
+                        fired.Add(pair.Key);
+                        _ = FireAfterDelayAsync(pair.Key, pair.Value, trigger.DelayAfterEvent, ct);
+                    }
+
+                    var pendingTitleFilters = matching.Any(pair => !fired.Contains(pair.Key));
+                    if (!pendingTitleFilters && !string.IsNullOrWhiteSpace(windowTitle)) return;
+                    await Task.Delay(TimeSpan.FromMilliseconds(250), ct).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Fenstertitel für Prozess {ProcessId} konnte nicht geprüft werden.", processId);
+            }
+        }
+
+        private async Task FireAfterDelayAsync(
+            Guid id,
+            AutomationDefinition expectedDefinition,
+            TimeSpan delay,
+            CancellationToken ct)
         {
             try
             {
                 if (delay > TimeSpan.Zero) await Task.Delay(delay, ct).ConfigureAwait(false);
-                if (_entries.ContainsKey(id)) Triggered?.Invoke(id);
+                if (_entries.TryGetValue(id, out var current) && ReferenceEquals(current, expectedDefinition))
+                    Triggered?.Invoke(id);
             }
             catch (OperationCanceledException) { }
         }
 
         private static bool Matches(ProcessAutomationTrigger trigger, ProcessInfo process)
         {
-            var expected = Path.GetFileNameWithoutExtension(trigger.ProcessName.Trim());
-            if (!string.Equals(expected, process.Name, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!ProcessNameMatches(trigger, process)) return false;
             return string.IsNullOrWhiteSpace(trigger.WindowTitleContains)
                 || process.WindowTitle.Contains(trigger.WindowTitleContains, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static Dictionary<int, ProcessInfo> CaptureProcesses()
+        private static bool ProcessNameMatches(ProcessAutomationTrigger trigger, ProcessInfo process) =>
+            string.Equals(
+                NormalizeProcessName(trigger.ProcessName),
+                process.Name,
+                StringComparison.OrdinalIgnoreCase);
+
+        private static string NormalizeProcessName(string? name) =>
+            Path.GetFileNameWithoutExtension(name?.Trim() ?? string.Empty);
+
+        private static bool TryReadWindowTitle(uint processId, out string windowTitle)
         {
-            var result = new Dictionary<int, ProcessInfo>();
+            try
+            {
+                using var process = Process.GetProcessById(checked((int)processId));
+                windowTitle = process.MainWindowTitle ?? string.Empty;
+                return !process.HasExited;
+            }
+            catch
+            {
+                windowTitle = string.Empty;
+                return false;
+            }
+        }
+
+        private static Dictionary<uint, ProcessInfo> CaptureProcesses()
+        {
+            var result = new Dictionary<uint, ProcessInfo>();
             foreach (var process in Process.GetProcesses())
             {
-                try { result[process.Id] = new ProcessInfo(process.ProcessName, process.MainWindowTitle ?? string.Empty); }
+                try
+                {
+                    result[checked((uint)process.Id)] = new ProcessInfo(
+                        NormalizeProcessName(process.ProcessName),
+                        process.MainWindowTitle ?? string.Empty);
+                }
                 catch { }
                 finally { process.Dispose(); }
             }
             return result;
+        }
+
+        private void DisposeWatchers()
+        {
+            if (_startWatcher != null)
+            {
+                _startWatcher.EventArrived -= OnProcessStarted;
+                try { _startWatcher.Stop(); } catch { }
+                _startWatcher.Dispose();
+                _startWatcher = null;
+            }
+            if (_stopWatcher != null)
+            {
+                _stopWatcher.EventArrived -= OnProcessExited;
+                try { _stopWatcher.Stop(); } catch { }
+                _stopWatcher.Dispose();
+                _stopWatcher = null;
+            }
         }
     }
 }

@@ -13,7 +13,10 @@ namespace DesktopAutomationApp.ViewModels
 {
     public sealed class AutomationDetailViewModel : ViewModelBase, INavigationGuard
     {
-        public record ActionItem(string Name, Guid Id, string Category);
+        public record ActionItem(string Name, Guid Id, string Category)
+        {
+            public string DisplayCategory => Category == "Makro" ? Loc.Get("Common.Macro") : Loc.Get("Common.Job");
+        }
 
         private readonly IAutomationApplicationService _automationAppService;
         private readonly IDialogService _dialogService;
@@ -84,6 +87,7 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
         public string HotkeyCaptureStatus => IsCapturingHotkey ? Loc.Get("Automation.Hotkey.CapturePrompt") : string.Empty;
+        public string TriggerDescription => Loc.Get($"Automation.Trigger.Description.{EditedAutomation.TriggerKind}");
 
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
@@ -121,7 +125,7 @@ namespace DesktopAutomationApp.ViewModels
                 RunningBehaviors.Add(behavior);
 
             ActionsView = new ListCollectionView(Actions);
-            ActionsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ActionItem.Category)));
+            ActionsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ActionItem.DisplayCategory)));
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
@@ -131,6 +135,7 @@ namespace DesktopAutomationApp.ViewModels
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
             EditedAutomation.Action.PropertyChanged += OnEditedActionChanged;
+            LocalizationService.Instance.CultureChanged += OnCultureChanged;
 
             LoadActions();
             ResolveSelectedAction();
@@ -239,6 +244,12 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnEditedAutomationChanged(object? sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName is nameof(EditableAutomation.DisplayTrigger)
+                or nameof(EditableAutomation.DisplayAction)
+                or nameof(EditableAutomation.NextRunDisplay)
+                or nameof(EditableAutomation.LastRunDisplay))
+                return;
+
             HasUnsavedChanges = true;
             if (e.PropertyName is nameof(EditableAutomation.TriggerKind)
                 or nameof(EditableAutomation.Modifiers)
@@ -252,6 +263,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 OnPropertyChanged(nameof(EditedAutomation.DisplayTrigger));
             }
+            if (e.PropertyName == nameof(EditableAutomation.TriggerKind))
+                OnPropertyChanged(nameof(TriggerDescription));
         }
 
         private void OnEditedActionChanged(object? sender, PropertyChangedEventArgs e)
@@ -293,6 +306,25 @@ namespace DesktopAutomationApp.ViewModels
         {
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void OnCultureChanged(object? sender, EventArgs e)
+        {
+            EditedAutomation.RefreshLocalizedDisplayProperties();
+            ActionsView.Refresh();
+            OnPropertyChanged(nameof(HotkeyCaptureStatus));
+            OnPropertyChanged(nameof(TriggerDescription));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                LocalizationService.Instance.CultureChanged -= OnCultureChanged;
+                EditedAutomation.PropertyChanged -= OnEditedAutomationChanged;
+                EditedAutomation.Action.PropertyChanged -= OnEditedActionChanged;
+            }
+            base.Dispose(disposing);
         }
     }
 }

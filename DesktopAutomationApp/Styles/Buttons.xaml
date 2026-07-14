@@ -118,4 +118,29 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Einheitliche Aktionen innerhalb von Tabellenzeilen -->
+    <Style x:Key="ButtonTablePrimary" TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
+        <Setter Property="MinWidth" Value="88"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="12,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="7"/>
+    </Style>
+
+    <Style x:Key="ButtonTableSecondary" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+        <Setter Property="MinWidth" Value="88"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="12,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="7"/>
+    </Style>
+
+    <Style x:Key="ButtonTableDanger" TargetType="Button" BasedOn="{StaticResource ButtonDanger}">
+        <Setter Property="MinWidth" Value="88"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="12,5"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="7"/>
+    </Style>
+
 </ResourceDictionary>

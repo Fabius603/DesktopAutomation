@@ -112,8 +112,16 @@ namespace DesktopAutomationApp.Models
         public string NextRunDisplay => _nextRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture)
             ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited
                 ? Loc.Get("Automation.EventBased") : Loc.Get("Automation.NotScheduled"));
-        public string LastRunDisplay => _lastRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture) ?? Loc.Get("Automation.NeverRun");
+        public string LastRunDisplay => AutomationDisplayFormatter.LastRun(_lastRunAt);
         public string RuntimeError => _lastError ?? string.Empty;
+
+        public void RefreshLocalizedDisplayProperties()
+        {
+            OnPropertyChanged(nameof(DisplayTrigger));
+            OnPropertyChanged(nameof(DisplayAction));
+            OnPropertyChanged(nameof(NextRunDisplay));
+            OnPropertyChanged(nameof(LastRunDisplay));
+        }
 
         public AutomationDefinition ToDomain()
         {

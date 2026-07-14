@@ -107,8 +107,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
                     services.AddSingleton<IAutomationEngine, AutomationEngine>();
                     services.AddSingleton<IAutomationTriggerProvider, HotkeyAutomationTriggerProvider>();
-                    services.AddSingleton<IAutomationTriggerProvider, ScheduleAutomationTriggerProvider>();
-                    services.AddSingleton<IAutomationTriggerProvider, IntervalAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, TimeAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, ProcessAutomationTriggerProvider>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();

@@ -39,6 +39,7 @@
             <conv:PointAxisOperatorConverter x:Key="PointAxisOperatorConverter" />
             <conv:MaxSizeDisplayConverter x:Key="MaxSizeDisplayConverter" />
             <conv:LocalizedEnumConverter x:Key="LocalizedEnumConverter" />
+            <conv:MacroStepTypeConverter x:Key="MacroStepTypeConverter" />
 
             <!-- ViewModel -> View Mapping -->
             <DataTemplate DataType="{x:Type vm:StartViewModel}">

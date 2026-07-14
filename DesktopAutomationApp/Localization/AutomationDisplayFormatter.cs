@@ -5,6 +5,27 @@ namespace DesktopAutomationApp.Localization;
 
 public static class AutomationDisplayFormatter
 {
+    public static string LastRun(DateTimeOffset? lastRunAt)
+    {
+        if (!lastRunAt.HasValue)
+            return Loc.Get("Automation.NeverRun");
+
+        var elapsed = DateTimeOffset.Now - lastRunAt.Value;
+        if (elapsed < TimeSpan.Zero)
+            elapsed = TimeSpan.Zero;
+
+        return elapsed.TotalDays switch
+        {
+            >= 365 => FormatRelative("Years", (long)(elapsed.TotalDays / 365)),
+            >= 30 => FormatRelative("Months", (long)(elapsed.TotalDays / 30)),
+            >= 7 => FormatRelative("Weeks", (long)(elapsed.TotalDays / 7)),
+            >= 1 => FormatRelative("Days", (long)elapsed.TotalDays),
+            _ when elapsed.TotalHours >= 1 => FormatRelative("Hours", (long)elapsed.TotalHours),
+            _ when elapsed.TotalMinutes >= 1 => FormatRelative("Minutes", (long)elapsed.TotalMinutes),
+            _ => FormatRelative("Seconds", (long)elapsed.TotalSeconds)
+        };
+    }
+
     public static string Trigger(AutomationTrigger trigger) => trigger switch
     {
         HotkeyAutomationTrigger hotkey => hotkey.VirtualKeyCode == 0
@@ -54,5 +75,7 @@ public static class AutomationDisplayFormatter
             result += Loc.Format("Automation.Trigger.AfterSeconds", process.DelayAfterEvent.TotalSeconds);
         return result;
     }
-}
 
+    private static string FormatRelative(string unit, long value) =>
+        Loc.Format($"Automation.Relative.{unit}.{(value == 1 ? "One" : "Many")}", value);
+}
