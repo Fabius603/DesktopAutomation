@@ -144,6 +144,21 @@
   <data name="Settings.Theme.Dark" xml:space="preserve">
     <value>Dark</value>
   </data>
+  <data name="Settings.Startup" xml:space="preserve">
+    <value>Windows startup</value>
+  </data>
+  <data name="Settings.StartWithWindows" xml:space="preserve">
+    <value>Start DesktopAutomation with Windows</value>
+  </data>
+  <data name="Settings.StartWithWindows.Description" xml:space="preserve">
+    <value>Starts the app automatically after signing in to Windows. This option is enabled by default.</value>
+  </data>
+  <data name="Settings.StartInBackground" xml:space="preserve">
+    <value>Open in the background at Windows startup</value>
+  </data>
+  <data name="Settings.StartInBackground.Description" xml:space="preserve">
+    <value>Only shows the notification area icon. Automations and triggers remain active.</value>
+  </data>
   <data name="Navigation.Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -1699,5 +1714,63 @@ Error:
   </data>
   <data name="Ui.Common.Discard" xml:space="preserve">
     <value>Discard</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.WindowEvent" xml:space="preserve"><value>Window event</value></data>
+  <data name="Enum.AutomationTriggerKind.FileSystemEvent" xml:space="preserve"><value>File or folder event</value></data>
+  <data name="Enum.AutomationTriggerKind.SystemEvent" xml:space="preserve"><value>Windows system event</value></data>
+  <data name="Automation.Trigger.Description.WindowEvent" xml:space="preserve"><value>Starts the automation when a matching window is opened, closed, focused, or renamed.</value></data>
+  <data name="Automation.Trigger.Description.FileSystemEvent" xml:space="preserve"><value>Starts the automation when a matching file or folder changes in the monitored directory.</value></data>
+  <data name="Automation.Trigger.Description.SystemEvent" xml:space="preserve"><value>Starts the automation when Windows is locked, unlocked, signed out, shut down, suspended, or resumed.</value></data>
+  <data name="Enum.WindowAutomationEventKind.Opened" xml:space="preserve"><value>Window opened</value></data>
+  <data name="Enum.WindowAutomationEventKind.Closed" xml:space="preserve"><value>Window closed</value></data>
+  <data name="Enum.WindowAutomationEventKind.Focused" xml:space="preserve"><value>Window focused</value></data>
+  <data name="Enum.WindowAutomationEventKind.TitleChanged" xml:space="preserve"><value>Window title changed</value></data>
+  <data name="Enum.FileSystemAutomationEventKind.Created" xml:space="preserve"><value>Created</value></data>
+  <data name="Enum.FileSystemAutomationEventKind.Changed" xml:space="preserve"><value>Changed</value></data>
+  <data name="Enum.FileSystemAutomationEventKind.Deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="Enum.FileSystemAutomationEventKind.Renamed" xml:space="preserve"><value>Renamed</value></data>
+  <data name="Enum.SystemAutomationEventKind.SessionLocked" xml:space="preserve"><value>Windows locked</value></data>
+  <data name="Enum.SystemAutomationEventKind.SessionUnlocked" xml:space="preserve"><value>Windows unlocked</value></data>
+  <data name="Enum.SystemAutomationEventKind.UserLogoff" xml:space="preserve"><value>User signs out</value></data>
+  <data name="Enum.SystemAutomationEventKind.SystemShutdown" xml:space="preserve"><value>Windows shuts down</value></data>
+  <data name="Enum.SystemAutomationEventKind.Suspend" xml:space="preserve"><value>System suspends</value></data>
+  <data name="Enum.SystemAutomationEventKind.Resume" xml:space="preserve"><value>System resumes</value></data>
+  <data name="Ui.Automation.Details.WindowEvent" xml:space="preserve"><value>Window event</value></data>
+  <data name="Ui.Automation.Details.FileSystemEvent" xml:space="preserve"><value>File/folder event</value></data>
+  <data name="Ui.Automation.Details.SystemEvent" xml:space="preserve"><value>System event</value></data>
+  <data name="Ui.Automation.Details.Event" xml:space="preserve"><value>Event</value></data>
+  <data name="Ui.Automation.Details.ProcessNameOptional" xml:space="preserve"><value>Process name (optional)</value></data>
+  <data name="Ui.Automation.Details.FolderPath" xml:space="preserve"><value>Folder to monitor</value></data>
+  <data name="Ui.Automation.Details.FileFilter" xml:space="preserve"><value>File filter</value></data>
+  <data name="Ui.Automation.Details.IncludeSubdirectories" xml:space="preserve"><value>Include subfolders</value></data>
+  <data name="Ui.Automation.Details.WaitUntilFileReady" xml:space="preserve"><value>Wait until the file has finished writing</value></data>
+  <data name="Ui.Common.Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Automation.FileSystem.SelectFolder" xml:space="preserve"><value>Select the folder to monitor</value></data>
+  <data name="Validation.WindowFilterRequired" xml:space="preserve"><value>A window event requires at least a process name or part of a window title.</value></data>
+  <data name="Validation.FolderRequired" xml:space="preserve"><value>A file or folder event requires a folder.</value></data>
+  <data name="Validation.FolderNotFound" xml:space="preserve"><value>The selected folder could not be found.</value></data>
+  <data name="Validation.FileFilterRequired" xml:space="preserve"><value>A file or folder event requires a file filter.</value></data>
+  <data name="Automation.Trigger.WindowEvent" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="Automation.Trigger.FileSystemEvent" xml:space="preserve"><value>{0}: {1} ({2})</value></data>
+  <data name="Automation.Window.AnyProcess" xml:space="preserve"><value>any process</value></data>
+  <data name="Logs.Title" xml:space="preserve"><value>Logs</value></data>
+  <data name="Logs.ChooseDescription" xml:space="preserve"><value>Choose the area you want to inspect.</value></data>
+  <data name="Logs.JobDescription" xml:space="preserve"><value>Job runs, steps, launch source, and total duration.</value></data>
+  <data name="Logs.AutomationLogs" xml:space="preserve"><value>Automation logs</value></data>
+  <data name="Logs.AutomationDescription" xml:space="preserve"><value>Triggers, skipped starts, actions, and errors for each automation.</value></data>
+  <data name="Logs.ApplicationLogs" xml:space="preserve"><value>Application logs</value></data>
+  <data name="Logs.ApplicationDescription" xml:space="preserve"><value>General messages, warnings, and errors from the application.</value></data>
+  <data name="Logs.Automations" xml:space="preserve"><value>Automations</value></data>
+  <data name="Logs.OpenFolder" xml:space="preserve"><value>Open folder</value></data>
+  <data name="JobLog.Origin.Manual" xml:space="preserve"><value>Manual</value></data>
+  <data name="JobLog.Origin.Automation" xml:space="preserve"><value>Automation</value></data>
+  <data name="JobLog.Origin.Job" xml:space="preserve"><value>Job</value></data>
+  <data name="JobLog.Origin.Application" xml:space="preserve"><value>Application</value></data>
+  <data name="JobLog.Origin.Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Ui.Job.Steps.NoSourceSelected" xml:space="preserve">
+    <value>No source step selected</value>
+  </data>
+  <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
+    <value>Source step unavailable</value>
   </data>
 </root>

@@ -12,8 +12,8 @@ namespace DesktopAutomationApp.Views
         {
             if (DataContext is AddStepDialogViewModel vm)
             {
-                vm.CreateStep();
-                DialogResult = vm.CreatedStep != null; // ShowDialog() gibt dann true/false zurück
+                if (!vm.CanConfirm()) return;
+                DialogResult = true;
             }
             Close();
         }

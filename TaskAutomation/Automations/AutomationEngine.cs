@@ -6,6 +6,7 @@ using Common.JsonRepository;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.Orchestration;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Automations
 {
@@ -44,6 +45,7 @@ namespace TaskAutomation.Automations
         private readonly IJobDispatcher _dispatcher;
         private readonly IReadOnlyList<IAutomationTriggerProvider> _providers;
         private readonly ILogger<AutomationEngine> _log;
+        private readonly IAutomationLogService _automationLogs;
         private readonly ConcurrentDictionary<Guid, AutomationDefinition> _automations = new();
         private readonly ConcurrentDictionary<Guid, AutomationRuntimeInfo> _runtime = new();
         private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _executionGates = new();
@@ -60,12 +62,14 @@ namespace TaskAutomation.Automations
             IJsonRepository<AutomationDefinition> repository,
             IJobDispatcher dispatcher,
             IEnumerable<IAutomationTriggerProvider> providers,
-            ILogger<AutomationEngine> log)
+            ILogger<AutomationEngine> log,
+            IAutomationLogService automationLogs)
         {
             _repository = repository;
             _dispatcher = dispatcher;
             _providers = providers.ToList();
             _log = log;
+            _automationLogs = automationLogs;
 
             foreach (var provider in _providers)
                 provider.Triggered += OnTriggered;
@@ -83,6 +87,7 @@ namespace TaskAutomation.Automations
 
                 _automations.Clear();
                 var definitions = await _repository.LoadAllAsync().ConfigureAwait(false);
+                _automationLogs.Synchronize(definitions);
                 foreach (var automation in definitions)
                 {
                     _automations[automation.Id] = automation;
@@ -93,10 +98,14 @@ namespace TaskAutomation.Automations
                     if (provider == null)
                     {
                         _log.LogWarning("Kein Trigger-Provider für {Kind} registriert.", automation.Trigger.Kind);
+                        _automationLogs.Write(automation.Id, ExecutionLogLevel.Warning,
+                            "Trigger konnte nicht registriert werden.", $"Kein Provider für Trigger-Typ: {automation.Trigger.Kind}");
                         continue;
                     }
 
                     await provider.RegisterAsync(automation, ct).ConfigureAwait(false);
+                    _automationLogs.Write(automation.Id, ExecutionLogLevel.Information,
+                        "Trigger registriert.", $"Typ: {automation.Trigger.Kind}");
                 }
 
                 foreach (var automation in definitions)
@@ -113,17 +122,21 @@ namespace TaskAutomation.Automations
         {
             if (_started) return;
             _started = true;
+            _log.LogInformation("Automationssystem wird gestartet. {ProviderCount} Trigger-Provider werden initialisiert.", _providers.Count);
             foreach (var provider in _providers)
                 await provider.StartAsync(ct).ConfigureAwait(false);
             await ReloadAsync(ct).ConfigureAwait(false);
+            _log.LogInformation("Automationssystem gestartet.");
         }
 
         public async Task StopAsync(CancellationToken ct = default)
         {
             if (!_started) return;
+            _log.LogInformation("Automationssystem wird beendet.");
             _started = false;
             foreach (var provider in _providers.Reverse())
                 await provider.StopAsync(ct).ConfigureAwait(false);
+            _log.LogInformation("Automationssystem beendet.");
         }
 
         public async Task SetPausedAsync(bool paused, CancellationToken ct = default)
@@ -137,6 +150,7 @@ namespace TaskAutomation.Automations
 
                 _isPaused = paused;
                 changed = true;
+                _log.LogInformation("Automationen werden {State}.", paused ? "pausiert" : "fortgesetzt");
 
                 if (!_started)
                     return;
@@ -152,6 +166,7 @@ namespace TaskAutomation.Automations
                         await provider.StartAsync(ct).ConfigureAwait(false);
                     await ReloadAsync(ct).ConfigureAwait(false);
                 }
+                _log.LogInformation("Automationen wurden {State}.", paused ? "pausiert" : "fortgesetzt");
             }
             catch
             {
@@ -177,41 +192,65 @@ namespace TaskAutomation.Automations
 
         public async Task TriggerAsync(Guid automationId, CancellationToken ct = default)
         {
-            if (!_started || _isPaused)
+            if (!_automations.TryGetValue(automationId, out var automation))
                 return;
 
-            if (!_automations.TryGetValue(automationId, out var automation) || !automation.Active)
+            _automationLogs.Write(automationId, ExecutionLogLevel.Debug, "Trigger erkannt.", $"Typ: {automation.Trigger.Kind}");
+            if (!_started || _isPaused)
+            {
+                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Trigger ignoriert.", "Automationen sind pausiert.");
                 return;
+            }
+
+            if (!automation.Active)
+            {
+                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Trigger ignoriert.", "Automation ist deaktiviert.");
+                return;
+            }
 
             var gate = _executionGates.GetOrAdd(automationId, _ => new SemaphoreSlim(1, 1));
             await gate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
                 if (!_started || _isPaused)
+                {
+                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Automationen wurden pausiert.");
                     return;
+                }
 
                 var now = DateTimeOffset.Now;
                 if (!IsInsideEnabledWindow(automation.RunPolicy, TimeOnly.FromDateTime(now.LocalDateTime)))
+                {
+                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Außerhalb des erlaubten Zeitfensters.");
                     return;
+                }
 
                 var lastRun = _runtime.GetValueOrDefault(automationId)?.LastRunAt ?? automation.LastRunAt;
                 if (lastRun is { } last && automation.RunPolicy.Cooldown > TimeSpan.Zero
                     && now - last < automation.RunPolicy.Cooldown)
+                {
+                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Cooldown ist noch aktiv.");
                     return;
+                }
 
                 if (!ExecuteAction(automation))
+                {
+                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Ziel läuft bereits.");
                     return;
+                }
 
                 automation.LastRunAt = now;
                 await _repository.SaveAsync(automation).ConfigureAwait(false);
                 _runtime[automationId] = new AutomationRuntimeInfo(now, GetRuntimeInfo(automationId).NextRunAt);
                 RuntimeChanged?.Invoke(automationId);
+                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Aktion gestartet.", $"Ziel: {automation.Action.Name}; Typ: {automation.Action.ActionType}");
                 _log.LogInformation("Automation ausgelöst: {Name}", automation.Name);
             }
             catch (Exception ex)
             {
                 _runtime[automationId] = new AutomationRuntimeInfo(automation.LastRunAt, GetRuntimeInfo(automationId).NextRunAt, ex.Message);
                 RuntimeChanged?.Invoke(automationId);
+                _automationLogs.Write(automationId, ExecutionLogLevel.Error, "Automation fehlgeschlagen.", ex.ToString());
                 _log.LogError(ex, "Automation konnte nicht ausgeführt werden: {Name}", automation.Name);
             }
             finally
@@ -234,31 +273,31 @@ namespace TaskAutomation.Automations
 
             if (!isRunning)
             {
-                StartTarget(isMakro, targetId.Value);
+                StartTarget(isMakro, targetId.Value, automation);
                 return true;
             }
 
             switch (automation.RunPolicy.AlreadyRunningBehavior)
             {
                 case AutomationAlreadyRunningBehavior.StartParallel:
-                    StartTarget(isMakro, targetId.Value);
+                    StartTarget(isMakro, targetId.Value, automation);
                     return true;
                 case AutomationAlreadyRunningBehavior.Stop:
                     StopTarget(isMakro, targetId.Value);
                     return true;
                 case AutomationAlreadyRunningBehavior.Restart:
                     StopTarget(isMakro, targetId.Value);
-                    StartTarget(isMakro, targetId.Value);
+                    StartTarget(isMakro, targetId.Value, automation);
                     return true;
                 default:
                     return false;
             }
         }
 
-        private void StartTarget(bool isMakro, Guid id)
+        private void StartTarget(bool isMakro, Guid id, AutomationDefinition automation)
         {
             if (isMakro) _dispatcher.StartMakro(id);
-            else _dispatcher.StartJob(id);
+            else _dispatcher.StartJob(id, new JobStartContext(JobStartSource.Automation, automation.Name, automation.Id));
         }
 
         private void StopTarget(bool isMakro, Guid id)

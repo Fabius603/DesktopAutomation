@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -101,6 +103,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand RenameCommand { get; }
+        public ICommand OpenFileCommand { get; }
         public ICommand AddStepCommand { get; }
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
@@ -148,12 +151,14 @@ namespace DesktopAutomationApp.ViewModels
                 StepsVersion++;
                 OnPropertyChanged(nameof(StepsVersion));
                 InvalidateAllCommands();
+                ValidateAndApply();
             };
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await Rename());
+            OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
             AddStepCommand      = new RelayCommand(async () => await OpenAddStepDialog());
             EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
@@ -181,9 +186,20 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
             IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
+            ValidateAndApply();
         }
 
         // ---------- Selection sync (called from code-behind) ----------
+        private void OpenFileInExplorer()
+            => ShowFileInExplorer(_makroAppService.GetStoragePath(), $"{Makro.Id}.json");
+
+        private static void ShowFileInExplorer(string directory, string fileName)
+        {
+            var path = Path.Combine(directory, fileName);
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+        }
+
         public void SetSelectedSteps(IEnumerable<object> items)
         {
             SelectedSteps.Clear();
@@ -208,12 +224,36 @@ namespace DesktopAutomationApp.ViewModels
         private async Task SaveInternal()
         {
             Makro.Befehle = new ObservableCollection<MakroBefehl>(Steps);
+            var validation = MakroValidation.Validate(Makro);
+            ApplyValidation(validation);
+            if (!validation.IsValid)
+            {
+                _dialogService.ShowError(LocalizeValidationError(validation.Error), Loc.Get("Validation.Title"));
+                return;
+            }
             await _makroAppService.SaveMakroAsync(Makro);
             // Update snapshot for future cancel
             _originalSteps.Clear();
             _originalSteps.AddRange(Steps);
             HasUnsavedChanges = false;
         }
+
+        private void ValidateAndApply()
+        {
+            var draft = new Makro { Name = Makro.Name, Befehle = new ObservableCollection<MakroBefehl>(Steps) };
+            ApplyValidation(MakroValidation.Validate(draft));
+        }
+
+        private static void ApplyValidation(MakroValidationResult validation)
+        {
+            foreach (var result in validation.Commands)
+                result.Command.SetValidationResult(result.IsValid, result.Error);
+        }
+
+        private static string LocalizeValidationError(MakroValidationError error) => error switch
+        {
+            _ => MakroValidation.Describe(error)
+        };
 
         // ---------- Rename ----------
         private async Task Rename()

@@ -199,7 +199,7 @@
     <value>Datei öffnen</value>
   </data>
   <data name="Ui.Logs.JobLogs" xml:space="preserve">
-    <value>Job-Logs</value>
+    <value>Job Logs</value>
   </data>
   <data name="Ui.Logs.Executions" xml:space="preserve">
     <value>Ausführungen</value>
@@ -1699,5 +1699,182 @@ Fehlermeldung:
   </data>
   <data name="Ui.Common.Discard" xml:space="preserve">
     <value>Verwerfen</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.WindowEvent" xml:space="preserve">
+    <value>Fensterereignis</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.FileSystemEvent" xml:space="preserve">
+    <value>Datei- oder Ordnerereignis</value>
+  </data>
+  <data name="Enum.AutomationTriggerKind.SystemEvent" xml:space="preserve">
+    <value>Windows-Systemereignis</value>
+  </data>
+  <data name="Automation.Trigger.Description.WindowEvent" xml:space="preserve">
+    <value>Startet die Automation, wenn ein passendes Fenster geöffnet, geschlossen, fokussiert oder umbenannt wird.</value>
+  </data>
+  <data name="Automation.Trigger.Description.FileSystemEvent" xml:space="preserve">
+    <value>Startet die Automation bei passenden Datei- oder Ordneränderungen im überwachten Verzeichnis.</value>
+  </data>
+  <data name="Automation.Trigger.Description.SystemEvent" xml:space="preserve">
+    <value>Startet die Automation beim Sperren, Entsperren, Abmelden, Herunterfahren, Standby oder Fortsetzen von Windows.</value>
+  </data>
+  <data name="Enum.WindowAutomationEventKind.Opened" xml:space="preserve">
+    <value>Fenster geöffnet</value>
+  </data>
+  <data name="Enum.WindowAutomationEventKind.Closed" xml:space="preserve">
+    <value>Fenster geschlossen</value>
+  </data>
+  <data name="Enum.WindowAutomationEventKind.Focused" xml:space="preserve">
+    <value>Fenster fokussiert</value>
+  </data>
+  <data name="Enum.WindowAutomationEventKind.TitleChanged" xml:space="preserve">
+    <value>Fenstertitel geändert</value>
+  </data>
+  <data name="Enum.FileSystemAutomationEventKind.Created" xml:space="preserve">
+    <value>Erstellt</value>
+  </data>
+  <data name="Enum.FileSystemAutomationEventKind.Changed" xml:space="preserve">
+    <value>Geändert</value>
+  </data>
+  <data name="Enum.FileSystemAutomationEventKind.Deleted" xml:space="preserve">
+    <value>Gelöscht</value>
+  </data>
+  <data name="Enum.FileSystemAutomationEventKind.Renamed" xml:space="preserve">
+    <value>Umbenannt</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.SessionLocked" xml:space="preserve">
+    <value>Windows gesperrt</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.SessionUnlocked" xml:space="preserve">
+    <value>Windows entsperrt</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.UserLogoff" xml:space="preserve">
+    <value>Benutzer meldet sich ab</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.SystemShutdown" xml:space="preserve">
+    <value>Windows wird heruntergefahren</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.Suspend" xml:space="preserve">
+    <value>Standby wird aktiviert</value>
+  </data>
+  <data name="Enum.SystemAutomationEventKind.Resume" xml:space="preserve">
+    <value>System wird fortgesetzt</value>
+  </data>
+  <data name="Ui.Automation.Details.WindowEvent" xml:space="preserve">
+    <value>Fensterereignis</value>
+  </data>
+  <data name="Ui.Automation.Details.FileSystemEvent" xml:space="preserve">
+    <value>Datei-/Ordnerereignis</value>
+  </data>
+  <data name="Ui.Automation.Details.SystemEvent" xml:space="preserve">
+    <value>Systemereignis</value>
+  </data>
+  <data name="Ui.Automation.Details.Event" xml:space="preserve">
+    <value>Ereignis</value>
+  </data>
+  <data name="Ui.Automation.Details.ProcessNameOptional" xml:space="preserve">
+    <value>Prozessname (optional)</value>
+  </data>
+  <data name="Ui.Automation.Details.FolderPath" xml:space="preserve">
+    <value>Zu überwachender Ordner</value>
+  </data>
+  <data name="Ui.Automation.Details.FileFilter" xml:space="preserve">
+    <value>Dateifilter</value>
+  </data>
+  <data name="Ui.Automation.Details.IncludeSubdirectories" xml:space="preserve">
+    <value>Unterordner einbeziehen</value>
+  </data>
+  <data name="Ui.Automation.Details.WaitUntilFileReady" xml:space="preserve">
+    <value>Warten, bis die Datei fertig geschrieben ist</value>
+  </data>
+  <data name="Ui.Common.Browse" xml:space="preserve">
+    <value>Durchsuchen</value>
+  </data>
+  <data name="Automation.FileSystem.SelectFolder" xml:space="preserve">
+    <value>Zu überwachenden Ordner auswählen</value>
+  </data>
+  <data name="Validation.WindowFilterRequired" xml:space="preserve">
+    <value>Für ein Fensterereignis muss mindestens ein Prozessname oder ein Teil des Fenstertitels angegeben werden.</value>
+  </data>
+  <data name="Validation.FolderRequired" xml:space="preserve">
+    <value>Für ein Datei- oder Ordnerereignis muss ein Ordner ausgewählt werden.</value>
+  </data>
+  <data name="Validation.FolderNotFound" xml:space="preserve">
+    <value>Der ausgewählte Ordner wurde nicht gefunden.</value>
+  </data>
+  <data name="Validation.FileFilterRequired" xml:space="preserve">
+    <value>Für ein Datei- oder Ordnerereignis muss ein Dateifilter angegeben werden.</value>
+  </data>
+  <data name="Automation.Trigger.WindowEvent" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Automation.Trigger.FileSystemEvent" xml:space="preserve">
+    <value>{0}: {1} ({2})</value>
+  </data>
+  <data name="Automation.Window.AnyProcess" xml:space="preserve">
+    <value>beliebiger Prozess</value>
+  </data>
+  <data name="Settings.Startup" xml:space="preserve">
+    <value>Windows-Start</value>
+  </data>
+  <data name="Settings.StartWithWindows" xml:space="preserve">
+    <value>DesktopAutomation mit Windows starten</value>
+  </data>
+  <data name="Settings.StartWithWindows.Description" xml:space="preserve">
+    <value>Startet die App automatisch nach der Windows-Anmeldung. Diese Option ist standardmäßig aktiviert.</value>
+  </data>
+  <data name="Settings.StartInBackground" xml:space="preserve">
+    <value>Bei Windows-Start im Hintergrund öffnen</value>
+  </data>
+  <data name="Settings.StartInBackground.Description" xml:space="preserve">
+    <value>Zeigt nur das Symbol im Infobereich an. Automationen und Trigger bleiben aktiv.</value>
+  </data>
+  <data name="Logs.Title" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Logs.ChooseDescription" xml:space="preserve">
+    <value>Wähle aus, welchen Bereich du untersuchen möchtest.</value>
+  </data>
+  <data name="Logs.JobDescription" xml:space="preserve">
+    <value>Ausführungen, Schritte, Startquelle und Laufzeit der Jobs.</value>
+  </data>
+  <data name="Logs.AutomationLogs" xml:space="preserve">
+    <value>Automation Logs</value>
+  </data>
+  <data name="Logs.AutomationDescription" xml:space="preserve">
+    <value>Trigger, übersprungene Starts, Aktionen und Fehler je Automation.</value>
+  </data>
+  <data name="Logs.ApplicationLogs" xml:space="preserve">
+    <value>Application Logs</value>
+  </data>
+  <data name="Logs.ApplicationDescription" xml:space="preserve">
+    <value>Allgemeine Meldungen, Warnungen und Fehler der Anwendung.</value>
+  </data>
+  <data name="Logs.Automations" xml:space="preserve">
+    <value>Automationen</value>
+  </data>
+  <data name="Logs.OpenFolder" xml:space="preserve">
+    <value>Ordner öffnen</value>
+  </data>
+  <data name="JobLog.Origin.Manual" xml:space="preserve">
+    <value>Manuell</value>
+  </data>
+  <data name="JobLog.Origin.Automation" xml:space="preserve">
+    <value>Automation</value>
+  </data>
+  <data name="JobLog.Origin.Job" xml:space="preserve">
+    <value>Job</value>
+  </data>
+  <data name="JobLog.Origin.Application" xml:space="preserve">
+    <value>Anwendung</value>
+  </data>
+  <data name="JobLog.Origin.Unknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="Ui.Job.Steps.NoSourceSelected" xml:space="preserve">
+    <value>Kein Quell-Step ausgewählt</value>
+  </data>
+  <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
+    <value>Quell-Step nicht verfügbar</value>
   </data>
 </root>

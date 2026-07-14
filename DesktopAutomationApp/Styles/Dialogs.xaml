@@ -5,9 +5,10 @@
     <!-- ═══ Dialog Window Style ═══ -->
     <Style x:Key="DialogWindowStyle" TargetType="{x:Type mah:MetroWindow}">
         <Setter Property="TitleBarHeight" Value="36"/>
-        <Setter Property="WindowTitleBrush" Value="{DynamicResource App.Brush.SidebarBackground}"/>
-        <Setter Property="NonActiveWindowTitleBrush" Value="{DynamicResource App.Brush.SidebarBackground}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="WindowTitleBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="NonActiveWindowTitleBrush" Value="{DynamicResource App.Brush.AccentDark}"/>
+        <Setter Property="TitleForeground" Value="White"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.AccentDark}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Background" Value="{DynamicResource App.Brush.WindowBackground}"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>

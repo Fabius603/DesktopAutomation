@@ -91,14 +91,16 @@
                         <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenLogFileCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="FileDocumentOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Logs.OpenFile}" VerticalAlignment="Center"/>
-                    </StackPanel>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenLogFolderCommand}" ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}">
+                    <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center"/>
                 </Button>
             </StackPanel>
-            <TextBlock Text="{loc:Translate Key=Ui.Logs.JobLogs}" Style="{StaticResource PageTitle}"/>
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal"><iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" Margin="0,0,6,0"/><TextBlock Text="{loc:Translate Key=Ui.Common.Back}"/></StackPanel>
+                </Button>
+                <TextBlock Text="{loc:Translate Key=Ui.Logs.JobLogs}" Style="{StaticResource PageTitle}"/>
+            </StackPanel>
         </DockPanel>
 
         <Grid Grid.Row="1">
@@ -131,10 +133,20 @@
                                                    FontWeight="SemiBold"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </DockPanel>
-                                    <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:G}'}"
+                                    <TextBlock Text="{Binding StartedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm:ss}'}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontSize="11"
                                                Margin="0,4,0,0"/>
+                                    <Grid Margin="0,5,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding ExecutionNumberText}" Foreground="{DynamicResource App.Brush.Accent}" FontWeight="SemiBold" FontSize="11"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding OriginText}" Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" Margin="10,0" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding DurationText}" Foreground="{DynamicResource App.Brush.TextMuted}" FontFamily="Consolas" FontSize="11"/>
+                                    </Grid>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -177,6 +189,7 @@
 
                     <ListBox x:Name="LogEntriesList"
                              ItemsSource="{Binding Entries}"
+                             SelectedItem="{Binding SelectedEntry}"
                              Style="{StaticResource LogListBoxStyle}"
                              ItemContainerStyle="{StaticResource LogEntryItemContainerStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
@@ -198,7 +211,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0"
-                                               Text="{Binding Timestamp, StringFormat='{}{0:T}'}"
+                                               Text="{Binding TimestampText}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontFamily="Consolas"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1"
@@ -221,9 +234,8 @@
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontFamily="Consolas"
                                                FontSize="12"
-                                               Margin="0,2,0,0"
-                                               MaxHeight="120"
-                                               TextWrapping="Wrap"/>
+                                               TextWrapping="Wrap"
+                                               Margin="0,4,0,0"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

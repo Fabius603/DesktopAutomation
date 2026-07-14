@@ -31,18 +31,16 @@
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding OpenFolderCommand}"
+                        Command="{Binding RefreshCommand}"
                         Margin="0,0,8,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Folder" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Yolo.OpenFolder}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,0,0"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

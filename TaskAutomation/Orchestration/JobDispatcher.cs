@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Orchestration
 {
@@ -82,7 +83,7 @@ namespace TaskAutomation.Orchestration
         /// Startet eine neue Instanz des Jobs. Mehrere parallele Instanzen desselben Jobs
         /// sind ausdrücklich erlaubt. Gibt die Instanz-ID zurück.
         /// </summary>
-        private Guid StartJobInternal(Job job)
+        private Guid StartJobInternal(Job job, JobStartContext startContext)
         {
             if (job.ActiveStepCount == 0)
             {
@@ -112,7 +113,7 @@ namespace TaskAutomation.Orchestration
             {
                 try
                 {
-                    await _executor.ExecuteJob(jobId, cts.Token).ConfigureAwait(false);
+                    await _executor.ExecuteJob(jobId, startContext, cts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -270,7 +271,7 @@ namespace TaskAutomation.Orchestration
         /// <summary>
         /// Startet eine neue Instanz des Jobs per ID und gibt die Instanz-ID zurück.
         /// </summary>
-        public Guid StartJob(Guid id)
+        public Guid StartJob(Guid id, JobStartContext? startContext = null)
         {
             var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
             if (job == null)
@@ -280,7 +281,7 @@ namespace TaskAutomation.Orchestration
             }
             try
             {
-                return StartJobInternal(job);
+                return StartJobInternal(job, startContext ?? JobStartContext.Manual);
             }
             catch (JobLimitExceededException ex)
             {
@@ -295,7 +296,7 @@ namespace TaskAutomation.Orchestration
         /// Registriert die Job-Instanz in RunningJobInstances, führt den Job inline aus (kein Task.Run)
         /// und wartet auf Abschluss. CancellationToken wird mit dem internen CTS verknüpft.
         /// </summary>
-        public async Task StartJobAsync(Guid id, CancellationToken ct)
+        public async Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null)
         {
             var job = _executor.AllJobs.Values.FirstOrDefault(j => j.Id == id);
             if (job == null)
@@ -326,7 +327,7 @@ namespace TaskAutomation.Orchestration
 
             try
             {
-                await _executor.ExecuteJob(job.Id, linkedCts.Token).ConfigureAwait(false);
+                await _executor.ExecuteJob(job.Id, startContext ?? JobStartContext.Manual, linkedCts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

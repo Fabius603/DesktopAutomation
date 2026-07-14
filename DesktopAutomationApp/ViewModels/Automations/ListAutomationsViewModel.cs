@@ -71,6 +71,7 @@ namespace DesktopAutomationApp.ViewModels
             _ = InitialLoadAsync();
         }
 
+
         private void OnCultureChanged(object? sender, EventArgs e)
         {
             foreach (var automation in Items)
@@ -92,7 +93,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private async Task InitialLoadAsync() => await RefreshAllAsync();
 
-        private async Task RefreshAllAsync()
+        public async Task RefreshAllAsync()
         {
             var automations = await _automationAppService.LoadAllAsync();
             Items.Clear();

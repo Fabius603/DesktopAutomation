@@ -1595,6 +1595,7 @@
 
         <!-- Step-Beschreibung -->
         <StackPanel Grid.Row="2" Margin="0,0,0,12">
+            <TextBlock Text="{Binding ValidationError}" Foreground="#FFD13438" TextWrapping="Wrap" Margin="0,0,0,8"/>
             <Border Background="{DynamicResource App.Brush.AccentSubtle}"
                     BorderBrush="{DynamicResource App.Brush.Accent}"
                     BorderThickness="1" CornerRadius="6" Padding="12,9">

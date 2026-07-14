@@ -50,7 +50,7 @@ namespace DesktopAutomationApp.ViewModels
             System.Diagnostics.Process.Start("explorer.exe", _downloader.ModelFolderPath);
         }
 
-        private async Task RefreshModelsAsync()
+        public async Task RefreshModelsAsync()
         {
             try
             {

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Infrastructure;
 using DesktopAutomationApp.Models;
@@ -20,6 +21,7 @@ namespace DesktopAutomationApp.ViewModels
     {
         private object? _currentContent;
         private string _currentContentName = "—";
+        private string _activeNavigationKey = "StartViewModel";
 
         private readonly IViewModelFactory _viewModelFactory;
         private readonly IJobDispatcher _jobDispatcher;
@@ -31,6 +33,9 @@ namespace DesktopAutomationApp.ViewModels
         private string _updateUrl = string.Empty;
         private bool _isUpdating;
         private bool _isUpdateReady;
+        private bool _isNavigating;
+        private double _navigationProgress;
+        private CancellationTokenSource? _navigationProgressCancellation;
         private int _updateProgress;
         private string _updateStatusText = string.Empty;
 
@@ -88,6 +93,9 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListAutomationsViewModel _listAutomations;
         private readonly YoloDownloadsViewModel _yoloDownloads;
         private readonly ExecutionLogsViewModel _executionLogs;
+        private readonly LogsHomeViewModel _logsHome;
+        private readonly AutomationLogsViewModel _automationLogs;
+        private readonly ApplicationLogsViewModel _applicationLogs;
         private readonly SettingsViewModel _settings;
 
         public object? CurrentContent
@@ -98,6 +106,7 @@ namespace DesktopAutomationApp.ViewModels
                 var old = _currentContent;
                 SetProperty(ref _currentContent, value);
                 CurrentContentName = value?.GetType().Name ?? "—";
+                ActiveNavigationKey = GetNavigationKey(value);
                 if (old is IDisposable disposable
                     && !ReferenceEquals(old, value)
                     && !IsPersistedViewModel(old))
@@ -118,6 +127,9 @@ namespace DesktopAutomationApp.ViewModels
             || ReferenceEquals(vm, _listAutomations)
             || ReferenceEquals(vm, _yoloDownloads)
             || ReferenceEquals(vm, _executionLogs)
+            || ReferenceEquals(vm, _logsHome)
+            || ReferenceEquals(vm, _automationLogs)
+            || ReferenceEquals(vm, _applicationLogs)
             || ReferenceEquals(vm, _settings);
 
         public string CurrentContentName
@@ -146,6 +158,9 @@ namespace DesktopAutomationApp.ViewModels
             ListAutomationsViewModel listAutomationsViewModel,
             YoloDownloadsViewModel yoloDownloadsViewModel,
             ExecutionLogsViewModel executionLogsViewModel,
+            LogsHomeViewModel logsHomeViewModel,
+            AutomationLogsViewModel automationLogsViewModel,
+            ApplicationLogsViewModel applicationLogsViewModel,
             SettingsViewModel settingsViewModel)
         {
             _viewModelFactory = viewModelFactory;
@@ -168,6 +183,9 @@ namespace DesktopAutomationApp.ViewModels
             _listAutomations = listAutomationsViewModel;
             _yoloDownloads = yoloDownloadsViewModel;
             _executionLogs = executionLogsViewModel;
+            _logsHome = logsHomeViewModel;
+            _automationLogs = automationLogsViewModel;
+            _applicationLogs = applicationLogsViewModel;
             _settings = settingsViewModel;
 
             // Events für Job-Fehler abonnieren
@@ -183,13 +201,17 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Automationsliste in die Details:
             _listAutomations.RequestOpenAutomation += OpenAutomationDetails;
 
-            ShowStart         = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _start; _start.RefreshCommand.Execute(null); } });
-            ShowListMakros    = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listMakros; _listMakros.RefreshCommand.Execute(null); } });
-            ShowListJobs      = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listJobs;   _listJobs.RefreshCommand.Execute(null);   } });
-            ShowListAutomations = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _listAutomations; _listAutomations.RefreshCommand.Execute(null); } });
-            ShowYoloDownloads = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _yoloDownloads; });
-            ShowExecutionLogs = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) { CurrentContent = _executionLogs; _executionLogs.RefreshCommand.Execute(null); } });
-            ShowSettings = new RelayCommand(async () => { if (await CheckNavigationGuardAsync()) CurrentContent = _settings; });
+            ShowStart         = new RelayCommand(async () => await NavigateAsync(_start, _start.RefreshAsync));
+            ShowListMakros    = new RelayCommand(async () => await NavigateAsync(_listMakros, _listMakros.RefreshAsync));
+            ShowListJobs      = new RelayCommand(async () => await NavigateAsync(_listJobs, _listJobs.RefreshAsync));
+            ShowListAutomations = new RelayCommand(async () => await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync));
+            ShowYoloDownloads = new RelayCommand(async () => await NavigateAsync(_yoloDownloads, _yoloDownloads.RefreshModelsAsync));
+            _logsHome.RequestOpen += OpenLogPage;
+            _executionLogs.RequestBack += OpenLogsHome;
+            _automationLogs.RequestBack += OpenLogsHome;
+            _applicationLogs.RequestBack += OpenLogsHome;
+            ShowExecutionLogs = new RelayCommand(async () => await NavigateAsync(_logsHome));
+            ShowSettings = new RelayCommand(async () => await NavigateAsync(_settings));
             StopAllJobsCommand = new RelayCommand(() =>
             {
                 _jobDispatcher.CancelAllJobs();
@@ -261,6 +283,82 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        public bool IsNavigating
+        {
+            get => _isNavigating;
+            private set => SetProperty(ref _isNavigating, value);
+        }
+
+        public double NavigationProgress
+        {
+            get => _navigationProgress;
+            private set => SetProperty(ref _navigationProgress, value);
+        }
+
+        private void StartNavigationProgress()
+        {
+            _navigationProgressCancellation?.Cancel();
+            _navigationProgressCancellation?.Dispose();
+            _navigationProgressCancellation = new CancellationTokenSource();
+
+            NavigationProgress = 0;
+            IsNavigating = true;
+            _ = AnimateNavigationProgressAsync(_navigationProgressCancellation.Token);
+        }
+
+        private async Task AnimateNavigationProgressAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Anfangs schnell, danach zunehmend langsamer. Bei 92 % wird auf den
+                // wirklichen Abschluss gewartet, damit der Balken niemals zu früh fertig ist.
+                while (NavigationProgress < 92)
+                {
+                    await Task.Delay(70, cancellationToken);
+                    var remaining = 92 - NavigationProgress;
+                    NavigationProgress = Math.Min(92, NavigationProgress + Math.Max(0.5, remaining * 0.09));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Der echte Ladevorgang ist fertig; CompleteNavigationProgressAsync übernimmt.
+            }
+        }
+
+        private async Task CompleteNavigationProgressAsync()
+        {
+            _navigationProgressCancellation?.Cancel();
+
+            // Den Rest sichtbar und weich bis ganz nach rechts auffüllen.
+            var start = NavigationProgress;
+            for (var step = 1; step <= 5; step++)
+            {
+                NavigationProgress = start + (100 - start) * step / 5d;
+                await Task.Delay(24);
+            }
+
+            IsNavigating = false;
+        }
+
+        /// <summary>Sidebar-Gruppe der aktuellen Seite. Detailseiten behalten die Gruppe ihrer übergeordneten Liste.</summary>
+        public string ActiveNavigationKey
+        {
+            get => _activeNavigationKey;
+            private set => SetProperty(ref _activeNavigationKey, value);
+        }
+
+        private static string GetNavigationKey(object? content) => content switch
+        {
+            StartViewModel => nameof(StartViewModel),
+            ListMakrosViewModel or MakroStepsViewModel => nameof(ListMakrosViewModel),
+            ListJobsViewModel or JobStepsViewModel => nameof(ListJobsViewModel),
+            ListAutomationsViewModel or AutomationDetailViewModel => nameof(ListAutomationsViewModel),
+            YoloDownloadsViewModel => nameof(YoloDownloadsViewModel),
+            LogsHomeViewModel or ExecutionLogsViewModel or AutomationLogsViewModel or ApplicationLogsViewModel => nameof(ExecutionLogsViewModel),
+            SettingsViewModel => nameof(SettingsViewModel),
+            _ => string.Empty
+        };
+
         public bool PrepareUpdateAndRestart()
         {
             try
@@ -275,45 +373,109 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         private void OpenJobDetails(Job job)
+            => _ = OpenJobDetailsAsync(job);
+
+        private async Task OpenJobDetailsAsync(Job job)
         {
-            var detailsVm = _viewModelFactory.CreateJobStepsViewModel(job);
-            detailsVm.RequestBack += async () =>
+            if (IsNavigating || !await CheckNavigationGuardAsync()) return;
+            StartNavigationProgress();
+            try
             {
-                if (await CheckNavigationGuardAsync())
+                await Dispatcher.Yield(DispatcherPriority.Render);
+                var detailsVm = _viewModelFactory.CreateJobStepsViewModel(job);
+                detailsVm.RequestBack += async () =>
                 {
-                    CurrentContent = _listJobs;
-                    _listJobs.RefreshCommand.Execute(null);
-                }
-            };
-            CurrentContent = detailsVm;
+                    await NavigateAsync(_listJobs, _listJobs.RefreshAsync);
+                };
+                CurrentContent = detailsVm;
+            }
+            finally
+            {
+                await CompleteNavigationProgressAsync();
+            }
         }
 
         private void OpenMakroDetails(Makro makro)
+            => _ = OpenMakroDetailsAsync(makro);
+
+        private async Task OpenMakroDetailsAsync(Makro makro)
         {
-            var detailsVm = _viewModelFactory.CreateMakroStepsViewModel(makro);
-            detailsVm.RequestBack += async () =>
+            if (IsNavigating || !await CheckNavigationGuardAsync()) return;
+            StartNavigationProgress();
+            try
             {
-                if (await CheckNavigationGuardAsync())
+                await Dispatcher.Yield(DispatcherPriority.Render);
+                var detailsVm = _viewModelFactory.CreateMakroStepsViewModel(makro);
+                detailsVm.RequestBack += async () =>
                 {
-                    CurrentContent = _listMakros;
-                    _listMakros.RefreshCommand.Execute(null);
-                }
-            };
-            CurrentContent = detailsVm;
+                    await NavigateAsync(_listMakros, _listMakros.RefreshAsync);
+                };
+                CurrentContent = detailsVm;
+            }
+            finally
+            {
+                await CompleteNavigationProgressAsync();
+            }
         }
 
         private void OpenAutomationDetails(EditableAutomation automation)
+            => _ = OpenAutomationDetailsAsync(automation);
+
+        private async Task OpenAutomationDetailsAsync(EditableAutomation automation)
         {
-            var detailsVm = _viewModelFactory.CreateAutomationDetailViewModel(automation);
-            detailsVm.RequestBack += async () =>
+            if (IsNavigating || !await CheckNavigationGuardAsync()) return;
+            StartNavigationProgress();
+            try
             {
-                if (await CheckNavigationGuardAsync())
+                await Dispatcher.Yield(DispatcherPriority.Render);
+                var detailsVm = _viewModelFactory.CreateAutomationDetailViewModel(automation);
+                detailsVm.RequestBack += async () =>
                 {
-                    CurrentContent = _listAutomations;
-                    _listAutomations.RefreshCommand.Execute(null);
-                }
-            };
-            CurrentContent = detailsVm;
+                    await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync);
+                };
+                CurrentContent = detailsVm;
+            }
+            finally
+            {
+                await CompleteNavigationProgressAsync();
+            }
+        }
+
+        private void OpenLogPage(LogPageKind page) => _ = OpenLogPageAsync(page);
+
+        private void OpenLogsHome() => _ = NavigateAsync(_logsHome);
+
+        private async Task OpenLogPageAsync(LogPageKind page)
+        {
+            switch (page)
+            {
+                case LogPageKind.Jobs:
+                    await NavigateAsync(_executionLogs, _executionLogs.RefreshAsync);
+                    break;
+                case LogPageKind.Automations:
+                    await NavigateAsync(_automationLogs, _automationLogs.RefreshAsync);
+                    break;
+                case LogPageKind.Application:
+                    await NavigateAsync(_applicationLogs, _applicationLogs.RefreshAsync);
+                    break;
+            }
+        }
+
+        private async Task NavigateAsync(object target, Func<Task>? prepareAsync = null)
+        {
+            if (IsNavigating || !await CheckNavigationGuardAsync()) return;
+            StartNavigationProgress();
+            try
+            {
+                await Dispatcher.Yield(DispatcherPriority.Render);
+                if (prepareAsync != null) await prepareAsync();
+                CurrentContent = target;
+                await Dispatcher.Yield(DispatcherPriority.Render);
+            }
+            finally
+            {
+                await CompleteNavigationProgressAsync();
+            }
         }
 
         private async Task<bool> CheckNavigationGuardAsync()

@@ -34,7 +34,10 @@ namespace TaskAutomation.Logging
             string name,
             string filePath,
             DateTimeOffset? startedAt = null,
-            DateTimeOffset? endedAt = null)
+            DateTimeOffset? endedAt = null,
+            long executionNumber = 0,
+            JobStartContext? startContext = null,
+            long? durationMs = null)
         {
             Id = id;
             Kind = kind;
@@ -43,6 +46,9 @@ namespace TaskAutomation.Logging
             FilePath = filePath;
             StartedAt = startedAt ?? DateTimeOffset.Now;
             EndedAt = endedAt;
+            ExecutionNumber = executionNumber;
+            StartContext = startContext ?? JobStartContext.Unknown;
+            DurationMs = durationMs;
         }
 
         public Guid Id { get; }
@@ -52,6 +58,9 @@ namespace TaskAutomation.Logging
         public string FilePath { get; }
         public DateTimeOffset StartedAt { get; }
         public DateTimeOffset? EndedAt { get; internal set; }
+        public long ExecutionNumber { get; }
+        public JobStartContext StartContext { get; }
+        public long? DurationMs { get; internal set; }
         public bool IsRunning => EndedAt is null;
     }
 
@@ -74,7 +83,7 @@ namespace TaskAutomation.Logging
 
         IReadOnlyList<ExecutionLogSession> Sessions { get; }
 
-        ExecutionLogSession BeginJob(Guid jobId, string jobName);
+        ExecutionLogSession BeginJob(Guid jobId, string jobName, JobStartContext? startContext = null);
         void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null);
         void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false);
         IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000);
@@ -90,6 +99,8 @@ namespace TaskAutomation.Logging
         private readonly string _rootDirectory;
         private readonly BlockingCollection<PendingLogWrite> _writeQueue;
         private readonly Thread _writerThread;
+        private readonly string _counterFilePath;
+        private readonly Dictionary<Guid, long> _jobCounters = new();
         private bool _disposed;
         private const int MaxInMemorySessions = 200;
         private const int MaxEntriesPerSession = 3000;
@@ -117,6 +128,8 @@ namespace TaskAutomation.Logging
                 "Logs",
                 "Executions");
             Directory.CreateDirectory(_rootDirectory);
+            _counterFilePath = Path.Combine(_rootDirectory, "job-counters.json");
+            LoadJobCounters();
             _writeQueue = new BlockingCollection<PendingLogWrite>(MaxPendingLogWrites);
             _writerThread = new Thread(WriteLogFiles)
             {
@@ -136,8 +149,8 @@ namespace TaskAutomation.Logging
             }
         }
 
-        public ExecutionLogSession BeginJob(Guid jobId, string jobName)
-            => Begin(ExecutionLogKind.Job, jobId, jobName);
+        public ExecutionLogSession BeginJob(Guid jobId, string jobName, JobStartContext? startContext = null)
+            => Begin(ExecutionLogKind.Job, jobId, jobName, startContext ?? JobStartContext.Unknown);
 
         public void Write(
             ExecutionLogSession session,
@@ -185,6 +198,7 @@ namespace TaskAutomation.Logging
         {
             session.EndedAt = DateTimeOffset.Now;
             var duration = session.EndedAt.Value - session.StartedAt;
+            session.DurationMs = (long)duration.TotalMilliseconds;
             var level = success || cancelled
                 ? ExecutionLogLevel.Information
                 : ExecutionLogLevel.Error;
@@ -200,6 +214,7 @@ namespace TaskAutomation.Logging
                 details,
                 durationMs: (long)duration.TotalMilliseconds);
             SessionChanged?.Invoke(this, session);
+            WriteSessionMetadata(session);
         }
 
         public IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000)
@@ -275,15 +290,25 @@ namespace TaskAutomation.Logging
             }
         }
 
-        private ExecutionLogSession Begin(ExecutionLogKind kind, Guid sourceId, string name)
+        private ExecutionLogSession Begin(ExecutionLogKind kind, Guid sourceId, string name, JobStartContext startContext)
         {
             var sessionId = Guid.NewGuid();
             var directory = Path.Combine(_rootDirectory, kind.ToString());
             Directory.CreateDirectory(directory);
 
             var fileName = $"{DateTime.Now:yyyyMMdd-HHmmss-fff}_{SafeFileName(name)}_{sessionId:N}.log";
-            var session = new ExecutionLogSession(sessionId, kind, sourceId, name, Path.Combine(directory, fileName));
+            long executionNumber;
+            lock (_gate)
+            {
+                executionNumber = _jobCounters.GetValueOrDefault(sourceId) + 1;
+                _jobCounters[sourceId] = executionNumber;
+                SaveJobCountersLocked();
+            }
+            var session = new ExecutionLogSession(
+                sessionId, kind, sourceId, name, Path.Combine(directory, fileName),
+                executionNumber: executionNumber, startContext: startContext);
             File.WriteAllText(session.FilePath, string.Empty, Encoding.UTF8);
+            WriteSessionMetadata(session);
 
             lock (_gate)
             {
@@ -293,12 +318,31 @@ namespace TaskAutomation.Logging
             }
 
             SessionChanged?.Invoke(this, session);
-            Write(session, ExecutionLogLevel.Information, $"{kind} '{name}' gestartet.", $"SourceId={sourceId}");
+            Write(session, ExecutionLogLevel.Information, $"{kind} '{name}' gestartet.",
+                $"SourceId={sourceId}, Run={executionNumber}, Origin={startContext.Source}, OriginName={startContext.SourceName}");
             return session;
         }
 
         private static ExecutionLogSession? TryCreateSessionFromFile(string filePath)
         {
+            var metadataPath = filePath + ".meta.json";
+            if (File.Exists(metadataPath))
+            {
+                try
+                {
+                    var metadata = JsonSerializer.Deserialize<SessionMetadata>(File.ReadAllText(metadataPath), JsonOptions);
+                    if (metadata != null)
+                    {
+                        return new ExecutionLogSession(
+                            metadata.Id, metadata.Kind, metadata.SourceId, metadata.Name, filePath,
+                            metadata.StartedAt, metadata.EndedAt ?? File.GetLastWriteTime(filePath),
+                            metadata.ExecutionNumber, metadata.StartContext, metadata.DurationMs);
+                    }
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+                catch (JsonException) { }
+            }
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var parts = fileName.Split('_');
             if (parts.Length < 3)
@@ -323,6 +367,45 @@ namespace TaskAutomation.Logging
             // Logs loaded from disk are never current in-memory runs.
             var endedAt = File.GetLastWriteTime(filePath);
             return new ExecutionLogSession(id, ExecutionLogKind.Job, Guid.Empty, name, filePath, startedAt, endedAt);
+        }
+
+        private void LoadJobCounters()
+        {
+            try
+            {
+                if (!File.Exists(_counterFilePath)) return;
+                var stored = JsonSerializer.Deserialize<Dictionary<Guid, long>>(File.ReadAllText(_counterFilePath), JsonOptions);
+                if (stored == null) return;
+                foreach (var pair in stored) _jobCounters[pair.Key] = pair.Value;
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            catch (JsonException) { }
+        }
+
+        private void SaveJobCountersLocked()
+        {
+            try
+            {
+                var temporaryPath = _counterFilePath + ".tmp";
+                File.WriteAllText(temporaryPath, JsonSerializer.Serialize(_jobCounters, JsonOptions), Encoding.UTF8);
+                File.Move(temporaryPath, _counterFilePath, true);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        private static void WriteSessionMetadata(ExecutionLogSession session)
+        {
+            try
+            {
+                var metadata = new SessionMetadata(
+                    session.Id, session.Kind, session.SourceId, session.Name, session.StartedAt,
+                    session.EndedAt, session.ExecutionNumber, session.StartContext, session.DurationMs);
+                File.WriteAllText(session.FilePath + ".meta.json", JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
 
         private static string FormatEntry(ExecutionLogEntry entry)
@@ -537,7 +620,9 @@ namespace TaskAutomation.Logging
         {
             try
             {
+                var metadataPath = file.FullName + ".meta.json";
                 file.Delete();
+                if (File.Exists(metadataPath)) File.Delete(metadataPath);
             }
             catch (IOException)
             {
@@ -652,5 +737,15 @@ namespace TaskAutomation.Logging
         }
 
         private readonly record struct PendingLogWrite(string FilePath, ExecutionLogEntry Entry);
+        private sealed record SessionMetadata(
+            Guid Id,
+            ExecutionLogKind Kind,
+            Guid SourceId,
+            string Name,
+            DateTimeOffset StartedAt,
+            DateTimeOffset? EndedAt,
+            long ExecutionNumber,
+            JobStartContext StartContext,
+            long? DurationMs);
     }
 }

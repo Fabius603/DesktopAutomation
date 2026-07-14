@@ -108,6 +108,17 @@ namespace DesktopAutomationApp.ViewModels
             };
         }
 
+        public bool CanConfirm()
+        {
+            CreateStep();
+            var result = CreatedStep == null ? null : MakroValidation.ValidateCommand(CreatedStep);
+            ValidationError = result == null || result.IsValid ? null : MakroValidation.Describe(result.Error);
+            return result?.IsValid == true;
+        }
+
+        private string? _validationError;
+        public string? ValidationError { get => _validationError; private set { _validationError = value; OnChange(); } }
+
         private async System.Threading.Tasks.Task CaptureKeyAsync()
         {
             if (!ShowKey || IsCapturing) return;

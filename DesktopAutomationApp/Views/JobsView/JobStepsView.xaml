@@ -877,7 +877,7 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Cancel}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -901,6 +901,9 @@
                 <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.Common.Rename}">
                     <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
+                </Button>
+                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFileCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.Logs.OpenFile}">
+                    <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14"/>
                 </Button>
             </StackPanel>
         </DockPanel>
@@ -936,6 +939,18 @@
                         <DataTemplate>
                             <!-- Outer grid: coloured left bar | content -->
                             <Grid>
+                                <Grid.ToolTip>
+                                    <ToolTip Content="{Binding ValidationError}"/>
+                                </Grid.ToolTip>
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                                <Setter Property="Background" Value="#30FF0000"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="4"/>
                                     <ColumnDefinition Width="*"/>

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Jobs
 {
@@ -31,6 +32,7 @@ namespace TaskAutomation.Jobs
         // ── Orchestrierung ─────────────────────────────────────────────────────
         Task ExecuteJob(string jobName, CancellationToken ct = default);
         Task ExecuteJob(Guid   jobId,   CancellationToken ct = default);
+        Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default);
         Task ReloadJobsAsync();
         Task ReloadMakrosAsync();
 

@@ -75,7 +75,7 @@ namespace DesktopAutomationApp.ViewModels
             _dialogService = dialogService;
             _dispatcher = dispatcher;
 
-            RefreshCommand   = new RelayCommand(LoadMakros);
+            RefreshCommand   = new RelayCommand(async () => await RefreshAsync());
             SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
             NewMakroCommand  = new RelayCommand(CreateNewMakro);
             DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
@@ -96,10 +96,11 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
 
-            LoadMakros();
+            _ = RefreshAsync();
         }
 
-        private async void LoadMakros()
+
+        public async Task RefreshAsync()
         {
             await _makroAppService.ReloadAsync();
 

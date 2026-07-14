@@ -12,6 +12,8 @@ using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
+using System.Diagnostics;
+using System.IO;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Localization;
 
@@ -28,6 +30,8 @@ namespace DesktopAutomationApp.ViewModels
         private readonly Stack<List<JobStep>> _undoStack = new();
         private readonly Stack<List<JobStep>> _redoStack = new();
         private List<JobStep> _clipboard  = new();
+        private List<JobStep> _savedSnapshot;
+        private CancellationTokenSource? _validationCts;
 
         /// <summary>All currently selected steps (synced from the view's ListBox.SelectedItems).</summary>
         public List<JobStep> SelectedSteps { get; } = new();
@@ -68,6 +72,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand RenameCommand { get; }
+        public ICommand OpenFileCommand { get; }
         public ICommand AddStepCommand { get; }
         public ICommand EditStepCommand { get; }
         public ICommand MoveStepUpCommand { get; }
@@ -95,6 +100,7 @@ namespace DesktopAutomationApp.ViewModels
             _dispatcher = dispatcher;
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
+            _savedSnapshot = DeepCloneSteps(_steps);
             ResolveConditionDisplayNames();
 
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
@@ -111,6 +117,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnPropertyChanged(nameof(StepsVersion));
                 ResolveConditionDisplayNames();
                 InvalidateAllCommands();
+                ScheduleValidation();
             };
 
             // Initiale Steps abonnieren
@@ -120,6 +127,7 @@ namespace DesktopAutomationApp.ViewModels
             SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await Rename());
+            OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
             AddStepCommand    = new RelayCommand(async () => await AddStep());
             EditStepCommand   = new RelayCommand<JobStep?>(
@@ -150,15 +158,28 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
+            ScheduleValidation();
         }
 
         // ---------- Step property changes ----------
+        private void OpenFileInExplorer()
+            => ShowFileInExplorer(_jobAppService.GetStoragePath(), $"{Job.Id}.json");
+
+        private static void ShowFileInExplorer(string directory, string fileName)
+        {
+            var path = Path.Combine(directory, fileName);
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+        }
+
         private void OnStepPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(JobStep.IsEnabled))
             {
+                JobValidation.RemoveInvalidSourceSelections(_steps);
                 HasUnsavedChanges = true;
                 InvalidateAllCommands();
+                ScheduleValidation();
             }
         }
 
@@ -179,16 +200,28 @@ namespace DesktopAutomationApp.ViewModels
         public void DiscardChanges()
         {
             _steps.Clear();
-            foreach (var s in Job.Steps ?? Enumerable.Empty<JobStep>())
+            foreach (var s in DeepCloneSteps(_savedSnapshot))
                 _steps.Add(s);
+            Job.Steps = DeepCloneSteps(_savedSnapshot);
             HasUnsavedChanges = false;
+            ScheduleValidation();
         }
 
         // ---------- Save ----------
         private async Task Save()
         {
+            JobValidation.RemoveInvalidSourceSelections(_steps);
+            var validation = await Task.Run(() => JobValidation.ValidateJob(new Job { Steps = _steps.ToList() }));
+            ApplyValidation(validation);
+            if (!validation.IsValid)
+            {
+                var errors = validation.Steps.Where(s => !s.IsValid).Select(s => s.Error).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct();
+                MessageBox.Show(string.Join(Environment.NewLine, errors), "Job kann nicht gespeichert werden", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             Job.Steps = _steps.ToList();
             await _jobAppService.SaveJobAsync(Job);
+            _savedSnapshot = DeepCloneSteps(_steps);
             HasUnsavedChanges = false;
         }
 
@@ -535,6 +568,8 @@ namespace DesktopAutomationApp.ViewModels
             _steps.RemoveAt(idx);
             _steps.Insert(newIdx, step);
 
+            JobValidation.RemoveInvalidSourceSelections(_steps);
+
             SelectedStep = step;
             HasUnsavedChanges = true;
             InvalidateAllCommands();
@@ -568,9 +603,37 @@ namespace DesktopAutomationApp.ViewModels
             var step = _steps[from];
             _steps.RemoveAt(from);
             _steps.Insert(to, step);
+            JobValidation.RemoveInvalidSourceSelections(_steps);
             SelectedStep = step;
             HasUnsavedChanges = true;
             InvalidateAllCommands();
+            ScheduleValidation();
+        }
+
+        private void ScheduleValidation()
+        {
+            _validationCts?.Cancel();
+            var cts = _validationCts = new CancellationTokenSource();
+            var snapshot = _steps.ToList();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(120, cts.Token);
+                    var result = JobValidation.ValidateJob(new Job { Steps = snapshot });
+                    if (cts.IsCancellationRequested) return;
+                    await Application.Current.Dispatcher.InvokeAsync(() => ApplyValidation(result));
+                }
+                catch (OperationCanceledException) { }
+            });
+        }
+
+        private static void ApplyValidation(JobValidationResult validation)
+        {
+            foreach (var result in validation.Steps)
+            {
+                result.Step.SetValidationResult(result.IsValid, result.Error);
+            }
         }
 
         private async Task DeleteStepAsync(JobStep? step)
@@ -828,13 +891,14 @@ namespace DesktopAutomationApp.ViewModels
             var sim = new System.Collections.Generic.List<JobStep>(_steps);
             sim.RemoveAt(from);
             sim.Insert(to, step);
-            return !IsValidIfStructure(sim);
+            return !JobValidation.IsIfStructureAllowed(sim);
         }
 
         /// <summary>
         /// Validates that every If-block in <paramref name="steps"/> obeys
         /// If → ElseIf* → Else? → EndIf ordering (no ElseIf after Else, no orphaned markers).
         /// </summary>
+#if false // Fachregel liegt in TaskAutomation.JobValidation.IsIfStructureAllowed.
         private static bool IsValidIfStructure(System.Collections.Generic.IReadOnlyList<JobStep> steps)
         {
             // Each stack entry: true = an Else has already been seen in this block.
@@ -866,6 +930,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             return seenElse.Count == 0; // every If must be closed
         }
+#endif
 
         /// <summary>
         /// Returns the number of currently open (unclosed) If-blocks at the given insert index.
@@ -1001,6 +1066,8 @@ namespace DesktopAutomationApp.ViewModels
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
                 foreach (var step in _steps)
                     step.PropertyChanged -= OnStepPropertyChanged;
+                _validationCts?.Cancel();
+                _validationCts?.Dispose();
             }
             base.Dispose(disposing);
         }

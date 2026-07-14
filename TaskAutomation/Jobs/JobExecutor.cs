@@ -24,6 +24,7 @@ using Common.JsonRepository;
 using ImageDetection.YOLO;
 using TaskAutomation.Events;
 using TaskAutomation.Logging;
+using TaskAutomation.Timing;
 
 namespace TaskAutomation.Jobs
 {
@@ -75,7 +76,6 @@ namespace TaskAutomation.Jobs
             { typeof(KlickOnPoint3DStep),      new KlickOnPoint3DStepHandler()      },
             { typeof(JobExecutionStep),        new JobExecutionStepHandler()        },
             { typeof(YOLODetectionStep),       new YOLOStepHandler()                },
-            { typeof(TimeoutStep),             new TimeoutStepHandler()             },
             { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
             { typeof(StartProcessStep),        new StartProcessStepHandler()        },
             { typeof(FocusProcessStep),         new FocusProcessStepHandler()        },
@@ -109,6 +109,7 @@ namespace TaskAutomation.Jobs
             IDesktopResultOverlay desktopResultOverlay,
             IDesktopCaptureService desktopCaptureService,
             IExecutionLogService executionLogService,
+            IPreciseDelayService preciseDelayService,
             Lazy<IJobLauncher>? lazyLauncher = null)
         {
             _logger               = logger;
@@ -123,9 +124,7 @@ namespace TaskAutomation.Jobs
             _desktopCaptureService = desktopCaptureService;
             _executionLogService = executionLogService;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
-
-            _ = ReloadJobsAsync();
-            _ = ReloadMakrosAsync();
+            _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
 
             _logger.LogInformation(
                 "JobExecutor initialisiert. Jobs: {Jobs}, Makros: {Makros}",
@@ -185,6 +184,9 @@ namespace TaskAutomation.Jobs
             => ExecuteJobAsync(jobName, ct);
 
         public Task ExecuteJob(Guid jobId, CancellationToken ct = default)
+            => ExecuteJob(jobId, JobStartContext.Unknown, ct);
+
+        public Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default)
         {
             var job = AllJobs.Values.FirstOrDefault(j => j.Id == jobId);
             if (job == null)
@@ -194,7 +196,7 @@ namespace TaskAutomation.Jobs
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobId.ToString(), new ArgumentException(errorMessage)));
                 return Task.CompletedTask;
             }
-            return ExecuteJobAsync(job, ct);
+            return ExecuteJobAsync(job, startContext, ct);
         }
 
         private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
@@ -210,10 +212,10 @@ namespace TaskAutomation.Jobs
                     new ArgumentException(errorMessage)));
                 return;
             }
-            await ExecuteJobAsync(job, ct).ConfigureAwait(false);
+            await ExecuteJobAsync(job, JobStartContext.Unknown, ct).ConfigureAwait(false);
         }
 
-        private async Task ExecuteJobAsync(Job job, CancellationToken ct)
+        private async Task ExecuteJobAsync(Job job, JobStartContext startContext, CancellationToken ct)
         {
             if (job == null)
             {
@@ -234,14 +236,14 @@ namespace TaskAutomation.Jobs
 
             CurrentJob = job;
             var jobRunStopwatch = Stopwatch.StartNew();
-            var executionLog = _executionLogService.BeginJob(job.Id, job.Name);
+            var executionLog = _executionLogService.BeginJob(job.Id, job.Name, startContext);
             bool jobCompletedSuccessfully = false;
             bool jobWasCancelled = false;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
             _executionLogService.Write(
                 executionLog,
-                ExecutionLogLevel.Information,
-                "Job-Ausführung gestartet.",
+                ExecutionLogLevel.Debug,
+                "Job vorbereitet.",
                 $"Steps={job.ActiveStepCount}, Repeating={job.Repeating}");
 
             // ── Zyklus-Erkennung ──────────────────────────────────────────────
@@ -314,9 +316,9 @@ namespace TaskAutomation.Jobs
                     ExecuteJob,
                     _desktopCaptureService,
                     executionLog,
-                    launcher == null ? (Func<Guid, Guid>?)null : launcher.StartJob,
+                    launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
-                    launcher == null ? (Func<Guid, CancellationToken, Task>?)null : launcher.StartJobAsync);
+                    launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)));
             }
             catch (OperationCanceledException ex)
             {
@@ -431,6 +433,9 @@ namespace TaskAutomation.Jobs
                         if (step is IfStep ifStep)
                         {
                             bool condMet = parentActive && EvaluateCondition(ifStep.Settings, pipelineCtx.Results);
+                            _executionLogService.Write(executionLog, ExecutionLogLevel.Debug,
+                                condMet ? "If-Bedingung erfüllt." : "If-Bedingung nicht erfüllt.",
+                                stepId: step.Id, stepType: step.GetType().Name);
                             branchStack.Push(new BranchFrame(parentActive, condMet, condMet));
                             continue;
                         }
@@ -473,7 +478,13 @@ namespace TaskAutomation.Jobs
                         }
 
                         // ── Regular step: execute only when current branch is active ──
-                        if (!parentActive) continue;
+                        if (!parentActive)
+                        {
+                            _executionLogService.Write(executionLog, ExecutionLogLevel.Debug,
+                                "Step wegen inaktivem Bedingungszweig übersprungen.",
+                                stepId: step.Id, stepType: step.GetType().Name);
+                            continue;
+                        }
 
                         // ── Disabled step: skip without executing ─────────────────────
                         if (!step.IsEnabled)

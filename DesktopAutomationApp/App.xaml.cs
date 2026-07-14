@@ -35,6 +35,9 @@ using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Settings;
 using DesktopAutomationApp.Theming;
 using Velopack;
+using TaskAutomation.Timing;
+using DesktopAutomationApp.Logging;
+using System.Windows.Threading;
 
 namespace DesktopAutomationApp
 {
@@ -42,6 +45,8 @@ namespace DesktopAutomationApp
     {
         private IHost _host = null!;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
+        private string[] _startupArguments = [];
+        private Task? _backgroundInitializationTask;
 
         [STAThread]
         public static void Main(string[] args)
@@ -49,6 +54,7 @@ namespace DesktopAutomationApp
             VelopackApp.Build().Run();
 
             var app = new App();
+            app._startupArguments = args;
             app.Run();
         }
 
@@ -60,6 +66,7 @@ namespace DesktopAutomationApp
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DesktopAutomation",
                 "Logs");
+            var applicationLogService = new ApplicationLogService(logDirectory);
 
             // Logs must live outside Velopack's replaceable application directory.
             Log.Logger = new LoggerConfiguration()
@@ -67,6 +74,7 @@ namespace DesktopAutomationApp
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.Debug()
+                .WriteTo.Sink(applicationLogService)
                 .WriteTo.File(
                     path: Path.Combine(logDirectory, "desktop-automation-.log"),
                     rollingInterval: RollingInterval.Day,
@@ -79,6 +87,18 @@ namespace DesktopAutomationApp
                 )
                 .CreateLogger();
 
+            AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+                Log.Fatal(eventArgs.ExceptionObject as Exception, "Unbehandelte Ausnahme in der Anwendung.");
+            DispatcherUnhandledException += (_, eventArgs) =>
+            {
+                Log.Fatal(eventArgs.Exception, "Unbehandelte Ausnahme im UI-Thread.");
+            };
+            TaskScheduler.UnobservedTaskException += (_, eventArgs) =>
+            {
+                Log.Error(eventArgs.Exception, "Nicht beobachtete Task-Ausnahme.");
+                eventArgs.SetObserved();
+            };
+
             var options = GetOptions();
 
             _host = Host.CreateDefaultBuilder()
@@ -90,6 +110,7 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<AutomationDefinition>("Configs/Automation", options, a => a.Id.ToString());
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
+                    services.AddSingleton<IPreciseDelayService, WindowsPreciseDelayService>();
                     services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IScriptExecutor, ScriptExecutor>();
@@ -105,16 +126,22 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
+                    services.AddSingleton<IAutomationLogService, AutomationLogService>();
+                    services.AddSingleton<IApplicationLogService>(applicationLogService);
                     services.AddSingleton<IAutomationEngine, AutomationEngine>();
                     services.AddSingleton<IAutomationTriggerProvider, HotkeyAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, TimeAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, ProcessAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, WindowAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, FileSystemAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, SystemAutomationTriggerProvider>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
                     services.AddSingleton<IAutomationApplicationService, AutomationApplicationService>();
                     services.AddSingleton<IDialogService, WpfDialogService>();
                     services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
+                    services.AddSingleton<IWindowsStartupRegistrationService, WindowsStartupRegistrationService>();
                     services.AddSingleton<ILocalizationService>(LocalizationService.Instance);
                     services.AddSingleton<IThemeService, ThemeService>();
                     services.AddSingleton<IViewModelFactory, ViewModelFactory>();
@@ -129,6 +156,9 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
                     services.AddSingleton<ExecutionLogsViewModel>();
+                    services.AddSingleton<LogsHomeViewModel>();
+                    services.AddSingleton<AutomationLogsViewModel>();
+                    services.AddSingleton<ApplicationLogsViewModel>();
                     services.AddSingleton<SettingsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
                     services.AddTransient<AutomationDetailViewModel>();
@@ -140,6 +170,9 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListMakrosView>();
                     services.AddSingleton<YoloDownloadsView>();
                     services.AddSingleton<ExecutionLogsView>();
+                    services.AddSingleton<LogsHomeView>();
+                    services.AddSingleton<AutomationLogsView>();
+                    services.AddSingleton<ApplicationLogsView>();
                 })
                 .Build();
         }
@@ -147,6 +180,10 @@ namespace DesktopAutomationApp
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            Log.Information("Anwendung gestartet. Version: {Version}; Hintergrundstart: {StartInBackground}; Betriebssystem: {OperatingSystem}",
+                typeof(App).Assembly.GetName().Version?.ToString(),
+                _startupArguments.Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase)),
+                Environment.OSVersion.VersionString);
 
             // ThreadPool auf genug Threads vorheizen: verhindert Thread-Injection-Verzögerung (~500 ms/Thread)
             // wenn MaxJobCount Jobs gleichzeitig starten. TP-Threads werden sofort bereitgestellt.
@@ -160,18 +197,26 @@ namespace DesktopAutomationApp
             await preferences.LoadAsync();
             _host.Services.GetRequiredService<ILocalizationService>().SetCulture(preferences.Current.Culture);
             _host.Services.GetRequiredService<IThemeService>().Apply(preferences.Current.ThemeMode, preferences.Current.Accent);
+            try
+            {
+                _host.Services.GetRequiredService<IWindowsStartupRegistrationService>().Apply(
+                    preferences.Current.StartWithWindows,
+                    preferences.Current.StartInBackgroundAtWindowsStartup);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Der Windows-Autostart konnte nicht synchronisiert werden.");
+            }
 
-            await _host.Services.GetRequiredService<IJobApplicationService>().ReloadAsync();
-            await _host.Services.GetRequiredService<IMakroApplicationService>().ReloadAsync();
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
             _ = _host.Services.GetRequiredService<IGlobalHotkeyService>();
-            await _host.Services.GetRequiredService<IAutomationEngine>().StartAsync();
 
             // F10 global: alle Jobs & Makros stoppen (bypass Pause-Zustand)
             var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
             var hotkeyServiceGlobal = _host.Services.GetRequiredService<IGlobalHotkeyService>();
             hotkeyServiceGlobal.EmergencyStopPressed += () =>
             {
+                Log.Warning("Notstopp über F10 ausgelöst.");
                 dispatcher.CancelAllJobs();
                 foreach (var id in dispatcher.RunningMakroIds.ToList())
                     dispatcher.CancelMakro(id);
@@ -182,11 +227,38 @@ namespace DesktopAutomationApp
 
             SetupTrayIcon(mainWindow);
 
-            mainWindow.Show();
+            var startInBackground = _startupArguments.Any(argument =>
+                string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
+            if (!startInBackground)
+                ShowMainWindow(mainWindow);
+
+            // Alles, was nicht für das erste sichtbare Fenster benötigt wird, startet im Hintergrund.
+            // Dadurch blockieren Datei-I/O und die Registrierung der Automation-Trigger nicht mehr die UI.
+            _backgroundInitializationTask = Task.Run(InitializeBackgroundServicesAsync);
+        }
+
+        private async Task InitializeBackgroundServicesAsync()
+        {
+            try
+            {
+                await _host.Services.GetRequiredService<IJobApplicationService>().ReloadAsync().ConfigureAwait(false);
+                await _host.Services.GetRequiredService<IMakroApplicationService>().ReloadAsync().ConfigureAwait(false);
+                await _host.Services.GetRequiredService<IAutomationEngine>().StartAsync().ConfigureAwait(false);
+
+                await Dispatcher.InvokeAsync(
+                        () => _host.Services.GetRequiredService<StartViewModel>().RefreshAsync(),
+                        DispatcherPriority.Background)
+                    .Task.Unwrap();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Die Hintergrundinitialisierung konnte nicht abgeschlossen werden.");
+            }
         }
 
         protected override async void OnExit(ExitEventArgs e)
         {
+            Log.Information("Anwendung wird beendet.");
             _trayIcon?.Dispose();
             _trayIcon = null;
 
@@ -213,6 +285,7 @@ namespace DesktopAutomationApp
             var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem(Loc.Get("Tray.StopAllJobs"));
             stopJobsItem.Click += (_, _) =>
             {
+                Log.Information("Alle Jobs wurden über das Tray-Menü gestoppt.");
                 dispatcher.CancelAllJobs();
             };
             contextMenu.Items.Add(stopJobsItem);
@@ -266,10 +339,21 @@ namespace DesktopAutomationApp
 
         private void ShowMainWindow(MainWindow mainWindow)
         {
-            mainWindow.Show();
             if (mainWindow.WindowState == WindowState.Minimized)
                 mainWindow.WindowState = WindowState.Normal;
+
+            mainWindow.Show();
+            mainWindow.ShowActivated = true;
             mainWindow.Activate();
+
+            // Ein kurzes Topmost-Umschalten stellt sicher, dass Windows das frisch gestartete
+            // Fenster auch vor bereits geöffneten Fenstern platziert.
+            mainWindow.Topmost = true;
+            mainWindow.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+            {
+                mainWindow.Topmost = false;
+                mainWindow.Activate();
+            });
         }
 
         private JsonSerializerOptions GetOptions()

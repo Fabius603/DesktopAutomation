@@ -6,8 +6,8 @@ namespace TaskAutomation.Orchestration
     /// </summary>
     public interface IJobLauncher
     {
-        Guid StartJob(Guid id);
-        Task StartJobAsync(Guid id, CancellationToken ct);
+        Guid StartJob(Guid id, TaskAutomation.Logging.JobStartContext? startContext = null);
+        Task StartJobAsync(Guid id, CancellationToken ct, TaskAutomation.Logging.JobStartContext? startContext = null);
         void CancelJob(Guid instanceId);
     }
 }

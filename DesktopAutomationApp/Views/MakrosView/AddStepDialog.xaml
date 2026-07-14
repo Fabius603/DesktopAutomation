@@ -84,9 +84,12 @@
         </StackPanel>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+        <Grid Grid.Row="2">
+        <TextBlock Text="{Binding ValidationError}" Foreground="#FFD13438" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,180,0"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="{loc:Translate Key=Ui.Common.Cancel}" IsCancel="True" Margin="0,0,8,0" Click="Cancel_Click" Style="{StaticResource ButtonSecondary}"/>
             <Button Content="{Binding ConfirmButtonText}" IsDefault="True" Click="Ok_Click" Style="{StaticResource ButtonPrimary}"/>
         </StackPanel>
+        </Grid>
     </Grid>
 </mah:MetroWindow>

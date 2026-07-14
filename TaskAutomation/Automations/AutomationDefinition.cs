@@ -47,7 +47,10 @@ namespace TaskAutomation.Automations
         Schedule,
         Interval,
         ProcessStarted,
-        ProcessExited
+        ProcessExited,
+        WindowEvent,
+        FileSystemEvent,
+        SystemEvent
     }
 
     [JsonDerivedType(typeof(HotkeyAutomationTrigger), "hotkey")]
@@ -56,6 +59,9 @@ namespace TaskAutomation.Automations
     [JsonDerivedType(typeof(IntervalAutomationTrigger), "interval")]
     [JsonDerivedType(typeof(ProcessStartedAutomationTrigger), "process_started")]
     [JsonDerivedType(typeof(ProcessExitedAutomationTrigger), "process_exited")]
+    [JsonDerivedType(typeof(WindowEventAutomationTrigger), "window_event")]
+    [JsonDerivedType(typeof(FileSystemAutomationTrigger), "file_system_event")]
+    [JsonDerivedType(typeof(SystemEventAutomationTrigger), "system_event")]
     public abstract class AutomationTrigger
     {
         [JsonPropertyName("kind")]
@@ -172,6 +178,86 @@ namespace TaskAutomation.Automations
         public override AutomationTriggerKind Kind => AutomationTriggerKind.ProcessExited;
 
         public override string GetDisplayText() => FormatProcessText("App schließt");
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum WindowAutomationEventKind
+    {
+        Opened,
+        Closed,
+        Focused,
+        TitleChanged
+    }
+
+    public sealed class WindowEventAutomationTrigger : AutomationTrigger
+    {
+        public override AutomationTriggerKind Kind => AutomationTriggerKind.WindowEvent;
+
+        [JsonPropertyName("event_kind")]
+        public WindowAutomationEventKind EventKind { get; set; } = WindowAutomationEventKind.Opened;
+
+        [JsonPropertyName("process_name")]
+        public string ProcessName { get; set; } = string.Empty;
+
+        [JsonPropertyName("window_title_contains")]
+        public string WindowTitleContains { get; set; } = string.Empty;
+
+        [JsonPropertyName("delay_after_event")]
+        public TimeSpan DelayAfterEvent { get; set; } = TimeSpan.Zero;
+
+        public override string GetDisplayText() => $"Fenster {EventKind}: {ProcessName} {WindowTitleContains}".Trim();
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum FileSystemAutomationEventKind
+    {
+        Created,
+        Changed,
+        Deleted,
+        Renamed
+    }
+
+    public sealed class FileSystemAutomationTrigger : AutomationTrigger
+    {
+        public override AutomationTriggerKind Kind => AutomationTriggerKind.FileSystemEvent;
+
+        [JsonPropertyName("event_kind")]
+        public FileSystemAutomationEventKind EventKind { get; set; } = FileSystemAutomationEventKind.Created;
+
+        [JsonPropertyName("directory_path")]
+        public string DirectoryPath { get; set; } = string.Empty;
+
+        [JsonPropertyName("filter")]
+        public string Filter { get; set; } = "*.*";
+
+        [JsonPropertyName("include_subdirectories")]
+        public bool IncludeSubdirectories { get; set; }
+
+        [JsonPropertyName("wait_until_ready")]
+        public bool WaitUntilReady { get; set; } = true;
+
+        public override string GetDisplayText() => $"{EventKind}: {DirectoryPath} ({Filter})";
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum SystemAutomationEventKind
+    {
+        SessionLocked,
+        SessionUnlocked,
+        UserLogoff,
+        SystemShutdown,
+        Suspend,
+        Resume
+    }
+
+    public sealed class SystemEventAutomationTrigger : AutomationTrigger
+    {
+        public override AutomationTriggerKind Kind => AutomationTriggerKind.SystemEvent;
+
+        [JsonPropertyName("event_kind")]
+        public SystemAutomationEventKind EventKind { get; set; } = SystemAutomationEventKind.SessionLocked;
+
+        public override string GetDisplayText() => EventKind.ToString();
     }
 
     public sealed class AutomationAction

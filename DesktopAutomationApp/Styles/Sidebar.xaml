@@ -58,7 +58,7 @@
             <DataTrigger Value="True">
                 <DataTrigger.Binding>
                     <MultiBinding Converter="{StaticResource EqualityConverter}">
-                        <Binding Path="DataContext.CurrentContentName"
+                        <Binding Path="DataContext.ActiveNavigationKey"
                                  RelativeSource="{RelativeSource AncestorType=Window}"/>
                         <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
                     </MultiBinding>

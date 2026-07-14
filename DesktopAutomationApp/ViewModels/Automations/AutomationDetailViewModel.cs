@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Windows.Data;
 using System.Windows.Input;
 using DesktopAutomation.Application.Interfaces;
@@ -35,6 +37,9 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<AutomationTriggerKind> TriggerKinds { get; } = new();
         public ObservableCollection<AutomationAlreadyRunningBehavior> RunningBehaviors { get; } = new();
         public ObservableCollection<IntervalUnit> IntervalUnits { get; } = new();
+        public ObservableCollection<WindowAutomationEventKind> WindowEventKinds { get; } = new();
+        public ObservableCollection<FileSystemAutomationEventKind> FileSystemEventKinds { get; } = new();
+        public ObservableCollection<SystemAutomationEventKind> SystemEventKinds { get; } = new();
         public ObservableCollection<ActionItem> Actions { get; } = new();
         public ListCollectionView ActionsView { get; }
 
@@ -61,6 +66,12 @@ namespace DesktopAutomationApp.ViewModels
 
                     EditedAutomation.Action.Name = value.Name;
                     OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
+                }
+                else
+                {
+                    EditedAutomation.Action.JobId = null;
+                    EditedAutomation.Action.MakroId = null;
+                    EditedAutomation.Action.Name = string.Empty;
                 }
 
                 OnPropertyChanged();
@@ -93,7 +104,9 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand RenameCommand { get; }
+        public ICommand OpenFileCommand { get; }
         public ICommand CaptureHotkeyCommand { get; }
+        public ICommand BrowseFileSystemFolderCommand { get; }
 
         public event Action? RequestBack;
 
@@ -120,6 +133,12 @@ namespace DesktopAutomationApp.ViewModels
                 TriggerKinds.Add(kind);
             foreach (IntervalUnit unit in Enum.GetValues(typeof(IntervalUnit)))
                 IntervalUnits.Add(unit);
+            foreach (WindowAutomationEventKind kind in Enum.GetValues(typeof(WindowAutomationEventKind)))
+                WindowEventKinds.Add(kind);
+            foreach (FileSystemAutomationEventKind kind in Enum.GetValues(typeof(FileSystemAutomationEventKind)))
+                FileSystemEventKinds.Add(kind);
+            foreach (SystemAutomationEventKind kind in Enum.GetValues(typeof(SystemAutomationEventKind)))
+                SystemEventKinds.Add(kind);
 
             foreach (AutomationAlreadyRunningBehavior behavior in Enum.GetValues(typeof(AutomationAlreadyRunningBehavior)))
                 RunningBehaviors.Add(behavior);
@@ -131,7 +150,9 @@ namespace DesktopAutomationApp.ViewModels
             SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await RenameAsync());
+            OpenFileCommand = new RelayCommand(OpenFileInExplorer);
             CaptureHotkeyCommand = new RelayCommand(async () => await CaptureHotkeyAsync(), () => !IsCapturingHotkey);
+            BrowseFileSystemFolderCommand = new RelayCommand(BrowseFileSystemFolder);
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
             EditedAutomation.Action.PropertyChanged += OnEditedActionChanged;
@@ -140,6 +161,14 @@ namespace DesktopAutomationApp.ViewModels
             LoadActions();
             ResolveSelectedAction();
             HasUnsavedChanges = _isNew;
+        }
+
+        private void OpenFileInExplorer()
+        {
+            var directory = _automationAppService.GetStoragePath();
+            var path = Path.Combine(directory, $"{EditedAutomation.Id}.json");
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
         }
 
         private void LoadActions()
@@ -202,16 +231,29 @@ namespace DesktopAutomationApp.ViewModels
             HasUnsavedChanges = true;
         }
 
+        private void BrowseFileSystemFolder()
+        {
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = Loc.Get("Automation.FileSystem.SelectFolder"),
+                UseDescriptionForTitle = true,
+                SelectedPath = Environment.ExpandEnvironmentVariables(EditedAutomation.FileSystemPath)
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                EditedAutomation.FileSystemPath = dialog.SelectedPath;
+        }
+
         public async Task SaveAsync()
         {
-            var error = ValidateEdited();
-            if (error != null)
+            var automation = EditedAutomation.ToDomain();
+            var validation = AutomationValidation.Validate(automation);
+            if (!validation.IsValid)
             {
-                _dialogService.ShowError(error, Loc.Get("Validation.Title"));
+                _dialogService.ShowError(LocalizeValidationError(validation.Error), Loc.Get("Validation.Title"));
                 return;
             }
 
-            await _automationAppService.SaveAsync(EditedAutomation.ToDomain());
+            await _automationAppService.SaveAsync(automation);
             _log.LogInformation("Automation gespeichert: {Name}", EditedAutomation.Name);
             HasUnsavedChanges = false;
         }
@@ -223,6 +265,23 @@ namespace DesktopAutomationApp.ViewModels
             HasUnsavedChanges = false;
         }
 
+        private static string LocalizeValidationError(AutomationValidationError error) => error switch
+        {
+            AutomationValidationError.NameRequired => Loc.Get("Validation.NameRequired"),
+            AutomationValidationError.ActionRequired => Loc.Get("Validation.ActionRequired"),
+            AutomationValidationError.HotkeyRequired => Loc.Get("Validation.HotkeyRequired"),
+            AutomationValidationError.ProcessNameRequired => Loc.Get("Validation.ProcessNameRequired"),
+            AutomationValidationError.WindowFilterRequired => Loc.Get("Validation.WindowFilterRequired"),
+            AutomationValidationError.FolderRequired => Loc.Get("Validation.FolderRequired"),
+            AutomationValidationError.FolderNotFound => Loc.Get("Validation.FolderNotFound"),
+            AutomationValidationError.FileFilterRequired => Loc.Get("Validation.FileFilterRequired"),
+            AutomationValidationError.WeekdayRequired => Loc.Get("Validation.WeekdayRequired"),
+            AutomationValidationError.IntervalPositive => Loc.Get("Validation.IntervalPositive"),
+            AutomationValidationError.ActiveWindowPair => Loc.Get("Validation.ActiveWindowPair"),
+            _ => Loc.Get("Validation.Title")
+        };
+
+#if false // Fachregeln liegen in TaskAutomation.AutomationValidation.
         private string? ValidateEdited()
         {
             if (string.IsNullOrWhiteSpace(EditedAutomation.Name)) return Loc.Get("Validation.NameRequired");
@@ -231,6 +290,20 @@ namespace DesktopAutomationApp.ViewModels
                 return Loc.Get("Validation.HotkeyRequired");
             if (EditedAutomation.IsProcessTrigger && string.IsNullOrWhiteSpace(EditedAutomation.ProcessName))
                 return Loc.Get("Validation.ProcessNameRequired");
+            if (EditedAutomation.IsWindowEventTrigger
+                && string.IsNullOrWhiteSpace(EditedAutomation.ProcessName)
+                && string.IsNullOrWhiteSpace(EditedAutomation.WindowTitleContains))
+                return Loc.Get("Validation.WindowFilterRequired");
+            if (EditedAutomation.IsFileSystemEventTrigger)
+            {
+                if (string.IsNullOrWhiteSpace(EditedAutomation.FileSystemPath))
+                    return Loc.Get("Validation.FolderRequired");
+                var path = Environment.ExpandEnvironmentVariables(EditedAutomation.FileSystemPath.Trim());
+                if (!Directory.Exists(path))
+                    return Loc.Get("Validation.FolderNotFound");
+                if (string.IsNullOrWhiteSpace(EditedAutomation.FileSystemFilter))
+                    return Loc.Get("Validation.FileFilterRequired");
+            }
             if (EditedAutomation.IsScheduleTrigger && !(EditedAutomation.Monday || EditedAutomation.Tuesday
                 || EditedAutomation.Wednesday || EditedAutomation.Thursday || EditedAutomation.Friday
                 || EditedAutomation.Saturday || EditedAutomation.Sunday))
@@ -241,6 +314,7 @@ namespace DesktopAutomationApp.ViewModels
                 return Loc.Get("Validation.ActiveWindowPair");
             return null;
         }
+#endif
 
         private void OnEditedAutomationChanged(object? sender, PropertyChangedEventArgs e)
         {
@@ -292,6 +366,13 @@ namespace DesktopAutomationApp.ViewModels
             target.ProcessName = source.ProcessName;
             target.WindowTitleContains = source.WindowTitleContains;
             target.DelayAfterEventSeconds = source.DelayAfterEventSeconds;
+            target.WindowEventKind = source.WindowEventKind;
+            target.FileSystemEventKind = source.FileSystemEventKind;
+            target.FileSystemPath = source.FileSystemPath;
+            target.FileSystemFilter = source.FileSystemFilter;
+            target.IncludeSubdirectories = source.IncludeSubdirectories;
+            target.WaitUntilFileReady = source.WaitUntilFileReady;
+            target.SystemEventKind = source.SystemEventKind;
             target.Action.Name = source.Action.Name;
             target.Action.JobId = source.Action.JobId;
             target.Action.MakroId = source.Action.MakroId;

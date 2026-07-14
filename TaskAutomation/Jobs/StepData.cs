@@ -57,6 +57,28 @@ namespace TaskAutomation.Jobs
         /// Bei Flow-Control-Steps (If/Else/EndIf) ist das nicht erlaubt.</summary>
         [JsonIgnore]
         public virtual bool CanBeDisabled => true;
+
+        private bool _isValid = true;
+        [JsonIgnore]
+        public bool IsValid
+        {
+            get => _isValid;
+            internal set { if (_isValid != value) { _isValid = value; OnPropertyChanged(); } }
+        }
+
+        private string? _validationError;
+        [JsonIgnore]
+        public string? ValidationError
+        {
+            get => _validationError;
+            internal set { if (_validationError != value) { _validationError = value; OnPropertyChanged(); } }
+        }
+
+        public void SetValidationResult(bool isValid, string? error)
+        {
+            ValidationError = error;
+            IsValid = isValid;
+        }
     }
 
     // ---- TemplateMatching ----

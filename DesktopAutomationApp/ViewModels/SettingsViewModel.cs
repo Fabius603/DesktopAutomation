@@ -3,6 +3,7 @@ using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Settings;
 using DesktopAutomationApp.Theming;
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
 
 namespace DesktopAutomationApp.ViewModels;
 
@@ -11,10 +12,14 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IUserPreferencesService _preferences;
     private readonly ILocalizationService _localization;
     private readonly IThemeService _theme;
+    private readonly IWindowsStartupRegistrationService _startupRegistration;
+    private readonly ILogger<SettingsViewModel> _log;
     private bool _isLoading = true;
     private LanguageOption? _selectedLanguage;
     private ThemeOption? _selectedTheme;
     private AccentOption? _selectedAccent;
+    private bool _startWithWindows;
+    private bool _startInBackgroundAtWindowsStartup;
 
     public ObservableCollection<LanguageOption> Languages { get; } =
     [
@@ -56,18 +61,36 @@ public sealed class SettingsViewModel : ViewModelBase
         set { if (SetAndChanged(ref _selectedAccent, value)) _ = ApplyAsync(); }
     }
 
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set { if (SetAndChanged(ref _startWithWindows, value)) _ = ApplyAsync(); }
+    }
+
+    public bool StartInBackgroundAtWindowsStartup
+    {
+        get => _startInBackgroundAtWindowsStartup;
+        set { if (SetAndChanged(ref _startInBackgroundAtWindowsStartup, value)) _ = ApplyAsync(); }
+    }
+
     public SettingsViewModel(
         IUserPreferencesService preferences,
         ILocalizationService localization,
-        IThemeService theme)
+        IThemeService theme,
+        IWindowsStartupRegistrationService startupRegistration,
+        ILogger<SettingsViewModel> log)
     {
         _preferences = preferences;
         _localization = localization;
         _theme = theme;
+        _startupRegistration = startupRegistration;
+        _log = log;
         var current = preferences.Current;
         _selectedLanguage = Languages.FirstOrDefault(x => x.CultureName == current.Culture) ?? Languages[0];
         _selectedTheme = Themes.FirstOrDefault(x => x.Mode == current.ThemeMode) ?? Themes[0];
         _selectedAccent = Accents.FirstOrDefault(x => x.Name == current.Accent) ?? Accents[0];
+        _startWithWindows = current.StartWithWindows;
+        _startInBackgroundAtWindowsStartup = current.StartInBackgroundAtWindowsStartup;
         _localization.CultureChanged += (_, _) =>
         {
             foreach (var option in Themes) option.Refresh();
@@ -90,9 +113,29 @@ public sealed class SettingsViewModel : ViewModelBase
         current.Culture = SelectedLanguage.CultureName;
         current.ThemeMode = SelectedTheme.Mode;
         current.Accent = SelectedAccent.Name;
+        current.StartWithWindows = StartWithWindows;
+        current.StartInBackgroundAtWindowsStartup = StartInBackgroundAtWindowsStartup;
         _localization.SetCulture(current.Culture);
         _theme.Apply(current.ThemeMode, current.Accent);
-        await _preferences.SaveAsync();
+        try
+        {
+            await _preferences.SaveAsync();
+            _log.LogInformation("Einstellungen gespeichert: Sprache {Culture}, Theme {Theme}, Akzent {Accent}, Windows-Autostart {StartWithWindows}, Hintergrundstart {StartInBackground}.",
+                current.Culture, current.ThemeMode, current.Accent, current.StartWithWindows, current.StartInBackgroundAtWindowsStartup);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Die Einstellungen konnten nicht gespeichert werden.");
+        }
+
+        try
+        {
+            _startupRegistration.Apply(current.StartWithWindows, current.StartInBackgroundAtWindowsStartup);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Der Windows-Autostart konnte nicht aktualisiert werden.");
+        }
     }
 }
 

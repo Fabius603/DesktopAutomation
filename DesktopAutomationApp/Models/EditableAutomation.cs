@@ -42,6 +42,13 @@ namespace DesktopAutomationApp.Models
         private string _processName = string.Empty;
         private string _windowTitleContains = string.Empty;
         private int _delayAfterEventSeconds;
+        private WindowAutomationEventKind _windowEventKind = WindowAutomationEventKind.Opened;
+        private FileSystemAutomationEventKind _fileSystemEventKind = FileSystemAutomationEventKind.Created;
+        private string _fileSystemPath = string.Empty;
+        private string _fileSystemFilter = "*.*";
+        private bool _includeSubdirectories;
+        private bool _waitUntilFileReady = true;
+        private SystemAutomationEventKind _systemEventKind = SystemAutomationEventKind.SessionLocked;
         private EditableAutomationAction _action = new();
         private AutomationAlreadyRunningBehavior _alreadyRunningBehavior = AutomationAlreadyRunningBehavior.Ignore;
         private int _cooldownSeconds;
@@ -71,6 +78,9 @@ namespace DesktopAutomationApp.Models
                 OnPropertyChanged(nameof(IsScheduleTrigger));
                 OnPropertyChanged(nameof(IsIntervalTrigger));
                 OnPropertyChanged(nameof(IsProcessTrigger));
+                OnPropertyChanged(nameof(IsWindowEventTrigger));
+                OnPropertyChanged(nameof(IsFileSystemEventTrigger));
+                OnPropertyChanged(nameof(IsSystemEventTrigger));
                 OnPropertyChanged(nameof(DisplayTrigger));
             }
         }
@@ -80,6 +90,9 @@ namespace DesktopAutomationApp.Models
         public bool IsScheduleTrigger => TriggerKind == AutomationTriggerKind.Schedule;
         public bool IsIntervalTrigger => TriggerKind == AutomationTriggerKind.Interval;
         public bool IsProcessTrigger => TriggerKind is AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited;
+        public bool IsWindowEventTrigger => TriggerKind == AutomationTriggerKind.WindowEvent;
+        public bool IsFileSystemEventTrigger => TriggerKind == AutomationTriggerKind.FileSystemEvent;
+        public bool IsSystemEventTrigger => TriggerKind == AutomationTriggerKind.SystemEvent;
 
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _virtualKeyCode; set { if (_virtualKeyCode != value) { _virtualKeyCode = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
@@ -98,6 +111,13 @@ namespace DesktopAutomationApp.Models
         public string ProcessName { get => _processName; set { if (_processName != value) { _processName = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public string WindowTitleContains { get => _windowTitleContains; set { if (_windowTitleContains != value) { _windowTitleContains = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public int DelayAfterEventSeconds { get => _delayAfterEventSeconds; set { if (_delayAfterEventSeconds != value) { _delayAfterEventSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public WindowAutomationEventKind WindowEventKind { get => _windowEventKind; set { if (_windowEventKind != value) { _windowEventKind = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public FileSystemAutomationEventKind FileSystemEventKind { get => _fileSystemEventKind; set { if (_fileSystemEventKind != value) { _fileSystemEventKind = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public string FileSystemPath { get => _fileSystemPath; set { if (_fileSystemPath != value) { _fileSystemPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public string FileSystemFilter { get => _fileSystemFilter; set { if (_fileSystemFilter != value) { _fileSystemFilter = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public bool IncludeSubdirectories { get => _includeSubdirectories; set { if (_includeSubdirectories != value) { _includeSubdirectories = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public bool WaitUntilFileReady { get => _waitUntilFileReady; set { if (_waitUntilFileReady != value) { _waitUntilFileReady = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public SystemAutomationEventKind SystemEventKind { get => _systemEventKind; set { if (_systemEventKind != value) { _systemEventKind = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
 
         public EditableAutomationAction Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayAction)); } } }
         public AutomationAlreadyRunningBehavior AlreadyRunningBehavior { get => _alreadyRunningBehavior; set { if (_alreadyRunningBehavior != value) { _alreadyRunningBehavior = value; OnPropertyChanged(); } } }
@@ -199,6 +219,25 @@ namespace DesktopAutomationApp.Models
                     Interval = BuildInterval(),
                     StartImmediately = StartImmediately
                 },
+                AutomationTriggerKind.WindowEvent => new WindowEventAutomationTrigger
+                {
+                    EventKind = WindowEventKind,
+                    ProcessName = ProcessName,
+                    WindowTitleContains = WindowTitleContains,
+                    DelayAfterEvent = TimeSpan.FromSeconds(Math.Max(0, DelayAfterEventSeconds))
+                },
+                AutomationTriggerKind.FileSystemEvent => new FileSystemAutomationTrigger
+                {
+                    EventKind = FileSystemEventKind,
+                    DirectoryPath = FileSystemPath,
+                    Filter = FileSystemFilter,
+                    IncludeSubdirectories = IncludeSubdirectories,
+                    WaitUntilReady = WaitUntilFileReady
+                },
+                AutomationTriggerKind.SystemEvent => new SystemEventAutomationTrigger
+                {
+                    EventKind = SystemEventKind
+                },
                 AutomationTriggerKind.ProcessExited => new ProcessExitedAutomationTrigger
                 {
                     ProcessName = ProcessName,
@@ -239,12 +278,28 @@ namespace DesktopAutomationApp.Models
                     WindowTitleContains = process.WindowTitleContains;
                     DelayAfterEventSeconds = (int)process.DelayAfterEvent.TotalSeconds;
                     break;
+                case WindowEventAutomationTrigger window:
+                    WindowEventKind = window.EventKind;
+                    ProcessName = window.ProcessName;
+                    WindowTitleContains = window.WindowTitleContains;
+                    DelayAfterEventSeconds = (int)window.DelayAfterEvent.TotalSeconds;
+                    break;
+                case FileSystemAutomationTrigger fileSystem:
+                    FileSystemEventKind = fileSystem.EventKind;
+                    FileSystemPath = fileSystem.DirectoryPath;
+                    FileSystemFilter = fileSystem.Filter;
+                    IncludeSubdirectories = fileSystem.IncludeSubdirectories;
+                    WaitUntilFileReady = fileSystem.WaitUntilReady;
+                    break;
+                case SystemEventAutomationTrigger systemEvent:
+                    SystemEventKind = systemEvent.EventKind;
+                    break;
             }
         }
 
         private TimeSpan BuildInterval()
         {
-            var value = Math.Max(1, IntervalValue);
+            var value = IntervalValue;
             return IntervalUnit switch
             {
                 IntervalUnit.Seconds => TimeSpan.FromSeconds(value),

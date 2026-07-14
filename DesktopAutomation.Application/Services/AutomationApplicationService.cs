@@ -2,6 +2,7 @@ using Common.JsonRepository;
 using DesktopAutomation.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Automations;
+using TaskAutomation.Logging;
 
 namespace DesktopAutomation.Application.Services
 {
@@ -10,15 +11,18 @@ namespace DesktopAutomation.Application.Services
         private readonly IJsonRepository<AutomationDefinition> _repository;
         private readonly IAutomationEngine _engine;
         private readonly ILogger<AutomationApplicationService> _log;
+        private readonly IAutomationLogService _automationLogs;
 
         public AutomationApplicationService(
             IJsonRepository<AutomationDefinition> repository,
             IAutomationEngine engine,
-            ILogger<AutomationApplicationService> log)
+            ILogger<AutomationApplicationService> log,
+            IAutomationLogService automationLogs)
         {
             _repository = repository;
             _engine = engine;
             _log = log;
+            _automationLogs = automationLogs;
         }
 
         public async Task<IReadOnlyList<AutomationDefinition>> LoadAllAsync()
@@ -39,11 +43,14 @@ namespace DesktopAutomation.Application.Services
             automation.UpdatedAt = DateTimeOffset.Now;
             await _repository.SaveAsync(automation).ConfigureAwait(false);
             await _engine.ReloadAsync().ConfigureAwait(false);
+            _automationLogs.Write(automation.Id, ExecutionLogLevel.Information, "Automation gespeichert.",
+                $"Status: {(automation.Active ? "aktiv" : "deaktiviert")}; Trigger: {automation.Trigger.Kind}; Ziel: {automation.Action.Name}; Zieltyp: {automation.Action.ActionType}");
             _log.LogInformation("Automation gespeichert und registriert: {Name}", automation.Name);
         }
 
         public async Task DeleteAsync(Guid id)
         {
+            _automationLogs.Write(id, ExecutionLogLevel.Information, "Löschen angefordert.");
             await _repository.DeleteAsync(id.ToString()).ConfigureAwait(false);
             await _engine.ReloadAsync().ConfigureAwait(false);
             _log.LogInformation("Automation gelöscht und deregistriert: {Id}", id);

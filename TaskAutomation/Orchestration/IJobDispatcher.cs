@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Orchestration
 {
@@ -43,13 +44,13 @@ namespace TaskAutomation.Orchestration
         /// Startet eine neue Instanz des Jobs mit der angegebenen ID.
         /// Gibt die eindeutige Instanz-ID zurück, mit der diese Ausführung gestoppt werden kann.
         /// </summary>
-        Guid StartJob(Guid id);
+        Guid StartJob(Guid id, JobStartContext? startContext = null);
 
         /// <summary>
         /// Startet eine neue Instanz und wartet auf deren Abschluss (registriert sie in RunningJobInstances).
         /// CancellationToken wird mit dem internen CTS verknüpft, sodass CancelJob ebenfalls greift.
         /// </summary>
-        Task StartJobAsync(Guid id, CancellationToken ct);
+        Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null);
 
         /// <summary>
         /// Bricht eine bestimmte Job-Instanz per Instanz-ID ab.

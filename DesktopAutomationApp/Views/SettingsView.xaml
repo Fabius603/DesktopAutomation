@@ -2,46 +2,131 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              Style="{StaticResource ContentViewBase}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="760" HorizontalAlignment="Left">
-            <TextBlock Text="{loc:Translate Settings.Title}" Style="{StaticResource PageTitle}" Margin="0,0,0,18"/>
+    <UserControl.Resources>
+        <Style x:Key="SettingsSectionIcon" TargetType="Border">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+        <Style x:Key="SettingsLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="SettingsDescription" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+    </UserControl.Resources>
 
-            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Translate Settings.Language}" Style="{StaticResource Heading2}"/>
-                    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
-                              ItemsSource="{Binding Languages}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
-                    <TextBlock Grid.Row="1" Text="{loc:Translate Settings.Language.Description}" Margin="0,16,16,0"
-                               Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap"/>
-                </Grid>
-            </Border>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="920" HorizontalAlignment="Stretch">
+            <StackPanel Margin="0,0,0,20">
+                <TextBlock Text="{loc:Translate Settings.Title}" Style="{StaticResource PageTitle}"/>
+                <Border Width="42" Height="2" Background="{DynamicResource App.Brush.Accent}"
+                        HorizontalAlignment="Left" Margin="0,9,0,0"/>
+            </StackPanel>
 
-            <Border Style="{StaticResource CardBorderStyle}">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="{loc:Translate Settings.Appearance}" Style="{StaticResource Heading2}"/>
-                    <TextBlock Grid.Row="1" Text="{loc:Translate Settings.Theme}" Margin="0,16,16,0" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
-                              ItemsSource="{Binding Themes}" DisplayMemberPath="DisplayName"
-                              SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"/>
-                    <TextBlock Grid.Row="2" Text="{loc:Translate Settings.Accent}" Margin="0,16,16,0" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Accents}" SelectedItem="{Binding SelectedAccent, Mode=TwoWay}"
-                              Width="180" HorizontalAlignment="Left" Margin="0,12,0,0">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="18" Height="18" Fill="{Binding Color}" Margin="0,0,8,0"/>
-                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                            <Border Style="{StaticResource SettingsSectionIcon}">
+                                <iconPacks:PackIconMaterial Kind="Translate" Width="19" Height="19"
+                                                            Foreground="{DynamicResource App.Brush.Accent}"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Translate Settings.Language}" Style="{StaticResource Heading2}"/>
+                                <TextBlock Text="{loc:Translate Settings.Language.Description}" Style="{StaticResource SettingsDescription}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <ComboBox ItemsSource="{Binding Languages}"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                                  HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                            <Border Style="{StaticResource SettingsSectionIcon}">
+                                <iconPacks:PackIconMaterial Kind="PaletteOutline" Width="19" Height="19"
+                                                            Foreground="{DynamicResource App.Brush.Accent}"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{loc:Translate Settings.Appearance}" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{loc:Translate Settings.Theme}" Style="{StaticResource SettingsLabel}"/>
+                        <ComboBox ItemsSource="{Binding Themes}" DisplayMemberPath="DisplayName"
+                                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" Margin="0,7,0,14"/>
+
+                        <TextBlock Text="{loc:Translate Settings.Accent}" Style="{StaticResource SettingsLabel}"/>
+                        <ComboBox ItemsSource="{Binding Accents}" SelectedItem="{Binding SelectedAccent, Mode=TwoWay}" Margin="0,7,0,0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="16" Height="16" Fill="{Binding Color}" Margin="0,0,9,0"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                        <Border Style="{StaticResource SettingsSectionIcon}">
+                            <iconPacks:PackIconMaterial Kind="RocketLaunchOutline" Width="19" Height="19"
+                                                        Foreground="{DynamicResource App.Brush.Accent}"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="{loc:Translate Settings.Startup}" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Background="{DynamicResource App.Brush.WindowBackground}" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,20,0">
+                                <TextBlock Text="{loc:Translate Settings.StartWithWindows}" Style="{StaticResource SettingsLabel}"/>
+                                <TextBlock Text="{loc:Translate Settings.StartWithWindows.Description}" Style="{StaticResource SettingsDescription}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" IsChecked="{Binding StartWithWindows, Mode=TwoWay}"
+                                      VerticalAlignment="Center" ToolTip="{loc:Translate Settings.StartWithWindows}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Background="{DynamicResource App.Brush.WindowBackground}" CornerRadius="8" Padding="14,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,20,0">
+                                <TextBlock Text="{loc:Translate Settings.StartInBackground}" Style="{StaticResource SettingsLabel}"/>
+                                <TextBlock Text="{loc:Translate Settings.StartInBackground.Description}" Style="{StaticResource SettingsDescription}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1"
+                                      IsChecked="{Binding StartInBackgroundAtWindowsStartup, Mode=TwoWay}"
+                                      IsEnabled="{Binding StartWithWindows}"
+                                      VerticalAlignment="Center"
+                                      ToolTip="{loc:Translate Settings.StartInBackground}"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
             </Border>
         </StackPanel>
     </ScrollViewer>

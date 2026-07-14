@@ -48,6 +48,8 @@ namespace DesktopAutomationApp.ViewModels
             _ctx = ctx;
             _precedingSteps = precedingSteps;
             _currentJobId = currentJobId;
+            AvailableCaptureSteps = BuildStepItems("CaptureResult");
+            AvailableDetectionSteps = BuildStepItems("DetectionResult");
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
@@ -226,6 +228,12 @@ namespace DesktopAutomationApp.ViewModels
 
         private bool CanConfirm()
         {
+            CreateStep();
+            var result = JobValidation.ValidateCandidate(_precedingSteps, CreatedStep);
+            _validationError = result.Error;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
+            return result.IsValid;
+#if false // Validierungsregeln liegen zentral in TaskAutomation.JobValidation.
             if (!StepPrerequisites.All(p => p.IsSatisfied))
                 return false;
 
@@ -307,7 +315,11 @@ namespace DesktopAutomationApp.ViewModels
                 "EndJob"  => true,
                 _ => false
             };
+#endif
         }
+
+        private string? _validationError;
+        public string? ValidationError => _validationError;
 
         private static bool IsExistingFile(string? path)
             => !string.IsNullOrWhiteSpace(path) && System.IO.File.Exists(path);
@@ -543,9 +555,11 @@ namespace DesktopAutomationApp.ViewModels
         private IReadOnlyList<SourceStepItem> BuildStepItems(string resultTypeName)
         {
             var items = new List<SourceStepItem>();
+            var allowed = JobValidation.GetAllowedSourceSteps(_precedingSteps, _precedingSteps.Count, resultTypeName);
             for (int i = 0; i < _precedingSteps.Count; i++)
             {
                 var step = _precedingSteps[i];
+                if (!allowed.Contains(step)) continue;
                 var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
                 if (info?.Output != resultTypeName) continue;
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
@@ -564,6 +578,7 @@ namespace DesktopAutomationApp.ViewModels
             for (int i = 0; i < _precedingSteps.Count; i++)
             {
                 var step = _precedingSteps[i];
+                if (!step.IsEnabled) continue;
                 var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
                 if (info is null || !info.IsConditionSource) continue;
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
@@ -575,8 +590,8 @@ namespace DesktopAutomationApp.ViewModels
             return items;
         }
 
-        public IReadOnlyList<SourceStepItem> AvailableCaptureSteps   => BuildStepItems("CaptureResult");
-        public IReadOnlyList<SourceStepItem> AvailableDetectionSteps => BuildStepItems("DetectionResult");
+        public IReadOnlyList<SourceStepItem> AvailableCaptureSteps { get; }
+        public IReadOnlyList<SourceStepItem> AvailableDetectionSteps { get; }
 
         // ----- Ergebnis -----
         public JobStep? CreatedStep { get; private set; }

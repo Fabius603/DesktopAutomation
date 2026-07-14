@@ -36,6 +36,13 @@ public static class AutomationDisplayFormatter
         IntervalAutomationTrigger interval => Loc.Format("Automation.Trigger.Interval", FormatInterval(interval.Interval)),
         ProcessStartedAutomationTrigger process => FormatProcess(process, "Automation.Trigger.ProcessStarted"),
         ProcessExitedAutomationTrigger process => FormatProcess(process, "Automation.Trigger.ProcessExited"),
+        WindowEventAutomationTrigger window => FormatWindowEvent(window),
+        FileSystemAutomationTrigger fileSystem => Loc.Format(
+            "Automation.Trigger.FileSystemEvent",
+            LocalizedEnum(fileSystem.EventKind),
+            fileSystem.DirectoryPath,
+            fileSystem.Filter),
+        SystemEventAutomationTrigger systemEvent => LocalizedEnum(systemEvent.EventKind),
         _ => trigger.Kind.ToString()
     };
 
@@ -74,6 +81,24 @@ public static class AutomationDisplayFormatter
         if (process.DelayAfterEvent > TimeSpan.Zero)
             result += Loc.Format("Automation.Trigger.AfterSeconds", process.DelayAfterEvent.TotalSeconds);
         return result;
+    }
+
+    private static string FormatWindowEvent(WindowEventAutomationTrigger window)
+    {
+        var process = string.IsNullOrWhiteSpace(window.ProcessName)
+            ? Loc.Get("Automation.Window.AnyProcess")
+            : window.ProcessName;
+        var result = Loc.Format("Automation.Trigger.WindowEvent", LocalizedEnum(window.EventKind), process);
+        if (!string.IsNullOrWhiteSpace(window.WindowTitleContains))
+            result += Loc.Format("Automation.Trigger.WindowTitle", window.WindowTitleContains);
+        return result;
+    }
+
+    private static string LocalizedEnum(Enum value)
+    {
+        var key = $"Enum.{value.GetType().Name}.{value}";
+        var localized = Loc.Get(key);
+        return localized == $"[{key}]" ? value.ToString() : localized;
     }
 
     private static string FormatRelative(string unit, long value) =>

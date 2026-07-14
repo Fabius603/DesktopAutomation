@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Windows.Data;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -22,8 +23,8 @@ namespace DesktopAutomationApp.Converters
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values is null || values.Length < 2) return "–";
-            if (values[0] is not string id || string.IsNullOrWhiteSpace(id)) return "–";
+            if (values is null || values.Length < 2) return Loc.Get("Ui.Job.Steps.NoSourceSelected");
+            if (values[0] is not string id || string.IsNullOrWhiteSpace(id)) return Loc.Get("Ui.Job.Steps.NoSourceSelected");
 
             var list = values[1] as IList;
             if (list is null) return id;
@@ -44,7 +45,7 @@ namespace DesktopAutomationApp.Converters
                 _cacheVersion = version;
             }
 
-            return _nameMap.TryGetValue(id, out var name) ? name : $"(Unbekannt)";
+            return _nameMap.TryGetValue(id, out var name) ? name : Loc.Get("Ui.Job.Steps.SourceUnavailable");
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

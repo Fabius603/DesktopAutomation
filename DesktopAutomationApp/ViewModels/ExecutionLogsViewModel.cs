@@ -29,6 +29,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ConcurrentQueue<ExecutionLogEntry> _pendingEntries = new();
         private readonly DispatcherTimer _liveUpdateTimer;
         private ExecutionLogSessionItem? _selectedSession;
+        private ExecutionLogEntryItem? _selectedEntry;
         private ExecutionLogLevel _selectedMinimumLevel = ExecutionLogLevel.Information;
         private CancellationTokenSource? _loadCancellation;
         private int _pendingEntryCount;
@@ -51,7 +52,9 @@ namespace DesktopAutomationApp.ViewModels
             });
 
         public ICommand RefreshCommand { get; }
-        public ICommand OpenLogFileCommand { get; }
+        public ICommand OpenLogFolderCommand { get; }
+        public ICommand BackCommand { get; }
+        public event Action? RequestBack;
 
         public bool IsLoading
         {
@@ -106,7 +109,6 @@ namespace DesktopAutomationApp.ViewModels
                 SetProperty(ref _selectedSession, value);
                 ClearPendingEntries();
                 _ = LoadEntriesAsync();
-                (OpenLogFileCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -115,8 +117,9 @@ namespace DesktopAutomationApp.ViewModels
             _logService = logService;
             Entries = CollectionViewSource.GetDefaultView(_entryBuffer);
             Entries.Filter = IsVisibleItem;
-            RefreshCommand = new RelayCommand(Refresh);
-            OpenLogFileCommand = new RelayCommand(OpenSelectedLogFile, () => SelectedSession != null);
+            RefreshCommand = new RelayCommand(async () => await RefreshAsync());
+            OpenLogFolderCommand = new RelayCommand(OpenLogFolder);
+            BackCommand = new RelayCommand(() => RequestBack?.Invoke());
 
             _liveUpdateTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
@@ -127,10 +130,10 @@ namespace DesktopAutomationApp.ViewModels
 
             _logService.SessionChanged += OnSessionChanged;
             _logService.EntryWritten += OnEntryWritten;
-            Refresh();
+            _ = RefreshAsync();
         }
 
-        private async void Refresh()
+        public async Task RefreshAsync()
         {
             var version = Interlocked.Increment(ref _refreshVersion);
             var selectedId = SelectedSession?.Id;
@@ -159,6 +162,12 @@ namespace DesktopAutomationApp.ViewModels
                 : Sessions.FirstOrDefault();
         }
 
+        public ExecutionLogEntryItem? SelectedEntry
+        {
+            get => _selectedEntry;
+            set => SetProperty(ref _selectedEntry, value);
+        }
+
         private async Task LoadEntriesAsync()
         {
             _loadCancellation?.Cancel();
@@ -185,6 +194,7 @@ namespace DesktopAutomationApp.ViewModels
 
                 _isTruncated = entries.Count >= MaxBufferedEntries;
                 _entryBuffer.ReplaceRange(entries.Select(entry => new ExecutionLogEntryItem(entry)));
+                SelectedEntry = null;
                 _latestLoadedTimestamp = entries.Count > 0
                     ? entries.Max(entry => entry.Timestamp)
                     : DateTimeOffset.MinValue;
@@ -219,21 +229,13 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        private void OpenSelectedLogFile()
+        private void OpenLogFolder()
         {
-            if (SelectedSession == null) return;
-
-            var directory = Path.GetDirectoryName(SelectedSession.FilePath);
-            if (!string.IsNullOrWhiteSpace(directory))
-                Directory.CreateDirectory(directory);
-
-            if (!File.Exists(SelectedSession.FilePath))
-                File.WriteAllText(SelectedSession.FilePath, string.Empty);
-
-            Process.Start(new ProcessStartInfo(SelectedSession.FilePath)
-            {
-                UseShellExecute = true
-            });
+            var directory = SelectedSession == null
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopAutomation", "Logs", "Executions", "Job")
+                : Path.GetDirectoryName(SelectedSession.FilePath)!;
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
         }
 
         private void OnSessionChanged(object? sender, ExecutionLogSession session)
@@ -357,6 +359,7 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class ExecutionLogSessionItem : ViewModelBase
     {
         private DateTimeOffset? _endedAt;
+        private long? _durationMs;
 
         public ExecutionLogSessionItem(ExecutionLogSession session)
         {
@@ -367,6 +370,9 @@ namespace DesktopAutomationApp.ViewModels
             FilePath = session.FilePath;
             StartedAt = session.StartedAt;
             _endedAt = session.EndedAt;
+            _durationMs = session.DurationMs;
+            ExecutionNumber = session.ExecutionNumber;
+            StartContext = session.StartContext;
         }
 
         public Guid Id { get; }
@@ -375,6 +381,20 @@ namespace DesktopAutomationApp.ViewModels
         public string Name { get; }
         public string FilePath { get; }
         public DateTimeOffset StartedAt { get; }
+        public long ExecutionNumber { get; }
+        public JobStartContext StartContext { get; }
+        public string ExecutionNumberText => ExecutionNumber > 0 ? $"#{ExecutionNumber}" : "—";
+        public string OriginText
+        {
+            get
+            {
+                var source = Loc.Get($"JobLog.Origin.{StartContext.Source}");
+                return string.IsNullOrWhiteSpace(StartContext.SourceName)
+                    ? source
+                    : $"{source}: {StartContext.SourceName}";
+            }
+        }
+        public string DurationText => _durationMs.HasValue ? FormatDuration(_durationMs.Value) : "—";
 
         public DateTimeOffset? EndedAt
         {
@@ -384,6 +404,7 @@ namespace DesktopAutomationApp.ViewModels
                 SetProperty(ref _endedAt, value);
                 OnPropertyChanged(nameof(IsRunning));
                 OnPropertyChanged(nameof(StatusText));
+                OnPropertyChanged(nameof(DurationText));
             }
         }
 
@@ -392,7 +413,16 @@ namespace DesktopAutomationApp.ViewModels
 
         public void Update(ExecutionLogSession session)
         {
+            _durationMs = session.DurationMs;
             EndedAt = session.EndedAt;
+        }
+
+        private static string FormatDuration(long durationMs)
+        {
+            var duration = TimeSpan.FromMilliseconds(Math.Max(0, durationMs));
+            return duration.TotalHours >= 1
+                ? $"{(int)duration.TotalHours:00}:{duration.Minutes:00}:{duration.Seconds:00}.{duration.Milliseconds:000}"
+                : $"{duration.Minutes:00}:{duration.Seconds:00}.{duration.Milliseconds:000}";
         }
     }
 
@@ -412,6 +442,7 @@ namespace DesktopAutomationApp.ViewModels
         public string? StepType { get; }
         public string Message { get; }
         public string DisplayDetails { get; }
+        public string TimestampText => Timestamp.LocalDateTime.ToString("dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.GetCultureInfo("de-DE"));
 
         private static string BuildDetails(ExecutionLogEntry entry)
         {

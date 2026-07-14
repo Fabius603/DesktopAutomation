@@ -83,7 +83,7 @@ namespace DesktopAutomationApp.ViewModels
             _dialogService = dialogService;
             _dispatcher = dispatcher;
 
-            RefreshCommand = new RelayCommand(LoadJobs);
+            RefreshCommand = new RelayCommand(async () => await RefreshAsync());
             OpenJobCommand = new RelayCommand<Job?>(job =>
             {
                 if (job != null) RequestOpenJob?.Invoke(job);
@@ -108,10 +108,11 @@ namespace DesktopAutomationApp.ViewModels
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
 
-            LoadJobs();
+            _ = RefreshAsync();
         }
 
-        private async void LoadJobs()
+
+        public async Task RefreshAsync()
         {
             await _jobAppService.ReloadAsync();
 
