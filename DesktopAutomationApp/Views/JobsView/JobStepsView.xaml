@@ -167,7 +167,7 @@
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.MinValues}"/><Run Text="{Binding Settings.MinSamples}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PredictionMs}"/><Run Text="{Binding Settings.PredictionMs}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PredictionModel}"/><Run Text="{Binding Settings.PredictionModel}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ResetAtDistance}"/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>

@@ -1785,4 +1785,21 @@ Error:
   <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
     <value>Source step unavailable</value>
   </data>
+  <data name="Ui.Step.Settings.PredictionModel" xml:space="preserve"><value>Prediction model</value></data>
+  <data name="Ui.Step.Settings.TimeBasis" xml:space="preserve"><value>Time basis</value></data>
+  <data name="Ui.Step.Settings.MaxPredictionDistance" xml:space="preserve"><value>Max. prediction distance</value></data>
+  <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. model error</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. confidence</value></data>
+  <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Model: </value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection step whose detected positions are used as measurements for movement prediction.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic selects the most suitable model. Linear fits steady motion, Acceleration fits changing speed, and Kalman handles noisy measurements.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Capture predicts relative to the capture time. Execution also accounts for capture age and targets the actual execution time.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MinSamples" xml:space="preserve"><value>Minimum number of valid position measurements required before returning a prediction. Higher values are more stable but react more slowly.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.PredictionMs" xml:space="preserve"><value>How many milliseconds into the future to predict. Longer horizons generally increase uncertainty.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.ResetDistance" xml:space="preserve"><value>Maximum pixel distance for assigning a new detection to an existing track. A new track is created beyond this distance. 0 disables the limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxSampleAge" xml:space="preserve"><value>Measurements older than this value are discarded. Lower values react faster to direction changes. 0 retains values up to the internal sample limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxDistance" xml:space="preserve"><value>Maximum pixel distance between the latest measurement and predicted position. More distant predictions are rejected. 0 disables the limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximum mean model deviation from measurements in pixels. Predictions with a larger error are rejected. 0 disables the limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimum result quality from 0 to 1. It combines detection confidence, model stability, and measurement count.</value></data>
+  <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Advanced</value></data>
 </root>

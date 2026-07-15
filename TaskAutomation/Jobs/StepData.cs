@@ -178,6 +178,21 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("max_sample_age_ms")]
         public int MaxSampleAgeMs { get; set; } = 500;
+
+        [JsonPropertyName("prediction_model")]
+        public string PredictionModel { get; set; } = "Linear";
+
+        [JsonPropertyName("time_basis")]
+        public string TimeBasis { get; set; } = "Capture";
+
+        [JsonPropertyName("max_prediction_distance")]
+        public double MaxPredictionDistance { get; set; } = 0;
+
+        [JsonPropertyName("max_fit_error")]
+        public double MaxFitError { get; set; } = 0;
+
+        [JsonPropertyName("minimum_confidence")]
+        public double MinimumConfidence { get; set; } = 0;
     }
 
     // ---- DesktopDuplication ----
@@ -575,7 +590,7 @@ namespace TaskAutomation.Jobs
 
         /// <summary>Zeit in Millisekunden nach der der Text automatisch entfernt wird. 0 = dauerhaft.</summary>
         [JsonPropertyName("duration_ms")]
-        public int DurationMs { get; set; } = 0;
+        public int DurationMs { get; set; } = 5000;
 
         /// <summary>Text wird am Ende des Jobs automatisch entfernt.</summary>
         [JsonPropertyName("clear_on_job_end")]

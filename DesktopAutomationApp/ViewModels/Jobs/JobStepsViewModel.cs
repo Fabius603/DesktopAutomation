@@ -353,6 +353,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.PredictMovementStep_PredictionMs = pm.Settings.PredictionMs;
                     vm.PredictMovementStep_ResetDistanceThreshold = pm.Settings.ResetDistanceThreshold;
                     vm.PredictMovementStep_MaxSampleAgeMs = pm.Settings.MaxSampleAgeMs;
+                    vm.PredictMovementStep_PredictionModel = pm.Settings.PredictionModel;
+                    vm.PredictMovementStep_TimeBasis = pm.Settings.TimeBasis;
+                    vm.PredictMovementStep_MaxPredictionDistance = pm.Settings.MaxPredictionDistance;
+                    vm.PredictMovementStep_MaxFitError = pm.Settings.MaxFitError;
+                    vm.PredictMovementStep_MinimumConfidence = pm.Settings.MinimumConfidence;
                     break;
 
                 case DesktopDuplicationStep d:

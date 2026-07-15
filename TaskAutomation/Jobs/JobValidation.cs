@@ -119,7 +119,9 @@ public static class JobValidation
         {
             TemplateMatchingStep s => ExistingFile(s.Settings.TemplatePath) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             ColorDetectionStep s => Unit(s.Settings.ConfidenceThreshold) && s.Settings.MinSize > 0 && s.Settings.MaxSize >= s.Settings.MinSize && s.Settings.MinWidth > 0 && s.Settings.MinHeight > 0 && s.Settings.DownscaleFactor > 0 && Roi(s.Settings.EnableROI, s.Settings.ROI),
-            PredictMovementStep s => s.Settings.MinSamples >= 2 && s.Settings.PredictionMs >= 0 && s.Settings.ResetDistanceThreshold >= 0 && s.Settings.MaxSampleAgeMs >= 0,
+            PredictMovementStep s => s.Settings.MinSamples >= 2 && s.Settings.ResetDistanceThreshold >= 0 && s.Settings.MaxSampleAgeMs >= 0
+                && s.Settings.MaxPredictionDistance >= 0 && s.Settings.MaxFitError >= 0 && Unit(s.Settings.MinimumConfidence)
+                && new[] { "Linear", "Acceleration", "Kalman", "Automatic" }.Contains(s.Settings.PredictionModel),
             DesktopDuplicationStep s => s.Settings.DesktopIdx >= 0,
             ShowImageStep s => Text(s.Settings.WindowName) && (s.Settings.ShowRawImage || s.Settings.ShowProcessedImage),
             VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName) && (s.Settings.UseRawImage || s.Settings.UseProcessedImage),

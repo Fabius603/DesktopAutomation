@@ -13,14 +13,14 @@
         <UniformGrid Columns="3">
             <Button Command="{Binding OpenJobLogsCommand}" Style="{StaticResource ButtonSecondary}" Padding="20" Margin="0,0,12,0" HorizontalContentAlignment="Stretch">
                 <StackPanel>
-                    <iconPacks:PackIconMaterial Kind="BriefcaseOutline" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
+                    <iconPacks:PackIconMaterial Kind="PlaylistPlay" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
                     <TextBlock Text="{loc:Translate Key=Ui.Logs.JobLogs}" Style="{StaticResource Heading2}" Margin="0,16,0,6"/>
                     <TextBlock Text="{loc:Translate Key=Logs.JobDescription}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                 </StackPanel>
             </Button>
             <Button Command="{Binding OpenAutomationLogsCommand}" Style="{StaticResource ButtonSecondary}" Padding="20" Margin="0,0,12,0" HorizontalContentAlignment="Stretch">
                 <StackPanel>
-                    <iconPacks:PackIconMaterial Kind="RobotOutline" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
+                    <iconPacks:PackIconMaterial Kind="CalendarClock" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
                     <TextBlock Text="{loc:Translate Key=Logs.AutomationLogs}" Style="{StaticResource Heading2}" Margin="0,16,0,6"/>
                     <TextBlock Text="{loc:Translate Key=Logs.AutomationDescription}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                 </StackPanel>

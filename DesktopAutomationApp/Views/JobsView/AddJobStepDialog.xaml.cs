@@ -24,7 +24,12 @@ namespace DesktopAutomationApp.Views
         public AddJobStepDialog()
         {
             InitializeComponent();
-            Loaded += (_, __) => CenterOnOwnerOnce();
+            Loaded += async (_, __) =>
+            {
+                CenterOnOwnerOnce();
+                if (DataContext is AddJobStepDialogViewModel vm)
+                    await vm.InitializeAsync();
+            };
         }
         private void Ok_Click(object sender, RoutedEventArgs e)
         {

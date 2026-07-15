@@ -1889,4 +1889,21 @@ Fehlermeldung:
   <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
     <value>Quell-Step nicht verfügbar</value>
   </data>
+  <data name="Ui.Step.Settings.PredictionModel" xml:space="preserve"><value>Vorhersagemodell</value></data>
+  <data name="Ui.Step.Settings.TimeBasis" xml:space="preserve"><value>Zeitbasis</value></data>
+  <data name="Ui.Step.Settings.MaxPredictionDistance" xml:space="preserve"><value>Max. Vorhersagedistanz</value></data>
+  <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. Modellfehler</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. Confidence</value></data>
+  <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Modell: </value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection-Step, dessen gefundene Positionen als Messwerte für die Bewegungsvorhersage verwendet werden.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic wählt das passendste Modell. Linear eignet sich für gleichmäßige Bewegung, Acceleration für Beschleunigung und Kalman für verrauschte Messwerte.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Capture sagt relativ zum Aufnahmezeitpunkt voraus. Execution berücksichtigt zusätzlich das Alter der Aufnahme und zielt auf den tatsächlichen Ausführungszeitpunkt.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MinSamples" xml:space="preserve"><value>Mindestanzahl gültiger Positionsmessungen, bevor eine Vorhersage ausgegeben wird. Höhere Werte sind stabiler, reagieren aber langsamer.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.PredictionMs" xml:space="preserve"><value>Zeitspanne in Millisekunden, die in die Zukunft vorhergesagt wird. Größere Werte erhöhen meist auch die Unsicherheit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.ResetDistance" xml:space="preserve"><value>Maximale Distanz in Pixeln für die Zuordnung einer neuen Erkennung zu einem bestehenden Track. Bei Überschreitung beginnt ein neuer Track. 0 deaktiviert die Grenze.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxSampleAge" xml:space="preserve"><value>Messwerte, die älter als dieser Wert sind, werden verworfen. Ein kleiner Wert reagiert schneller auf Richtungswechsel. 0 behält Werte bis zum internen Sample-Limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxDistance" xml:space="preserve"><value>Maximal erlaubte Distanz in Pixeln zwischen der letzten Messung und der vorhergesagten Position. Weiter entfernte Vorhersagen werden abgelehnt. 0 deaktiviert die Grenze.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximal erlaubte mittlere Abweichung des Modells von den Messwerten in Pixeln. Größere Fehler führen zu keiner Vorhersage. 0 deaktiviert die Grenze.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Confidence der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
+  <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Erweitert</value></data>
 </root>

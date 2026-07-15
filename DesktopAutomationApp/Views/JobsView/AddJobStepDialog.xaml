@@ -18,6 +18,12 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
         </Style>
+        <Style x:Key="StepAdvancedExpander" TargetType="Expander">
+            <Setter Property="Header" Value="{loc:Translate Key=Ui.Step.Settings.Advanced}"/>
+            <Setter Property="IsExpanded" Value="False"/>
+            <Setter Property="Margin" Value="0,4,0,6"/>
+            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+        </Style>
         <Style x:Key="StepCompactTextBox" TargetType="TextBox">
             <Setter Property="Width" Value="42"/>
             <Setter Property="MinHeight" Value="28"/>
@@ -126,6 +132,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
@@ -150,6 +157,14 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseTemplatePathCommand}"/>
                         </Grid>
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                        </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -183,20 +198,13 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
-                        </Grid>
-                        <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MatchMode}" Style="{StaticResource StepFieldLabel}"/>
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding TemplateMatchModesAll}"
                                       SelectedItem="{Binding TemplateMatchingStep_TemplateMatchMode}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── Color Detection ── -->
@@ -233,6 +241,14 @@
                             </StackPanel>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
+                                     Text="{Binding ColorDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                        </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
+                        <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
@@ -260,15 +276,6 @@
                             </WrapPanel>
                         </Grid>
                         <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" IsChecked="{Binding ColorDetectionStep_EnableROI}" Margin="140,0,0,10"/>
-                        <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding ColorDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
-                        </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -314,6 +321,8 @@
                             <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding ColorDetectionStep_DownscaleFactor, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── Predict Movement ── -->
@@ -330,41 +339,44 @@
                                       SelectedItem="{Binding PredictMovementStep_SourceDetectionStep}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinValues}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding PredictMovementStep_MinSamples, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PredictionModel}" Style="{StaticResource StepFieldLabel}"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding PredictMovementModels}" SelectedItem="{Binding PredictMovementStep_PredictionModel}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.PredictionMs}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding PredictMovementStep_PredictionMs, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinimumConfidence}" Style="{StaticResource StepFieldLabel}"/>
+                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_MinimumConfidence, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
-                        <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ResetAtDistance}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding PredictMovementStep_ResetDistanceThreshold, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Grid>
-                        <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxAgeMs}" Style="{StaticResource StepFieldLabel}"/>
-                            <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left"
-                                     Text="{Binding PredictMovementStep_MaxSampleAgeMs, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
+                                <Grid Style="{StaticResource StepFieldGrid}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MinValues}" Style="{StaticResource StepFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_MinSamples, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                                <Grid Style="{StaticResource StepFieldGrid}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ResetAtDistance}" Style="{StaticResource StepFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_ResetDistanceThreshold, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                                <Grid Style="{StaticResource StepFieldGrid}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxAgeMs}" Style="{StaticResource StepFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_MaxSampleAgeMs, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                                <Grid Style="{StaticResource StepFieldGrid}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxPredictionDistance}" Style="{StaticResource StepFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_MaxPredictionDistance, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                                <Grid Style="{StaticResource StepFieldGrid}">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.MaxFitError}" Style="{StaticResource StepFieldLabel}"/>
+                                    <TextBox Grid.Column="1" Style="{StaticResource StepGroupedTextBox}" HorizontalAlignment="Left" Text="{Binding PredictMovementStep_MaxFitError, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── Desktop Duplication ── -->
@@ -654,6 +666,24 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ClickType}" Style="{StaticResource StepFieldLabel}"/>
+                            <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
+                                      SelectedItem="{Binding KlickOnPoint3DStep_ClickType}">
+                                <ComboBox.Items>
+                                    <sys:String>left</sys:String>
+                                    <sys:String>right</sys:String>
+                                    <sys:String>middle</sys:String>
+                                    <sys:String>none</sys:String>
+                                </ComboBox.Items>
+                            </ComboBox>
+                        </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
+                        <Grid Style="{StaticResource StepFieldGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.Offset}" Style="{StaticResource StepFieldLabel}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
@@ -667,27 +697,13 @@
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ClickType}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1" Width="120" HorizontalAlignment="Left"
-                                      SelectedItem="{Binding KlickOnPoint3DStep_ClickType}">
-                                <ComboBox.Items>
-                                    <sys:String>left</sys:String>
-                                    <sys:String>right</sys:String>
-                                    <sys:String>middle</sys:String>
-                                    <sys:String>none</sys:String>
-                                </ComboBox.Items>
-                            </ComboBox>
-                        </Grid>
-                        <Grid Style="{StaticResource StepFieldGrid}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.TimeoutMs}" Style="{StaticResource StepFieldLabel}"/>
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KlickOnPoint3DStep_Timeout, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                         <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.DoubleClick}" IsChecked="{Binding KlickOnPoint3DStep_DoubleClick}" Margin="140,0,0,0"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── YOLO Detection ── -->
@@ -725,6 +741,8 @@
                                       SelectedItem="{Binding YoloDetectionStep_ClassName}"
                                       IsEditable="True"/>
                         </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -762,6 +780,8 @@
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding YoloDetectionStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── Timeout ── -->
@@ -812,6 +832,8 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseExecutablePathCommand}"/>
                         </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -826,6 +848,8 @@
                         <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.WaitForCompletion}"
                                   IsChecked="{Binding StartProcessStep_WaitForExit}"
                                   Margin="0,0,0,4"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── FocusProcess ── -->
@@ -844,6 +868,8 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseFocusProcessPathCommand}"/>
                         </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -855,6 +881,8 @@
                                       ItemsSource="{Binding FocusProcessWindowModes}"
                                       SelectedItem="{Binding FocusProcessStep_WindowMode}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── ShowText ── -->
@@ -873,6 +901,16 @@
                                      Text="{Binding ShowTextStep_Text, UpdateSourceTrigger=PropertyChanged}"
                                      mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.TextToDisplayEmptyRemove}"/>
                         </Grid>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1" Width="60" IsReadOnly="True" Text="{Binding ShowTextStep_DesktopIndex}"/>
+                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}" Margin="8,0,0,0" Padding="10,5" HorizontalAlignment="Left" Command="{Binding ChooseMonitorForShowTextCommand}"/>
+                        </Grid>
+
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
 
                         <!-- Schriftgröße -->
                         <Grid Margin="0,0,0,8">
@@ -937,22 +975,6 @@
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Position}" FontWeight="SemiBold" Margin="0,4,0,6"
                                    Foreground="{DynamicResource App.Brush.TextSecondary}"/>
 
-                        <!-- Monitor wählen (wie DesktopDuplication) -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <TextBox Grid.Column="1" Width="60" IsReadOnly="True"
-                                     Text="{Binding ShowTextStep_DesktopIndex}"/>
-                            <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}" Margin="8,0,0,0" Padding="10,5"
-                                    HorizontalAlignment="Left"
-                                    Command="{Binding ChooseMonitorForShowTextCommand}"/>
-                        </Grid>
-
                         <!-- X-Offset -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
@@ -976,6 +998,8 @@
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowTextStep_OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── ActiveWindow ── -->
@@ -991,6 +1015,8 @@
                                      Text="{Binding ActiveWindowStep_ProcessName, UpdateSourceTrigger=PropertyChanged}"
                                      mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.ProcessNamePlaceholder}"/>
                         </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="110"/>
@@ -1004,6 +1030,8 @@
                         <TextBlock Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" Margin="0,0,0,4"
                                    TextWrapping="Wrap"
                                    Text="{loc:Translate Key=Ui.Step.Settings.ActiveWindowResultHint}"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── KeyPoint Matching ── -->
@@ -1036,6 +1064,8 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseKeyPointMatchingTemplatePathCommand}"/>
                         </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -1082,6 +1112,8 @@
                             <TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left"
                                      Text="{Binding KeyPointMatchingStep_LowesRatioThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
                         </Grid>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <!-- ── If ── -->

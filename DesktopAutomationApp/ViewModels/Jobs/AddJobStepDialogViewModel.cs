@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -39,6 +40,8 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobExecutor _ctx;
         private readonly IReadOnlyList<JobStep> _precedingSteps;
         private readonly Guid? _currentJobId;
+        private readonly SemaphoreSlim _yoloLoadLock = new(1, 1);
+        private bool _isInitialized;
 
         public AddJobStepDialogViewModel(
             IJobExecutor ctx,
@@ -139,19 +142,6 @@ namespace DesktopAutomationApp.ViewModels
             }
 
             // YOLO: erstes verfügbares Modell + erste Klasse vorauswählen
-            try
-            {
-                var firstModel = _ctx.YoloManager?.GetAvailableModels()?.FirstOrDefault();
-                if (firstModel != null)
-                {
-                    _yoloDetectionStep_Model = firstModel;
-                    var firstClass = _ctx.YoloManager?.GetClassesForModel(firstModel)?.FirstOrDefault();
-                    if (firstClass != null)
-                        _yoloDetectionStep_ClassName = firstClass;
-                }
-            }
-            catch { }
-
             // If / ElseIf: start with one empty condition row
             IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps()));
             ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps()));
@@ -174,6 +164,14 @@ namespace DesktopAutomationApp.ViewModels
 
         // ----- Dialog-Interop -----
         public event Action<bool>? RequestClose; // true = OK, false = Cancel
+
+        /// <summary>Lädt optionale, dateisystembasierte Daten erst nach dem Anzeigen des Dialogs.</summary>
+        public async Task InitializeAsync()
+        {
+            if (_isInitialized) return;
+            _isInitialized = true;
+            await LoadYoloModelsAsync();
+        }
 
         private StepDialogMode _mode = StepDialogMode.Add;
         public StepDialogMode Mode
@@ -257,9 +255,11 @@ namespace DesktopAutomationApp.ViewModels
                 "PredictMovement" =>
                     HasDetectionSource(PredictMovementStep_SourceDetectionStep)
                     && PredictMovementStep_MinSamples >= 2
-                    && PredictMovementStep_PredictionMs >= 0
                     && PredictMovementStep_ResetDistanceThreshold >= 0
-                    && PredictMovementStep_MaxSampleAgeMs >= 0,
+                    && PredictMovementStep_MaxSampleAgeMs >= 0
+                    && PredictMovementStep_MaxPredictionDistance >= 0
+                    && PredictMovementStep_MaxFitError >= 0
+                    && PredictMovementStep_MinimumConfidence is >= 0 and <= 1,
                 "ShowImage" =>
                     !string.IsNullOrWhiteSpace(ShowImageStep_WindowName)
                     && HasCaptureSource(ShowImageStep_SourceCaptureStep)
@@ -485,6 +485,8 @@ namespace DesktopAutomationApp.ViewModels
                 // Deckt alle Show*, StepTypeDescription, StepPrerequisites und StepOutput auf einmal ab.
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                if (_isInitialized && value == "YoloDetection")
+                    _ = LoadYoloModelsAsync();
             }
         }
 
@@ -761,6 +763,9 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== PredictMovement Felder =====
+        public IReadOnlyList<string> PredictMovementModels { get; } = new[] { "Automatic", "Linear", "Acceleration", "Kalman" };
+        public IReadOnlyList<string> PredictMovementTimeBases { get; } = new[] { "Capture", "Execution" };
+
         private SourceStepItem? _predictMovementStep_SourceDetectionStep;
         public SourceStepItem? PredictMovementStep_SourceDetectionStep
         {
@@ -794,6 +799,41 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _predictMovementStep_MaxSampleAgeMs;
             set { _predictMovementStep_MaxSampleAgeMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private string _predictMovementStep_PredictionModel = "Automatic";
+        public string PredictMovementStep_PredictionModel
+        {
+            get => _predictMovementStep_PredictionModel;
+            set { _predictMovementStep_PredictionModel = value; OnChange(); }
+        }
+
+        private string _predictMovementStep_TimeBasis = "Execution";
+        public string PredictMovementStep_TimeBasis
+        {
+            get => _predictMovementStep_TimeBasis;
+            set { _predictMovementStep_TimeBasis = value; OnChange(); }
+        }
+
+        private double _predictMovementStep_MaxPredictionDistance = 500;
+        public double PredictMovementStep_MaxPredictionDistance
+        {
+            get => _predictMovementStep_MaxPredictionDistance;
+            set { _predictMovementStep_MaxPredictionDistance = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private double _predictMovementStep_MaxFitError = 75;
+        public double PredictMovementStep_MaxFitError
+        {
+            get => _predictMovementStep_MaxFitError;
+            set { _predictMovementStep_MaxFitError = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private double _predictMovementStep_MinimumConfidence = 0.15;
+        public double PredictMovementStep_MinimumConfidence
+        {
+            get => _predictMovementStep_MinimumConfidence;
+            set { _predictMovementStep_MinimumConfidence = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         // ===== KlickOnPoint3D Felder =====
@@ -834,7 +874,8 @@ namespace DesktopAutomationApp.ViewModels
             { 
                 _yoloDetectionStep_Model = value; 
                 OnChange(); 
-                OnChange(nameof(YoloDetectionStep_AvailableClasses));
+                if (_isInitialized)
+                    _ = LoadYoloClassesAsync(value);
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
             } 
         }
@@ -861,11 +902,17 @@ namespace DesktopAutomationApp.ViewModels
         public int YoloDetectionStep_RoiW { get => _yoloDetectionStep_RoiW; set { _yoloDetectionStep_RoiW = value; OnChange(); } }
         public int YoloDetectionStep_RoiH { get => _yoloDetectionStep_RoiH; set { _yoloDetectionStep_RoiH = value; OnChange(); } }
 
+        // Die Collections werden im Hintergrund gefüllt; die Getter dürfen keine I/O ausführen.
+        private readonly ObservableCollection<string> _yoloModels = new();
+        private readonly ObservableCollection<string> _yoloClasses = new();
+
         // YOLO Listen Properties
         public ObservableCollection<string> YoloDetectionStep_AvailableModels
         {
             get
             {
+                return _yoloModels;
+#if false // Legacy synchronous loading retained temporarily for reference.
                 try
                 {
                     var yoloManager = _ctx.YoloManager;
@@ -881,6 +928,7 @@ namespace DesktopAutomationApp.ViewModels
                     System.Diagnostics.Debug.WriteLine($"Fehler beim Laden der YOLO-Modelle: {ex.Message}");
                 }
                 return new ObservableCollection<string>();
+#endif
             }
         }
 
@@ -888,6 +936,8 @@ namespace DesktopAutomationApp.ViewModels
         {
             get
             {
+                return _yoloClasses;
+#if false // Legacy synchronous loading retained temporarily for reference.
                 if (string.IsNullOrWhiteSpace(YoloDetectionStep_Model))
                     return new ObservableCollection<string>();
 
@@ -906,10 +956,48 @@ namespace DesktopAutomationApp.ViewModels
                     System.Diagnostics.Debug.WriteLine($"Fehler beim Laden der YOLO-Klassen für Model '{YoloDetectionStep_Model}': {ex.Message}");
                 }
                 return new ObservableCollection<string>();
+#endif
             }
         }
 
         // Datei-Auswahl (in VM gewünscht)
+        private async Task LoadYoloModelsAsync()
+        {
+            await _yoloLoadLock.WaitAsync();
+            try
+            {
+                if (_yoloModels.Count == 0)
+                {
+                    var models = await Task.Run(() => _ctx.YoloManager?.GetAvailableModels() ?? new List<string>());
+                    foreach (var model in models) _yoloModels.Add(model);
+                }
+                if (string.IsNullOrWhiteSpace(YoloDetectionStep_Model))
+                    YoloDetectionStep_Model = _yoloModels.FirstOrDefault() ?? string.Empty;
+                else
+                    await LoadYoloClassesCoreAsync(YoloDetectionStep_Model);
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Failed to load YOLO models: {ex.Message}"); }
+            finally { _yoloLoadLock.Release(); }
+        }
+
+        private async Task LoadYoloClassesAsync(string model)
+        {
+            await _yoloLoadLock.WaitAsync();
+            try { await LoadYoloClassesCoreAsync(model); }
+            finally { _yoloLoadLock.Release(); }
+        }
+
+        private async Task LoadYoloClassesCoreAsync(string model)
+        {
+            if (string.IsNullOrWhiteSpace(model)) return;
+            var classes = await Task.Run(() => _ctx.YoloManager?.GetClassesForModel(model) ?? new List<string>());
+            if (!string.Equals(model, YoloDetectionStep_Model, StringComparison.Ordinal)) return;
+            _yoloClasses.Clear();
+            foreach (var item in classes) _yoloClasses.Add(item);
+            if (string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName))
+                YoloDetectionStep_ClassName = _yoloClasses.FirstOrDefault() ?? string.Empty;
+        }
+
         private static ImageSource? LoadImagePreview(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
@@ -1564,7 +1652,7 @@ namespace DesktopAutomationApp.ViewModels
             set { _showTextStep_OffsetY = value; OnChange(); }
         }
 
-        private int _showTextStep_DurationMs = 0;
+        private int _showTextStep_DurationMs = 5000;
         public int ShowTextStep_DurationMs
         {
             get => _showTextStep_DurationMs;
@@ -1898,9 +1986,14 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         SourceDetectionStepId = PredictMovementStep_SourceDetectionStep?.StepId ?? "",
                         MinSamples = PredictMovementStep_MinSamples,
-                        PredictionMs = PredictMovementStep_PredictionMs,
+                        PredictionMs = 0,
                         ResetDistanceThreshold = PredictMovementStep_ResetDistanceThreshold,
-                        MaxSampleAgeMs = PredictMovementStep_MaxSampleAgeMs
+                        MaxSampleAgeMs = PredictMovementStep_MaxSampleAgeMs,
+                        PredictionModel = PredictMovementStep_PredictionModel,
+                        TimeBasis = "Execution",
+                        MaxPredictionDistance = PredictMovementStep_MaxPredictionDistance,
+                        MaxFitError = PredictMovementStep_MaxFitError,
+                        MinimumConfidence = PredictMovementStep_MinimumConfidence
                     }
                 },
                 "DesktopDuplication" => new DesktopDuplicationStep
