@@ -34,6 +34,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
     [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
+    [JsonDerivedType(typeof(DynamicRoiStep), "dynamic_roi")]
     public abstract class JobStep : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -112,6 +113,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
+
+        [JsonPropertyName("dynamic_roi_step_id")]
+        public string DynamicRoiStepId { get; set; } = "";
     }
 
     // ---- ColorDetection ----
@@ -153,6 +157,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
+
+        [JsonPropertyName("dynamic_roi_step_id")]
+        public string DynamicRoiStepId { get; set; } = "";
     }
 
     // ---- PredictMovement ----
@@ -193,6 +200,30 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("minimum_confidence")]
         public double MinimumConfidence { get; set; } = 0;
+    }
+
+    public sealed class DynamicRoiStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public DynamicRoiSettings Settings { get; set; } = new();
+    }
+
+    public sealed class DynamicRoiSettings
+    {
+        [JsonPropertyName("source_detection_step_id")]
+        public string SourceDetectionStepId { get; set; } = string.Empty;
+
+        [JsonPropertyName("padding")]
+        public int Padding { get; set; } = 25;
+
+        [JsonPropertyName("minimum_confidence")]
+        public double MinimumConfidence { get; set; }
+
+        [JsonPropertyName("full_search_interval")]
+        public int FullSearchInterval { get; set; } = 10;
+
+        [JsonPropertyName("reset_after_misses")]
+        public int ResetAfterMisses { get; set; } = 3;
     }
 
     // ---- DesktopDuplication ----
@@ -316,6 +347,8 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("script_path")]
         public string ScriptPath { get; set; } = string.Empty;
+        [JsonPropertyName("arguments")]
+        public string Arguments { get; set; } = string.Empty;
         [JsonPropertyName("wait_for_exit")]
         public bool WaitForExit { get; set; } = false;
     }
@@ -423,6 +456,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
+
+        [JsonPropertyName("dynamic_roi_step_id")]
+        public string DynamicRoiStepId { get; set; } = "";
     }
 
     // ---- If / ElseIf / Else / EndIf ----
@@ -437,32 +473,21 @@ namespace TaskAutomation.Jobs
         LessThan,
         GreaterThanOrEqual,
         LessThanOrEqual,
+        Contains,
+        StartsWith,
+        IsEmpty,
+        IsNotEmpty,
     }
 
     public enum ConditionMatchMode { All, Any }
 
-    public sealed class StepCondition : INotifyPropertyChanged
+    public sealed class StepCondition
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
         [JsonPropertyName("source_step_id")]
         public string SourceStepId { get; set; } = "";
 
-        private string _sourceStepDisplayName = "";
-        [JsonIgnore]
-        public string SourceStepDisplayName
-        {
-            get => _sourceStepDisplayName;
-            set { if (_sourceStepDisplayName != value) { _sourceStepDisplayName = value; OnPropertyChanged(); } }
-        }
-
-        [JsonPropertyName("property")]
-        public string Property { get; set; } = "";
-
-        [JsonPropertyName("property_display_name")]
-        public string PropertyDisplayName { get; set; } = "";
+        [JsonPropertyName("property_path")]
+        public string PropertyPath { get; set; } = "";
 
         [JsonPropertyName("operator")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -533,6 +558,19 @@ namespace TaskAutomation.Jobs
         public StartProcessSettings Settings { get; set; } = new();
     }
 
+    public enum StartProcessPlacementMode
+    {
+        Centered,
+        Custom
+    }
+
+    public enum StartProcessWindowMode
+    {
+        ApplicationDefault,
+        Normal,
+        Maximized
+    }
+
     public sealed class StartProcessSettings
     {
         [JsonPropertyName("executable_path")]
@@ -543,6 +581,23 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("wait_for_exit")]
         public bool WaitForExit { get; set; } = false;
+
+        [JsonPropertyName("monitor_index")]
+        public int MonitorIndex { get; set; }
+
+        [JsonPropertyName("placement_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public StartProcessPlacementMode PlacementMode { get; set; } = StartProcessPlacementMode.Centered;
+
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; }
+
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; }
+
+        [JsonPropertyName("window_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public StartProcessWindowMode WindowMode { get; set; } = StartProcessWindowMode.ApplicationDefault;
     }
 
     // ---- FocusProcess ----
@@ -601,6 +656,7 @@ namespace TaskAutomation.Jobs
     {
         Normal,
         Maximized,
+        // Nur zur Abwärtskompatibilität mit bereits gespeicherten Jobs.
         Fullscreen
     }
 
@@ -658,6 +714,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = string.Empty;
+
+        [JsonPropertyName("dynamic_roi_step_id")]
+        public string DynamicRoiStepId { get; set; } = string.Empty;
     }
 
     // ---- PointComparison ----

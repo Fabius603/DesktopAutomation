@@ -223,8 +223,10 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{loc:Translate Key=Ui.Common.ProcessName}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
-                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
+                                    <ComboBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              ItemsSource="{Binding AvailableProcessNames}"
+                                              IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True" Height="34"
+                                              mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.WindowTitleContainsOptional}" Margin="0,0,0,4"/>
@@ -258,8 +260,10 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.ProcessNameOptional}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="34"
-                                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
+                                    <ComboBox Text="{Binding EditedAutomation.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              ItemsSource="{Binding AvailableProcessNames}"
+                                              IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True" Height="34"
+                                              mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Automation.Details.ProcessNamePlaceholder}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="4">
                                     <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.WindowTitleContainsOptional}" Margin="0,0,0,4"/>

@@ -17,7 +17,7 @@ namespace TaskAutomation.Scripts
             _logger = logger;
         }
 
-        public async Task ExecuteScriptFile(string scriptPath, CancellationToken ct = default)
+        public async Task ExecuteScriptFile(string scriptPath, string arguments, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(scriptPath))
                 throw new ArgumentException("Script path is null/empty.", nameof(scriptPath));
@@ -27,17 +27,17 @@ namespace TaskAutomation.Scripts
             if (!File.Exists(scriptPath))
                 throw new FileNotFoundException("Script file not found.", scriptPath);
 
-            var (fileName, arguments, workingDir) = ResolveCommand(scriptPath);
+            var (fileName, commandArguments, workingDir) = ResolveCommand(scriptPath, arguments);
 
             _logger.LogInformation("Starte Skript {Script} mit Interpreter {Exe} {Args} (WorkingDir={Dir})",
-                scriptPath, fileName, arguments, workingDir);
+                scriptPath, fileName, commandArguments, workingDir);
 
             using var proc = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = fileName,
-                    Arguments = arguments,
+                    Arguments = commandArguments,
                     WorkingDirectory = workingDir,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
@@ -107,7 +107,8 @@ namespace TaskAutomation.Scripts
         }
 
         // Rest wie gehabt …
-        private static (string fileName, string arguments, string workingDir) ResolveCommand(string scriptPath)
+        private static (string fileName, string arguments, string workingDir) ResolveCommand(
+            string scriptPath, string? scriptArguments)
         {
             var ext = Path.GetExtension(scriptPath).ToLowerInvariant();
             var dir = Path.GetDirectoryName(scriptPath) ?? Environment.CurrentDirectory;
@@ -119,31 +120,31 @@ namespace TaskAutomation.Scripts
                     var pwsh = FindOnPath("pwsh.exe");
                     var ps = pwsh ?? FindOnPath("powershell.exe") ?? "powershell.exe";
                     var args = $"-NoLogo -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\"";
-                    return (ps, args, dir);
+                    return (ps, AppendArguments(args, scriptArguments), dir);
 
                 case ".bat":
                 case ".cmd":
-                    return ("cmd.exe", $"/c \"{scriptPath}\"", dir);
+                    return ("cmd.exe", AppendArguments($"/c \"{scriptPath}\"", scriptArguments), dir);
 
                 case ".sh":
                     var bash = FindOnPath("bash.exe") ?? "bash";
-                    return (bash, $"\"{scriptPath}\"", dir);
+                    return (bash, AppendArguments($"\"{scriptPath}\"", scriptArguments), dir);
 
                 case ".py":
                     var python = FindOnPath("python.exe") ?? FindOnPath("py.exe") ?? "python";
-                    return (python, $"\"{scriptPath}\"", dir);
+                    return (python, AppendArguments($"\"{scriptPath}\"", scriptArguments), dir);
 
                 case ".js":
                     var node = FindOnPath("node.exe") ?? "node";
-                    return (node, $"\"{scriptPath}\"", dir);
+                    return (node, AppendArguments($"\"{scriptPath}\"", scriptArguments), dir);
 
                 case ".vbs":
                 case ".wsf":
                     var cscript = FindOnPath("cscript.exe") ?? "cscript.exe";
-                    return (cscript, $"//nologo \"{scriptPath}\"", dir);
+                    return (cscript, AppendArguments($"//nologo \"{scriptPath}\"", scriptArguments), dir);
 
                 case ".exe":
-                    return (scriptPath, "", dir);
+                    return (scriptPath, scriptArguments?.Trim() ?? string.Empty, dir);
 
                 default:
                     if (!string.IsNullOrEmpty(shebang))
@@ -153,11 +154,16 @@ namespace TaskAutomation.Scripts
                         var args2 = string.IsNullOrEmpty(shebangArgs)
                             ? $"\"{scriptPath}\""
                             : $"{shebangArgs} \"{scriptPath}\"";
-                        return (exePath, args2, dir);
+                        return (exePath, AppendArguments(args2, scriptArguments), dir);
                     }
-                    return (scriptPath, "", dir);
+                    return (scriptPath, scriptArguments?.Trim() ?? string.Empty, dir);
             }
         }
+
+        private static string AppendArguments(string commandArguments, string? scriptArguments)
+            => string.IsNullOrWhiteSpace(scriptArguments)
+                ? commandArguments
+                : $"{commandArguments} {scriptArguments.Trim()}";
 
         private static string? TryReadShebang(string scriptPath)
         {

@@ -38,10 +38,12 @@ namespace TaskAutomation.Steps
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
 
             System.Drawing.Rectangle? roi = null;
-            if (step.Settings.EnableROI && step.Settings.ROI.Width > 0 && step.Settings.ROI.Height > 0)
+            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            var effectiveRoi = dynamicRoi ?? step.Settings.ROI;
+            if ((dynamicRoi.HasValue || step.Settings.EnableROI) && effectiveRoi.Width > 0 && effectiveRoi.Height > 0)
                 roi = new System.Drawing.Rectangle(
-                    step.Settings.ROI.X, step.Settings.ROI.Y,
-                    step.Settings.ROI.Width, step.Settings.ROI.Height);
+                    effectiveRoi.X, effectiveRoi.Y,
+                    effectiveRoi.Width, effectiveRoi.Height);
 
             var rawResult = await ctx.YoloManager.DetectAsync(
                 step.Settings.Model, step.Settings.ClassName, capture.Image!,
@@ -55,7 +57,9 @@ namespace TaskAutomation.Steps
                 return new DetectionResult
                 {
                     WasExecuted    = true,
-                    Found          = false
+                    Found          = false,
+                    AppliedRoi = dynamicRoi?.ToString(),
+                    UsedDynamicRoi = dynamicRoi.HasValue
                 };
             }
 
@@ -99,6 +103,7 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections  = allDetections
+                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

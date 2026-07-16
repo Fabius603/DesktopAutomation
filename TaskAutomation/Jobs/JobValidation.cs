@@ -28,11 +28,11 @@ public static class JobValidation
         return ValidateStep(steps, candidate).IsValid;
     }
 
-    public static StepValidationResult ValidateCandidate(IReadOnlyList<JobStep> precedingSteps, JobStep? candidate)
+    public static StepValidationResult ValidateCandidate(IReadOnlyList<JobStep> precedingSteps, JobStep? candidate, IReadOnlyList<JobStep>? allSteps = null)
     {
         if (candidate == null) return new(null!, false, "Es konnte kein Step erstellt werden.");
         var steps = precedingSteps.Concat([candidate]).ToList();
-        return ValidateStep(steps, candidate);
+        return ValidateStep(steps, candidate, allSteps);
     }
 
     public static bool IsSourceStepAllowed(IReadOnlyList<JobStep> steps, JobStep consumer, JobStep source)
@@ -85,7 +85,7 @@ public static class JobValidation
         return errors;
     }
 
-    public static StepValidationResult ValidateStep(IReadOnlyList<JobStep> steps, JobStep step)
+    public static StepValidationResult ValidateStep(IReadOnlyList<JobStep> steps, JobStep step, IReadOnlyList<JobStep>? referenceSteps = null)
     {
         if (!step.IsEnabled)
             return new(step, true, null);
@@ -104,6 +104,16 @@ public static class JobValidation
             if (source == null || !source.IsEnabled || IndexOf(steps, source) >= index)
                 return new(step, false, "Der ausgewaehlte Quell-Step ist deaktiviert, nicht vorhanden oder steht nicht davor.");
         }
+
+        if (step is IfStep ifStep && ValidateConditions(steps, index, ifStep.Settings.Conditions) is { } ifError)
+            return new(step, false, ifError);
+        if (step is ElseIfStep elseIfStep && ValidateConditions(steps, index, elseIfStep.Settings.Conditions) is { } elseIfError)
+            return new(step, false, elseIfError);
+
+        var dynamicRoiId = GetDynamicRoiStepId(step);
+        if (!string.IsNullOrWhiteSpace(dynamicRoiId)
+            && (referenceSteps ?? steps).FirstOrDefault(s => s.Id == dynamicRoiId) is not DynamicRoiStep)
+            return new(step, false, "Der ausgewählte dynamische ROI-Step ist nicht vorhanden oder ungültig.");
 
         var chainError = StepPipelineRegistry.ValidateStepChain(steps.Take(index + 1).Where(s => s.IsEnabled))
             .LastOrDefault(e => e.StepTypeName == step.GetType().Name);
@@ -133,22 +143,45 @@ public static class JobValidation
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
             ActiveProcessStep s => Text(s.Settings.ProcessName),
-            StartProcessStep s => ExistingFile(s.Settings.ExecutablePath),
-            FocusProcessStep s => ExistingFile(s.Settings.ExecutablePath),
+            StartProcessStep s => ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath)
+                && s.Settings.MonitorIndex >= 0,
+            FocusProcessStep s => ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath),
             ShowTextStep s => Text(s.Settings.Text) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
             ActiveWindowStep s => Text(s.Settings.ProcessName) && s.Settings.CacheMs >= 0,
             KeyPointMatchingStep s => ExistingFile(s.Settings.TemplatePath) && s.Settings.MinMatchCount > 0 && s.Settings.LowesRatioThreshold is > 0 and <= 1 && Roi(s.Settings.EnableROI, s.Settings.ROI),
             IfStep s => Conditions(s.Settings.Conditions),
             ElseIfStep s => Conditions(s.Settings.Conditions),
             PointComparisonStep s => PointComparison(s.Settings),
+            DynamicRoiStep s => s.Settings.Padding >= 0 && Unit(s.Settings.MinimumConfidence)
+                && s.Settings.FullSearchInterval >= 0 && s.Settings.ResetAfterMisses >= 0,
             _ => true
         };
         return valid ? null : invalid;
     }
 
-    private static bool Conditions(IEnumerable<StepCondition> conditions) => conditions.All(c =>
-        Text(c.SourceStepId) && Text(c.Property)
-        && (c.Operator is ConditionOperator.IsTrue or ConditionOperator.IsFalse || Text(c.ComparisonValue)));
+    private static bool Conditions(IEnumerable<StepCondition> conditions)
+    {
+        var rows = conditions.ToList();
+        return rows.Count > 0 && rows.All(c =>
+            Text(c.SourceStepId) && Text(c.PropertyPath));
+    }
+
+    private static string? ValidateConditions(IReadOnlyList<JobStep> steps, int conditionStepIndex, IEnumerable<StepCondition> conditions)
+    {
+        foreach (var condition in conditions)
+        {
+            var source = steps.Take(conditionStepIndex).FirstOrDefault(s => s.Id == condition.SourceStepId && s.IsEnabled);
+            if (source is null) return "Eine Bedingung verweist nicht auf einen gültigen vorherigen Step.";
+            var output = StepPipelineRegistry.Get(source.GetType())?.Output;
+            if (string.IsNullOrWhiteSpace(output) || output == "–") return "Der ausgewählte Step besitzt keinen auswertbaren Rückgabewert.";
+            if (!StepResultMetadata.TryGetProperty(output, condition.PropertyPath, out var property)) return "Die ausgewählte Rückgabeeigenschaft existiert nicht mehr.";
+            if (!ConditionRules.IsOperatorAllowed(property.PropertyType, condition.Operator))
+                return "Der Operator passt nicht zum Datentyp der ausgewählten Eigenschaft.";
+            if (!ConditionRules.IsComparisonValueValid(property, condition.Operator, condition.ComparisonValue))
+                return "Der Vergleichswert besitzt nicht den erwarteten Datentyp.";
+        }
+        return null;
+    }
 
     private static bool PointComparison(PointComparisonSettings s)
         => s.Points.Count > 0
@@ -183,6 +216,7 @@ public static class JobValidation
         KlickOnPoint3DStep s => [s.Settings.SourceDetectionStepId],
         YOLODetectionStep s => [s.Settings.SourceCaptureStepId],
         KeyPointMatchingStep s => [s.Settings.SourceCaptureStepId],
+        DynamicRoiStep s => [s.Settings.SourceDetectionStepId],
         IfStep s => s.Settings.Conditions.Select(c => c.SourceStepId),
         ElseIfStep s => s.Settings.Conditions.Select(c => c.SourceStepId),
         PointComparisonStep s => s.Settings.Points
@@ -191,6 +225,15 @@ public static class JobValidation
             .Concat(s.Settings.Mode == PointComparisonMode.Offset && s.Settings.OffsetSettings.ReferenceSource == PointEntrySource.JobResult
                 ? [s.Settings.OffsetSettings.ReferenceDetectionStepId] : []),
         _ => []
+    };
+
+    private static string? GetDynamicRoiStepId(JobStep step) => step switch
+    {
+        TemplateMatchingStep s => s.Settings.DynamicRoiStepId,
+        ColorDetectionStep s => s.Settings.DynamicRoiStepId,
+        YOLODetectionStep s => s.Settings.DynamicRoiStepId,
+        KeyPointMatchingStep s => s.Settings.DynamicRoiStepId,
+        _ => null
     };
 
     /// <summary>Entfernt Referenzen, die nach Deaktivieren/Verschieben nicht mehr erlaubt sind.</summary>

@@ -10,836 +10,55 @@
              xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
-
     <UserControl.Resources>
-        <conv:RectToStringConverter x:Key="RectToStringConverter"/>
-        <conv:StepPipelineInfoConverter x:Key="PipelineInfoConverter"/>
-        <conv:StepBlockBorderConverter x:Key="StepBlockBorderConverter"/>
-        <conv:StepNumberConverter x:Key="StepNumberConverter"/>
-        <conv:SourceStepNameConverter x:Key="SourceStepNameConverter"/>
-        <conv:StepConditionDisplayConverter x:Key="StepConditionDisplayConverter"/>
-        <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
-
-        <!-- Gemeinsame Parameterzeile -->
-        <Style x:Key="ParamText" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,2,0,2"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-
-        <!-- === Deine Step-DataTemplates (unverändert) === -->
-        <!-- TemplateMatchingStep -->
-        <DataTemplate DataType="{x:Type jobs:TemplateMatchingStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TemplatePath}"/><Run Text="{Binding Settings.TemplatePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MatchMode}"/><Run Text="{Binding Settings.TemplateMatchMode}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MultipleMatches}"/>
-                        <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
-                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ColorDetectionStep -->
-        <DataTemplate DataType="{x:Type jobs:ColorDetectionStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Color}" VerticalAlignment="Center"/>
-                        <Border Width="18" Height="18"
-                                Background="{Binding Settings.ColorHex}"
-                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                                BorderThickness="1"
-                                CornerRadius="3"/>
-                        <TextBlock Text="{Binding Settings.ColorHex}" Margin="6,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinSize}"/><Run Text="{Binding Settings.MinSize}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MaxSize}"/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinWidth}"/><Run Text="{Binding Settings.MinWidth}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinHeight}"/><Run Text="{Binding Settings.MinHeight}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Downscale}"/><Run Text="{Binding Settings.DownscaleFactor}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
-                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- PredictMovementStep -->
-        <DataTemplate DataType="{x:Type jobs:PredictMovementStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinValues}"/><Run Text="{Binding Settings.MinSamples}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PredictionModel}"/><Run Text="{Binding Settings.PredictionModel}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ResetAtDistance}"/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MaxAgeMs}"/><Run Text="{Binding Settings.MaxSampleAgeMs}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- DesktopDuplicationStep -->
-        <DataTemplate DataType="{x:Type jobs:DesktopDuplicationStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DesktopIndex}"/><Run Text="{Binding Settings.DesktopIdx}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CaptureMousePointer}"/><Run Text="{Binding Settings.CaptureCursor}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ProcessDuplicationStep -->
-        <DataTemplate DataType="{x:Type jobs:ProcessDuplicationStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessName}"/><Run Text="{Binding Settings.ProcessName}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ShowImageStep -->
-        <DataTemplate DataType="{x:Type jobs:ShowImageStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowName}"/><Run Text="{Binding Settings.WindowName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowRawImage}"/>
-                        <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowProcessedImage}"/>
-                        <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ShowOnDesktopStep -->
-        <DataTemplate DataType="{x:Type jobs:ShowOnDesktopStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- VideoCreationStep -->
-        <DataTemplate DataType="{x:Type jobs:VideoCreationStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.SavePath}"/><Run Text="{Binding Settings.SavePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.FileName}"/><Run Text="{Binding Settings.FileName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseRawImage}"/>
-                        <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseProcessedImage}"/>
-                        <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- MakroExecutionStep -->
-        <DataTemplate DataType="{x:Type jobs:MakroExecutionStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MacroName}"/><Run Text="{Binding Settings.MakroName}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type jobs:KlickOnPointStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DoubleClick}"/>
-                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClickType}"/><Run Text="{Binding Settings.ClickType}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TimeoutMs}"/><Run Text="{Binding Settings.TimeoutMs}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Offset}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type jobs:KlickOnPoint3DStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClickType}"/><Run Text="{Binding Settings.ClickType}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Origin}"/><Run Text="{Binding Settings.OriginX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OriginY}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Offset}"/><Run Text="{Binding Settings.OffsetX}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TimeoutMs}"/><Run Text="{Binding Settings.TimeoutMs}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DoubleClick}"/>
-                        <Run Text="{Binding Settings.DoubleClick, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type jobs:ScriptExecutionStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ScriptPath}"/><Run Text="{Binding Settings.ScriptPath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
-                        <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type jobs:JobExecutionStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.JobName}"/><Run Text="{Binding Settings.JobName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
-                        <Run Text="{Binding Settings.WaitForCompletion, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- YOLODetectionStep -->
-        <DataTemplate DataType="{x:Type jobs:YOLODetectionStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Model}"/><Run Text="{Binding Settings.Model}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ClassName}"/><Run Text="{Binding Settings.ClassName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
-                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- TimeoutStep -->
-        <DataTemplate DataType="{x:Type jobs:TimeoutStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitTimeMs}"/><Run Text="{Binding Settings.DelayMs}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ActiveProcessStep -->
-        <DataTemplate DataType="{x:Type jobs:ActiveProcessStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CacheMs}"/><Run Text="{Binding Settings.CacheMs}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- StartProcessStep -->
-        <DataTemplate DataType="{x:Type jobs:StartProcessStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Arguments}"/><Run Text="{Binding Settings.Arguments}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
-                        <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- FocusProcessStep -->
-        <DataTemplate DataType="{x:Type jobs:FocusProcessStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ShowTextStep -->
-        <DataTemplate DataType="{x:Type jobs:ShowTextStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Text}"/><Run Text="{Binding Settings.Text}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Size}"/><Run Text="{Binding Settings.FontSize}"/>
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.FontColor}"/><Run Text="{Binding Settings.FontColor}"/>
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Opacity}"/><Run Text="{Binding Settings.Opacity, StringFormat={}{0:P0}}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Monitor}"/><Run Text="{Binding Settings.DesktopIndex}"/>
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PositionOffset}"/><Run Text="{Binding Settings.OffsetX}"/>
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CommaSeparator}"/><Run Text="{Binding Settings.OffsetY}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- ActiveWindowStep -->
-        <DataTemplate DataType="{x:Type jobs:ActiveWindowStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- KeyPointMatchingStep -->
-        <DataTemplate DataType="{x:Type jobs:KeyPointMatchingStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
-                        <Run>
-                            <Run.Text>
-                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
-                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                </MultiBinding>
-                            </Run.Text>
-                        </Run>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TemplatePath}"/><Run Text="{Binding Settings.TemplatePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinMatches}"/><Run Text="{Binding Settings.MinMatchCount}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.LoweSRatio}"/><Run Text="{Binding Settings.LowesRatioThreshold, StringFormat=F2}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- PointComparisonStep -->
-        <DataTemplate DataType="{x:Type jobs:PointComparisonStep}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
-                <Border Grid.Column="1"/>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Mode}"/>
-                        <Run Text="{Binding Settings.Mode, Mode=OneWay}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Matches}"/>
-                        <Run Text="{Binding Settings.MatchRequirement, Mode=OneWay}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Points}"/><Run Text="{Binding Settings.Points.Count, Mode=OneWay}"/>
-                    </TextBlock>
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
-        <!-- EndJobStep -->
-        <DataTemplate DataType="{x:Type jobs:EndJobStep}">
-            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
-        </DataTemplate>
-
-        <!-- IfStep -->
-        <DataTemplate DataType="{x:Type jobs:IfStep}">
-            <StackPanel>
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
-                <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Style="{StaticResource ParamText}"
-                                       TextWrapping="Wrap">
-                                <TextBlock.Text>
-                                    <MultiBinding Converter="{StaticResource StepConditionDisplayConverter}">
-                                        <Binding Mode="OneWay"/>
-                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                        <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
-                    <Run Text="{loc:Translate Key=Ui.Job.Steps.OpenParenthesis}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CloseParenthesis}"/>
-                </TextBlock>
-                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
-                            Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}"
-                            Style="{StaticResource ButtonSecondary}"
-                            Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
-                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElse}"
-                            Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}"
-                            Style="{StaticResource ButtonSecondary}"
-                            Padding="8,4" FontSize="11"/>
-                </StackPanel>
-            </StackPanel>
-        </DataTemplate>
-
-        <!-- ElseIfStep -->
-        <DataTemplate DataType="{x:Type jobs:ElseIfStep}">
-            <StackPanel>
-                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
-                <ItemsControl ItemsSource="{Binding Settings.Conditions}" Margin="0,4,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Style="{StaticResource ParamText}"
-                                       TextWrapping="Wrap">
-                                <TextBlock.Text>
-                                    <MultiBinding Converter="{StaticResource StepConditionDisplayConverter}">
-                                        <Binding Mode="OneWay"/>
-                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                        <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Style="{StaticResource ParamText}" Margin="0,3,0,0" FontStyle="Italic">
-                    <Run Text="{loc:Translate Key=Ui.Job.Steps.OpenParenthesis}"/><Run Text="{Binding Settings.MatchMode, Mode=OneWay, Converter={StaticResource ConditionMatchModeConverter}}"/><Run Text="{loc:Translate Key=Ui.Job.Steps.CloseParenthesis}"/>
-                </TextBlock>
-                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
-                            Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}"
-                            Style="{StaticResource ButtonSecondary}"
-                            Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
-                    <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElse}"
-                            Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}"
-                            Style="{StaticResource ButtonSecondary}"
-                            Padding="8,4" FontSize="11"/>
-                </StackPanel>
-            </StackPanel>
-        </DataTemplate>
-
-        <!-- ElseStep -->
-        <DataTemplate DataType="{x:Type jobs:ElseStep}">
-            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
-        </DataTemplate>
-
-        <!-- EndIfStep -->
-        <DataTemplate DataType="{x:Type jobs:EndIfStep}">
-            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
-        </DataTemplate>
-
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Jobs/JobStepTemplates.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <conv:JobStepDetailsConverter x:Key="JobStepDetailsConverter"/>
+            <conv:StepHasDetailsConverter x:Key="StepHasDetailsConverter"/>
+            <conv:StepBlockShapeConverter x:Key="StepBlockShapeConverter"/>
+            <conv:StepCanAddBranchesConverter x:Key="StepCanAddBranchesConverter"/>
+            <conv:StepDetailsEnabledConverter x:Key="StepDetailsEnabledConverter"/>
+            <conv:StepBlockVisualConverter x:Key="StepBlockVisualConverter"/>
+            <conv:StepRegularSummaryVisibilityConverter x:Key="StepRegularSummaryVisibilityConverter"/>
+            <conv:StepBranchSummaryConverter x:Key="StepBranchSummaryConverter"/>
+            <Style x:Key="JobStepCardListBoxItemStyle" TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Margin">
+                    <Setter.Value>
+                        <MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="itemMargin">
+                            <Binding/>
+                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        </MultiBinding>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="Frame" BorderBrush="{DynamicResource App.Brush.CardBorder}" SnapsToDevicePixels="True">
+                                <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBackground"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
+                                <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBorder"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
+                                <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameCorner"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
+                                <Border x:Name="Card" BorderBrush="{DynamicResource App.Brush.CardBorder}" Padding="0">
+                                    <Border.Margin><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardMargin"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Margin>
+                                    <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBackground"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
+                                    <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBorder"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
+                                    <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardCorner"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
+                                    <ContentPresenter/>
+                                </Border>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter TargetName="Card" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/></Trigger>
+                                <Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter TargetName="Card" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
@@ -909,21 +128,23 @@
         </DockPanel>
 
         <!-- Unterer Bereich: wie Makro-Ansicht (DockPanel + ListBox mit Hover/Selected) -->
-        <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
+        <Border Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0">
             <DockPanel>
 
                 <!-- ListBox mit Hover-/Selected-Rahmen wie im Makro -->
                 <ListBox x:Name="StepsList"
                          ItemsSource="{Binding Steps}"
                          SelectionMode="Extended"
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Visible"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingStackPanel.ScrollUnit="Pixel"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
                          SelectionChanged="StepsList_SelectionChanged"
-                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
+                         MouseDoubleClick="StepsList_MouseDoubleClick"
+                         Background="Transparent" BorderThickness="0"
+                         ItemContainerStyle="{StaticResource JobStepCardListBoxItemStyle}"
                          behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <ListBox.InputBindings>
@@ -952,42 +173,23 @@
                                     </Style>
                                 </Grid.Style>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="4"/>
+                                    <ColumnDefinition Width="0"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Coloured left bar -->
-                                <Border Grid.Column="0" CornerRadius="2,0,0,2">
-                                    <Border.Background>
-                                        <MultiBinding Converter="{StaticResource StepBlockBorderConverter}">
-                                            <Binding />
-                                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                        </MultiBinding>
-                                    </Border.Background>
-                                </Border>
-
-                                <!-- Subtle background tint over the whole row -->
-                                <Border Grid.Column="1" Grid.ColumnSpan="2">
-                                    <Border.Background>
-                                        <MultiBinding Converter="{StaticResource StepBlockBorderConverter}" ConverterParameter="background">
-                                            <Binding />
-                                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
-                                        </MultiBinding>
-                                    </Border.Background>
-                                </Border>
-
-                                <!-- Inner grid: content | action buttons -->
-                                <Grid Grid.Column="1" Grid.ColumnSpan="2" Margin="8,0,0,0">
+                                <!-- Compact card: overview first, full template only on demand. -->
+                                <Grid Grid.Column="1" Grid.ColumnSpan="2" Margin="10,7,8,7">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                <!-- Links: Step-Details via implizite DataTemplates -->
-                                <StackPanel Grid.Column="0">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
                                             <Style.Triggers>
@@ -997,17 +199,17 @@
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>
-                                    <!-- Schrittnummer + Step-Inhalt nebeneinander -->
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="8"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    FontWeight="Bold"
-                                                   FontSize="14"
-                                                   VerticalAlignment="Top"
+                                                   FontSize="13"
+                                                   VerticalAlignment="Center"
                                                    Foreground="{DynamicResource MahApps.Brushes.Accent}">
                                             <TextBlock.Text>
                                                 <MultiBinding Converter="{StaticResource StepNumberConverter}">
@@ -1017,13 +219,54 @@
                                                 </MultiBinding>
                                             </TextBlock.Text>
                                         </TextBlock>
-                                        <ContentPresenter Grid.Column="2" Content="{Binding}"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Converter={StaticResource StepDisplayNameConverter}}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="14"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <iconPacks:PackIconMaterial Grid.Column="3" Kind="AlertCircleOutline"
+                                                                    Width="16" Height="16" Margin="8,0,0,0"
+                                                                    Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
+                                                                    ToolTip="{Binding ValidationError}"
+                                                                    Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                     </Grid>
-
-
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0" ToolTip="{Binding ValidationError}"
+                                                Visibility="{Binding Converter={StaticResource StepRegularSummaryVisibilityConverter}}">
+                                        <TextBlock FontSize="11" Opacity="0.68" Text="{loc:Translate Key=Ui.Job.Steps.CompactInput}"/>
+                                        <TextBlock FontSize="11" Opacity="0.68" Margin="3,0,12,0"
+                                                   Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter=prereqs}"/>
+                                        <TextBlock FontSize="11" Opacity="0.68" Text="{loc:Translate Key=Ui.Job.Steps.CompactOutput}"/>
+                                        <TextBlock FontSize="11" Opacity="0.68" Margin="3,0,0,0" TextTrimming="CharacterEllipsis"
+                                                   Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter=output}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Converter={StaticResource StepBranchSummaryConverter}}"
+                                               Margin="0,3,0,0" FontSize="11" Opacity="0.72"
+                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Converter={StaticResource StepRegularSummaryVisibilityConverter}}" Value="Visible">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0"
+                                                Visibility="{Binding Converter={StaticResource StepCanAddBranchesConverter}}">
+                                        <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
+                                                Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource ButtonSecondary}"
+                                                Padding="8,4" Margin="0,0,6,0" FontSize="11"/>
+                                        <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElse}"
+                                                Command="{Binding DataContext.AddElseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" Style="{StaticResource ButtonSecondary}"
+                                                Padding="8,4" FontSize="11"/>
+                                    </StackPanel>
                                 </StackPanel>
 
-                                <!-- Rechts: Buttons identisch zur Makro-Ansicht -->
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
                                             HorizontalAlignment="Right"
@@ -1045,29 +288,120 @@
                                         <iconPacks:PackIconMaterial Kind="Pencil"/>
                                     </Button>
                                     <!-- Nach oben -->
-                                    <Button Style="{StaticResource ButtonIcon}"
-                                            Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepUp}"
-                                            Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
-                                        <iconPacks:PackIconMaterial Kind="ArrowUp"/>
+                                    <Button Style="{StaticResource ButtonIcon}" Margin="0,0,2,0"
+                                            ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}" Click="StepMoreButton_Click">
+                                        <iconPacks:PackIconMaterial Kind="DotsVertical"/>
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}"
+                                                          Command="{Binding PlacementTarget.DataContext.DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}"
+                                                          Command="{Binding PlacementTarget.DataContext.DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <Separator/>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
+                                                          Command="{Binding PlacementTarget.DataContext.DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
                                     </Button>
                                     <!-- Nach unten -->
-                                    <Button Style="{StaticResource ButtonIcon}"
-                                            Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.Common.MoveStepDown}"
-                                            Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
-                                        <iconPacks:PackIconMaterial Kind="ArrowDown"/>
-                                    </Button>
                                     <!-- Löschen -->
-                                    <Button Style="{StaticResource ButtonIconDanger}"
-                                            ToolTip="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
-                                            Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
-                                        <iconPacks:PackIconMaterial Kind="Delete"/>
-                                    </Button>
+                                    <ToggleButton x:Name="DetailsToggle"
+                                                  Margin="6,0,0,0" Padding="5,3"
+                                                  ToolTip="{loc:Translate Key=Ui.Job.Steps.ShowDetails}"
+                                                  IsEnabled="{Binding Converter={StaticResource StepDetailsEnabledConverter}}">
+                                        <iconPacks:PackIconMaterial Width="18" Height="18">
+                                            <iconPacks:PackIconMaterial.Style>
+                                                <Style TargetType="iconPacks:PackIconMaterial">
+                                                    <Setter Property="Kind" Value="ChevronLeft"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                            <Setter Property="Kind" Value="ChevronRight"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </iconPacks:PackIconMaterial.Style>
+                                        </iconPacks:PackIconMaterial>
+                                    </ToggleButton>
                                 </StackPanel>
+
+                                <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,1" Padding="10"
+                                        BorderThickness="1,1,0,0"
+                                        BorderBrush="{DynamicResource App.Brush.CardBorder}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsChecked, ElementName=DetailsToggle}" Value="True"/>
+                                                        <Condition Binding="{Binding Converter={StaticResource StepHasDetailsConverter}}" Value="Visible"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel>
+                                    <ContentControl>
+                                        <ContentControl.Content>
+                                            <MultiBinding Converter="{StaticResource JobStepDetailsConverter}">
+                                                <Binding/>
+                                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </ContentControl.Content>
+                                        <ContentControl.ContentTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <ItemsControl ItemsSource="{Binding Groups}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Margin="0,0,0,10">
+                                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="0,0,0,4"
+                                                                               Foreground="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                                    <ItemsControl ItemsSource="{Binding Items}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate>
+                                                                                <Grid Margin="0,2">
+                                                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                                                    <TextBlock Text="{Binding Name}" Opacity="0.7" TextWrapping="Wrap"/>
+                                                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                                                </Grid>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Border BorderThickness="0,1,0,0" BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                                                            Padding="0,10,0,0">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.DetailsReturnValue}" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource MahApps.Brushes.Accent}"/>
+                                                            <TextBlock Text="{Binding Result.TypeName}" FontWeight="Bold" Margin="0,4,0,4"/>
+                                                            <ItemsControl ItemsSource="{Binding Result.Properties}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Grid Margin="0,2">
+                                                                            <Grid.ColumnDefinitions><ColumnDefinition Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                                            <TextBlock Text="{Binding Name}" Opacity="0.7"/>
+                                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold"/>
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
+                                    </StackPanel>
+                                </Border>
                                 </Grid><!-- /inner Grid (content | buttons) -->
                             </Grid><!-- /outer Grid (bar | content) -->
                         </DataTemplate>

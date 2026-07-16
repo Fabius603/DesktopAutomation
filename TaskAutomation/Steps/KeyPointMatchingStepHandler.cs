@@ -43,19 +43,19 @@ namespace TaskAutomation.Steps
                     step.Settings.MinMatchCount,
                     step.Settings.LowesRatioThreshold);
 
-            ctx.KeyPointMatcher.SetROI(step.Settings.ROI);
-            if (step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();
+            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            ctx.KeyPointMatcher.SetROI(dynamicRoi ?? step.Settings.ROI);
+            if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();
             else                         ctx.KeyPointMatcher.DisableROI();
 
             ctx.KeyPointMatcher.SetTemplate(step.Settings.TemplatePath);
 
-            using var sourceMat = OpenCvSharp.Extensions.BitmapConverter.ToMat(capture.Image!);
-            var rawResult = ctx.KeyPointMatcher.Detect(sourceMat);
+            var rawResult = ctx.KeyPointMatcher.Detect(capture.Image!);
 
             if (!rawResult.Success)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Keine ausreichend guten Matches gefunden.");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
@@ -98,6 +98,7 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections  = allDetections
+                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

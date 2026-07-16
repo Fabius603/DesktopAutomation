@@ -101,7 +101,6 @@ namespace DesktopAutomationApp.ViewModels
 
             _steps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
             _savedSnapshot = DeepCloneSteps(_steps);
-            ResolveConditionDisplayNames();
 
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
             // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
@@ -115,7 +114,6 @@ namespace DesktopAutomationApp.ViewModels
 
                 StepsVersion++;
                 OnPropertyChanged(nameof(StepsVersion));
-                ResolveConditionDisplayNames();
                 InvalidateAllCommands();
                 ScheduleValidation();
             };
@@ -246,7 +244,7 @@ namespace DesktopAutomationApp.ViewModels
                 : _steps.Count;
 
             var precedingSteps = _steps.Take(insertIndex).ToList();
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, _steps.ToList())
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -293,7 +291,7 @@ namespace DesktopAutomationApp.ViewModels
             // Only steps before the edited one count as "preceding" for
             // prerequisite evaluation.
             var precedingSteps = _steps.Take(idx).ToList();
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, _steps.ToList())
                 {
                     Mode = StepDialogMode.Edit,
                     IsTypeLocked = target is TaskAutomation.Jobs.ElseIfStep
@@ -327,6 +325,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.TemplateMatchingStep_RoiW = t.Settings.ROI.Width;
                     vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
                     vm.TemplateMatchingStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == t.Settings.SourceCaptureStepId);
+                    vm.DetectionDynamicRoiStep = vm.AvailableDynamicRoiSteps.FirstOrDefault(s => s.StepId == t.Settings.DynamicRoiStepId);
                     break;
 
                 case ColorDetectionStep cd:
@@ -344,6 +343,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ColorDetectionStep_RoiW = cd.Settings.ROI.Width;
                     vm.ColorDetectionStep_RoiH = cd.Settings.ROI.Height;
                     vm.ColorDetectionStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == cd.Settings.SourceCaptureStepId);
+                    vm.DetectionDynamicRoiStep = vm.AvailableDynamicRoiSteps.FirstOrDefault(s => s.StepId == cd.Settings.DynamicRoiStepId);
                     break;
 
                 case PredictMovementStep pm:
@@ -401,6 +401,7 @@ namespace DesktopAutomationApp.ViewModels
                 case ScriptExecutionStep se:
                     vm.SelectedType = "ScriptExecution";
                     vm.ScriptExecutionStep_ScriptPath = se.Settings.ScriptPath;
+                    vm.ScriptExecutionStep_Arguments = se.Settings.Arguments;
                     vm.ScriptExecutionStep_WaitForExit = se.Settings.WaitForExit;
                     break;
 
@@ -446,6 +447,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.YoloDetectionStep_RoiW = yd.Settings.ROI.Width;
                     vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
                     vm.YoloDetectionStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == yd.Settings.SourceCaptureStepId);
+                    vm.DetectionDynamicRoiStep = vm.AvailableDynamicRoiSteps.FirstOrDefault(s => s.StepId == yd.Settings.DynamicRoiStepId);
                     break;
 
                 case TimeoutStep to:
@@ -463,12 +465,19 @@ namespace DesktopAutomationApp.ViewModels
                     vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
                     vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
                     vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
+                    vm.StartProcessStep_MonitorIndex = sp.Settings.MonitorIndex;
+                    vm.StartProcessStep_PlacementMode = sp.Settings.PlacementMode;
+                    vm.StartProcessStep_OffsetX = sp.Settings.OffsetX;
+                    vm.StartProcessStep_OffsetY = sp.Settings.OffsetY;
+                    vm.StartProcessStep_WindowMode = sp.Settings.WindowMode;
                     break;
 
                 case FocusProcessStep fp:
                     vm.SelectedType = "FocusProcess";
                     vm.FocusProcessStep_ExecutablePath = fp.Settings.ExecutablePath;
-                    vm.FocusProcessStep_WindowMode     = fp.Settings.WindowMode;
+                    vm.FocusProcessStep_WindowMode = fp.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
+                        ? FocusProcessWindowMode.Maximized
+                        : fp.Settings.WindowMode;
                     break;
 
                 case ShowTextStep st:
@@ -501,6 +510,16 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KeyPointMatchingStep_RoiW = km.Settings.ROI.Width;
                     vm.KeyPointMatchingStep_RoiH = km.Settings.ROI.Height;
                     vm.KeyPointMatchingStep_SourceCaptureStep = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == km.Settings.SourceCaptureStepId);
+                    vm.DetectionDynamicRoiStep = vm.AvailableDynamicRoiSteps.FirstOrDefault(s => s.StepId == km.Settings.DynamicRoiStepId);
+                    break;
+
+                case DynamicRoiStep dr:
+                    vm.SelectedType = "DynamicRoi";
+                    vm.DynamicRoiStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == dr.Settings.SourceDetectionStepId);
+                    vm.DynamicRoiStep_Padding = dr.Settings.Padding;
+                    vm.DynamicRoiStep_MinimumConfidence = dr.Settings.MinimumConfidence;
+                    vm.DynamicRoiStep_FullSearchInterval = dr.Settings.FullSearchInterval;
+                    vm.DynamicRoiStep_ResetAfterMisses = dr.Settings.ResetAfterMisses;
                     break;
 
                 case TaskAutomation.Jobs.IfStep ifs:
@@ -1004,7 +1023,7 @@ namespace DesktopAutomationApp.ViewModels
             int insertIdx = FindInsertBeforeElseOrEndIf(ifIdx, endIfIdx);
 
             var precedingSteps = _steps.Take(insertIdx).ToList();
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, _steps.ToList())
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 
@@ -1097,37 +1116,5 @@ namespace DesktopAutomationApp.ViewModels
             (AddElseCommand       as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
         }
 
-        // ---------- Display-Name-Auflösung für If/ElseIf-Bedingungen ----------
-        /// <summary>
-        /// Füllt <see cref="TaskAutomation.Jobs.StepCondition.SourceStepDisplayName"/> für alle
-        /// If/ElseIf-Steps anhand der aktuellen Step-Liste. Wird nach dem Laden und nach jeder
-        /// Listenänderung aufgerufen, da SourceStepDisplayName nicht serialisiert wird.
-        /// </summary>
-        private void ResolveConditionDisplayNames()
-        {
-            // Schnelle Lookup-Map: StepId → (friendlyName, 1-basierter Index)
-            var idToName = new Dictionary<string, string>(_steps.Count, StringComparer.Ordinal);
-            for (int i = 0; i < _steps.Count; i++)
-            {
-                var step = _steps[i];
-                idToName[step.Id] = StepLocalization.NumberedName(step.GetType(), i + 1);
-            }
-
-            foreach (var step in _steps)
-            {
-                IEnumerable<TaskAutomation.Jobs.StepCondition>? conditions = step switch
-                {
-                    TaskAutomation.Jobs.IfStep     ifs  => ifs.Settings.Conditions,
-                    TaskAutomation.Jobs.ElseIfStep eifs => eifs.Settings.Conditions,
-                    _                                   => null
-                };
-                if (conditions is null) continue;
-
-                foreach (var cond in conditions)
-                    cond.SourceStepDisplayName = idToName.TryGetValue(cond.SourceStepId, out var name)
-                        ? name
-                        : cond.SourceStepId;
-            }
-        }
     }
 }

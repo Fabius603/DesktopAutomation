@@ -74,6 +74,12 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Bewegung vorhersagen"),
 
+            [typeof(DynamicRoiStep)] = new(
+                Prerequisites: ["DetectionResult"],
+                Output: "DynamicRoiResult",
+                IsConditionSource: true,
+                DisplayName: "Dynamische ROI aktualisieren"),
+
             // ── Interaktion ────────────────────────────────────────────────────
             [typeof(KlickOnPointStep)] = new(
                 Prerequisites: ["DetectionResult"],
@@ -209,6 +215,7 @@ namespace TaskAutomation.Steps
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
             ["PointComparison"]    = typeof(PointComparisonStep),
+            ["DynamicRoi"]         = typeof(DynamicRoiStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),

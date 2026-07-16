@@ -32,6 +32,7 @@ namespace TaskAutomation.Steps
         /// Gibt für nicht-ausgeführte Steps immer einen sinnvollen Default zurück.
         /// </summary>
         IJobResultStore Results { get; }
+        IDictionary<string, DynamicRoiState> DynamicRoiStates { get; }
 
         // ── Read-only Services ─────────────────────────────────────────────────
 

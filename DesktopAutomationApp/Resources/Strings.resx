@@ -619,7 +619,7 @@
     <value>Wert</value>
   </data>
   <data name="Ui.Step.Settings.AddCondition" xml:space="preserve">
-    <value>+ Bedingung hinzufügen</value>
+    <value>Bedingung hinzufügen</value>
   </data>
   <data name="Ui.Step.Settings.ElseDescription" xml:space="preserve">
     <value>Keine Konfiguration erforderlich. Dieser Block wird ausgeführt, wenn keine vorherige Bedingung zutraf.</value>
@@ -1906,4 +1906,58 @@ Fehlermeldung:
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximal erlaubte mittlere Abweichung des Modells von den Messwerten in Pixeln. Größere Fehler führen zu keiner Vorhersage. 0 deaktiviert die Grenze.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Confidence der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Erweitert</value></data>
+  <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamische ROI</value></data>
+  <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erzeugt aus dem besten Match eine ROI für die nächste Job-Runde.</value></data>
+  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Quell-Erkennung</value></data>
+  <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Rand in Pixeln</value></data>
+  <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimale Konfidenz (0–1)</value></data>
+  <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Vollbildsuche nach X ROI-Durchläufen (0 = nie)</value></data>
+  <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Dynamische ROI nach X erfolglosen Versuchen entfernen (0 = nie)</value></data>
+  <data name="Ui.Step.DynamicRoi.FallbackHint" xml:space="preserve"><value>Ohne dynamische ROI wird die aktivierte feste ROI verwendet, andernfalls Vollbild.</value></data>
+  <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Dynamische ROI verwenden</value></data>
+  <data name="Ui.Job.Steps.RoiPadding" xml:space="preserve"><value>Rand: </value></data>
+  <data name="Ui.Job.Steps.RoiMinConfidence" xml:space="preserve"><value>Minimale Konfidenz: </value></data>
+  <data name="Ui.Job.Steps.RoiFullSearchInterval" xml:space="preserve"><value>Basis-Suche nach ROI-Durchläufen: </value></data>
+  <data name="Ui.Job.Steps.RoiResetAfterMisses" xml:space="preserve"><value>Reset nach Fehlversuchen: </value></data>
+  <data name="Ui.Job.Steps.CompactInput" xml:space="preserve">
+    <value>Eingabe:</value>
+  </data>
+  <data name="Ui.Job.Steps.CompactOutput" xml:space="preserve">
+    <value>Ausgabe:</value>
+  </data>
+  <data name="Ui.Job.Steps.ShowDetails" xml:space="preserve">
+    <value>Details anzeigen</value>
+  </data>
+  <data name="Ui.Job.Steps.DetailsSources" xml:space="preserve"><value>Quellen und Abhängigkeiten</value></data>
+  <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Erkennung</value></data>
+  <data name="Ui.Job.Steps.DetailsRoi" xml:space="preserve"><value>ROI</value></data>
+  <data name="Ui.Job.Steps.DetailsGeneral" xml:space="preserve"><value>Allgemein</value></data>
+  <data name="Ui.Job.Steps.DetailsAdvanced" xml:space="preserve"><value>Erweitert</value></data>
+  <data name="Ui.Job.Steps.DetailsReturnValue" xml:space="preserve"><value>Rückgabewert und Eigenschaften</value></data>
+  <data name="Ui.Common.Yes" xml:space="preserve"><value>Ja</value></data>
+  <data name="Ui.Common.No" xml:space="preserve"><value>Nein</value></data>
+  <data name="Condition.Contains" xml:space="preserve"><value>enthält</value></data>
+  <data name="Condition.StartsWith" xml:space="preserve"><value>beginnt mit</value></data>
+  <data name="Condition.IsEmpty" xml:space="preserve"><value>ist leer</value></data>
+  <data name="Condition.IsNotEmpty" xml:space="preserve"><value>ist nicht leer</value></data>
+  <data name="Ui.Job.Steps.DetailsConditions" xml:space="preserve"><value>Bedingungen</value></data>
+  <data name="Ui.Step.Settings.ConditionEditorHint" xml:space="preserve"><value>Lege fest, ob alle Bedingungen oder mindestens eine Bedingung erfüllt sein muss.</value></data>
+  <data name="Ui.Step.Settings.RemoveCondition" xml:space="preserve"><value>Bedingung entfernen</value></data>
+  <data name="Ui.Step.IfEditor.AndConnector" xml:space="preserve"><value>UND</value></data>
+  <data name="Ui.Step.IfEditor.OrConnector" xml:space="preserve"><value>ODER</value></data>
+  <data name="Ui.Step.IfEditor.Condition" xml:space="preserve"><value>Bedingung</value></data>
+  <data name="Ui.Step.IfEditor.ResultPath" xml:space="preserve"><value>Step und Eigenschaft</value></data>
+  <data name="Ui.Step.IfEditor.SelectValue" xml:space="preserve"><value>Step und Eigenschaft auswählen…</value></data>
+  <data name="Ui.Step.IfEditor.ExampleDecimal" xml:space="preserve"><value>z. B. 0,85</value></data>
+  <data name="Ui.Step.IfEditor.ExampleInteger" xml:space="preserve"><value>z. B. 3</value></data>
+  <data name="Ui.Step.IfEditor.ExampleText" xml:space="preserve"><value>Text eingeben…</value></data>
+  <data name="Ui.Step.IfEditor.ExampleDate" xml:space="preserve"><value>z. B. 15.07.2026 14:30:00</value></data>
+  <data name="Ui.Step.IfEditor.InvalidValue" xml:space="preserve"><value>Bitte einen gültigen Vergleichswert eingeben.</value></data>
+  <data name="Ui.Step.Settings.Monitor" xml:space="preserve"><value>Monitor</value></data>
+  <data name="Ui.Step.Settings.Pixels" xml:space="preserve"><value>Pixel</value></data>
+  <data name="Ui.Step.Settings.ApplicationDefault" xml:space="preserve"><value>Anwendung entscheiden</value></data>
+  <data name="Ui.Step.Settings.Windowed" xml:space="preserve"><value>Fenster</value></data>
+  <data name="Ui.Step.Settings.Maximized" xml:space="preserve"><value>Maximiert</value></data>
+  <data name="Ui.Step.Settings.Centered" xml:space="preserve"><value>Zentriert</value></data>
+  <data name="Ui.Step.Settings.Custom" xml:space="preserve"><value>Benutzerdefiniert</value></data>
 </root>

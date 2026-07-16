@@ -29,6 +29,8 @@ namespace TaskAutomation.Steps
         // ── IStepPipelineContext ───────────────────────────────────────────────
 
         public IJobResultStore Results => _results;
+        public IDictionary<string, DynamicRoiState> DynamicRoiStates { get; } =
+            new Dictionary<string, DynamicRoiState>(StringComparer.OrdinalIgnoreCase);
 
         public ILogger              Logger             { get; }
         public DxgiResources        DxgiResources      { get; }

@@ -24,19 +24,21 @@ namespace TaskAutomation.Steps
             if (!step.Settings.WaitForExit)
             {
                 var scriptPath = step.Settings.ScriptPath;
+                var arguments = step.Settings.Arguments;
                 var scriptExecutor = ctx.ScriptExecutor;
 
                 logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", scriptPath);
                 _ = Task.Run(async () =>
                 {
-                    try { await scriptExecutor.ExecuteScriptFile(scriptPath, CancellationToken.None); }
+                    try { await scriptExecutor.ExecuteScriptFile(scriptPath, arguments, CancellationToken.None); }
                     catch (Exception ex) { logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
                 });
             }
             else
             {
                 logger.LogInformation("ScriptExecutionStepHandler: Executing '{Path}'", step.Settings.ScriptPath);
-                await ctx.ScriptExecutor.ExecuteScriptFile(step.Settings.ScriptPath, ct);
+                await ctx.ScriptExecutor.ExecuteScriptFile(
+                    step.Settings.ScriptPath, step.Settings.Arguments, ct);
             }
 
             return new TaskResult { WasExecuted = true, Success = true };

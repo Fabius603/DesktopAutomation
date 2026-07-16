@@ -83,6 +83,7 @@ namespace TaskAutomation.Jobs
             { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
             { typeof(KeyPointMatchingStep),    new KeyPointMatchingStepHandler()    },
             { typeof(PointComparisonStep),     new PointComparisonStepHandler()     },
+            { typeof(DynamicRoiStep),          new DynamicRoiStepHandler()          },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
@@ -680,7 +681,7 @@ namespace TaskAutomation.Jobs
             if (result == null) return null;
 
             var parts = new List<string>();
-            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "IsPredicted", "PredictedForUtc", "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc", "CaptureTimestampUtc" })
+            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "AppliedRoi", "UsedDynamicRoi", "RoiUpdated", "RoiReset", "GlobalBounds", "ConsecutiveMisses", "FullSearchInterval", "IsPredicted", "PredictedForUtc", "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc", "CaptureTimestampUtc" })
             {
                 var property = result.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
                 if (property == null) continue;
@@ -867,11 +868,11 @@ namespace TaskAutomation.Jobs
         /// <summary>
         /// Evaluates an <see cref="IfConditionSettings"/> against the current pipeline results.
         /// Returns true when all (or any) conditions in the settings are met.
-        /// An empty condition list is treated as "always true".
+        /// An empty condition list is invalid and therefore never matches.
         /// </summary>
         private static bool EvaluateCondition(IfConditionSettings settings, IJobResultStore results)
         {
-            if (settings.Conditions.Count == 0) return true;
+            if (settings.Conditions.Count == 0) return false;
 
             return settings.MatchMode == ConditionMatchMode.All
                 ? settings.Conditions.All(c  => EvaluateSingleCondition(c, results))
@@ -880,50 +881,45 @@ namespace TaskAutomation.Jobs
 
         private static bool EvaluateSingleCondition(StepCondition condition, IJobResultStore results)
         {
-            if (string.IsNullOrEmpty(condition.SourceStepId) || string.IsNullOrEmpty(condition.Property))
+            if (string.IsNullOrEmpty(condition.SourceStepId) || string.IsNullOrEmpty(condition.PropertyPath))
                 return false;
 
             var result = results.GetRaw(condition.SourceStepId);
             if (result is null) return false;
 
-            // Use reflection so property access stays in sync with StepResultMetadata
-            // without maintaining a parallel hard-coded switch.
-            var prop = result.GetType()
-                             .GetProperty(condition.Property, BindingFlags.Public | BindingFlags.Instance);
-            if (prop is null) return false;
+            var resultTypeName = result.GetType().Name;
+            if (!StepResultMetadata.TryGetProperty(resultTypeName, condition.PropertyPath, out var descriptor) ||
+                !StepResultMetadata.TryReadValue(result, descriptor, out var value)) return false;
 
-            var value = prop.GetValue(result);
+            if (condition.Operator == ConditionOperator.IsEmpty) return value is null || string.IsNullOrEmpty(value as string);
+            if (condition.Operator == ConditionOperator.IsNotEmpty) return value is not null && !string.IsNullOrEmpty(value as string);
             if (value is null) return false;
 
             return condition.Operator switch
             {
                 ConditionOperator.IsTrue  => value is bool b  && b,
                 ConditionOperator.IsFalse => value is bool b2 && !b2,
-                _                         => CompareForOperator(value, condition.Operator, condition.ComparisonValue)
+                _                         => CompareForOperator(value, descriptor, condition.Operator, condition.ComparisonValue)
             };
         }
 
-        private static bool CompareForOperator(object value, ConditionOperator op, string? comparisonValue)
+        private static bool CompareForOperator(object value, ResultPropertyDescriptor descriptor, ConditionOperator op, string? comparisonValue)
         {
-            int cmp;
-            switch (value)
+            if (!StepResultMetadata.TryParseComparison(descriptor, comparisonValue, out var expected)) return false;
+            if (descriptor.PropertyType == ResultPropertyType.String)
             {
-                case bool b:
-                    if (!bool.TryParse(comparisonValue, out bool bv)) return false;
-                    cmp = b.CompareTo(bv);
-                    break;
-                case double d:
-                    if (!double.TryParse(comparisonValue,
-                            System.Globalization.NumberStyles.Any,
-                            System.Globalization.CultureInfo.InvariantCulture,
-                            out double dv)) return false;
-                    cmp = d.CompareTo(dv);
-                    break;
-                default:
-                    cmp = string.Compare(value.ToString(), comparisonValue,
-                                         StringComparison.OrdinalIgnoreCase);
-                    break;
+                var actualText = value.ToString() ?? ""; var expectedText = expected?.ToString() ?? "";
+                if (op == ConditionOperator.Contains) return actualText.Contains(expectedText, StringComparison.OrdinalIgnoreCase);
+                if (op == ConditionOperator.StartsWith) return actualText.StartsWith(expectedText, StringComparison.OrdinalIgnoreCase);
             }
+            int cmp = descriptor.PropertyType switch
+            {
+                ResultPropertyType.Double => Convert.ToDouble(value).CompareTo(Convert.ToDouble(expected)),
+                ResultPropertyType.Integer => Convert.ToInt64(value).CompareTo(Convert.ToInt64(expected)),
+                ResultPropertyType.DateTime => Convert.ToDateTime(value).CompareTo((DateTime)expected!),
+                ResultPropertyType.Bool => Convert.ToBoolean(value).CompareTo(Convert.ToBoolean(expected)),
+                _ => string.Compare(value.ToString(), expected?.ToString(), StringComparison.OrdinalIgnoreCase)
+            };
             return op switch
             {
                 ConditionOperator.Equals             => cmp == 0,

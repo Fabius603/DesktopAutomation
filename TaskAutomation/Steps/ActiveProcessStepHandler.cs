@@ -25,10 +25,7 @@ namespace TaskAutomation.Steps
                 return Task.FromResult(new ActiveProcessResult { WasExecuted = true, IsRunning = false });
             }
 
-            // Remove .exe extension for GetProcessesByName compatibility
-            var nameWithoutExt = processName.EndsWith(".exe", System.StringComparison.OrdinalIgnoreCase)
-                ? processName[..^4]
-                : processName;
+            var nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(processName);
 
             var processes = Process.GetProcessesByName(nameWithoutExt);
             var isRunning = processes.Length > 0;

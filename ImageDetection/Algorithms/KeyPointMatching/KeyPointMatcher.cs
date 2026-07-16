@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
+using OpenCvSharp.Extensions;
 
 namespace ImageDetection.Algorithms.KeyPointMatching
 {
@@ -85,6 +87,46 @@ namespace ImageDetection.Algorithms.KeyPointMatching
         public void SetROI(Rect roi) => _roi  = roi;
         public void EnableROI()               => _useROI = true;
         public void DisableROI()              => _useROI = false;
+
+        public IDetectionResult Detect(Bitmap bitmap)
+        {
+            if (bitmap == null) return new DetectionResult { Success = false, Confidence = 0 };
+            var useValidatedRoi = _useROI && _roi.Width > 0 && _roi.Height > 0
+                && _roi.X >= 0 && _roi.Y >= 0
+                && _roi.Right <= bitmap.Width && _roi.Bottom <= bitmap.Height;
+            if (useValidatedRoi)
+            {
+                using var cropped = bitmap.Clone(
+                    new Rectangle(_roi.X, _roi.Y, _roi.Width, _roi.Height), bitmap.PixelFormat);
+                using var croppedMat = cropped.ToMat();
+                var previousUseRoi = _useROI;
+                _useROI = false;
+                try
+                {
+                    var result = Detect(croppedMat);
+                    OffsetResult(result, _roi.X, _roi.Y);
+                    return result;
+                }
+                finally { _useROI = previousUseRoi; }
+            }
+
+            using var mat = bitmap.ToMat();
+            return Detect(mat);
+        }
+
+        private static void OffsetResult(IDetectionResult result, int offsetX, int offsetY)
+        {
+            var results = result.AllResults.Count > 0 ? result.AllResults.Distinct() : new[] { result };
+            foreach (var item in results)
+            {
+                item.CenterPoint = new System.Drawing.Point(item.CenterPoint.X + offsetX, item.CenterPoint.Y + offsetY);
+                if (item.BoundingBox is Rectangle box)
+                {
+                    box.Offset(offsetX, offsetY);
+                    item.BoundingBox = box;
+                }
+            }
+        }
 
         /// <summary>
         /// Searches <paramref name="rawSource"/> for the previously set template.

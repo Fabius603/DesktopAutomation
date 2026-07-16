@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -42,6 +43,7 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<FileSystemAutomationEventKind> FileSystemEventKinds { get; } = new();
         public ObservableCollection<SystemAutomationEventKind> SystemEventKinds { get; } = new();
         public ObservableCollection<ActionItem> Actions { get; } = new();
+        public ObservableCollection<string> AvailableProcessNames { get; } = new();
         public ListCollectionView ActionsView { get; }
 
         public ActionItem? SelectedAction
@@ -168,6 +170,7 @@ namespace DesktopAutomationApp.ViewModels
             LocalizationService.Instance.CultureChanged += OnCultureChanged;
 
             LoadActions();
+            _ = LoadInstalledProgramsAsync();
             ResolveSelectedAction();
             HasUnsavedChanges = _isNew;
         }
@@ -178,6 +181,23 @@ namespace DesktopAutomationApp.ViewModels
             var path = Path.Combine(directory, $"{EditedAutomation.Id}.json");
             Directory.CreateDirectory(directory);
             Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+        }
+
+        private async Task LoadInstalledProgramsAsync()
+        {
+            try
+            {
+                var programs = await InstalledProgramDiscovery.DiscoverAsync();
+                foreach (var processName in programs
+                             .Select(program => program.ProcessName)
+                             .Where(name => !string.IsNullOrWhiteSpace(name))
+                             .Distinct(StringComparer.OrdinalIgnoreCase)
+                             .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase))
+                    AvailableProcessNames.Add(processName);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            catch (ArgumentException) { }
         }
 
         public void ReportDateTimeInputValidity(string inputId, bool isValid)

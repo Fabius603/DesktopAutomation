@@ -39,8 +39,52 @@ namespace ImageDetection.Algorithms.ColorDetection
             if (bitmap is null)
                 return new DetectionResult { Success = false, Confidence = 0 };
 
+            ValidateOptions(options);
+            var roi = ResolveRoi(options, bitmap.Width, bitmap.Height);
+            var usesPartialRoi = roi.X != 0 || roi.Y != 0
+                || roi.Width != bitmap.Width || roi.Height != bitmap.Height;
+
+            if (usesPartialRoi)
+            {
+                using var cropped = bitmap.Clone(
+                    new DrawingRectangle(roi.X, roi.Y, roi.Width, roi.Height),
+                    bitmap.PixelFormat);
+                var croppedOptions = CopyWithoutRoi(options);
+                var result = Detect(cropped, croppedOptions, ct);
+                OffsetResult(result, roi.X, roi.Y);
+                return result;
+            }
+
             using var sourceMat = BitmapConverter.ToMat(bitmap);
             return Detect(sourceMat, options, ct);
+        }
+
+        private static ColorDetectionOptions CopyWithoutRoi(ColorDetectionOptions source) => new()
+        {
+            ColorHex = source.ColorHex,
+            ConfidenceThreshold = source.ConfidenceThreshold,
+            MinSize = source.MinSize,
+            MaxSize = source.MaxSize,
+            MinWidth = source.MinWidth,
+            MinHeight = source.MinHeight,
+            DownscaleFactor = source.DownscaleFactor,
+            EnableROI = false
+        };
+
+        private static void OffsetResult(IDetectionResult result, int offsetX, int offsetY)
+        {
+            var results = result.AllResults.Count > 0
+                ? result.AllResults.Distinct()
+                : new[] { result };
+            foreach (var item in results)
+            {
+                item.CenterPoint = new DrawingPoint(item.CenterPoint.X + offsetX, item.CenterPoint.Y + offsetY);
+                if (item.BoundingBox is DrawingRectangle box)
+                {
+                    box.Offset(offsetX, offsetY);
+                    item.BoundingBox = box;
+                }
+            }
         }
 
         public IDetectionResult Detect(Mat sourceMat, ColorDetectionOptions options, CancellationToken ct = default)

@@ -17,12 +17,17 @@ public static class StepLocalization
     public static string Property(string propertyName, string? fallback = null) =>
         GetOrFallback($"Step.ResultProperty.{propertyName}", fallback ?? propertyName);
 
+    public static string PropertyPath(string propertyPath) => Property(propertyPath,
+        string.Join(" / ", propertyPath.Split('.').Select(segment =>
+            System.Text.RegularExpressions.Regex.Replace(segment, "(?<=[a-z0-9])([A-Z])", " $1"))));
+
     public static ResultTypeDescriptor ResultType(ResultTypeDescriptor descriptor) =>
         new(
             descriptor.TypeName,
             descriptor.DisplayName,
             descriptor.Properties
-                .Select(p => new ResultPropertyDescriptor(p.Name, Property(p.Name, p.DisplayName), p.PropertyType))
+                .Select(p => new ResultPropertyDescriptor(p.Name, Property(p.Name, p.DisplayName), p.PropertyType,
+                    p.Description, p.IsNullable, p.Example))
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>

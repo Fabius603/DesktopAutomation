@@ -50,7 +50,7 @@ namespace DesktopAutomationApp.Converters
                 var c = Palette[i];
                 _borderBrushes[i] = new SolidColorBrush(c);
                 _borderBrushes[i].Freeze();
-                _bgBrushes[i] = new SolidColorBrush(Color.FromArgb(0x14, c.R, c.G, c.B));
+                _bgBrushes[i] = new SolidColorBrush(Color.FromArgb(0x2A, c.R, c.G, c.B));
                 _bgBrushes[i].Freeze();
             }
         }
@@ -67,6 +67,9 @@ namespace DesktopAutomationApp.Converters
             bool wantBackground = parameter is string p &&
                                   p.Equals("background", StringComparison.OrdinalIgnoreCase);
 
+            if (wantBackground)
+                return Brushes.Transparent;
+
             // Rebuild map only when the version counter changes (once per collection change).
             int version = values.Length > 2 && values[2] is int v ? v : 0;
             if (_groupIndexMap == null || version != _cacheVersion)
@@ -79,9 +82,7 @@ namespace DesktopAutomationApp.Converters
             if (groupIndex < 0)
                 return Brushes.Transparent;
 
-            return wantBackground
-                ? _bgBrushes[groupIndex % _bgBrushes.Length]
-                : _borderBrushes[groupIndex % _borderBrushes.Length];
+            return _borderBrushes[groupIndex % _borderBrushes.Length];
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
@@ -116,5 +117,72 @@ namespace DesktopAutomationApp.Converters
 
             return map;
         }
+    }
+
+    /// <summary>Returns connected card geometry for steps inside an If/EndIf block.</summary>
+    public sealed class StepBlockShapeConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length < 2 || values[0] is not JobStep step || values[1] is not IList steps)
+                return DependencyProperty.UnsetValue;
+            var index = steps.IndexOf(step);
+            var inside = false;
+            for (var i = 0; i <= index && i < steps.Count; i++)
+            {
+                if (steps[i] is IfStep) inside = true;
+                if (i < index && steps[i] is EndIfStep) inside = false;
+            }
+            var start = step is IfStep;
+            var end = step is EndIfStep && inside;
+            var branchMarker = step is IfStep or ElseIfStep or ElseStep or EndIfStep;
+            var mode = parameter as string;
+            if (!inside)
+                return mode switch { "margin" => new Thickness(0, 0, 10, 6), "border" => new Thickness(1), _ => new CornerRadius(8) };
+            return mode switch
+            {
+                "margin" => new Thickness(branchMarker ? 0 : 14, 0, 10, end ? 10 : 3),
+                "border" => new Thickness(1),
+                _ => start ? new CornerRadius(8, 8, 4, 4) : end ? new CornerRadius(4, 4, 8, 8) : new CornerRadius(4)
+            };
+        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
+    }
+
+    public sealed class StepBlockVisualConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length < 2 || values[0] is not JobStep step || values[1] is not IList steps)
+                return DependencyProperty.UnsetValue;
+            var index = steps.IndexOf(step);
+            var inBlock = false;
+            for (var i = 0; i <= index && i < steps.Count; i++)
+            {
+                if (steps[i] is IfStep) inBlock = true;
+                if (i < index && steps[i] is EndIfStep) inBlock = false;
+            }
+            var start = step is IfStep;
+            var end = step is EndIfStep && inBlock;
+            var branch = step is ElseIfStep or ElseStep;
+            var inner = inBlock && !start && !end && !branch;
+            return (parameter as string) switch
+            {
+                // Keep the block connected internally, but separate its closing
+                // EndIf card from the following top-level step like a normal card.
+                "itemMargin" => new Thickness(0, 0, 10, end || !inBlock ? 7 : 0),
+                "frameBorder" => !inBlock ? new Thickness(0) : start ? new Thickness(1, 1, 1, 0) : end ? new Thickness(1, 0, 1, 1) : new Thickness(1, 0, 1, 0),
+                "frameCorner" => start ? new CornerRadius(9, 9, 0, 0) : end ? new CornerRadius(0, 0, 9, 9) : new CornerRadius(0),
+                "cardMargin" => inner ? new Thickness(12, 4, 12, 4) : new Thickness(0),
+                "cardBorder" => !inBlock || inner ? new Thickness(1) : branch ? new Thickness(0, 1, 0, 0) : new Thickness(0),
+                "cardCorner" => !inBlock ? new CornerRadius(8) : inner ? new CornerRadius(6) : start ? new CornerRadius(8, 8, 0, 0) : end ? new CornerRadius(0, 0, 8, 8) : new CornerRadius(0),
+                "frameBackground" => inBlock ? FindBrush("App.Brush.Surface") : Brushes.Transparent,
+                "cardBackground" => start || branch ? FindBrush("App.Brush.SurfaceHover") : FindBrush("App.Brush.Surface"),
+                _ => DependencyProperty.UnsetValue
+            };
+        }
+
+        private static Brush FindBrush(string key) => Application.Current?.TryFindResource(key) as Brush ?? Brushes.Transparent;
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 }

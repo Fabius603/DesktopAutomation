@@ -34,8 +34,9 @@ namespace TaskAutomation.Steps
             if (ctx.TemplateMatcher == null)
                 ctx.TemplateMatcher = new TemplateMatching(step.Settings.TemplateMatchMode);
 
-            ctx.TemplateMatcher.SetROI(step.Settings.ROI);
-            if (step.Settings.EnableROI) ctx.TemplateMatcher.EnableROI();
+            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            ctx.TemplateMatcher.SetROI(dynamicRoi ?? step.Settings.ROI);
+            if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.TemplateMatcher.EnableROI();
             else                         ctx.TemplateMatcher.DisableROI();
             ctx.TemplateMatcher.EnableMultiplePoints();
             ctx.TemplateMatcher.SetTemplate(step.Settings.TemplatePath);
@@ -46,7 +47,7 @@ namespace TaskAutomation.Steps
             if (!rawResult.Success)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: No match found above threshold");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
@@ -98,6 +99,7 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
+                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

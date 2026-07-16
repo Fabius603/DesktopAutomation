@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace TaskAutomation.Steps
         protected override Task<ActiveWindowResult> ExecuteCoreAsync(
             ActiveWindowStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var processName = step.Settings.ProcessName?.Trim() ?? string.Empty;
+            var processName = Path.GetFileNameWithoutExtension(step.Settings.ProcessName?.Trim() ?? string.Empty);
             var cacheMs = Math.Max(0, step.Settings.CacheMs);
 
             if (cacheMs > 0 &&
@@ -46,11 +47,7 @@ namespace TaskAutomation.Steps
             try
             {
                 using var proc = Process.GetProcessById((int)pid);
-                isActive = proc.ProcessName.Equals(
-                    processName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                        ? processName[..^4]
-                        : processName,
-                    StringComparison.OrdinalIgnoreCase);
+                isActive = proc.ProcessName.Equals(processName, StringComparison.OrdinalIgnoreCase);
             }
             catch (Exception ex)
             {

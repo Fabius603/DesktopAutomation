@@ -25,6 +25,10 @@ namespace DesktopAutomationApp.Converters
                     ConditionOperator.LessThan           => "<",
                     ConditionOperator.GreaterThanOrEqual => "≥",
                     ConditionOperator.LessThanOrEqual    => "≤",
+                    ConditionOperator.Contains           => Loc.Get("Condition.Contains"),
+                    ConditionOperator.StartsWith         => Loc.Get("Condition.StartsWith"),
+                    ConditionOperator.IsEmpty            => Loc.Get("Condition.IsEmpty"),
+                    ConditionOperator.IsNotEmpty         => Loc.Get("Condition.IsNotEmpty"),
                     _                                    => op.ToString()
                 };
             }

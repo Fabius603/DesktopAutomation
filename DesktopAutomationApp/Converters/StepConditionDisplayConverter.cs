@@ -42,19 +42,14 @@ namespace DesktopAutomationApp.Converters
                 _cacheVersion = version;
             }
 
-            // Resolve source name: prefer live lookup, fall back to stored display name
             string source;
             if (_nameMap != null && !string.IsNullOrWhiteSpace(c.SourceStepId)
                 && _nameMap.TryGetValue(c.SourceStepId, out var resolved))
                 source = resolved;
             else
-                source = !string.IsNullOrWhiteSpace(c.SourceStepDisplayName)
-                    ? c.SourceStepDisplayName
-                    : (string.IsNullOrWhiteSpace(c.SourceStepId) ? Loc.Get("Step.Unknown") : c.SourceStepId);
+                source = string.IsNullOrWhiteSpace(c.SourceStepId) ? Loc.Get("Step.Unknown") : c.SourceStepId;
 
-            var prop = !string.IsNullOrWhiteSpace(c.Property)
-                ? StepLocalization.Property(c.Property, c.PropertyDisplayName)
-                : c.PropertyDisplayName;
+            var prop = StepLocalization.PropertyPath(c.PropertyPath);
             if (string.IsNullOrWhiteSpace(prop)) prop = Loc.Get("Common.Value");
 
             var op = c.Operator switch
@@ -70,7 +65,7 @@ namespace DesktopAutomationApp.Converters
                 _ => c.Operator.ToString()
             };
 
-            var needsComparisonValue = c.Operator is not ConditionOperator.IsTrue and not ConditionOperator.IsFalse;
+            var needsComparisonValue = ConditionRules.RequiresComparisonValue(c.Operator);
             var comparison = c.ComparisonValue?.Trim() ?? string.Empty;
 
             if (needsComparisonValue && !string.IsNullOrWhiteSpace(comparison))

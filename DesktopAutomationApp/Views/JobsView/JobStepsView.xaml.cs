@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -68,6 +69,37 @@ namespace DesktopAutomationApp.Views
                 lb.Dispatcher.BeginInvoke(() => lb.ScrollIntoView(lb.SelectedItem));
 
             _vm?.SetSelectedSteps(lb.SelectedItems.Cast<object>());
+        }
+
+        private void StepsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (ItemsControl.ContainerFromElement(StepsList, e.OriginalSource as DependencyObject) is not ListBoxItem item)
+                return;
+            var toggle = FindVisualChild<ToggleButton>(item, "DetailsToggle");
+            if (toggle is not null) toggle.IsChecked = toggle.IsChecked != true;
+            e.Handled = true;
+        }
+
+        private void StepMoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { ContextMenu: { } menu } button)
+            {
+                menu.PlacementTarget = button;
+                menu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
+        {
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T match && match.Name == name) return match;
+                var nested = FindVisualChild<T>(child, name);
+                if (nested is not null) return nested;
+            }
+            return null;
         }
     }
 }

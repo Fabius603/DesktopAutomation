@@ -46,6 +46,8 @@ namespace TaskAutomation.Steps
         public bool SourceCaptureIsFresh { get; init; } = true;
         public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
         public bool IsPredicted { get; init; }
+        public string? AppliedRoi { get; init; }
+        public bool UsedDynamicRoi { get; init; }
         public DateTime? PredictedForUtc { get; init; }
         /// <summary>
         /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
@@ -67,6 +69,16 @@ namespace TaskAutomation.Steps
         public string? ErrorMessage { get; init; }
 
         public static readonly TaskResult Default = new() { WasExecuted = false };
+    }
+
+    public sealed record DynamicRoiResult : StepResultBase
+    {
+        public bool RoiUpdated { get; init; }
+        public bool RoiReset { get; init; }
+        public string? GlobalBounds { get; init; }
+        public int ConsecutiveMisses { get; init; }
+        public int FullSearchInterval { get; init; }
+        public static readonly DynamicRoiResult Default = new() { WasExecuted = false };
     }
 
     /// <summary>

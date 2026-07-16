@@ -24,9 +24,10 @@ namespace TaskAutomation.Steps
             }
 
             var detector = ctx.ColorDetector ??= new ColorDetector();
+            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
             var rawResult = detector.Detect(
                 capture.Image!,
-                CreateOptions(step.Settings),
+                CreateOptions(step.Settings, dynamicRoi),
                 ct);
 
             if (!rawResult.Success)
@@ -34,7 +35,7 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "ColorDetectionStepHandler: Kein Treffer ueber Threshold {Threshold:F2} gefunden.",
                     step.Settings.ConfidenceThreshold);
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = new System.Drawing.Point(
@@ -86,12 +87,13 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
+                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 
         protected override DetectionResult CreateDefault() => DetectionResult.Default;
 
-        private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings)
+        private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings, Rect? dynamicRoi)
             => new()
             {
                 ColorHex = settings.ColorHex,
@@ -101,12 +103,12 @@ namespace TaskAutomation.Steps
                 MinWidth = settings.MinWidth,
                 MinHeight = settings.MinHeight,
                 DownscaleFactor = settings.DownscaleFactor,
-                EnableROI = settings.EnableROI,
+                EnableROI = dynamicRoi.HasValue || settings.EnableROI,
                 ROI = new Rect(
-                    settings.ROI.X,
-                    settings.ROI.Y,
-                    settings.ROI.Width,
-                    settings.ROI.Height)
+                    (dynamicRoi ?? settings.ROI).X,
+                    (dynamicRoi ?? settings.ROI).Y,
+                    (dynamicRoi ?? settings.ROI).Width,
+                    (dynamicRoi ?? settings.ROI).Height)
             };
     }
 }
