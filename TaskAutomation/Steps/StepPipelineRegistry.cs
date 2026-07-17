@@ -121,12 +121,12 @@ namespace TaskAutomation.Steps
             [typeof(StartProcessStep)] = new(
                 Prerequisites: [],
                 Output:        "TaskResult",
-                DisplayName:   "Prozess starten"),
+                DisplayName:   "Prozess starten/beenden"),
 
             [typeof(FocusProcessStep)] = new(
                 Prerequisites: [],
                 Output:        "TaskResult",
-                DisplayName:   "Prozess in Vordergrund"),
+                DisplayName:   "Prozessfenster steuern"),
 
             [typeof(ShowTextStep)] = new(
                 Prerequisites: [],

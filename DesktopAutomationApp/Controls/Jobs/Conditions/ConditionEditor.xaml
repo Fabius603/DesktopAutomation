@@ -145,7 +145,14 @@
                                                 Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}"
                                                    Style="{StaticResource ConditionFieldLabel}"/>
-                                        <Border Height="36" BorderThickness="1" CornerRadius="4">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <RadioButton Content="{loc:Translate Key=Ui.Step.IfEditor.LiteralValue}"
+                                                         IsChecked="{Binding ComparisonIsLiteral}"
+                                                         Margin="0,0,18,0"/>
+                                            <RadioButton Content="{loc:Translate Key=Ui.Step.IfEditor.JobResultValue}"
+                                                         IsChecked="{Binding ComparisonIsJobResult}"/>
+                                        </StackPanel>
+                                        <Border Height="38" BorderThickness="1" CornerRadius="4">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="BorderBrush" Value="Transparent"/>
@@ -172,6 +179,42 @@
                                                                     SelectedTimeFormat="Long"
                                                                     mah:TextBoxHelper.Watermark="{Binding InputExample}"
                                                                     Visibility="{Binding ShowDateValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <ComboBox ItemsSource="{Binding BooleanValues}"
+                                                          SelectedItem="{Binding ComparisonBoolean, UpdateSourceTrigger=PropertyChanged}"
+                                                          Height="36"
+                                                          VerticalContentAlignment="Center"
+                                                          Visibility="{Binding ShowBooleanValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <Button Height="36" HorizontalContentAlignment="Stretch"
+                                                        Style="{StaticResource ButtonSecondary}"
+                                                        Click="PathSelector_Click"
+                                                        Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Button.ContextMenu>
+                                                        <ContextMenu ItemsSource="{Binding ComparisonSelectionTree}"
+                                                                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                            <ContextMenu.Resources>
+                                                                <Style TargetType="{x:Type MenuItem}">
+                                                                    <Setter Property="Command" Value="{Binding SelectCommand}"/>
+                                                                </Style>
+                                                            </ContextMenu.Resources>
+                                                            <ContextMenu.ItemTemplate>
+                                                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                                    <TextBlock Text="{Binding DisplayName}"/>
+                                                                </HierarchicalDataTemplate>
+                                                            </ContextMenu.ItemTemplate>
+                                                        </ContextMenu>
+                                                    </Button.ContextMenu>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding ComparisonPath}" TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center"/>
+                                                        <iconPacks:PackIconMaterial Grid.Column="1" Kind="ChevronRight"
+                                                                                    Width="15" Height="15" Margin="8,0,0,0"
+                                                                                    Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                                    </Grid>
+                                                </Button>
                                             </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding ComparisonValueValidationError}"

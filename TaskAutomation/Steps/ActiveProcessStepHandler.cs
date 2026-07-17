@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -17,7 +15,8 @@ namespace TaskAutomation.Steps
         protected override Task<ActiveProcessResult> ExecuteCoreAsync(
             ActiveProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var processName = step.Settings.ProcessName?.Trim() ?? string.Empty;
+            ct.ThrowIfCancellationRequested();
+            var processName = ProcessWindowMatcher.NormalizeProcessName(step.Settings.ProcessName);
 
             if (string.IsNullOrEmpty(processName))
             {
@@ -25,16 +24,11 @@ namespace TaskAutomation.Steps
                 return Task.FromResult(new ActiveProcessResult { WasExecuted = true, IsRunning = false });
             }
 
-            var nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(processName);
-
-            var processes = Process.GetProcessesByName(nameWithoutExt);
-            var isRunning = processes.Length > 0;
-
-            foreach (var p in processes) p.Dispose();
+            var isRunning = ProcessWindowMatcher.FindMatchingProcessIds(processName, null).Count > 0;
 
             ctx.Logger.LogInformation(
                 "ActiveProcessStepHandler: Prozess '{Name}' {Status}.",
-                processName, isRunning ? "läuft" : "nicht gefunden");
+                step.Settings.ProcessName, isRunning ? "läuft" : "nicht gefunden");
 
             return Task.FromResult(new ActiveProcessResult { WasExecuted = true, IsRunning = isRunning });
         }

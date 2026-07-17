@@ -97,6 +97,15 @@ public static class StepResultMetadata
     public static ResultTypeDescriptor? GetResultType(string typeName) =>
         ResultTypes.FirstOrDefault(r => r.TypeName == typeName);
 
+    public static StepResultBase? CreateDefaultResult(string resultTypeName)
+    {
+        var resultType = ResultClrTypes.FirstOrDefault(type => type.Name == resultTypeName);
+        if (resultType is null) return null;
+        var defaultField = resultType.GetField("Default", BindingFlags.Public | BindingFlags.Static);
+        return defaultField?.GetValue(null) as StepResultBase
+               ?? Activator.CreateInstance(resultType) as StepResultBase;
+    }
+
     public static IReadOnlyList<ConditionResultSource> GetConditionSources(IReadOnlyList<JobStep> steps, int consumerIndex) =>
         steps.Take(Math.Clamp(consumerIndex, 0, steps.Count))
             .Select((step, index) => (step, index, output: StepPipelineRegistry.Get(step.GetType())?.Output))

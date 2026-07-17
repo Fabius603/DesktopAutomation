@@ -63,7 +63,7 @@ namespace DesktopAutomationApp.ViewModels
                 .Concat(_allJobSteps
                 .Select((step, index) => (step, index))
                 .Where(x => x.step is DynamicRoiStep)
-                .Select(x => new SourceStepItem(x.step.Id, StepLocalization.NumberedName(x.step.GetType(), x.index + 1), dynamicRoiDescriptor))
+                .Select(x => new SourceStepItem(x.step.Id, StepLocalization.NumberedName(x.step, _allJobSteps), dynamicRoiDescriptor))
                 ).ToList();
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
@@ -487,9 +487,9 @@ namespace DesktopAutomationApp.ViewModels
                 new("Timeout",            "Automatisierung",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
                 new("StartProcess",       "Automatisierung",
-                    "Startet ein Programm oder eine ausführbare Datei. Optional kann auf das Beenden des Prozesses gewartet werden."),
+                    "Startet ein Programm oder beendet laufende Prozesse anhand ihres Namens und optional ihres Fenstertitels."),
                 new("FocusProcess",       "Automatisierung",
-                    "Bringt das Hauptfenster eines bereits laufenden Prozesses in den Vordergrund. Wenn der Prozess nicht gefunden wird, passiert nichts."),
+                    "Bringt ein Prozessfenster in den Vordergrund oder minimiert es. Optional kann nach einem Fenstertitel gefiltert werden."),
                 new("ShowText",            "Ausgabe",
                     "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
                 new("EndJob",             "Automatisierung",
@@ -607,7 +607,7 @@ namespace DesktopAutomationApp.ViewModels
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
                     .FirstOrDefault(r => r.TypeName == resultTypeName);
                 if (descriptor is null) continue;
-                var name = StepLocalization.NumberedName(step.GetType(), i + 1);
+                var name = StepLocalization.NumberedName(step, _precedingSteps);
                 items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
             }
             return items;
@@ -618,7 +618,7 @@ namespace DesktopAutomationApp.ViewModels
             => StepResultMetadata.GetConditionSources(_precedingSteps, _precedingSteps.Count)
                 .Select(source => new SourceStepItem(
                     source.Step.Id,
-                    StepLocalization.NumberedName(source.Step.GetType(), source.StepIndex + 1),
+                    StepLocalization.NumberedName(source.Step, _precedingSteps),
                     StepLocalization.ResultType(source.ResultType)))
                 .ToArray();
 
@@ -1656,6 +1656,43 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<InstalledProgramSuggestion> AvailableExecutablePrograms { get; } = new();
         public ObservableCollection<string> AvailableProcessNames { get; } = new();
 
+        private StartProcessAction _startProcessStep_Action = StartProcessAction.Start;
+        public StartProcessAction StartProcessStep_Action
+        {
+            get => _startProcessStep_Action;
+            set
+            {
+                _startProcessStep_Action = value;
+                OnChange();
+                OnChange(nameof(StartProcessStep_IsStartAction));
+                OnChange(nameof(StartProcessStep_IsTerminateAction));
+            }
+        }
+        public bool StartProcessStep_IsStartAction
+        {
+            get => StartProcessStep_Action == StartProcessAction.Start;
+            set { if (value) StartProcessStep_Action = StartProcessAction.Start; }
+        }
+        public bool StartProcessStep_IsTerminateAction
+        {
+            get => StartProcessStep_Action == StartProcessAction.Terminate;
+            set { if (value) StartProcessStep_Action = StartProcessAction.Terminate; }
+        }
+
+        private string _startProcessStep_ProcessName = string.Empty;
+        public string StartProcessStep_ProcessName
+        {
+            get => _startProcessStep_ProcessName;
+            set { _startProcessStep_ProcessName = value; OnChange(); }
+        }
+
+        private string _startProcessStep_WindowTitleContains = string.Empty;
+        public string StartProcessStep_WindowTitleContains
+        {
+            get => _startProcessStep_WindowTitleContains;
+            set { _startProcessStep_WindowTitleContains = value; OnChange(); }
+        }
+
         private string _startProcessStep_ExecutablePath = string.Empty;
         public string StartProcessStep_ExecutablePath
         {
@@ -1742,6 +1779,29 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== FocusProcess Felder =====
+        private FocusProcessAction _focusProcessStep_Action = FocusProcessAction.BringToFront;
+        public FocusProcessAction FocusProcessStep_Action
+        {
+            get => _focusProcessStep_Action;
+            set
+            {
+                _focusProcessStep_Action = value;
+                OnChange();
+                OnChange(nameof(FocusProcessStep_IsBringToFrontAction));
+                OnChange(nameof(FocusProcessStep_IsMinimizeAction));
+            }
+        }
+        public bool FocusProcessStep_IsBringToFrontAction
+        {
+            get => FocusProcessStep_Action == FocusProcessAction.BringToFront;
+            set { if (value) FocusProcessStep_Action = FocusProcessAction.BringToFront; }
+        }
+        public bool FocusProcessStep_IsMinimizeAction
+        {
+            get => FocusProcessStep_Action == FocusProcessAction.Minimize;
+            set { if (value) FocusProcessStep_Action = FocusProcessAction.Minimize; }
+        }
+
         private string _focusProcessStep_ExecutablePath = string.Empty;
         public string FocusProcessStep_ExecutablePath
         {
@@ -1761,6 +1821,13 @@ namespace DesktopAutomationApp.ViewModels
                 TaskAutomation.Jobs.FocusProcessWindowMode.Normal,
                 TaskAutomation.Jobs.FocusProcessWindowMode.Maximized
             ];
+
+        private string _focusProcessStep_WindowTitleContains = string.Empty;
+        public string FocusProcessStep_WindowTitleContains
+        {
+            get => _focusProcessStep_WindowTitleContains;
+            set { _focusProcessStep_WindowTitleContains = value; OnChange(); }
+        }
 
         // ===== ShowText Felder =====
         private string _showTextStep_Text = string.Empty;
@@ -2286,7 +2353,10 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new StartProcessSettings
                     {
+                        Action = StartProcessStep_Action,
                         ExecutablePath = StartProcessStep_ExecutablePath,
+                        ProcessName = StartProcessStep_ProcessName,
+                        WindowTitleContains = StartProcessStep_WindowTitleContains,
                         Arguments      = StartProcessStep_Arguments,
                         WaitForExit    = StartProcessStep_WaitForExit,
                         MonitorIndex = StartProcessStep_MonitorIndex,
@@ -2300,7 +2370,9 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new FocusProcessSettings
                     {
+                        Action = FocusProcessStep_Action,
                         ExecutablePath = FocusProcessStep_ExecutablePath,
+                        WindowTitleContains = FocusProcessStep_WindowTitleContains,
                         WindowMode     = FocusProcessStep_WindowMode
                     }
                 },

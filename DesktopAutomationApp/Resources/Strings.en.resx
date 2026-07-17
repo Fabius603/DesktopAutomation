@@ -1473,10 +1473,10 @@ Error:
     <value>Is process active</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
-    <value>Start process</value>
+    <value>Start/terminate process</value>
   </data>
   <data name="Step.Type.FocusProcess" xml:space="preserve">
-    <value>Bring process to foreground</value>
+    <value>Control process window</value>
   </data>
   <data name="Step.Type.ShowText" xml:space="preserve">
     <value>Show text on desktop</value>
@@ -1554,10 +1554,10 @@ Error:
     <value>Waits for a configured duration before running the next step.</value>
   </data>
   <data name="Step.Description.StartProcess" xml:space="preserve">
-    <value>Starts a program or executable file.</value>
+    <value>Starts a program or terminates running processes by name and optional window title.</value>
   </data>
   <data name="Step.Description.FocusProcess" xml:space="preserve">
-    <value>Brings the main window of a running process to the foreground.</value>
+    <value>Brings a process window to the foreground or minimizes it. Optionally filters by window title.</value>
   </data>
   <data name="Step.Description.ShowText" xml:space="preserve">
     <value>Shows configurable text on the desktop.</value>
@@ -1856,4 +1856,19 @@ Error:
   <data name="Ui.Step.Settings.Maximized" xml:space="preserve"><value>Maximized</value></data>
   <data name="Ui.Step.Settings.Centered" xml:space="preserve"><value>Centered</value></data>
   <data name="Ui.Step.Settings.Custom" xml:space="preserve"><value>Custom</value></data>
+  <data name="Ui.Step.IfEditor.LiteralValue" xml:space="preserve"><value>Fixed value</value></data>
+  <data name="Ui.Step.IfEditor.JobResultValue" xml:space="preserve"><value>Job result</value></data>
+  <data name="Ui.Step.Settings.Action" xml:space="preserve"><value>Action</value></data>
+  <data name="Ui.Step.Settings.StartProcess" xml:space="preserve"><value>Start</value></data>
+  <data name="Ui.Step.Settings.TerminateProcess" xml:space="preserve"><value>Terminate</value></data>
+  <data name="Ui.Step.Settings.BringToFront" xml:space="preserve"><value>Bring to foreground</value></data>
+  <data name="Ui.Step.Settings.Minimize" xml:space="preserve"><value>Minimize</value></data>
+  <data name="Ui.Step.Settings.ProcessName" xml:space="preserve"><value>Process name</value></data>
+  <data name="Ui.Step.Settings.WindowTitleContains" xml:space="preserve"><value>Window title contains</value></data>
+  <data name="Ui.Job.Steps.Action" xml:space="preserve"><value>Action: </value></data>
+  <data name="Ui.Job.Steps.WindowTitle" xml:space="preserve"><value>Window title: </value></data>
+  <data name="Enum.StartProcessAction.Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Enum.StartProcessAction.Terminate" xml:space="preserve"><value>Terminate</value></data>
+  <data name="Enum.FocusProcessAction.BringToFront" xml:space="preserve"><value>Bring to foreground</value></data>
+  <data name="Enum.FocusProcessAction.Minimize" xml:space="preserve"><value>Minimize</value></data>
 </root>

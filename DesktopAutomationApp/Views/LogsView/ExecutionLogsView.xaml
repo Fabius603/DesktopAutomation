@@ -227,7 +227,6 @@
                                                Text="{Binding Message}"
                                                FontWeight="SemiBold"
                                                Margin="0,2,0,0"
-                                               MaxHeight="60"
                                                TextWrapping="Wrap"/>
                                     <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                                                Text="{Binding DisplayDetails}"

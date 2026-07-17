@@ -462,7 +462,10 @@ namespace DesktopAutomationApp.ViewModels
 
                 case StartProcessStep sp:
                     vm.SelectedType = "StartProcess";
+                    vm.StartProcessStep_Action = sp.Settings.Action;
                     vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
+                    vm.StartProcessStep_ProcessName = sp.Settings.ProcessName;
+                    vm.StartProcessStep_WindowTitleContains = sp.Settings.WindowTitleContains;
                     vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
                     vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
                     vm.StartProcessStep_MonitorIndex = sp.Settings.MonitorIndex;
@@ -474,7 +477,9 @@ namespace DesktopAutomationApp.ViewModels
 
                 case FocusProcessStep fp:
                     vm.SelectedType = "FocusProcess";
+                    vm.FocusProcessStep_Action = fp.Settings.Action;
                     vm.FocusProcessStep_ExecutablePath = fp.Settings.ExecutablePath;
+                    vm.FocusProcessStep_WindowTitleContains = fp.Settings.WindowTitleContains;
                     vm.FocusProcessStep_WindowMode = fp.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
                         ? FocusProcessWindowMode.Maximized
                         : fp.Settings.WindowMode;

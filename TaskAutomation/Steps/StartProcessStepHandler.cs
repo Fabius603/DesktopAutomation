@@ -45,6 +45,9 @@ namespace TaskAutomation.Steps
         protected override async Task<TaskResult> ExecuteCoreAsync(
             StartProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
+            if (step.Settings.Action == StartProcessAction.Terminate)
+                return await TerminateProcessesAsync(step.Settings, ctx, ct).ConfigureAwait(false);
+
             var configuredExecutable = step.Settings.ExecutablePath?.Trim() ?? string.Empty;
 
             if (!ExecutablePathResolver.TryResolve(configuredExecutable, out var executablePath))
@@ -105,6 +108,66 @@ namespace TaskAutomation.Steps
         }
 
         protected override TaskResult CreateDefault() => TaskResult.Default;
+
+        private static async Task<TaskResult> TerminateProcessesAsync(
+            StartProcessSettings settings, IStepPipelineContext ctx, CancellationToken ct)
+        {
+            var processName = ProcessWindowMatcher.NormalizeProcessName(settings.ProcessName);
+            var matchingIds = ProcessWindowMatcher.FindMatchingProcessIds(
+                processName, settings.WindowTitleContains);
+            if (matchingIds.Count == 0)
+            {
+                var titleText = string.IsNullOrWhiteSpace(settings.WindowTitleContains)
+                    ? string.Empty
+                    : $" mit einem Fenster, dessen Titel '{settings.WindowTitleContains}' enthält";
+                var message = $"Prozess '{processName}'{titleText} wurde nicht gefunden.";
+                ctx.Logger.LogWarning("StartProcessStepHandler: {Error}", message);
+                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = message };
+            }
+
+            var currentProcessId = Environment.ProcessId;
+            var terminated = 0;
+            var errors = new System.Collections.Generic.List<string>();
+            foreach (var processId in matchingIds)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (processId == currentProcessId)
+                {
+                    errors.Add($"PID {processId} ist die DesktopAutomation-Anwendung und wurde nicht beendet.");
+                    continue;
+                }
+
+                try
+                {
+                    using var process = Process.GetProcessById(processId);
+                    process.Kill();
+                    await process.WaitForExitAsync(ct).ConfigureAwait(false);
+                    terminated++;
+                    ctx.Logger.LogInformation(
+                        "StartProcessStepHandler: Prozess '{Process}' (PID {Pid}) beendet.", processName, processId);
+                }
+                catch (ArgumentException)
+                {
+                    // Der Prozess wurde zwischen Suche und Beenden bereits geschlossen.
+                    terminated++;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    errors.Add($"PID {processId}: {ex.Message}");
+                    ctx.Logger.LogWarning(ex,
+                        "StartProcessStepHandler: Prozess '{Process}' (PID {Pid}) konnte nicht beendet werden.",
+                        processName, processId);
+                }
+            }
+
+            if (errors.Count == 0)
+                return new TaskResult { WasExecuted = true, Success = true };
+
+            var errorMessage = terminated > 0
+                ? $"{terminated} Prozess(e) beendet; {errors.Count} Fehler: {string.Join("; ", errors)}"
+                : string.Join("; ", errors);
+            return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = errorMessage };
+        }
 
         private static async Task PositionMainWindowAsync(
             Process process, StartProcessSettings settings, ILogger logger, CancellationToken ct)

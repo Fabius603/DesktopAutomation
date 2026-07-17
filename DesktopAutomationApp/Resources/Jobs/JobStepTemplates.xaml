@@ -590,21 +590,54 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Action}"/><Run Text="{Binding Settings.Action, Converter={StaticResource LocalizedEnumConverter}}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Arguments}"/><Run Text="{Binding Settings.Arguments}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Monitor}"/><Run Text="{Binding Settings.MonitorIndex}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
-                        <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
+                    <StackPanel>
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Settings.Action}" Value="{x:Static jobs:StartProcessAction.Start}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.Arguments}"/><Run Text="{Binding Settings.Arguments}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.Monitor}"/><Run Text="{Binding Settings.MonitorIndex}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/>
+                            <Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Settings.Action}" Value="{x:Static jobs:StartProcessAction.Terminate}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.WindowTitleContains}"/>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -622,9 +655,25 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Action}"/><Run Text="{Binding Settings.Action, Converter={StaticResource LocalizedEnumConverter}}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.WindowTitleContains}"/>
+                    </TextBlock>
+                    <TextBlock>
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource ParamText}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Settings.Action}" Value="{x:Static jobs:FocusProcessAction.BringToFront}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/>
                     </TextBlock>
                 </StackPanel>

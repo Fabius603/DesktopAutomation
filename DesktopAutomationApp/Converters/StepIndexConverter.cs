@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using DesktopAutomationApp.Localization;
+using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -14,25 +16,12 @@ namespace DesktopAutomationApp.Converters
     /// </summary>
     public class StepNumberConverter : IMultiValueConverter
     {
-        private int _cacheVersion = int.MinValue;
-        private Dictionary<object, int>? _indexMap;
-
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values?.Length < 2 || values![0] == null || values[1] is not IList collection)
-                return "?.";
-
-            int version = values.Length > 2 && values[2] is int v ? v : 0;
-
-            if (_indexMap == null || version != _cacheVersion)
-            {
-                _indexMap = new Dictionary<object, int>(collection.Count, ReferenceEqualityComparer.Instance);
-                for (int i = 0; i < collection.Count; i++)
-                    if (collection[i] != null) _indexMap[collection[i]!] = i;
-                _cacheVersion = version;
-            }
-
-            return _indexMap.TryGetValue(values[0], out var idx) ? $"{idx + 1}." : "?.";
+            if (values?.Length < 2 || values[0] is not JobStep step || values[1] is not IList collection)
+                return string.Empty;
+            var number = StepLocalization.DisplayNumber(collection, step);
+            return number.HasValue ? $"{number.Value}.\u00A0" : string.Empty;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

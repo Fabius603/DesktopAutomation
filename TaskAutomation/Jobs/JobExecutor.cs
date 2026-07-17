@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
@@ -423,6 +424,7 @@ namespace TaskAutomation.Jobs
 
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
+                    var conditionSources = BuildConditionSources(steps);
 
                     foreach (var step in steps)
                     {
@@ -433,9 +435,13 @@ namespace TaskAutomation.Jobs
                         // ── Control-flow steps: handle without executing ────────
                         if (step is IfStep ifStep)
                         {
-                            bool condMet = parentActive && EvaluateCondition(ifStep.Settings, pipelineCtx.Results);
-                            _executionLogService.Write(executionLog, ExecutionLogLevel.Debug,
-                                condMet ? "If-Bedingung erfüllt." : "If-Bedingung nicht erfüllt.",
+                            var evaluation = parentActive
+                                ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
+                                : new ConditionEvaluation(false, "Nicht ausgewertet: Der übergeordnete Bedingungszweig ist inaktiv.");
+                            bool condMet = parentActive && evaluation.IsMatch;
+                            _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
+                                condMet ? "IF-Zweig wird ausgeführt." : "IF-Zweig wird übersprungen.",
+                                evaluation.Details,
                                 stepId: step.Id, stepType: step.GetType().Name);
                             branchStack.Push(new BranchFrame(parentActive, condMet, condMet));
                             continue;
@@ -448,14 +454,31 @@ namespace TaskAutomation.Jobs
                                 var top = branchStack.Pop();
                                 if (top.ParentActive && !top.AnyMatched)
                                 {
-                                    bool condMet = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results);
+                                    var evaluation = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results, conditionSources);
+                                    bool condMet = evaluation.IsMatch;
+                                    _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
+                                        condMet ? "ELSE-IF-Zweig wird ausgeführt." : "ELSE-IF-Zweig wird übersprungen.",
+                                        evaluation.Details,
+                                        stepId: step.Id, stepType: step.GetType().Name);
                                     branchStack.Push(new BranchFrame(top.ParentActive, condMet, condMet));
                                 }
                                 else
                                 {
                                     // A branch already matched or parent inactive – skip this branch.
+                                    var reason = !top.ParentActive
+                                        ? "Nicht ausgewertet: Der übergeordnete Bedingungszweig ist inaktiv."
+                                        : "Nicht ausgewertet: Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
+                                    _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
+                                        "ELSE-IF-Zweig wird übersprungen.", reason,
+                                        stepId: step.Id, stepType: step.GetType().Name);
                                     branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
                                 }
+                            }
+                            else
+                            {
+                                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning,
+                                    "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
+                                    stepId: step.Id, stepType: step.GetType().Name);
                             }
                             continue;
                         }
@@ -466,7 +489,21 @@ namespace TaskAutomation.Jobs
                             {
                                 var top = branchStack.Pop();
                                 bool executeElse = top.ParentActive && !top.AnyMatched;
+                                var details = executeElse
+                                    ? "Kein vorheriger IF-/ELSE-IF-Zweig wurde erfüllt."
+                                    : !top.ParentActive
+                                        ? "Der übergeordnete Bedingungszweig ist inaktiv."
+                                        : "Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
+                                _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
+                                    executeElse ? "ELSE-Zweig wird ausgeführt." : "ELSE-Zweig wird übersprungen.",
+                                    details, stepId: step.Id, stepType: step.GetType().Name);
                                 branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
+                            }
+                            else
+                            {
+                                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning,
+                                    "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
+                                    stepId: step.Id, stepType: step.GetType().Name);
                             }
                             continue;
                         }
@@ -865,47 +902,173 @@ namespace TaskAutomation.Jobs
             }
         }
 
-        /// <summary>
-        /// Evaluates an <see cref="IfConditionSettings"/> against the current pipeline results.
-        /// Returns true when all (or any) conditions in the settings are met.
-        /// An empty condition list is invalid and therefore never matches.
-        /// </summary>
-        private static bool EvaluateCondition(IfConditionSettings settings, IJobResultStore results)
-        {
-            if (settings.Conditions.Count == 0) return false;
+        private sealed record ConditionEvaluation(bool IsMatch, string Details);
+        private sealed record SingleConditionEvaluation(bool IsMatch, string Details);
+        private sealed record ConditionStepSource(string Label, string? ResultTypeName);
 
-            return settings.MatchMode == ConditionMatchMode.All
-                ? settings.Conditions.All(c  => EvaluateSingleCondition(c, results))
-                : settings.Conditions.Any(c  => EvaluateSingleCondition(c, results));
+        private static ConditionEvaluation EvaluateCondition(
+            IfConditionSettings settings,
+            IJobResultStore results,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
+        {
+            if (settings.Conditions.Count == 0)
+                return new ConditionEvaluation(false, "Keine Bedingungen konfiguriert.");
+
+            var evaluations = settings.Conditions
+                .Select((condition, index) => (Index: index + 1, Evaluation: EvaluateSingleCondition(condition, results, conditionSources)))
+                .ToArray();
+            var isMatch = settings.MatchMode == ConditionMatchMode.All
+                ? evaluations.All(item => item.Evaluation.IsMatch)
+                : evaluations.Any(item => item.Evaluation.IsMatch);
+            var mode = settings.MatchMode == ConditionMatchMode.All ? "ALLE (AND)" : "MINDESTENS EINE (OR)";
+            var lines = new List<string> { $"Verknüpfung: {mode}" };
+            lines.AddRange(evaluations.Select(item => $"{item.Index}. {item.Evaluation.Details}"));
+            lines.Add($"Gesamtergebnis: {(isMatch ? "ERFÜLLT" : "NICHT ERFÜLLT")}");
+            return new ConditionEvaluation(isMatch, string.Join(Environment.NewLine, lines));
         }
 
-        private static bool EvaluateSingleCondition(StepCondition condition, IJobResultStore results)
+        private static SingleConditionEvaluation EvaluateSingleCondition(
+            StepCondition condition,
+            IJobResultStore results,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
         {
             if (string.IsNullOrEmpty(condition.SourceStepId) || string.IsNullOrEmpty(condition.PropertyPath))
-                return false;
+                return new SingleConditionEvaluation(false, "NICHT ERFÜLLT — Quell-Step oder Ergebniseigenschaft fehlt.");
 
-            var result = results.GetRaw(condition.SourceStepId);
-            if (result is null) return false;
+            var leftName = FormatResultReference(condition.SourceStepId, condition.PropertyPath, conditionSources);
+            if (!TryReadResultValue(results, condition.SourceStepId, condition.PropertyPath,
+                    conditionSources, out var descriptor, out var value, out var leftWasExecuted))
+                return new SingleConditionEvaluation(false, $"NICHT ERFÜLLT — {leftName}: Wert ist nicht verfügbar.");
+            var leftStatus = leftWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
 
-            var resultTypeName = result.GetType().Name;
-            if (!StepResultMetadata.TryGetProperty(resultTypeName, condition.PropertyPath, out var descriptor) ||
-                !StepResultMetadata.TryReadValue(result, descriptor, out var value)) return false;
-
-            if (condition.Operator == ConditionOperator.IsEmpty) return value is null || string.IsNullOrEmpty(value as string);
-            if (condition.Operator == ConditionOperator.IsNotEmpty) return value is not null && !string.IsNullOrEmpty(value as string);
-            if (value is null) return false;
-
-            return condition.Operator switch
+            if (condition.Operator == ConditionOperator.IsEmpty)
             {
-                ConditionOperator.IsTrue  => value is bool b  && b,
-                ConditionOperator.IsFalse => value is bool b2 && !b2,
-                _                         => CompareForOperator(value, descriptor, condition.Operator, condition.ComparisonValue)
-            };
+                var isEmpty = value is null || string.IsNullOrEmpty(value as string);
+                return BuildSingleEvaluation(isEmpty, leftName + leftStatus, descriptor, value, "ist leer", null);
+            }
+            if (condition.Operator == ConditionOperator.IsNotEmpty)
+            {
+                var isNotEmpty = value is not null && !string.IsNullOrEmpty(value as string);
+                return BuildSingleEvaluation(isNotEmpty, leftName + leftStatus, descriptor, value, "ist nicht leer", null);
+            }
+            if (condition.Operator == ConditionOperator.IsTrue)
+                return BuildSingleEvaluation(value is bool b && b, leftName + leftStatus, descriptor, value, "=", "Festwert true");
+            if (condition.Operator == ConditionOperator.IsFalse)
+                return BuildSingleEvaluation(value is bool b && !b, leftName + leftStatus, descriptor, value, "=", "Festwert false");
+            if (value is null)
+                return new SingleConditionEvaluation(false, $"NICHT ERFÜLLT — {leftName} [{descriptor.PropertyType}]: Wert ist <null>.");
+
+            var comparison = condition.EffectiveComparison;
+            object? expected;
+            string expectedText;
+            if (comparison.Kind == ComparisonOperandKind.Literal)
+            {
+                if (!StepResultMetadata.TryParseComparison(descriptor, comparison.Value, out expected))
+                    return new SingleConditionEvaluation(false,
+                        $"NICHT ERFÜLLT — {leftName}: Festwert '{comparison.Value}' ist für {descriptor.PropertyType} ungültig.");
+                expectedText = $"Festwert {FormatLogValue(expected)}";
+            }
+            else
+            {
+                var rightName = FormatResultReference(comparison.SourceStepId, comparison.PropertyPath, conditionSources);
+                if (!TryReadResultValue(results, comparison.SourceStepId, comparison.PropertyPath,
+                        conditionSources, out var rightDescriptor, out expected, out var rightWasExecuted))
+                    return new SingleConditionEvaluation(false, $"NICHT ERFÜLLT — {rightName}: Vergleichswert ist nicht verfügbar.");
+                if (rightDescriptor.PropertyType != descriptor.PropertyType)
+                    return new SingleConditionEvaluation(false,
+                        $"NICHT ERFÜLLT — Datentypen stimmen nicht überein: {descriptor.PropertyType} und {rightDescriptor.PropertyType}.");
+                var rightStatus = rightWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
+                expectedText = $"{rightName}{rightStatus} [{rightDescriptor.PropertyType}] = {FormatLogValue(expected)}";
+            }
+
+            var isMatch = CompareForOperator(value, descriptor, condition.Operator, expected);
+            return BuildSingleEvaluation(isMatch, leftName + leftStatus, descriptor, value,
+                FormatConditionOperator(condition.Operator), expectedText);
         }
 
-        private static bool CompareForOperator(object value, ResultPropertyDescriptor descriptor, ConditionOperator op, string? comparisonValue)
+        private static SingleConditionEvaluation BuildSingleEvaluation(
+            bool isMatch,
+            string leftName,
+            ResultPropertyDescriptor descriptor,
+            object? actual,
+            string conditionOperator,
+            string? expected) =>
+            new(isMatch,
+                $"{(isMatch ? "ERFÜLLT" : "NICHT ERFÜLLT")} — {leftName} [{descriptor.PropertyType}] = {FormatLogValue(actual)} "
+                + conditionOperator + (expected is null ? string.Empty : $" {expected}"));
+
+        private static Dictionary<string, ConditionStepSource> BuildConditionSources(IReadOnlyList<JobStep> steps)
         {
-            if (!StepResultMetadata.TryParseComparison(descriptor, comparisonValue, out var expected)) return false;
+            var sources = new Dictionary<string, ConditionStepSource>(StringComparer.OrdinalIgnoreCase);
+            for (var index = 0; index < steps.Count; index++)
+                if (!string.IsNullOrWhiteSpace(steps[index].Id))
+                    sources[steps[index].Id] = new ConditionStepSource(
+                        $"Step {index + 1} ({steps[index].GetType().Name})",
+                        StepPipelineRegistry.Get(steps[index].GetType())?.Output);
+            return sources;
+        }
+
+        private static string FormatResultReference(
+            string? stepId,
+            string? propertyPath,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
+        {
+            var step = !string.IsNullOrWhiteSpace(stepId) && conditionSources.TryGetValue(stepId, out var source)
+                ? source.Label
+                : string.IsNullOrWhiteSpace(stepId) ? "Unbekannter Step" : stepId;
+            return $"{step} → {(string.IsNullOrWhiteSpace(propertyPath) ? "Unbekannte Eigenschaft" : propertyPath)}";
+        }
+
+        private static string FormatConditionOperator(ConditionOperator conditionOperator) => conditionOperator switch
+        {
+            ConditionOperator.Equals => "=",
+            ConditionOperator.NotEquals => "!=",
+            ConditionOperator.GreaterThan => ">",
+            ConditionOperator.LessThan => "<",
+            ConditionOperator.GreaterThanOrEqual => ">=",
+            ConditionOperator.LessThanOrEqual => "<=",
+            ConditionOperator.Contains => "enthält",
+            ConditionOperator.StartsWith => "beginnt mit",
+            _ => conditionOperator.ToString()
+        };
+
+        private static string FormatLogValue(object? value) => value switch
+        {
+            null => "<null>",
+            string text => $"\"{text.Replace("\r", "\\r").Replace("\n", "\\n")}\"",
+            DateTime dateTime => dateTime.ToString("O", CultureInfo.InvariantCulture),
+            bool boolean => boolean ? "true" : "false",
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? "<null>"
+        };
+
+        private static bool TryReadResultValue(
+            IJobResultStore results,
+            string? sourceStepId,
+            string? propertyPath,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
+            out ResultPropertyDescriptor descriptor,
+            out object? value,
+            out bool wasExecuted)
+        {
+            descriptor = null!;
+            value = null;
+            wasExecuted = false;
+            if (string.IsNullOrWhiteSpace(sourceStepId) || string.IsNullOrWhiteSpace(propertyPath)) return false;
+            var result = results.GetRaw(sourceStepId);
+            if (result is null
+                && conditionSources.TryGetValue(sourceStepId, out var source)
+                && !string.IsNullOrWhiteSpace(source.ResultTypeName))
+                result = StepResultMetadata.CreateDefaultResult(source.ResultTypeName);
+            wasExecuted = result?.WasExecuted == true;
+            return result is not null
+                   && StepResultMetadata.TryGetProperty(result.GetType().Name, propertyPath, out descriptor)
+                   && StepResultMetadata.TryReadValue(result, descriptor, out value);
+        }
+
+        private static bool CompareForOperator(object value, ResultPropertyDescriptor descriptor, ConditionOperator op, object? expected)
+        {
+            if (expected is null) return false;
             if (descriptor.PropertyType == ResultPropertyType.String)
             {
                 var actualText = value.ToString() ?? ""; var expectedText = expected?.ToString() ?? "";

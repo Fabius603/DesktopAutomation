@@ -39,7 +39,8 @@ namespace DesktopAutomationApp.Converters
                     if (list[i] is JobStep step)
                     {
                         var friendly = StepResultMetadata.GetFriendlyName(step.GetType().Name);
-                        _nameMap[step.Id] = $"{friendly} (Step {i + 1})";
+                        var number = StepLocalization.DisplayNumber(list, step);
+                        _nameMap[step.Id] = number.HasValue ? $"{friendly} (Step {number.Value})" : friendly;
                     }
                 }
                 _cacheVersion = version;

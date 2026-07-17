@@ -481,6 +481,27 @@ namespace TaskAutomation.Jobs
 
     public enum ConditionMatchMode { All, Any }
 
+    public enum ComparisonOperandKind { Literal, JobResult }
+
+    public sealed class ComparisonOperand
+    {
+        [JsonPropertyName("kind")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ComparisonOperandKind Kind { get; set; } = ComparisonOperandKind.Literal;
+
+        [JsonPropertyName("value")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Value { get; set; }
+
+        [JsonPropertyName("source_step_id")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SourceStepId { get; set; }
+
+        [JsonPropertyName("property_path")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? PropertyPath { get; set; }
+    }
+
     public sealed class StepCondition
     {
         [JsonPropertyName("source_step_id")]
@@ -493,8 +514,21 @@ namespace TaskAutomation.Jobs
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ConditionOperator Operator { get; set; } = ConditionOperator.IsTrue;
 
+        /// <summary>Legacy literal value. Kept so existing job JSON remains readable.</summary>
         [JsonPropertyName("comparison_value")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ComparisonValue { get; set; }
+
+        [JsonPropertyName("comparison")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ComparisonOperand? Comparison { get; set; }
+
+        [JsonIgnore]
+        public ComparisonOperand EffectiveComparison => Comparison ?? new ComparisonOperand
+        {
+            Kind = ComparisonOperandKind.Literal,
+            Value = ComparisonValue
+        };
     }
 
     public sealed class IfConditionSettings
@@ -571,10 +605,26 @@ namespace TaskAutomation.Jobs
         Maximized
     }
 
+    public enum StartProcessAction
+    {
+        Start,
+        Terminate
+    }
+
     public sealed class StartProcessSettings
     {
+        [JsonPropertyName("action")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public StartProcessAction Action { get; set; } = StartProcessAction.Start;
+
         [JsonPropertyName("executable_path")]
         public string ExecutablePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("process_name")]
+        public string ProcessName { get; set; } = string.Empty;
+
+        [JsonPropertyName("window_title_contains")]
+        public string WindowTitleContains { get; set; } = string.Empty;
 
         [JsonPropertyName("arguments")]
         public string Arguments { get; set; } = string.Empty;
@@ -660,10 +710,24 @@ namespace TaskAutomation.Jobs
         Fullscreen
     }
 
+    public enum FocusProcessAction
+    {
+        BringToFront,
+        Minimize
+    }
+
     public sealed class FocusProcessSettings
     {
+        [JsonPropertyName("action")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public FocusProcessAction Action { get; set; } = FocusProcessAction.BringToFront;
+
         [JsonPropertyName("executable_path")]
         public string ExecutablePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("window_title_contains")]
+        public string WindowTitleContains { get; set; } = string.Empty;
+
         [JsonPropertyName("window_mode")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public FocusProcessWindowMode WindowMode { get; set; } = FocusProcessWindowMode.Normal;

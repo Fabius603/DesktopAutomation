@@ -770,6 +770,15 @@
 
                     <!-- ── StartProcess ── -->
                     <StackPanel Visibility="{Binding ShowStartProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Action}" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton GroupName="StartProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.StartProcess}"
+                                         IsChecked="{Binding StartProcessStep_IsStartAction}" Margin="0,0,16,0"/>
+                            <RadioButton GroupName="StartProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.TerminateProcess}"
+                                         IsChecked="{Binding StartProcessStep_IsTerminateAction}"/>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding StartProcessStep_IsStartAction, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -861,10 +870,44 @@
                         </Grid>
                             </StackPanel>
                         </Expander>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding StartProcessStep_IsTerminateAction, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ProcessName}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                <ComboBox Grid.Column="1" IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                                          ItemsSource="{Binding AvailableProcessNames}"
+                                          Text="{Binding StartProcessStep_ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.ProcessNamePlaceholder}"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.WindowTitleContains}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding StartProcessStep_WindowTitleContains, UpdateSourceTrigger=PropertyChanged}"
+                                         mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.Optional}"/>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- ── FocusProcess ── -->
                     <StackPanel Visibility="{Binding ShowFocusProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Action}" Margin="0,0,0,4"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.BringToFront}"
+                                         IsChecked="{Binding FocusProcessStep_IsBringToFrontAction}" Margin="0,0,16,0"/>
+                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.Minimize}"
+                                         IsChecked="{Binding FocusProcessStep_IsMinimizeAction}"/>
+                        </StackPanel>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -892,7 +935,19 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseFocusProcessPathCommand}"/>
                         </Grid>
-                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.WindowTitleContains}" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding FocusProcessStep_WindowTitleContains, UpdateSourceTrigger=PropertyChanged}"
+                                     mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.Optional}"/>
+                        </Grid>
+                        <Expander Style="{StaticResource StepAdvancedExpander}"
+                                  Visibility="{Binding FocusProcessStep_IsBringToFrontAction, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Margin="0,10,0,0">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>

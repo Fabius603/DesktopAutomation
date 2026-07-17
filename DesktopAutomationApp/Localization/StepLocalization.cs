@@ -1,3 +1,5 @@
+using System.Collections;
+using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
 namespace DesktopAutomationApp.Localization;
@@ -32,6 +34,28 @@ public static class StepLocalization
 
     public static string NumberedName(Type type, int oneBasedIndex) =>
         $"{Type(type)} ({Loc.Format("Step.Number", oneBasedIndex)})";
+
+    public static bool IsNumbered(JobStep step) =>
+        step is not (IfStep or ElseIfStep or ElseStep or EndIfStep);
+
+    public static int? DisplayNumber(IEnumerable? steps, JobStep target)
+    {
+        if (!IsNumbered(target) || steps is null) return null;
+        var number = 0;
+        foreach (var item in steps)
+        {
+            if (item is not JobStep step) continue;
+            if (IsNumbered(step)) number++;
+            if (ReferenceEquals(step, target) || step.Id == target.Id) return number;
+        }
+        return null;
+    }
+
+    public static string NumberedName(JobStep step, IEnumerable? steps)
+    {
+        var number = DisplayNumber(steps, step);
+        return number.HasValue ? NumberedName(step.GetType(), number.Value) : Type(step.GetType());
+    }
 
     private static string GetOrFallback(string key, string fallback)
     {

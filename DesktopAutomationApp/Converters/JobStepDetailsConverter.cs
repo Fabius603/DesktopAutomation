@@ -47,11 +47,9 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
         var index = 1;
         foreach (var condition in settings.Conditions)
         {
-            var source = ResolveStep(condition.SourceStepId, steps) ?? condition.SourceStepId;
-            var property = StepLocalization.PropertyPath(condition.PropertyPath);
-            var suffix = !ConditionRules.RequiresComparisonValue(condition.Operator)
-                ? string.Empty : $" {condition.ComparisonValue}";
-            target.Add(("conditions", new StepDetailItem($"{index}. {source}", $"{property} {OperatorText(condition.Operator)}{suffix}")));
+            target.Add(("conditions", new StepDetailItem(
+                $"{index}. {Loc.Get("Ui.Step.IfEditor.Condition")}",
+                ConditionDisplayFormatter.Format(condition, steps as IList))));
             index++;
         }
     }
@@ -148,7 +146,10 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
     {
         var list = steps?.Cast<object>().OfType<JobStep>().ToList();
         var index = list?.FindIndex(s => s.Id == id) ?? -1;
-        return index >= 0 ? $"{index + 1}. {StepLocalization.Type(list![index].GetType())}" : null;
+        if (index < 0) return null;
+        var step = list![index];
+        var number = StepLocalization.DisplayNumber(list, step);
+        return number.HasValue ? $"{number.Value}. {StepLocalization.Type(step.GetType())}" : StepLocalization.Type(step.GetType());
     }
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
@@ -175,24 +176,20 @@ public sealed class StepRegularSummaryVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
-public sealed class StepBranchSummaryConverter : IValueConverter
+public sealed class StepBranchSummaryConverter : IMultiValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is ElseStep) return Loc.Get("Ui.Step.Settings.ElseDescription");
-        if (value is not IfStep and not ElseIfStep) return string.Empty;
-        var settings = value is IfStep i ? i.Settings : ((ElseIfStep)value).Settings;
+        var step = values.FirstOrDefault();
+        if (step is ElseStep) return Loc.Get("Ui.Step.Settings.ElseDescription");
+        if (step is not IfStep and not ElseIfStep) return string.Empty;
+        var settings = step is IfStep i ? i.Settings : ((ElseIfStep)step).Settings;
+        var steps = values.Skip(1).FirstOrDefault() as IList;
         var join = settings.MatchMode == ConditionMatchMode.All ? " AND " : " OR ";
-        return string.Join(join, settings.Conditions.Select(c =>
-            $"{StepLocalization.PropertyPath(c.PropertyPath)} {OperatorText(c.Operator)}{(c.ComparisonValue is null ? "" : $" {c.ComparisonValue}")}"));
+        return string.Join(join, settings.Conditions.Select(condition =>
+            ConditionDisplayFormatter.Format(condition, steps)));
     }
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
-    private static string OperatorText(ConditionOperator op) => op switch
-    {
-        ConditionOperator.IsTrue => Loc.Get("Condition.IsTrue"), ConditionOperator.IsFalse => Loc.Get("Condition.IsFalse"),
-        ConditionOperator.Equals => "=", ConditionOperator.NotEquals => "≠", ConditionOperator.GreaterThan => ">", ConditionOperator.LessThan => "<",
-        ConditionOperator.GreaterThanOrEqual => "≥", ConditionOperator.LessThanOrEqual => "≤", _ => op.ToString()
-    };
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 
 public sealed class StepCanAddBranchesConverter : IValueConverter

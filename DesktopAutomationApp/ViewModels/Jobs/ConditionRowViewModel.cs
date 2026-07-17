@@ -32,9 +32,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private void NotifyInput()
     {
         OnChange(nameof(ShowComparisonValue));
+        OnChange(nameof(ShowLiteralComparisonValue));
+        OnChange(nameof(ShowJobResultComparisonValue));
         OnChange(nameof(ShowNumericValue));
         OnChange(nameof(ShowTextValue));
         OnChange(nameof(ShowDateValue));
+        OnChange(nameof(ShowBooleanValue));
         OnChange(nameof(InputHint));
         OnChange(nameof(InputExample));
         NotifyValidation();
@@ -48,12 +51,24 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
 
     public ICommand RemoveCommand { get; }
     public IReadOnlyList<ConditionSelectionNode> SelectionTree { get; }
+    public IReadOnlyList<ConditionSelectionNode> ComparisonSelectionTree { get; private set; } = [];
     public ObservableCollection<ConditionOperator> AvailableOperators { get; } = [];
 
     private SourceStepItem? _selectedSourceStep;
     public SourceStepItem? SelectedSourceStep { get => _selectedSourceStep; private set { _selectedSourceStep = value; OnChange(); OnChange(nameof(SelectedPath)); } }
     private ResultPropertyDescriptor? _selectedProperty;
-    public ResultPropertyDescriptor? SelectedProperty { get => _selectedProperty; private set { _selectedProperty = value; OnChange(); RefreshOperators(); OnChange(nameof(SelectedPath)); } }
+    public ResultPropertyDescriptor? SelectedProperty
+    {
+        get => _selectedProperty;
+        private set
+        {
+            _selectedProperty = value;
+            OnChange();
+            RefreshOperators();
+            RefreshComparisonChoices();
+            OnChange(nameof(SelectedPath));
+        }
+    }
     private ConditionOperator _selectedOperator;
     public ConditionOperator SelectedOperator { get => _selectedOperator; set { _selectedOperator = value; OnChange(); NotifyInput(); } }
 
@@ -67,16 +82,61 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
     private DateTime? _comparisonDate;
     public DateTime? ComparisonDate { get => _comparisonDate; set { _comparisonDate = value; OnChange(); NotifyValidation(); } }
+    private bool? _comparisonBoolean;
+    public bool? ComparisonBoolean { get => _comparisonBoolean; set { _comparisonBoolean = value; OnChange(); NotifyValidation(); } }
+    public IReadOnlyList<bool> BooleanValues { get; } = [true, false];
+
+    private ComparisonOperandKind _comparisonKind = ComparisonOperandKind.Literal;
+    public ComparisonOperandKind ComparisonKind
+    {
+        get => _comparisonKind;
+        set
+        {
+            if (_comparisonKind == value) return;
+            _comparisonKind = value;
+            OnChange(); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
+            NotifyInput();
+        }
+    }
+    public bool ComparisonIsLiteral
+    {
+        get => ComparisonKind == ComparisonOperandKind.Literal;
+        set { if (value) ComparisonKind = ComparisonOperandKind.Literal; }
+    }
+    public bool ComparisonIsJobResult
+    {
+        get => ComparisonKind == ComparisonOperandKind.JobResult;
+        set { if (value) ComparisonKind = ComparisonOperandKind.JobResult; }
+    }
+
+    private SourceStepItem? _selectedComparisonSourceStep;
+    public SourceStepItem? SelectedComparisonSourceStep
+    {
+        get => _selectedComparisonSourceStep;
+        private set { _selectedComparisonSourceStep = value; OnChange(); OnChange(nameof(ComparisonPath)); NotifyValidation(); }
+    }
+    private ResultPropertyDescriptor? _selectedComparisonProperty;
+    public ResultPropertyDescriptor? SelectedComparisonProperty
+    {
+        get => _selectedComparisonProperty;
+        private set { _selectedComparisonProperty = value; OnChange(); OnChange(nameof(ComparisonPath)); NotifyValidation(); }
+    }
 
     public bool ShowComparisonValue => ConditionRules.RequiresComparisonValue(SelectedOperator);
-    public bool ShowNumericValue => ShowComparisonValue && SelectedProperty?.PropertyType is ResultPropertyType.Double or ResultPropertyType.Integer;
-    public bool ShowTextValue => ShowComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.String;
-    public bool ShowDateValue => ShowComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.DateTime;
+    public bool ShowLiteralComparisonValue => ShowComparisonValue && ComparisonIsLiteral;
+    public bool ShowJobResultComparisonValue => ShowComparisonValue && ComparisonIsJobResult;
+    public bool ShowNumericValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType is ResultPropertyType.Double or ResultPropertyType.Integer;
+    public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.String;
+    public bool ShowDateValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.DateTime;
+    public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.Bool;
     public bool IsIntegerValue => SelectedProperty?.PropertyType == ResultPropertyType.Integer;
     public bool CanRemove => _owner.Count > 1;
     public string SelectedPath => SelectedSourceStep is null || SelectedProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
         : $"{SelectedSourceStep.DisplayName}.{SelectedProperty.Name}";
+    public string ComparisonPath => SelectedComparisonSourceStep is null || SelectedComparisonProperty is null
+        ? Loc.Get("Ui.Step.IfEditor.SelectValue")
+        : $"{SelectedComparisonSourceStep.DisplayName}.{SelectedComparisonProperty.Name}";
     public string InputHint => SelectedProperty?.Description ?? "";
     public string InputExample => SelectedProperty?.Example ?? (SelectedProperty?.PropertyType switch
     {
@@ -87,7 +147,9 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _ => string.Empty
     });
     public bool IsComparisonValueValid => SelectedProperty is not null &&
-        ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetComparisonValue());
+        (!ShowComparisonValue || (ComparisonIsLiteral
+            ? ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
+            : SelectedComparisonSourceStep is not null && SelectedComparisonProperty?.PropertyType == SelectedProperty.PropertyType));
     public string ComparisonValueValidationError => IsComparisonValueValid
         ? string.Empty
         : Loc.Get("Ui.Step.IfEditor.InvalidValue");
@@ -120,21 +182,68 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             _owner.CollectionChanged -= OnOwnerCollectionChanged;
     }
 
-    private IReadOnlyList<ConditionSelectionNode> BuildSelectionTree(IReadOnlyList<SourceStepItem> sources)
+    private IReadOnlyList<ConditionSelectionNode> BuildSelectionTree(
+        IReadOnlyList<SourceStepItem> sources,
+        Func<ResultPropertyDescriptor, bool>? filter = null,
+        Action<SourceStepItem, ResultPropertyDescriptor>? selection = null)
         => sources.Select(source => new ConditionSelectionNode(
             source.DisplayName,
-            source.ResultType.PropertyTree.Select(node => CreateSelectionNode(source, node)).ToArray())).ToArray();
+            source.ResultType.PropertyTree
+                .Select(node => CreateSelectionNode(source, node, filter, selection))
+                .Where(node => node is not null)
+                .Cast<ConditionSelectionNode>()
+                .ToArray()))
+            .Where(node => node.Children.Count > 0)
+            .ToArray();
 
-    private ConditionSelectionNode CreateSelectionNode(SourceStepItem source, ResultPropertyNode node) =>
-        new(
-            node.Property is null ? node.DisplayName : $"{node.DisplayName} ({node.Property.PropertyType})",
-            node.Children.Select(child => CreateSelectionNode(source, child)).ToArray(),
-            node.Property is null ? null : new RelayCommand(() => SelectPath(source, node.Property)));
+    private ConditionSelectionNode? CreateSelectionNode(
+        SourceStepItem source,
+        ResultPropertyNode node,
+        Func<ResultPropertyDescriptor, bool>? filter,
+        Action<SourceStepItem, ResultPropertyDescriptor>? selection)
+    {
+        var children = node.Children
+            .Select(child => CreateSelectionNode(source, child, filter, selection))
+            .Where(child => child is not null)
+            .Cast<ConditionSelectionNode>()
+            .ToArray();
+        if (node.Property is null)
+            return children.Length == 0 ? null : new ConditionSelectionNode(node.DisplayName, children);
+        if (filter is not null && !filter(node.Property)) return null;
+        var select = selection ?? SelectPath;
+        return new ConditionSelectionNode(
+            $"{node.DisplayName} ({node.Property.PropertyType})",
+            children,
+            new RelayCommand(() => select(source, node.Property)));
+    }
 
     private void SelectPath(SourceStepItem source, ResultPropertyDescriptor property)
     {
         SelectedSourceStep = source;
         SelectedProperty = property;
+    }
+
+    private void SelectComparisonPath(SourceStepItem source, ResultPropertyDescriptor property)
+    {
+        SelectedComparisonSourceStep = source;
+        SelectedComparisonProperty = property;
+    }
+
+    private void RefreshComparisonChoices()
+    {
+        ComparisonSelectionTree = SelectedProperty is null
+            ? []
+            : BuildSelectionTree(_availableSourceSteps,
+                property => property.PropertyType == SelectedProperty.PropertyType,
+                SelectComparisonPath);
+        OnChange(nameof(ComparisonSelectionTree));
+
+        if (SelectedComparisonProperty?.PropertyType != SelectedProperty?.PropertyType)
+        {
+            SelectedComparisonSourceStep = null;
+            SelectedComparisonProperty = null;
+        }
+        NotifyValidation();
     }
 
     public StepCondition ToCondition()
@@ -144,17 +253,24 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             SourceStepId = SelectedSourceStep?.StepId ?? "",
             PropertyPath = SelectedProperty?.Name ?? "",
             Operator = SelectedOperator,
-            ComparisonValue = GetComparisonValue()
+            Comparison = ShowComparisonValue ? new ComparisonOperand
+            {
+                Kind = ComparisonKind,
+                Value = ComparisonIsLiteral ? GetLiteralComparisonValue() : null,
+                SourceStepId = ComparisonIsJobResult ? SelectedComparisonSourceStep?.StepId : null,
+                PropertyPath = ComparisonIsJobResult ? SelectedComparisonProperty?.Name : null
+            } : null
         };
     }
 
-    private string? GetComparisonValue()
+    private string? GetLiteralComparisonValue()
     {
-        if (SelectedProperty is null || !ShowComparisonValue) return null;
+        if (SelectedProperty is null || !ShowComparisonValue || !ComparisonIsLiteral) return null;
         object? editorValue = SelectedProperty.PropertyType switch
         {
             ResultPropertyType.Double or ResultPropertyType.Integer => ComparisonNumber,
             ResultPropertyType.DateTime => ComparisonDate,
+            ResultPropertyType.Bool => ComparisonBoolean,
             ResultPropertyType.String => ComparisonValue,
             _ => null
         };
@@ -166,18 +282,51 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == condition.SourceStepId);
         _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p => p.Name == condition.PropertyPath);
         RefreshOperators();
-        if (_selectedProperty is not null && ConditionRules.IsOperatorAllowed(_selectedProperty.PropertyType, condition.Operator))
-            _selectedOperator = condition.Operator;
-        _comparisonValue = condition.ComparisonValue ?? "";
-        if (_selectedProperty is not null && StepResultMetadata.TryParseComparison(_selectedProperty, condition.ComparisonValue, out var parsed))
+        var comparison = condition.EffectiveComparison;
+        var editorOperator = condition.Operator;
+        switch (condition.Operator)
+        {
+            case ConditionOperator.IsTrue:
+                editorOperator = ConditionOperator.Equals;
+                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.TrueString };
+                break;
+            case ConditionOperator.IsFalse:
+                editorOperator = ConditionOperator.Equals;
+                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.FalseString };
+                break;
+            case ConditionOperator.IsEmpty:
+                editorOperator = ConditionOperator.Equals;
+                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = string.Empty };
+                break;
+            case ConditionOperator.IsNotEmpty:
+                editorOperator = ConditionOperator.NotEquals;
+                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = string.Empty };
+                break;
+        }
+        if (AvailableOperators.Contains(editorOperator))
+            _selectedOperator = editorOperator;
+        _comparisonKind = comparison.Kind;
+        _comparisonValue = comparison.Value ?? "";
+        if (_selectedProperty is not null && StepResultMetadata.TryParseComparison(_selectedProperty, comparison.Value, out var parsed))
         {
             if (_selectedProperty.PropertyType is ResultPropertyType.Double or ResultPropertyType.Integer)
                 _comparisonNumber = Convert.ToDouble(parsed);
             if (_selectedProperty.PropertyType == ResultPropertyType.DateTime && parsed is DateTime date)
                 _comparisonDate = date.ToLocalTime();
+            if (_selectedProperty.PropertyType == ResultPropertyType.Bool && parsed is bool boolean)
+                _comparisonBoolean = boolean;
+        }
+        RefreshComparisonChoices();
+        if (comparison.Kind == ComparisonOperandKind.JobResult)
+        {
+            _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == comparison.SourceStepId);
+            _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
+                .FirstOrDefault(p => p.Name == comparison.PropertyPath && p.PropertyType == _selectedProperty?.PropertyType);
         }
         OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
-        OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(SelectedPath)); NotifyInput();
+        OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(SelectedPath));
+        OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
+        OnChange(nameof(SelectedComparisonSourceStep)); OnChange(nameof(SelectedComparisonProperty)); OnChange(nameof(ComparisonPath)); NotifyInput();
     }
 
     private void RefreshOperators()

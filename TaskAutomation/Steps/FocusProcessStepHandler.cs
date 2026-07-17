@@ -108,6 +108,7 @@ namespace TaskAutomation.Steps
 
         private const int SW_RESTORE = 9;
         private const int SW_MAXIMIZE = 3;
+        private const int SW_MINIMIZE = 6;
         private const int GWL_EXSTYLE = -20;
         private const long WS_EX_TOOLWINDOW = 0x00000080L;
         private const uint GW_OWNER = 4;
@@ -134,7 +135,8 @@ namespace TaskAutomation.Steps
             for (var attempt = 0; attempt < 3 && target == null; attempt++)
             {
                 ct.ThrowIfCancellationRequested();
-                target = FindBestWindow(configuredPath, ctx.Logger, out processFound);
+                target = FindBestWindow(
+                    configuredPath, step.Settings.WindowTitleContains, ctx.Logger, out processFound);
                 if (target == null)
                     await Task.Delay(75, ct).ConfigureAwait(false);
             }
@@ -142,11 +144,23 @@ namespace TaskAutomation.Steps
             if (target == null)
             {
                 var processName = Path.GetFileNameWithoutExtension(configuredPath);
+                var titleText = string.IsNullOrWhiteSpace(step.Settings.WindowTitleContains)
+                    ? string.Empty
+                    : $" mit dem Titelteil '{step.Settings.WindowTitleContains}'";
                 var error = processFound
-                    ? $"Für den Prozess '{processName}' wurde kein sichtbares Fenster gefunden."
+                    ? $"Für den Prozess '{processName}' wurde kein sichtbares Fenster{titleText} gefunden."
                     : $"Prozess '{processName}' läuft nicht.";
                 ctx.Logger.LogWarning("FocusProcessStepHandler: {Error}", error);
                 return Failure(error);
+            }
+
+            if (step.Settings.Action == FocusProcessAction.Minimize)
+            {
+                ShowWindow(target.Handle, SW_MINIMIZE);
+                ctx.Logger.LogInformation(
+                    "FocusProcessStepHandler: Fenster '{Title}' (PID {Pid}, HWND 0x{Handle:X}) minimiert.",
+                    target.Title, target.ProcessId, target.Handle.ToInt64());
+                return new TaskResult { WasExecuted = true, Success = true };
             }
 
             var requestedMode = step.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
@@ -183,7 +197,7 @@ namespace TaskAutomation.Steps
         };
 
         private static WindowCandidate? FindBestWindow(
-            string configuredPath, ILogger logger, out bool processFound)
+            string configuredPath, string? windowTitleContains, ILogger logger, out bool processFound)
         {
             var processName = Path.GetFileNameWithoutExtension(configuredPath);
             var processes = Process.GetProcessesByName(processName);
@@ -207,6 +221,11 @@ namespace TaskAutomation.Steps
                     var processIds = IncludeDescendantProcesses(rootIds, logger);
                     candidates = EnumerateCandidateWindows(processIds, logger);
                 }
+                candidates = candidates
+                    .Where(candidate => ProcessWindowMatcher.TitleMatches(candidate.Title, windowTitleContains))
+                    .ToList();
+                if (candidates.Count == 0)
+                    candidates = EnumerateAssociatedWindows(processName, windowTitleContains);
                 if (candidates.Count == 0) return null;
 
                 var foreground = GetForegroundWindow();
@@ -340,6 +359,29 @@ namespace TaskAutomation.Steps
                 logger.LogWarning(
                     "FocusProcessStepHandler: Fenstersuche nach Programmtitel fehlgeschlagen (Win32={Error}).",
                     Marshal.GetLastWin32Error());
+            return candidates;
+        }
+
+        private static List<WindowCandidate> EnumerateAssociatedWindows(
+            string processName, string? windowTitleContains)
+        {
+            var candidates = new List<WindowCandidate>();
+            foreach (var window in ProcessWindowMatcher.FindMatchingWindows(processName, windowTitleContains))
+            {
+                if (!GetWindowRect(window.Handle, out var rect)) continue;
+                var width = Math.Max(0, rect.Right - rect.Left);
+                var height = Math.Max(0, rect.Bottom - rect.Top);
+                if (width == 0 || height == 0) continue;
+
+                var exStyle = GetWindowLongPtr(window.Handle, GWL_EXSTYLE).ToInt64();
+                candidates.Add(new WindowCandidate(
+                    window.Handle,
+                    window.OwnerProcessId,
+                    window.Title,
+                    (long)width * height,
+                    (exStyle & WS_EX_TOOLWINDOW) != 0,
+                    GetWindow(window.Handle, GW_OWNER) != IntPtr.Zero));
+            }
             return candidates;
         }
 

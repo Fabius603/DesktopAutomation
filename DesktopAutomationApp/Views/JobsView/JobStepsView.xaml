@@ -202,7 +202,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="0"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
@@ -240,9 +240,15 @@
                                         <TextBlock FontSize="11" Opacity="0.68" Margin="3,0,0,0" TextTrimming="CharacterEllipsis"
                                                    Text="{Binding Converter={StaticResource PipelineInfoConverter}, ConverterParameter=output}"/>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Converter={StaticResource StepBranchSummaryConverter}}"
-                                               Margin="0,3,0,0" FontSize="11" Opacity="0.72"
+                                    <TextBlock Margin="0,3,0,0" FontSize="11" Opacity="0.72"
                                                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource StepBranchSummaryConverter}">
+                                                <Binding/>
+                                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Visible"/>
@@ -318,7 +324,7 @@
                                                     <Setter Property="Kind" Value="ChevronLeft"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
-                                                            <Setter Property="Kind" Value="ChevronRight"/>
+                                                            <Setter Property="Kind" Value="ChevronDown"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>

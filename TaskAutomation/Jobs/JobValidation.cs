@@ -143,8 +143,9 @@ public static class JobValidation
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
             ActiveProcessStep s => Text(s.Settings.ProcessName),
-            StartProcessStep s => ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath)
-                && s.Settings.MonitorIndex >= 0,
+            StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate
+                ? Text(s.Settings.ProcessName)
+                : ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath) && s.Settings.MonitorIndex >= 0,
             FocusProcessStep s => ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath),
             ShowTextStep s => Text(s.Settings.Text) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
             ActiveWindowStep s => Text(s.Settings.ProcessName) && s.Settings.CacheMs >= 0,
@@ -177,8 +178,28 @@ public static class JobValidation
             if (!StepResultMetadata.TryGetProperty(output, condition.PropertyPath, out var property)) return "Die ausgewählte Rückgabeeigenschaft existiert nicht mehr.";
             if (!ConditionRules.IsOperatorAllowed(property.PropertyType, condition.Operator))
                 return "Der Operator passt nicht zum Datentyp der ausgewählten Eigenschaft.";
-            if (!ConditionRules.IsComparisonValueValid(property, condition.Operator, condition.ComparisonValue))
-                return "Der Vergleichswert besitzt nicht den erwarteten Datentyp.";
+            if (!ConditionRules.RequiresComparisonValue(condition.Operator)) continue;
+
+            var comparison = condition.EffectiveComparison;
+            if (comparison.Kind == ComparisonOperandKind.Literal)
+            {
+                if (!ConditionRules.IsComparisonValueValid(property, condition.Operator, comparison.Value))
+                    return "Der Vergleichswert besitzt nicht den erwarteten Datentyp.";
+                continue;
+            }
+
+            var comparisonSource = steps.Take(conditionStepIndex)
+                .FirstOrDefault(s => s.Id == comparison.SourceStepId && s.IsEnabled);
+            if (comparisonSource is null)
+                return "Der JobResult-Vergleich verweist nicht auf einen gültigen vorherigen Step.";
+            var comparisonOutput = StepPipelineRegistry.Get(comparisonSource.GetType())?.Output;
+            if (string.IsNullOrWhiteSpace(comparisonOutput) || comparisonOutput == "–")
+                return "Der ausgewählte JobResult-Step besitzt keinen auswertbaren Rückgabewert.";
+            if (string.IsNullOrWhiteSpace(comparison.PropertyPath)
+                || !StepResultMetadata.TryGetProperty(comparisonOutput, comparison.PropertyPath, out var comparisonProperty))
+                return "Die ausgewählte JobResult-Vergleichseigenschaft existiert nicht mehr.";
+            if (comparisonProperty.PropertyType != property.PropertyType)
+                return "Beide Vergleichswerte müssen denselben Datentyp besitzen.";
         }
         return null;
     }
@@ -217,8 +238,8 @@ public static class JobValidation
         YOLODetectionStep s => [s.Settings.SourceCaptureStepId],
         KeyPointMatchingStep s => [s.Settings.SourceCaptureStepId],
         DynamicRoiStep s => [s.Settings.SourceDetectionStepId],
-        IfStep s => s.Settings.Conditions.Select(c => c.SourceStepId),
-        ElseIfStep s => s.Settings.Conditions.Select(c => c.SourceStepId),
+        IfStep s => ConditionSourceIds(s.Settings.Conditions),
+        ElseIfStep s => ConditionSourceIds(s.Settings.Conditions),
         PointComparisonStep s => s.Settings.Points
             .Where(p => p.Source == PointEntrySource.JobResult)
             .Select(p => p.SourceDetectionStepId)
@@ -226,6 +247,11 @@ public static class JobValidation
                 ? [s.Settings.OffsetSettings.ReferenceDetectionStepId] : []),
         _ => []
     };
+
+    private static IEnumerable<string> ConditionSourceIds(IEnumerable<StepCondition> conditions) =>
+        conditions.SelectMany(condition => condition.EffectiveComparison is { Kind: ComparisonOperandKind.JobResult } comparison
+            ? new[] { condition.SourceStepId, comparison.SourceStepId ?? string.Empty }
+            : new[] { condition.SourceStepId });
 
     private static string? GetDynamicRoiStepId(JobStep step) => step switch
     {
