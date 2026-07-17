@@ -262,15 +262,19 @@ public static class JobValidation
         _ => null
     };
 
-    /// <summary>Entfernt Referenzen, die nach Deaktivieren/Verschieben nicht mehr erlaubt sind.</summary>
+    /// <summary>
+    /// Entfernt nur Referenzen auf Steps, die nicht mehr existieren.
+    /// Voruebergehend ungueltige Referenzen (deaktivierter Step oder falsche Reihenfolge)
+    /// bleiben erhalten, damit sie nach Reaktivieren oder Zurueckverschieben wieder gueltig werden.
+    /// </summary>
     public static void RemoveInvalidSourceSelections(IReadOnlyList<JobStep> steps)
     {
+        var existingIds = steps.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
         for (var i = 0; i < steps.Count; i++)
         {
-            var allowed = steps.Take(i).Where(s => s.IsEnabled).Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
             VisitSourceProperties(steps[i], (owner, property) =>
             {
-                if (property.GetValue(owner) is string id && id.Length > 0 && !allowed.Contains(id) && property.CanWrite)
+                if (property.GetValue(owner) is string id && id.Length > 0 && !existingIds.Contains(id) && property.CanWrite)
                     property.SetValue(owner, string.Empty);
             });
         }
