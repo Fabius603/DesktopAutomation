@@ -3,6 +3,7 @@ using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Settings;
 using DesktopAutomationApp.Theming;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 
 namespace DesktopAutomationApp.ViewModels;
@@ -31,16 +32,26 @@ public sealed class SettingsViewModel : ViewModelBase
     [
         new(AppThemeMode.System, "Settings.Theme.System"),
         new(AppThemeMode.Light, "Settings.Theme.Light"),
-        new(AppThemeMode.Dark, "Settings.Theme.Dark")
+        new(AppThemeMode.Dark, "Settings.Theme.Dark"),
+        new(AppThemeMode.Black, "Settings.Theme.Black")
     ];
 
     public ObservableCollection<AccentOption> Accents { get; } =
     [
         new("Blue", "#FF2196F3"),
-        new("Teal", "#FF00A6A6"),
-        new("Green", "#FF2EAD63"),
+        new("Indigo", "#FF5C6BC0"),
         new("Purple", "#FF8E5BD9"),
-        new("Orange", "#FFF28C28")
+        new("Pink", "#FFE91E63"),
+        new("Red", "#FFE53935"),
+        new("Orange", "#FFF28C28"),
+        new("Amber", "#FFD18B00"),
+        new("Green", "#FF2EAD63"),
+        new("Teal", "#FF00A6A6"),
+        new("Cyan", "#FF00ACC1"),
+        new("Slate", "#FF607D8B"),
+        new("Graphite", "#FF4B5563"),
+        new("Brown", "#FF795548"),
+        new("Navy", "#FF34495E")
     ];
 
     public LanguageOption? SelectedLanguage
@@ -98,11 +109,11 @@ public sealed class SettingsViewModel : ViewModelBase
         _isLoading = false;
     }
 
-    private bool SetAndChanged<T>(ref T field, T value)
+    private bool SetAndChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (Equals(field, value)) return false;
         field = value;
-        OnPropertyChanged();
+        OnPropertyChanged(propertyName);
         return true;
     }
 

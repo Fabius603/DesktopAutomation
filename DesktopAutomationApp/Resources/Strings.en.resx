@@ -144,6 +144,9 @@
   <data name="Settings.Theme.Dark" xml:space="preserve">
     <value>Dark</value>
   </data>
+  <data name="Settings.Theme.Black" xml:space="preserve">
+    <value>Black</value>
+  </data>
   <data name="Settings.Startup" xml:space="preserve">
     <value>Windows startup</value>
   </data>

@@ -26,7 +26,8 @@ public sealed class ThemeService : IThemeService, IDisposable
         var application = Application.Current;
         if (application == null) return;
 
-        ThemeManager.Current.ChangeTheme(application, EffectiveMode == AppThemeMode.Dark ? "Dark.Blue" : "Light.Blue");
+        var usesDarkBase = EffectiveMode is AppThemeMode.Dark or AppThemeMode.Black;
+        ThemeManager.Current.ChangeTheme(application, usesDarkBase ? "Dark.Blue" : "Light.Blue");
         ReplaceDictionary(application, "AppThemePalette", $"Styles/Themes/{EffectiveMode}.xaml");
         ReplaceDictionary(application, "AppAccentPalette", $"Styles/Accents/{_accent}.xaml");
         ThemeChanged?.Invoke(this, EventArgs.Empty);
@@ -47,7 +48,12 @@ public sealed class ThemeService : IThemeService, IDisposable
             : AppThemeMode.Dark;
     }
 
-    private static string NormalizeAccent(string accent) => accent is "Blue" or "Teal" or "Green" or "Purple" or "Orange" ? accent : "Blue";
+    private static string NormalizeAccent(string accent) => accent is
+        "Blue" or "Indigo" or "Purple" or "Pink" or "Red" or "Orange" or
+        "Amber" or "Green" or "Teal" or "Cyan" or "Slate" or
+        "Graphite" or "Brown" or "Navy"
+            ? accent
+            : "Blue";
 
     private static void ReplaceDictionary(Application application, string marker, string source)
     {

@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <sys:String xmlns:sys="clr-namespace:System;assembly=System.Runtime" x:Key="App.Palette.Kind">AppThemePalette</sys:String>
+    <Color x:Key="App.Color.WindowBackground">#FF0B0B0B</Color>
+    <Color x:Key="App.Color.Surface">#FF151515</Color>
+    <Color x:Key="App.Color.SurfaceHover">#FF202020</Color>
+    <Color x:Key="App.Color.SidebarBackground">#FF050505</Color>
+    <Color x:Key="App.Color.CardBorder">#FF2B2B2B</Color>
+    <Color x:Key="App.Color.RowEven">#FF101010</Color>
+    <Color x:Key="App.Color.RowOdd">#FF171717</Color>
+    <Color x:Key="App.Color.TextPrimary">#FFEEEEEE</Color>
+    <Color x:Key="App.Color.TextSecondary">#FFBDBDBD</Color>
+    <Color x:Key="App.Color.TextMuted">#FF858585</Color>
+    <SolidColorBrush x:Key="App.Brush.WindowBackground" Color="{StaticResource App.Color.WindowBackground}"/>
+    <SolidColorBrush x:Key="App.Brush.Surface" Color="{StaticResource App.Color.Surface}"/>
+    <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{StaticResource App.Color.SurfaceHover}"/>
+    <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{StaticResource App.Color.SidebarBackground}"/>
+    <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{StaticResource App.Color.CardBorder}"/>
+    <SolidColorBrush x:Key="App.Brush.RowEven" Color="{StaticResource App.Color.RowEven}"/>
+    <SolidColorBrush x:Key="App.Brush.RowOdd" Color="{StaticResource App.Color.RowOdd}"/>
+    <SolidColorBrush x:Key="App.Brush.TextPrimary" Color="{StaticResource App.Color.TextPrimary}"/>
+    <SolidColorBrush x:Key="App.Brush.TextSecondary" Color="{StaticResource App.Color.TextSecondary}"/>
+    <SolidColorBrush x:Key="App.Brush.TextMuted" Color="{StaticResource App.Color.TextMuted}"/>
+    <SolidColorBrush x:Key="MahApps.Brushes.ThemeBackground" Color="{StaticResource App.Color.WindowBackground}"/>
+    <SolidColorBrush x:Key="MahApps.Brushes.ThemeForeground" Color="{StaticResource App.Color.TextPrimary}"/>
+</ResourceDictionary>

@@ -4,7 +4,8 @@ public enum AppThemeMode
 {
     System,
     Light,
-    Dark
+    Dark,
+    Black
 }
 
 public sealed class UserPreferences
