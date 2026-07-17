@@ -448,7 +448,7 @@
     <value>Capture</value>
   </data>
   <data name="Ui.Step.Settings.EnableROI" xml:space="preserve">
-    <value>Enable ROI</value>
+    <value>Use static ROI</value>
   </data>
   <data name="Ui.Step.Settings.Confidence01" xml:space="preserve">
     <value>Confidence (0…1)</value>
@@ -807,23 +807,11 @@
   <data name="Ui.Job.Steps.WindowName" xml:space="preserve">
     <value>WindowName: </value>
   </data>
-  <data name="Ui.Job.Steps.ShowRawImage" xml:space="preserve">
-    <value>ShowRawImage: </value>
-  </data>
-  <data name="Ui.Job.Steps.ShowProcessedImage" xml:space="preserve">
-    <value>ShowProcessedImage: </value>
-  </data>
   <data name="Ui.Job.Steps.SavePath" xml:space="preserve">
     <value>SavePath: </value>
   </data>
   <data name="Ui.Job.Steps.FileName" xml:space="preserve">
     <value>FileName: </value>
-  </data>
-  <data name="Ui.Job.Steps.UseRawImage" xml:space="preserve">
-    <value>UseRawImage: </value>
-  </data>
-  <data name="Ui.Job.Steps.UseProcessedImage" xml:space="preserve">
-    <value>UseProcessedImage: </value>
   </data>
   <data name="Ui.Job.Steps.MacroName" xml:space="preserve">
     <value>Macro name: </value>
@@ -1805,6 +1793,7 @@ Error:
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximum mean model deviation from measurements in pixels. Predictions with a larger error are rejected. 0 disables the limit.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimum result quality from 0 to 1. It combines detection confidence, model stability, and measurement count.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Advanced</value></data>
+  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Create dynamic ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamic ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Creates an ROI from the best match for the next job iteration.</value></data>
   <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Source detection</value></data>
@@ -1812,8 +1801,13 @@ Error:
   <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimum confidence (0–1)</value></data>
   <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Full-screen search after X ROI iterations (0 = never)</value></data>
   <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Remove dynamic ROI after X unsuccessful attempts (0 = never)</value></data>
-  <data name="Ui.Step.DynamicRoi.FallbackHint" xml:space="preserve"><value>Without a dynamic ROI, the enabled static ROI is used; otherwise the full screen is searched.</value></data>
   <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Use dynamic ROI</value></data>
+  <data name="Ui.Step.Roi.Hint.None" xml:space="preserve"><value>The entire image is searched.</value></data>
+  <data name="Ui.Step.Roi.Hint.Static" xml:space="preserve"><value>The search is limited to the static ROI.</value></data>
+  <data name="Ui.Step.Roi.Hint.Dynamic" xml:space="preserve"><value>The dynamic ROI automatically narrows the entire image.</value></data>
+  <data name="Ui.Step.Roi.Hint.Combined" xml:space="preserve"><value>The dynamic ROI further narrows the static ROI.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicFull" xml:space="preserve"><value>No dynamic ROI selected. The entire image is searched.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicStatic" xml:space="preserve"><value>No dynamic ROI selected. The static ROI is used.</value></data>
   <data name="Ui.Job.Steps.RoiPadding" xml:space="preserve"><value>Padding: </value></data>
   <data name="Ui.Job.Steps.RoiMinConfidence" xml:space="preserve"><value>Minimum confidence: </value></data>
   <data name="Ui.Job.Steps.RoiFullSearchInterval" xml:space="preserve"><value>Base search after ROI iterations: </value></data>

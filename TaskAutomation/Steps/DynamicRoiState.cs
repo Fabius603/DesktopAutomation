@@ -14,7 +14,11 @@ public sealed class DynamicRoiState
 
 internal static class DynamicRoiResolver
 {
-    public static Rect? Resolve(string? dynamicRoiStepId, CaptureResult capture, IStepPipelineContext context)
+    public static Rect? Resolve(
+        string? dynamicRoiStepId,
+        CaptureResult capture,
+        IStepPipelineContext context,
+        Rect? staticRoi = null)
     {
         if (string.IsNullOrWhiteSpace(dynamicRoiStepId)
             || !context.DynamicRoiStates.TryGetValue(dynamicRoiStepId, out var state)
@@ -42,6 +46,24 @@ internal static class DynamicRoiResolver
             intersection.Y - capture.Offset.Y,
             intersection.Width,
             intersection.Height);
+
+        if (staticRoi is Rect baseRoi && baseRoi.Width > 0 && baseRoi.Height > 0)
+        {
+            var left = System.Math.Max(resolved.X, baseRoi.X);
+            var top = System.Math.Max(resolved.Y, baseRoi.Y);
+            var right = System.Math.Min(resolved.X + resolved.Width, baseRoi.X + baseRoi.Width);
+            var bottom = System.Math.Min(resolved.Y + resolved.Height, baseRoi.Y + baseRoi.Height);
+            if (right <= left || bottom <= top)
+            {
+                context.Logger.LogInformation(
+                    "Dynamic ROI {StepId}: keine Überschneidung mit der festen ROI; feste ROI wird verwendet.",
+                    dynamicRoiStepId);
+                return null;
+            }
+
+            resolved = new Rect(left, top, right - left, bottom - top);
+        }
+
         context.Logger.LogDebug("Dynamic ROI {StepId}: lokale ROI angewendet X={X}, Y={Y}, B={Width}, H={Height}; Nutzung={Use}/{Interval}.",
             dynamicRoiStepId, resolved.X, resolved.Y, resolved.Width, resolved.Height,
             state.RoiUsesSinceFullSearch, state.FullSearchInterval);

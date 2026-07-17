@@ -379,10 +379,24 @@ namespace TaskAutomation.Jobs
                         await pipelineCtx.VideoRecorder.StartAsync(ct).ConfigureAwait(false);
                         recorderStarted = true;
                         _logger.LogInformation("VideoRecorder gestartet.");
+                        _executionLogService.Write(
+                            executionLog,
+                            ExecutionLogLevel.Information,
+                            "Videoaufnahme gestartet.",
+                            $"Datei={pipelineCtx.VideoRecorder.OutputFilePath}, Größe={videoWidth}x{videoHeight}, FPS=60",
+                            stepId: videoStep.Id,
+                            stepType: videoStep.GetType().Name);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Fehler beim Starten des VideoRecorders: {Message}", ex.Message);
+                        _executionLogService.Write(
+                            executionLog,
+                            ExecutionLogLevel.Error,
+                            "Videoaufnahme konnte nicht gestartet werden.",
+                            ex.ToString(),
+                            stepId: videoStep.Id,
+                            stepType: videoStep.GetType().Name);
                         throw;
                     }
                 }
@@ -636,8 +650,25 @@ namespace TaskAutomation.Jobs
                     {
                         await pipelineCtx.VideoRecorder.StopAndSave();
                         _logger.LogInformation("VideoRecorder gestoppt und gespeichert.");
+                        _executionLogService.Write(
+                            executionLog,
+                            ExecutionLogLevel.Information,
+                            "Videoaufnahme gespeichert.",
+                            $"Datei={pipelineCtx.VideoRecorder.OutputFilePath}, übergebene Frames={pipelineCtx.VideoRecorder.SubmittedFrameCount}",
+                            stepId: videoStep?.Id,
+                            stepType: videoStep?.GetType().Name);
                     }
-                    catch (Exception ex) { _logger.LogError(ex, "Fehler beim Stoppen des VideoRecorders."); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Fehler beim Stoppen des VideoRecorders.");
+                        _executionLogService.Write(
+                            executionLog,
+                            ExecutionLogLevel.Error,
+                            "Videoaufnahme konnte nicht gespeichert werden.",
+                            ex.ToString(),
+                            stepId: videoStep?.Id,
+                            stepType: videoStep?.GetType().Name);
+                    }
                 }
 
                 if (desktopDuplicationStep != null)
@@ -696,7 +727,7 @@ namespace TaskAutomation.Jobs
                         ctx.ExecutionLogSession,
                         ExecutionLogLevel.Information,
                         "Step abgeschlossen.",
-                        BuildStepResultDetails(result),
+                        BuildStepResultDetails(step, result, ctx.Results),
                         step.Id,
                         step.GetType().Name,
                         stopwatch.ElapsedMilliseconds);
@@ -713,12 +744,23 @@ namespace TaskAutomation.Jobs
             }
         }
 
-        private static string? BuildStepResultDetails(object? result)
+        private static string? BuildStepResultDetails(
+            JobStep step,
+            object? result,
+            IJobResultStore results)
         {
             if (result == null) return null;
 
             var parts = new List<string>();
-            foreach (var name in new[] { "WasExecuted", "Success", "Found", "Confidence", "Point", "AppliedRoi", "UsedDynamicRoi", "RoiUpdated", "RoiReset", "GlobalBounds", "ConsecutiveMisses", "FullSearchInterval", "IsPredicted", "PredictedForUtc", "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc", "CaptureTimestampUtc" })
+            foreach (var name in new[]
+            {
+                "WasExecuted", "Success", "Found", "Confidence", "Point", "BoundingBox",
+                "AppliedRoi", "UsedDynamicRoi", "RoiUpdated", "RoiReset", "GlobalBounds",
+                "ConsecutiveMisses", "FullSearchInterval", "IsPredicted", "PredictedForUtc",
+                "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc",
+                "HasImage", "Bounds", "Offset", "IsFresh", "CaptureTimestampUtc",
+                "IsRunning", "IsActive", "Matches", "MatchCount", "TotalCount"
+            })
             {
                 var property = result.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
                 if (property == null) continue;
@@ -726,6 +768,44 @@ namespace TaskAutomation.Jobs
                 var value = property.GetValue(result);
                 if (value != null)
                     parts.Add($"{name}={value}");
+            }
+
+            switch (step)
+            {
+                case DesktopDuplicationStep capture:
+                    parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");
+                    parts.Add($"CaptureCursor={capture.Settings.CaptureCursor}");
+                    break;
+                case ProcessDuplicationStep processCapture:
+                    parts.Add($"Process={processCapture.Settings.ProcessName}");
+                    break;
+                case TimeoutStep timeout:
+                    parts.Add($"ConfiguredDelayMs={timeout.Settings.DelayMs}");
+                    break;
+                case ShowOnDesktopStep overlay:
+                    var detection = results.GetById<DetectionResult>(overlay.Settings.SourceDetectionStepId);
+                    var count = detection.AllDetections.Count > 0
+                        ? detection.AllDetections.Count
+                        : detection.Found && detection.Point.HasValue ? 1 : 0;
+                    parts.Add(count > 0 ? $"OverlayItems={count}" : "OverlayCleared=True");
+                    break;
+                case VideoCreationStep video:
+                    parts.Add($"Output={Path.Combine(video.Settings.SavePath, video.Settings.FileName)}");
+                    parts.Add(string.IsNullOrWhiteSpace(video.Settings.SourceDetectionStepId)
+                        ? "DetectionOverlay=None"
+                        : $"DetectionOverlay={video.Settings.SourceDetectionStepId}");
+                    break;
+                case ScriptExecutionStep script:
+                    parts.Add($"Script={script.Settings.ScriptPath}");
+                    parts.Add(script.Settings.WaitForExit ? "Mode=WaitForCompletion" : "Mode=FireAndForget; Status=Started");
+                    break;
+                case JobExecutionStep childJob:
+                    parts.Add($"Job={childJob.Settings.JobName}");
+                    parts.Add(childJob.Settings.WaitForCompletion ? "Mode=WaitForCompletion" : "Mode=FireAndForget; Status=Started");
+                    break;
+                case MakroExecutionStep macro:
+                    parts.Add($"Makro={macro.Settings.MakroName}");
+                    break;
             }
 
             return parts.Count == 0 ? result.GetType().Name : string.Join(", ", parts);

@@ -295,19 +295,21 @@
                                     </Button>
                                     <!-- Nach oben -->
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,2,0"
-                                            ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}" Click="StepMoreButton_Click">
+                                            ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
+                                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Click="StepMoreButton_Click">
                                         <iconPacks:PackIconMaterial Kind="DotsVertical"/>
                                         <Button.ContextMenu>
                                             <ContextMenu>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}"
-                                                          Command="{Binding PlacementTarget.DataContext.DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          Command="{Binding PlacementTarget.Tag.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}"
-                                                          Command="{Binding PlacementTarget.DataContext.DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <Separator/>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
-                                                          Command="{Binding PlacementTarget.DataContext.DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             </ContextMenu>
                                         </Button.ContextMenu>

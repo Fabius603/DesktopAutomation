@@ -248,14 +248,6 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowName}"/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowRawImage}"/>
-                        <Run Text="{Binding Settings.ShowRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ShowProcessedImage}"/>
-                        <Run Text="{Binding Settings.ShowProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -329,14 +321,6 @@
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.FileName}"/><Run Text="{Binding Settings.FileName}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseRawImage}"/>
-                        <Run Text="{Binding Settings.UseRawImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.UseProcessedImage}"/>
-                        <Run Text="{Binding Settings.UseProcessedImage, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

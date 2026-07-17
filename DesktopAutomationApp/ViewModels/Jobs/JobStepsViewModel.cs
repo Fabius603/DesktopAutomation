@@ -369,10 +369,9 @@ namespace DesktopAutomationApp.ViewModels
                 case ShowImageStep si:
                     vm.SelectedType = "ShowImage";
                     vm.ShowImageStep_WindowName = si.Settings.WindowName;
-                    vm.ShowImageStep_ShowRawImage = si.Settings.ShowRawImage;
-                    vm.ShowImageStep_ShowProcessedImage = si.Settings.ShowProcessedImage;
                     vm.ShowImageStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceCaptureStepId);
-                    vm.ShowImageStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceDetectionStepId);
+                    vm.ShowImageStep_SourceDetectionStep = vm.AvailableOptionalDetectionSteps.FirstOrDefault(s => s.StepId == si.Settings.SourceDetectionStepId)
+                        ?? vm.AvailableOptionalDetectionSteps.FirstOrDefault();
                     break;
 
                 case ShowOnDesktopStep sod:
@@ -384,10 +383,9 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "VideoCreation";
                     vm.VideoCreationStep_SavePath = v.Settings.SavePath;
                     vm.VideoCreationStep_FileName = v.Settings.FileName;
-                    vm.VideoCreationStep_UseRawImage = v.Settings.UseRawImage;
-                    vm.VideoCreationStep_UseProcessedImage = v.Settings.UseProcessedImage;
                     vm.VideoCreationStep_SourceCaptureStep   = vm.AvailableCaptureSteps.FirstOrDefault(s => s.StepId == v.Settings.SourceCaptureStepId);
-                    vm.VideoCreationStep_SourceDetectionStep = vm.AvailableDetectionSteps.FirstOrDefault(s => s.StepId == v.Settings.SourceDetectionStepId);
+                    vm.VideoCreationStep_SourceDetectionStep = vm.AvailableOptionalDetectionSteps.FirstOrDefault(s => s.StepId == v.Settings.SourceDetectionStepId)
+                        ?? vm.AvailableOptionalDetectionSteps.FirstOrDefault();
                     break;
 
                 case MakroExecutionStep me:

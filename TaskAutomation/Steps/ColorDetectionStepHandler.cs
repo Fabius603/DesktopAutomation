@@ -24,7 +24,11 @@ namespace TaskAutomation.Steps
             }
 
             var detector = ctx.ColorDetector ??= new ColorDetector();
-            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            var dynamicRoi = DynamicRoiResolver.Resolve(
+                step.Settings.DynamicRoiStepId,
+                capture,
+                ctx,
+                step.Settings.EnableROI ? step.Settings.ROI : null);
             var rawResult = detector.Detect(
                 capture.Image!,
                 CreateOptions(step.Settings, dynamicRoi),

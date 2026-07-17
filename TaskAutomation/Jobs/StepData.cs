@@ -267,12 +267,6 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("window_name")]
         public string WindowName { get; set; } = "MyWindow";
 
-        [JsonPropertyName("show_raw_image")]
-        public bool ShowRawImage { get; set; } = true;
-
-        [JsonPropertyName("show_processed_image")]
-        public bool ShowProcessedImage { get; set; } = true;
-
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";
 
@@ -307,12 +301,6 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("file_name")]
         public string FileName { get; set; } = "output.mp4";
-
-        [JsonPropertyName("use_raw_image")]
-        public bool UseRawImage { get; set; } = true;
-
-        [JsonPropertyName("use_processed_image")]
-        public bool UseProcessedImage { get; set; } = true;
 
         [JsonPropertyName("source_capture_step_id")]
         public string SourceCaptureStepId { get; set; } = "";

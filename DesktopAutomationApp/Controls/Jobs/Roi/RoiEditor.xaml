@@ -1,0 +1,66 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Roi.RoiEditor"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:roi="clr-namespace:DesktopAutomationApp.Controls.Jobs.Roi">
+    <StackPanel>
+        <roi:StaticRoiEditor
+            IsRoiEnabled="{Binding IsRoiEnabled, ElementName=Root}"
+            X="{Binding X, ElementName=Root}"
+            Y="{Binding Y, ElementName=Root}"
+            RoiWidth="{Binding RoiWidth, ElementName=Root}"
+            RoiHeight="{Binding RoiHeight, ElementName=Root}"
+            CaptureCommand="{Binding CaptureCommand, ElementName=Root}"/>
+        <roi:DynamicRoiSelector/>
+        <TextBlock Margin="4,0,4,8"
+                   FontSize="11"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource App.Brush.TextMuted}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.None}"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRoiEnabled, ElementName=Root}" Value="True"/>
+                                <Condition Binding="{Binding UseDynamicRoi}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.Static}"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRoiEnabled, ElementName=Root}" Value="False"/>
+                                <Condition Binding="{Binding HasSelectedDynamicRoi}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.Dynamic}"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRoiEnabled, ElementName=Root}" Value="True"/>
+                                <Condition Binding="{Binding HasSelectedDynamicRoi}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.Combined}"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRoiEnabled, ElementName=Root}" Value="False"/>
+                                <Condition Binding="{Binding UseDynamicRoi}" Value="True"/>
+                                <Condition Binding="{Binding HasSelectedDynamicRoi}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.NoDynamicFull}"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsRoiEnabled, ElementName=Root}" Value="True"/>
+                                <Condition Binding="{Binding UseDynamicRoi}" Value="True"/>
+                                <Condition Binding="{Binding HasSelectedDynamicRoi}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Text" Value="{loc:Translate Key=Ui.Step.Roi.Hint.NoDynamicStatic}"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+    </StackPanel>
+</UserControl>

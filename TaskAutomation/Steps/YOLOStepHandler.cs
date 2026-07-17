@@ -38,7 +38,11 @@ namespace TaskAutomation.Steps
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
 
             System.Drawing.Rectangle? roi = null;
-            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            var dynamicRoi = DynamicRoiResolver.Resolve(
+                step.Settings.DynamicRoiStepId,
+                capture,
+                ctx,
+                step.Settings.EnableROI ? step.Settings.ROI : null);
             var effectiveRoi = dynamicRoi ?? step.Settings.ROI;
             if ((dynamicRoi.HasValue || step.Settings.EnableROI) && effectiveRoi.Width > 0 && effectiveRoi.Height > 0)
                 roi = new System.Drawing.Rectangle(

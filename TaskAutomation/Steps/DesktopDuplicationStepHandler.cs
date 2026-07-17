@@ -13,10 +13,25 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogDebug(
                 "DesktopDuplicationStepHandler: Capturing monitor {MonitorIndex}", step.Settings.DesktopIdx);
 
-            return await ctx.DesktopCaptureService.CaptureAsync(
+            var result = await ctx.DesktopCaptureService.CaptureAsync(
                                 step.Settings.DesktopIdx, ct,
                                 captureCursor: step.Settings.CaptureCursor)
                             .ConfigureAwait(false);
+
+            if (result.HasImage)
+            {
+                ctx.Logger.LogInformation(
+                    "DesktopDuplicationStepHandler: Monitor {MonitorIndex} aufgenommen, Bounds={Bounds}, Frisch={IsFresh}, Cursor={CaptureCursor}.",
+                    step.Settings.DesktopIdx, result.Bounds, result.IsFresh, step.Settings.CaptureCursor);
+            }
+            else
+            {
+                ctx.Logger.LogWarning(
+                    "DesktopDuplicationStepHandler: Monitor {MonitorIndex} lieferte kein Bild.",
+                    step.Settings.DesktopIdx);
+            }
+
+            return result;
         }
 
         protected override CaptureResult CreateDefault() => CaptureResult.Default;

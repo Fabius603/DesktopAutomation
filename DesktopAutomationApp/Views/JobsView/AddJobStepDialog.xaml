@@ -167,12 +167,11 @@
                         </Grid>
                         <Expander Style="{StaticResource StepAdvancedExpander}">
                             <StackPanel Margin="0,10,0,0">
-                        <roiControls:StaticRoiEditor
+                        <roiControls:RoiEditor
                             IsRoiEnabled="{Binding TemplateMatchingStep_EnableROI}"
                             X="{Binding TemplateMatchingStep_RoiX}" Y="{Binding TemplateMatchingStep_RoiY}"
                             RoiWidth="{Binding TemplateMatchingStep_RoiW}" RoiHeight="{Binding TemplateMatchingStep_RoiH}"
                             CaptureCommand="{Binding CaptureTemplateMatchingRoiCommand}"/>
-                        <roiControls:DynamicRoiSelector/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -228,12 +227,11 @@
                         </Grid>
                         <Expander Style="{StaticResource StepAdvancedExpander}">
                             <StackPanel Margin="0,10,0,0">
-                        <roiControls:StaticRoiEditor
+                        <roiControls:RoiEditor
                             IsRoiEnabled="{Binding ColorDetectionStep_EnableROI}"
                             X="{Binding ColorDetectionStep_RoiX}" Y="{Binding ColorDetectionStep_RoiY}"
                             RoiWidth="{Binding ColorDetectionStep_RoiW}" RoiHeight="{Binding ColorDetectionStep_RoiH}"
                             CaptureCommand="{Binding CaptureColorDetectionRoiCommand}"/>
-                        <roiControls:DynamicRoiSelector/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -380,7 +378,7 @@
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
+                                      ItemsSource="{Binding AvailableOptionalDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding ShowImageStep_SourceDetectionStep}"/>
                         </Grid>
@@ -393,17 +391,6 @@
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding ShowImageStep_WindowName, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Grid>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ImageSource}" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
-                                      ItemsSource="{Binding ImageModeOptions}"
-                                      SelectedItem="{Binding ShowImageStep_ImageMode}"/>
                         </Grid>
                     </StackPanel>
 
@@ -445,7 +432,7 @@
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
+                                      ItemsSource="{Binding AvailableOptionalDetectionSteps}"
                                       DisplayMemberPath="DisplayName"
                                       SelectedItem="{Binding VideoCreationStep_SourceDetectionStep}"/>
                         </Grid>
@@ -470,17 +457,6 @@
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             <TextBox Grid.Column="1"
                                      Text="{Binding VideoCreationStep_FileName, UpdateSourceTrigger=PropertyChanged}"/>
-                        </Grid>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.ImageSource}" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
-                                      ItemsSource="{Binding ImageModeOptions}"
-                                      SelectedItem="{Binding VideoCreationStep_ImageMode}"/>
                         </Grid>
                     </StackPanel>
 
@@ -715,12 +691,11 @@
                         </Grid>
                         <Expander Style="{StaticResource StepAdvancedExpander}">
                             <StackPanel Margin="0,10,0,0">
-                        <roiControls:StaticRoiEditor
+                        <roiControls:RoiEditor
                             IsRoiEnabled="{Binding YoloDetectionStep_EnableROI}"
                             X="{Binding YoloDetectionStep_RoiX}" Y="{Binding YoloDetectionStep_RoiY}"
                             RoiWidth="{Binding YoloDetectionStep_RoiW}" RoiHeight="{Binding YoloDetectionStep_RoiH}"
                             CaptureCommand="{Binding CaptureYoloDetectionRoiCommand}"/>
-                        <roiControls:DynamicRoiSelector/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -1147,12 +1122,11 @@
                         </Grid>
                         <Expander Style="{StaticResource StepAdvancedExpander}">
                             <StackPanel Margin="0,10,0,0">
-                        <roiControls:StaticRoiEditor
+                        <roiControls:RoiEditor
                             IsRoiEnabled="{Binding KeyPointMatchingStep_EnableROI}"
                             X="{Binding KeyPointMatchingStep_RoiX}" Y="{Binding KeyPointMatchingStep_RoiY}"
                             RoiWidth="{Binding KeyPointMatchingStep_RoiW}" RoiHeight="{Binding KeyPointMatchingStep_RoiH}"
                             CaptureCommand="{Binding CaptureKeyPointMatchingRoiCommand}"/>
-                        <roiControls:DynamicRoiSelector/>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -1186,8 +1160,8 @@
                         <TextBox Text="{Binding DynamicRoiStep_Padding, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.MinimumConfidence}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding DynamicRoiStep_MinimumConfidence, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
-                        <Expander Header="{loc:Translate Key=Ui.Step.Settings.Advanced}" IsExpanded="False">
-                            <StackPanel Margin="0,8,0,0">
+                        <Expander Style="{StaticResource StepAdvancedExpander}">
+                            <StackPanel Margin="0,10,0,0">
                                 <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.FullSearchInterval}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                                 <TextBox Text="{Binding DynamicRoiStep_FullSearchInterval, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
                                 <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.ResetAfterMisses}" TextWrapping="Wrap" Margin="0,0,0,4"/>

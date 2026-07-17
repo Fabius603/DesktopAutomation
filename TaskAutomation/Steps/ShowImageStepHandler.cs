@@ -17,7 +17,8 @@ namespace TaskAutomation.Steps
             logger.LogDebug("ShowImageStepHandler: Window '{Name}'", step.Settings.WindowName);
 
             var capture   = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            var detection = string.IsNullOrEmpty(step.Settings.SourceDetectionStepId)
+            var hasDetectionSource = !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId);
+            var detection = !hasDetectionSource
                 ? DetectionResult.Default
                 : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
 
@@ -29,27 +30,20 @@ namespace TaskAutomation.Steps
                 return new OutputResult { WasExecuted = true, Success = false };
             }
 
-            if (step.Settings.ShowRawImage)
-            {
-                var winName = $"{step.Settings.WindowName} - Raw Image";
-                ctx.OpenedWindowNames.Add(winName);
-                ctx.ImageDisplayService.DisplayImage(winName, rawImage, ImageDisplayType.Raw);
-                logger.LogDebug("ShowImageStepHandler: Raw image displayed in '{Win}'", winName);
-            }
+            using var drawnImage = hasDetectionSource && detection.Found
+                ? DetectionResultDrawing.Draw(rawImage, detection, capture.Offset)
+                : null;
+            var image = drawnImage ?? rawImage;
+            var displayType = drawnImage != null ? ImageDisplayType.Processed : ImageDisplayType.Raw;
 
-            if (step.Settings.ShowProcessedImage)
-            {
-                var winName = $"{step.Settings.WindowName} - Processed Image";
-                using var drawnImage = detection.Found
-                    ? DetectionResultDrawing.Draw(rawImage, detection, capture.Offset)
-                    : null;
-                var img = drawnImage ?? rawImage;
-                ctx.OpenedWindowNames.Add(winName);
-                ctx.ImageDisplayService.DisplayImage(winName, img, ImageDisplayType.Processed);
-                logger.LogDebug("ShowImageStepHandler: Processed image displayed in '{Win}'", winName);
-            }
+            ctx.OpenedWindowNames.Add(step.Settings.WindowName);
+            ctx.ImageDisplayService.DisplayImage(step.Settings.WindowName, image, displayType);
 
-            logger.LogInformation("ShowImageStepHandler: Images displayed successfully");
+            logger.LogInformation(
+                "ShowImageStepHandler: Bild in '{Window}' angezeigt (Erkennungsquelle={HasDetectionSource}, Ergebnis eingezeichnet={DetectionDrawn})",
+                step.Settings.WindowName,
+                hasDetectionSource,
+                drawnImage != null);
             return new OutputResult { WasExecuted = true, Success = true };
         }
 

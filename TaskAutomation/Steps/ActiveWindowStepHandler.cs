@@ -23,6 +23,10 @@ namespace TaskAutomation.Steps
                 string.Equals(cached.ProcessName, processName, StringComparison.OrdinalIgnoreCase) &&
                 (DateTime.Now - cached.Timestamp).TotalMilliseconds < cacheMs)
             {
+                ctx.Logger.LogInformation(
+                    "ActiveWindowStepHandler: Gecachtes Ergebnis für Prozess '{Process}' verwendet - Fenster aktiv: {IsActive}.",
+                    processName,
+                    cached.IsActive);
                 return Task.FromResult(new ActiveWindowResult { WasExecuted = true, IsActive = cached.IsActive });
             }
 

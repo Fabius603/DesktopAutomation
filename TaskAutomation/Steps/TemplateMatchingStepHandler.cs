@@ -34,7 +34,11 @@ namespace TaskAutomation.Steps
             if (ctx.TemplateMatcher == null)
                 ctx.TemplateMatcher = new TemplateMatching(step.Settings.TemplateMatchMode);
 
-            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            var dynamicRoi = DynamicRoiResolver.Resolve(
+                step.Settings.DynamicRoiStepId,
+                capture,
+                ctx,
+                step.Settings.EnableROI ? step.Settings.ROI : null);
             ctx.TemplateMatcher.SetROI(dynamicRoi ?? step.Settings.ROI);
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.TemplateMatcher.EnableROI();
             else                         ctx.TemplateMatcher.DisableROI();

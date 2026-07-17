@@ -43,7 +43,11 @@ namespace TaskAutomation.Steps
                     step.Settings.MinMatchCount,
                     step.Settings.LowesRatioThreshold);
 
-            var dynamicRoi = DynamicRoiResolver.Resolve(step.Settings.DynamicRoiStepId, capture, ctx);
+            var dynamicRoi = DynamicRoiResolver.Resolve(
+                step.Settings.DynamicRoiStepId,
+                capture,
+                ctx,
+                step.Settings.EnableROI ? step.Settings.ROI : null);
             ctx.KeyPointMatcher.SetROI(dynamicRoi ?? step.Settings.ROI);
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();
             else                         ctx.KeyPointMatcher.DisableROI();

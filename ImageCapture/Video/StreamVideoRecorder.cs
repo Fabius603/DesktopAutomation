@@ -34,6 +34,10 @@ public class StreamVideoRecorder : IDisposable
     private readonly SemaphoreSlim stopLock = new(1, 1);
     private bool isStarted;
     private bool isStopped;
+    private long submittedFrameCount;
+
+    public string? OutputFilePath { get; private set; }
+    public long SubmittedFrameCount => Interlocked.Read(ref submittedFrameCount);
 
     public string OutputDirectory
     {
@@ -87,6 +91,7 @@ public class StreamVideoRecorder : IDisposable
         await ffmpegInitTask.ConfigureAwait(false);
 
         string outputFile = VideoHelper.GetUniqueFilePath(Path.Combine(OutputDirectory, FileName));
+        OutputFilePath = outputFile;
 
         var psi = new ProcessStartInfo
         {
@@ -170,6 +175,7 @@ public class StreamVideoRecorder : IDisposable
             {
                 _latestFrame = frame;
             }
+            Interlocked.Increment(ref submittedFrameCount);
         }
         catch
         {

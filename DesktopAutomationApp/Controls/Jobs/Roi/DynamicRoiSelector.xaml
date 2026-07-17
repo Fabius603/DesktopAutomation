@@ -22,8 +22,6 @@
                            Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                 <ComboBox ItemsSource="{Binding AvailableDynamicRoiSteps}" DisplayMemberPath="DisplayName"
                           SelectedItem="{Binding DetectionDynamicRoiStep}"/>
-                <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.FallbackHint}" TextWrapping="Wrap"
-                           Margin="0,6,0,0" FontSize="11" Foreground="{DynamicResource App.Brush.TextMuted}"/>
             </StackPanel>
         </StackPanel>
     </Border>

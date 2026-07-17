@@ -433,7 +433,7 @@
     <value>Aufnehmen</value>
   </data>
   <data name="Ui.Step.Settings.EnableROI" xml:space="preserve">
-    <value>ROI aktivieren</value>
+    <value>Feste ROI verwenden</value>
   </data>
   <data name="Ui.Step.Settings.Confidence01" xml:space="preserve">
     <value>Confidence (0…1)</value>
@@ -792,23 +792,11 @@
   <data name="Ui.Job.Steps.WindowName" xml:space="preserve">
     <value>WindowName: </value>
   </data>
-  <data name="Ui.Job.Steps.ShowRawImage" xml:space="preserve">
-    <value>ShowRawImage: </value>
-  </data>
-  <data name="Ui.Job.Steps.ShowProcessedImage" xml:space="preserve">
-    <value>ShowProcessedImage: </value>
-  </data>
   <data name="Ui.Job.Steps.SavePath" xml:space="preserve">
     <value>SavePath: </value>
   </data>
   <data name="Ui.Job.Steps.FileName" xml:space="preserve">
     <value>FileName: </value>
-  </data>
-  <data name="Ui.Job.Steps.UseRawImage" xml:space="preserve">
-    <value>UseRawImage: </value>
-  </data>
-  <data name="Ui.Job.Steps.UseProcessedImage" xml:space="preserve">
-    <value>UseProcessedImage: </value>
   </data>
   <data name="Ui.Job.Steps.MacroName" xml:space="preserve">
     <value>MakroName: </value>
@@ -1909,6 +1897,7 @@ Fehlermeldung:
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximal erlaubte mittlere Abweichung des Modells von den Messwerten in Pixeln. Größere Fehler führen zu keiner Vorhersage. 0 deaktiviert die Grenze.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Confidence der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Erweitert</value></data>
+  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Dynamische ROI erstellen</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamische ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erzeugt aus dem besten Match eine ROI für die nächste Job-Runde.</value></data>
   <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Quell-Erkennung</value></data>
@@ -1916,8 +1905,13 @@ Fehlermeldung:
   <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimale Konfidenz (0–1)</value></data>
   <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Vollbildsuche nach X ROI-Durchläufen (0 = nie)</value></data>
   <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Dynamische ROI nach X erfolglosen Versuchen entfernen (0 = nie)</value></data>
-  <data name="Ui.Step.DynamicRoi.FallbackHint" xml:space="preserve"><value>Ohne dynamische ROI wird die aktivierte feste ROI verwendet, andernfalls Vollbild.</value></data>
   <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Dynamische ROI verwenden</value></data>
+  <data name="Ui.Step.Roi.Hint.None" xml:space="preserve"><value>Das gesamte Bild wird durchsucht.</value></data>
+  <data name="Ui.Step.Roi.Hint.Static" xml:space="preserve"><value>Die Suche wird auf die feste ROI begrenzt.</value></data>
+  <data name="Ui.Step.Roi.Hint.Dynamic" xml:space="preserve"><value>Die dynamische ROI grenzt das gesamte Bild automatisch ein.</value></data>
+  <data name="Ui.Step.Roi.Hint.Combined" xml:space="preserve"><value>Die dynamische ROI grenzt die feste ROI weiter ein.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicFull" xml:space="preserve"><value>Keine dynamische ROI ausgewählt. Das gesamte Bild wird durchsucht.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicStatic" xml:space="preserve"><value>Keine dynamische ROI ausgewählt. Die feste ROI wird verwendet.</value></data>
   <data name="Ui.Job.Steps.RoiPadding" xml:space="preserve"><value>Rand: </value></data>
   <data name="Ui.Job.Steps.RoiMinConfidence" xml:space="preserve"><value>Minimale Konfidenz: </value></data>
   <data name="Ui.Job.Steps.RoiFullSearchInterval" xml:space="preserve"><value>Basis-Suche nach ROI-Durchläufen: </value></data>

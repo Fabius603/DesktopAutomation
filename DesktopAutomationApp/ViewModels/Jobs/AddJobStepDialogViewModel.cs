@@ -58,6 +58,16 @@ namespace DesktopAutomationApp.ViewModels
             _currentJobId = currentJobId;
             AvailableCaptureSteps = BuildStepItems("CaptureResult");
             AvailableDetectionSteps = BuildStepItems("DetectionResult");
+            var detectionDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == "DetectionResult");
+            AvailableOptionalDetectionSteps = new[]
+                {
+                    new SourceStepItem(
+                        string.Empty,
+                        Loc.Get("Ui.Job.Steps.NoSourceSelected"),
+                        detectionDescriptor)
+                }
+                .Concat(AvailableDetectionSteps)
+                .ToList();
             var dynamicRoiDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == "TaskResult");
             AvailableDynamicRoiSteps = new[] { new SourceStepItem(string.Empty, "Keine (Vollbild/feste ROI)", dynamicRoiDescriptor) }
                 .Concat(_allJobSteps
@@ -191,10 +201,10 @@ namespace DesktopAutomationApp.ViewModels
             KlickOnPointStep_SourceDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
             KlickOnPoint3DStep_SourceDetectionStep  = AvailableDetectionSteps.FirstOrDefault();
             ShowImageStep_SourceCaptureStep         = AvailableCaptureSteps.FirstOrDefault();
-            ShowImageStep_SourceDetectionStep       = AvailableDetectionSteps.FirstOrDefault();
+            ShowImageStep_SourceDetectionStep       = AvailableOptionalDetectionSteps.FirstOrDefault();
             ShowOnDesktopStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
             VideoCreationStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
-            VideoCreationStep_SourceDetectionStep   = AvailableDetectionSteps.FirstOrDefault();
+            VideoCreationStep_SourceDetectionStep   = AvailableOptionalDetectionSteps.FirstOrDefault();
             PointComparisonStep_RefDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
             DetectionDynamicRoiStep = AvailableDynamicRoiSteps.FirstOrDefault();
         }
@@ -300,15 +310,13 @@ namespace DesktopAutomationApp.ViewModels
                     && PredictMovementStep_MinimumConfidence is >= 0 and <= 1,
                 "ShowImage" =>
                     !string.IsNullOrWhiteSpace(ShowImageStep_WindowName)
-                    && HasCaptureSource(ShowImageStep_SourceCaptureStep)
-                    && (ShowImageStep_ShowRawImage || ShowImageStep_ShowProcessedImage),
+                    && HasCaptureSource(ShowImageStep_SourceCaptureStep),
                 "ShowOnDesktop" =>
                     HasDetectionSource(ShowOnDesktopStep_SourceDetectionStep),
                 "VideoCreation" =>
                     IsValidDirectoryPath(VideoCreationStep_SavePath)
                     && IsValidFileName(VideoCreationStep_FileName)
-                    && HasCaptureSource(VideoCreationStep_SourceCaptureStep)
-                    && (VideoCreationStep_UseRawImage || VideoCreationStep_UseProcessedImage),
+                    && HasCaptureSource(VideoCreationStep_SourceCaptureStep),
                 "MakroExecution" => MakroExecutionStep_SelectedMakro != null,
                 "JobExecution"   => JobExecutionStep_SelectedJob != null,
                 "DesktopDuplication" => DesktopDuplicationStep_DesktopIdx >= 0,
@@ -624,26 +632,41 @@ namespace DesktopAutomationApp.ViewModels
 
         public IReadOnlyList<SourceStepItem> AvailableCaptureSteps { get; }
         public IReadOnlyList<SourceStepItem> AvailableDetectionSteps { get; }
+        public IReadOnlyList<SourceStepItem> AvailableOptionalDetectionSteps { get; }
         public IReadOnlyList<SourceStepItem> AvailableDynamicRoiSteps { get; }
 
         private SourceStepItem? _detectionDynamicRoiStep;
         public SourceStepItem? DetectionDynamicRoiStep
         {
             get => _detectionDynamicRoiStep;
-            set { _detectionDynamicRoiStep = value; OnChange(); OnChange(nameof(UseDynamicRoi)); }
-        }
-
-        public bool UseDynamicRoi
-        {
-            get => !string.IsNullOrWhiteSpace(DetectionDynamicRoiStep?.StepId);
             set
             {
-                DetectionDynamicRoiStep = value
-                    ? AvailableDynamicRoiSteps.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s.StepId))
-                    : AvailableDynamicRoiSteps.FirstOrDefault();
+                _detectionDynamicRoiStep = value;
+                if (!string.IsNullOrWhiteSpace(value?.StepId))
+                    _useDynamicRoi = true;
                 OnChange();
+                OnChange(nameof(UseDynamicRoi));
+                OnChange(nameof(HasSelectedDynamicRoi));
             }
         }
+
+        private bool _useDynamicRoi;
+        public bool UseDynamicRoi
+        {
+            get => _useDynamicRoi;
+            set
+            {
+                if (_useDynamicRoi == value) return;
+                _useDynamicRoi = value;
+                if (!value || DetectionDynamicRoiStep is null)
+                    DetectionDynamicRoiStep = AvailableDynamicRoiSteps.FirstOrDefault();
+                OnChange();
+                OnChange(nameof(HasSelectedDynamicRoi));
+            }
+        }
+
+        public bool HasSelectedDynamicRoi =>
+            !string.IsNullOrWhiteSpace(DetectionDynamicRoiStep?.StepId);
 
         private SourceStepItem? _dynamicRoiStep_SourceDetectionStep;
         public SourceStepItem? DynamicRoiStep_SourceDetectionStep
@@ -1444,52 +1467,6 @@ namespace DesktopAutomationApp.ViewModels
             set { _showImageStep_SourceDetectionStep = value; OnChange(); }
         }
 
-        private bool _showImageStep_ShowRawImage = true;
-        public bool ShowImageStep_ShowRawImage 
-        { 
-            get => _showImageStep_ShowRawImage; 
-            set 
-            { 
-                _showImageStep_ShowRawImage = value; 
-                OnChange(); 
-                OnChange(nameof(ShowImageStep_ShowProcessedImage));
-                OnChange(nameof(ShowImageStep_ImageMode));
-            } 
-        }
-
-        private bool _showImageStep_ShowProcessedImage = false;
-        public bool ShowImageStep_ShowProcessedImage 
-        { 
-            get => _showImageStep_ShowProcessedImage; 
-            set 
-            { 
-                _showImageStep_ShowProcessedImage = value; 
-                OnChange(); 
-                OnChange(nameof(ShowImageStep_ShowRawImage));
-                OnChange(nameof(ShowImageStep_ImageMode));
-            } 
-        }
-
-        public string[] ImageModeOptions { get; } = { "Rohbild", "Verarbeitetes Bild", "Beides" };
-
-        public string ShowImageStep_ImageMode
-        {
-            get => (_showImageStep_ShowRawImage, _showImageStep_ShowProcessedImage) switch
-            {
-                (true,  false) => "Rohbild",
-                (false, true)  => "Verarbeitetes Bild",
-                _              => "Beides"
-            };
-            set
-            {
-                _showImageStep_ShowRawImage     = value != "Verarbeitetes Bild";
-                _showImageStep_ShowProcessedImage = value != "Rohbild";
-                OnChange();
-                OnChange(nameof(ShowImageStep_ShowRawImage));
-                OnChange(nameof(ShowImageStep_ShowProcessedImage));
-            }
-        }
-
         // ===== ShowOnDesktop Felder =====
         private SourceStepItem? _showOnDesktopStep_SourceDetectionStep;
         public SourceStepItem? ShowOnDesktopStep_SourceDetectionStep
@@ -1517,50 +1494,6 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _videoCreationStep_SourceDetectionStep;
             set { _videoCreationStep_SourceDetectionStep = value; OnChange(); }
-        }
-
-        private bool _videoCreationStep_UseRawImage = true;
-        public bool VideoCreationStep_UseRawImage 
-        { 
-            get => _videoCreationStep_UseRawImage; 
-            set 
-            { 
-                _videoCreationStep_UseRawImage = value; 
-                OnChange(); 
-                OnChange(nameof(VideoCreationStep_UseProcessedImage));
-                OnChange(nameof(VideoCreationStep_ImageMode));
-            } 
-        }
-
-        private bool _videoCreationStep_UseProcessedImage = false;
-        public bool VideoCreationStep_UseProcessedImage 
-        { 
-            get => _videoCreationStep_UseProcessedImage; 
-            set 
-            { 
-                _videoCreationStep_UseProcessedImage = value; 
-                OnChange(); 
-                OnChange(nameof(VideoCreationStep_UseRawImage));
-                OnChange(nameof(VideoCreationStep_ImageMode));
-            } 
-        }
-
-        public string VideoCreationStep_ImageMode
-        {
-            get => (_videoCreationStep_UseRawImage, _videoCreationStep_UseProcessedImage) switch
-            {
-                (true,  false) => "Rohbild",
-                (false, true)  => "Verarbeitetes Bild",
-                _              => "Beides"
-            };
-            set
-            {
-                _videoCreationStep_UseRawImage     = value != "Verarbeitetes Bild";
-                _videoCreationStep_UseProcessedImage = value != "Rohbild";
-                OnChange();
-                OnChange(nameof(VideoCreationStep_UseRawImage));
-                OnChange(nameof(VideoCreationStep_UseProcessedImage));
-            }
         }
 
         // ===== JobExecution Felder =====
@@ -2245,8 +2178,6 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new ShowImageSettings
                     {
                         WindowName = ShowImageStep_WindowName,
-                        ShowRawImage = ShowImageStep_ShowRawImage,
-                        ShowProcessedImage = ShowImageStep_ShowProcessedImage,
                         SourceCaptureStepId   = ShowImageStep_SourceCaptureStep?.StepId ?? "",
                         SourceDetectionStepId = ShowImageStep_SourceDetectionStep?.StepId ?? ""
                     }
@@ -2264,8 +2195,6 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         SavePath = VideoCreationStep_SavePath,
                         FileName = VideoCreationStep_FileName,
-                        UseRawImage = VideoCreationStep_UseRawImage,
-                        UseProcessedImage = VideoCreationStep_UseProcessedImage,
                         SourceCaptureStepId   = VideoCreationStep_SourceCaptureStep?.StepId ?? "",
                         SourceDetectionStepId = VideoCreationStep_SourceDetectionStep?.StepId ?? ""
                     }

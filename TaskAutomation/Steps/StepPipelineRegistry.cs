@@ -78,7 +78,7 @@ namespace TaskAutomation.Steps
                 Prerequisites: ["DetectionResult"],
                 Output: "DynamicRoiResult",
                 IsConditionSource: true,
-                DisplayName: "Dynamische ROI aktualisieren"),
+                DisplayName: "Dynamische ROI erstellen"),
 
             // ── Interaktion ────────────────────────────────────────────────────
             [typeof(KlickOnPointStep)] = new(

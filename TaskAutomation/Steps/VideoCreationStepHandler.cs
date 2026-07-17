@@ -32,11 +32,11 @@ namespace TaskAutomation.Steps
             Bitmap? frameToAdd = null;
             try
             {
-                frameToAdd = step.Settings.UseRawImage
-                    ? (Bitmap)capture.Image.Clone()
-                    : detection.Found
-                        ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
-                        : (Bitmap)capture.Image.Clone();
+                var drawDetectionResult = !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId)
+                    && detection.Found;
+                frameToAdd = drawDetectionResult
+                    ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
+                    : (Bitmap)capture.Image.Clone();
 
                 ct.ThrowIfCancellationRequested();
                 ctx.VideoRecorder.AddFrame(frameToAdd);
@@ -45,7 +45,12 @@ namespace TaskAutomation.Steps
             {
                 frameToAdd?.Dispose();
             }
-            logger.LogDebug("VideoCreationStepHandler: Frame added to video recorder");
+            logger.LogInformation(
+                "VideoCreationStepHandler: Frame zum Video hinzugefügt (Detection-Quelle={DetectionSource}, Ergebnis eingezeichnet={DetectionDrawn}).",
+                string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId)
+                    ? "keine"
+                    : step.Settings.SourceDetectionStepId,
+                !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId) && detection.Found);
 
             return new OutputResult { WasExecuted = true, Success = true };
         }

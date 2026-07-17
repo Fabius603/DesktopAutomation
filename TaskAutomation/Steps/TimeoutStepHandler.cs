@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 using TaskAutomation.Timing;
 
@@ -18,6 +19,9 @@ namespace TaskAutomation.Steps
             await _delayService.DelayAsync(
                 TimeSpan.FromMilliseconds(step.Settings.DelayMs),
                 ct).ConfigureAwait(false);
+            ctx.Logger.LogInformation(
+                "TimeoutStepHandler: Wartezeit von {DelayMs} ms abgeschlossen.",
+                step.Settings.DelayMs);
             return new TaskResult { WasExecuted = true, Success = true };
         }
 

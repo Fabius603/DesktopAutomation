@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
@@ -24,6 +25,9 @@ namespace TaskAutomation.Steps
             if (!detection.Found || detection.Point is null)
             {
                 ctx.DesktopResultOverlay.Clear();
+                ctx.Logger.LogInformation(
+                    "ShowOnDesktopStepHandler: Kein Treffer im Quell-Step {SourceStepId}; Overlay wurde geleert.",
+                    step.Settings.SourceDetectionStepId);
                 return Task.FromResult(new OutputResult { WasExecuted = true, Success = true });
             }
 
@@ -33,6 +37,9 @@ namespace TaskAutomation.Steps
                 : new[] { (Center: detection.Point.Value, detection.BoundingBox) };
 
             ctx.DesktopResultOverlay.ShowResult(items);
+            ctx.Logger.LogInformation(
+                "ShowOnDesktopStepHandler: {Count} Treffer aus Quell-Step {SourceStepId} auf dem Desktop angezeigt.",
+                items.Count, step.Settings.SourceDetectionStepId);
 
             return Task.FromResult(new OutputResult { WasExecuted = true, Success = true });
         }
