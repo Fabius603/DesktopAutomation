@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -86,6 +87,9 @@ namespace DesktopAutomationApp.ViewModels
 
         public ICommand InstallUpdateCommand { get; }
         public ICommand OpenUpdateCommand { get; }  // fallback: browser
+        public string AppVersion { get; } = GetAppVersion();
+        public string VersionLabel => $" v{AppVersion}";
+        public string WindowTitle => $"DesktopAutomation{VersionLabel}";
 
         private readonly StartViewModel _start;
         private readonly ListMakrosViewModel _listMakros;
@@ -97,6 +101,20 @@ namespace DesktopAutomationApp.ViewModels
         private readonly AutomationLogsViewModel _automationLogs;
         private readonly ApplicationLogsViewModel _applicationLogs;
         private readonly SettingsViewModel _settings;
+
+        private static string GetAppVersion()
+        {
+            var assembly = typeof(MainViewModel).Assembly;
+            var informationalVersion = assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                .InformationalVersion;
+
+            if (!string.IsNullOrWhiteSpace(informationalVersion))
+                return informationalVersion.Split('+')[0];
+
+            var version = assembly.GetName().Version;
+            return version == null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+        }
 
         public object? CurrentContent
         {

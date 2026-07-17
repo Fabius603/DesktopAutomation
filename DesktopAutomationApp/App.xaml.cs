@@ -45,6 +45,9 @@ namespace DesktopAutomationApp
     {
         private IHost _host = null!;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
+        private AccentIconSet? _accentIcons;
+        private IThemeService? _themeService;
+        private MainWindow? _mainWindow;
         private string[] _startupArguments = [];
         private Task? _backgroundInitializationTask;
 
@@ -196,7 +199,8 @@ namespace DesktopAutomationApp
             var preferences = _host.Services.GetRequiredService<IUserPreferencesService>();
             await preferences.LoadAsync();
             _host.Services.GetRequiredService<ILocalizationService>().SetCulture(preferences.Current.Culture);
-            _host.Services.GetRequiredService<IThemeService>().Apply(preferences.Current.ThemeMode, preferences.Current.Accent);
+            _themeService = _host.Services.GetRequiredService<IThemeService>();
+            _themeService.Apply(preferences.Current.ThemeMode, preferences.Current.Accent);
             try
             {
                 _host.Services.GetRequiredService<IWindowsStartupRegistrationService>().Apply(
@@ -223,9 +227,12 @@ namespace DesktopAutomationApp
             };
 
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+            _mainWindow = mainWindow;
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
 
             SetupTrayIcon(mainWindow);
+            _themeService.ThemeChanged += OnThemeChanged;
+            UpdateAccentIcons();
 
             var startInBackground = _startupArguments.Any(argument =>
                 string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
@@ -259,8 +266,12 @@ namespace DesktopAutomationApp
         protected override async void OnExit(ExitEventArgs e)
         {
             Log.Information("Anwendung wird beendet.");
+            if (_themeService != null)
+                _themeService.ThemeChanged -= OnThemeChanged;
             _trayIcon?.Dispose();
             _trayIcon = null;
+            _accentIcons?.Dispose();
+            _accentIcons = null;
 
             await _host.Services.GetRequiredService<IAutomationEngine>().StopAsync();
             Log.CloseAndFlush();
@@ -329,12 +340,38 @@ namespace DesktopAutomationApp
                 ContextMenuStrip = contextMenu,
             };
 
-            var iconStream = GetResourceStream(new Uri("pack://application:,,,/Assets/App.ico"));
-            if (iconStream != null)
-                _trayIcon.Icon = new System.Drawing.Icon(iconStream.Stream);
-
             _trayIcon.Visible = true;
             _trayIcon.DoubleClick += (_, _) => ShowMainWindow(mainWindow);
+        }
+
+        private void OnThemeChanged(object? sender, EventArgs e) => UpdateAccentIcons();
+
+        private void UpdateAccentIcons()
+        {
+            if (_mainWindow == null || _trayIcon == null)
+                return;
+
+            var accent = TryFindResource("App.Color.Accent") switch
+            {
+                System.Windows.Media.Color color => color,
+                System.Windows.Media.SolidColorBrush brush => brush.Color,
+                _ => System.Windows.Media.Color.FromRgb(0x21, 0x96, 0xF3)
+            };
+
+            try
+            {
+                var newIcons = AccentIconFactory.Create(accent);
+                _mainWindow.Icon = newIcons.WindowIcon;
+                _trayIcon.Icon = newIcons.TrayIcon;
+
+                var oldIcons = _accentIcons;
+                _accentIcons = newIcons;
+                oldIcons?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Das App-Icon konnte nicht an die Akzentfarbe angepasst werden.");
+            }
         }
 
         private void ShowMainWindow(MainWindow mainWindow)
