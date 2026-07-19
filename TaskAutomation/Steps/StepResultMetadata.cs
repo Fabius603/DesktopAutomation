@@ -20,8 +20,11 @@ public sealed record ResultTypeDescriptor(
     string DisplayName,
     ResultPropertyDescriptor[] Properties)
 {
-    private IReadOnlyList<ResultPropertyNode>? _propertyTree;
-    public IReadOnlyList<ResultPropertyNode> PropertyTree => _propertyTree ??= ResultPropertyTree.Create(Properties);
+    // ResultTypeDescriptor ist Bestandteil von SourceStepItem (ebenfalls ein Record).
+    // Ein nachträglich gesetztes Backing-Field würde deshalb Equality/GetHashCode
+    // ändern, während der Eintrag bereits in einer ComboBox verwendet wird.
+    private readonly IReadOnlyList<ResultPropertyNode> _propertyTree = ResultPropertyTree.Create(Properties);
+    public IReadOnlyList<ResultPropertyNode> PropertyTree => _propertyTree;
 }
 
 public sealed class ResultPropertyNode
