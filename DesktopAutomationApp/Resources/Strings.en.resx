@@ -1428,59 +1428,50 @@ Error:
   <data name="Enum.AutomationAlreadyRunningBehavior.Restart" xml:space="preserve">
     <value>Restart</value>
   </data>
-  <data name="Step.Category.Erfassung" xml:space="preserve">
-    <value>Capture</value>
+  <data name="Step.Category.BildAufnehmen" xml:space="preserve">
+    <value>Capture image</value>
   </data>
-  <data name="Step.Category.Erkennung" xml:space="preserve">
-    <value>Detection</value>
+  <data name="Step.Category.BildAuswerten" xml:space="preserve">
+    <value>Analyze image</value>
   </data>
-  <data name="Step.Category.Interaktion" xml:space="preserve">
-    <value>Interaction</value>
+  <data name="Step.Category.MausTastatur" xml:space="preserve">
+    <value>Control mouse and keyboard</value>
   </data>
-  <data name="Step.Category.Ausgabe" xml:space="preserve">
-    <value>Output</value>
+  <data name="Step.Category.ProgrammeFenster" xml:space="preserve">
+    <value>Control apps and windows</value>
   </data>
-  <data name="Step.Category.Automatisierung" xml:space="preserve">
-    <value>Automation</value>
+  <data name="Step.Category.AnzeigenSpeichern" xml:space="preserve">
+    <value>Display and save</value>
   </data>
-  <data name="Step.Category.Abfrage" xml:space="preserve">
-    <value>Query</value>
-  </data>
-  <data name="Step.Category.Ablaufsteuerung" xml:space="preserve">
-    <value>Flow control</value>
-  </data>
-  <data name="Step.Category.Prozess" xml:space="preserve">
-    <value>Process</value>
-  </data>
-  <data name="Step.Category.Fenster" xml:space="preserve">
-    <value>Window</value>
+  <data name="Step.Category.AblaufSteuern" xml:space="preserve">
+    <value>Control workflow</value>
   </data>
   <data name="Step.Type.DesktopDuplication" xml:space="preserve">
-    <value>Desktop duplication</value>
+    <value>Capture screen</value>
   </data>
   <data name="Step.Type.ProcessCapture" xml:space="preserve">
-    <value>Process window capture</value>
+    <value>Capture process window</value>
   </data>
   <data name="Step.Type.TemplateMatching" xml:space="preserve">
-    <value>Template matching</value>
+    <value>Find image template</value>
   </data>
   <data name="Step.Type.ColorDetection" xml:space="preserve">
     <value>Color detection</value>
   </data>
   <data name="Step.Type.YoloDetection" xml:space="preserve">
-    <value>YOLO detection</value>
+    <value>Detect objects</value>
   </data>
   <data name="Step.Type.KeyPointMatching" xml:space="preserve">
-    <value>Keypoint matching</value>
+    <value>Compare image features</value>
   </data>
   <data name="Step.Type.PredictMovement" xml:space="preserve">
     <value>Predict movement</value>
   </data>
   <data name="Step.Type.KlickOnPoint" xml:space="preserve">
-    <value>Click point</value>
+    <value>Click detected point</value>
   </data>
   <data name="Step.Type.KlickOnPoint3D" xml:space="preserve">
-    <value>Click point in 3D environment</value>
+    <value>Click 3D target</value>
   </data>
   <data name="Step.Type.MakroExecution" xml:space="preserve">
     <value>Run macro</value>
@@ -1489,13 +1480,13 @@ Error:
     <value>Run script</value>
   </data>
   <data name="Step.Type.JobExecution" xml:space="preserve">
-    <value>Start job</value>
+    <value>Run job</value>
   </data>
   <data name="Step.Type.Timeout" xml:space="preserve">
-    <value>Timeout</value>
+    <value>Wait</value>
   </data>
   <data name="Step.Type.ActiveProcess" xml:space="preserve">
-    <value>Is process running?</value>
+    <value>Check process status</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
     <value>Start/terminate process</value>
@@ -1507,10 +1498,10 @@ Error:
     <value>Show text on desktop</value>
   </data>
   <data name="Step.Type.ActiveWindow" xml:space="preserve">
-    <value>Is window in foreground</value>
+    <value>Check foreground window</value>
   </data>
   <data name="Step.Type.PointComparison" xml:space="preserve">
-    <value>Point comparison</value>
+    <value>Compare points</value>
   </data>
   <data name="Step.Type.ShowImage" xml:space="preserve">
     <value>Show image</value>
@@ -1861,7 +1852,7 @@ Error:
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximum mean model deviation from measurements in pixels. Predictions with a larger error are rejected. 0 disables the limit.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimum result quality from 0 to 1. It combines detection confidence, model stability, and measurement count.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Advanced</value></data>
-  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Create dynamic ROI</value></data>
+  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Create dynamic image area</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamic ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Creates an ROI from the best match for the next job iteration.</value></data>
   <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Detection result</value></data>
@@ -1972,7 +1963,7 @@ Error:
   <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>No value selected</value></data>
   <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Select a result and property</value></data>
   <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Identify process by</value></data>
-  <data name="Step.Type.GetProcess" xml:space="preserve"><value>Get process</value></data>
+  <data name="Step.Type.GetProcess" xml:space="preserve"><value>Find running process</value></data>
   <data name="Step.Description.GetProcess" xml:space="preserve"><value>Finds a running process by its characteristics and provides the concrete process reference to subsequent steps.</value></data>
   <data name="Ui.Step.Settings.GetProcessHint" xml:space="preserve"><value>Enter at least a process name or program path. The optional window title narrows the search further.</value></data>
   <data name="Ui.Job.Steps.ResultType.Boolean" xml:space="preserve"><value>Bool</value></data>

@@ -501,6 +501,7 @@ namespace DesktopAutomationApp.ViewModels
             private readonly string _category;
             private readonly string _description;
             public string Name { get; }
+            public string CategoryKey => _category;
             public string Category => LocalizedOrFallback($"Step.Category.{_category}", _category);
             public string Description => LocalizedOrFallback($"Step.Description.{Name}", _description);
             public string DisplayLabel => LocalizedOrFallback($"Step.Type.{Name}", TaskAutomation.Steps.StepPipelineRegistry.GetByName(Name)?.DisplayName ?? Name);
@@ -524,57 +525,70 @@ namespace DesktopAutomationApp.ViewModels
         {
             var items = new List<StepTypeItem>
             {
-                new("DesktopDuplication", "Erfassung",
+                new("DesktopDuplication", "BildAufnehmen",
                     "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit."),
-                new("TemplateMatching",   "Erkennung",
+                new("TemplateMatching",   "BildAuswerten",
                     "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden."),
-                new("ColorDetection",     "Erkennung",
+                new("ColorDetection",     "BildAuswerten",
                     "Erkennt eine bestimmte Farbe in einer Bildquelle. Threshold und MindestgrÃ¶ÃŸe bestimmen, ab wann ein Treffer gilt."),
-                new("PredictMovement",    "Erkennung",
+                new("PredictMovement",    "BildAuswerten",
                     "Berechnet aus den letzten Erkennungspunkten eine vorhergesagte Zielposition fuer Klick- und Anzeige-Steps."),
-                new("YoloDetection",      "Erkennung",
+                new("YoloDetection",      "BildAuswerten",
                     "Erkennt Objekte im Bild mithilfe eines YOLO-KI-Modells und speichert die Fundstelle für nachfolgende Steps (z. B. KlickOnPoint)."),
-                new("KlickOnPoint",       "Interaktion",
+                new("KlickOnPoint",       "MausTastatur",
                     "Klickt auf den zuletzt erkannten Bildpunkt (z. B. Ergebnis eines TemplateMatching- oder YOLO-Steps). Wartet bis zum angegebenen Timeout auf einen Fund."),
-                new("KlickOnPoint3D",     "Interaktion",
+                new("KlickOnPoint3D",     "MausTastatur",
                     "Wie KlickOnPoint, aber für 3D-Umgebungen: Die Maus wird per FOV-Berechnung auf das Zielobjekt bewegt, bevor geklickt wird."),
-                new("ShowImage",          "Ausgabe",
+                new("ShowImage",          "AnzeigenSpeichern",
                     "Zeigt das aktuelle Bild (roh oder verarbeitet) in einem separaten Vorschaufenster an."),
-                new("ShowOnDesktop",      "Ausgabe",
+                new("ShowOnDesktop",      "AnzeigenSpeichern",
                     "Zeichnet das Erkennungsergebnis (BoundingBox + Mittelpunkt + Konfidenz) direkt als transparentes Overlay auf den Desktop."),
-                new("VideoCreation",      "Ausgabe",
+                new("VideoCreation",      "AnzeigenSpeichern",
                     "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte."),
-                new("MakroExecution",     "Automatisierung",
+                new("MakroExecution",     "MausTastatur",
                     "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus."),
-                new("JobExecution",       "Automatisierung",
+                new("JobExecution",       "AblaufSteuern",
                     "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird."),
-                new("ScriptExecution",    "Automatisierung",
+                new("ScriptExecution",    "ProgrammeFenster",
                     "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet."),
-                new("Timeout",            "Automatisierung",
+                new("Timeout",            "AblaufSteuern",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
-                new("StartProcess",       "Prozess",
+                new("StartProcess",       "ProgrammeFenster",
                     "Startet ein Programm oder beendet laufende Prozesse anhand ihres Namens und optional ihres Fenstertitels."),
-                new("GetProcess",         "Prozess",
+                new("GetProcess",         "ProgrammeFenster",
                     "Ermittelt einen laufenden Prozess anhand von Prozessname, Programmpfad und optionalem Fenstertitel und stellt ihn nachfolgenden Steps bereit."),
-                new("FocusProcess",       "Fenster",
+                new("FocusProcess",       "ProgrammeFenster",
                     "Bringt ein Prozessfenster in den Vordergrund oder minimiert es. Optional kann nach einem Fenstertitel gefiltert werden."),
-                new("ShowText",            "Ausgabe",
+                new("ShowText",            "AnzeigenSpeichern",
                     "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
-                new("EndJob",             "Automatisierung",
+                new("EndJob",             "AblaufSteuern",
                     "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
-                new("ActiveProcess",      "Prozess",
+                new("ActiveProcess",      "ProgrammeFenster",
                     "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden."),
-                new("ActiveWindow",       "Fenster",
+                new("ActiveWindow",       "ProgrammeFenster",
                     "Prüft, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist. Das Ergebnis (\"Fenster aktiv\") kann in If-Bedingungen ausgewertet werden."),
-                new("PointComparison",   "Abfrage",
+                new("PointComparison",   "BildAuswerten",
                     "Vergleicht eine Liste von Punkten entweder gegen einen Referenzpunkt mit Toleranz (Offset-Modus) oder gegen Achsen-Ausdrücke wie x < 100 (Ausdrucks-Modus). Das Ergebnis (\"Übereinstimmung\") kann in If-Bedingungen ausgewertet werden."),
-                new("KeyPointMatching",   "Erkennung",
+                new("KeyPointMatching",   "BildAuswerten",
                     "Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis (\"Gefunden\") kann von einem KlickOnPoint-Step verwendet werden."),
-                new("DynamicRoi", "Erkennung",
+                new("DynamicRoi", "BildAuswerten",
                     "Übernimmt das beste Match einer Erkennung als ROI für die nächste Job-Runde."),
-                new("If",                 "Ablaufsteuerung",
+                new("If",                 "AblaufSteuern",
                     "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist."),
             };
+            string[] categoryOrder =
+            [
+                "BildAufnehmen",
+                "BildAuswerten",
+                "MausTastatur",
+                "ProgrammeFenster",
+                "AnzeigenSpeichern",
+                "AblaufSteuern"
+            ];
+            items = items
+                .OrderBy(item => Array.IndexOf(categoryOrder, item.CategoryKey))
+                .ToList();
+
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
             return view;

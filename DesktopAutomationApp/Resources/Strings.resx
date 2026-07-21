@@ -1413,59 +1413,50 @@ Fehlermeldung:
   <data name="Enum.AutomationAlreadyRunningBehavior.Restart" xml:space="preserve">
     <value>Neu starten</value>
   </data>
-  <data name="Step.Category.Erfassung" xml:space="preserve">
-    <value>Erfassung</value>
+  <data name="Step.Category.BildAufnehmen" xml:space="preserve">
+    <value>Bild aufnehmen</value>
   </data>
-  <data name="Step.Category.Erkennung" xml:space="preserve">
-    <value>Erkennung</value>
+  <data name="Step.Category.BildAuswerten" xml:space="preserve">
+    <value>Bild auswerten</value>
   </data>
-  <data name="Step.Category.Interaktion" xml:space="preserve">
-    <value>Interaktion</value>
+  <data name="Step.Category.MausTastatur" xml:space="preserve">
+    <value>Maus und Tastatur steuern</value>
   </data>
-  <data name="Step.Category.Ausgabe" xml:space="preserve">
-    <value>Ausgabe</value>
+  <data name="Step.Category.ProgrammeFenster" xml:space="preserve">
+    <value>Programme und Fenster steuern</value>
   </data>
-  <data name="Step.Category.Automatisierung" xml:space="preserve">
-    <value>Automatisierung</value>
+  <data name="Step.Category.AnzeigenSpeichern" xml:space="preserve">
+    <value>Anzeigen und speichern</value>
   </data>
-  <data name="Step.Category.Abfrage" xml:space="preserve">
-    <value>Abfrage</value>
-  </data>
-  <data name="Step.Category.Ablaufsteuerung" xml:space="preserve">
-    <value>Ablaufsteuerung</value>
-  </data>
-  <data name="Step.Category.Prozess" xml:space="preserve">
-    <value>Prozess</value>
-  </data>
-  <data name="Step.Category.Fenster" xml:space="preserve">
-    <value>Fenster</value>
+  <data name="Step.Category.AblaufSteuern" xml:space="preserve">
+    <value>Ablauf steuern</value>
   </data>
   <data name="Step.Type.DesktopDuplication" xml:space="preserve">
-    <value>Desktop-Duplizierung</value>
+    <value>Bildschirm aufnehmen</value>
   </data>
   <data name="Step.Type.ProcessCapture" xml:space="preserve">
-    <value>Prozess-Fensteraufnahme</value>
+    <value>Prozessfenster aufnehmen</value>
   </data>
   <data name="Step.Type.TemplateMatching" xml:space="preserve">
-    <value>Template Matching</value>
+    <value>Bildvorlage erkennen</value>
   </data>
   <data name="Step.Type.ColorDetection" xml:space="preserve">
     <value>Farberkennung</value>
   </data>
   <data name="Step.Type.YoloDetection" xml:space="preserve">
-    <value>YOLO-Erkennung</value>
+    <value>Objekte erkennen</value>
   </data>
   <data name="Step.Type.KeyPointMatching" xml:space="preserve">
-    <value>KeyPoint Matching</value>
+    <value>Bildmerkmale vergleichen</value>
   </data>
   <data name="Step.Type.PredictMovement" xml:space="preserve">
     <value>Bewegung vorhersagen</value>
   </data>
   <data name="Step.Type.KlickOnPoint" xml:space="preserve">
-    <value>Klick auf Punkt</value>
+    <value>Erkannten Punkt anklicken</value>
   </data>
   <data name="Step.Type.KlickOnPoint3D" xml:space="preserve">
-    <value>Klick auf Punkt in 3D-Umgebung</value>
+    <value>3D-Ziel anklicken</value>
   </data>
   <data name="Step.Type.MakroExecution" xml:space="preserve">
     <value>Makro ausführen</value>
@@ -1474,13 +1465,13 @@ Fehlermeldung:
     <value>Skript ausführen</value>
   </data>
   <data name="Step.Type.JobExecution" xml:space="preserve">
-    <value>Job starten</value>
+    <value>Job ausführen</value>
   </data>
   <data name="Step.Type.Timeout" xml:space="preserve">
-    <value>Timeout</value>
+    <value>Warten</value>
   </data>
   <data name="Step.Type.ActiveProcess" xml:space="preserve">
-    <value>Läuft Prozess?</value>
+    <value>Prozessstatus prüfen</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
     <value>Prozess starten/beenden</value>
@@ -1492,10 +1483,10 @@ Fehlermeldung:
     <value>Text auf Desktop anzeigen</value>
   </data>
   <data name="Step.Type.ActiveWindow" xml:space="preserve">
-    <value>Ist Fenster im Vordergrund</value>
+    <value>Vordergrundfenster prüfen</value>
   </data>
   <data name="Step.Type.PointComparison" xml:space="preserve">
-    <value>Punkte-Vergleich</value>
+    <value>Punkte vergleichen</value>
   </data>
   <data name="Step.Type.ShowImage" xml:space="preserve">
     <value>Bild anzeigen</value>
@@ -1507,16 +1498,16 @@ Fehlermeldung:
     <value>Video erstellen</value>
   </data>
   <data name="Step.Type.If" xml:space="preserve">
-    <value>If</value>
+    <value>Wenn</value>
   </data>
   <data name="Step.Type.ElseIf" xml:space="preserve">
-    <value>Else If</value>
+    <value>Sonst wenn</value>
   </data>
   <data name="Step.Type.Else" xml:space="preserve">
-    <value>Else</value>
+    <value>Sonst</value>
   </data>
   <data name="Step.Type.EndIf" xml:space="preserve">
-    <value>End If</value>
+    <value>Ende wenn</value>
   </data>
   <data name="Step.Type.EndJob" xml:space="preserve">
     <value>Job beenden</value>
@@ -1965,7 +1956,7 @@ Fehlermeldung:
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximal erlaubte mittlere Abweichung des Modells von den Messwerten in Pixeln. Größere Fehler führen zu keiner Vorhersage. 0 deaktiviert die Grenze.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Confidence der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Erweitert</value></data>
-  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Dynamische ROI erstellen</value></data>
+  <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Dynamischen Bildbereich erstellen</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamische ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erzeugt aus dem besten Match eine ROI für die nächste Job-Runde.</value></data>
   <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Erkennungs-Ergebnis</value></data>
@@ -2076,7 +2067,7 @@ Fehlermeldung:
   <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>Kein Wert ausgewählt</value></data>
   <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Ergebnis und Eigenschaft auswählen</value></data>
   <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Prozess bestimmen über</value></data>
-  <data name="Step.Type.GetProcess" xml:space="preserve"><value>Prozess ermitteln</value></data>
+  <data name="Step.Type.GetProcess" xml:space="preserve"><value>Laufenden Prozess suchen</value></data>
   <data name="Step.Description.GetProcess" xml:space="preserve"><value>Sucht einen laufenden Prozess anhand seiner Merkmale und stellt die konkrete Prozessreferenz für nachfolgende Steps bereit.</value></data>
   <data name="Ui.Step.Settings.GetProcessHint" xml:space="preserve"><value>Mindestens Prozessname oder Programmpfad angeben. Der optionale Fenstertitel grenzt die Suche weiter ein.</value></data>
   <data name="Ui.Job.Steps.ResultType.Boolean" xml:space="preserve"><value>Bool</value></data>
