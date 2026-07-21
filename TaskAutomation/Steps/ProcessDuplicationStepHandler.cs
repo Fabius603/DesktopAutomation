@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class ProcessDuplicationStepHandler : JobStepHandler<ProcessDuplicationStep, CaptureResult>
+    public sealed class ProcessDuplicationStepHandler : JobStepHandler<ProcessDuplicationStep, ProcessDuplicationResult>
     {
-        protected override async Task<CaptureResult> ExecuteCoreAsync(
+        protected override async Task<ProcessDuplicationResult> ExecuteCoreAsync(
             ProcessDuplicationStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -28,7 +28,7 @@ namespace TaskAutomation.Steps
             if (!captureResult.ProcessFound)
             {
                 logger.LogWarning("ProcessDuplicationStepHandler: Process '{ProcessName}' not found", step.Settings.ProcessName);
-                return new CaptureResult { WasExecuted = true };
+                return new ProcessDuplicationResult { WasExecuted = true };
             }
 
             var bitmap = captureResult.ProcessImage.Clone() as Bitmap;
@@ -40,7 +40,7 @@ namespace TaskAutomation.Steps
                 "ProcessDuplicationStepHandler: Captured '{ProcessName}' at offset ({X},{Y})",
                 step.Settings.ProcessName, offset.X, offset.Y);
 
-            return new CaptureResult
+            return new ProcessDuplicationResult
             {
                 WasExecuted = true,
                 Image       = bitmap,
@@ -51,7 +51,7 @@ namespace TaskAutomation.Steps
             };
         }
 
-        protected override CaptureResult CreateDefault() => CaptureResult.Default;
+        protected override ProcessDuplicationResult CreateDefault() => ProcessDuplicationResult.Default;
     }
 }
 

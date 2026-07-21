@@ -14,7 +14,7 @@ namespace TaskAutomation.Events
         /// Index 0 wird als bestes Ergebnis (Akzentfarbe) hervorgehoben.
         /// Ersetzt alle vorher angezeigten Ergebnisse.
         /// </summary>
-        void ShowResult(IReadOnlyList<(Point Center, Rectangle? BoundingBox)> allDetections);
+        void ShowResult(IReadOnlyList<Steps.DetectionItem> allDetections);
 
         /// <summary>
         /// Entfernt alle aktuell angezeigten Erkennungsergebnis-Items aus dem Overlay.

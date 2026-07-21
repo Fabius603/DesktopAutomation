@@ -10,6 +10,7 @@ namespace TaskAutomation.Steps
     {
         private readonly Dictionary<Type, StepResultBase>   _byType = new();
         private readonly Dictionary<string, StepResultBase> _byId   = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Type> _stepTypesById = new(StringComparer.OrdinalIgnoreCase);
 
         public JobResultStore() { }
 
@@ -42,6 +43,7 @@ namespace TaskAutomation.Steps
 
             _byType[typeof(TStep)] = result;
             _byId[stepId]         = result;
+            _stepTypesById[stepId] = typeof(TStep);
 
             DisposeIfUnreferenced(previousByType, result);
             if (!ReferenceEquals(previousById, previousByType))
@@ -63,6 +65,33 @@ namespace TaskAutomation.Steps
                 DisposeResult(result);
             _byType.Clear();
             _byId.Clear();
+            _stepTypesById.Clear();
+        }
+
+        /// <summary>Behält nur Ergebnisse der angegebenen Steps und gibt alle übrigen Ressourcen frei.</summary>
+        internal void RetainOnly(IEnumerable<string> stepIds)
+        {
+            var retainedIds = stepIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var removed = _byId
+                .Where(pair => !retainedIds.Contains(pair.Key))
+                .Select(pair => pair.Value)
+                .Distinct(ReferenceEqualityComparer.Instance)
+                .ToList();
+
+            foreach (var id in _byId.Keys.Where(id => !retainedIds.Contains(id)).ToList())
+            {
+                _byId.Remove(id);
+                _stepTypesById.Remove(id);
+            }
+
+            _byType.Clear();
+            foreach (var pair in _byId)
+                if (_stepTypesById.TryGetValue(pair.Key, out var stepType))
+                    _byType[stepType] = pair.Value;
+
+            foreach (var result in removed)
+                if (!_byId.Values.Any(value => ReferenceEquals(value, result)))
+                    DisposeResult(result);
         }
 
         private void DisposeIfUnreferenced(StepResultBase? previous, StepResultBase replacement)
@@ -78,12 +107,10 @@ namespace TaskAutomation.Steps
 
         private static void DisposeResult(StepResultBase result)
         {
-            if (result is not CaptureResult capture)
+            if (result is not ICaptureStepResult capture)
                 return;
 
             capture.Image?.Dispose();
-            if (!ReferenceEquals(capture.ProcessedImage, capture.Image))
-                capture.ProcessedImage?.Dispose();
         }
 
         private sealed class ReferenceEqualityComparer : IEqualityComparer<StepResultBase>

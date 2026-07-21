@@ -110,7 +110,16 @@
                                                 </ContextMenu.Resources>
                                                 <ContextMenu.ItemTemplate>
                                                     <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                                        <TextBlock Text="{Binding DisplayName}"/>
+                                                        <Grid MinWidth="190">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding SecondaryText}"
+                                                                       Margin="14,0,0,0" FontSize="10"
+                                                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                                        </Grid>
                                                     </HierarchicalDataTemplate>
                                                 </ContextMenu.ItemTemplate>
                                             </ContextMenu>
@@ -198,7 +207,16 @@
                                                             </ContextMenu.Resources>
                                                             <ContextMenu.ItemTemplate>
                                                                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                                                    <TextBlock Text="{Binding DisplayName}"/>
+                                                                    <Grid MinWidth="190">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding SecondaryText}"
+                                                                                   Margin="14,0,0,0" FontSize="10"
+                                                                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                                                    </Grid>
                                                                 </HierarchicalDataTemplate>
                                                             </ContextMenu.ItemTemplate>
                                                         </ContextMenu>

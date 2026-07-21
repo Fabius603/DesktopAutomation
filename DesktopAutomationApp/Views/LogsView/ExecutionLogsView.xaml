@@ -207,6 +207,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="130"/>
                                         <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="150"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
@@ -219,16 +220,21 @@
                                                Foreground="{DynamicResource App.Brush.Accent}"
                                                FontWeight="SemiBold"/>
                                     <TextBlock Grid.Row="0" Grid.Column="2"
+                                               Text="{Binding JobStateText}"
+                                               Foreground="{DynamicResource App.Brush.Accent}"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="3"
                                                Text="{Binding StepType}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                TextTrimming="CharacterEllipsis"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
                                                Text="{Binding Message}"
                                                FontWeight="SemiBold"
                                                Margin="0,2,0,0"
                                                TextWrapping="Wrap"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4"
                                                Text="{Binding DisplayDetails}"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                                FontFamily="Consolas"

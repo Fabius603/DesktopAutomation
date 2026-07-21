@@ -12,9 +12,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class KeyPointMatchingStepHandler : JobStepHandler<KeyPointMatchingStep, DetectionResult>
+    public sealed class KeyPointMatchingStepHandler : JobStepHandler<KeyPointMatchingStep, KeyPointMatchingResult>
     {
-        protected override async Task<DetectionResult> ExecuteCoreAsync(
+        protected override async Task<KeyPointMatchingResult> ExecuteCoreAsync(
             KeyPointMatchingStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -26,11 +26,12 @@ namespace TaskAutomation.Steps
             if (!File.Exists(step.Settings.TemplatePath))
                 throw new FileNotFoundException($"Template-Datei nicht gefunden: '{step.Settings.TemplatePath}'");
 
-            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            if (!capture.HasImage)
+            var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = input.Capture;
+            if (input.Image is null)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Kein Bild verfügbar, Step wird übersprungen.");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new KeyPointMatchingResult { WasExecuted = true, Found = false };
             }
 
             // Lazy-create / re-use the matcher (one per job context)
@@ -44,7 +45,7 @@ namespace TaskAutomation.Steps
                     step.Settings.LowesRatioThreshold);
 
             var dynamicRoi = DynamicRoiResolver.Resolve(
-                step.Settings.DynamicRoiStepId,
+                step.Settings.DynamicRoiSource,
                 capture,
                 ctx,
                 step.Settings.EnableROI ? step.Settings.ROI : null);
@@ -54,12 +55,12 @@ namespace TaskAutomation.Steps
 
             ctx.KeyPointMatcher.SetTemplate(step.Settings.TemplatePath);
 
-            var rawResult = ctx.KeyPointMatcher.Detect(capture.Image!);
+            var rawResult = ctx.KeyPointMatcher.Detect(input.Image);
 
             if (!rawResult.Success)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Keine ausreichend guten Matches gefunden.");
-                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
+                return new KeyPointMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
@@ -85,14 +86,14 @@ namespace TaskAutomation.Steps
                     System.Drawing.Rectangle? bb = r.BoundingBox.HasValue
                         ? new System.Drawing.Rectangle(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
                         : null;
-                    return (Center: c, BoundingBox: bb);
+                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
                 })
-                .ToList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)>();
+                .ToList();
 
             if (allDetections.Count == 0)
-                allDetections.Add((Center: globalPoint, BoundingBox: globalBoundingBox));
+                allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new DetectionResult
+            return new KeyPointMatchingResult
             {
                 WasExecuted    = true,
                 Found          = true,
@@ -106,6 +107,6 @@ namespace TaskAutomation.Steps
             };
         }
 
-        protected override DetectionResult CreateDefault() => DetectionResult.Default;
+        protected override KeyPointMatchingResult CreateDefault() => KeyPointMatchingResult.Default;
     }
 }

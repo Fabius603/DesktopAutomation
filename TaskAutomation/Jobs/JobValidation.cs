@@ -11,13 +11,17 @@ public sealed record JobValidationResult(bool IsValid, IReadOnlyList<StepValidat
 /// <summary>Zentrale Regeln fuer Step-Abhaengigkeiten. UI-Code darf diese Regeln nur anzeigen.</summary>
 public static class JobValidation
 {
-    public static IReadOnlyList<JobStep> GetAllowedSourceSteps(IReadOnlyList<JobStep> steps, int consumerIndex, string resultTypeName)
-        => steps.Take(Math.Clamp(consumerIndex, 0, steps.Count))
-            .Where(s => s.IsEnabled && StepPipelineRegistry.Get(s.GetType())?.Output == resultTypeName)
-            .ToList();
-
     public static bool IsStepAllowed(Job job, JobStep step)
-        => ValidateStep(job.Steps, step).IsValid;
+    {
+        var section = GetSection(job, step);
+        if (section == null) return false;
+        var precedingPhases = ReferenceEquals(section, job.Steps)
+            ? job.StartSteps
+            : ReferenceEquals(section, job.EndSteps)
+                ? job.StartSteps.Concat(job.Steps).ToList()
+                : [];
+        return ValidateStep(precedingPhases.Concat(section).ToList(), step).IsValid;
+    }
 
     public static bool IsJobAllowed(Job job) => ValidateJob(job).IsValid;
 
@@ -44,11 +48,31 @@ public static class JobValidation
 
     public static JobValidationResult ValidateJob(Job job)
     {
-        var results = job.Steps.Select(s => ValidateStep(job.Steps, s)).ToList();
-        var structureErrors = GetIfStructureErrors(job.Steps);
+        var results = ValidateSection(job.StartSteps, [])
+            .Concat(ValidateSection(job.Steps, job.StartSteps))
+            .Concat(ValidateSection(job.EndSteps, job.StartSteps.Concat(job.Steps).ToList()))
+            .ToList();
+        return new JobValidationResult(results.All(r => r.IsValid), results);
+    }
+
+    private static IReadOnlyList<StepValidationResult> ValidateSection(
+        IReadOnlyList<JobStep> steps,
+        IReadOnlyList<JobStep> precedingPhases)
+    {
+        var executionOrder = precedingPhases.Concat(steps).ToList();
+        var results = steps.Select(s => ValidateStep(executionOrder, s)).ToList();
+        var structureErrors = GetIfStructureErrors(steps);
         results = results.Select(r => structureErrors.TryGetValue(r.Step, out var error)
             ? new StepValidationResult(r.Step, false, error) : r).ToList();
-        return new JobValidationResult(results.All(r => r.IsValid), results);
+        return results;
+    }
+
+    private static IReadOnlyList<JobStep>? GetSection(Job job, JobStep step)
+    {
+        if (job.StartSteps.Contains(step)) return job.StartSteps;
+        if (job.Steps.Contains(step)) return job.Steps;
+        if (job.EndSteps.Contains(step)) return job.EndSteps;
+        return null;
     }
 
     public static bool IsIfStructureAllowed(IReadOnlyList<JobStep> steps)
@@ -95,8 +119,8 @@ public static class JobValidation
             return new(step, false, valueError);
 
         var index = IndexOf(steps, step);
-        if (GetRequiredSourceIds(step).Any(string.IsNullOrWhiteSpace))
-            return new(step, false, "Es wurde kein gueltiger Quell-Step ausgewaehlt.");
+        if (ValidateResultBindings(steps, index, step) is { } bindingError)
+            return new(step, false, bindingError);
         foreach (var sourceId in EnumerateSourceIds(step))
         {
             if (string.IsNullOrWhiteSpace(sourceId)) continue;
@@ -105,21 +129,19 @@ public static class JobValidation
                 return new(step, false, "Der ausgewaehlte Quell-Step ist deaktiviert, nicht vorhanden oder steht nicht davor.");
         }
 
+        var processSourceId = GetProcessTarget(step)?.ProcessSource.SourceStepId;
+        if (!string.IsNullOrWhiteSpace(processSourceId)
+            && !ProducesProcessReference(steps.FirstOrDefault(candidate => candidate.Id == processSourceId)))
+            return new(step, false, "Die Prozessquelle muss ein vorheriger Prozess- oder Fenster-Step mit Prozessreferenz sein.");
+
         if (step is IfStep ifStep && ValidateConditions(steps, index, ifStep.Settings.Conditions) is { } ifError)
             return new(step, false, ifError);
         if (step is ElseIfStep elseIfStep && ValidateConditions(steps, index, elseIfStep.Settings.Conditions) is { } elseIfError)
             return new(step, false, elseIfError);
 
-        var dynamicRoiId = GetDynamicRoiStepId(step);
-        if (!string.IsNullOrWhiteSpace(dynamicRoiId)
-            && (referenceSteps ?? steps).FirstOrDefault(s => s.Id == dynamicRoiId) is not DynamicRoiStep)
-            return new(step, false, "Der ausgewählte dynamische ROI-Step ist nicht vorhanden oder ungültig.");
-
-        var chainError = StepPipelineRegistry.ValidateStepChain(steps.Take(index + 1).Where(s => s.IsEnabled))
-            .LastOrDefault(e => e.StepTypeName == step.GetType().Name);
-        return chainError == null
-            ? new(step, true, null)
-            : new(step, false, $"Fehlende Voraussetzung: {chainError.MissingPrerequisite}");
+        // Concrete bindings and their value shapes were validated above. There is no
+        // additional result-group validation because outputs are step-specific.
+        return new(step, true, null);
     }
 
     private static string? ValidateValues(JobStep step)
@@ -142,13 +164,14 @@ public static class JobValidation
             KlickOnPoint3DStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0,
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
-            ActiveProcessStep s => Text(s.Settings.ProcessName),
+            ActiveProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate
-                ? Text(s.Settings.ProcessName)
+                ? ProcessTargetConfigured(s.Settings.Target)
                 : ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath) && s.Settings.MonitorIndex >= 0,
-            FocusProcessStep s => ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath),
+            FocusProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             ShowTextStep s => Text(s.Settings.Text) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
-            ActiveWindowStep s => Text(s.Settings.ProcessName) && s.Settings.CacheMs >= 0,
+            ActiveWindowStep s => ProcessTargetConfigured(s.Settings.Target)
+                                  && s.Settings.CacheMs >= 0,
             KeyPointMatchingStep s => ExistingFile(s.Settings.TemplatePath) && s.Settings.MinMatchCount > 0 && s.Settings.LowesRatioThreshold is > 0 and <= 1 && Roi(s.Settings.EnableROI, s.Settings.ROI),
             IfStep s => Conditions(s.Settings.Conditions),
             ElseIfStep s => Conditions(s.Settings.Conditions),
@@ -198,7 +221,7 @@ public static class JobValidation
             if (string.IsNullOrWhiteSpace(comparison.PropertyPath)
                 || !StepResultMetadata.TryGetProperty(comparisonOutput, comparison.PropertyPath, out var comparisonProperty))
                 return "Die ausgewählte JobResult-Vergleichseigenschaft existiert nicht mehr.";
-            if (comparisonProperty.PropertyType != property.PropertyType)
+            if (!StepResultMetadata.AreComparable(property, comparisonProperty))
                 return "Beide Vergleichswerte müssen denselben Datentyp besitzen.";
         }
         return null;
@@ -206,14 +229,19 @@ public static class JobValidation
 
     private static bool PointComparison(PointComparisonSettings s)
         => s.Points.Count > 0
-           && s.Points.All(p => p.Source == PointEntrySource.Manual || Text(p.SourceDetectionStepId))
+           && s.Points.All(p => p.Source == PointEntrySource.Manual || p.PointsSource.IsConfigured)
            && (s.Mode == PointComparisonMode.Offset
-               ? (s.OffsetSettings.ReferenceSource == PointEntrySource.Manual || Text(s.OffsetSettings.ReferenceDetectionStepId))
+               ? (s.OffsetSettings.ReferenceSource == PointEntrySource.Manual
+                  || s.OffsetSettings.ReferencePointsSource.IsConfigured)
                  && s.OffsetSettings.OffsetX >= 0 && s.OffsetSettings.OffsetY >= 0
                : s.ExpressionSettings.Expressions.Count > 0
                  && s.ExpressionSettings.Expressions.All(e => e.Axis is "X" or "Y"));
 
     private static bool Text(string? value) => !string.IsNullOrWhiteSpace(value);
+    private static bool ProcessTargetConfigured(ProcessTargetSettings? target) =>
+        target?.ProcessSource.IsConfigured == true
+        || Text(target?.ProcessName)
+        || Text(target?.ExecutablePath);
     private static bool Unit(double value) => value is >= 0 and <= 1;
     private static bool ExistingFile(string? path) => Text(path) && File.Exists(path);
     private static bool Roi(bool enabled, OpenCvSharp.Rect roi) => !enabled || (roi.X >= 0 && roi.Y >= 0 && roi.Width > 0 && roi.Height > 0);
@@ -225,41 +253,88 @@ public static class JobValidation
         catch { return false; }
     }
 
-    private static IEnumerable<string> GetRequiredSourceIds(JobStep step) => step switch
+    private static ProcessTargetSettings? GetProcessTarget(JobStep step) => step switch
     {
-        TemplateMatchingStep s => [s.Settings.SourceCaptureStepId],
-        ColorDetectionStep s => [s.Settings.SourceCaptureStepId],
-        PredictMovementStep s => [s.Settings.SourceDetectionStepId],
-        ShowImageStep s => [s.Settings.SourceCaptureStepId],
-        ShowOnDesktopStep s => [s.Settings.SourceDetectionStepId],
-        VideoCreationStep s => [s.Settings.SourceCaptureStepId],
-        KlickOnPointStep s => [s.Settings.SourceDetectionStepId],
-        KlickOnPoint3DStep s => [s.Settings.SourceDetectionStepId],
-        YOLODetectionStep s => [s.Settings.SourceCaptureStepId],
-        KeyPointMatchingStep s => [s.Settings.SourceCaptureStepId],
-        DynamicRoiStep s => [s.Settings.SourceDetectionStepId],
-        IfStep s => ConditionSourceIds(s.Settings.Conditions),
-        ElseIfStep s => ConditionSourceIds(s.Settings.Conditions),
-        PointComparisonStep s => s.Settings.Points
-            .Where(p => p.Source == PointEntrySource.JobResult)
-            .Select(p => p.SourceDetectionStepId)
-            .Concat(s.Settings.Mode == PointComparisonMode.Offset && s.Settings.OffsetSettings.ReferenceSource == PointEntrySource.JobResult
-                ? [s.Settings.OffsetSettings.ReferenceDetectionStepId] : []),
-        _ => []
+        ActiveProcessStep s => s.Settings.Target,
+        StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate => s.Settings.Target,
+        FocusProcessStep s => s.Settings.Target,
+        ActiveWindowStep s => s.Settings.Target,
+        _ => null
     };
 
-    private static IEnumerable<string> ConditionSourceIds(IEnumerable<StepCondition> conditions) =>
-        conditions.SelectMany(condition => condition.EffectiveComparison is { Kind: ComparisonOperandKind.JobResult } comparison
-            ? new[] { condition.SourceStepId, comparison.SourceStepId ?? string.Empty }
-            : new[] { condition.SourceStepId });
-
-    private static string? GetDynamicRoiStepId(JobStep step) => step switch
+    private static string? ValidateResultBindings(IReadOnlyList<JobStep> steps, int consumerIndex, JobStep step)
     {
-        TemplateMatchingStep s => s.Settings.DynamicRoiStepId,
-        ColorDetectionStep s => s.Settings.DynamicRoiStepId,
-        YOLODetectionStep s => s.Settings.DynamicRoiStepId,
-        KeyPointMatchingStep s => s.Settings.DynamicRoiStepId,
-        _ => null
+        var bindings = GetResultBindings(step).ToList();
+        if (step is PointComparisonStep comparison)
+        {
+            bindings.AddRange(comparison.Settings.Points
+                .Where(point => point.Source == PointEntrySource.JobResult)
+                .Select(point => ("points", point.PointsSource)));
+            if (comparison.Settings.Mode == PointComparisonMode.Offset
+                && comparison.Settings.OffsetSettings.ReferenceSource == PointEntrySource.JobResult)
+                bindings.Add(("points", comparison.Settings.OffsetSettings.ReferencePointsSource));
+        }
+        foreach (var (key, binding) in bindings)
+        {
+            var contract = StepInputContractRegistry.Get(step.GetType(), key);
+            if (contract is null) return $"Für die Eingabe '{key}' fehlt der Backend-Vertrag.";
+            if (!binding.IsConfigured)
+            {
+                if (contract.Required) return $"Für die Eingabe '{key}' wurde keine Ergebnis-Eigenschaft ausgewählt.";
+                continue;
+            }
+
+            var source = steps.Take(Math.Max(0, consumerIndex))
+                .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
+            if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
+            var output = StepPipelineRegistry.Get(source.GetType())?.Output;
+            if (string.IsNullOrWhiteSpace(output)
+                || !StepResultMetadata.TryGetProperty(output, binding.PropertyPath, out var property))
+                return $"Die Ergebnis-Eigenschaft '{binding.PropertyPath}' existiert für den Quell-Step nicht.";
+            if (!contract.Accepts(property))
+                return $"Die Ergebnis-Eigenschaft '{binding.PropertyPath}' ist für die Eingabe '{key}' nicht erlaubt.";
+        }
+        return null;
+    }
+
+    private static IEnumerable<(string Key, ResultBinding Binding)> GetResultBindings(JobStep step)
+    {
+        return step switch
+        {
+            TemplateMatchingStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
+            ColorDetectionStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
+            YOLODetectionStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
+            KeyPointMatchingStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
+            PredictMovementStep s => [("points", s.Settings.PointsSource)],
+            KlickOnPointStep s => [("points", s.Settings.PointsSource)],
+            KlickOnPoint3DStep s => [("points", s.Settings.PointsSource)],
+            DynamicRoiStep s => [("bounds", s.Settings.BoundsSource)],
+            ShowOnDesktopStep s => [("detections", s.Settings.DetectionsSource)],
+            ShowImageStep s =>
+            [
+                ("image", s.Settings.ImageSource),
+                ("detections", s.Settings.DetectionsSource)
+            ],
+            VideoCreationStep s =>
+            [
+                ("image", s.Settings.ImageSource),
+                ("detections", s.Settings.DetectionsSource)
+            ],
+            ActiveProcessStep s => [("process", s.Settings.Target.ProcessSource)],
+            StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate =>
+                [("process", s.Settings.Target.ProcessSource)],
+            FocusProcessStep s => [("process", s.Settings.Target.ProcessSource)],
+            ActiveWindowStep s => [("process", s.Settings.Target.ProcessSource)],
+            _ => []
+        };
+    }
+
+    private static bool ProducesProcessReference(JobStep? step) => step switch
+    {
+        StartProcessStep { Settings.Action: StartProcessAction.Start } => true,
+        ActiveProcessStep => true,
+        ActiveWindowStep => true,
+        _ => false
     };
 
     /// <summary>
@@ -284,8 +359,6 @@ public static class JobValidation
     {
         var ids = new List<string>();
         VisitSourceProperties(step, (owner, property) => ids.Add((string?)property.GetValue(owner) ?? ""));
-        if (step is PointComparisonStep p && p.Settings.Mode == PointComparisonMode.Offset && p.Settings.OffsetSettings.ReferenceSource == PointEntrySource.JobResult)
-            ids.Add(p.Settings.OffsetSettings.ReferenceDetectionStepId);
         return ids;
     }
 

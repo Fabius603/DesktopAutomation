@@ -66,18 +66,8 @@ namespace TaskAutomation.Steps
                 }
                 else
                 {
-                    var detection = ctx.Results.GetById<DetectionResult>(entry.SourceDetectionStepId);
-                    if (!detection.Found) continue;
-
-                    if (entry.UseAllDetections && detection.AllDetections.Count > 0)
-                    {
-                        foreach (var d in detection.AllDetections)
-                            result.Add(d.Center);
-                    }
-                    else if (detection.Point.HasValue)
-                    {
-                        result.Add(detection.Point.Value);
-                    }
+                    var resolved = ResultBindingResolver.Resolve<System.Drawing.Point>(ctx.Results, entry.PointsSource);
+                    if (resolved.IsSuccess) result.AddRange(resolved.Values);
                 }
             }
             return result;
@@ -96,9 +86,9 @@ namespace TaskAutomation.Steps
             }
             else
             {
-                var detection = ctx.Results.GetById<DetectionResult>(settings.ReferenceDetectionStepId);
-                if (!detection.Found || !detection.Point.HasValue) return false;
-                refPoint = detection.Point.Value;
+                var resolved = ResultBindingResolver.Resolve<System.Drawing.Point>(ctx.Results, settings.ReferencePointsSource);
+                if (!resolved.IsSuccess) return false;
+                refPoint = resolved.FirstOrDefault;
             }
 
             return Math.Abs(point.X - refPoint.X) <= settings.OffsetX

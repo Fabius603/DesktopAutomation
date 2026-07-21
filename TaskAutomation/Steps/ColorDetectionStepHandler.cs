@@ -8,29 +8,30 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class ColorDetectionStepHandler : JobStepHandler<ColorDetectionStep, DetectionResult>
+    public sealed class ColorDetectionStepHandler : JobStepHandler<ColorDetectionStep, ColorDetectionResult>
     {
-        protected override async Task<DetectionResult> ExecuteCoreAsync(
+        protected override async Task<ColorDetectionResult> ExecuteCoreAsync(
             ColorDetectionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             await Task.Yield();
 
             var logger = ctx.Logger;
-            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            if (!capture.HasImage)
+            var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = input.Capture;
+            if (input.Image is null)
             {
                 logger.LogInformation("ColorDetectionStepHandler: Kein Bild verfuegbar, Step wird uebersprungen.");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new ColorDetectionResult { WasExecuted = true, Found = false };
             }
 
             var detector = ctx.ColorDetector ??= new ColorDetector();
             var dynamicRoi = DynamicRoiResolver.Resolve(
-                step.Settings.DynamicRoiStepId,
+                step.Settings.DynamicRoiSource,
                 capture,
                 ctx,
                 step.Settings.EnableROI ? step.Settings.ROI : null);
             var rawResult = detector.Detect(
-                capture.Image!,
+                input.Image,
                 CreateOptions(step.Settings, dynamicRoi),
                 ct);
 
@@ -39,7 +40,7 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "ColorDetectionStepHandler: Kein Treffer ueber Threshold {Threshold:F2} gefunden.",
                     step.Settings.ConfidenceThreshold);
-                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
+                return new ColorDetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = new System.Drawing.Point(
@@ -70,18 +71,18 @@ namespace TaskAutomation.Steps
                             r.BoundingBox.Value.Width,
                             r.BoundingBox.Value.Height)
                         : null;
-                    return (Center: center, BoundingBox: box);
+                    return new DetectionItem { Center = center, BoundingBox = box, Confidence = rawResult.Confidence };
                 })
-                .ToList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)>();
+                .ToList();
 
             if (allDetections.Count == 0)
-                allDetections.Add((globalPoint, globalBoundingBox));
+                allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
             logger.LogInformation(
                 "ColorDetectionStepHandler: Treffer bei ({X},{Y}), Confidence {Confidence:F3}.",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
 
-            return new DetectionResult
+            return new ColorDetectionResult
             {
                 WasExecuted = true,
                 Found = true,
@@ -95,7 +96,7 @@ namespace TaskAutomation.Steps
             };
         }
 
-        protected override DetectionResult CreateDefault() => DetectionResult.Default;
+        protected override ColorDetectionResult CreateDefault() => ColorDetectionResult.Default;
 
         private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings, Rect? dynamicRoi)
             => new()

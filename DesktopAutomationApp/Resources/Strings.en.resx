@@ -421,7 +421,7 @@
     <value>STEP TYPE</value>
   </data>
   <data name="Ui.Step.Settings.CaptureStep" xml:space="preserve">
-    <value>Capture-Step</value>
+    <value>Capture result</value>
   </data>
   <data name="Ui.Step.Settings.Template" xml:space="preserve">
     <value>Template</value>
@@ -475,7 +475,7 @@
     <value>Downscale</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Detection-Step</value>
+    <value>Detection result</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Min. values</value>
@@ -499,7 +499,7 @@
     <value>Capture mouse pointer</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStepOpt" xml:space="preserve">
-    <value>Detection-Step (opt.)</value>
+    <value>Detection result (opt.)</value>
   </data>
   <data name="Ui.Step.Settings.WindowName" xml:space="preserve">
     <value>Window name</value>
@@ -625,7 +625,7 @@
     <value>One (OR)</value>
   </data>
   <data name="Ui.Step.Settings.SourceStep" xml:space="preserve">
-    <value>Source step</value>
+    <value>Source result</value>
   </data>
   <data name="Ui.Step.Settings.Property" xml:space="preserve">
     <value>Property</value>
@@ -855,6 +855,7 @@
   <data name="Ui.Job.Steps.ProcessNameLabel" xml:space="preserve">
     <value>Process name: </value>
   </data>
+  <data name="Ui.Job.Steps.ProcessSource" xml:space="preserve"><value>Process reference: </value></data>
   <data name="Ui.Job.Steps.CacheMs" xml:space="preserve">
     <value>Cache (ms): </value>
   </data>
@@ -1625,6 +1626,39 @@ Error:
   <data name="Step.ResultProperty.HasImage" xml:space="preserve">
     <value>Has image</value>
   </data>
+  <data name="Step.ResultProperty.Image" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="Step.ResultValueType.Boolean" xml:space="preserve"><value>Boolean</value></data>
+  <data name="Step.ResultValueType.Integer" xml:space="preserve"><value>Integer</value></data>
+  <data name="Step.ResultValueType.Number" xml:space="preserve"><value>Number</value></data>
+  <data name="Step.ResultValueType.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Step.ResultValueType.DateTime" xml:space="preserve"><value>Date/time</value></data>
+  <data name="Step.ResultValueType.Image" xml:space="preserve"><value>Image</value></data>
+  <data name="Step.ResultValueType.Point" xml:space="preserve"><value>Point</value></data>
+  <data name="Step.ResultValueType.Rectangle" xml:space="preserve"><value>Rectangle</value></data>
+  <data name="Step.ResultValueType.Process" xml:space="preserve"><value>Process reference</value></data>
+  <data name="Step.ResultValueType.Detection" xml:space="preserve"><value>Detection</value></data>
+  <data name="Step.ResultValueType.Collection" xml:space="preserve"><value>List of {0}</value></data>
+  <data name="Ui.Step.IfEditor.CompleteValue" xml:space="preserve"><value>Complete value</value></data>
+  <data name="Step.ResultProperty.Process" xml:space="preserve">
+    <value>Process</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ProcessId" xml:space="preserve">
+    <value>Process / Process ID</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ProcessName" xml:space="preserve">
+    <value>Process / Process name</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ExecutablePath" xml:space="preserve">
+    <value>Process / Executable path</value>
+  </data>
+  <data name="Step.ResultProperty.Process.StartTimeUtc" xml:space="preserve">
+    <value>Process / Start time</value>
+  </data>
+  <data name="Step.ResultProperty.Process.WindowHandle" xml:space="preserve">
+    <value>Process / Window handle</value>
+  </data>
   <data name="Step.ResultProperty.IsRunning" xml:space="preserve">
     <value>Process is running</value>
   </data>
@@ -1771,10 +1805,10 @@ Error:
   <data name="JobLog.Origin.Application" xml:space="preserve"><value>Application</value></data>
   <data name="JobLog.Origin.Unknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="Ui.Job.Steps.NoSourceSelected" xml:space="preserve">
-    <value>No source step selected</value>
+    <value>No result selected</value>
   </data>
   <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
-    <value>Source step unavailable</value>
+    <value>Source result unavailable</value>
   </data>
   <data name="Ui.Step.Settings.PredictionModel" xml:space="preserve"><value>Prediction model</value></data>
   <data name="Ui.Step.Settings.TimeBasis" xml:space="preserve"><value>Time basis</value></data>
@@ -1782,7 +1816,7 @@ Error:
   <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. model error</value></data>
   <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. confidence</value></data>
   <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Model: </value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection step whose detected positions are used as measurements for movement prediction.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection result whose detected positions are used as measurements for movement prediction.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic selects the most suitable model. Linear fits steady motion, Acceleration fits changing speed, and Kalman handles noisy measurements.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Capture predicts relative to the capture time. Execution also accounts for capture age and targets the actual execution time.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinSamples" xml:space="preserve"><value>Minimum number of valid position measurements required before returning a prediction. Higher values are more stable but react more slowly.</value></data>
@@ -1796,7 +1830,7 @@ Error:
   <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Create dynamic ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamic ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Creates an ROI from the best match for the next job iteration.</value></data>
-  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Source detection</value></data>
+  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Detection result</value></data>
   <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Padding in pixels</value></data>
   <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimum confidence (0–1)</value></data>
   <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Full-screen search after X ROI iterations (0 = never)</value></data>
@@ -1839,8 +1873,15 @@ Error:
   <data name="Ui.Step.IfEditor.AndConnector" xml:space="preserve"><value>AND</value></data>
   <data name="Ui.Step.IfEditor.OrConnector" xml:space="preserve"><value>OR</value></data>
   <data name="Ui.Step.IfEditor.Condition" xml:space="preserve"><value>Condition</value></data>
-  <data name="Ui.Step.IfEditor.ResultPath" xml:space="preserve"><value>Step and property</value></data>
-  <data name="Ui.Step.IfEditor.SelectValue" xml:space="preserve"><value>Select step and property…</value></data>
+  <data name="Ui.Step.IfEditor.ResultPath" xml:space="preserve"><value>Result and property</value></data>
+  <data name="Ui.Step.IfEditor.SelectValue" xml:space="preserve"><value>Select result and property…</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Collection" xml:space="preserve"><value>List</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Optional" xml:space="preserve"><value>Optional</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Single" xml:space="preserve"><value>Value</value></data>
+  <data name="Ui.Job.Steps.PointX" xml:space="preserve"><value>X: </value></data>
+  <data name="Ui.Job.Steps.PointY" xml:space="preserve"><value> · Y: </value></data>
+  <data name="Ui.Step.ResultSource.FromStep" xml:space="preserve"><value>{0} from {1}</value></data>
+  <data name="Ui.Step.ProcessSource.SearchByCharacteristics" xml:space="preserve"><value>Search by process characteristics</value></data>
   <data name="Ui.Step.IfEditor.ExampleDecimal" xml:space="preserve"><value>e.g. 0.85</value></data>
   <data name="Ui.Step.IfEditor.ExampleInteger" xml:space="preserve"><value>e.g. 3</value></data>
   <data name="Ui.Step.IfEditor.ExampleText" xml:space="preserve"><value>Enter text…</value></data>
@@ -1861,6 +1902,7 @@ Error:
   <data name="Ui.Step.Settings.BringToFront" xml:space="preserve"><value>Bring to foreground</value></data>
   <data name="Ui.Step.Settings.Minimize" xml:space="preserve"><value>Minimize</value></data>
   <data name="Ui.Step.Settings.ProcessName" xml:space="preserve"><value>Process name</value></data>
+  <data name="Ui.Step.Settings.ProcessSource" xml:space="preserve"><value>Process reference</value></data>
   <data name="Ui.Step.Settings.WindowTitleContains" xml:space="preserve"><value>Window title contains</value></data>
   <data name="Ui.Job.Steps.Action" xml:space="preserve"><value>Action: </value></data>
   <data name="Ui.Job.Steps.WindowTitle" xml:space="preserve"><value>Window title: </value></data>
@@ -1868,4 +1910,32 @@ Error:
   <data name="Enum.StartProcessAction.Terminate" xml:space="preserve"><value>Terminate</value></data>
   <data name="Enum.FocusProcessAction.BringToFront" xml:space="preserve"><value>Bring to foreground</value></data>
   <data name="Enum.FocusProcessAction.Minimize" xml:space="preserve"><value>Minimize</value></data>
+  <data name="Ui.Job.Steps.Section.Start" xml:space="preserve"><value>On start</value></data>
+  <data name="Ui.Job.Steps.Section.Run" xml:space="preserve"><value>On every iteration</value></data>
+  <data name="Ui.Job.Steps.Section.End" xml:space="preserve"><value>On shutdown</value></data>
+  <data name="Ui.Job.Steps.Section.Start.Empty" xml:space="preserve"><value>Steps in this section run once before the first iteration begins.</value></data>
+  <data name="Ui.Job.Steps.Section.Run.Empty" xml:space="preserve"><value>Steps in this section run during every iteration of the job.</value></data>
+  <data name="Ui.Job.Steps.Section.End.Empty" xml:space="preserve"><value>Steps in this section run once when the job shuts down.</value></data>
+  <data name="Ui.Job.Steps.MoveToStart" xml:space="preserve"><value>Move to “On start”</value></data>
+  <data name="Ui.Job.Steps.MoveToRun" xml:space="preserve"><value>Move to “On every iteration”</value></data>
+  <data name="Ui.Job.Steps.MoveToEnd" xml:space="preserve"><value>Move to “On shutdown”</value></data>
+  <data name="Ui.Job.EndSettings.Tooltip" xml:space="preserve"><value>Shutdown phase settings</value></data>
+  <data name="Ui.Job.EndSettings.Title" xml:space="preserve"><value>On shutdown</value></data>
+  <data name="Ui.Job.EndSettings.Timeout" xml:space="preserve"><value>Time limit</value></data>
+  <data name="Ui.Job.EndSettings.Timeout.Unit" xml:space="preserve"><value>seconds</value></data>
+  <data name="Ui.Job.EndSettings.Timeout.Description" xml:space="preserve"><value>Steps still running after this time are cancelled.</value></data>
+  <data name="Ui.Dashboard.ForceStopAll" xml:space="preserve"><value>Force stop</value></data>
+  <data name="Ui.Dashboard.ForceStopAllTooltip" xml:space="preserve"><value>Immediately stop all jobs including their shutdown phase and all macros (F10)</value></data>
+  <data name="Enum.JobExecutionState.Starting" xml:space="preserve"><value>Preparing</value></data>
+  <data name="Enum.JobExecutionState.RunningStartSteps" xml:space="preserve"><value>On start</value></data>
+  <data name="Enum.JobExecutionState.RunningSteps" xml:space="preserve"><value>On every iteration</value></data>
+  <data name="Enum.JobExecutionState.StopRequested" xml:space="preserve"><value>Stop requested</value></data>
+  <data name="Enum.JobExecutionState.RunningEndSteps" xml:space="preserve"><value>On shutdown</value></data>
+  <data name="Enum.JobExecutionState.ForceStopRequested" xml:space="preserve"><value>Force stop</value></data>
+  <data name="Enum.JobExecutionState.Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Enum.JobExecutionState.Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="Enum.JobExecutionState.Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>No value selected</value></data>
+  <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Select a result and property</value></data>
+  <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Identify process by</value></data>
 </root>

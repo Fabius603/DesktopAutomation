@@ -23,13 +23,35 @@ public static class StepLocalization
         string.Join(" / ", propertyPath.Split('.').Select(segment =>
             System.Text.RegularExpressions.Regex.Replace(segment, "(?<=[a-z0-9])([A-Z])", " $1"))));
 
+    public static string ResultValueType(ResultPropertyDescriptor property)
+    {
+        var key = property.ValueKind switch
+        {
+            ResultValueKind.Boolean => "Boolean",
+            ResultValueKind.Integer => "Integer",
+            ResultValueKind.Number => "Number",
+            ResultValueKind.Text => "Text",
+            ResultValueKind.DateTime => "DateTime",
+            ResultValueKind.Image => "Image",
+            ResultValueKind.Point => "Point",
+            ResultValueKind.Rectangle => "Rectangle",
+            ResultValueKind.ProcessReference => "Process",
+            ResultValueKind.Detection => "Detection",
+            _ => property.PropertyType.ToString()
+        };
+        var type = GetOrFallback($"Step.ResultValueType.{key}", key);
+        return property.Cardinality == ResultCardinality.Collection
+            ? GetOrFallback("Step.ResultValueType.Collection", "List of {0}").Replace("{0}", type, StringComparison.Ordinal)
+            : type;
+    }
+
     public static ResultTypeDescriptor ResultType(ResultTypeDescriptor descriptor) =>
         new(
             descriptor.TypeName,
             descriptor.DisplayName,
             descriptor.Properties
                 .Select(p => new ResultPropertyDescriptor(p.Name, Property(p.Name, p.DisplayName), p.PropertyType,
-                    p.Description, p.IsNullable, p.Example))
+                    p.Description, p.IsNullable, p.Example, p.ValueKind, p.Cardinality))
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>
@@ -55,6 +77,18 @@ public static class StepLocalization
     {
         var number = DisplayNumber(steps, step);
         return number.HasValue ? NumberedName(step.GetType(), number.Value) : Type(step.GetType());
+    }
+
+    public static string ResultSourceName(
+        JobStep step,
+        IEnumerable? steps,
+        ResultTypeDescriptor resultType,
+        string? propertyName = null)
+    {
+        var resultValue = resultType.TypeName;
+        if (!string.IsNullOrWhiteSpace(propertyName))
+            resultValue += "." + Property(propertyName, propertyName);
+        return Loc.Format("Ui.Step.ResultSource.FromStep", resultValue, NumberedName(step, steps));
     }
 
     private static string GetOrFallback(string key, string fallback)

@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class DesktopDuplicationStepHandler : JobStepHandler<DesktopDuplicationStep, CaptureResult>
+    public sealed class DesktopDuplicationStepHandler : JobStepHandler<DesktopDuplicationStep, DesktopDuplicationResult>
     {
-        protected override async Task<CaptureResult> ExecuteCoreAsync(
+        protected override async Task<DesktopDuplicationResult> ExecuteCoreAsync(
             DesktopDuplicationStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             ctx.Logger.LogDebug(
@@ -31,10 +31,14 @@ namespace TaskAutomation.Steps
                     step.Settings.DesktopIdx);
             }
 
-            return result;
+            return new DesktopDuplicationResult
+            {
+                WasExecuted = true, Image = result.Image, Bounds = result.Bounds, Offset = result.Offset,
+                IsFresh = result.IsFresh, CaptureTimestampUtc = result.CaptureTimestampUtc
+            };
         }
 
-        protected override CaptureResult CreateDefault() => CaptureResult.Default;
+        protected override DesktopDuplicationResult CreateDefault() => DesktopDuplicationResult.Default;
     }
 }
 

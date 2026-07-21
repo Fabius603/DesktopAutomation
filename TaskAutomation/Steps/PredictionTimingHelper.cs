@@ -8,11 +8,11 @@ namespace TaskAutomation.Steps
     internal static class PredictionTimingHelper
     {
         public static async Task WaitUntilPredictionTimeAsync(
-            DetectionResult detection,
+            IDetectionStepResult? detection,
             ILogger logger,
             CancellationToken ct)
         {
-            if (!detection.IsPredicted || detection.PredictedForUtc is not { } predictedForUtc)
+            if (detection is not PredictMovementResult { IsPredicted: true, PredictedForUtc: { } predictedForUtc })
                 return;
 
             var remaining = predictedForUtc - DateTime.UtcNow;

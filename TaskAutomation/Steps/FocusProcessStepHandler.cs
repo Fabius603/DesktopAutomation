@@ -14,7 +14,7 @@ using TaskAutomation.Jobs;
 namespace TaskAutomation.Steps
 {
     /// <summary>Bringt das sichtbare Hauptfenster eines laufenden Prozesses in den Vordergrund.</summary>
-    public sealed class FocusProcessStepHandler : JobStepHandler<FocusProcessStep, TaskResult>
+    public sealed class FocusProcessStepHandler : JobStepHandler<FocusProcessStep, FocusProcessResult>
     {
         private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
 
@@ -120,11 +120,15 @@ namespace TaskAutomation.Steps
         private const uint KEYEVENTF_KEYUP = 0x0002;
         private static readonly IntPtr HWND_TOP = IntPtr.Zero;
 
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<FocusProcessResult> ExecuteCoreAsync(
             FocusProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var configuredProgram = step.Settings.ExecutablePath?.Trim() ?? string.Empty;
-            if (!ExecutablePathResolver.TryResolve(configuredProgram, out var configuredPath))
+            var processTarget = step.Settings.Target;
+            var configuredProgram = processTarget.ExecutablePath;
+            var usesRuntimeReference = processTarget.ProcessSource.IsConfigured;
+            var configuredPath = string.Empty;
+            if (!usesRuntimeReference
+                && !ExecutablePathResolver.TryResolve(configuredProgram, out configuredPath))
             {
                 ctx.Logger.LogWarning("FocusProcessStepHandler: Programm '{Program}' wurde nicht gefunden.", configuredProgram);
                 return Failure($"Programm '{configuredProgram}' wurde nicht gefunden.");
@@ -135,18 +139,53 @@ namespace TaskAutomation.Steps
             for (var attempt = 0; attempt < 3 && target == null; attempt++)
             {
                 ct.ThrowIfCancellationRequested();
-                target = FindBestWindow(
-                    configuredPath, step.Settings.WindowTitleContains, ctx.Logger, out processFound);
+                if (usesRuntimeReference)
+                {
+                    var ids = ProcessTargetResolver.ResolveProcessIds(processTarget, ctx.Results).ToHashSet();
+                    processFound = ids.Count > 0;
+                    var sourceReference = ProcessTargetResolver.ResolveReference(processTarget, ctx.Results);
+                    if (sourceReference is { WindowHandle: not 0 })
+                    {
+                        var exactWindow = ProcessWindowMatcher.FindMatchingWindows(
+                                sourceReference.ProcessId, processTarget.WindowTitleContains)
+                            .FirstOrDefault(window => window.Handle.ToInt64() == sourceReference.WindowHandle);
+                        if (exactWindow is not null)
+                            target = ToWindowCandidate(exactWindow);
+                    }
+                    target ??= EnumerateCandidateWindows(ids, ctx.Logger)
+                        .Where(candidate => ProcessWindowMatcher.TitleMatches(
+                            candidate.Title, processTarget.WindowTitleContains))
+                        .OrderByDescending(candidate => candidate.Area)
+                        .FirstOrDefault();
+                    if (target == null && ids.Count == 1)
+                    {
+                        var processId = ids.First();
+                        target = ProcessWindowMatcher.FindMatchingWindows(
+                                processId, processTarget.WindowTitleContains)
+                            .Select(ToWindowCandidate)
+                            .Where(candidate => candidate != null)
+                            .Cast<WindowCandidate>()
+                            .OrderByDescending(candidate => candidate.Area)
+                            .FirstOrDefault();
+                    }
+                }
+                else
+                {
+                    target = FindBestWindow(
+                        configuredPath, processTarget.WindowTitleContains, ctx.Logger, out processFound);
+                }
                 if (target == null)
                     await Task.Delay(75, ct).ConfigureAwait(false);
             }
 
             if (target == null)
             {
-                var processName = Path.GetFileNameWithoutExtension(configuredPath);
-                var titleText = string.IsNullOrWhiteSpace(step.Settings.WindowTitleContains)
+                var processName = usesRuntimeReference
+                    ? $"Step {processTarget.ProcessSource.SourceStepId}"
+                    : Path.GetFileNameWithoutExtension(configuredPath);
+                var titleText = string.IsNullOrWhiteSpace(processTarget.WindowTitleContains)
                     ? string.Empty
-                    : $" mit dem Titelteil '{step.Settings.WindowTitleContains}'";
+                    : $" mit dem Titelteil '{processTarget.WindowTitleContains}'";
                 var error = processFound
                     ? $"Für den Prozess '{processName}' wurde kein sichtbares Fenster{titleText} gefunden."
                     : $"Prozess '{processName}' läuft nicht.";
@@ -160,7 +199,7 @@ namespace TaskAutomation.Steps
                 ctx.Logger.LogInformation(
                     "FocusProcessStepHandler: Fenster '{Title}' (PID {Pid}, HWND 0x{Handle:X}) minimiert.",
                     target.Title, target.ProcessId, target.Handle.ToInt64());
-                return new TaskResult { WasExecuted = true, Success = true };
+                return new FocusProcessResult { WasExecuted = true, Success = true };
             }
 
             var requestedMode = step.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
@@ -184,17 +223,30 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogInformation(
                 "FocusProcessStepHandler: Fenster '{Title}' (PID {Pid}, HWND 0x{Handle:X}) aktiviert.",
                 target.Title, target.ProcessId, target.Handle.ToInt64());
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new FocusProcessResult { WasExecuted = true, Success = true };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override FocusProcessResult CreateDefault() => FocusProcessResult.Default;
 
-        private static TaskResult Failure(string message) => new()
+        private static FocusProcessResult Failure(string message) => new()
         {
             WasExecuted = true,
             Success = false,
             ErrorMessage = message
         };
+
+        private static WindowCandidate? ToWindowCandidate(ProcessWindowMatcher.ProcessWindowMatch window)
+        {
+            if (!GetWindowRect(window.Handle, out var rect)) return null;
+            var width = Math.Max(0, rect.Right - rect.Left);
+            var height = Math.Max(0, rect.Bottom - rect.Top);
+            if (width == 0 || height == 0) return null;
+            var exStyle = GetWindowLongPtr(window.Handle, GWL_EXSTYLE).ToInt64();
+            return new WindowCandidate(
+                window.Handle, window.OwnerProcessId, window.Title, (long)width * height,
+                (exStyle & WS_EX_TOOLWINDOW) != 0,
+                GetWindow(window.Handle, GW_OWNER) != IntPtr.Zero);
+        }
 
         private static WindowCandidate? FindBestWindow(
             string configuredPath, string? windowTitleContains, ILogger logger, out bool processFound)

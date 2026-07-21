@@ -8,7 +8,7 @@ namespace TaskAutomation.Events
     /// </summary>
     public sealed class NullDesktopResultOverlay : IDesktopResultOverlay
     {
-        public void ShowResult(IReadOnlyList<(Point Center, Rectangle? BoundingBox)> allDetections) { }
+        public void ShowResult(IReadOnlyList<Steps.DetectionItem> allDetections) { }
         public void Clear() { }
         public void ShowText(string stepKey, string text, float fontSize,
                              byte r, byte g, byte b, byte a,

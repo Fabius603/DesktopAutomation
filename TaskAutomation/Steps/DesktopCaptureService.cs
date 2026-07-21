@@ -66,7 +66,7 @@ namespace TaskAutomation.Steps
         public DesktopCaptureService(ILogger<DesktopCaptureService> logger)
             => _logger = logger;
 
-        public async Task<CaptureResult> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false)
+        public async Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false)
         {
             var sem = _semaphores.GetOrAdd(monitorIdx, _ => new SemaphoreSlim(1, 1));
             await sem.WaitAsync(ct).ConfigureAwait(false);
@@ -177,9 +177,8 @@ namespace TaskAutomation.Steps
                         "DesktopCaptureService: Aufgenommen {W}x{H} bei Offset ({X},{Y})",
                         bitmap.Width, bitmap.Height, offset.X, offset.Y);
 
-                    return new CaptureResult
+                    return new CaptureFrame
                     {
-                        WasExecuted = true,
                         Image       = bitmap,
                         Bounds      = screenBounds,
                         Offset      = offset,

@@ -20,8 +20,8 @@ namespace TaskAutomation.Orchestration
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
 
-        // instanceId → (JobId, JobName, CancellationTokenSource)
-        private record RunningJobEntry(Guid JobId, string JobName, CancellationTokenSource Cts);
+        // instanceId → Jobdefinition und einheitliche Zustands-/Abbruchsteuerung
+        private sealed record RunningJobEntry(Guid JobId, string JobName, JobExecutionCancellation Cancellation);
         private readonly ConcurrentDictionary<Guid, RunningJobEntry> _jobInstances = new();
 
         /// <summary>Maximale Anzahl gleichzeitig laufender Job-Instanzen.</summary>
@@ -55,7 +55,11 @@ namespace TaskAutomation.Orchestration
         /// Alle aktuell laufenden Job-Instanzen.
         /// </summary>
         public IReadOnlyCollection<RunningJobInstance> RunningJobInstances
-            => _jobInstances.Select(kvp => new RunningJobInstance(kvp.Key, kvp.Value.JobId, kvp.Value.JobName)).ToArray();
+            => _jobInstances.Select(kvp => new RunningJobInstance(
+                kvp.Key,
+                kvp.Value.JobId,
+                kvp.Value.JobName,
+                kvp.Value.Cancellation.State)).ToArray();
 
         /// <summary>
         /// Distinct Job-IDs aller laufenden Instanzen (für "läuft irgendetwas"-Prüfungen).
@@ -101,8 +105,9 @@ namespace TaskAutomation.Orchestration
             }
 
             var instanceId = Guid.NewGuid();
-            var cts        = new CancellationTokenSource();
-            var entry      = new RunningJobEntry(job.Id, job.Name, cts);
+            var cancellation = new JobExecutionCancellation();
+            cancellation.StateChanged += _ => FireRunningJobsChanged();
+            var entry      = new RunningJobEntry(job.Id, job.Name, cancellation);
             _jobInstances[instanceId] = entry;
 
             FireRunningJobsChanged();
@@ -113,7 +118,7 @@ namespace TaskAutomation.Orchestration
             {
                 try
                 {
-                    await _executor.ExecuteJob(jobId, startContext, cts.Token).ConfigureAwait(false);
+                    await _executor.ExecuteJob(jobId, startContext, cancellation).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -126,7 +131,7 @@ namespace TaskAutomation.Orchestration
                 finally
                 {
                     _jobInstances.TryRemove(instanceId, out _);
-                    cts.Dispose();
+                    cancellation.Dispose();
                     FireRunningJobsChanged();
                 }
             });
@@ -137,22 +142,19 @@ namespace TaskAutomation.Orchestration
         /// <summary>Bricht eine bestimmte Job-Instanz per Instanz-ID ab.</summary>
         private void CancelJobInstance(Guid instanceId)
         {
-            if (_jobInstances.TryGetValue(instanceId, out var entry))
+            if (_jobInstances.TryGetValue(instanceId, out var entry)
+                && entry.Cancellation.State.CanRequestStop())
             {
                 _logger.LogDebug("Job '{Name}' (Instanz {Id}) Abbruch.", entry.JobName, instanceId);
-                // Cancel() in Task.Run: läuft Callbacks synchron INNERHALB des Tasks, bevor
-                // irgendwas disposed wird. CTS-Disposal übernimmt StartJobInternal's finally.
-                var cts = entry.Cts;
+                var cancellation = entry.Cancellation;
                 _ = Task.Run(() =>
                 {
-                    try { cts.Cancel(); }
-                    catch (ObjectDisposedException) { }
+                    cancellation.RequestStop();
                 });
-                FireRunningJobsChanged();
             }
             else
             {
-                _logger.LogDebug("Keine laufende Job-Instanz mit ID '{InstanceId}' gefunden.", instanceId);
+                _logger.LogDebug("Für Job-Instanz '{InstanceId}' ist kein normaler Stop mehr möglich.", instanceId);
             }
         }
 
@@ -162,7 +164,7 @@ namespace TaskAutomation.Orchestration
             var matches = new List<RunningJobEntry>();
             foreach (var kvp in _jobInstances)
             {
-                if (kvp.Value.JobId == jobId)
+                if (kvp.Value.JobId == jobId && kvp.Value.Cancellation.State.CanRequestStop())
                     matches.Add(kvp.Value);
             }
             if (matches.Count == 0)
@@ -171,13 +173,10 @@ namespace TaskAutomation.Orchestration
                 return;
             }
             _logger.LogInformation("Breche {Count} Instanz(en) von Job-ID '{JobId}' ab.", matches.Count, jobId);
-            FireRunningJobsChanged();
-            // Cancel() läuft Callbacks synchron, alle parallel – kein Dispose (StartJobInternal's finally ist Eigentümer).
             _ = Task.Run(() =>
             {
                 foreach (var e in matches)
-                    try { e.Cts.Cancel(); }
-                    catch (ObjectDisposedException) { }
+                    e.Cancellation.RequestStop();
             });
         }
 
@@ -187,16 +186,27 @@ namespace TaskAutomation.Orchestration
             var matches = new List<RunningJobEntry>();
             foreach (var kvp in _jobInstances)
             {
-                matches.Add(kvp.Value);
+                if (kvp.Value.Cancellation.State.CanRequestStop())
+                    matches.Add(kvp.Value);
             }
             if (matches.Count == 0) return;
             _logger.LogInformation("Breche alle {Count} Job-Instanzen ab.", matches.Count);
-            FireRunningJobsChanged();
             _ = Task.Run(() =>
             {
                 foreach (var e in matches)
-                    try { e.Cts.Cancel(); }
-                    catch (ObjectDisposedException) { }
+                    e.Cancellation.RequestStop();
+            });
+        }
+
+        private void ForceStopAllJobsInternal()
+        {
+            var matches = _jobInstances.Values.ToArray();
+            if (matches.Length == 0) return;
+            _logger.LogWarning("Erzwinge den Abbruch aller {Count} Job-Instanzen.", matches.Length);
+            _ = Task.Run(() =>
+            {
+                foreach (var entry in matches)
+                    entry.Cancellation.ForceStop();
             });
         }
 
@@ -248,6 +258,24 @@ namespace TaskAutomation.Orchestration
         /// Bricht alle laufenden Job-Instanzen ab (asynchron).
         /// </summary>
         public void CancelAllJobs() => CancelAllJobsInternal();
+
+        public void ForceStopJob(Guid instanceId)
+        {
+            if (_jobInstances.TryGetValue(instanceId, out var entry))
+                _ = Task.Run(() => entry.Cancellation.ForceStop());
+        }
+
+        public void ForceStopJobsByDefinition(Guid jobDefinitionId)
+        {
+            var matches = _jobInstances.Values.Where(entry => entry.JobId == jobDefinitionId).ToArray();
+            _ = Task.Run(() =>
+            {
+                foreach (var entry in matches)
+                    entry.Cancellation.ForceStop();
+            });
+        }
+
+        public void ForceStopAllJobs() => ForceStopAllJobsInternal();
 
         /// <summary>        /// Fordert den Abbruch aller laufenden Instanzen eines Jobs per Name an.
         /// </summary>
@@ -321,13 +349,14 @@ namespace TaskAutomation.Orchestration
             }
 
             var instanceId = Guid.NewGuid();
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            _jobInstances[instanceId] = new RunningJobEntry(job.Id, job.Name, linkedCts);
+            using var cancellation = new JobExecutionCancellation(ct);
+            cancellation.StateChanged += _ => FireRunningJobsChanged();
+            _jobInstances[instanceId] = new RunningJobEntry(job.Id, job.Name, cancellation);
             FireRunningJobsChanged();
 
             try
             {
-                await _executor.ExecuteJob(job.Id, startContext ?? JobStartContext.Manual, linkedCts.Token).ConfigureAwait(false);
+                await _executor.ExecuteJob(job.Id, startContext ?? JobStartContext.Manual, cancellation).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

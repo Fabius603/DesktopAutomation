@@ -7,9 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class VideoCreationStepHandler : JobStepHandler<VideoCreationStep, OutputResult>
+    public sealed class VideoCreationStepHandler : JobStepHandler<VideoCreationStep, VideoCreationResult>
     {
-        protected override async Task<OutputResult> ExecuteCoreAsync(
+        protected override async Task<VideoCreationResult> ExecuteCoreAsync(
             VideoCreationStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -18,25 +18,22 @@ namespace TaskAutomation.Steps
             if (ctx.VideoRecorder == null)
                 throw new InvalidOperationException("VideoRecorder is not initialized");
 
-            var capture   = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            var detection = string.IsNullOrEmpty(step.Settings.SourceDetectionStepId)
-                ? DetectionResult.Default
-                : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
-
-            if (capture.Image == null || capture.Image.Width == 0)
+            var imageInput = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = imageInput.Capture;
+            var detections = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
+            if (imageInput.Image == null || imageInput.Image.Width == 0)
             {
                 logger.LogInformation("VideoCreationStepHandler: Kein Bild verfügbar, Frame wird übersprungen");
-                return new OutputResult { WasExecuted = true, Success = false };
+                return new VideoCreationResult { WasExecuted = true, Success = false };
             }
 
             Bitmap? frameToAdd = null;
             try
             {
-                var drawDetectionResult = !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId)
-                    && detection.Found;
+                var drawDetectionResult = detections.IsSuccess;
                 frameToAdd = drawDetectionResult
-                    ? DetectionResultDrawing.Draw(capture.Image, detection, capture.Offset)
-                    : (Bitmap)capture.Image.Clone();
+                    ? DetectionResultDrawing.Draw(imageInput.Image, detections.Values, capture.Offset)
+                    : (Bitmap)imageInput.Image.Clone();
 
                 ct.ThrowIfCancellationRequested();
                 ctx.VideoRecorder.AddFrame(frameToAdd);
@@ -47,14 +44,15 @@ namespace TaskAutomation.Steps
             }
             logger.LogInformation(
                 "VideoCreationStepHandler: Frame zum Video hinzugefügt (Detection-Quelle={DetectionSource}, Ergebnis eingezeichnet={DetectionDrawn}).",
-                string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId)
+                !step.Settings.DetectionsSource.IsConfigured
                     ? "keine"
-                    : step.Settings.SourceDetectionStepId,
-                !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId) && detection.Found);
+                    : step.Settings.DetectionsSource.SourceStepId,
+                step.Settings.DetectionsSource.IsConfigured && detections.Values.Count > 0);
 
-            return new OutputResult { WasExecuted = true, Success = true };
+            return new VideoCreationResult { WasExecuted = true, Success = true };
         }
 
-        protected override OutputResult CreateDefault() => OutputResult.Default;
+        protected override VideoCreationResult CreateDefault() => VideoCreationResult.Default;
+
     }
 }

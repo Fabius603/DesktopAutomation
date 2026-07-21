@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using TaskAutomation.Events;
+using TaskAutomation.Steps;
 using Color = GameOverlay.Drawing.Color;
 
 namespace DesktopAutomationApp.Services
@@ -44,7 +45,7 @@ namespace DesktopAutomationApp.Services
         private static readonly Color ColorTransparent = new(  0,   0,   0,   0);
         private static readonly Color ColorWhiteAlpha  = new(255, 255, 255, 230);   // kräftiger weißer Ring
 
-        public void ShowResult(IReadOnlyList<(Point Center, Rectangle? BoundingBox)> allDetections)
+        public void ShowResult(IReadOnlyList<DetectionItem> allDetections)
         {
             var overlay = EnsureOverlay();
 

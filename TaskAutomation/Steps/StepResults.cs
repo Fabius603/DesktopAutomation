@@ -1,128 +1,187 @@
-using System.Drawing;
-using OpenCvSharp;
 using System;
+using System.Drawing;
 
-namespace TaskAutomation.Steps
+namespace TaskAutomation.Steps;
+
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class ResultHiddenAttribute : Attribute;
+
+/// <summary>Technical execution state shared by all step results. It is not a selectable payload.</summary>
+public abstract record StepResultBase
 {
-    /// <summary>
-    /// Basisklasse für alle Step-Ergebnisse. Wird im IJobResultStore gespeichert
-    /// und ist per StepTyp oder Step-ID abrufbar – gibt immer einen sinnvollen Default zurück.
-    /// </summary>
-    public abstract record StepResultBase
-    {
-        /// <summary>True wenn der Step tatsächlich ausgeführt wurde (false = Default-Wert).</summary>
-        public bool WasExecuted { get; init; }
-    }
+    [ResultHidden]
+    public bool WasExecuted { get; init; }
+}
 
-    /// <summary>
-    /// Ergebnis von Capture-Steps (DesktopDuplication, ProcessDuplication).
-    /// Enthält das aufgenommene Bild sowie Bildschirm-Bounds und Offset für Koordinaten-Umrechnung.
-    /// </summary>
-    public sealed record CaptureResult : StepResultBase
-    {
-        public Bitmap?              Image          { get; init; }
-        public Bitmap?              ProcessedImage { get; init; }
-        public System.Drawing.Rectangle Bounds    { get; init; }
-        public System.Drawing.Point                Offset         { get; init; }
-        public bool IsFresh { get; init; } = true;
-        public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+public sealed record DetectionItem
+{
+    public Point Center { get; init; }
+    public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+}
 
-        public bool HasImage => Image is not null;
+/// <summary>Stable identity for one process instance. Start time prevents PID reuse.</summary>
+public sealed record RuntimeProcessReference
+{
+    public int ProcessId { get; init; }
+    public DateTime StartTimeUtc { get; init; }
+    public string ProcessName { get; init; } = string.Empty;
+    public string ExecutablePath { get; init; } = string.Empty;
+    public long WindowHandle { get; init; }
+}
 
-        public static readonly CaptureResult Default = new() { WasExecuted = false };
-    }
+/// <summary>Internal capture data contract used for coordinate conversion.</summary>
+public interface ICaptureStepResult
+{
+    Bitmap? Image { get; }
+    Rectangle Bounds { get; }
+    Point Offset { get; }
+    bool IsFresh { get; }
+    DateTime CaptureTimestampUtc { get; }
+}
 
-    /// <summary>
-    /// Ergebnis von Detection-Steps (TemplateMatching, YOLO).
-    /// Enthält ob etwas gefunden wurde, den globalen Bildschirm-Punkt und ein annotiertes Bild.
-    /// </summary>
-    public sealed record DetectionResult : StepResultBase
-    {
-        public bool    Found          { get; init; }
-        public System.Drawing.Point?     Point         { get; init; }
-        /// <summary>BoundingBox in globalen virtuellen Desktop-Koordinaten (falls von der Erkennung geliefert).</summary>
-        public System.Drawing.Rectangle? BoundingBox   { get; init; }
-        public double  Confidence     { get; init; }
-        public bool SourceCaptureIsFresh { get; init; } = true;
-        public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-        public bool IsPredicted { get; init; }
-        public string? AppliedRoi { get; init; }
-        public bool UsedDynamicRoi { get; init; }
-        public DateTime? PredictedForUtc { get; init; }
-        /// <summary>
-        /// Alle gefundenen Objekte in globalen virtuellen Desktop-Koordinaten.
-        /// Index 0 = bestes Ergebnis (identisch mit Point/BoundingBox).
-        /// Leer wenn nichts gefunden oder der Handler AllResults nicht befüllt.
-        /// </summary>
-        public IReadOnlyList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)> AllDetections { get; init; }
-            = System.Array.Empty<(System.Drawing.Point, System.Drawing.Rectangle?)>();
+/// <summary>Internal detection data contract. The concrete result still belongs to one step type.</summary>
+public interface IDetectionStepResult
+{
+    bool Found { get; }
+    Point? Point { get; }
+    Rectangle? BoundingBox { get; }
+    double Confidence { get; }
+    bool SourceCaptureIsFresh { get; }
+    DateTime SourceCaptureTimestampUtc { get; }
+    IReadOnlyList<DetectionItem> AllDetections { get; }
+}
 
-        public static readonly DetectionResult Default = new() { WasExecuted = false, Found = false };
-    }
+/// <summary>Technical action outcome; these fields are logged but never offered as user data.</summary>
+public interface IActionExecutionResult
+{
+    [ResultHidden] bool Success { get; }
+    [ResultHidden] string? ErrorMessage { get; }
+}
 
-    /// <summary>
-    /// Ergebnis von Aktions-Steps (Click, Makro, Script, JobExecution).
-    /// </summary>
-    public sealed record TaskResult : StepResultBase
-    {
-        public bool    Success      { get; init; }
-        public string? ErrorMessage { get; init; }
+public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResult
+{
+    public Bitmap? Image { get; init; }
+    public Rectangle Bounds { get; init; }
+    public Point Offset { get; init; }
+    public bool IsFresh { get; init; } = true;
+    public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public bool HasImage => Image is not null;
+    public static readonly DesktopDuplicationResult Default = new();
+}
 
-        public static readonly TaskResult Default = new() { WasExecuted = false };
-    }
+public sealed record ProcessDuplicationResult : StepResultBase, ICaptureStepResult
+{
+    public Bitmap? Image { get; init; }
+    public Rectangle Bounds { get; init; }
+    public Point Offset { get; init; }
+    public bool IsFresh { get; init; } = true;
+    public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public bool HasImage => Image is not null;
+    public static readonly ProcessDuplicationResult Default = new();
+}
 
-    public sealed record DynamicRoiResult : StepResultBase
-    {
-        public bool RoiUpdated { get; init; }
-        public bool RoiReset { get; init; }
-        public string? GlobalBounds { get; init; }
-        public int ConsecutiveMisses { get; init; }
-        public int FullSearchInterval { get; init; }
-        public static readonly DynamicRoiResult Default = new() { WasExecuted = false };
-    }
+public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResult
+{
+    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public string? AppliedRoi { get; init; } public bool UsedDynamicRoi { get; init; }
+    public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
+    public static readonly TemplateMatchingResult Default = new();
+}
 
-    /// <summary>
-    /// Ergebnis von Ausgabe-Steps (ShowImage, VideoCreation).
-    /// </summary>
-    public sealed record OutputResult : StepResultBase
-    {
-        public bool Success { get; init; }
+public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
+{
+    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public string? AppliedRoi { get; init; } public bool UsedDynamicRoi { get; init; }
+    public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
+    public static readonly ColorDetectionResult Default = new();
+}
 
-        public static readonly OutputResult Default = new() { WasExecuted = false };
-    }
+public sealed record YOLODetectionResult : StepResultBase, IDetectionStepResult
+{
+    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public string? AppliedRoi { get; init; } public bool UsedDynamicRoi { get; init; }
+    public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
+    public static readonly YOLODetectionResult Default = new();
+}
 
-    /// <summary>
-    /// Ergebnis von ActiveProcessStep.
-    /// Gibt an, ob der abgefragte Prozess aktuell läuft.
-    /// </summary>
-    public sealed record ActiveProcessResult : StepResultBase
-    {
-        public bool IsRunning { get; init; }
+public sealed record KeyPointMatchingResult : StepResultBase, IDetectionStepResult
+{
+    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public string? AppliedRoi { get; init; } public bool UsedDynamicRoi { get; init; }
+    public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
+    public static readonly KeyPointMatchingResult Default = new();
+}
 
-        public static readonly ActiveProcessResult Default = new() { WasExecuted = false };
-    }
+public sealed record PredictMovementResult : StepResultBase, IDetectionStepResult
+{
+    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public bool IsPredicted { get; init; }
+    public DateTime? PredictedForUtc { get; init; }
+    public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
+    public static readonly PredictMovementResult Default = new();
+}
 
-    /// <summary>
-    /// Ergebnis von ActiveWindowStep.
-    /// Gibt an, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist.
-    /// </summary>
-    public sealed record ActiveWindowResult : StepResultBase
-    {
-        public bool IsActive { get; init; }
+public sealed record KlickOnPointResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly KlickOnPointResult Default = new(); }
+public sealed record KlickOnPoint3DResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly KlickOnPoint3DResult Default = new(); }
+public sealed record MakroExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly MakroExecutionResult Default = new(); }
+public sealed record ScriptExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ScriptExecutionResult Default = new(); }
+public sealed record JobExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly JobExecutionResult Default = new(); }
+public sealed record TimeoutResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly TimeoutResult Default = new(); }
+public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly FocusProcessResult Default = new(); }
+public sealed record ShowTextResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowTextResult Default = new(); }
+public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowImageResult Default = new(); }
+public sealed record ShowOnDesktopResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowOnDesktopResult Default = new(); }
+public sealed record VideoCreationResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly VideoCreationResult Default = new(); }
 
-        public static readonly ActiveWindowResult Default = new() { WasExecuted = false };
-    }
+public sealed record StartProcessResult : StepResultBase, IActionExecutionResult
+{
+    public bool Success { get; init; }
+    public string? ErrorMessage { get; init; }
+    public RuntimeProcessReference? Process { get; init; }
+    public static readonly StartProcessResult Default = new();
+}
 
-    /// <summary>
-    /// Ergebnis von PointComparisonStep.
-    /// Gibt an, ob die geprüften Punkte die Bedingung erfüllen.
-    /// </summary>
-    public sealed record PointComparisonResult : StepResultBase
-    {
-        public bool Matches    { get; init; }
-        public int  MatchCount { get; init; }
-        public int  TotalCount { get; init; }
+public sealed record DynamicRoiResult : StepResultBase
+{
+    public bool RoiUpdated { get; init; }
+    public bool RoiReset { get; init; }
+    public Rectangle? GlobalBounds { get; init; }
+    public int ConsecutiveMisses { get; init; }
+    public int FullSearchInterval { get; init; }
+    public static readonly DynamicRoiResult Default = new();
+}
 
-        public static readonly PointComparisonResult Default = new() { WasExecuted = false };
-    }
+public sealed record ActiveProcessResult : StepResultBase
+{
+    public bool IsRunning { get; init; }
+    public int MatchCount { get; init; }
+    public RuntimeProcessReference? Process { get; init; }
+    public static readonly ActiveProcessResult Default = new();
+}
+
+public sealed record ActiveWindowResult : StepResultBase
+{
+    public bool IsActive { get; init; }
+    public RuntimeProcessReference? Process { get; init; }
+    public long WindowHandle { get; init; }
+    public static readonly ActiveWindowResult Default = new();
+}
+
+public sealed record PointComparisonResult : StepResultBase
+{
+    public bool Matches { get; init; }
+    public int MatchCount { get; init; }
+    public int TotalCount { get; init; }
+    public static readonly PointComparisonResult Default = new();
 }

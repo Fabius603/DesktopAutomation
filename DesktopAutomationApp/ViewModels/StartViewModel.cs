@@ -87,10 +87,10 @@ namespace DesktopAutomationApp.ViewModels
                     _dispatcher.CancelMakro(item.Id);
                 else
                     _dispatcher.CancelJobsByDefinition(item.Id);
-            });
+            }, item => item?.CanRequestStop == true);
             StopAllJobsCommand = new RelayCommand(() =>
             {
-                _dispatcher.CancelAllJobs();
+                _dispatcher.ForceStopAllJobs();
                 foreach (var id in _dispatcher.RunningMakroIds.ToList())
                     _dispatcher.CancelMakro(id);
             }, () => RunningTotalCount > 0);
@@ -144,7 +144,11 @@ namespace DesktopAutomationApp.ViewModels
                 automation.RefreshLastRun();
         }
 
-        private async void OnCultureChanged(object? sender, EventArgs e) => await RefreshAutomationsAsync();
+        private async void OnCultureChanged(object? sender, EventArgs e)
+        {
+            RebuildRunningItems();
+            await RefreshAutomationsAsync();
+        }
 
         private void RefreshRunningJobs()
         {
@@ -172,10 +176,8 @@ namespace DesktopAutomationApp.ViewModels
         private void RebuildRunningItems()
         {
             var instances = _dispatcher.RunningJobInstances;
-            RunningItems = instances
-                .GroupBy(i => (i.JobId, i.JobName))
-                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
-                .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+            RunningItems = CreateGroupedJobs(instances)
+                .Concat(RunningMakros.Select(m => CreateMakroItem(m.Id, m.Name)))
                 .ToList();
             RunningTotalCount = instances.Count + RunningMakros.Count;
             (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -190,17 +192,14 @@ namespace DesktopAutomationApp.ViewModels
         private void OnRunningJobsChanged()
         {
             var snapshot = _dispatcher.RunningJobInstances;
-            var grouped  = snapshot
-                .GroupBy(i => (i.JobId, i.JobName))
-                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
-                .ToList();
+            var grouped = CreateGroupedJobs(snapshot).ToList();
             var total = snapshot.Count;
 
             Application.Current?.Dispatcher?.InvokeAsync(() =>
             {
                 RunningJobCount = total;
                 RunningItems = grouped
-                    .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+                    .Concat(RunningMakros.Select(m => CreateMakroItem(m.Id, m.Name)))
                     .ToList();
                 RunningTotalCount = total + RunningMakros.Count;
                 (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -217,10 +216,7 @@ namespace DesktopAutomationApp.ViewModels
                 .Select(m => new RunningJobInfo { Id = m!.Id, Name = m.Name })
                 .ToList();
             var jobSnapshot = _dispatcher.RunningJobInstances;
-            var grouped     = jobSnapshot
-                .GroupBy(i => (i.JobId, i.JobName))
-                .Select(g => new GroupedRunningItem { Id = g.Key.JobId, Name = g.Key.JobName, InstanceCount = g.Count(), IsMakro = false })
-                .ToList();
+            var grouped = CreateGroupedJobs(jobSnapshot).ToList();
             var jobTotal = jobSnapshot.Count;
 
             Application.Current?.Dispatcher?.InvokeAsync(() =>
@@ -230,12 +226,43 @@ namespace DesktopAutomationApp.ViewModels
                 RunningMakroCount = RunningMakros.Count;
                 RunningJobCount   = jobTotal;
                 RunningItems = grouped
-                    .Concat(RunningMakros.Select(m => new GroupedRunningItem { Id = m.Id, Name = m.Name, InstanceCount = 1, IsMakro = true }))
+                    .Concat(RunningMakros.Select(m => CreateMakroItem(m.Id, m.Name)))
                     .ToList();
                 RunningTotalCount = jobTotal + RunningMakros.Count;
                 (StopAllJobsCommand as RelayCommand)?.RaiseCanExecuteChanged();
             });
         }
+
+        private static IEnumerable<GroupedRunningItem> CreateGroupedJobs(IEnumerable<RunningJobInstance> instances)
+            => instances
+                .GroupBy(instance => (instance.JobId, instance.JobName))
+                .Select(group => new GroupedRunningItem
+                {
+                    Id = group.Key.JobId,
+                    Name = group.Key.JobName,
+                    InstanceCount = group.Count(),
+                    IsMakro = false,
+                    CanRequestStop = group.Any(instance => instance.State.CanRequestStop()),
+                    PhaseText = string.Join(", ", group
+                        .GroupBy(instance => instance.State)
+                        .Select(states => states.Count() == 1
+                            ? StateText(states.Key)
+                            : $"{StateText(states.Key)} ({states.Count()}×)"))
+                });
+
+        private static GroupedRunningItem CreateMakroItem(Guid id, string name)
+            => new()
+            {
+                Id = id,
+                Name = name,
+                InstanceCount = 1,
+                IsMakro = true,
+                CanRequestStop = true,
+                PhaseText = Loc.Get("Enum.JobExecutionState.RunningSteps")
+            };
+
+        private static string StateText(JobExecutionState state)
+            => Loc.Get($"Enum.JobExecutionState.{state}");
 
         protected override void Dispose(bool disposing)
         {
@@ -276,5 +303,7 @@ namespace DesktopAutomationApp.ViewModels
         public string Name { get; init; } = "";
         public int InstanceCount { get; set; }
         public bool IsMakro { get; init; }
+        public bool CanRequestStop { get; init; }
+        public string PhaseText { get; init; } = string.Empty;
     }
 }

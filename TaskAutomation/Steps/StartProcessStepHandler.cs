@@ -12,10 +12,10 @@ namespace TaskAutomation.Steps
     /// Startet ein Programm oder eine ausführbare Datei.
     /// Wenn <see cref="StartProcessSettings.WaitForExit"/> aktiviert ist,
     /// wird auf die Beendigung des Prozesses gewartet (unter Berücksichtigung des
-    /// Cancellation-Tokens). Das Ergebnis (<see cref="TaskResult.Success"/>) ist
+    /// Cancellation-Tokens). Das Ergebnis (<see cref="StartProcessResult.Success"/>) ist
     /// <c>true</c>, wenn der Prozess erfolgreich gestartet wurde.
     /// </summary>
-    public sealed class StartProcessStepHandler : JobStepHandler<StartProcessStep, TaskResult>
+    public sealed class StartProcessStepHandler : JobStepHandler<StartProcessStep, StartProcessResult>
     {
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(
@@ -42,7 +42,7 @@ namespace TaskAutomation.Steps
         private const int SW_RESTORE = 9;
         private const int SW_MAXIMIZE = 3;
 
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<StartProcessResult> ExecuteCoreAsync(
             StartProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             if (step.Settings.Action == StartProcessAction.Terminate)
@@ -53,7 +53,7 @@ namespace TaskAutomation.Steps
             if (!ExecutablePathResolver.TryResolve(configuredExecutable, out var executablePath))
             {
                 ctx.Logger.LogWarning("StartProcessStepHandler: Programm '{Program}' wurde nicht gefunden.", configuredExecutable);
-                return new TaskResult { WasExecuted = true, Success = false,
+                return new StartProcessResult { WasExecuted = true, Success = false,
                     ErrorMessage = $"Programm '{configuredExecutable}' wurde nicht gefunden." };
             }
 
@@ -76,17 +76,19 @@ namespace TaskAutomation.Steps
             catch (Exception ex)
             {
                 ctx.Logger.LogError(ex, "StartProcessStepHandler: Fehler beim Starten des Prozesses '{Path}'.", executablePath);
-                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = ex.Message };
+                return new StartProcessResult { WasExecuted = true, Success = false, ErrorMessage = ex.Message };
             }
 
             if (process == null)
             {
-                return new TaskResult { WasExecuted = true, Success = false,
+                return new StartProcessResult { WasExecuted = true, Success = false,
                     ErrorMessage = "Prozess konnte nicht gestartet werden (Process.Start gab null zurück)." };
             }
 
             await PositionMainWindowAsync(process, step.Settings, ctx.Logger, ct)
                 .ConfigureAwait(false);
+
+            var processReference = ProcessTargetResolver.CreateReference(process, executablePath);
 
             if (step.Settings.WaitForExit)
             {
@@ -104,25 +106,30 @@ namespace TaskAutomation.Steps
                 process.Dispose();
             }
 
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new StartProcessResult
+            {
+                WasExecuted = true,
+                Success = true,
+                Process = processReference
+            };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override StartProcessResult CreateDefault() => StartProcessResult.Default;
 
-        private static async Task<TaskResult> TerminateProcessesAsync(
+        private static async Task<StartProcessResult> TerminateProcessesAsync(
             StartProcessSettings settings, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var processName = ProcessWindowMatcher.NormalizeProcessName(settings.ProcessName);
-            var matchingIds = ProcessWindowMatcher.FindMatchingProcessIds(
-                processName, settings.WindowTitleContains);
+            var target = settings.Target;
+            var processName = ProcessWindowMatcher.NormalizeProcessName(target.ProcessName);
+            var matchingIds = ProcessTargetResolver.ResolveProcessIds(target, ctx.Results);
             if (matchingIds.Count == 0)
             {
-                var titleText = string.IsNullOrWhiteSpace(settings.WindowTitleContains)
+                var titleText = string.IsNullOrWhiteSpace(target.WindowTitleContains)
                     ? string.Empty
-                    : $" mit einem Fenster, dessen Titel '{settings.WindowTitleContains}' enthält";
+                    : $" mit einem Fenster, dessen Titel '{target.WindowTitleContains}' enthält";
                 var message = $"Prozess '{processName}'{titleText} wurde nicht gefunden.";
                 ctx.Logger.LogWarning("StartProcessStepHandler: {Error}", message);
-                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = message };
+                return new StartProcessResult { WasExecuted = true, Success = false, ErrorMessage = message };
             }
 
             var currentProcessId = Environment.ProcessId;
@@ -161,12 +168,12 @@ namespace TaskAutomation.Steps
             }
 
             if (errors.Count == 0)
-                return new TaskResult { WasExecuted = true, Success = true };
+                return new StartProcessResult { WasExecuted = true, Success = true };
 
             var errorMessage = terminated > 0
                 ? $"{terminated} Prozess(e) beendet; {errors.Count} Fehler: {string.Join("; ", errors)}"
                 : string.Join("; ", errors);
-            return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = errorMessage };
+            return new StartProcessResult { WasExecuted = true, Success = false, ErrorMessage = errorMessage };
         }
 
         private static async Task PositionMainWindowAsync(

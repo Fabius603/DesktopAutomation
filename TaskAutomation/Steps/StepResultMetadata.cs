@@ -13,7 +13,9 @@ public sealed record ResultPropertyDescriptor(
     ResultPropertyType PropertyType,
     string? Description = null,
     bool IsNullable = false,
-    string? Example = null);
+    string? Example = null,
+    ResultValueKind ValueKind = ResultValueKind.Text,
+    ResultCardinality Cardinality = ResultCardinality.Single);
 
 public sealed record ResultTypeDescriptor(
     string TypeName,
@@ -59,7 +61,7 @@ public static class ResultPropertyTree
 
             for (var index = 0; index < segments.Length; index++)
             {
-                var segment = segments[index];
+                var segment = segments[index].Replace("[]", string.Empty, StringComparison.Ordinal);
                 var node = children.FirstOrDefault(n => n.Segment == segment);
                 if (node is null)
                 {
@@ -88,11 +90,10 @@ public static class ResultPropertyTree
 /// </summary>
 public static class StepResultMetadata
 {
-    private static readonly Type[] ResultClrTypes =
-    [
-        typeof(CaptureResult), typeof(DetectionResult), typeof(TaskResult), typeof(DynamicRoiResult),
-        typeof(OutputResult), typeof(ActiveProcessResult), typeof(ActiveWindowResult), typeof(PointComparisonResult)
-    ];
+    private static readonly Type[] ResultClrTypes = typeof(StepResultBase).Assembly.GetTypes()
+        .Where(type => !type.IsAbstract && typeof(StepResultBase).IsAssignableFrom(type))
+        .OrderBy(type => type.Name, StringComparer.Ordinal)
+        .ToArray();
 
     public static readonly IReadOnlyList<ResultTypeDescriptor> ResultTypes = ResultClrTypes
         .Select(CreateDescriptor).ToArray();
@@ -114,7 +115,7 @@ public static class StepResultMetadata
             .Select((step, index) => (step, index, output: StepPipelineRegistry.Get(step.GetType())?.Output))
             .Where(x => x.step.IsEnabled && !string.IsNullOrWhiteSpace(x.output) && x.output != "–")
             .Select(x => new { x.step, x.index, ResultType = GetResultType(x.output!) })
-            .Where(x => x.ResultType is not null)
+            .Where(x => x.ResultType?.Properties.Length > 0)
             .Select(x => new ConditionResultSource(x.step, x.index, x.ResultType!))
             .ToArray();
 
@@ -137,8 +138,16 @@ public static class StepResultMetadata
         return descriptor is not null;
     }
 
+    public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
+        left.PropertyType == right.PropertyType
+        && left.ValueKind == right.ValueKind
+        && (left.Cardinality == ResultCardinality.Collection)
+            == (right.Cardinality == ResultCardinality.Collection);
+
     public static bool TryReadValue(object result, ResultPropertyDescriptor property, out object? value)
     {
+        if (property.Name.Contains("[]", StringComparison.Ordinal))
+            return ResultBindingResolver.TryReadPath(result, property.Name, out value);
         value = result;
         foreach (var segment in property.Name.Split('.'))
         {
@@ -188,34 +197,88 @@ public static class StepResultMetadata
 
     private static IEnumerable<ResultPropertyDescriptor> BuildProperties(Type type)
     {
-        foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead))
-        {
-            var actual = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-            var nullable = Nullable.GetUnderlyingType(property.PropertyType) is not null || !property.PropertyType.IsValueType;
-            if (TryMapType(actual, out var mapped))
-            {
-                yield return Property(property.Name, mapped, nullable);
-                continue;
-            }
-            if (actual == typeof(System.Drawing.Point) || actual == typeof(System.Drawing.Rectangle))
-            {
-                foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                             .Where(p => p.CanRead && p.PropertyType == typeof(int)))
-                    yield return Property($"{property.Name}.{child.Name}", ResultPropertyType.Integer, nullable);
-                continue;
-            }
-            if (typeof(IEnumerable).IsAssignableFrom(actual) && actual != typeof(string))
-                yield return Property($"{property.Name}.Count", ResultPropertyType.Integer, false);
-        }
+        foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                     .Where(property => property.CanRead && !IsHidden(type, property)))
+            foreach (var descriptor in BuildProperty(property.PropertyType, property.Name))
+                yield return descriptor;
     }
 
-    private static ResultPropertyDescriptor Property(string path, ResultPropertyType type, bool nullable) =>
-        new(path, Humanize(path), type, Description(type, nullable), nullable, Example(path));
+    private static IEnumerable<ResultPropertyDescriptor> BuildProperty(Type declaredType, string path,
+        ResultCardinality? forcedCardinality = null)
+    {
+        var actual = Nullable.GetUnderlyingType(declaredType) ?? declaredType;
+        var nullable = Nullable.GetUnderlyingType(declaredType) is not null || !declaredType.IsValueType;
+        var cardinality = forcedCardinality
+            ?? (nullable ? ResultCardinality.OptionalSingle : ResultCardinality.Single);
+
+        if (TryGetCollectionItemType(actual, out var itemType))
+        {
+            if (itemType == typeof(DetectionItem))
+                yield return Property(path, ResultPropertyType.String, false,
+                    ResultValueKind.Detection, ResultCardinality.Collection);
+            yield return Property($"{path}.Count", ResultPropertyType.Integer, false,
+                ResultValueKind.Integer, ResultCardinality.Single);
+            if (itemType is not null)
+                foreach (var child in itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                             .Where(property => property.CanRead && !IsHidden(itemType, property)))
+                    foreach (var descriptor in BuildProperty(child.PropertyType, $"{path}[].{child.Name}", ResultCardinality.Collection))
+                        yield return descriptor;
+            yield break;
+        }
+
+        if (TryMapType(actual, out var mapped))
+            yield return Property(path, mapped, nullable, SemanticKind(actual), cardinality);
+
+        if (actual == typeof(System.Drawing.Point) || actual == typeof(System.Drawing.Rectangle))
+            yield return Property(path, ResultPropertyType.String, nullable, SemanticKind(actual), cardinality);
+
+        if (actual is not null && (actual == typeof(System.Drawing.Point)
+                                   || actual == typeof(System.Drawing.Rectangle)
+                                   || actual == typeof(RuntimeProcessReference)))
+                foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                         .Where(property => property.CanRead && !IsHidden(actual, property)))
+                foreach (var descriptor in BuildProperty(child.PropertyType, $"{path}.{child.Name}", cardinality))
+                    yield return descriptor;
+    }
+
+    private static bool IsHidden(Type ownerType, PropertyInfo property) =>
+        property.GetCustomAttribute<ResultHiddenAttribute>(inherit: true) is not null
+        || ownerType.GetInterfaces().Any(interfaceType =>
+            interfaceType.GetProperty(property.Name)?.GetCustomAttribute<ResultHiddenAttribute>(inherit: true) is not null);
+
+    private static bool TryGetCollectionItemType(Type type, out Type? itemType)
+    {
+        itemType = type.IsArray ? type.GetElementType()
+            : type.IsGenericType && typeof(IEnumerable).IsAssignableFrom(type)
+                ? type.GetGenericArguments().FirstOrDefault()
+                : null;
+        return type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
+    }
+
+    private static ResultPropertyDescriptor Property(
+        string path, ResultPropertyType type, bool nullable,
+        ResultValueKind valueKind = ResultValueKind.Text,
+        ResultCardinality cardinality = ResultCardinality.Single) =>
+        new(path, Humanize(path), type, Description(type, nullable), nullable, Example(path), valueKind, cardinality);
+
+    private static ResultValueKind SemanticKind(Type type) => type == typeof(bool) ? ResultValueKind.Boolean
+        : type == typeof(DateTime) ? ResultValueKind.DateTime
+        : type == typeof(string) ? ResultValueKind.Text
+        : type == typeof(System.Drawing.Bitmap) ? ResultValueKind.Image
+        : type == typeof(System.Drawing.Point) ? ResultValueKind.Point
+        : type == typeof(System.Drawing.Rectangle) ? ResultValueKind.Rectangle
+        : type == typeof(RuntimeProcessReference) ? ResultValueKind.ProcessReference
+        : type == typeof(DetectionItem) ? ResultValueKind.Detection
+        : type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)
+            ? ResultValueKind.Integer
+            : ResultValueKind.Number;
     private static bool TryMapType(Type type, out ResultPropertyType result)
     {
         if (type == typeof(bool)) { result = ResultPropertyType.Bool; return true; }
         if (type == typeof(string)) { result = ResultPropertyType.String; return true; }
         if (type == typeof(DateTime)) { result = ResultPropertyType.DateTime; return true; }
+        if (type == typeof(System.Drawing.Bitmap) || type == typeof(RuntimeProcessReference))
+        { result = ResultPropertyType.String; return true; }
         if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)) { result = ResultPropertyType.Integer; return true; }
         if (type == typeof(float) || type == typeof(double) || type == typeof(decimal)) { result = ResultPropertyType.Double; return true; }
         result = default; return false;

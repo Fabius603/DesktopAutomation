@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -17,7 +18,7 @@ namespace DesktopAutomationApp.ViewModels
         private void OnChange([CallerMemberName] string? p = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
-        public IReadOnlyList<SourceStepItem> AvailableDetectionSteps { get; }
+        public ResultBindingPickerViewModel PointsSource { get; }
 
         private PointEntrySource _source = PointEntrySource.Manual;
 
@@ -63,28 +64,14 @@ namespace DesktopAutomationApp.ViewModels
             set { _manualY = value; OnChange(); }
         }
 
-        private SourceStepItem? _selectedDetectionStep;
-        public SourceStepItem? SelectedDetectionStep
-        {
-            get => _selectedDetectionStep;
-            set { _selectedDetectionStep = value; OnChange(); }
-        }
-
-        private bool _useAllDetections;
-        public bool UseAllDetections
-        {
-            get => _useAllDetections;
-            set { _useAllDetections = value; OnChange(); }
-        }
-
         public ICommand RemoveCommand { get; }
 
         public PointEntryViewModel(
             ObservableCollection<PointEntryViewModel> owner,
             IReadOnlyList<SourceStepItem> detectionSteps)
         {
-            AvailableDetectionSteps  = detectionSteps;
-            SelectedDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
+            PointsSource = new ResultBindingPickerViewModel(detectionSteps,
+                StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true);
             RemoveCommand            = new RelayCommand(() => owner.Remove(this));
         }
 
@@ -93,8 +80,7 @@ namespace DesktopAutomationApp.ViewModels
             Source                = _source,
             ManualX               = _manualX,
             ManualY               = _manualY,
-            SourceDetectionStepId = _selectedDetectionStep?.StepId ?? "",
-            UseAllDetections      = _useAllDetections
+            PointsSource = PointsSource.ToBinding()
         };
 
         public void LoadFrom(PointEntry e)
@@ -104,10 +90,7 @@ namespace DesktopAutomationApp.ViewModels
             OnChange(nameof(ManualX));
             _manualY = e.ManualY;
             OnChange(nameof(ManualY));
-            _selectedDetectionStep = AvailableDetectionSteps
-                .FirstOrDefault(s => s.StepId == e.SourceDetectionStepId);
-            OnChange(nameof(SelectedDetectionStep));
-            UseAllDetections = e.UseAllDetections;
+            PointsSource.Load(e.PointsSource);
         }
     }
 }

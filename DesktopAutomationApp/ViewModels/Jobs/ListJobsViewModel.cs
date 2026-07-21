@@ -102,7 +102,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (param is not Guid id) return;
                 _dispatcher.CancelJobsByDefinition(id);
-            });
+            }, param => param is Guid id && _dispatcher.RunningJobInstances.Any(instance =>
+                instance.JobId == id && instance.State.CanRequestStop()));
             OpenFolderCommand = new RelayCommand(() =>
                 Process.Start(new ProcessStartInfo(_jobAppService.GetStoragePath()) { UseShellExecute = true }));
 
@@ -178,7 +179,11 @@ namespace DesktopAutomationApp.ViewModels
         {
             // Snapshot op ThreadPool thread – als HashSet für O(1) Contains() im Converter.
             var ids = new HashSet<Guid>(_dispatcher.RunningJobIds);
-            Application.Current?.Dispatcher?.InvokeAsync(() => RunningJobIds = ids);
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                RunningJobIds = ids;
+                (StopJobCommand as RelayCommand<object?>)?.RaiseCanExecuteChanged();
+            });
         }
 
         protected override void Dispose(bool disposing)
@@ -193,6 +198,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             (DeleteJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenJobCommand   as RelayCommand<Job?>)?.RaiseCanExecuteChanged();
+            (StopJobCommand   as RelayCommand<object?>)?.RaiseCanExecuteChanged();
         }
 
     }

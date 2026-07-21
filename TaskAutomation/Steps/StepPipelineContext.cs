@@ -116,6 +116,14 @@ namespace TaskAutomation.Steps
             _results = new JobResultStore();
         }
 
+        /// <summary>
+        /// Beginnt eine neue Phase/Runde, behält aber Ergebnisse früherer Lifecycle-Phasen.
+        /// </summary>
+        public void ResetResults(IEnumerable<string> retainedStepIds)
+        {
+            _results.RetainOnly(retainedStepIds);
+        }
+
         // ── Dispose ────────────────────────────────────────────────────────────
 
         public void Dispose()

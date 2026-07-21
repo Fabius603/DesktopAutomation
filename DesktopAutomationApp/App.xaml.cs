@@ -221,7 +221,7 @@ namespace DesktopAutomationApp
             hotkeyServiceGlobal.EmergencyStopPressed += () =>
             {
                 Log.Warning("Notstopp über F10 ausgelöst.");
-                dispatcher.CancelAllJobs();
+                dispatcher.ForceStopAllJobs();
                 foreach (var id in dispatcher.RunningMakroIds.ToList())
                     dispatcher.CancelMakro(id);
             };

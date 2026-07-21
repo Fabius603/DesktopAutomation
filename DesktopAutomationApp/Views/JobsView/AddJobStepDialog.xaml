@@ -6,6 +6,7 @@
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  xmlns:roiControls="clr-namespace:DesktopAutomationApp.Controls.Jobs.Roi"
                  xmlns:conditionControls="clr-namespace:DesktopAutomationApp.Controls.Jobs.Conditions"
+                 xmlns:jobControls="clr-namespace:DesktopAutomationApp.Controls.Jobs"
                  WindowStartupLocation="CenterOwner"
                  Width="540" Height="560"
                  Title="{Binding DialogTitle}"
@@ -137,10 +138,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding TemplateMatchingStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding TemplateMatchingStep_ImageSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -194,10 +192,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding ColorDetectionStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding ColorDetectionStep_ImageSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -289,10 +284,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding PredictMovementStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding PredictMovementStep_PointsSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -365,10 +357,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding ShowImageStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding ShowImageStep_ImageSource}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
@@ -377,10 +366,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableOptionalDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding ShowImageStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding ShowImageStep_DetectionsSource}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
@@ -403,10 +389,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding ShowOnDesktopStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding ShowOnDesktopStep_DetectionsSource}"/>
                         </Grid>
                     </StackPanel>
 
@@ -419,10 +402,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding VideoCreationStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding VideoCreationStep_ImageSource}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
@@ -431,10 +411,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStepOpt}" VerticalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableOptionalDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding VideoCreationStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding VideoCreationStep_DetectionsSource}"/>
                         </Grid>
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
@@ -534,10 +511,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding KlickOnPointStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding KlickOnPointStep_PointsSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -588,10 +562,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableDetectionSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding KlickOnPoint3DStep_SourceDetectionStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding KlickOnPoint3DStep_PointsSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -662,10 +633,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding YoloDetectionStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding YoloDetectionStep_ImageSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -725,7 +693,10 @@
 
                     <!-- ── ActiveProcess ── -->
                     <StackPanel Visibility="{Binding ShowActiveProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <jobControls:ProcessTargetModeSelector
+                            Picker="{Binding ActiveProcessStep_ProcessSource}"
+                            UseProcessReference="{Binding ActiveProcessStep_UsesProcessSource}"/>
+                        <Grid Margin="0,0,0,8" Visibility="{Binding ActiveProcessStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
@@ -847,7 +818,10 @@
                         </Expander>
                         </StackPanel>
                         <StackPanel Visibility="{Binding StartProcessStep_IsTerminateAction, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <Grid Margin="0,0,0,8">
+                            <jobControls:ProcessTargetModeSelector
+                                Picker="{Binding StartProcessStep_ProcessSource}"
+                                UseProcessReference="{Binding StartProcessStep_UsesProcessSource}"/>
+                            <Grid Margin="0,0,0,8" Visibility="{Binding StartProcessStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="140"/>
                                     <ColumnDefinition Width="*"/>
@@ -859,7 +833,7 @@
                                           Text="{Binding StartProcessStep_ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.ProcessNamePlaceholder}"/>
                             </Grid>
-                            <Grid Margin="0,0,0,8">
+                            <Grid Margin="0,0,0,8" Visibility="{Binding StartProcessStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="140"/>
                                     <ColumnDefinition Width="*"/>
@@ -875,15 +849,10 @@
 
                     <!-- ── FocusProcess ── -->
                     <StackPanel Visibility="{Binding ShowFocusProcess, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Action}" Margin="0,0,0,4"
-                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.BringToFront}"
-                                         IsChecked="{Binding FocusProcessStep_IsBringToFrontAction}" Margin="0,0,16,0"/>
-                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.Minimize}"
-                                         IsChecked="{Binding FocusProcessStep_IsMinimizeAction}"/>
-                        </StackPanel>
-                        <Grid Margin="0,0,0,8">
+                        <jobControls:ProcessTargetModeSelector
+                            Picker="{Binding FocusProcessStep_ProcessSource}"
+                            UseProcessReference="{Binding FocusProcessStep_UsesProcessSource}"/>
+                        <Grid Margin="0,0,0,8" Visibility="{Binding FocusProcessStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
@@ -910,7 +879,7 @@
                             <Button Grid.Column="2" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
                                     Command="{Binding BrowseFocusProcessPathCommand}"/>
                         </Grid>
-                        <Grid Margin="0,0,0,8">
+                        <Grid Margin="0,0,0,8" Visibility="{Binding FocusProcessStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
@@ -921,6 +890,14 @@
                                      Text="{Binding FocusProcessStep_WindowTitleContains, UpdateSourceTrigger=PropertyChanged}"
                                      mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Settings.Optional}"/>
                         </Grid>
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Action}" Margin="0,2,0,4"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.BringToFront}"
+                                         IsChecked="{Binding FocusProcessStep_IsBringToFrontAction}" Margin="0,0,16,0"/>
+                            <RadioButton GroupName="FocusProcessAction" Content="{loc:Translate Key=Ui.Step.Settings.Minimize}"
+                                         IsChecked="{Binding FocusProcessStep_IsMinimizeAction}"/>
+                        </StackPanel>
                         <Expander Style="{StaticResource StepAdvancedExpander}"
                                   Visibility="{Binding FocusProcessStep_IsBringToFrontAction, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <StackPanel Margin="0,10,0,0">
@@ -1058,9 +1035,12 @@
 
                     <!-- ── ActiveWindow ── -->
                     <StackPanel Visibility="{Binding ShowActiveWindow, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid Margin="0,0,0,8">
+                        <jobControls:ProcessTargetModeSelector
+                            Picker="{Binding ActiveWindowStep_ProcessSource}"
+                            UseProcessReference="{Binding ActiveWindowStep_UsesProcessSource}"/>
+                        <Grid Margin="0,0,0,8" Visibility="{Binding ActiveWindowStep_UsesProcessSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Common.ProcessName}" VerticalAlignment="Center"
@@ -1075,7 +1055,7 @@
                             <StackPanel Margin="0,10,0,0">
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CacheMs}" VerticalAlignment="Center"
@@ -1098,10 +1078,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableCaptureSteps}"
-                                      DisplayMemberPath="DisplayName"
-                                      SelectedItem="{Binding KeyPointMatchingStep_SourceCaptureStep}"/>
+                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding KeyPointMatchingStep_ImageSource}"/>
                         </Grid>
                         <Grid Style="{StaticResource StepFieldGrid}">
                             <Grid.ColumnDefinitions>
@@ -1154,8 +1131,7 @@
                         <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Description}"
                                    TextWrapping="Wrap" Margin="0,0,0,12" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Source}" Margin="0,0,0,4"/>
-                        <ComboBox ItemsSource="{Binding AvailableDetectionSteps}" DisplayMemberPath="DisplayName"
-                                  SelectedItem="{Binding DynamicRoiStep_SourceDetectionStep}" Margin="0,0,0,10"/>
+                        <jobControls:ResultBindingPicker DataContext="{Binding DynamicRoiStep_BoundsSource}" Margin="0,0,0,10"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Padding}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding DynamicRoiStep_Padding, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.MinimumConfidence}" Margin="0,0,0,4"/>
@@ -1346,10 +1322,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                                Foreground="{DynamicResource App.Brush.TextSecondary}" FontSize="12"/>
-                                    <ComboBox Grid.Column="1"
-                                              ItemsSource="{Binding AvailableDetectionSteps}"
-                                              DisplayMemberPath="DisplayName"
-                                              SelectedItem="{Binding PointComparisonStep_RefDetectionStep}"/>
+                                    <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding PointComparisonStep_ReferencePointsSource}"/>
                                 </Grid>
                                 <Rectangle Height="1" Fill="{DynamicResource App.Brush.CardBorder}" Margin="0,0,0,10"/>
                                 <Grid>
@@ -1525,14 +1498,8 @@
                                                             </Grid.ColumnDefinitions>
                                                             <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}" VerticalAlignment="Center"
                                                                        FontSize="11" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                                            <ComboBox Grid.Column="1"
-                                                                      ItemsSource="{Binding AvailableDetectionSteps}"
-                                                                      DisplayMemberPath="DisplayName"
-                                                                      SelectedItem="{Binding SelectedDetectionStep}"/>
+                                                            <jobControls:ResultBindingPicker Grid.Column="1" DataContext="{Binding PointsSource}"/>
                                                         </Grid>
-                                                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.UseAllPointsFoundByThisStep}"
-                                                                  IsChecked="{Binding UseAllDetections}"
-                                                                  Margin="90,0,0,0" FontSize="11"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>

@@ -188,8 +188,15 @@ namespace TaskAutomation.Jobs
         public Task ExecuteJob(Guid jobId, CancellationToken ct = default)
             => ExecuteJob(jobId, JobStartContext.Unknown, ct);
 
-        public Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default)
+        public async Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default)
         {
+            using var cancellation = new JobExecutionCancellation(ct);
+            await ExecuteJob(jobId, startContext, cancellation).ConfigureAwait(false);
+        }
+
+        public Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation)
+        {
+            ArgumentNullException.ThrowIfNull(cancellation);
             var job = AllJobs.Values.FirstOrDefault(j => j.Id == jobId);
             if (job == null)
             {
@@ -198,7 +205,7 @@ namespace TaskAutomation.Jobs
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobId.ToString(), new ArgumentException(errorMessage)));
                 return Task.CompletedTask;
             }
-            return ExecuteJobAsync(job, startContext, ct);
+            return ExecuteJobAsync(job, startContext, cancellation);
         }
 
         private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
@@ -214,11 +221,13 @@ namespace TaskAutomation.Jobs
                     new ArgumentException(errorMessage)));
                 return;
             }
-            await ExecuteJobAsync(job, JobStartContext.Unknown, ct).ConfigureAwait(false);
+            using var cancellation = new JobExecutionCancellation(ct);
+            await ExecuteJobAsync(job, JobStartContext.Unknown, cancellation).ConfigureAwait(false);
         }
 
-        private async Task ExecuteJobAsync(Job job, JobStartContext startContext, CancellationToken ct)
+        private async Task ExecuteJobAsync(Job job, JobStartContext startContext, JobExecutionCancellation cancellation)
         {
+            var ct = cancellation.ExecutionToken;
             if (job == null)
             {
                 var err = "Job ist null.";
@@ -239,8 +248,23 @@ namespace TaskAutomation.Jobs
             CurrentJob = job;
             var jobRunStopwatch = Stopwatch.StartNew();
             var executionLog = _executionLogService.BeginJob(job.Id, job.Name, startContext);
+            cancellation.StateChanged += state => _executionLogService.Write(
+                executionLog,
+                state is JobExecutionState.ForceStopRequested or JobExecutionState.Failed
+                    ? ExecutionLogLevel.Warning
+                    : ExecutionLogLevel.Information,
+                "Jobstatus geändert.",
+                $"Status={state}",
+                jobState: state);
+            _executionLogService.Write(
+                executionLog,
+                ExecutionLogLevel.Information,
+                "Jobstatus geändert.",
+                $"Status={cancellation.State}",
+                jobState: cancellation.State);
             bool jobCompletedSuccessfully = false;
             bool jobWasCancelled = false;
+            var completionReason = JobCompletionReason.Completed;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
             _executionLogService.Write(
                 executionLog,
@@ -257,6 +281,7 @@ namespace TaskAutomation.Jobs
                 var err = $"Zirkuläre Abhängigkeit erkannt: Job '{job.Name}' ist bereits in [{chain}].";
                 _logger.LogError(err);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung abgebrochen.", err);
+                cancellation.MarkCompleted(JobExecutionState.Failed);
                 _executionLogService.Complete(executionLog, false, err);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
                 await UnloadYoloModelsAsync(job);
@@ -275,6 +300,7 @@ namespace TaskAutomation.Jobs
             {
                 _logger.LogInformation("Job '{JobName}' vor Ausführung abgebrochen.", job.Name);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Information, "Job vor Ausführung gestoppt.");
+                cancellation.MarkCompleted(JobExecutionState.Cancelled);
                 _executionLogService.Complete(executionLog, false, "Gestoppt während YOLO-Preload.", cancelled: true);
                 await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
@@ -285,6 +311,7 @@ namespace TaskAutomation.Jobs
             {
                 _logger.LogError(ex, "Job '{JobName}' vor Ausführung fehlgeschlagen: {Message}", job.Name, ex.Message);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung fehlgeschlagen.", ex.ToString());
+                cancellation.MarkCompleted(JobExecutionState.Failed);
                 _executionLogService.Complete(executionLog, false, ex.Message);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 await UnloadYoloModelsAsync(job);
@@ -299,8 +326,9 @@ namespace TaskAutomation.Jobs
             try
             {
                 // ── Schritte analysieren ──────────────────────────────────────
-                videoStep = job.Steps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
-                desktopDuplicationStep = job.Steps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
+                var allSteps = job.EnumerateAllSteps().ToList();
+                videoStep = allSteps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
+                desktopDuplicationStep = allSteps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
 
                 // ── Pipeline-Kontext erstellen ────────────────────────────────
                 var launcher = _lazyLauncher.Value;
@@ -329,6 +357,7 @@ namespace TaskAutomation.Jobs
                     executionLog,
                     ExecutionLogLevel.Information,
                     "Job vor der Step-Ausführung gestoppt.");
+                cancellation.MarkCompleted(JobExecutionState.Cancelled);
                 _executionLogService.Complete(executionLog, false, ex.Message, cancelled: true);
                 await UnloadYoloModelsAsync(job);
                 _executionChain.Value = parentChain;
@@ -343,6 +372,7 @@ namespace TaskAutomation.Jobs
                     ExecutionLogLevel.Error,
                     "Job vor der Step-Ausführung fehlgeschlagen.",
                     ex.ToString());
+                cancellation.MarkCompleted(JobExecutionState.Failed);
                 _executionLogService.Complete(executionLog, false, ex.Message);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 await UnloadYoloModelsAsync(job);
@@ -423,14 +453,26 @@ namespace TaskAutomation.Jobs
                     }
                 }
 
+                // Einmalige Startphase. Ein EndJob-Step beendet danach kontrolliert die Hauptphase.
+                cancellation.EnterStartPhase();
+                pipelineCtx.ResetResults();
+                bool jobEndedByStep = await ExecuteStepSequenceAsync(
+                    job.StartSteps,
+                    "Startphase",
+                    pipelineCtx,
+                    job,
+                    ct,
+                    continueAfterStepError: false).ConfigureAwait(false);
+
                 // ── Ausführungsschleife ───────────────────────────────────────
-                bool jobEndedByStep = false;
+                cancellation.EnterRunPhase();
                 int iteration = 0;
-                do
+                var startStepIds = job.StartSteps.Select(step => step.Id).ToArray();
+                while (!jobEndedByStep)
                 {
                     iteration++;
                     var iterationStopwatch = Stopwatch.StartNew();
-                    pipelineCtx.ResetResults();
+                    pipelineCtx.ResetResults(startStepIds);
                     _executionLogService.Write(
                         executionLog,
                         ExecutionLogLevel.Debug,
@@ -438,7 +480,7 @@ namespace TaskAutomation.Jobs
 
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
-                    var conditionSources = BuildConditionSources(steps);
+                    var conditionSources = BuildConditionSources(job.StartSteps.Concat(steps).ToList());
 
                     foreach (var step in steps)
                     {
@@ -597,29 +639,71 @@ namespace TaskAutomation.Jobs
                         durationMs: iterationStopwatch.ElapsedMilliseconds);
 
                     if (jobEndedByStep) break;
+                    ct.ThrowIfCancellationRequested();
+                    if (!job.Repeating) break;
                 }
-                while (job.Repeating && !ct.IsCancellationRequested);
+                completionReason = jobEndedByStep
+                    ? JobCompletionReason.EndJobStep
+                    : JobCompletionReason.Completed;
                 jobCompletedSuccessfully = true;
             }
             catch (OperationCanceledException)
             {
                 jobWasCancelled = true;
+                completionReason = JobCompletionReason.Cancelled;
                 _logger.LogInformation("Job '{JobName}' abgebrochen.", job.Name);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Information, "Job gestoppt.");
             }
             catch (StepException)
             {
+                completionReason = JobCompletionReason.StepFailed;
                 // Fehler wurde bereits über JobStepErrorOccurred gemeldet – kein weiteres Event.
                 _logger.LogDebug("Job '{JobName}' nach Step-Fehler gestoppt.", job.Name);
             }
             catch (Exception ex)
             {
+                completionReason = JobCompletionReason.StepFailed;
                 _logger.LogError(ex, "Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job fehlgeschlagen.", ex.ToString());
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
             }
             finally
             {
+                cancellation.BeginEndPhase();
+                var endPhaseTimeout = TimeSpan.FromSeconds(Math.Clamp(
+                    job.EndPhaseTimeoutSeconds,
+                    Job.MinEndPhaseTimeoutSeconds,
+                    Job.MaxEndPhaseTimeoutSeconds));
+                using (var endTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation.EndPhaseToken))
+                {
+                    endTimeoutCts.CancelAfter(endPhaseTimeout);
+                    try
+                    {
+                        pipelineCtx.ResetResults(job.StartSteps.Concat(job.Steps).Select(step => step.Id));
+                        await ExecuteStepSequenceAsync(
+                            job.EndSteps,
+                            "Endphase",
+                            pipelineCtx,
+                            job,
+                            endTimeoutCts.Token,
+                            continueAfterStepError: true,
+                            precedingSteps: job.StartSteps.Concat(job.Steps).ToList()).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        var cause = cancellation.EndPhaseToken.IsCancellationRequested
+                            ? "durch ForceStop"
+                            : $"nach {endPhaseTimeout.TotalSeconds:0} Sekunden wegen Zeitüberschreitung";
+                        _logger.LogWarning("Endphase von Job '{JobName}' wurde {Cause} abgebrochen.", job.Name, cause);
+                        _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Endphase abgebrochen.", cause);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Unerwarteter Fehler in der Endphase von Job '{JobName}'.", job.Name);
+                        _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Endphase fehlgeschlagen.", ex.ToString());
+                    }
+                }
+
                 jobRunStopwatch.Stop();
                 CurrentJob = null;
 
@@ -638,7 +722,7 @@ namespace TaskAutomation.Jobs
                     try { _imageDisplayService.CloseWindow(winName); } catch { /* best-effort */ }
 
                 // Desktop-Ergebnis-Overlay leeren (ShowOnDesktopStep).
-                if (job.Steps.OfType<ShowOnDesktopStep>().Any())
+                if (job.EnumerateAllSteps().OfType<ShowOnDesktopStep>().Any())
                     try { _desktopResultOverlay.Clear(); } catch { /* best-effort */ }
 
                 // Text-Overlay: bei Job-Ende aufräumen (ShowTextStep mit ClearOnJobEnd).
@@ -684,14 +768,172 @@ namespace TaskAutomation.Jobs
                 await UnloadYoloModelsAsync(job);
 
                 _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
+                var finalState = cancellation.IsForceStopRequested || jobWasCancelled
+                    ? JobExecutionState.Cancelled
+                    : completionReason == JobCompletionReason.StepFailed
+                        ? JobExecutionState.Failed
+                        : JobExecutionState.Completed;
+                cancellation.MarkCompleted(finalState);
                 _executionLogService.Complete(
                     executionLog,
                     jobCompletedSuccessfully,
-                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms",
+                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms, Grund={completionReason}",
                     cancelled: jobWasCancelled);
 
                 _executionChain.Value = parentChain;
             }
+        }
+
+        private async Task<bool> ExecuteStepSequenceAsync(
+            IReadOnlyList<JobStep>? configuredSteps,
+            string phaseName,
+            StepPipelineContext pipelineCtx,
+            Job job,
+            CancellationToken ct,
+            bool continueAfterStepError,
+            IReadOnlyList<JobStep>? precedingSteps = null)
+        {
+            var steps = configuredSteps ?? [];
+            if (steps.Count == 0) return false;
+
+            _executionLogService.Write(
+                pipelineCtx.ExecutionLogSession,
+                ExecutionLogLevel.Information,
+                $"{phaseName} gestartet.",
+                $"Steps={steps.Count}");
+
+            var branchStack = new Stack<BranchFrame>();
+            var conditionSources = BuildConditionSources((precedingSteps ?? []).Concat(steps).ToList());
+
+            foreach (var step in steps)
+            {
+                ct.ThrowIfCancellationRequested();
+                bool parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
+
+                if (step is IfStep ifStep)
+                {
+                    var evaluation = parentActive
+                        ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
+                        : new ConditionEvaluation(false, "Nicht ausgewertet: Der übergeordnete Bedingungszweig ist inaktiv.");
+                    bool conditionMet = parentActive && evaluation.IsMatch;
+                    _executionLogService.Write(
+                        pipelineCtx.ExecutionLogSession,
+                        ExecutionLogLevel.Information,
+                        conditionMet ? "IF-Zweig wird ausgeführt." : "IF-Zweig wird übersprungen.",
+                        evaluation.Details,
+                        stepId: step.Id,
+                        stepType: step.GetType().Name);
+                    branchStack.Push(new BranchFrame(parentActive, conditionMet, conditionMet));
+                    continue;
+                }
+
+                if (step is ElseIfStep elseIfStep)
+                {
+                    if (branchStack.Count == 0)
+                    {
+                        _executionLogService.Write(
+                            pipelineCtx.ExecutionLogSession,
+                            ExecutionLogLevel.Warning,
+                            "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
+                            stepId: step.Id,
+                            stepType: step.GetType().Name);
+                        continue;
+                    }
+
+                    var top = branchStack.Pop();
+                    if (top.ParentActive && !top.AnyMatched)
+                    {
+                        var evaluation = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results, conditionSources);
+                        bool conditionMet = evaluation.IsMatch;
+                        _executionLogService.Write(
+                            pipelineCtx.ExecutionLogSession,
+                            ExecutionLogLevel.Information,
+                            conditionMet ? "ELSE-IF-Zweig wird ausgeführt." : "ELSE-IF-Zweig wird übersprungen.",
+                            evaluation.Details,
+                            stepId: step.Id,
+                            stepType: step.GetType().Name);
+                        branchStack.Push(new BranchFrame(top.ParentActive, conditionMet, conditionMet));
+                    }
+                    else
+                    {
+                        branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
+                    }
+                    continue;
+                }
+
+                if (step is ElseStep)
+                {
+                    if (branchStack.Count == 0)
+                    {
+                        _executionLogService.Write(
+                            pipelineCtx.ExecutionLogSession,
+                            ExecutionLogLevel.Warning,
+                            "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
+                            stepId: step.Id,
+                            stepType: step.GetType().Name);
+                        continue;
+                    }
+
+                    var top = branchStack.Pop();
+                    bool executeElse = top.ParentActive && !top.AnyMatched;
+                    branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
+                    continue;
+                }
+
+                if (step is EndIfStep)
+                {
+                    if (branchStack.Count > 0) branchStack.Pop();
+                    continue;
+                }
+
+                if (!parentActive) continue;
+
+                if (!step.IsEnabled)
+                {
+                    _executionLogService.Write(
+                        pipelineCtx.ExecutionLogSession,
+                        ExecutionLogLevel.Debug,
+                        "Step übersprungen, weil er deaktiviert ist.",
+                        stepId: step.Id,
+                        stepType: step.GetType().Name);
+                    continue;
+                }
+
+                if (step is EndJobStep)
+                {
+                    _executionLogService.Write(
+                        pipelineCtx.ExecutionLogSession,
+                        ExecutionLogLevel.Information,
+                        $"{phaseName} durch EndJob-Step beendet.",
+                        stepId: step.Id,
+                        stepType: step.GetType().Name);
+                    return true;
+                }
+
+                try
+                {
+                    await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    _executionLogService.Write(
+                        pipelineCtx.ExecutionLogSession,
+                        ExecutionLogLevel.Error,
+                        $"Step in {phaseName} fehlgeschlagen.",
+                        ex.ToString(),
+                        step.Id,
+                        step.GetType().Name);
+                    JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, step.GetType().Name, ex));
+                    if (!continueAfterStepError) throw new StepException(ex);
+                }
+            }
+
+            _executionLogService.Write(
+                pipelineCtx.ExecutionLogSession,
+                ExecutionLogLevel.Information,
+                $"{phaseName} beendet.");
+            return false;
         }
 
         /// <summary>Führt einen einzelnen Step aus – loggt Fehler und rethrowt.</summary>
@@ -772,6 +1014,18 @@ namespace TaskAutomation.Jobs
 
             switch (step)
             {
+                case StartProcessStep when result is StartProcessResult processResult:
+                    if (processResult.Process is { } startedProcess)
+                        parts.Add($"PID={startedProcess.ProcessId}, Process={startedProcess.ProcessName}, StartedUtc={startedProcess.StartTimeUtc:O}");
+                    break;
+                case ActiveProcessStep when result is ActiveProcessResult activeProcess:
+                    if (activeProcess.Process is { } runningProcess)
+                        parts.Add($"PID={runningProcess.ProcessId}, Process={runningProcess.ProcessName}");
+                    break;
+                case ActiveWindowStep when result is ActiveWindowResult activeWindow:
+                    if (activeWindow.Process is { } windowProcess)
+                        parts.Add($"PID={windowProcess.ProcessId}, Process={windowProcess.ProcessName}, HWND=0x{activeWindow.WindowHandle:X}");
+                    break;
                 case DesktopDuplicationStep capture:
                     parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");
                     parts.Add($"CaptureCursor={capture.Settings.CaptureCursor}");
@@ -783,17 +1037,14 @@ namespace TaskAutomation.Jobs
                     parts.Add($"ConfiguredDelayMs={timeout.Settings.DelayMs}");
                     break;
                 case ShowOnDesktopStep overlay:
-                    var detection = results.GetById<DetectionResult>(overlay.Settings.SourceDetectionStepId);
-                    var count = detection.AllDetections.Count > 0
-                        ? detection.AllDetections.Count
-                        : detection.Found && detection.Point.HasValue ? 1 : 0;
+                    var count = ResultBindingResolver.ResolveDetections(results, overlay.Settings.DetectionsSource).Values.Count;
                     parts.Add(count > 0 ? $"OverlayItems={count}" : "OverlayCleared=True");
                     break;
                 case VideoCreationStep video:
                     parts.Add($"Output={Path.Combine(video.Settings.SavePath, video.Settings.FileName)}");
-                    parts.Add(string.IsNullOrWhiteSpace(video.Settings.SourceDetectionStepId)
+                    parts.Add(!video.Settings.DetectionsSource.IsConfigured
                         ? "DetectionOverlay=None"
-                        : $"DetectionOverlay={video.Settings.SourceDetectionStepId}");
+                        : $"DetectionOverlay={video.Settings.DetectionsSource.SourceStepId}.{video.Settings.DetectionsSource.PropertyPath}");
                     break;
                 case ScriptExecutionStep script:
                     parts.Add($"Script={script.Settings.ScriptPath}");
@@ -834,7 +1085,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            var yoloSteps = job.Steps.OfType<YOLODetectionStep>().ToList();
+            var yoloSteps = job.EnumerateAllSteps().OfType<YOLODetectionStep>().ToList();
             if (yoloSteps.Count == 0)
             {
                 _logger.LogDebug("Keine YOLO-Steps im Job '{JobName}' - Vorladen übersprungen", job.Name);
@@ -888,7 +1139,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            var yoloSteps = job.Steps.OfType<YOLODetectionStep>().ToList();
+            var yoloSteps = job.EnumerateAllSteps().OfType<YOLODetectionStep>().ToList();
             if (yoloSteps.Count == 0)
             {
                 return;
@@ -1023,12 +1274,12 @@ namespace TaskAutomation.Jobs
 
             if (condition.Operator == ConditionOperator.IsEmpty)
             {
-                var isEmpty = value is null || string.IsNullOrEmpty(value as string);
+                var isEmpty = IsEmptyConditionValue(value);
                 return BuildSingleEvaluation(isEmpty, leftName + leftStatus, descriptor, value, "ist leer", null);
             }
             if (condition.Operator == ConditionOperator.IsNotEmpty)
             {
-                var isNotEmpty = value is not null && !string.IsNullOrEmpty(value as string);
+                var isNotEmpty = !IsEmptyConditionValue(value);
                 return BuildSingleEvaluation(isNotEmpty, leftName + leftStatus, descriptor, value, "ist nicht leer", null);
             }
             if (condition.Operator == ConditionOperator.IsTrue)
@@ -1054,7 +1305,7 @@ namespace TaskAutomation.Jobs
                 if (!TryReadResultValue(results, comparison.SourceStepId, comparison.PropertyPath,
                         conditionSources, out var rightDescriptor, out expected, out var rightWasExecuted))
                     return new SingleConditionEvaluation(false, $"NICHT ERFÜLLT — {rightName}: Vergleichswert ist nicht verfügbar.");
-                if (rightDescriptor.PropertyType != descriptor.PropertyType)
+                if (!StepResultMetadata.AreComparable(descriptor, rightDescriptor))
                     return new SingleConditionEvaluation(false,
                         $"NICHT ERFÜLLT — Datentypen stimmen nicht überein: {descriptor.PropertyType} und {rightDescriptor.PropertyType}.");
                 var rightStatus = rightWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
@@ -1121,6 +1372,19 @@ namespace TaskAutomation.Jobs
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? "<null>"
         };
+
+        private static bool IsEmptyConditionValue(object? value)
+        {
+            if (value is null) return true;
+            if (value is string text) return string.IsNullOrEmpty(text);
+            if (value is System.Collections.IEnumerable values)
+            {
+                var enumerator = values.GetEnumerator();
+                try { return !enumerator.MoveNext(); }
+                finally { (enumerator as IDisposable)?.Dispose(); }
+            }
+            return false;
+        }
 
         private static bool TryReadResultValue(
             IJobResultStore results,

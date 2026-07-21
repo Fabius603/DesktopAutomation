@@ -46,7 +46,7 @@ public sealed class MeinStepSettings
 
 ### 2. Ergebnistyp definieren (`StepResults.cs`)
 
-Falls dein Step einen neuen Ergebnistyp liefert (z. B. nicht `TaskResult`), definiere ihn hier:
+Jeder ausführbare Step besitzt einen eigenen Ergebnistyp nach dem Muster `<Stepname>Result`:
 
 ```csharp
 public sealed record MeinResult : StepResultBase
@@ -57,35 +57,16 @@ public sealed record MeinResult : StepResultBase
 }
 ```
 
-> Wenn dein Step nur `TaskResult` (`Success = true/false`) liefert, kannst du diesen Schritt überspringen.
+> Auch ein Step ohne auswählbare Nutzdaten erhält einen eigenen Ergebnistyp. Technischer Ausführungsstatus wird nicht im Picker veröffentlicht.
 
-### 3. Metadaten registrieren (`StepResultMetadata.cs`)
+### 3. Metadaten festlegen (`StepResultMetadata.cs`)
 
-a) In `Properties`:
+Konkrete Ergebnistypen und ihre öffentlichen Eigenschaften werden automatisch entdeckt.
+Interne Laufzeitdaten und `WasExecuted` gehören nicht zum auswählbaren Schema.
 
-```csharp
-["MeinStep"] =
-[
-    new("Success",     "Erfolgreich",      ResultPropertyType.Bool),
-    new("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
-],
-```
-
-b) In `FriendlyNames`:
-
-```csharp
-["MeinStep"] = "Mein Step (Anzeigename)",
-```
-
-c) Falls du einen **neuen Ergebnistyp** (nicht `TaskResult`/`CaptureResult`/…) erstellt hast, trage ihn auch in `ResultTypes` ein:
-
-```csharp
-new ResultTypeDescriptor("MeinResult", "MeinResult",
-[
-    new ResultPropertyDescriptor("MeinWert",    "Mein Wert",        ResultPropertyType.String),
-    new ResultPropertyDescriptor("WasExecuted", "Wurde ausgeführt", ResultPropertyType.Bool),
-]),
-```
+Eigenschaften werden standardmäßig veröffentlicht. `WasExecuted`, `Success` und
+`ErrorMessage` sind technische Ausführungswerte und bleiben im Picker verborgen.
+Weitere technische Felder können ausdrücklich mit `[ResultHidden]` markiert werden.
 
 ### 4. Pipeline registrieren (`StepPipelineRegistry.cs`)
 
@@ -94,7 +75,7 @@ a) In `_map` (Voraussetzungen und Ausgabe angeben):
 ```csharp
 [typeof(MeinStep)] = new(
     Prerequisites: [],          // Leer = keine Voraussetzungen
-    Output:        "TaskResult" // oder Name deines neuen Ergebnistyps
+    ResultType:    typeof(MeinResult)
 ),
 ```
 
@@ -115,17 +96,17 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class MeinStepHandler : JobStepHandler<MeinStep, TaskResult>
+    public sealed class MeinStepHandler : JobStepHandler<MeinStep, MeinResult>
     {
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<MeinResult> ExecuteCoreAsync(
             MeinStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             // Implementierung hier
             ctx.Logger.LogInformation("MeinStepHandler wird ausgeführt.");
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new MeinResult { WasExecuted = true, MeinWert = "Ergebnis" };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override MeinResult CreateDefault() => MeinResult.Default;
     }
 }
 ```
@@ -144,10 +125,8 @@ Im `_stepHandlers`-Dictionary in `JobExecutor.cs` eintragen:
 
 - [ ] `[JsonDerivedType]` in `StepData.cs` eingetragen
 - [ ] `MeinStep` + `MeinStepSettings` in `StepData.cs` definiert
-- [ ] Ergebnistyp (falls neu) in `StepResults.cs` definiert
-- [ ] Eintrag in `StepResultMetadata.Properties` hinzugefügt
-- [ ] Eintrag in `StepResultMetadata.FriendlyNames` hinzugefügt
-- [ ] Neuen Ergebnistyp ggf. in `StepResultMetadata.ResultTypes` registriert
+- [ ] Eigenen Ergebnistyp `<Stepname>Result` in `StepResults.cs` definiert
+- [ ] Nur die gewünschten Picker-Eigenschaften in `StepResultMetadata` veröffentlicht
 - [ ] `StepPipelineRegistry._map` aktualisiert
 - [ ] `StepPipelineRegistry._nameMap` aktualisiert
 - [ ] Handler-Klasse erstellt

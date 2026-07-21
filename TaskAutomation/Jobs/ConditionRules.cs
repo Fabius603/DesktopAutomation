@@ -11,7 +11,7 @@ public static class ConditionRules
     private static readonly ConditionOperator[] StringOperators =
     [
         ConditionOperator.Equals, ConditionOperator.NotEquals, ConditionOperator.Contains,
-        ConditionOperator.StartsWith
+        ConditionOperator.StartsWith, ConditionOperator.IsEmpty, ConditionOperator.IsNotEmpty
     ];
 
     private static readonly ConditionOperator[] OrderedOperators =

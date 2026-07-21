@@ -13,16 +13,20 @@ public sealed record SourceStepItem(string StepId, string DisplayName, ResultTyp
 
 public sealed class ConditionSelectionNode
 {
-    public ConditionSelectionNode(string displayName, IReadOnlyList<ConditionSelectionNode>? children = null, ICommand? selectCommand = null)
+    public ConditionSelectionNode(string displayName, IReadOnlyList<ConditionSelectionNode>? children = null,
+        ICommand? selectCommand = null, string? secondaryText = null)
     {
         DisplayName = displayName;
         Children = children ?? [];
         SelectCommand = selectCommand;
+        SecondaryText = secondaryText;
     }
 
     public string DisplayName { get; }
     public IReadOnlyList<ConditionSelectionNode> Children { get; }
     public ICommand? SelectCommand { get; }
+    public string? SecondaryText { get; }
+    public bool IsSelectable => SelectCommand is not null;
 }
 
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
@@ -149,7 +153,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool IsComparisonValueValid => SelectedProperty is not null &&
         (!ShowComparisonValue || (ComparisonIsLiteral
             ? ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
-            : SelectedComparisonSourceStep is not null && SelectedComparisonProperty?.PropertyType == SelectedProperty.PropertyType));
+            : SelectedComparisonSourceStep is not null && SelectedComparisonProperty is not null
+                && StepResultMetadata.AreComparable(SelectedProperty, SelectedComparisonProperty)));
     public string ComparisonValueValidationError => IsComparisonValueValid
         ? string.Empty
         : Loc.Get("Ui.Step.IfEditor.InvalidValue");
@@ -211,10 +216,19 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             return children.Length == 0 ? null : new ConditionSelectionNode(node.DisplayName, children);
         if (filter is not null && !filter(node.Property)) return null;
         var select = selection ?? SelectPath;
+        if (children.Length > 0)
+        {
+            var completeValue = new ConditionSelectionNode(
+                Loc.Get("Ui.Step.IfEditor.CompleteValue"),
+                selectCommand: new RelayCommand(() => select(source, node.Property)),
+                secondaryText: StepLocalization.ResultValueType(node.Property));
+            return new ConditionSelectionNode(node.DisplayName, new[] { completeValue }.Concat(children).ToArray());
+        }
         return new ConditionSelectionNode(
-            $"{node.DisplayName} ({node.Property.PropertyType})",
+            node.DisplayName,
             children,
-            new RelayCommand(() => select(source, node.Property)));
+            new RelayCommand(() => select(source, node.Property)),
+            StepLocalization.ResultValueType(node.Property));
     }
 
     private void SelectPath(SourceStepItem source, ResultPropertyDescriptor property)
@@ -234,11 +248,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         ComparisonSelectionTree = SelectedProperty is null
             ? []
             : BuildSelectionTree(_availableSourceSteps,
-                property => property.PropertyType == SelectedProperty.PropertyType,
+                property => StepResultMetadata.AreComparable(SelectedProperty, property),
                 SelectComparisonPath);
         OnChange(nameof(ComparisonSelectionTree));
 
-        if (SelectedComparisonProperty?.PropertyType != SelectedProperty?.PropertyType)
+        if (SelectedProperty is null || SelectedComparisonProperty is not null
+            && !StepResultMetadata.AreComparable(SelectedProperty, SelectedComparisonProperty))
         {
             SelectedComparisonSourceStep = null;
             SelectedComparisonProperty = null;
@@ -321,7 +336,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         {
             _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == comparison.SourceStepId);
             _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
-                .FirstOrDefault(p => p.Name == comparison.PropertyPath && p.PropertyType == _selectedProperty?.PropertyType);
+                .FirstOrDefault(p => p.Name == comparison.PropertyPath && _selectedProperty is not null
+                    && StepResultMetadata.AreComparable(_selectedProperty, p));
         }
         OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
         OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(SelectedPath));
@@ -336,4 +352,5 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             foreach (var op in ConditionRules.GetOperators(_selectedProperty.PropertyType)) AvailableOperators.Add(op);
         SelectedOperator = AvailableOperators.FirstOrDefault(); NotifyInput();
     }
+
 }

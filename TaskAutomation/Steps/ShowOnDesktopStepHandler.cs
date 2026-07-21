@@ -13,37 +13,32 @@ namespace TaskAutomation.Steps
     /// analog zu <see cref="ShowImageStepHandler"/>, jedoch ohne eigenes Vorschaufenster.
     /// Bestes Ergebnis (Index 0) wird farblich hervorgehoben, alle weiteren in Grün.
     /// </summary>
-    public sealed class ShowOnDesktopStepHandler : JobStepHandler<ShowOnDesktopStep, OutputResult>
+    public sealed class ShowOnDesktopStepHandler : JobStepHandler<ShowOnDesktopStep, ShowOnDesktopResult>
     {
-        protected override Task<OutputResult> ExecuteCoreAsync(
+        protected override Task<ShowOnDesktopResult> ExecuteCoreAsync(
             ShowOnDesktopStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var detection = string.IsNullOrEmpty(step.Settings.SourceDetectionStepId)
-                ? DetectionResult.Default
-                : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
+            var resolved = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
 
-            if (!detection.Found || detection.Point is null)
+            if (!resolved.IsSuccess)
             {
                 ctx.DesktopResultOverlay.Clear();
                 ctx.Logger.LogInformation(
                     "ShowOnDesktopStepHandler: Kein Treffer im Quell-Step {SourceStepId}; Overlay wurde geleert.",
-                    step.Settings.SourceDetectionStepId);
-                return Task.FromResult(new OutputResult { WasExecuted = true, Success = true });
+                    step.Settings.DetectionsSource.SourceStepId);
+                return Task.FromResult(new ShowOnDesktopResult { WasExecuted = true, Success = true });
             }
 
-            // AllDetections bevorzugen; Fallback auf Einzel-Ergebnis
-            IReadOnlyList<(Point Center, Rectangle? BoundingBox)> items = detection.AllDetections.Count > 0
-                ? detection.AllDetections
-                : new[] { (Center: detection.Point.Value, detection.BoundingBox) };
+            IReadOnlyList<DetectionItem> items = resolved.Values;
 
             ctx.DesktopResultOverlay.ShowResult(items);
             ctx.Logger.LogInformation(
                 "ShowOnDesktopStepHandler: {Count} Treffer aus Quell-Step {SourceStepId} auf dem Desktop angezeigt.",
-                items.Count, step.Settings.SourceDetectionStepId);
+                items.Count, step.Settings.DetectionsSource.SourceStepId);
 
-            return Task.FromResult(new OutputResult { WasExecuted = true, Success = true });
+            return Task.FromResult(new ShowOnDesktopResult { WasExecuted = true, Success = true });
         }
 
-        protected override OutputResult CreateDefault() => OutputResult.Default;
+        protected override ShowOnDesktopResult CreateDefault() => ShowOnDesktopResult.Default;
     }
 }

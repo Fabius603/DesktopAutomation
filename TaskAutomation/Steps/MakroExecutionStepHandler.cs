@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class MakroExecutionStepHandler : JobStepHandler<MakroExecutionStep, TaskResult>
+    public sealed class MakroExecutionStepHandler : JobStepHandler<MakroExecutionStep, MakroExecutionResult>
     {
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<MakroExecutionResult> ExecuteCoreAsync(
             MakroExecutionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -40,9 +40,9 @@ namespace TaskAutomation.Steps
             logger.LogInformation("MakroExecutionStepHandler: Executing '{Name}' (ID:{Id})", makro.Name, makro.Id);
             await ctx.MakroExecutor.ExecuteMakro(makro, ctx.DxgiResources, ct);
 
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new MakroExecutionResult { WasExecuted = true, Success = true };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override MakroExecutionResult CreateDefault() => MakroExecutionResult.Default;
     }
 }

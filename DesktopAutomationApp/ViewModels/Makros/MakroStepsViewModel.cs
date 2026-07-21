@@ -18,6 +18,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Behaviors;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -164,7 +165,7 @@ namespace DesktopAutomationApp.ViewModels
             EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
             MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
-            ReorderStepCommand  = new RelayCommand<(int from, int to)>(t => MoveToIndex(t.from, t.to));
+            ReorderStepCommand  = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep);
             DeleteStepCommand     = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
             DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
             UndoCommand           = new RelayCommand(Undo, () => CanUndo);
@@ -298,6 +299,19 @@ namespace DesktopAutomationApp.ViewModels
             SelectedStep = step;
             HasUnsavedChanges = true;
             InvalidateAllCommands();
+        }
+
+        private void MoveStep(StepDragDrop.MoveRequest request)
+        {
+            if (!ReferenceEquals(request.Source, Steps)
+                || !ReferenceEquals(request.Target, Steps))
+                return;
+
+            var targetIndex = Math.Clamp(request.TargetIndex, 0, Steps.Count);
+            if (targetIndex > request.SourceIndex)
+                targetIndex--;
+
+            MoveToIndex(request.SourceIndex, targetIndex);
         }
 
         private void EditStep(MakroBefehl? step)

@@ -406,7 +406,7 @@
     <value>STEP-TYP</value>
   </data>
   <data name="Ui.Step.Settings.CaptureStep" xml:space="preserve">
-    <value>Capture-Step</value>
+    <value>Capture-Ergebnis</value>
   </data>
   <data name="Ui.Step.Settings.Template" xml:space="preserve">
     <value>Template</value>
@@ -460,7 +460,7 @@
     <value>Downscale</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Detection-Step</value>
+    <value>Erkennungs-Ergebnis</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Min. Werte</value>
@@ -484,7 +484,7 @@
     <value>Mauszeiger aufnehmen</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStepOpt" xml:space="preserve">
-    <value>Detection-Step (opt.)</value>
+    <value>Erkennungs-Ergebnis (opt.)</value>
   </data>
   <data name="Ui.Step.Settings.WindowName" xml:space="preserve">
     <value>Fenstername</value>
@@ -610,7 +610,7 @@
     <value>Eine (OR)</value>
   </data>
   <data name="Ui.Step.Settings.SourceStep" xml:space="preserve">
-    <value>Quell-Step</value>
+    <value>Quell-Ergebnis</value>
   </data>
   <data name="Ui.Step.Settings.Property" xml:space="preserve">
     <value>Eigenschaft</value>
@@ -840,6 +840,7 @@
   <data name="Ui.Job.Steps.ProcessNameLabel" xml:space="preserve">
     <value>Prozessname: </value>
   </data>
+  <data name="Ui.Job.Steps.ProcessSource" xml:space="preserve"><value>Prozessreferenz: </value></data>
   <data name="Ui.Job.Steps.CacheMs" xml:space="preserve">
     <value>Cache (ms): </value>
   </data>
@@ -1610,6 +1611,39 @@ Fehlermeldung:
   <data name="Step.ResultProperty.HasImage" xml:space="preserve">
     <value>Bild vorhanden</value>
   </data>
+  <data name="Step.ResultProperty.Image" xml:space="preserve">
+    <value>Bild</value>
+  </data>
+  <data name="Step.ResultValueType.Boolean" xml:space="preserve"><value>Wahrheitswert</value></data>
+  <data name="Step.ResultValueType.Integer" xml:space="preserve"><value>Ganzzahl</value></data>
+  <data name="Step.ResultValueType.Number" xml:space="preserve"><value>Zahl</value></data>
+  <data name="Step.ResultValueType.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Step.ResultValueType.DateTime" xml:space="preserve"><value>Datum/Zeit</value></data>
+  <data name="Step.ResultValueType.Image" xml:space="preserve"><value>Bild</value></data>
+  <data name="Step.ResultValueType.Point" xml:space="preserve"><value>Punkt</value></data>
+  <data name="Step.ResultValueType.Rectangle" xml:space="preserve"><value>Rechteck</value></data>
+  <data name="Step.ResultValueType.Process" xml:space="preserve"><value>Prozessreferenz</value></data>
+  <data name="Step.ResultValueType.Detection" xml:space="preserve"><value>Erkennung</value></data>
+  <data name="Step.ResultValueType.Collection" xml:space="preserve"><value>Liste von {0}</value></data>
+  <data name="Ui.Step.IfEditor.CompleteValue" xml:space="preserve"><value>Gesamter Wert</value></data>
+  <data name="Step.ResultProperty.Process" xml:space="preserve">
+    <value>Prozess</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ProcessId" xml:space="preserve">
+    <value>Prozess / Prozess-ID</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ProcessName" xml:space="preserve">
+    <value>Prozess / Prozessname</value>
+  </data>
+  <data name="Step.ResultProperty.Process.ExecutablePath" xml:space="preserve">
+    <value>Prozess / Programmpfad</value>
+  </data>
+  <data name="Step.ResultProperty.Process.StartTimeUtc" xml:space="preserve">
+    <value>Prozess / Startzeit</value>
+  </data>
+  <data name="Step.ResultProperty.Process.WindowHandle" xml:space="preserve">
+    <value>Prozess / Fenster-Handle</value>
+  </data>
   <data name="Step.ResultProperty.IsRunning" xml:space="preserve">
     <value>Prozess läuft</value>
   </data>
@@ -1875,10 +1909,10 @@ Fehlermeldung:
     <value>Unbekannt</value>
   </data>
   <data name="Ui.Job.Steps.NoSourceSelected" xml:space="preserve">
-    <value>Kein Quell-Step ausgewählt</value>
+    <value>Kein Ergebnis ausgewählt</value>
   </data>
   <data name="Ui.Job.Steps.SourceUnavailable" xml:space="preserve">
-    <value>Quell-Step nicht verfügbar</value>
+    <value>Quell-Ergebnis nicht verfügbar</value>
   </data>
   <data name="Ui.Step.Settings.PredictionModel" xml:space="preserve"><value>Vorhersagemodell</value></data>
   <data name="Ui.Step.Settings.TimeBasis" xml:space="preserve"><value>Zeitbasis</value></data>
@@ -1886,7 +1920,7 @@ Fehlermeldung:
   <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. Modellfehler</value></data>
   <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. Confidence</value></data>
   <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Modell: </value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection-Step, dessen gefundene Positionen als Messwerte für die Bewegungsvorhersage verwendet werden.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Erkennungs-Ergebnis, dessen gefundene Positionen als Messwerte für die Bewegungsvorhersage verwendet werden.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic wählt das passendste Modell. Linear eignet sich für gleichmäßige Bewegung, Acceleration für Beschleunigung und Kalman für verrauschte Messwerte.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Capture sagt relativ zum Aufnahmezeitpunkt voraus. Execution berücksichtigt zusätzlich das Alter der Aufnahme und zielt auf den tatsächlichen Ausführungszeitpunkt.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinSamples" xml:space="preserve"><value>Mindestanzahl gültiger Positionsmessungen, bevor eine Vorhersage ausgegeben wird. Höhere Werte sind stabiler, reagieren aber langsamer.</value></data>
@@ -1900,7 +1934,7 @@ Fehlermeldung:
   <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Dynamische ROI erstellen</value></data>
   <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamische ROI</value></data>
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erzeugt aus dem besten Match eine ROI für die nächste Job-Runde.</value></data>
-  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Quell-Erkennung</value></data>
+  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Erkennungs-Ergebnis</value></data>
   <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Rand in Pixeln</value></data>
   <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimale Konfidenz (0–1)</value></data>
   <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Vollbildsuche nach X ROI-Durchläufen (0 = nie)</value></data>
@@ -1943,8 +1977,15 @@ Fehlermeldung:
   <data name="Ui.Step.IfEditor.AndConnector" xml:space="preserve"><value>UND</value></data>
   <data name="Ui.Step.IfEditor.OrConnector" xml:space="preserve"><value>ODER</value></data>
   <data name="Ui.Step.IfEditor.Condition" xml:space="preserve"><value>Bedingung</value></data>
-  <data name="Ui.Step.IfEditor.ResultPath" xml:space="preserve"><value>Step und Eigenschaft</value></data>
-  <data name="Ui.Step.IfEditor.SelectValue" xml:space="preserve"><value>Step und Eigenschaft auswählen…</value></data>
+  <data name="Ui.Step.IfEditor.ResultPath" xml:space="preserve"><value>Ergebnis und Eigenschaft</value></data>
+  <data name="Ui.Step.IfEditor.SelectValue" xml:space="preserve"><value>Ergebnis und Eigenschaft auswählen…</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Collection" xml:space="preserve"><value>Liste</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Optional" xml:space="preserve"><value>Optional</value></data>
+  <data name="Ui.Step.ResultBinding.Cardinality.Single" xml:space="preserve"><value>Wert</value></data>
+  <data name="Ui.Job.Steps.PointX" xml:space="preserve"><value>X: </value></data>
+  <data name="Ui.Job.Steps.PointY" xml:space="preserve"><value> · Y: </value></data>
+  <data name="Ui.Step.ResultSource.FromStep" xml:space="preserve"><value>{0} aus {1}</value></data>
+  <data name="Ui.Step.ProcessSource.SearchByCharacteristics" xml:space="preserve"><value>Nach Prozessmerkmalen suchen</value></data>
   <data name="Ui.Step.IfEditor.ExampleDecimal" xml:space="preserve"><value>z. B. 0,85</value></data>
   <data name="Ui.Step.IfEditor.ExampleInteger" xml:space="preserve"><value>z. B. 3</value></data>
   <data name="Ui.Step.IfEditor.ExampleText" xml:space="preserve"><value>Text eingeben…</value></data>
@@ -1965,6 +2006,7 @@ Fehlermeldung:
   <data name="Ui.Step.Settings.BringToFront" xml:space="preserve"><value>In den Vordergrund</value></data>
   <data name="Ui.Step.Settings.Minimize" xml:space="preserve"><value>Minimieren</value></data>
   <data name="Ui.Step.Settings.ProcessName" xml:space="preserve"><value>Prozessname</value></data>
+  <data name="Ui.Step.Settings.ProcessSource" xml:space="preserve"><value>Prozessreferenz</value></data>
   <data name="Ui.Step.Settings.WindowTitleContains" xml:space="preserve"><value>Fenstertitel enthält</value></data>
   <data name="Ui.Job.Steps.Action" xml:space="preserve"><value>Aktion: </value></data>
   <data name="Ui.Job.Steps.WindowTitle" xml:space="preserve"><value>Fenstertitel: </value></data>
@@ -1972,4 +2014,32 @@ Fehlermeldung:
   <data name="Enum.StartProcessAction.Terminate" xml:space="preserve"><value>Beenden</value></data>
   <data name="Enum.FocusProcessAction.BringToFront" xml:space="preserve"><value>In den Vordergrund</value></data>
   <data name="Enum.FocusProcessAction.Minimize" xml:space="preserve"><value>Minimieren</value></data>
+  <data name="Ui.Job.Steps.Section.Start" xml:space="preserve"><value>Beim Start</value></data>
+  <data name="Ui.Job.Steps.Section.Run" xml:space="preserve"><value>Bei jedem Durchlauf</value></data>
+  <data name="Ui.Job.Steps.Section.End" xml:space="preserve"><value>Beim Beenden</value></data>
+  <data name="Ui.Job.Steps.Section.Start.Empty" xml:space="preserve"><value>Steps in diesem Bereich werden einmal ausgeführt, bevor der erste Durchlauf beginnt.</value></data>
+  <data name="Ui.Job.Steps.Section.Run.Empty" xml:space="preserve"><value>Steps in diesem Bereich werden in jedem Durchlauf des Jobs ausgeführt.</value></data>
+  <data name="Ui.Job.Steps.Section.End.Empty" xml:space="preserve"><value>Steps in diesem Bereich werden einmal ausgeführt, wenn der Job beendet wird.</value></data>
+  <data name="Ui.Job.Steps.MoveToStart" xml:space="preserve"><value>Nach „Beim Start“ verschieben</value></data>
+  <data name="Ui.Job.Steps.MoveToRun" xml:space="preserve"><value>Nach „Bei jedem Durchlauf“ verschieben</value></data>
+  <data name="Ui.Job.Steps.MoveToEnd" xml:space="preserve"><value>Nach „Beim Beenden“ verschieben</value></data>
+  <data name="Ui.Job.EndSettings.Tooltip" xml:space="preserve"><value>Einstellungen für die Beendigungsphase</value></data>
+  <data name="Ui.Job.EndSettings.Title" xml:space="preserve"><value>Beim Beenden</value></data>
+  <data name="Ui.Job.EndSettings.Timeout" xml:space="preserve"><value>Zeitlimit</value></data>
+  <data name="Ui.Job.EndSettings.Timeout.Unit" xml:space="preserve"><value>Sekunden</value></data>
+  <data name="Ui.Job.EndSettings.Timeout.Description" xml:space="preserve"><value>Nach dieser Zeit werden noch laufende Steps der Beendigungsphase abgebrochen.</value></data>
+  <data name="Ui.Dashboard.ForceStopAll" xml:space="preserve"><value>Sofort stoppen</value></data>
+  <data name="Ui.Dashboard.ForceStopAllTooltip" xml:space="preserve"><value>Alle Jobs einschließlich ihrer Beendigungsphase und alle Makros sofort stoppen (F10)</value></data>
+  <data name="Enum.JobExecutionState.Starting" xml:space="preserve"><value>Vorbereitung</value></data>
+  <data name="Enum.JobExecutionState.RunningStartSteps" xml:space="preserve"><value>Beim Start</value></data>
+  <data name="Enum.JobExecutionState.RunningSteps" xml:space="preserve"><value>Bei jedem Durchlauf</value></data>
+  <data name="Enum.JobExecutionState.StopRequested" xml:space="preserve"><value>Beenden angefordert</value></data>
+  <data name="Enum.JobExecutionState.RunningEndSteps" xml:space="preserve"><value>Beim Beenden</value></data>
+  <data name="Enum.JobExecutionState.ForceStopRequested" xml:space="preserve"><value>Sofortabbruch</value></data>
+  <data name="Enum.JobExecutionState.Completed" xml:space="preserve"><value>Beendet</value></data>
+  <data name="Enum.JobExecutionState.Cancelled" xml:space="preserve"><value>Abgebrochen</value></data>
+  <data name="Enum.JobExecutionState.Failed" xml:space="preserve"><value>Fehlgeschlagen</value></data>
+  <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>Kein Wert ausgewählt</value></data>
+  <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Ergebnis und Eigenschaft auswählen</value></data>
+  <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Prozess bestimmen über</value></data>
 </root>

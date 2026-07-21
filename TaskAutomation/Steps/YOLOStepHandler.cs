@@ -10,9 +10,9 @@ using ImageHelperMethods;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class YOLOStepHandler : JobStepHandler<YOLODetectionStep, DetectionResult>
+    public sealed class YOLOStepHandler : JobStepHandler<YOLODetectionStep, YOLODetectionResult>
     {
-        protected override async Task<DetectionResult> ExecuteCoreAsync(
+        protected override async Task<YOLODetectionResult> ExecuteCoreAsync(
             YOLODetectionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -28,18 +28,19 @@ namespace TaskAutomation.Steps
             if (ctx.YoloManager == null)
                 throw new InvalidOperationException("YoloManager not available");
 
-            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            if (!capture.HasImage)
+            var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = input.Capture;
+            if (input.Image is null)
             {
                 logger.LogInformation("YOLOStepHandler: Kein Bild verfügbar, Step wird übersprungen");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new YOLODetectionResult { WasExecuted = true, Found = false };
             }
 
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
 
             System.Drawing.Rectangle? roi = null;
             var dynamicRoi = DynamicRoiResolver.Resolve(
-                step.Settings.DynamicRoiStepId,
+                step.Settings.DynamicRoiSource,
                 capture,
                 ctx,
                 step.Settings.EnableROI ? step.Settings.ROI : null);
@@ -50,7 +51,7 @@ namespace TaskAutomation.Steps
                     effectiveRoi.Width, effectiveRoi.Height);
 
             var rawResult = await ctx.YoloManager.DetectAsync(
-                step.Settings.Model, step.Settings.ClassName, capture.Image!,
+                step.Settings.Model, step.Settings.ClassName, input.Image,
                 step.Settings.ConfidenceThreshold, roi, ct);
 
             if (rawResult?.Success != true)
@@ -58,7 +59,7 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "YOLOStepHandler: No '{ClassName}' found above threshold {T}",
                     step.Settings.ClassName, step.Settings.ConfidenceThreshold);
-                return new DetectionResult
+                return new YOLODetectionResult
                 {
                     WasExecuted    = true,
                     Found          = false,
@@ -90,14 +91,14 @@ namespace TaskAutomation.Steps
                     System.Drawing.Rectangle? bb = r.BoundingBox.HasValue
                         ? new System.Drawing.Rectangle(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
                         : null;
-                    return (Center: c, BoundingBox: bb);
+                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
                 })
-                .ToList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)>();
+                .ToList();
 
             if (allDetections.Count == 0)
-                allDetections.Add((Center: globalPoint, BoundingBox: globalBoundingBox));
+                allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new DetectionResult
+            return new YOLODetectionResult
             {
                 WasExecuted    = true,
                 Found          = true,
@@ -111,6 +112,6 @@ namespace TaskAutomation.Steps
             };
         }
 
-        protected override DetectionResult CreateDefault() => DetectionResult.Default;
+        protected override YOLODetectionResult CreateDefault() => YOLODetectionResult.Default;
     }
 }

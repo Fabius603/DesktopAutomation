@@ -5,6 +5,17 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
+    public sealed record CaptureFrame : ICaptureStepResult
+    {
+        public System.Drawing.Bitmap? Image { get; init; }
+        public System.Drawing.Rectangle Bounds { get; init; }
+        public System.Drawing.Point Offset { get; init; }
+        public bool IsFresh { get; init; } = true;
+        public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+        public bool HasImage => Image is not null;
+        public static readonly CaptureFrame Default = new();
+    }
+
     /// <summary>
     /// Anwendungsweiter Singleton-Dienst für den Desktop-Screenshot über DXGI Desktop Duplication.
     /// Verwaltet intern genau eine <see cref="ImageCapture.DesktopDuplication.DesktopDuplicator"/>-Instanz
@@ -18,6 +29,6 @@ namespace TaskAutomation.Steps
         /// Wenn <paramref name="captureCursor"/> true ist, wird der aktuelle Mauszeiger
         /// in das Bild eingeblendet.
         /// </summary>
-        Task<CaptureResult> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false);
+        Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false);
     }
 }

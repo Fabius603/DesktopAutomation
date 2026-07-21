@@ -11,7 +11,11 @@ namespace TaskAutomation.Orchestration
     /// Repräsentiert eine laufende Job-Instanz (eine von möglicherweise mehreren gleichzeitigen
     /// Ausführungen desselben Jobs).
     /// </summary>
-    public record RunningJobInstance(Guid InstanceId, Guid JobId, string JobName);
+    public record RunningJobInstance(
+        Guid InstanceId,
+        Guid JobId,
+        string JobName,
+        JobExecutionState State);
 
     public interface IJobDispatcher : IDisposable
     {
@@ -53,24 +57,34 @@ namespace TaskAutomation.Orchestration
         Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null);
 
         /// <summary>
-        /// Bricht eine bestimmte Job-Instanz per Instanz-ID ab.
+        /// Fordert für eine Job-Instanz einmalig einen kontrollierten Stop an.
+        /// Weitere Aufrufe und Aufrufe während der Endphase werden ignoriert.
         /// </summary>
         void CancelJob(Guid instanceId);
 
         /// <summary>
-        /// Bricht alle laufenden Instanzen eines Jobs per Name ab.
+        /// Fordert für alle noch normal laufenden Instanzen eines Jobs einen kontrollierten Stop an.
         /// </summary>
         void CancelJob(string name);
 
         /// <summary>
-        /// Bricht alle laufenden Instanzen eines Jobs per Job-Definitions-ID ab (asynchron, non-blocking).
+        /// Fordert für alle laufenden Instanzen eines Jobs per Definitions-ID einen kontrollierten Stop an.
         /// </summary>
         void CancelJobsByDefinition(Guid jobDefinitionId);
 
         /// <summary>
-        /// Bricht alle laufenden Job-Instanzen ab (asynchron, non-blocking).
+        /// Fordert für alle laufenden Job-Instanzen einen kontrollierten Stop an.
         /// </summary>
         void CancelAllJobs();
+
+        /// <summary>Bricht eine Instanz einschließlich ihrer Endphase sofort ab.</summary>
+        void ForceStopJob(Guid instanceId);
+
+        /// <summary>Bricht alle Instanzen einer Jobdefinition einschließlich ihrer Endphase sofort ab.</summary>
+        void ForceStopJobsByDefinition(Guid jobDefinitionId);
+
+        /// <summary>Bricht alle Job-Instanzen einschließlich ihrer Endphasen sofort ab.</summary>
+        void ForceStopAllJobs();
 
         /// <summary>Startet ein Makro per ID.</summary>
         void StartMakro(Guid id);

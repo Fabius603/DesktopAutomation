@@ -10,9 +10,9 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class TemplateMatchingStepHandler : JobStepHandler<TemplateMatchingStep, DetectionResult>
+    public sealed class TemplateMatchingStepHandler : JobStepHandler<TemplateMatchingStep, TemplateMatchingResult>
     {
-        protected override async Task<DetectionResult> ExecuteCoreAsync(
+        protected override async Task<TemplateMatchingResult> ExecuteCoreAsync(
             TemplateMatchingStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -24,18 +24,19 @@ namespace TaskAutomation.Steps
             if (!File.Exists(step.Settings.TemplatePath))
                 throw new FileNotFoundException($"Template file not found: '{step.Settings.TemplatePath}'");
 
-            var capture = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            if (!capture.HasImage)
+            var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = input.Capture;
+            if (input.Image is null)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: Kein Bild verfuegbar, Step wird uebersprungen");
-                return new DetectionResult { WasExecuted = true, Found = false };
+                return new TemplateMatchingResult { WasExecuted = true, Found = false };
             }
 
             if (ctx.TemplateMatcher == null)
                 ctx.TemplateMatcher = new TemplateMatching(step.Settings.TemplateMatchMode);
 
             var dynamicRoi = DynamicRoiResolver.Resolve(
-                step.Settings.DynamicRoiStepId,
+                step.Settings.DynamicRoiSource,
                 capture,
                 ctx,
                 step.Settings.EnableROI ? step.Settings.ROI : null);
@@ -46,12 +47,12 @@ namespace TaskAutomation.Steps
             ctx.TemplateMatcher.SetTemplate(step.Settings.TemplatePath);
             ctx.TemplateMatcher.SetThreshold(step.Settings.ConfidenceThreshold);
 
-            var rawResult = ctx.TemplateMatcher.Detect(capture.Image!);
+            var rawResult = ctx.TemplateMatcher.Detect(input.Image);
 
             if (!rawResult.Success)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: No match found above threshold");
-                return new DetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
+                return new TemplateMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
@@ -86,14 +87,14 @@ namespace TaskAutomation.Steps
                             r.BoundingBox.Value.Width,
                             r.BoundingBox.Value.Height)
                         : null;
-                    return (Center: c, BoundingBox: bb);
+                    return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
                 })
-                .ToList<(System.Drawing.Point Center, System.Drawing.Rectangle? BoundingBox)>();
+                .ToList();
 
             if (allDetections.Count == 0)
-                allDetections.Add((Center: globalPoint, BoundingBox: globalBoundingBox));
+                allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new DetectionResult
+            return new TemplateMatchingResult
             {
                 WasExecuted   = true,
                 Found         = true,
@@ -107,6 +108,6 @@ namespace TaskAutomation.Steps
             };
         }
 
-        protected override DetectionResult CreateDefault() => DetectionResult.Default;
+        protected override TemplateMatchingResult CreateDefault() => TemplateMatchingResult.Default;
     }
 }

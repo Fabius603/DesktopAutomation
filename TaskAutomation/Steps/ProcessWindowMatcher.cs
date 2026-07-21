@@ -52,6 +52,9 @@ internal static class ProcessWindowMatcher
         string.IsNullOrWhiteSpace(titleContains)
         || (title ?? string.Empty).Contains(titleContains.Trim(), StringComparison.OrdinalIgnoreCase);
 
+    public static bool IsForegroundWindow(IntPtr handle) =>
+        handle != IntPtr.Zero && GetForegroundWindow() == handle;
+
     public static bool ForegroundWindowMatches(string? processName, string? titleContains = null)
     {
         var foregroundWindow = GetForegroundWindow();
@@ -66,6 +69,33 @@ internal static class ProcessWindowMatcher
             if (window.Handle == foregroundWindow)
                 return true;
         return false;
+    }
+
+    public static bool ForegroundWindowMatches(int processId, string? titleContains = null)
+    {
+        var foregroundWindow = GetForegroundWindow();
+        if (foregroundWindow == IntPtr.Zero) return false;
+        return FindMatchingWindows(processId, titleContains).Any(window => window.Handle == foregroundWindow);
+    }
+
+    public static IReadOnlyList<ProcessWindowMatch> FindMatchingWindows(
+        int processId, string? titleContains = null)
+    {
+        if (processId <= 0) return [];
+        string processName;
+        try
+        {
+            using var process = Process.GetProcessById(processId);
+            processName = process.ProcessName;
+        }
+        catch { return []; }
+
+        return FindWindowAssociations(processName, new HashSet<int> { processId })
+            .Where(association => association.TargetProcessIds.Contains(processId)
+                                  && TitleMatches(association.Window.Title, titleContains))
+            .Select(association => association.Window)
+            .DistinctBy(window => window.Handle)
+            .ToArray();
     }
 
     public static IReadOnlyList<ProcessWindowMatch> FindMatchingWindows(

@@ -6,14 +6,14 @@ using TaskAutomation.Timing;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class TimeoutStepHandler : JobStepHandler<TimeoutStep, TaskResult>
+    public sealed class TimeoutStepHandler : JobStepHandler<TimeoutStep, TimeoutResult>
     {
         private readonly IPreciseDelayService _delayService;
 
         public TimeoutStepHandler(IPreciseDelayService delayService) =>
             _delayService = delayService;
 
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<TimeoutResult> ExecuteCoreAsync(
             TimeoutStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             await _delayService.DelayAsync(
@@ -22,9 +22,9 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogInformation(
                 "TimeoutStepHandler: Wartezeit von {DelayMs} ms abgeschlossen.",
                 step.Settings.DelayMs);
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new TimeoutResult { WasExecuted = true, Success = true };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override TimeoutResult CreateDefault() => TimeoutResult.Default;
     }
 }

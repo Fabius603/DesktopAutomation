@@ -111,11 +111,11 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("dynamic_roi_step_id")]
-        public string DynamicRoiStepId { get; set; } = "";
+        [JsonPropertyName("dynamic_roi_source")]
+        public ResultBinding DynamicRoiSource { get; set; } = new();
     }
 
     // ---- ColorDetection ----
@@ -155,11 +155,11 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("dynamic_roi_step_id")]
-        public string DynamicRoiStepId { get; set; } = "";
+        [JsonPropertyName("dynamic_roi_source")]
+        public ResultBinding DynamicRoiSource { get; set; } = new();
     }
 
     // ---- PredictMovement ----
@@ -171,8 +171,8 @@ namespace TaskAutomation.Jobs
 
     public sealed class PredictMovementSettings
     {
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("points_source")]
+        public ResultBinding PointsSource { get; set; } = new();
 
         [JsonPropertyName("min_samples")]
         public int MinSamples { get; set; } = 3;
@@ -210,8 +210,8 @@ namespace TaskAutomation.Jobs
 
     public sealed class DynamicRoiSettings
     {
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = string.Empty;
+        [JsonPropertyName("bounds_source")]
+        public ResultBinding BoundsSource { get; set; } = new();
 
         [JsonPropertyName("padding")]
         public int Padding { get; set; } = 25;
@@ -267,11 +267,11 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("window_name")]
         public string WindowName { get; set; } = "MyWindow";
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("detections_source")]
+        public ResultBinding DetectionsSource { get; set; } = new();
     }
 
     // ---- ShowOnDesktop ----
@@ -283,8 +283,8 @@ namespace TaskAutomation.Jobs
 
     public sealed class ShowOnDesktopSettings
     {
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("detections_source")]
+        public ResultBinding DetectionsSource { get; set; } = new();
     }
 
     // ---- VideoCreation ----
@@ -302,11 +302,11 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("file_name")]
         public string FileName { get; set; } = "output.mp4";
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("detections_source")]
+        public ResultBinding DetectionsSource { get; set; } = new();
     }
 
     // ---- MakroExecution ----
@@ -360,8 +360,8 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("offset_y")]
         public int OffsetY { get; set; } = 0;
 
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("points_source")]
+        public ResultBinding PointsSource { get; set; } = new();
     }
 
     public sealed class KlickOnPoint3DStep : JobStep
@@ -386,8 +386,8 @@ namespace TaskAutomation.Jobs
         public int OffsetX { get; set; } = 0;
         [JsonPropertyName("offset_y")]
         public int OffsetY { get; set; } = 0;
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("points_source")]
+        public ResultBinding PointsSource { get; set; } = new();
     }
 
     public sealed class JobExecutionStep : JobStep
@@ -442,11 +442,11 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = "";
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("dynamic_roi_step_id")]
-        public string DynamicRoiStepId { get; set; } = "";
+        [JsonPropertyName("dynamic_roi_source")]
+        public ResultBinding DynamicRoiSource { get; set; } = new();
     }
 
     // ---- If / ElseIf / Else / EndIf ----
@@ -568,8 +568,27 @@ namespace TaskAutomation.Jobs
 
     public sealed class ActiveProcessSettings
     {
+        [JsonPropertyName("target")]
+        public ProcessTargetSettings Target { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Uniform target used by all process and window steps. A source step has priority
+    /// over the fallback selectors and identifies one concrete process instance.
+    /// </summary>
+    public sealed class ProcessTargetSettings
+    {
+        [JsonPropertyName("process_source")]
+        public ResultBinding ProcessSource { get; set; } = new();
+
         [JsonPropertyName("process_name")]
         public string ProcessName { get; set; } = string.Empty;
+
+        [JsonPropertyName("executable_path")]
+        public string ExecutablePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("window_title_contains")]
+        public string WindowTitleContains { get; set; } = string.Empty;
     }
 
     // ---- StartProcess ----
@@ -601,18 +620,15 @@ namespace TaskAutomation.Jobs
 
     public sealed class StartProcessSettings
     {
+        [JsonPropertyName("target")]
+        public ProcessTargetSettings Target { get; set; } = new();
+
         [JsonPropertyName("action")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public StartProcessAction Action { get; set; } = StartProcessAction.Start;
 
         [JsonPropertyName("executable_path")]
         public string ExecutablePath { get; set; } = string.Empty;
-
-        [JsonPropertyName("process_name")]
-        public string ProcessName { get; set; } = string.Empty;
-
-        [JsonPropertyName("window_title_contains")]
-        public string WindowTitleContains { get; set; } = string.Empty;
 
         [JsonPropertyName("arguments")]
         public string Arguments { get; set; } = string.Empty;
@@ -706,15 +722,12 @@ namespace TaskAutomation.Jobs
 
     public sealed class FocusProcessSettings
     {
+        [JsonPropertyName("target")]
+        public ProcessTargetSettings Target { get; set; } = new();
+
         [JsonPropertyName("action")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public FocusProcessAction Action { get; set; } = FocusProcessAction.BringToFront;
-
-        [JsonPropertyName("executable_path")]
-        public string ExecutablePath { get; set; } = string.Empty;
-
-        [JsonPropertyName("window_title_contains")]
-        public string WindowTitleContains { get; set; } = string.Empty;
 
         [JsonPropertyName("window_mode")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -731,8 +744,8 @@ namespace TaskAutomation.Jobs
 
     public sealed class ActiveWindowSettings
     {
-        [JsonPropertyName("process_name")]
-        public string ProcessName { get; set; } = string.Empty;
+        [JsonPropertyName("target")]
+        public ProcessTargetSettings Target { get; set; } = new();
 
         [JsonPropertyName("cache_ms")]
         public int CacheMs { get; set; } = 0;
@@ -764,11 +777,11 @@ namespace TaskAutomation.Jobs
         [JsonConverter(typeof(OpenCvRectJsonConverter))]
         public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
 
-        [JsonPropertyName("source_capture_step_id")]
-        public string SourceCaptureStepId { get; set; } = string.Empty;
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
 
-        [JsonPropertyName("dynamic_roi_step_id")]
-        public string DynamicRoiStepId { get; set; } = string.Empty;
+        [JsonPropertyName("dynamic_roi_source")]
+        public ResultBinding DynamicRoiSource { get; set; } = new();
     }
 
     // ---- PointComparison ----
@@ -791,11 +804,9 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("manual_y")]
         public int ManualY { get; set; } = 0;
 
-        [JsonPropertyName("source_detection_step_id")]
-        public string SourceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("points_source")]
+        public ResultBinding PointsSource { get; set; } = new();
 
-        [JsonPropertyName("use_all_detections")]
-        public bool UseAllDetections { get; set; } = false;
     }
 
     public sealed class OffsetComparisonSettings
@@ -810,8 +821,8 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("reference_y")]
         public int ReferenceY { get; set; } = 0;
 
-        [JsonPropertyName("reference_detection_step_id")]
-        public string ReferenceDetectionStepId { get; set; } = "";
+        [JsonPropertyName("reference_points_source")]
+        public ResultBinding ReferencePointsSource { get; set; } = new();
 
         [JsonPropertyName("offset_x")]
         public int OffsetX { get; set; } = 10;

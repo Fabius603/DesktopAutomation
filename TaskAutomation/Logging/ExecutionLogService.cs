@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using TaskAutomation.Orchestration;
 
 namespace TaskAutomation.Logging
 {
@@ -62,6 +63,7 @@ namespace TaskAutomation.Logging
         public JobStartContext StartContext { get; }
         public long? DurationMs { get; internal set; }
         public bool IsRunning => EndedAt is null;
+        public JobExecutionState? JobState { get; internal set; }
     }
 
     public sealed class ExecutionLogEntry
@@ -74,6 +76,7 @@ namespace TaskAutomation.Logging
         public string? StepId { get; init; }
         public string? StepType { get; init; }
         public long? DurationMs { get; init; }
+        public JobExecutionState? JobState { get; init; }
     }
 
     public interface IExecutionLogService
@@ -84,7 +87,7 @@ namespace TaskAutomation.Logging
         IReadOnlyList<ExecutionLogSession> Sessions { get; }
 
         ExecutionLogSession BeginJob(Guid jobId, string jobName, JobStartContext? startContext = null);
-        void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null);
+        void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null, JobExecutionState? jobState = null);
         void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false);
         IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000);
         Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000, CancellationToken cancellationToken = default);
@@ -159,8 +162,11 @@ namespace TaskAutomation.Logging
             string? details = null,
             string? stepId = null,
             string? stepType = null,
-            long? durationMs = null)
+            long? durationMs = null,
+            JobExecutionState? jobState = null)
         {
+            if (jobState.HasValue)
+                session.JobState = jobState;
             var entry = new ExecutionLogEntry
             {
                 SessionId = session.Id,
@@ -170,7 +176,8 @@ namespace TaskAutomation.Logging
                 Details = details,
                 StepId = stepId,
                 StepType = stepType,
-                DurationMs = durationMs
+                DurationMs = durationMs,
+                JobState = jobState ?? session.JobState
             };
 
             lock (_gate)

@@ -14,6 +14,7 @@ using System.Windows.Threading;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Logging;
+using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
@@ -433,6 +434,7 @@ namespace DesktopAutomationApp.ViewModels
             Timestamp = entry.Timestamp;
             Level = entry.Level;
             StepType = entry.StepType;
+            JobState = entry.JobState;
             Message = entry.Message;
             DisplayDetails = BuildDetails(entry);
         }
@@ -440,6 +442,10 @@ namespace DesktopAutomationApp.ViewModels
         public DateTimeOffset Timestamp { get; }
         public ExecutionLogLevel Level { get; }
         public string? StepType { get; }
+        public JobExecutionState? JobState { get; }
+        public string JobStateText => JobState.HasValue
+            ? Loc.Get($"Enum.JobExecutionState.{JobState.Value}")
+            : string.Empty;
         public string Message { get; }
         public string DisplayDetails { get; }
         public string TimestampText => Timestamp.LocalDateTime.ToString("dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.GetCultureInfo("de-DE"));

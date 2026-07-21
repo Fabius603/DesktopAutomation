@@ -3,36 +3,43 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 
-namespace TaskAutomation.Steps
+namespace TaskAutomation.Steps;
+
+public sealed class ActiveProcessStepHandler : JobStepHandler<ActiveProcessStep, ActiveProcessResult>
 {
-    /// <summary>
-    /// Prüft, ob ein Prozess mit dem konfigurierten Namen aktuell ausgeführt wird.
-    /// Das Ergebnis (<see cref="TaskResult.Success"/>) ist <c>true</c>, wenn mindestens
-    /// eine Instanz des Prozesses gefunden wurde, sonst <c>false</c>.
-    /// </summary>
-    public sealed class ActiveProcessStepHandler : JobStepHandler<ActiveProcessStep, ActiveProcessResult>
+    protected override Task<ActiveProcessResult> ExecuteCoreAsync(
+        ActiveProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
     {
-        protected override Task<ActiveProcessResult> ExecuteCoreAsync(
-            ActiveProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
+        ct.ThrowIfCancellationRequested();
+        var target = step.Settings.Target;
+        if (!target.ProcessSource.IsConfigured
+            && string.IsNullOrWhiteSpace(target.ProcessName)
+            && string.IsNullOrWhiteSpace(target.ExecutablePath))
         {
-            ct.ThrowIfCancellationRequested();
-            var processName = ProcessWindowMatcher.NormalizeProcessName(step.Settings.ProcessName);
-
-            if (string.IsNullOrEmpty(processName))
-            {
-                ctx.Logger.LogWarning("ActiveProcessStepHandler: Kein Prozessname konfiguriert.");
-                return Task.FromResult(new ActiveProcessResult { WasExecuted = true, IsRunning = false });
-            }
-
-            var isRunning = ProcessWindowMatcher.FindMatchingProcessIds(processName, null).Count > 0;
-
-            ctx.Logger.LogInformation(
-                "ActiveProcessStepHandler: Prozess '{Name}' {Status}.",
-                step.Settings.ProcessName, isRunning ? "läuft" : "nicht gefunden");
-
-            return Task.FromResult(new ActiveProcessResult { WasExecuted = true, IsRunning = isRunning });
+            ctx.Logger.LogWarning("ActiveProcessStepHandler: Kein Prozessziel konfiguriert.");
+            return Task.FromResult(new ActiveProcessResult { WasExecuted = true });
         }
 
-        protected override ActiveProcessResult CreateDefault() => ActiveProcessResult.Default;
+        var processIds = ProcessTargetResolver.ResolveProcessIds(target, ctx.Results);
+        var processReference = processIds.Count > 0
+            ? ProcessTargetResolver.CreateReference(processIds[0])
+            : null;
+        ctx.Logger.LogInformation(
+            "ActiveProcessStepHandler: Ziel '{Target}' - aktiv: {IsRunning}, Treffer: {MatchCount}.",
+            TargetLabel(target), processIds.Count > 0, processIds.Count);
+        return Task.FromResult(new ActiveProcessResult
+        {
+            WasExecuted = true,
+            IsRunning = processIds.Count > 0,
+            MatchCount = processIds.Count,
+            Process = processReference
+        });
     }
+
+    protected override ActiveProcessResult CreateDefault() => ActiveProcessResult.Default;
+
+    private static string TargetLabel(ProcessTargetSettings target) =>
+        target.ProcessSource.IsConfigured
+            ? $"Step {target.ProcessSource.SourceStepId}"
+            : !string.IsNullOrWhiteSpace(target.ProcessName) ? target.ProcessName : target.ExecutablePath;
 }

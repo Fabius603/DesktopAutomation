@@ -195,7 +195,7 @@
                          VirtualizingPanel.VirtualizationMode="Recycling"
                          SelectionChanged="StepsList_SelectionChanged"
                          ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
-                         behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
+                         behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete"             Command="{Binding DeleteSelectedCommand}"/>

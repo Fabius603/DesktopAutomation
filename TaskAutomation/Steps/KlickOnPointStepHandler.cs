@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class KlickOnPointStepHandler : JobStepHandler<KlickOnPointStep, TaskResult>
+    public sealed class KlickOnPointStepHandler : JobStepHandler<KlickOnPointStep, KlickOnPointResult>
     {
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<KlickOnPointResult> ExecuteCoreAsync(
             KlickOnPointStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -21,12 +21,13 @@ namespace TaskAutomation.Steps
                 "KlickOnPointStepHandler: click='{ClickType}' double={Double} timeout={T}ms",
                 step.Settings.ClickType, step.Settings.DoubleClick, step.Settings.TimeoutMs);
 
-            // Hole den detektierten Punkt vom konfigurierten Detection-Step
-            var detection = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
-            if (!detection.Found || detection.Point is null)
+            var resolved = ResultBindingResolver.ResolvePoints(ctx.Results, step.Settings.PointsSource);
+            var detection = resolved.SourceResult as IDetectionStepResult;
+            var selectedPoint = resolved.FirstOrDefault;
+            if (!resolved.IsSuccess)
             {
                 logger.LogInformation("KlickOnPointStepHandler: No detection point available, skipping click");
-                return new TaskResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
+                return new KlickOnPointResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
             }
 
             // Timeout-Check
@@ -38,7 +39,7 @@ namespace TaskAutomation.Steps
                 {
                     logger.LogDebug("KlickOnPointStepHandler: Timeout not elapsed ({R:F0}ms remaining), skipping",
                         step.Settings.TimeoutMs - elapsed.TotalMilliseconds);
-                    return new TaskResult { WasExecuted = true, Success = true };
+                    return new KlickOnPointResult { WasExecuted = true, Success = true };
                 }
             }
 
@@ -46,17 +47,17 @@ namespace TaskAutomation.Steps
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
             var point = new System.Drawing.Point(
-                detection.Point.Value.X + step.Settings.OffsetX,
-                detection.Point.Value.Y + step.Settings.OffsetY);
+                selectedPoint.X + step.Settings.OffsetX,
+                selectedPoint.Y + step.Settings.OffsetY);
             logger.LogInformation("KlickOnPointStepHandler: Clicking at ({X},{Y})", point.X, point.Y);
 
             var macro = CreateClickMacro(step.Settings, point);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
 
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new KlickOnPointResult { WasExecuted = true, Success = true };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override KlickOnPointResult CreateDefault() => KlickOnPointResult.Default;
 
         private static Makro CreateClickMacro(KlickOnPointSettings settings, System.Drawing.Point point)
         {

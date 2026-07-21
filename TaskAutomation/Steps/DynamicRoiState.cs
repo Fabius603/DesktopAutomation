@@ -1,6 +1,7 @@
 using System.Drawing;
 using OpenCvSharp;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps;
 
@@ -15,21 +16,27 @@ public sealed class DynamicRoiState
 internal static class DynamicRoiResolver
 {
     public static Rect? Resolve(
-        string? dynamicRoiStepId,
-        CaptureResult capture,
+        ResultBinding? dynamicRoiSource,
+        ICaptureStepResult capture,
         IStepPipelineContext context,
         Rect? staticRoi = null)
     {
-        if (string.IsNullOrWhiteSpace(dynamicRoiStepId)
-            || !context.DynamicRoiStates.TryGetValue(dynamicRoiStepId, out var state)
-            || state.GlobalBounds is not Rectangle global)
+        var resolvedBounds = ResultBindingResolver.Resolve<Rectangle>(context.Results, dynamicRoiSource);
+        var dynamicRoiStepId = dynamicRoiSource?.SourceStepId;
+        if (!resolvedBounds.IsSuccess
+            || string.IsNullOrWhiteSpace(dynamicRoiStepId))
         {
-            if (!string.IsNullOrWhiteSpace(dynamicRoiStepId))
+            if (dynamicRoiSource?.IsConfigured == true)
                 context.Logger.LogDebug("Dynamic ROI {StepId}: noch keine ROI vorhanden; Basis-Suchbereich wird verwendet.", dynamicRoiStepId);
             return null;
         }
 
-        if (state.FullSearchInterval > 0 && state.RoiUsesSinceFullSearch >= state.FullSearchInterval)
+        var global = resolvedBounds.FirstOrDefault;
+        context.DynamicRoiStates.TryGetValue(dynamicRoiStepId, out var state);
+
+        if (state is not null
+            && state.FullSearchInterval > 0
+            && state.RoiUsesSinceFullSearch >= state.FullSearchInterval)
         {
             state.RoiUsesSinceFullSearch = 0;
             context.Logger.LogInformation("Dynamic ROI {StepId}: periodische Basis-Suche nach {Interval} ROI-Durchläufen.",
@@ -40,7 +47,8 @@ internal static class DynamicRoiResolver
         var captureBounds = capture.Bounds;
         var intersection = Rectangle.Intersect(global, captureBounds);
         if (intersection.Width <= 0 || intersection.Height <= 0) return null;
-        state.RoiUsesSinceFullSearch++;
+        if (state is not null)
+            state.RoiUsesSinceFullSearch++;
         var resolved = new Rect(
             intersection.X - capture.Offset.X,
             intersection.Y - capture.Offset.Y,
@@ -66,7 +74,7 @@ internal static class DynamicRoiResolver
 
         context.Logger.LogDebug("Dynamic ROI {StepId}: lokale ROI angewendet X={X}, Y={Y}, B={Width}, H={Height}; Nutzung={Use}/{Interval}.",
             dynamicRoiStepId, resolved.X, resolved.Y, resolved.Width, resolved.Height,
-            state.RoiUsesSinceFullSearch, state.FullSearchInterval);
+            state?.RoiUsesSinceFullSearch ?? 0, state?.FullSearchInterval ?? 0);
         return resolved;
     }
 }

@@ -10,23 +10,19 @@ namespace TaskAutomation.Steps
         private const int Thickness = 2;
         private const int Radius = 5;
 
-        public static Bitmap Draw(Bitmap source, DetectionResult detection, Point captureOffset)
+        public static Bitmap Draw(Bitmap source, IReadOnlyList<DetectionItem> detections, Point captureOffset)
         {
             var bitmap = (Bitmap)source.Clone();
-            if (!detection.Found || detection.Point is null)
+            if (detections.Count == 0)
                 return bitmap;
 
             using var graphics = Graphics.FromImage(bitmap);
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            var items = detection.AllDetections.Count > 0
-                ? detection.AllDetections
-                : new[] { (Center: detection.Point.Value, detection.BoundingBox) };
+            for (var i = 1; i < detections.Count; i++)
+                DrawSingle(graphics, detections[i].Center, detections[i].BoundingBox, captureOffset, ColorOther);
 
-            for (var i = 1; i < items.Count; i++)
-                DrawSingle(graphics, items[i].Center, items[i].BoundingBox, captureOffset, ColorOther);
-
-            DrawSingle(graphics, items[0].Center, items[0].BoundingBox, captureOffset, ColorBest);
+            DrawSingle(graphics, detections[0].Center, detections[0].BoundingBox, captureOffset, ColorBest);
             return bitmap;
         }
 

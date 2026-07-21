@@ -7,9 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class ScriptExecutionStepHandler : JobStepHandler<ScriptExecutionStep, TaskResult>
+    public sealed class ScriptExecutionStepHandler : JobStepHandler<ScriptExecutionStep, ScriptExecutionResult>
     {
-        protected override async Task<TaskResult> ExecuteCoreAsync(
+        protected override async Task<ScriptExecutionResult> ExecuteCoreAsync(
             ScriptExecutionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
@@ -41,9 +41,9 @@ namespace TaskAutomation.Steps
                     step.Settings.ScriptPath, step.Settings.Arguments, ct);
             }
 
-            return new TaskResult { WasExecuted = true, Success = true };
+            return new ScriptExecutionResult { WasExecuted = true, Success = true };
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override ScriptExecutionResult CreateDefault() => ScriptExecutionResult.Default;
     }
 }

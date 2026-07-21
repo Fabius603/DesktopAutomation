@@ -33,7 +33,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -47,17 +47,10 @@
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.MatchMode}"/><Run Text="{Binding Settings.TemplateMatchMode}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MultipleMatches}"/>
-                        <Run Text="{Binding Settings.MultiplePoints, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.EnableROI, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
@@ -82,7 +75,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -116,11 +109,8 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.Downscale}"/><Run Text="{Binding Settings.DownscaleFactor}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.EnableROI, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
                         <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
@@ -145,7 +135,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.PointsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -226,19 +216,20 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
                             </Run.Text>
                         </Run>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.DetectionsSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.DetectionsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -269,7 +260,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.DetectionsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -297,19 +288,20 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
                             </Run.Text>
                         </Run>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.DetectionsSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.DetectionsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -361,7 +353,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.PointsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -401,7 +393,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceDetectionStepId"/>
+                                    <Binding Path="Settings.PointsSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -492,7 +484,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -551,11 +543,18 @@
                 <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessSource}"/>
+                        <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                            <Binding Path="Settings.Target.ProcessSource"/>
+                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                        </MultiBinding></Run.Text></Run>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CacheMs}"/><Run Text="{Binding Settings.CacheMs}"/>
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Target.ProcessName}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -615,12 +614,23 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <TextBlock Style="{StaticResource ParamText}">
-                            <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        <TextBlock Style="{StaticResource ParamText}"
+                                   Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessSource}"/>
+                            <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                <Binding Path="Settings.Target.ProcessSource"/>
+                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                            </MultiBinding></Run.Text></Run>
                         </TextBlock>
-                        <TextBlock Style="{StaticResource ParamText}">
-                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.WindowTitleContains}"/>
-                        </TextBlock>
+                        <StackPanel Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                            <TextBlock Style="{StaticResource ParamText}">
+                                <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Target.ProcessName}"/>
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource ParamText}">
+                                <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -638,15 +648,26 @@
                 <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessSource}"/>
+                        <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                            <Binding Path="Settings.Target.ProcessSource"/>
+                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                        </MultiBinding></Run.Text></Run>
+                    </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.Action}"/><Run Text="{Binding Settings.Action, Converter={StaticResource LocalizedEnumConverter}}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/>
-                    </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.WindowTitleContains}"/>
-                    </TextBlock>
+                    <StackPanel Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.Target.ExecutablePath}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
+                        </TextBlock>
+                    </StackPanel>
                     <TextBlock>
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource ParamText}">
@@ -705,8 +726,21 @@
                 <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessSource}"/>
+                        <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                            <Binding Path="Settings.Target.ProcessSource"/>
+                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                        </MultiBinding></Run.Text></Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.Target.ProcessSource.IsConfigured, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Target.ProcessName}"/>
+                    </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.ProcessName}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.CacheMs}"/><Run Text="{Binding Settings.CacheMs}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -720,7 +754,7 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                            <Binding Path="Settings.SourceDetectionStepId"/>
+                            <Binding Path="Settings.BoundsSource"/>
                             <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                             <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                         </MultiBinding></Run.Text></Run>
@@ -750,7 +784,7 @@
                         <Run>
                             <Run.Text>
                                 <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
-                                    <Binding Path="Settings.SourceCaptureStepId"/>
+                                    <Binding Path="Settings.ImageSource"/>
                                     <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                 </MultiBinding>
@@ -766,9 +800,10 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.LoweSRatio}"/><Run Text="{Binding Settings.LowesRatioThreshold, StringFormat=F2}"/>
                     </TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
-                        <Run Text="{Binding Settings.EnableROI, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.EnableROI, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
+                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -797,6 +832,47 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.Points}"/><Run Text="{Binding Settings.Points.Count, Mode=OneWay}"/>
                     </TextBlock>
+                    <ItemsControl ItemsSource="{Binding Settings.Points}" Margin="8,1,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock>
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource ParamText}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source}" Value="{x:Static jobs:PointEntrySource.Manual}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PointX}"/><Run Text="{Binding ManualX}"/>
+                                        <Run Text="{loc:Translate Key=Ui.Job.Steps.PointY}"/><Run Text="{Binding ManualY}"/>
+                                    </TextBlock>
+                                    <TextBlock>
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource ParamText}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source}" Value="{x:Static jobs:PointEntrySource.Manual}">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                                <Binding Path="PointsSource"/>
+                                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Grid>
         </DataTemplate>

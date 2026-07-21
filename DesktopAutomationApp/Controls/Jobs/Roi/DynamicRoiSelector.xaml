@@ -1,28 +1,14 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Roi.DynamicRoiSelector"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:jobControls="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
     <Border Background="{DynamicResource App.Brush.Surface}" BorderBrush="{DynamicResource App.Brush.CardBorder}"
             BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,2,0,10">
         <StackPanel>
-            <CheckBox IsChecked="{Binding UseDynamicRoi}" FontWeight="SemiBold"
-                      Content="{loc:Translate Key=Ui.Step.DynamicRoi.Use}"/>
-            <StackPanel Margin="24,10,0,0">
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding UseDynamicRoi}" Value="True">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
-                <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Selector}" Margin="0,0,0,4"
-                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                <ComboBox ItemsSource="{Binding AvailableDynamicRoiSteps}" DisplayMemberPath="DisplayName"
-                          SelectedItem="{Binding DetectionDynamicRoiStep}"/>
-            </StackPanel>
+            <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Selector}" Margin="0,0,0,6"
+                       FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+            <jobControls:ResultBindingPicker DataContext="{Binding DetectionDynamicRoiSource}"/>
         </StackPanel>
     </Border>
 </UserControl>

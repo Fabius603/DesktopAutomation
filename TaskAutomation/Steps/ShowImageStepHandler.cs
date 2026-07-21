@@ -8,30 +8,28 @@ using TaskAutomation.Events;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class ShowImageStepHandler : JobStepHandler<ShowImageStep, OutputResult>
+    public sealed class ShowImageStepHandler : JobStepHandler<ShowImageStep, ShowImageResult>
     {
-        protected override async Task<OutputResult> ExecuteCoreAsync(
+        protected override async Task<ShowImageResult> ExecuteCoreAsync(
             ShowImageStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var logger = ctx.Logger;
             logger.LogDebug("ShowImageStepHandler: Window '{Name}'", step.Settings.WindowName);
 
-            var capture   = ctx.Results.GetById<CaptureResult>(step.Settings.SourceCaptureStepId);
-            var hasDetectionSource = !string.IsNullOrWhiteSpace(step.Settings.SourceDetectionStepId);
-            var detection = !hasDetectionSource
-                ? DetectionResult.Default
-                : ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
-
-            var rawImage = capture.Image;
+            var imageInput = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
+            var capture = imageInput.Capture;
+            var detections = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
+            var hasDetectionSource = step.Settings.DetectionsSource.IsConfigured;
+            var rawImage = imageInput.Image;
 
             if (rawImage == null)
             {
                 logger.LogInformation("ShowImageStepHandler: Kein Bild verfügbar, Step wird übersprungen");
-                return new OutputResult { WasExecuted = true, Success = false };
+                return new ShowImageResult { WasExecuted = true, Success = false };
             }
 
-            using var drawnImage = hasDetectionSource && detection.Found
-                ? DetectionResultDrawing.Draw(rawImage, detection, capture.Offset)
+            using var drawnImage = detections.IsSuccess
+                ? DetectionResultDrawing.Draw(rawImage, detections.Values, capture.Offset)
                 : null;
             var image = drawnImage ?? rawImage;
             var displayType = drawnImage != null ? ImageDisplayType.Processed : ImageDisplayType.Raw;
@@ -44,9 +42,10 @@ namespace TaskAutomation.Steps
                 step.Settings.WindowName,
                 hasDetectionSource,
                 drawnImage != null);
-            return new OutputResult { WasExecuted = true, Success = true };
+            return new ShowImageResult { WasExecuted = true, Success = true };
         }
 
-        protected override OutputResult CreateDefault() => OutputResult.Default;
+        protected override ShowImageResult CreateDefault() => ShowImageResult.Default;
+
     }
 }

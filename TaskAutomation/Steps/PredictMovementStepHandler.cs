@@ -9,7 +9,7 @@ using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
 {
-    public sealed class PredictMovementStepHandler : JobStepHandler<PredictMovementStep, DetectionResult>
+    public sealed class PredictMovementStepHandler : JobStepHandler<PredictMovementStep, PredictMovementResult>
     {
         private const int MaxSamples = 12;
         private const double RegressionEpsilon = 1e-12;
@@ -18,28 +18,35 @@ namespace TaskAutomation.Steps
         private const double MinimumActionLeadMs = 2.0;
         private const double MaximumActionLeadMs = 33.0;
 
-        protected override Task<DetectionResult> ExecuteCoreAsync(
+        protected override Task<PredictMovementResult> ExecuteCoreAsync(
             PredictMovementStep step,
             IStepPipelineContext ctx,
             CancellationToken ct)
         {
-            var source = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
+            var resolved = ResultBindingResolver.ResolvePoints(ctx.Results, step.Settings.PointsSource);
+            var source = resolved.SourceResult as IDetectionStepResult;
+            if (source is null)
+                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
             var state = GetState(ctx, step.Id);
             var sampleTimestamp = source.SourceCaptureTimestampUtc;
 
             PruneOldSamplesAndTracks(state, sampleTimestamp, step.Settings.MaxSampleAgeMs);
 
-            if (!source.Found || source.Point is null)
+            if (!resolved.IsSuccess)
             {
                 // A single missed detection must not destroy an otherwise stable track. Old
                 // tracks are removed by MaxSampleAgeMs and can therefore survive brief gaps.
                 ctx.Logger.LogInformation("PredictMovementStepHandler: Kein Quellpunkt verfuegbar, History beibehalten.");
-                return Task.FromResult(new DetectionResult { WasExecuted = true, Found = false });
+                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
             }
 
-            var detections = source.AllDetections.Count > 0
-                ? source.AllDetections
-                : new[] { (Center: source.Point.Value, source.BoundingBox) };
+            var detections = resolved.Values.Select((point, index) => new DetectionItem
+            {
+                Center = point,
+                BoundingBox = source.AllDetections.ElementAtOrDefault(index)?.BoundingBox
+                              ?? (index == 0 ? source.BoundingBox : null),
+                Confidence = source.AllDetections.ElementAtOrDefault(index)?.Confidence ?? source.Confidence
+            }).ToArray();
 
             AssignDetectionsToTracks(state, detections, sampleTimestamp, step.Settings.ResetDistanceThreshold);
 
@@ -64,7 +71,7 @@ namespace TaskAutomation.Steps
                     "PredictMovementStepHandler: Noch nicht genug stabile Samples. Benoetigt={MinSamples}, Tracks={Tracks}.",
                     step.Settings.MinSamples,
                     state.Tracks.Count);
-                return Task.FromResult(new DetectionResult { WasExecuted = true, Found = false });
+                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
             }
 
             var ordered = predictions
@@ -90,10 +97,10 @@ namespace TaskAutomation.Steps
                     "PredictMovementStepHandler: Confidence {Confidence:F3} liegt unter Minimum {Minimum:F3}.",
                     confidence,
                     step.Settings.MinimumConfidence);
-                return Task.FromResult(new DetectionResult { WasExecuted = true, Found = false });
+                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
             }
 
-            return Task.FromResult(new DetectionResult
+            return Task.FromResult(new PredictMovementResult
             {
                 WasExecuted = true,
                 Found = true,
@@ -104,11 +111,16 @@ namespace TaskAutomation.Steps
                 SourceCaptureTimestampUtc = source.SourceCaptureTimestampUtc,
                 IsPredicted = true,
                 PredictedForUtc = predictedFor,
-                AllDetections = ordered.Select(p => (p.Center, p.BoundingBox)).ToList()
+                AllDetections = ordered.Select(p => new DetectionItem
+                {
+                    Center = p.Center,
+                    BoundingBox = p.BoundingBox,
+                    Confidence = confidence
+                }).ToList()
             });
         }
 
-        protected override DetectionResult CreateDefault() => DetectionResult.Default;
+        protected override PredictMovementResult CreateDefault() => PredictMovementResult.Default;
 
         private static PredictMovementState GetState(IStepPipelineContext ctx, string stepId)
         {
@@ -123,7 +135,7 @@ namespace TaskAutomation.Steps
 
         private static void AssignDetectionsToTracks(
             PredictMovementState state,
-            IReadOnlyList<(Point Center, Rectangle? BoundingBox)> detections,
+            IReadOnlyList<DetectionItem> detections,
             DateTime sampleTimestamp,
             double resetDistanceThreshold)
         {
@@ -180,7 +192,7 @@ namespace TaskAutomation.Steps
 
         private static void AddSample(
             PredictMovementTrack track,
-            (Point Center, Rectangle? BoundingBox) detection,
+            DetectionItem detection,
             DateTime timestampUtc)
         {
             if (track.Samples.Count > 0 && track.Samples.Last().TimestampUtc == timestampUtc)

@@ -56,9 +56,23 @@ namespace DesktopAutomationApp.ViewModels
             _precedingSteps = precedingSteps;
             _allJobSteps = allJobSteps ?? precedingSteps;
             _currentJobId = currentJobId;
-            AvailableCaptureSteps = BuildStepItems("CaptureResult");
-            AvailableDetectionSteps = BuildStepItems("DetectionResult");
-            var detectionDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == "DetectionResult");
+            AvailableCaptureSteps = BuildStepItems(ResultValueKind.Image);
+            AvailableDetectionSteps = BuildStepItems(ResultValueKind.Detection);
+            var processDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == nameof(StartProcessResult));
+            AvailableProcessSteps = new[]
+                {
+                    new SourceStepItem(
+                        string.Empty,
+                        Loc.Get("Ui.Step.ProcessSource.SearchByCharacteristics"),
+                        processDescriptor)
+                }
+                .Concat(BuildStepItems(ResultValueKind.ProcessReference).Where(item =>
+                    _precedingSteps.FirstOrDefault(step => step.Id == item.StepId) is StartProcessStep
+                    { Settings.Action: StartProcessAction.Start }))
+                .DistinctBy(item => item.StepId)
+                .ToList();
+            var detectionDescriptor = StepResultMetadata.ResultTypes.First(r =>
+                r.Properties.Any(property => property.ValueKind == ResultValueKind.Detection));
             AvailableOptionalDetectionSteps = new[]
                 {
                     new SourceStepItem(
@@ -68,13 +82,45 @@ namespace DesktopAutomationApp.ViewModels
                 }
                 .Concat(AvailableDetectionSteps)
                 .ToList();
-            var dynamicRoiDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == "TaskResult");
-            AvailableDynamicRoiSteps = new[] { new SourceStepItem(string.Empty, "Keine (Vollbild/feste ROI)", dynamicRoiDescriptor) }
-                .Concat(_allJobSteps
-                .Select((step, index) => (step, index))
-                .Where(x => x.step is DynamicRoiStep)
-                .Select(x => new SourceStepItem(x.step.Id, StepLocalization.NumberedName(x.step, _allJobSteps), dynamicRoiDescriptor))
-                ).ToList();
+            var allResultSources = GetConditionSourceSteps();
+            TemplateMatchingStep_ImageSource = Picker<TemplateMatchingStep>("image", allResultSources);
+            ColorDetectionStep_ImageSource = Picker<ColorDetectionStep>("image", allResultSources);
+            YoloDetectionStep_ImageSource = Picker<YOLODetectionStep>("image", allResultSources);
+            KeyPointMatchingStep_ImageSource = Picker<KeyPointMatchingStep>("image", allResultSources);
+            PredictMovementStep_PointsSource = Picker<PredictMovementStep>("points", allResultSources);
+            KlickOnPointStep_PointsSource = Picker<KlickOnPointStep>("points", allResultSources);
+            KlickOnPoint3DStep_PointsSource = Picker<KlickOnPoint3DStep>("points", allResultSources);
+            DynamicRoiStep_BoundsSource = Picker<DynamicRoiStep>("bounds", allResultSources);
+            DetectionDynamicRoiSource = Picker<TemplateMatchingStep>("dynamicRoi", allResultSources, false);
+            ShowImageStep_ImageSource = Picker<ShowImageStep>("image", allResultSources);
+            ShowImageStep_DetectionsSource = Picker<ShowImageStep>("detections", allResultSources, false);
+            ShowOnDesktopStep_DetectionsSource = Picker<ShowOnDesktopStep>("detections", allResultSources);
+            VideoCreationStep_ImageSource = Picker<VideoCreationStep>("image", allResultSources);
+            VideoCreationStep_DetectionsSource = Picker<VideoCreationStep>("detections", allResultSources, false);
+            ActiveProcessStep_ProcessSource = Picker<ActiveProcessStep>("process", allResultSources, false);
+            StartProcessStep_ProcessSource = Picker<StartProcessStep>("process", allResultSources, false);
+            FocusProcessStep_ProcessSource = Picker<FocusProcessStep>("process", allResultSources, false);
+            ActiveWindowStep_ProcessSource = Picker<ActiveWindowStep>("process", allResultSources, false);
+            PointComparisonStep_ReferencePointsSource = Picker<PointComparisonStep>("points", allResultSources);
+            foreach (var picker in new[]
+                     {
+                         TemplateMatchingStep_ImageSource, ColorDetectionStep_ImageSource, YoloDetectionStep_ImageSource,
+                         KeyPointMatchingStep_ImageSource, PredictMovementStep_PointsSource, KlickOnPointStep_PointsSource,
+                         KlickOnPoint3DStep_PointsSource, DynamicRoiStep_BoundsSource, DetectionDynamicRoiSource, ShowImageStep_ImageSource,
+                         ShowImageStep_DetectionsSource, ShowOnDesktopStep_DetectionsSource, VideoCreationStep_ImageSource,
+                         VideoCreationStep_DetectionsSource, ActiveProcessStep_ProcessSource, StartProcessStep_ProcessSource,
+                         FocusProcessStep_ProcessSource, ActiveWindowStep_ProcessSource
+                         , PointComparisonStep_ReferencePointsSource
+                     })
+                picker.PropertyChanged += (_, _) =>
+                {
+                    OnChange(nameof(ActiveProcessStep_UsesProcessSource));
+                    OnChange(nameof(StartProcessStep_UsesProcessSource));
+                    OnChange(nameof(FocusProcessStep_UsesProcessSource));
+                    OnChange(nameof(ActiveWindowStep_UsesProcessSource));
+                    OnChange(nameof(UseDynamicRoi));
+                    OnChange(nameof(HasSelectedDynamicRoi));
+                };
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
@@ -206,7 +252,10 @@ namespace DesktopAutomationApp.ViewModels
             VideoCreationStep_SourceCaptureStep     = AvailableCaptureSteps.FirstOrDefault();
             VideoCreationStep_SourceDetectionStep   = AvailableOptionalDetectionSteps.FirstOrDefault();
             PointComparisonStep_RefDetectionStep    = AvailableDetectionSteps.FirstOrDefault();
-            DetectionDynamicRoiStep = AvailableDynamicRoiSteps.FirstOrDefault();
+            ActiveProcessStep_SourceProcessStep = AvailableProcessSteps.FirstOrDefault();
+            StartProcessStep_SourceProcessStep = AvailableProcessSteps.FirstOrDefault();
+            FocusProcessStep_SourceProcessStep = AvailableProcessSteps.FirstOrDefault();
+            ActiveWindowStep_SourceProcessStep = AvailableProcessSteps.FirstOrDefault();
         }
 
         // ----- Dialog-Interop -----
@@ -336,17 +385,27 @@ namespace DesktopAutomationApp.ViewModels
                     && HasCaptureSource(YoloDetectionStep_SourceCaptureStep)
                     && HasValidRoi(YoloDetectionStep_EnableROI, YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH),
                 "Timeout" => TimeoutStep_DelayMs >= 0,
-                "ActiveProcess" => !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
-                "StartProcess"  => ExecutablePathResolver.CanResolve(StartProcessStep_ExecutablePath)
-                    && StartProcessStep_MonitorIndex >= 0,
-                "FocusProcess"  => ExecutablePathResolver.CanResolve(FocusProcessStep_ExecutablePath),
+                "ActiveProcess" => ActiveProcessStep_UsesProcessSource
+                    ? ActiveProcessStep_ProcessSource.IsConfigured
+                    : !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
+                "StartProcess"  => StartProcessStep_IsStartAction
+                    ? ExecutablePathResolver.CanResolve(StartProcessStep_ExecutablePath)
+                      && StartProcessStep_MonitorIndex >= 0
+                    : StartProcessStep_UsesProcessSource
+                        ? StartProcessStep_ProcessSource.IsConfigured
+                        : !string.IsNullOrWhiteSpace(StartProcessStep_ProcessName),
+                "FocusProcess"  => FocusProcessStep_UsesProcessSource
+                    ? FocusProcessStep_ProcessSource.IsConfigured
+                    : ExecutablePathResolver.CanResolve(FocusProcessStep_ExecutablePath),
                 "ShowText"      =>
                     !string.IsNullOrWhiteSpace(ShowTextStep_Text)
                     && ShowTextStep_FontSize > 0
                     && ShowTextStep_Opacity is >= 0 and <= 1
                     && ShowTextStep_DesktopIndex >= 0
                     && ShowTextStep_DurationMs >= 0,
-                "ActiveWindow"  => !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName)
+                "ActiveWindow"  => (ActiveWindowStep_UsesProcessSource
+                                      ? ActiveWindowStep_ProcessSource.IsConfigured
+                                      : !string.IsNullOrWhiteSpace(ActiveWindowStep_ProcessName))
                                    && ActiveWindowStep_CacheMs >= 0,
                 "KeyPointMatching" =>
                     IsExistingFile(KeyPointMatchingStep_TemplatePath)
@@ -416,7 +475,7 @@ namespace DesktopAutomationApp.ViewModels
             if (PointComparisonStep_Mode == TaskAutomation.Jobs.PointComparisonMode.Offset)
             {
                 if (PointComparisonStep_RefSource == TaskAutomation.Jobs.PointEntrySource.JobResult
-                    && PointComparisonStep_RefDetectionStep == null)
+                    && !PointComparisonStep_ReferencePointsSource.IsConfigured)
                     return false;
 
                 return PointComparisonStep_OffsetX >= 0 && PointComparisonStep_OffsetY >= 0;
@@ -428,7 +487,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private static bool IsValidPointEntry(PointEntryViewModel point)
             => point.Source == TaskAutomation.Jobs.PointEntrySource.Manual
-                || point.SelectedDetectionStep != null;
+                || point.PointsSource.IsConfigured;
 
         private static bool IsValidAxisExpression(AxisExpressionViewModel expression)
             => expression.Axis is "X" or "Y";
@@ -579,7 +638,13 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var step in _precedingSteps)
             {
                 var info = StepPipelineRegistry.Get(step.GetType());
-                if (info != null) set.Add(info.Output);
+                if (info == null) continue;
+                set.Add(info.Output);
+                var result = StepResultMetadata.GetResultType(info.Output);
+                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Image) == true) set.Add("Image");
+                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Point) == true) set.Add("Points");
+                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Rectangle) == true) set.Add("Rectangles");
+                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Detection) == true) set.Add("Detections");
             }
             return set;
         }
@@ -602,19 +667,17 @@ namespace DesktopAutomationApp.ViewModels
         /// <summary>
         /// Builds a list of all preceding steps that produce a result of the given type name.
         /// </summary>
-        private IReadOnlyList<SourceStepItem> BuildStepItems(string resultTypeName)
+        private IReadOnlyList<SourceStepItem> BuildStepItems(ResultValueKind valueKind)
         {
             var items = new List<SourceStepItem>();
-            var allowed = JobValidation.GetAllowedSourceSteps(_precedingSteps, _precedingSteps.Count, resultTypeName);
             for (int i = 0; i < _precedingSteps.Count; i++)
             {
                 var step = _precedingSteps[i];
-                if (!allowed.Contains(step)) continue;
                 var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
-                if (info?.Output != resultTypeName) continue;
+                if (info is null) continue;
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
-                    .FirstOrDefault(r => r.TypeName == resultTypeName);
-                if (descriptor is null) continue;
+                    .FirstOrDefault(r => r.TypeName == info.Output);
+                if (descriptor?.Properties.Any(property => property.ValueKind == valueKind) != true) continue;
                 var name = StepLocalization.NumberedName(step, _precedingSteps);
                 items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
             }
@@ -630,43 +693,43 @@ namespace DesktopAutomationApp.ViewModels
                     StepLocalization.ResultType(source.ResultType)))
                 .ToArray();
 
+        private static ResultBindingPickerViewModel Picker<TStep>(
+            string key, IReadOnlyList<SourceStepItem> sources, bool selectDefault = true)
+            where TStep : JobStep => new(sources,
+                StepInputContractRegistry.Get(typeof(TStep), key)
+                ?? throw new InvalidOperationException($"Eingabevertrag '{key}' für {typeof(TStep).Name} fehlt."),
+                selectDefault);
+
+        public ResultBindingPickerViewModel TemplateMatchingStep_ImageSource { get; }
+        public ResultBindingPickerViewModel ColorDetectionStep_ImageSource { get; }
+        public ResultBindingPickerViewModel YoloDetectionStep_ImageSource { get; }
+        public ResultBindingPickerViewModel KeyPointMatchingStep_ImageSource { get; }
+        public ResultBindingPickerViewModel PredictMovementStep_PointsSource { get; }
+        public ResultBindingPickerViewModel KlickOnPointStep_PointsSource { get; }
+        public ResultBindingPickerViewModel KlickOnPoint3DStep_PointsSource { get; }
+        public ResultBindingPickerViewModel DynamicRoiStep_BoundsSource { get; }
+        public ResultBindingPickerViewModel ShowImageStep_ImageSource { get; }
+        public ResultBindingPickerViewModel ShowImageStep_DetectionsSource { get; }
+        public ResultBindingPickerViewModel ShowOnDesktopStep_DetectionsSource { get; }
+        public ResultBindingPickerViewModel VideoCreationStep_ImageSource { get; }
+        public ResultBindingPickerViewModel VideoCreationStep_DetectionsSource { get; }
+        public ResultBindingPickerViewModel ActiveProcessStep_ProcessSource { get; }
+        public ResultBindingPickerViewModel StartProcessStep_ProcessSource { get; }
+        public ResultBindingPickerViewModel FocusProcessStep_ProcessSource { get; }
+        public ResultBindingPickerViewModel ActiveWindowStep_ProcessSource { get; }
+        public ResultBindingPickerViewModel PointComparisonStep_ReferencePointsSource { get; }
+
         public IReadOnlyList<SourceStepItem> AvailableCaptureSteps { get; }
         public IReadOnlyList<SourceStepItem> AvailableDetectionSteps { get; }
         public IReadOnlyList<SourceStepItem> AvailableOptionalDetectionSteps { get; }
-        public IReadOnlyList<SourceStepItem> AvailableDynamicRoiSteps { get; }
+        public ResultBindingPickerViewModel DetectionDynamicRoiSource { get; }
+        public IReadOnlyList<SourceStepItem> AvailableProcessSteps { get; }
 
-        private SourceStepItem? _detectionDynamicRoiStep;
-        public SourceStepItem? DetectionDynamicRoiStep
-        {
-            get => _detectionDynamicRoiStep;
-            set
-            {
-                _detectionDynamicRoiStep = value;
-                if (!string.IsNullOrWhiteSpace(value?.StepId))
-                    _useDynamicRoi = true;
-                OnChange();
-                OnChange(nameof(UseDynamicRoi));
-                OnChange(nameof(HasSelectedDynamicRoi));
-            }
-        }
+        private static bool HasProcessSource(SourceStepItem? source) =>
+            !string.IsNullOrWhiteSpace(source?.StepId);
 
-        private bool _useDynamicRoi;
-        public bool UseDynamicRoi
-        {
-            get => _useDynamicRoi;
-            set
-            {
-                if (_useDynamicRoi == value) return;
-                _useDynamicRoi = value;
-                if (!value || DetectionDynamicRoiStep is null)
-                    DetectionDynamicRoiStep = AvailableDynamicRoiSteps.FirstOrDefault();
-                OnChange();
-                OnChange(nameof(HasSelectedDynamicRoi));
-            }
-        }
-
-        public bool HasSelectedDynamicRoi =>
-            !string.IsNullOrWhiteSpace(DetectionDynamicRoiStep?.StepId);
+        public bool UseDynamicRoi => DetectionDynamicRoiSource.IsConfigured;
+        public bool HasSelectedDynamicRoi => DetectionDynamicRoiSource.IsConfigured;
 
         private SourceStepItem? _dynamicRoiStep_SourceDetectionStep;
         public SourceStepItem? DynamicRoiStep_SourceDetectionStep
@@ -1577,6 +1640,19 @@ namespace DesktopAutomationApp.ViewModels
         public int TimeoutStep_DelayMs { get => _timeoutStep_DelayMs; set { _timeoutStep_DelayMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         // ===== ActiveProcess Felder =====
+        private SourceStepItem? _activeProcessStep_SourceProcessStep;
+        public SourceStepItem? ActiveProcessStep_SourceProcessStep
+        {
+            get => _activeProcessStep_SourceProcessStep;
+            set { _activeProcessStep_SourceProcessStep = value; OnChange(); OnChange(nameof(ActiveProcessStep_UsesProcessSource)); }
+        }
+        private bool _activeProcessStep_UsesProcessSource = false;
+        public bool ActiveProcessStep_UsesProcessSource
+        {
+            get => _activeProcessStep_UsesProcessSource;
+            set { _activeProcessStep_UsesProcessSource = value; OnChange(); }
+        }
+
         private string _activeProcessStep_ProcessName = string.Empty;
         public string ActiveProcessStep_ProcessName
         {
@@ -1585,6 +1661,19 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== StartProcess Felder =====
+        private SourceStepItem? _startProcessStep_SourceProcessStep;
+        public SourceStepItem? StartProcessStep_SourceProcessStep
+        {
+            get => _startProcessStep_SourceProcessStep;
+            set { _startProcessStep_SourceProcessStep = value; OnChange(); OnChange(nameof(StartProcessStep_UsesProcessSource)); }
+        }
+        private bool _startProcessStep_UsesProcessSource = false;
+        public bool StartProcessStep_UsesProcessSource
+        {
+            get => _startProcessStep_UsesProcessSource;
+            set { _startProcessStep_UsesProcessSource = value; OnChange(); }
+        }
+
         public ObservableCollection<InstalledProgramSuggestion> AvailableStartPrograms { get; } = new();
         public ObservableCollection<InstalledProgramSuggestion> AvailableExecutablePrograms { get; } = new();
         public ObservableCollection<string> AvailableProcessNames { get; } = new();
@@ -1712,6 +1801,19 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== FocusProcess Felder =====
+        private SourceStepItem? _focusProcessStep_SourceProcessStep;
+        public SourceStepItem? FocusProcessStep_SourceProcessStep
+        {
+            get => _focusProcessStep_SourceProcessStep;
+            set { _focusProcessStep_SourceProcessStep = value; OnChange(); OnChange(nameof(FocusProcessStep_UsesProcessSource)); }
+        }
+        private bool _focusProcessStep_UsesProcessSource = false;
+        public bool FocusProcessStep_UsesProcessSource
+        {
+            get => _focusProcessStep_UsesProcessSource;
+            set { _focusProcessStep_UsesProcessSource = value; OnChange(); }
+        }
+
         private FocusProcessAction _focusProcessStep_Action = FocusProcessAction.BringToFront;
         public FocusProcessAction FocusProcessStep_Action
         {
@@ -1827,6 +1929,19 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== ActiveWindow Felder =====
+        private SourceStepItem? _activeWindowStep_SourceProcessStep;
+        public SourceStepItem? ActiveWindowStep_SourceProcessStep
+        {
+            get => _activeWindowStep_SourceProcessStep;
+            set { _activeWindowStep_SourceProcessStep = value; OnChange(); OnChange(nameof(ActiveWindowStep_UsesProcessSource)); }
+        }
+        private bool _activeWindowStep_UsesProcessSource = false;
+        public bool ActiveWindowStep_UsesProcessSource
+        {
+            get => _activeWindowStep_UsesProcessSource;
+            set { _activeWindowStep_UsesProcessSource = value; OnChange(); }
+        }
+
         private string _activeWindowStep_ProcessName = string.Empty;
         public string ActiveWindowStep_ProcessName
         {
@@ -2121,8 +2236,8 @@ namespace DesktopAutomationApp.ViewModels
                         ConfidenceThreshold = TemplateMatchingStep_ConfidenceThreshold,
                         EnableROI = TemplateMatchingStep_EnableROI,
                         ROI = new Rect(TemplateMatchingStep_RoiX, TemplateMatchingStep_RoiY, TemplateMatchingStep_RoiW, TemplateMatchingStep_RoiH),
-                        SourceCaptureStepId = TemplateMatchingStep_SourceCaptureStep?.StepId ?? "",
-                        DynamicRoiStepId = DetectionDynamicRoiStep?.StepId ?? ""
+                        ImageSource = TemplateMatchingStep_ImageSource.ToBinding(),
+                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
                     }
                 },
                 "ColorDetection" => new ColorDetectionStep
@@ -2138,15 +2253,15 @@ namespace DesktopAutomationApp.ViewModels
                         DownscaleFactor = ColorDetectionStep_DownscaleFactor,
                         EnableROI = ColorDetectionStep_EnableROI,
                         ROI = new Rect(ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
-                        SourceCaptureStepId = ColorDetectionStep_SourceCaptureStep?.StepId ?? "",
-                        DynamicRoiStepId = DetectionDynamicRoiStep?.StepId ?? ""
+                        ImageSource = ColorDetectionStep_ImageSource.ToBinding(),
+                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
                     }
                 },
                 "PredictMovement" => new PredictMovementStep
                 {
                     Settings = new PredictMovementSettings
                     {
-                        SourceDetectionStepId = PredictMovementStep_SourceDetectionStep?.StepId ?? "",
+                        PointsSource = PredictMovementStep_PointsSource.ToBinding(),
                         MinSamples = PredictMovementStep_MinSamples,
                         PredictionMs = 0,
                         ResetDistanceThreshold = PredictMovementStep_ResetDistanceThreshold,
@@ -2178,15 +2293,15 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new ShowImageSettings
                     {
                         WindowName = ShowImageStep_WindowName,
-                        SourceCaptureStepId   = ShowImageStep_SourceCaptureStep?.StepId ?? "",
-                        SourceDetectionStepId = ShowImageStep_SourceDetectionStep?.StepId ?? ""
+                        ImageSource = ShowImageStep_ImageSource.ToBinding(),
+                        DetectionsSource = ShowImageStep_DetectionsSource.ToBinding()
                     }
                 },
                 "ShowOnDesktop" => new ShowOnDesktopStep
                 {
                     Settings = new ShowOnDesktopSettings
                     {
-                        SourceDetectionStepId = ShowOnDesktopStep_SourceDetectionStep?.StepId ?? ""
+                        DetectionsSource = ShowOnDesktopStep_DetectionsSource.ToBinding()
                     }
                 },
                 "VideoCreation" => new VideoCreationStep
@@ -2195,8 +2310,8 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         SavePath = VideoCreationStep_SavePath,
                         FileName = VideoCreationStep_FileName,
-                        SourceCaptureStepId   = VideoCreationStep_SourceCaptureStep?.StepId ?? "",
-                        SourceDetectionStepId = VideoCreationStep_SourceDetectionStep?.StepId ?? ""
+                        ImageSource = VideoCreationStep_ImageSource.ToBinding(),
+                        DetectionsSource = VideoCreationStep_DetectionsSource.ToBinding()
                     }
                 },
                 "MakroExecution" => new MakroExecutionStep
@@ -2234,7 +2349,7 @@ namespace DesktopAutomationApp.ViewModels
                         TimeoutMs = KlickOnPointStep_TimeoutMs,
                         OffsetX = KlickOnPointStep_OffsetX,
                         OffsetY = KlickOnPointStep_OffsetY,
-                        SourceDetectionStepId = KlickOnPointStep_SourceDetectionStep?.StepId ?? ""
+                        PointsSource = KlickOnPointStep_PointsSource.ToBinding()
                     }
                 },
                 "KlickOnPoint3D" => new KlickOnPoint3DStep
@@ -2248,7 +2363,7 @@ namespace DesktopAutomationApp.ViewModels
                         OriginY = KlickOnPoint3DStep_OriginY,
                         OffsetX = KlickOnPoint3DStep_OffsetX,
                         OffsetY = KlickOnPoint3DStep_OffsetY,
-                        SourceDetectionStepId = KlickOnPoint3DStep_SourceDetectionStep?.StepId ?? ""
+                        PointsSource = KlickOnPoint3DStep_PointsSource.ToBinding()
                     }
                 },
                 "YoloDetection" => new YOLODetectionStep
@@ -2260,8 +2375,8 @@ namespace DesktopAutomationApp.ViewModels
                         ClassName = YoloDetectionStep_ClassName,
                         EnableROI = YoloDetectionStep_EnableROI,
                         ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH),
-                        SourceCaptureStepId = YoloDetectionStep_SourceCaptureStep?.StepId ?? "",
-                        DynamicRoiStepId = DetectionDynamicRoiStep?.StepId ?? ""
+                        ImageSource = YoloDetectionStep_ImageSource.ToBinding(),
+                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
                     }
                 },
                 "Timeout" => new TimeoutStep
@@ -2275,7 +2390,15 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new ActiveProcessSettings
                     {
-                        ProcessName = ActiveProcessStep_ProcessName
+                        Target = new ProcessTargetSettings
+                        {
+                            ProcessSource = ActiveProcessStep_UsesProcessSource
+                                ? ActiveProcessStep_ProcessSource.ToBinding()
+                                : new ResultBinding(),
+                            ProcessName = ActiveProcessStep_UsesProcessSource
+                                ? string.Empty
+                                : ActiveProcessStep_ProcessName
+                        }
                     }
                 },
                 "StartProcess" => new StartProcessStep
@@ -2284,15 +2407,25 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         Action = StartProcessStep_Action,
                         ExecutablePath = StartProcessStep_ExecutablePath,
-                        ProcessName = StartProcessStep_ProcessName,
-                        WindowTitleContains = StartProcessStep_WindowTitleContains,
                         Arguments      = StartProcessStep_Arguments,
                         WaitForExit    = StartProcessStep_WaitForExit,
                         MonitorIndex = StartProcessStep_MonitorIndex,
                         PlacementMode = StartProcessStep_PlacementMode,
                         OffsetX = StartProcessStep_OffsetX,
                         OffsetY = StartProcessStep_OffsetY,
-                        WindowMode = StartProcessStep_WindowMode
+                        WindowMode = StartProcessStep_WindowMode,
+                        Target = new ProcessTargetSettings
+                        {
+                            ProcessSource = StartProcessStep_UsesProcessSource
+                                ? StartProcessStep_ProcessSource.ToBinding()
+                                : new ResultBinding(),
+                            ProcessName = StartProcessStep_UsesProcessSource
+                                ? string.Empty
+                                : StartProcessStep_ProcessName,
+                            WindowTitleContains = StartProcessStep_UsesProcessSource
+                                ? string.Empty
+                                : StartProcessStep_WindowTitleContains
+                        }
                     }
                 },
                 "FocusProcess" => new FocusProcessStep
@@ -2300,9 +2433,19 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new FocusProcessSettings
                     {
                         Action = FocusProcessStep_Action,
-                        ExecutablePath = FocusProcessStep_ExecutablePath,
-                        WindowTitleContains = FocusProcessStep_WindowTitleContains,
-                        WindowMode     = FocusProcessStep_WindowMode
+                        WindowMode     = FocusProcessStep_WindowMode,
+                        Target = new ProcessTargetSettings
+                        {
+                            ProcessSource = FocusProcessStep_UsesProcessSource
+                                ? FocusProcessStep_ProcessSource.ToBinding()
+                                : new ResultBinding(),
+                            ExecutablePath = FocusProcessStep_UsesProcessSource
+                                ? string.Empty
+                                : FocusProcessStep_ExecutablePath,
+                            WindowTitleContains = FocusProcessStep_UsesProcessSource
+                                ? string.Empty
+                                : FocusProcessStep_WindowTitleContains
+                        }
                     }
                 },
                 "ShowText" => new ShowTextStep
@@ -2324,8 +2467,16 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new ActiveWindowSettings
                     {
-                        ProcessName = ActiveWindowStep_ProcessName,
-                        CacheMs = ActiveWindowStep_CacheMs
+                        CacheMs = ActiveWindowStep_CacheMs,
+                        Target = new ProcessTargetSettings
+                        {
+                            ProcessSource = ActiveWindowStep_UsesProcessSource
+                                ? ActiveWindowStep_ProcessSource.ToBinding()
+                                : new ResultBinding(),
+                            ProcessName = ActiveWindowStep_UsesProcessSource
+                                ? string.Empty
+                                : ActiveWindowStep_ProcessName
+                        }
                     }
                 },
                 "KeyPointMatching" => new KeyPointMatchingStep
@@ -2337,15 +2488,15 @@ namespace DesktopAutomationApp.ViewModels
                         LowesRatioThreshold = KeyPointMatchingStep_LowesRatioThreshold,
                         EnableROI           = KeyPointMatchingStep_EnableROI,
                         ROI                 = new Rect(KeyPointMatchingStep_RoiX, KeyPointMatchingStep_RoiY, KeyPointMatchingStep_RoiW, KeyPointMatchingStep_RoiH),
-                        SourceCaptureStepId = KeyPointMatchingStep_SourceCaptureStep?.StepId ?? "",
-                        DynamicRoiStepId = DetectionDynamicRoiStep?.StepId ?? ""
+                        ImageSource = KeyPointMatchingStep_ImageSource.ToBinding(),
+                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
                     }
                 },
                 "DynamicRoi" => new DynamicRoiStep
                 {
                     Settings = new DynamicRoiSettings
                     {
-                        SourceDetectionStepId = DynamicRoiStep_SourceDetectionStep?.StepId ?? "",
+                        BoundsSource = DynamicRoiStep_BoundsSource.ToBinding(),
                         Padding = DynamicRoiStep_Padding,
                         MinimumConfidence = DynamicRoiStep_MinimumConfidence,
                         FullSearchInterval = DynamicRoiStep_FullSearchInterval,
@@ -2383,7 +2534,7 @@ namespace DesktopAutomationApp.ViewModels
                             ReferenceSource          = PointComparisonStep_RefSource,
                             ReferenceX               = PointComparisonStep_RefX,
                             ReferenceY               = PointComparisonStep_RefY,
-                            ReferenceDetectionStepId = PointComparisonStep_RefDetectionStep?.StepId ?? "",
+                            ReferencePointsSource = PointComparisonStep_ReferencePointsSource.ToBinding(),
                             OffsetX                  = PointComparisonStep_OffsetX,
                             OffsetY                  = PointComparisonStep_OffsetY
                         },

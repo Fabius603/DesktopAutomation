@@ -12,9 +12,9 @@ namespace TaskAutomation.Steps
     /// Zeigt einen konfigurierbaren Text direkt auf dem Desktop an.
     /// Der Text bleibt sichtbar, bis der Job endet oder dieser Step erneut mit leerem Text ausgeführt wird.
     /// </summary>
-    public sealed class ShowTextStepHandler : JobStepHandler<ShowTextStep, TaskResult>
+    public sealed class ShowTextStepHandler : JobStepHandler<ShowTextStep, ShowTextResult>
     {
-        protected override Task<TaskResult> ExecuteCoreAsync(
+        protected override Task<ShowTextResult> ExecuteCoreAsync(
             ShowTextStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var s = step.Settings;
@@ -45,10 +45,10 @@ namespace TaskAutomation.Steps
                 "ShowTextStepHandler: Text '{Text}' auf Monitor {Index} bei ({X},{Y}) angezeigt.",
                 s.Text, s.DesktopIndex, s.OffsetX, s.OffsetY);
 
-            return Task.FromResult(new TaskResult { WasExecuted = true, Success = true });
+            return Task.FromResult(new ShowTextResult { WasExecuted = true, Success = true });
         }
 
-        protected override TaskResult CreateDefault() => TaskResult.Default;
+        protected override ShowTextResult CreateDefault() => ShowTextResult.Default;
 
         // ── Hilfsmethoden ──────────────────────────────────────────────────────
 

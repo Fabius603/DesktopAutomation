@@ -10,16 +10,18 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
 {
     protected override Task<DynamicRoiResult> ExecuteCoreAsync(DynamicRoiStep step, IStepPipelineContext ctx, CancellationToken ct)
     {
-        var detection = ctx.Results.GetById<DetectionResult>(step.Settings.SourceDetectionStepId);
+        var resolved = ResultBindingResolver.Resolve<Rectangle>(ctx.Results, step.Settings.BoundsSource);
+        var detection = resolved.SourceResult as IDetectionStepResult;
         if (!ctx.DynamicRoiStates.TryGetValue(step.Id, out var state))
             ctx.DynamicRoiStates[step.Id] = state = new DynamicRoiState();
 
         state.FullSearchInterval = step.Settings.FullSearchInterval;
         var updated = false;
         var reset = false;
-        if (detection.Found && detection.Confidence >= step.Settings.MinimumConfidence
-            && detection.BoundingBox is Rectangle box)
+        var confidence = detection?.Confidence ?? 1.0;
+        if (resolved.IsSuccess && confidence >= step.Settings.MinimumConfidence)
         {
+            var box = resolved.FirstOrDefault;
             var padding = System.Math.Max(0, step.Settings.Padding);
             box.Inflate(padding, padding);
             state.GlobalBounds = box;
@@ -27,7 +29,7 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
             updated = true;
             ctx.Logger.LogInformation(
                 "Dynamic ROI {StepId}: ROI aktualisiert auf global X={X}, Y={Y}, B={Width}, H={Height}; Confidence={Confidence:F3}, Padding={Padding}.",
-                step.Id, box.X, box.Y, box.Width, box.Height, detection.Confidence, padding);
+                step.Id, box.X, box.Y, box.Width, box.Height, confidence, padding);
         }
         else
         {
@@ -53,7 +55,7 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
             WasExecuted = true,
             RoiUpdated = updated,
             RoiReset = reset,
-            GlobalBounds = state.GlobalBounds?.ToString(),
+            GlobalBounds = state.GlobalBounds,
             ConsecutiveMisses = state.ConsecutiveMisses,
             FullSearchInterval = state.FullSearchInterval
         });

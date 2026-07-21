@@ -23,6 +23,142 @@
             <conv:StepBlockVisualConverter x:Key="StepBlockVisualConverter"/>
             <conv:StepRegularSummaryVisibilityConverter x:Key="StepRegularSummaryVisibilityConverter"/>
             <conv:StepBranchSummaryConverter x:Key="StepBranchSummaryConverter"/>
+            <Style x:Key="JobStepSectionExpanderStyle" TargetType="Expander">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Expander">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ToggleButton Grid.Row="0"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              HorizontalContentAlignment="Stretch"
+                                              Background="Transparent" BorderThickness="0" Padding="0"
+                                              FocusVisualStyle="{x:Null}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <ContentPresenter HorizontalAlignment="Stretch"
+                                                              VerticalAlignment="Stretch"
+                                                              Content="{TemplateBinding Content}"
+                                                              ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                    <ContentPresenter Content="{TemplateBinding Header}"
+                                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                      HorizontalAlignment="Stretch"/>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="SectionContent"
+                                                  Grid.Row="1"
+                                                  ContentSource="Content"
+                                                  Visibility="Collapsed"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="True">
+                                    <Setter TargetName="SectionContent" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="JobStepSectionHeaderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+                <Setter Property="BorderThickness" Value="0,1,0,1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+                <Setter Property="Padding" Value="14,12"/>
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="False"/>
+                            <Condition Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#30FF0000"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
+                    </MultiDataTrigger>
+                </Style.Triggers>
+            </Style>
+            <DataTemplate x:Key="JobStepSectionCompactCardTemplate">
+                <Border Margin="0,0,0,6" Padding="12,9" CornerRadius="6" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource App.Brush.CardBackground}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                    <Setter Property="Background" Value="#30FF0000"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" FontWeight="Bold" FontSize="13" Margin="0,0,2,0"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource MahApps.Brushes.Accent}">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{StaticResource StepNumberConverter}">
+                                    <Binding/>
+                                    <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" Text="{Binding Converter={StaticResource StepDisplayNameConverter}}"
+                                   FontWeight="SemiBold" FontSize="14"/>
+                        <Button Grid.Column="2" Style="{StaticResource ButtonIcon}" Margin="8,0,2,0"
+                                ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
+                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                Click="StepMoreButton_Click">
+                            <iconPacks:PackIconMaterial Kind="DotsVertical"/>
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}"
+                                              Command="{Binding PlacementTarget.Tag.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}"
+                                              Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <Separator/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToStart}"
+                                              Command="{Binding PlacementTarget.Tag.MoveToStartSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToRun}"
+                                              Command="{Binding PlacementTarget.Tag.MoveToRunSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToEnd}"
+                                              Command="{Binding PlacementTarget.Tag.MoveToEndSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <Separator/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
+                                              Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <iconPacks:PackIconMaterial Grid.Column="3" Kind="AlertCircleOutline"
+                                                    Width="16" Height="16" Margin="8,0,0,0"
+                                                    Foreground="{DynamicResource App.Brush.Danger}"
+                                                    ToolTip="{Binding ValidationError}"
+                                                    Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+            <Style x:Key="JobStepCompactListItemStyle" TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
             <Style x:Key="JobStepCardListBoxItemStyle" TargetType="ListBoxItem">
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="Padding" Value="0"/>
@@ -30,7 +166,7 @@
                     <Setter.Value>
                         <MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="itemMargin">
                             <Binding/>
-                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                            <Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/>
                             <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                         </MultiBinding>
                     </Setter.Value>
@@ -39,14 +175,14 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
                             <Border x:Name="Frame" BorderBrush="{DynamicResource App.Brush.CardBorder}" SnapsToDevicePixels="True">
-                                <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBackground"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
-                                <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBorder"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
-                                <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameCorner"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
+                                <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBackground"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
+                                <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameBorder"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
+                                <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="frameCorner"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
                                 <Border x:Name="Card" BorderBrush="{DynamicResource App.Brush.CardBorder}" Padding="0">
-                                    <Border.Margin><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardMargin"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Margin>
-                                    <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBackground"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
-                                    <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBorder"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
-                                    <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardCorner"><Binding/><Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
+                                    <Border.Margin><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardMargin"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Margin>
+                                    <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBackground"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
+                                    <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBorder"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
+                                    <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardCorner"><Binding/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
                                     <ContentPresenter/>
                                 </Border>
                             </Border>
@@ -127,15 +263,72 @@
             </StackPanel>
         </DockPanel>
 
-        <!-- Unterer Bereich: wie Makro-Ansicht (DockPanel + ListBox mit Hover/Selected) -->
+        <!-- Drei Lebenszyklus-Bereiche des Jobs. -->
         <Border Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0">
-            <DockPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+
+                <Expander Style="{StaticResource JobStepSectionExpanderStyle}" AllowDrop="True"
+                          Tag="{Binding StartSteps}"
+                          DragEnter="StepSection_DragEnter" DragOver="StepSection_DragOver"
+                          DragLeave="StepSection_DragLeave" Drop="StepSection_Drop"
+                          IsExpanded="{Binding IsStartSectionExpanded, Mode=TwoWay}">
+                    <Expander.Header>
+                        <Border Style="{StaticResource JobStepSectionHeaderStyle}" Tag="{Binding HasStartStepErrors}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <iconPacks:PackIconMaterial Width="18" Height="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <iconPacks:PackIconMaterial.Style><Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="ChevronRight"/><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True"><Setter Property="Kind" Value="ChevronDown"/></DataTrigger></Style.Triggers></Style></iconPacks:PackIconMaterial.Style>
+                                </iconPacks:PackIconMaterial>
+                                <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.Job.Steps.Section.Start}" FontWeight="SemiBold" FontSize="15"/>
+                                <TextBlock Grid.Column="2" Text="{Binding StartSteps.Count}" Opacity="0.7" FontWeight="SemiBold"/>
+                            </Grid>
+                        </Border>
+                    </Expander.Header>
+                    <Border Margin="14,8">
+                        <Grid>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Section.Start.Empty}"
+                                       TextWrapping="Wrap" Opacity="0.65" Margin="12,8"
+                                       Visibility="{Binding HasStartSteps, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                            <ListBox x:Name="StartStepsList" ItemsSource="{Binding StartSteps}"
+                                     MinHeight="48" Background="Transparent" BorderThickness="0"
+                                     SelectionMode="Extended"
+                                     SelectionChanged="StepsList_SelectionChanged"
+                                     MouseDoubleClick="StepsList_MouseDoubleClick"
+                                     ItemContainerStyle="{StaticResource JobStepCardListBoxItemStyle}"
+                                     ItemTemplate="{Binding ItemTemplate, ElementName=StepsList}"
+                                    behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}"/>
+                        </Grid>
+                    </Border>
+                </Expander>
+
+                <Expander Style="{StaticResource JobStepSectionExpanderStyle}" AllowDrop="True"
+                          Tag="{Binding Steps}"
+                          DragEnter="StepSection_DragEnter" DragOver="StepSection_DragOver"
+                          DragLeave="StepSection_DragLeave" Drop="StepSection_Drop"
+                          IsExpanded="{Binding IsRunSectionExpanded, Mode=TwoWay}">
+                    <Expander.Header>
+                        <Border Style="{StaticResource JobStepSectionHeaderStyle}" Tag="{Binding HasStepErrors}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <iconPacks:PackIconMaterial Width="18" Height="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <iconPacks:PackIconMaterial.Style><Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="ChevronRight"/><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True"><Setter Property="Kind" Value="ChevronDown"/></DataTrigger></Style.Triggers></Style></iconPacks:PackIconMaterial.Style>
+                                </iconPacks:PackIconMaterial>
+                                <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.Job.Steps.Section.Run}" FontWeight="SemiBold" FontSize="15"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Steps.Count}" Opacity="0.7" FontWeight="SemiBold"/>
+                            </Grid>
+                        </Border>
+                    </Expander.Header>
+                    <StackPanel Margin="14,8">
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Section.Run.Empty}"
+                                   TextWrapping="Wrap" Opacity="0.65" Margin="12,8"
+                                   Visibility="{Binding HasSteps, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 
                 <!-- ListBox mit Hover-/Selected-Rahmen wie im Makro -->
                 <ListBox x:Name="StepsList"
                          ItemsSource="{Binding Steps}"
                          SelectionMode="Extended"
-                         ScrollViewer.VerticalScrollBarVisibility="Visible"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingStackPanel.ScrollUnit="Pixel"
@@ -145,7 +338,7 @@
                          MouseDoubleClick="StepsList_MouseDoubleClick"
                          Background="Transparent" BorderThickness="0"
                          ItemContainerStyle="{StaticResource JobStepCardListBoxItemStyle}"
-                         behaviors:SimpleReorderDragDrop.MoveCommand="{Binding ReorderStepCommand}">
+                        behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete"              Command="{Binding DeleteSelectedCommand}"/>
@@ -214,7 +407,7 @@
                                             <TextBlock.Text>
                                                 <MultiBinding Converter="{StaticResource StepNumberConverter}">
                                                     <Binding/>
-                                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                    <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                                     <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                                 </MultiBinding>
                                             </TextBlock.Text>
@@ -245,7 +438,7 @@
                                         <TextBlock.Text>
                                             <MultiBinding Converter="{StaticResource StepBranchSummaryConverter}">
                                                 <Binding/>
-                                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                                 <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                             </MultiBinding>
                                         </TextBlock.Text>
@@ -308,6 +501,16 @@
                                                           Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <Separator/>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToStart}"
+                                                          Command="{Binding PlacementTarget.Tag.MoveToStartSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToRun}"
+                                                          Command="{Binding PlacementTarget.Tag.MoveToRunSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToEnd}"
+                                                          Command="{Binding PlacementTarget.Tag.MoveToEndSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                <Separator/>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
                                                           Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
@@ -357,7 +560,7 @@
                                         <ContentControl.Content>
                                             <MultiBinding Converter="{StaticResource JobStepDetailsConverter}">
                                                 <Binding/>
-                                                <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                                 <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                             </MultiBinding>
                                         </ContentControl.Content>
@@ -415,8 +618,85 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                    </StackPanel>
+                </Expander>
 
-            </DockPanel>
+                <Expander Style="{StaticResource JobStepSectionExpanderStyle}" AllowDrop="True"
+                          Tag="{Binding EndSteps}"
+                          DragEnter="StepSection_DragEnter" DragOver="StepSection_DragOver"
+                          DragLeave="StepSection_DragLeave" Drop="StepSection_Drop"
+                          IsExpanded="{Binding IsEndSectionExpanded, Mode=TwoWay}">
+                    <Expander.Header>
+                        <Border Style="{StaticResource JobStepSectionHeaderStyle}" Tag="{Binding HasEndStepErrors}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <iconPacks:PackIconMaterial Width="18" Height="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <iconPacks:PackIconMaterial.Style><Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="ChevronRight"/><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True"><Setter Property="Kind" Value="ChevronDown"/></DataTrigger></Style.Triggers></Style></iconPacks:PackIconMaterial.Style>
+                                </iconPacks:PackIconMaterial>
+                                <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.Job.Steps.Section.End}" FontWeight="SemiBold" FontSize="15"/>
+                                <Button x:Name="EndSettingsButton" Grid.Column="2"
+                                        Style="{StaticResource ButtonIcon}" Width="28" Height="28" Margin="8,-6,8,-6"
+                                        ToolTip="{loc:Translate Key=Ui.Job.EndSettings.Tooltip}"
+                                        PreviewMouseLeftButtonDown="EndSettingsButton_PreviewMouseLeftButtonDown">
+                                    <iconPacks:PackIconMaterial Kind="CogOutline" Width="17" Height="17"/>
+                                </Button>
+                                <TextBlock Grid.Column="3" Text="{Binding EndSteps.Count}" Opacity="0.7" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                                <Popup x:Name="EndSettingsPopup" Grid.Column="2"
+                                       PlacementTarget="{Binding ElementName=EndSettingsButton}"
+                                       Placement="Bottom" HorizontalOffset="-270" VerticalOffset="8"
+                                       StaysOpen="False" AllowsTransparency="True">
+                                    <Border Width="330" Padding="16" CornerRadius="8"
+                                            Background="{DynamicResource App.Brush.Surface}"
+                                            BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1"
+                                            DataContext="{Binding DataContext, Source={x:Reference EndSettingsButton}}">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.28"/>
+                                        </Border.Effect>
+                                        <StackPanel>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.EndSettings.Title}"
+                                                       FontSize="15" FontWeight="SemiBold" Margin="0,0,0,14"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.EndSettings.Timeout}"
+                                                       FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                            <DockPanel LastChildFill="False">
+                                                <TextBox Width="90" HorizontalContentAlignment="Right"
+                                                         Text="{Binding EndPhaseTimeoutSeconds, UpdateSourceTrigger=LostFocus,
+                                                                        ValidatesOnExceptions=True, NotifyOnValidationError=True}"/>
+                                                <TextBlock Text="{loc:Translate Key=Ui.Job.EndSettings.Timeout.Unit}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </DockPanel>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.EndSettings.Timeout.Description}"
+                                                       Foreground="{DynamicResource App.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap" Margin="0,9,0,0" FontSize="12"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </Expander.Header>
+                    <Border Margin="14,8">
+                        <Grid>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Section.End.Empty}"
+                                       TextWrapping="Wrap" Opacity="0.65" Margin="12,8"
+                                       Visibility="{Binding HasEndSteps, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                            <ListBox x:Name="EndStepsList" ItemsSource="{Binding EndSteps}"
+                                     MinHeight="48" Background="Transparent" BorderThickness="0"
+                                     SelectionMode="Extended"
+                                     SelectionChanged="StepsList_SelectionChanged"
+                                     MouseDoubleClick="StepsList_MouseDoubleClick"
+                                     ItemContainerStyle="{StaticResource JobStepCardListBoxItemStyle}"
+                                     ItemTemplate="{Binding ItemTemplate, ElementName=StepsList}"
+                                    behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}"/>
+                        </Grid>
+                    </Border>
+                </Expander>
+            </StackPanel>
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>
