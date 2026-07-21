@@ -1,0 +1,63 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
+    <Style x:Key="StepFieldGrid" TargetType="Grid">
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    <Style x:Key="StepFieldLabel" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+    </Style>
+    <Style x:Key="StepAdvancedExpander" TargetType="Expander">
+        <Setter Property="Header" Value="{loc:Translate Key=Ui.Step.Settings.Advanced}"/>
+        <Setter Property="IsExpanded" Value="False"/>
+        <Setter Property="Margin" Value="0,4,0,6"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+    </Style>
+    <Style x:Key="StepCompactTextBox" TargetType="TextBox">
+        <Setter Property="Width" Value="42"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="StepAxisLabel" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,4,0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+    </Style>
+    <Style x:Key="StepGroupedFieldLabel" TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+    </Style>
+    <Style x:Key="StepGroupedTextBox" TargetType="TextBox" BasedOn="{StaticResource StepCompactTextBox}">
+        <Setter Property="Width" Value="72"/>
+    </Style>
+    <Style x:Key="RoiFieldWrapPanel" TargetType="WrapPanel">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="ItemHeight" Value="34"/>
+    </Style>
+    <Style x:Key="RoiFieldGroup" TargetType="StackPanel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Margin" Value="0,0,14,6"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="StepInlineButton" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Padding" Value="10,4"/>
+        <Setter Property="Margin" Value="8,0,0,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="TemplatePreviewBorder" TargetType="Border">
+        <Setter Property="Width" Value="96"/>
+        <Setter Property="Height" Value="64"/>
+        <Setter Property="Margin" Value="0,6,0,0"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.WindowBackground}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+</ResourceDictionary>

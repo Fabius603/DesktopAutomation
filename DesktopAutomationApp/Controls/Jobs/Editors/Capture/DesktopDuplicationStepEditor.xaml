@@ -1,0 +1,6 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Capture.DesktopDuplicationStepEditor" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared">
+ <StackPanel Visibility="{Binding ShowDesktopDuplication, Converter={StaticResource BooleanToVisibilityConverter}}">
+  <Grid Margin="0,0,0,6"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" Style="{StaticResource StepFieldLabel}"/><shared:MonitorPicker Grid.Column="1" MonitorIndex="{Binding DesktopDuplicationStep_DesktopIdx}" SelectCommand="{Binding ChooseMonitorCommand}" HorizontalAlignment="Left"/></Grid>
+  <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.CaptureMousePointer}" IsChecked="{Binding DesktopDuplicationStep_CaptureCursor}"/>
+ </StackPanel>
+</UserControl>

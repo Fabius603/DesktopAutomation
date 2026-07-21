@@ -1,0 +1,33 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Shared.PathPickerField"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+            <TextBox Text="{Binding PathValue, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     IsReadOnly="{Binding IsReadOnly, ElementName=Root}"/>
+            <Border>
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource TemplatePreviewBorder}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasPreview, ElementName=Root}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Image Source="{Binding PreviewSource, ElementName=Root}" Stretch="Uniform"/>
+            </Border>
+        </StackPanel>
+        <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Common.Ellipsis}"
+                Width="32" Height="28" Margin="6,0,0,0"
+                VerticalAlignment="Top"
+                Command="{Binding BrowseCommand, ElementName=Root}"/>
+    </Grid>
+</UserControl>

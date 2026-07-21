@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
     <UserControl.Resources>
@@ -97,45 +98,8 @@
                                 <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.IfEditor.ResultPath}"
                                                Style="{StaticResource ConditionFieldLabel}"/>
-                                    <Button Height="36" HorizontalContentAlignment="Stretch"
-                                            Style="{StaticResource ButtonSecondary}"
-                                            Click="PathSelector_Click">
-                                        <Button.ContextMenu>
-                                            <ContextMenu ItemsSource="{Binding SelectionTree}"
-                                                         DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                                <ContextMenu.Resources>
-                                                    <Style TargetType="{x:Type MenuItem}">
-                                                        <Setter Property="Command" Value="{Binding SelectCommand}"/>
-                                                    </Style>
-                                                </ContextMenu.Resources>
-                                                <ContextMenu.ItemTemplate>
-                                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                                        <Grid MinWidth="190">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock Grid.Column="1" Text="{Binding SecondaryText}"
-                                                                       Margin="14,0,0,0" FontSize="10"
-                                                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                                        </Grid>
-                                                    </HierarchicalDataTemplate>
-                                                </ContextMenu.ItemTemplate>
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding SelectedPath}" TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"/>
-                                            <iconPacks:PackIconMaterial Grid.Column="1" Kind="ChevronRight"
-                                                                        Width="15" Height="15" Margin="8,0,0,0"
-                                                                        Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                        </Grid>
-                                    </Button>
+                                    <jobs:ResultPathPicker ItemsSource="{Binding SelectionTree}"
+                                                           DisplayText="{Binding SelectedPath}"/>
 
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Operator}"
                                                Style="{StaticResource ConditionFieldLabel}" Margin="0,12,0,4"/>
@@ -193,46 +157,9 @@
                                                           Height="36"
                                                           VerticalContentAlignment="Center"
                                                           Visibility="{Binding ShowBooleanValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <Button Height="36" HorizontalContentAlignment="Stretch"
-                                                        Style="{StaticResource ButtonSecondary}"
-                                                        Click="PathSelector_Click"
-                                                        Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <Button.ContextMenu>
-                                                        <ContextMenu ItemsSource="{Binding ComparisonSelectionTree}"
-                                                                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                                            <ContextMenu.Resources>
-                                                                <Style TargetType="{x:Type MenuItem}">
-                                                                    <Setter Property="Command" Value="{Binding SelectCommand}"/>
-                                                                </Style>
-                                                            </ContextMenu.Resources>
-                                                            <ContextMenu.ItemTemplate>
-                                                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                                                    <Grid MinWidth="190">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="*"/>
-                                                                            <ColumnDefinition Width="Auto"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/>
-                                                                        <TextBlock Grid.Column="1" Text="{Binding SecondaryText}"
-                                                                                   Margin="14,0,0,0" FontSize="10"
-                                                                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                                                    </Grid>
-                                                                </HierarchicalDataTemplate>
-                                                            </ContextMenu.ItemTemplate>
-                                                        </ContextMenu>
-                                                    </Button.ContextMenu>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="{Binding ComparisonPath}" TextTrimming="CharacterEllipsis"
-                                                                   VerticalAlignment="Center"/>
-                                                        <iconPacks:PackIconMaterial Grid.Column="1" Kind="ChevronRight"
-                                                                                    Width="15" Height="15" Margin="8,0,0,0"
-                                                                                    Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                                    </Grid>
-                                                </Button>
+                                                <jobs:ResultPathPicker ItemsSource="{Binding ComparisonSelectionTree}"
+                                                                       DisplayText="{Binding ComparisonPath}"
+                                                                       Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                             </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding ComparisonValueValidationError}"

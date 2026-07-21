@@ -14,12 +14,10 @@
                 BorderThickness="1">
             <StackPanel>
                 <WrapPanel Margin="0,0,0,8">
-                    <RadioButton GroupName="ProcessTargetMode"
-                                 Content="{loc:Translate Key=Ui.Step.ProcessSource.SearchByCharacteristics}"
+                    <RadioButton Content="{loc:Translate Key=Ui.Step.ProcessSource.SearchByCharacteristics}"
                                  IsChecked="{Binding UseProcessReference, ElementName=Root, Mode=TwoWay, Converter={StaticResource InverseBooleanConverter}}"
                                  Margin="0,0,18,0"/>
-                    <RadioButton GroupName="ProcessTargetMode"
-                                 Content="{loc:Translate Key=Ui.Step.Settings.ProcessSource}"
+                    <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.ProcessSource}"
                                  IsChecked="{Binding UseProcessReference, ElementName=Root, Mode=TwoWay}"/>
                 </WrapPanel>
                 <jobs:ResultBindingPicker DataContext="{Binding Picker, ElementName=Root}"

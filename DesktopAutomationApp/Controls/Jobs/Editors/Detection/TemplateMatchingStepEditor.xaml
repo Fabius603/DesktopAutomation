@@ -1,0 +1,24 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Detection.TemplateMatchingStepEditor"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+ xmlns:roi="clr-namespace:DesktopAutomationApp.Controls.Jobs.Roi" xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared">
+ <StackPanel Visibility="{Binding ShowTemplateMatching, Converter={StaticResource BooleanToVisibilityConverter}}">
+  <Grid Style="{StaticResource StepFieldGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.CaptureStep}" Style="{StaticResource StepFieldLabel}"/><jobs:ResultBindingPicker Grid.Column="1" DataContext="{Binding TemplateMatchingStep_ImageSource}"/>
+  </Grid>
+  <Grid Style="{StaticResource StepFieldGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Template}" Style="{StaticResource StepFieldLabel}"/>
+   <shared:PathPickerField Grid.Column="1" PathValue="{Binding TemplateMatchingStep_TemplatePath}" BrowseCommand="{Binding BrowseTemplatePathCommand}"
+                           PreviewSource="{Binding TemplateMatchingStep_TemplatePreview}" HasPreview="{Binding TemplateMatchingStep_HasTemplatePreview}"/>
+  </Grid>
+  <Grid Style="{StaticResource StepFieldGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/><TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left" Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+  </Grid>
+  <Expander Style="{StaticResource StepAdvancedExpander}"><StackPanel Margin="0,10,0,0">
+   <roi:RoiEditor IsRoiEnabled="{Binding TemplateMatchingStep_EnableROI}" X="{Binding TemplateMatchingStep_RoiX}" Y="{Binding TemplateMatchingStep_RoiY}" RoiWidth="{Binding TemplateMatchingStep_RoiW}" RoiHeight="{Binding TemplateMatchingStep_RoiH}" CaptureCommand="{Binding CaptureTemplateMatchingRoiCommand}"/>
+   <Grid Style="{StaticResource StepFieldGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.MatchMode}" Style="{StaticResource StepFieldLabel}"/><ComboBox Grid.Column="1" ItemsSource="{Binding TemplateMatchModesAll}" SelectedItem="{Binding TemplateMatchingStep_TemplateMatchMode}"/>
+   </Grid>
+  </StackPanel></Expander>
+ </StackPanel>
+</UserControl>

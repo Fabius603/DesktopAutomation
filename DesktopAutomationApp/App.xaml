@@ -23,6 +23,7 @@
                 <ResourceDictionary Source="Styles/Sidebar.xaml" />
                 <ResourceDictionary Source="Styles/PageLayout.xaml" />
                 <ResourceDictionary Source="Styles/Controls.xaml" />
+                <ResourceDictionary Source="Styles/StepEditors.xaml" />
                 <ResourceDictionary Source="Styles/Dialogs.xaml" />
                 <ResourceDictionary Source="Styles/Logs.xaml" />
             </ResourceDictionary.MergedDictionaries>
