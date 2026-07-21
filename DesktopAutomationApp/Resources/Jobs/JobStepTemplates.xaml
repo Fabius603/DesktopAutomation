@@ -47,7 +47,7 @@
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.MatchMode}"/><Run Text="{Binding Settings.TemplateMatchMode}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat={}{0:P0}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}"
                                Visibility="{Binding Settings.EnableROI, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -92,7 +92,7 @@
                         <TextBlock Text="{Binding Settings.ColorHex}" Margin="6,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat={}{0:P0}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.MinSize}"/><Run Text="{Binding Settings.MinSize}"/>
@@ -147,6 +147,9 @@
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.PredictionModel}"/><Run Text="{Binding Settings.PredictionModel}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.RoiMinConfidence}"/><Run Text="{Binding Settings.MinimumConfidence, StringFormat={}{0:P0}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ResetAtDistance}"/><Run Text="{Binding Settings.ResetDistanceThreshold}"/>
@@ -498,7 +501,7 @@
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ClassName}"/><Run Text="{Binding Settings.ClassName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
-                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat=F2}"/>
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat={}{0:P0}}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.EnableROI}"/>
@@ -526,6 +529,29 @@
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.WaitTimeMs}"/><Run Text="{Binding Settings.DelayMs}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ActiveProcessStep -->
+        <DataTemplate DataType="{x:Type jobs:GetProcessStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Query.ProcessName}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.Query.ExecutablePath}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Query.WindowTitleContains}"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -627,10 +653,10 @@
                             <TextBlock Style="{StaticResource ParamText}">
                                 <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Target.ProcessName}"/>
                             </TextBlock>
-                            <TextBlock Style="{StaticResource ParamText}">
-                                <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
-                            </TextBlock>
                         </StackPanel>
+                        <TextBlock Style="{StaticResource ParamText}">
+                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
+                        </TextBlock>
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -664,10 +690,10 @@
                         <TextBlock Style="{StaticResource ParamText}">
                             <Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.Target.ExecutablePath}"/>
                         </TextBlock>
-                        <TextBlock Style="{StaticResource ParamText}">
-                            <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
-                        </TextBlock>
                     </StackPanel>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
+                    </TextBlock>
                     <TextBlock>
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource ParamText}">
@@ -740,6 +766,9 @@
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.ProcessNameLabel}"/><Run Text="{Binding Settings.Target.ProcessName}"/>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowTitle}"/><Run Text="{Binding Settings.Target.WindowTitleContains}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.CacheMs}"/><Run Text="{Binding Settings.CacheMs}"/>
                     </TextBlock>
                 </StackPanel>
@@ -760,7 +789,7 @@
                         </MultiBinding></Run.Text></Run>
                     </TextBlock>
                     <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiPadding}"/><Run Text="{Binding Settings.Padding}"/></TextBlock>
-                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiMinConfidence}"/><Run Text="{Binding Settings.MinimumConfidence, StringFormat=F2}"/></TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiMinConfidence}"/><Run Text="{Binding Settings.MinimumConfidence, StringFormat={}{0:P0}}"/></TextBlock>
                     <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiFullSearchInterval}"/><Run Text="{Binding Settings.FullSearchInterval}"/></TextBlock>
                     <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiResetAfterMisses}"/><Run Text="{Binding Settings.ResetAfterMisses}"/></TextBlock>
                 </StackPanel>
@@ -879,7 +908,12 @@
 
         <!-- EndJobStep -->
         <DataTemplate DataType="{x:Type jobs:EndJobStep}">
-            <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
+            <StackPanel>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" Foreground="{DynamicResource App.Brush.Accent}"/>
+                <TextBlock Style="{StaticResource ParamText}">
+                    <Run Text="{loc:Translate Key=Ui.Job.Steps.SkipEndStepsLabel}"/><Run Text="{Binding Settings.SkipEndSteps, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/>
+                </TextBlock>
+            </StackPanel>
         </DataTemplate>
 
         <!-- IfStep -->

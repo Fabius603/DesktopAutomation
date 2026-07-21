@@ -67,8 +67,7 @@ namespace DesktopAutomationApp.ViewModels
                         processDescriptor)
                 }
                 .Concat(BuildStepItems(ResultValueKind.ProcessReference).Where(item =>
-                    _precedingSteps.FirstOrDefault(step => step.Id == item.StepId) is StartProcessStep
-                    { Settings.Action: StartProcessAction.Start }))
+                    CanProvideProcessReference(_precedingSteps.FirstOrDefault(step => step.Id == item.StepId))))
                 .DistinctBy(item => item.StepId)
                 .ToList();
             var detectionDescriptor = StepResultMetadata.ResultTypes.First(r =>
@@ -553,17 +552,19 @@ namespace DesktopAutomationApp.ViewModels
                     "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet."),
                 new("Timeout",            "Automatisierung",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
-                new("StartProcess",       "Automatisierung",
+                new("StartProcess",       "Prozess",
                     "Startet ein Programm oder beendet laufende Prozesse anhand ihres Namens und optional ihres Fenstertitels."),
-                new("FocusProcess",       "Automatisierung",
+                new("GetProcess",         "Prozess",
+                    "Ermittelt einen laufenden Prozess anhand von Prozessname, Programmpfad und optionalem Fenstertitel und stellt ihn nachfolgenden Steps bereit."),
+                new("FocusProcess",       "Fenster",
                     "Bringt ein Prozessfenster in den Vordergrund oder minimiert es. Optional kann nach einem Fenstertitel gefiltert werden."),
                 new("ShowText",            "Ausgabe",
                     "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
                 new("EndJob",             "Automatisierung",
                     "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
-                new("ActiveProcess",      "Abfrage",
+                new("ActiveProcess",      "Prozess",
                     "Prüft, ob ein Prozess mit dem angegebenen Namen aktuell ausgeführt wird. Das Ergebnis (\"Prozess läuft\") kann in If-Bedingungen ausgewertet werden."),
-                new("ActiveWindow",       "Abfrage",
+                new("ActiveWindow",       "Fenster",
                     "Prüft, ob ein Fenster des angegebenen Prozesses das aktive Vordergrundfenster ist. Das Ergebnis (\"Fenster aktiv\") kann in If-Bedingungen ausgewertet werden."),
                 new("PointComparison",   "Abfrage",
                     "Vergleicht eine Liste von Punkten entweder gegen einen Referenzpunkt mit Toleranz (Offset-Modus) oder gegen Achsen-Ausdrücke wie x < 100 (Ausdrucks-Modus). Das Ergebnis (\"Übereinstimmung\") kann in If-Bedingungen ausgewertet werden."),
@@ -612,6 +613,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
         public bool ShowTimeout => SelectedType == "Timeout";
         public bool ShowActiveProcess => SelectedType == "ActiveProcess";
+        public bool ShowGetProcess => SelectedType == "GetProcess";
         public bool ShowStartProcess  => SelectedType == "StartProcess";
         public bool ShowFocusProcess  => SelectedType == "FocusProcess";
         public bool ShowShowText       => SelectedType == "ShowText";
@@ -678,7 +680,7 @@ namespace DesktopAutomationApp.ViewModels
                 var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
                     .FirstOrDefault(r => r.TypeName == info.Output);
                 if (descriptor?.Properties.Any(property => property.ValueKind == valueKind) != true) continue;
-                var name = StepLocalization.NumberedName(step, _precedingSteps);
+                var name = StepLocalization.ResultStepName(step, _precedingSteps);
                 items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
             }
             return items;
@@ -689,7 +691,7 @@ namespace DesktopAutomationApp.ViewModels
             => StepResultMetadata.GetConditionSources(_precedingSteps, _precedingSteps.Count)
                 .Select(source => new SourceStepItem(
                     source.Step.Id,
-                    StepLocalization.NumberedName(source.Step, _precedingSteps),
+                    StepLocalization.ResultStepName(source.Step, _precedingSteps),
                     StepLocalization.ResultType(source.ResultType)))
                 .ToArray();
 
@@ -728,8 +730,30 @@ namespace DesktopAutomationApp.ViewModels
         private static bool HasProcessSource(SourceStepItem? source) =>
             !string.IsNullOrWhiteSpace(source?.StepId);
 
-        public bool UseDynamicRoi => DetectionDynamicRoiSource.IsConfigured;
-        public bool HasSelectedDynamicRoi => DetectionDynamicRoiSource.IsConfigured;
+        private static bool CanProvideProcessReference(JobStep? step) => step switch
+        {
+            StartProcessStep { Settings.Action: StartProcessAction.Start } => true,
+            GetProcessStep or ActiveProcessStep or FocusProcessStep or ActiveWindowStep => true,
+            _ => false
+        };
+
+        private bool _useDynamicRoi;
+        public bool UseDynamicRoi
+        {
+            get => _useDynamicRoi;
+            set
+            {
+                if (_useDynamicRoi == value) return;
+                _useDynamicRoi = value;
+                OnChange();
+                OnChange(nameof(HasSelectedDynamicRoi));
+            }
+        }
+
+        public bool HasSelectedDynamicRoi => UseDynamicRoi && DetectionDynamicRoiSource.IsConfigured;
+
+        private ResultBinding GetDynamicRoiBinding() =>
+            UseDynamicRoi ? DetectionDynamicRoiSource.ToBinding() : new ResultBinding();
 
         private SourceStepItem? _dynamicRoiStep_SourceDetectionStep;
         public SourceStepItem? DynamicRoiStep_SourceDetectionStep
@@ -1660,6 +1684,28 @@ namespace DesktopAutomationApp.ViewModels
             set { _activeProcessStep_ProcessName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
+        // ===== GetProcess Felder =====
+        private string _getProcessStep_ProcessName = string.Empty;
+        public string GetProcessStep_ProcessName
+        {
+            get => _getProcessStep_ProcessName;
+            set { _getProcessStep_ProcessName = value; OnChange(); }
+        }
+
+        private string _getProcessStep_ExecutablePath = string.Empty;
+        public string GetProcessStep_ExecutablePath
+        {
+            get => _getProcessStep_ExecutablePath;
+            set { _getProcessStep_ExecutablePath = value; OnChange(); }
+        }
+
+        private string _getProcessStep_WindowTitleContains = string.Empty;
+        public string GetProcessStep_WindowTitleContains
+        {
+            get => _getProcessStep_WindowTitleContains;
+            set { _getProcessStep_WindowTitleContains = value; OnChange(); }
+        }
+
         // ===== StartProcess Felder =====
         private SourceStepItem? _startProcessStep_SourceProcessStep;
         public SourceStepItem? StartProcessStep_SourceProcessStep
@@ -1727,6 +1773,13 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _startProcessStep_Arguments;
             set { _startProcessStep_Arguments = value; OnChange(); }
+        }
+
+        private string _startProcessStep_WorkingDirectory = string.Empty;
+        public string StartProcessStep_WorkingDirectory
+        {
+            get => _startProcessStep_WorkingDirectory;
+            set { _startProcessStep_WorkingDirectory = value; OnChange(); }
         }
 
         private bool _startProcessStep_WaitForExit = false;
@@ -1954,6 +2007,20 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _activeWindowStep_CacheMs;
             set { _activeWindowStep_CacheMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        }
+
+        private string _activeWindowStep_WindowTitleContains = string.Empty;
+        public string ActiveWindowStep_WindowTitleContains
+        {
+            get => _activeWindowStep_WindowTitleContains;
+            set { _activeWindowStep_WindowTitleContains = value; OnChange(); }
+        }
+
+        private bool _endJobStep_SkipEndSteps;
+        public bool EndJobStep_SkipEndSteps
+        {
+            get => _endJobStep_SkipEndSteps;
+            set { _endJobStep_SkipEndSteps = value; OnChange(); }
         }
 
         // ===== KeyPointMatching Felder =====
@@ -2237,7 +2304,7 @@ namespace DesktopAutomationApp.ViewModels
                         EnableROI = TemplateMatchingStep_EnableROI,
                         ROI = new Rect(TemplateMatchingStep_RoiX, TemplateMatchingStep_RoiY, TemplateMatchingStep_RoiW, TemplateMatchingStep_RoiH),
                         ImageSource = TemplateMatchingStep_ImageSource.ToBinding(),
-                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
+                        DynamicRoiSource = GetDynamicRoiBinding()
                     }
                 },
                 "ColorDetection" => new ColorDetectionStep
@@ -2254,7 +2321,7 @@ namespace DesktopAutomationApp.ViewModels
                         EnableROI = ColorDetectionStep_EnableROI,
                         ROI = new Rect(ColorDetectionStep_RoiX, ColorDetectionStep_RoiY, ColorDetectionStep_RoiW, ColorDetectionStep_RoiH),
                         ImageSource = ColorDetectionStep_ImageSource.ToBinding(),
-                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
+                        DynamicRoiSource = GetDynamicRoiBinding()
                     }
                 },
                 "PredictMovement" => new PredictMovementStep
@@ -2376,7 +2443,7 @@ namespace DesktopAutomationApp.ViewModels
                         EnableROI = YoloDetectionStep_EnableROI,
                         ROI = new Rect(YoloDetectionStep_RoiX, YoloDetectionStep_RoiY, YoloDetectionStep_RoiW, YoloDetectionStep_RoiH),
                         ImageSource = YoloDetectionStep_ImageSource.ToBinding(),
-                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
+                        DynamicRoiSource = GetDynamicRoiBinding()
                     }
                 },
                 "Timeout" => new TimeoutStep
@@ -2401,6 +2468,18 @@ namespace DesktopAutomationApp.ViewModels
                         }
                     }
                 },
+                "GetProcess" => new GetProcessStep
+                {
+                    Settings = new GetProcessSettings
+                    {
+                        Query = new ProcessTargetSettings
+                        {
+                            ProcessName = GetProcessStep_ProcessName,
+                            ExecutablePath = GetProcessStep_ExecutablePath,
+                            WindowTitleContains = GetProcessStep_WindowTitleContains
+                        }
+                    }
+                },
                 "StartProcess" => new StartProcessStep
                 {
                     Settings = new StartProcessSettings
@@ -2408,6 +2487,7 @@ namespace DesktopAutomationApp.ViewModels
                         Action = StartProcessStep_Action,
                         ExecutablePath = StartProcessStep_ExecutablePath,
                         Arguments      = StartProcessStep_Arguments,
+                        WorkingDirectory = StartProcessStep_WorkingDirectory,
                         WaitForExit    = StartProcessStep_WaitForExit,
                         MonitorIndex = StartProcessStep_MonitorIndex,
                         PlacementMode = StartProcessStep_PlacementMode,
@@ -2422,9 +2502,7 @@ namespace DesktopAutomationApp.ViewModels
                             ProcessName = StartProcessStep_UsesProcessSource
                                 ? string.Empty
                                 : StartProcessStep_ProcessName,
-                            WindowTitleContains = StartProcessStep_UsesProcessSource
-                                ? string.Empty
-                                : StartProcessStep_WindowTitleContains
+                            WindowTitleContains = StartProcessStep_WindowTitleContains
                         }
                     }
                 },
@@ -2442,9 +2520,7 @@ namespace DesktopAutomationApp.ViewModels
                             ExecutablePath = FocusProcessStep_UsesProcessSource
                                 ? string.Empty
                                 : FocusProcessStep_ExecutablePath,
-                            WindowTitleContains = FocusProcessStep_UsesProcessSource
-                                ? string.Empty
-                                : FocusProcessStep_WindowTitleContains
+                            WindowTitleContains = FocusProcessStep_WindowTitleContains
                         }
                     }
                 },
@@ -2475,7 +2551,8 @@ namespace DesktopAutomationApp.ViewModels
                                 : new ResultBinding(),
                             ProcessName = ActiveWindowStep_UsesProcessSource
                                 ? string.Empty
-                                : ActiveWindowStep_ProcessName
+                                : ActiveWindowStep_ProcessName,
+                            WindowTitleContains = ActiveWindowStep_WindowTitleContains
                         }
                     }
                 },
@@ -2489,7 +2566,7 @@ namespace DesktopAutomationApp.ViewModels
                         EnableROI           = KeyPointMatchingStep_EnableROI,
                         ROI                 = new Rect(KeyPointMatchingStep_RoiX, KeyPointMatchingStep_RoiY, KeyPointMatchingStep_RoiW, KeyPointMatchingStep_RoiH),
                         ImageSource = KeyPointMatchingStep_ImageSource.ToBinding(),
-                        DynamicRoiSource = DetectionDynamicRoiSource.ToBinding()
+                        DynamicRoiSource = GetDynamicRoiBinding()
                     }
                 },
                 "DynamicRoi" => new DynamicRoiStep
@@ -2521,7 +2598,13 @@ namespace DesktopAutomationApp.ViewModels
                 },
                 "Else"  => new TaskAutomation.Jobs.ElseStep(),
                 "EndIf" => new TaskAutomation.Jobs.EndIfStep(),
-                "EndJob" => new TaskAutomation.Jobs.EndJobStep(),
+                "EndJob" => new TaskAutomation.Jobs.EndJobStep
+                {
+                    Settings = new TaskAutomation.Jobs.EndJobSettings
+                    {
+                        SkipEndSteps = EndJobStep_SkipEndSteps
+                    }
+                },
                 "PointComparison" => new TaskAutomation.Jobs.PointComparisonStep
                 {
                     Settings = new TaskAutomation.Jobs.PointComparisonSettings

@@ -6,9 +6,12 @@
     <Border Background="{DynamicResource App.Brush.Surface}" BorderBrush="{DynamicResource App.Brush.CardBorder}"
             BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,2,0,10">
         <StackPanel>
-            <TextBlock Text="{loc:Translate Key=Ui.Step.DynamicRoi.Selector}" Margin="0,0,0,6"
-                       FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-            <jobControls:ResultBindingPicker DataContext="{Binding DetectionDynamicRoiSource}"/>
+            <CheckBox Content="{loc:Translate Key=Ui.Step.DynamicRoi.Use}"
+                      IsChecked="{Binding UseDynamicRoi, Mode=TwoWay}"
+                      FontWeight="SemiBold"
+                      Margin="0,0,0,6"/>
+            <jobControls:ResultBindingPicker DataContext="{Binding DetectionDynamicRoiSource}"
+                                             Visibility="{Binding UseDynamicRoi, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </StackPanel>
     </Border>
 </UserControl>

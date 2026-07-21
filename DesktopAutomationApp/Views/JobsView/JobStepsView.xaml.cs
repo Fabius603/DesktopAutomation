@@ -133,7 +133,7 @@ namespace DesktopAutomationApp.Views
         private void StepSection_DragOver(object sender, DragEventArgs e)
         {
             if (e.Handled
-                || sender is not Expander { Tag: System.Collections.IList target }
+                || sender is not Expander { Tag: System.Collections.IList target } expander
                 || !StepDragDrop.TryGetPayload(e.Data, out _))
                 return;
 
@@ -141,7 +141,10 @@ namespace DesktopAutomationApp.Views
             if (list == null)
                 return;
 
-            StepDragDrop.ShowSectionTarget(list);
+            if (IsPointerOverHeader(expander, e))
+                StepDragDrop.ShowSectionStartTarget(list);
+            else
+                StepDragDrop.ShowSectionTarget(list);
             e.Effects = DragDropEffects.Move;
             e.Handled = true;
         }
@@ -163,7 +166,7 @@ namespace DesktopAutomationApp.Views
         private void StepSection_Drop(object sender, DragEventArgs e)
         {
             if (e.Handled
-                || sender is not Expander { Tag: System.Collections.IList target }
+                || sender is not Expander { Tag: System.Collections.IList target } expander
                 || !StepDragDrop.TryGetPayload(e.Data, out var payload)
                 || DataContext is not JobStepsViewModel vm)
                 return;
@@ -172,11 +175,21 @@ namespace DesktopAutomationApp.Views
                 payload.Source,
                 payload.SourceIndex,
                 target,
-                target.Count);
+                IsPointerOverHeader(expander, e) ? 0 : target.Count);
             if (vm.ReorderStepCommand.CanExecute(request))
                 vm.ReorderStepCommand.Execute(request);
             StepDragDrop.ClearTargetPreview();
             e.Handled = true;
+        }
+
+        private static bool IsPointerOverHeader(Expander expander, DragEventArgs e)
+        {
+            if (expander.Header is not FrameworkElement header)
+                return false;
+
+            var point = e.GetPosition(header);
+            return point.X >= 0 && point.X <= header.ActualWidth
+                && point.Y >= 0 && point.Y <= header.ActualHeight;
         }
 
         private static T? FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement

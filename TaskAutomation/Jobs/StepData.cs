@@ -28,6 +28,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(EndIfStep),    "end_if")]
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
+    [JsonDerivedType(typeof(GetProcessStep),    "get_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
     [JsonDerivedType(typeof(FocusProcessStep),   "focus_process")]
     [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
@@ -556,7 +557,20 @@ namespace TaskAutomation.Jobs
     }
 
     /// <summary>Immediately ends the current job when executed.</summary>
-    public sealed class EndJobStep : JobStep { }
+    public sealed class EndJobStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public EndJobSettings Settings { get; set; } = new();
+    }
+
+    public sealed class EndJobSettings
+    {
+        /// <summary>
+        /// Skips only the user-configured end-step area. Internal cleanup always runs.
+        /// </summary>
+        [JsonPropertyName("skip_end_steps")]
+        public bool SkipEndSteps { get; set; } = false;
+    }
 
     // ---- ActiveProcess ----
     /// <summary>Prüft, ob ein Prozess mit dem angegebenen Namen aktuell läuft.</summary>
@@ -570,6 +584,20 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("target")]
         public ProcessTargetSettings Target { get; set; } = new();
+    }
+
+    // ---- GetProcess ----
+    /// <summary>Findet einen laufenden Prozess anhand von Prozess-, Pfad- und Fenstermerkmalen.</summary>
+    public sealed class GetProcessStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public GetProcessSettings Settings { get; set; } = new();
+    }
+
+    public sealed class GetProcessSettings
+    {
+        [JsonPropertyName("query")]
+        public ProcessTargetSettings Query { get; set; } = new();
     }
 
     /// <summary>
@@ -632,6 +660,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("arguments")]
         public string Arguments { get; set; } = string.Empty;
+
+        [JsonPropertyName("working_directory")]
+        public string WorkingDirectory { get; set; } = string.Empty;
 
         [JsonPropertyName("wait_for_exit")]
         public bool WaitForExit { get; set; } = false;

@@ -10,7 +10,7 @@
         </Grid.ColumnDefinitions>
 
         <jobs:ResultPathPicker ItemsSource="{Binding SelectionTree}"
-                               DisplayText="{Binding SelectedPath}"
+                               DisplayText="{Binding SelectedDisplayPath}"
                                SecondaryText="{Binding SelectedCardinality}"/>
 
         <Button Grid.Column="1"

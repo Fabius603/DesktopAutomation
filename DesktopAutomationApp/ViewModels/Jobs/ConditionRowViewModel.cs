@@ -137,10 +137,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool CanRemove => _owner.Count > 1;
     public string SelectedPath => SelectedSourceStep is null || SelectedProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
-        : $"{SelectedSourceStep.DisplayName}.{SelectedProperty.Name}";
+        : $"{SelectedSourceStep.DisplayName}  →  {SelectedProperty.DisplayName}";
     public string ComparisonPath => SelectedComparisonSourceStep is null || SelectedComparisonProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
-        : $"{SelectedComparisonSourceStep.DisplayName}.{SelectedComparisonProperty.Name}";
+        : $"{SelectedComparisonSourceStep.DisplayName}  →  {SelectedComparisonProperty.DisplayName}";
     public string InputHint => SelectedProperty?.Description ?? "";
     public string InputExample => SelectedProperty?.Example ?? (SelectedProperty?.PropertyType switch
     {

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace TaskAutomation.Steps
@@ -21,6 +22,17 @@ namespace TaskAutomation.Steps
             if (!File.Exists(step.Settings.ScriptPath))
                 throw new FileNotFoundException($"Script file not found: '{step.Settings.ScriptPath}'");
 
+            var scriptName = Path.GetFileName(step.Settings.ScriptPath);
+            Action<string, bool>? outputCallback = ctx.ExecutionLogSession == null
+                ? null
+                : (line, isError) => ctx.ExecutionLogService.Write(
+                    ctx.ExecutionLogSession,
+                    isError ? ExecutionLogLevel.Warning : ExecutionLogLevel.Information,
+                    isError ? $"Script-Fehlerausgabe: {scriptName}" : $"Script-Ausgabe: {scriptName}",
+                    line,
+                    step.Id,
+                    step.GetType().Name);
+
             if (!step.Settings.WaitForExit)
             {
                 var scriptPath = step.Settings.ScriptPath;
@@ -30,7 +42,11 @@ namespace TaskAutomation.Steps
                 logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", scriptPath);
                 _ = Task.Run(async () =>
                 {
-                    try { await scriptExecutor.ExecuteScriptFile(scriptPath, arguments, CancellationToken.None); }
+                    try
+                    {
+                        await scriptExecutor.ExecuteScriptFile(
+                            scriptPath, arguments, CancellationToken.None, outputCallback);
+                    }
                     catch (Exception ex) { logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
                 });
             }
@@ -38,7 +54,7 @@ namespace TaskAutomation.Steps
             {
                 logger.LogInformation("ScriptExecutionStepHandler: Executing '{Path}'", step.Settings.ScriptPath);
                 await ctx.ScriptExecutor.ExecuteScriptFile(
-                    step.Settings.ScriptPath, step.Settings.Arguments, ct);
+                    step.Settings.ScriptPath, step.Settings.Arguments, ct, outputCallback);
             }
 
             return new ScriptExecutionResult { WasExecuted = true, Success = true };

@@ -47,6 +47,10 @@ public sealed class ResultBindingPickerViewModel : INotifyPropertyChanged
         ? $"{SelectedStepName} → {SelectedPropertyName}"
         : SelectedPropertyName;
 
+    public string SelectedDisplayPath => IsConfigured
+        ? $"{SelectedStepName}  →  {SelectedPropertyName}"
+        : SelectedPropertyName;
+
     public ResultBinding ToBinding() => new()
     {
         SourceStepId = _selectedSource?.StepId ?? string.Empty,
@@ -114,6 +118,7 @@ public sealed class ResultBindingPickerViewModel : INotifyPropertyChanged
     {
         OnChange(nameof(SelectedPath));
         OnChange(nameof(SelectedStepName));
+        OnChange(nameof(SelectedDisplayPath));
         OnChange(nameof(SelectedPropertyName));
         OnChange(nameof(SelectedCardinality));
         OnChange(nameof(IsConfigured));

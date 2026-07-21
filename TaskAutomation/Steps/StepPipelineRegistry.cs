@@ -121,6 +121,11 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Ist Prozess aktiv"),
 
+            [typeof(GetProcessStep)] = new(
+                Prerequisites: [],
+                ResultType:    typeof(GetProcessResult),
+                DisplayName:   "Prozess ermitteln"),
+
             [typeof(StartProcessStep)] = new(
                 Prerequisites: [],
                 ResultType:    typeof(StartProcessResult),
@@ -212,6 +217,7 @@ namespace TaskAutomation.Steps
             ["ScriptExecution"]    = typeof(ScriptExecutionStep),
             ["Timeout"]            = typeof(TimeoutStep),
             ["ActiveProcess"]      = typeof(ActiveProcessStep),
+            ["GetProcess"]         = typeof(GetProcessStep),
             ["StartProcess"]       = typeof(StartProcessStep),
             ["FocusProcess"]       = typeof(FocusProcessStep),
             ["ShowText"]           = typeof(ShowTextStep),

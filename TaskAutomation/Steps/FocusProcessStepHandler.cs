@@ -199,7 +199,7 @@ namespace TaskAutomation.Steps
                 ctx.Logger.LogInformation(
                     "FocusProcessStepHandler: Fenster '{Title}' (PID {Pid}, HWND 0x{Handle:X}) minimiert.",
                     target.Title, target.ProcessId, target.Handle.ToInt64());
-                return new FocusProcessResult { WasExecuted = true, Success = true };
+                return Success(target);
             }
 
             var requestedMode = step.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
@@ -223,10 +223,21 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogInformation(
                 "FocusProcessStepHandler: Fenster '{Title}' (PID {Pid}, HWND 0x{Handle:X}) aktiviert.",
                 target.Title, target.ProcessId, target.Handle.ToInt64());
-            return new FocusProcessResult { WasExecuted = true, Success = true };
+            return Success(target);
         }
 
         protected override FocusProcessResult CreateDefault() => FocusProcessResult.Default;
+
+        private static FocusProcessResult Success(WindowCandidate target)
+        {
+            var process = ProcessTargetResolver.CreateReference(checked((int)target.ProcessId));
+            return new FocusProcessResult
+            {
+                WasExecuted = true,
+                Success = true,
+                Process = process is null ? null : process with { WindowHandle = target.Handle.ToInt64() }
+            };
+        }
 
         private static FocusProcessResult Failure(string message) => new()
         {

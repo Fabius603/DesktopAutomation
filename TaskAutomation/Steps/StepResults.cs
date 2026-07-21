@@ -59,6 +59,12 @@ public interface IActionExecutionResult
     [ResultHidden] string? ErrorMessage { get; }
 }
 
+/// <summary>Common output contract for steps that identify or operate on one process/window.</summary>
+public interface IProcessReferenceResult
+{
+    RuntimeProcessReference? Process { get; }
+}
+
 public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResult
 {
     public Bitmap? Image { get; init; }
@@ -138,13 +144,19 @@ public sealed record MakroExecutionResult : StepResultBase, IActionExecutionResu
 public sealed record ScriptExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ScriptExecutionResult Default = new(); }
 public sealed record JobExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly JobExecutionResult Default = new(); }
 public sealed record TimeoutResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly TimeoutResult Default = new(); }
-public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly FocusProcessResult Default = new(); }
+public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult, IProcessReferenceResult
+{
+    public bool Success { get; init; }
+    public string? ErrorMessage { get; init; }
+    public RuntimeProcessReference? Process { get; init; }
+    public static readonly FocusProcessResult Default = new();
+}
 public sealed record ShowTextResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowTextResult Default = new(); }
 public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowImageResult Default = new(); }
 public sealed record ShowOnDesktopResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowOnDesktopResult Default = new(); }
 public sealed record VideoCreationResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly VideoCreationResult Default = new(); }
 
-public sealed record StartProcessResult : StepResultBase, IActionExecutionResult
+public sealed record StartProcessResult : StepResultBase, IActionExecutionResult, IProcessReferenceResult
 {
     public bool Success { get; init; }
     public string? ErrorMessage { get; init; }
@@ -162,7 +174,14 @@ public sealed record DynamicRoiResult : StepResultBase
     public static readonly DynamicRoiResult Default = new();
 }
 
-public sealed record ActiveProcessResult : StepResultBase
+public sealed record GetProcessResult : StepResultBase, IProcessReferenceResult
+{
+    public bool Found { get; init; }
+    public RuntimeProcessReference? Process { get; init; }
+    public static readonly GetProcessResult Default = new();
+}
+
+public sealed record ActiveProcessResult : StepResultBase, IProcessReferenceResult
 {
     public bool IsRunning { get; init; }
     public int MatchCount { get; init; }
@@ -170,7 +189,7 @@ public sealed record ActiveProcessResult : StepResultBase
     public static readonly ActiveProcessResult Default = new();
 }
 
-public sealed record ActiveWindowResult : StepResultBase
+public sealed record ActiveWindowResult : StepResultBase, IProcessReferenceResult
 {
     public bool IsActive { get; init; }
     public RuntimeProcessReference? Process { get; init; }

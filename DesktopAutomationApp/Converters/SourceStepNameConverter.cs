@@ -40,7 +40,7 @@ namespace DesktopAutomationApp.Converters
                 {
                     if (list[i] is JobStep step)
                     {
-                        _nameMap[step.Id] = StepLocalization.NumberedName(step, list);
+                        _nameMap[step.Id] = StepLocalization.ResultStepName(step, list);
                     }
                 }
                 _cacheVersion = version;
@@ -58,7 +58,7 @@ namespace DesktopAutomationApp.Converters
                     candidate.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
             var propertyName = property is null
                 ? binding.PropertyPath
-                : StepLocalization.Property(property.Name, property.DisplayName);
+                : StepLocalization.PropertyPath(property.Name);
             var cardinality = property?.Cardinality == ResultCardinality.Collection ? " · Liste" : string.Empty;
             return $"{name}  →  {propertyName}{cardinality}";
         }

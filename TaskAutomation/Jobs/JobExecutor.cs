@@ -78,6 +78,7 @@ namespace TaskAutomation.Jobs
             { typeof(JobExecutionStep),        new JobExecutionStepHandler()        },
             { typeof(YOLODetectionStep),       new YOLOStepHandler()                },
             { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
+            { typeof(GetProcessStep),          new GetProcessStepHandler()          },
             { typeof(StartProcessStep),        new StartProcessStepHandler()        },
             { typeof(FocusProcessStep),         new FocusProcessStepHandler()        },
             { typeof(ShowTextStep),             new ShowTextStepHandler()            },
@@ -264,6 +265,7 @@ namespace TaskAutomation.Jobs
                 jobState: cancellation.State);
             bool jobCompletedSuccessfully = false;
             bool jobWasCancelled = false;
+            bool runEndSteps = true;
             var completionReason = JobCompletionReason.Completed;
             _logger.LogInformation("Starte Job: {JobName}", job.Name);
             _executionLogService.Write(
@@ -346,6 +348,7 @@ namespace TaskAutomation.Jobs
                     ExecuteJob,
                     _desktopCaptureService,
                     executionLog,
+                    _executionLogService,
                     launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
                     launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)));
@@ -456,13 +459,16 @@ namespace TaskAutomation.Jobs
                 // Einmalige Startphase. Ein EndJob-Step beendet danach kontrolliert die Hauptphase.
                 cancellation.EnterStartPhase();
                 pipelineCtx.ResetResults();
-                bool jobEndedByStep = await ExecuteStepSequenceAsync(
+                var startPhaseEndJob = await ExecuteStepSequenceAsync(
                     job.StartSteps,
                     "Startphase",
                     pipelineCtx,
                     job,
                     ct,
                     continueAfterStepError: false).ConfigureAwait(false);
+                bool jobEndedByStep = startPhaseEndJob != null;
+                if (startPhaseEndJob != null)
+                    runEndSteps = !startPhaseEndJob.Settings.SkipEndSteps;
 
                 // ── Ausführungsschleife ───────────────────────────────────────
                 cancellation.EnterRunPhase();
@@ -593,7 +599,7 @@ namespace TaskAutomation.Jobs
                         }
 
                         // ── EndJob: immediately stop the job ──────────────────────────
-                        if (step is EndJobStep)
+                        if (step is EndJobStep endJobStep)
                         {
                             _logger.LogInformation(
                                 "Job '{JobName}' durch EndJob-Step beendet.", job.Name);
@@ -604,6 +610,7 @@ namespace TaskAutomation.Jobs
                                 stepId: step.Id,
                                 stepType: step.GetType().Name);
                             jobEndedByStep = true;
+                            runEndSteps = !endJobStep.Settings.SkipEndSteps;
                             break;
                         }
 
@@ -674,7 +681,15 @@ namespace TaskAutomation.Jobs
                     job.EndPhaseTimeoutSeconds,
                     Job.MinEndPhaseTimeoutSeconds,
                     Job.MaxEndPhaseTimeoutSeconds));
-                using (var endTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation.EndPhaseToken))
+                if (!runEndSteps)
+                {
+                    _executionLogService.Write(
+                        executionLog,
+                        ExecutionLogLevel.Information,
+                        "Konfigurierte End-Steps durch EndJob-Einstellung übersprungen.",
+                        "Das interne Aufräumen wird weiterhin ausgeführt.");
+                }
+                else using (var endTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation.EndPhaseToken))
                 {
                     endTimeoutCts.CancelAfter(endPhaseTimeout);
                     try
@@ -784,7 +799,7 @@ namespace TaskAutomation.Jobs
             }
         }
 
-        private async Task<bool> ExecuteStepSequenceAsync(
+        private async Task<EndJobStep?> ExecuteStepSequenceAsync(
             IReadOnlyList<JobStep>? configuredSteps,
             string phaseName,
             StepPipelineContext pipelineCtx,
@@ -794,7 +809,7 @@ namespace TaskAutomation.Jobs
             IReadOnlyList<JobStep>? precedingSteps = null)
         {
             var steps = configuredSteps ?? [];
-            if (steps.Count == 0) return false;
+            if (steps.Count == 0) return null;
 
             _executionLogService.Write(
                 pipelineCtx.ExecutionLogSession,
@@ -899,7 +914,7 @@ namespace TaskAutomation.Jobs
                     continue;
                 }
 
-                if (step is EndJobStep)
+                if (step is EndJobStep endJobStep)
                 {
                     _executionLogService.Write(
                         pipelineCtx.ExecutionLogSession,
@@ -907,7 +922,7 @@ namespace TaskAutomation.Jobs
                         $"{phaseName} durch EndJob-Step beendet.",
                         stepId: step.Id,
                         stepType: step.GetType().Name);
-                    return true;
+                    return endJobStep;
                 }
 
                 try
@@ -933,7 +948,7 @@ namespace TaskAutomation.Jobs
                 pipelineCtx.ExecutionLogSession,
                 ExecutionLogLevel.Information,
                 $"{phaseName} beendet.");
-            return false;
+            return null;
         }
 
         /// <summary>Führt einen einzelnen Step aus – loggt Fehler und rethrowt.</summary>
@@ -1012,20 +1027,11 @@ namespace TaskAutomation.Jobs
                     parts.Add($"{name}={value}");
             }
 
+            if (result is IProcessReferenceResult { Process: { } processReference })
+                parts.Add($"PID={processReference.ProcessId}, Process={processReference.ProcessName}, HWND=0x{processReference.WindowHandle:X}");
+
             switch (step)
             {
-                case StartProcessStep when result is StartProcessResult processResult:
-                    if (processResult.Process is { } startedProcess)
-                        parts.Add($"PID={startedProcess.ProcessId}, Process={startedProcess.ProcessName}, StartedUtc={startedProcess.StartTimeUtc:O}");
-                    break;
-                case ActiveProcessStep when result is ActiveProcessResult activeProcess:
-                    if (activeProcess.Process is { } runningProcess)
-                        parts.Add($"PID={runningProcess.ProcessId}, Process={runningProcess.ProcessName}");
-                    break;
-                case ActiveWindowStep when result is ActiveWindowResult activeWindow:
-                    if (activeWindow.Process is { } windowProcess)
-                        parts.Add($"PID={windowProcess.ProcessId}, Process={windowProcess.ProcessName}, HWND=0x{activeWindow.WindowHandle:X}");
-                    break;
                 case DesktopDuplicationStep capture:
                     parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");
                     parts.Add($"CaptureCursor={capture.Settings.CaptureCursor}");

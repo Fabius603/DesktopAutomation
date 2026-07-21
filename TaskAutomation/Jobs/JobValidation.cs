@@ -165,6 +165,7 @@ public static class JobValidation
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
             ActiveProcessStep s => ProcessTargetConfigured(s.Settings.Target),
+            GetProcessStep s => ProcessQueryConfigured(s.Settings.Query),
             StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate
                 ? ProcessTargetConfigured(s.Settings.Target)
                 : ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath) && s.Settings.MonitorIndex >= 0,
@@ -242,6 +243,9 @@ public static class JobValidation
         target?.ProcessSource.IsConfigured == true
         || Text(target?.ProcessName)
         || Text(target?.ExecutablePath);
+    private static bool ProcessQueryConfigured(ProcessTargetSettings? query) =>
+        query?.ProcessSource.IsConfigured != true
+        && (Text(query?.ProcessName) || Text(query?.ExecutablePath));
     private static bool Unit(double value) => value is >= 0 and <= 1;
     private static bool ExistingFile(string? path) => Text(path) && File.Exists(path);
     private static bool Roi(bool enabled, OpenCvSharp.Rect roi) => !enabled || (roi.X >= 0 && roi.Y >= 0 && roi.Width > 0 && roi.Height > 0);
@@ -256,6 +260,7 @@ public static class JobValidation
     private static ProcessTargetSettings? GetProcessTarget(JobStep step) => step switch
     {
         ActiveProcessStep s => s.Settings.Target,
+        GetProcessStep s => s.Settings.Query,
         StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate => s.Settings.Target,
         FocusProcessStep s => s.Settings.Target,
         ActiveWindowStep s => s.Settings.Target,
@@ -332,7 +337,9 @@ public static class JobValidation
     private static bool ProducesProcessReference(JobStep? step) => step switch
     {
         StartProcessStep { Settings.Action: StartProcessAction.Start } => true,
+        GetProcessStep => true,
         ActiveProcessStep => true,
+        FocusProcessStep => true,
         ActiveWindowStep => true,
         _ => false
     };

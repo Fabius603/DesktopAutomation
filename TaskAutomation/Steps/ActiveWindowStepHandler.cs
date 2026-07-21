@@ -25,7 +25,13 @@ public sealed class ActiveWindowStepHandler : JobStepHandler<ActiveWindowStep, A
             && ctx.ActiveWindowCache.TryGetValue(step.Id, out var cached)
             && string.Equals(cached.ProcessName, cacheKey, StringComparison.OrdinalIgnoreCase)
             && (DateTime.Now - cached.Timestamp).TotalMilliseconds < cacheMs)
-            return Task.FromResult(new ActiveWindowResult { WasExecuted = true, IsActive = cached.IsActive });
+            return Task.FromResult(new ActiveWindowResult
+            {
+                WasExecuted = true,
+                IsActive = cached.IsActive,
+                Process = ProcessTargetResolver.IsCurrent(cached.Process) ? cached.Process : null,
+                WindowHandle = cached.WindowHandle
+            });
 
         var processIds = ProcessTargetResolver.ResolveProcessIds(target, ctx.Results);
         ProcessWindowMatcher.ProcessWindowMatch? foreground = null;
@@ -55,14 +61,20 @@ public sealed class ActiveWindowStepHandler : JobStepHandler<ActiveWindowStep, A
         ctx.Logger.LogInformation(
             "ActiveWindowStepHandler: Prozessziel '{Target}' - Fenster aktiv: {IsActive}.",
             cacheKey, isActive);
+        var processReference = matchedProcessId > 0
+            ? ProcessTargetResolver.CreateReference(matchedProcessId) is { } process
+                ? process with { WindowHandle = foreground?.Handle.ToInt64() ?? process.WindowHandle }
+                : null
+            : null;
         if (cacheMs > 0)
-            ctx.ActiveWindowCache[step.Id] = new ActiveWindowCacheEntry(cacheKey, isActive, DateTime.Now);
+            ctx.ActiveWindowCache[step.Id] = new ActiveWindowCacheEntry(
+                cacheKey, isActive, processReference, foreground?.Handle.ToInt64() ?? 0, DateTime.Now);
 
         return Task.FromResult(new ActiveWindowResult
         {
             WasExecuted = true,
             IsActive = isActive,
-            Process = matchedProcessId > 0 ? ProcessTargetResolver.CreateReference(matchedProcessId) : null,
+            Process = processReference,
             WindowHandle = foreground?.Handle.ToInt64() ?? 0
         });
     }

@@ -78,6 +78,7 @@
                     <detection:YoloDetectionStepEditor/>
                     <flow:TimeoutStepEditor/>
                     <process:ActiveProcessStepEditor/>
+                    <process:GetProcessStepEditor/>
                     <process:StartProcessStepEditor/>
                     <process:FocusProcessStepEditor/>
                     <output:ShowTextStepEditor/>

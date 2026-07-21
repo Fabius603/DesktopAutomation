@@ -179,6 +179,21 @@ public static class StepDragDrop
         ShowIndicator(list, GetEndInsertionY(list), list.Items.Count == 0);
     }
 
+    /// <summary>
+    /// Shows the insertion target at index zero when hovering a section header.
+    /// </summary>
+    public static void ShowSectionStartTarget(ListBox list)
+    {
+        if (!_isDragging)
+            return;
+
+        _targetIndex = 0;
+        var insertionY = list.Items.Count == 0
+            ? Math.Max(1, list.ActualHeight / 2)
+            : GetInsertionPlacement(list, new Point(0, 0)).Y;
+        ShowIndicator(list, insertionY, list.Items.Count == 0);
+    }
+
     public static void ClearTargetPreview(ListBox? list = null)
     {
         if (list == null || ReferenceEquals(list, _indicatorOwner))

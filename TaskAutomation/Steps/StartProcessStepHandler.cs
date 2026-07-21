@@ -64,9 +64,13 @@ namespace TaskAutomation.Steps
                 UseShellExecute = true
             };
 
+            var workingDirectory = step.Settings.WorkingDirectory?.Trim();
+            if (!string.IsNullOrEmpty(workingDirectory))
+                startInfo.WorkingDirectory = workingDirectory;
+
             ctx.Logger.LogInformation(
-                "StartProcessStepHandler: Starte '{Path}' mit Argumenten '{Args}' (WaitForExit={Wait}).",
-                executablePath, startInfo.Arguments, step.Settings.WaitForExit);
+                "StartProcessStepHandler: Starte '{Path}' mit Argumenten '{Args}' aus Arbeitsverzeichnis '{WorkingDirectory}' (WaitForExit={Wait}).",
+                executablePath, startInfo.Arguments, startInfo.WorkingDirectory, step.Settings.WaitForExit);
 
             Process? process;
             try

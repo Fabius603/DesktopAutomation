@@ -12,7 +12,7 @@
                            PreviewSource="{Binding TemplateMatchingStep_TemplatePreview}" HasPreview="{Binding TemplateMatchingStep_HasTemplatePreview}"/>
   </Grid>
   <Grid Style="{StaticResource StepFieldGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-   <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Confidence01}" Style="{StaticResource StepFieldLabel}"/><TextBox Grid.Column="1" Style="{StaticResource StepCompactTextBox}" HorizontalAlignment="Left" Text="{Binding TemplateMatchingStep_ConfidenceThreshold, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+   <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ConfidencePercent}" Style="{StaticResource StepFieldLabel}"/><shared:PercentageInput Grid.Column="1" Value="{Binding TemplateMatchingStep_ConfidenceThreshold, Mode=TwoWay}"/>
   </Grid>
   <Expander Style="{StaticResource StepAdvancedExpander}"><StackPanel Margin="0,10,0,0">
    <roi:RoiEditor IsRoiEnabled="{Binding TemplateMatchingStep_EnableROI}" X="{Binding TemplateMatchingStep_RoiX}" Y="{Binding TemplateMatchingStep_RoiY}" RoiWidth="{Binding TemplateMatchingStep_RoiW}" RoiHeight="{Binding TemplateMatchingStep_RoiH}" CaptureCommand="{Binding CaptureTemplateMatchingRoiCommand}"/>

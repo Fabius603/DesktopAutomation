@@ -137,10 +137,10 @@
                                                 </Style>
                                             </Border.Style>
                                             <Grid>
-                                                <mah:NumericUpDown Value="{Binding ComparisonNumber, UpdateSourceTrigger=PropertyChanged}"
-                                                                   Minimum="-1000000000" Maximum="1000000000"
-                                                                   mah:TextBoxHelper.Watermark="{Binding InputExample}"
-                                                                   Visibility="{Binding ShowNumericValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <TextBox Text="{Binding ComparisonNumber, UpdateSourceTrigger=PropertyChanged}"
+                                                         mah:TextBoxHelper.Watermark="{Binding InputExample}"
+                                                         VerticalContentAlignment="Center"
+                                                         Visibility="{Binding ShowNumericValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                 <TextBox Text="{Binding ComparisonValue, UpdateSourceTrigger=PropertyChanged}"
                                                          ToolTip="{Binding InputHint}"
                                                          mah:TextBoxHelper.Watermark="{Binding InputExample}"

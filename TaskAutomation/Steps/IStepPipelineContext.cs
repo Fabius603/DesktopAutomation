@@ -46,6 +46,7 @@ namespace TaskAutomation.Steps
         IImageDisplayService ImageDisplayService { get; }
         IDesktopResultOverlay DesktopResultOverlay { get; }
         ExecutionLogSession? ExecutionLogSession { get; }
+        IExecutionLogService ExecutionLogService { get; }
 
         /// <summary>Der aktuell laufende Job (für Zyklusprüfungen in JobExecutionStep).</summary>
         Job CurrentJob { get; }

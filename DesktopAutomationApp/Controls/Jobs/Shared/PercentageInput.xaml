@@ -1,0 +1,19 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Shared.PercentageInput"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="52"/>
+        </Grid.ColumnDefinitions>
+        <Slider Minimum="0" Maximum="1"
+                SmallChange="0.01" LargeChange="0.05"
+                TickFrequency="0.01" IsSnapToTickEnabled="True"
+                VerticalAlignment="Center"
+                Value="{Binding Value, ElementName=Root, Mode=TwoWay}"/>
+        <TextBlock Grid.Column="1" Margin="8,0,0,0"
+                   VerticalAlignment="Center" TextAlignment="Right"
+                   Text="{Binding Value, ElementName=Root, StringFormat={}{0:P0}}"/>
+    </Grid>
+</UserControl>

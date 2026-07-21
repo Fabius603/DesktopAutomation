@@ -8,6 +8,10 @@ namespace TaskAutomation.Scripts
 {
     public interface IScriptExecutor
     {
-        Task ExecuteScriptFile(string scriptPath, string arguments, CancellationToken ct);
+        Task ExecuteScriptFile(
+            string scriptPath,
+            string arguments,
+            CancellationToken ct,
+            Action<string, bool>? outputCallback = null);
     }
 }

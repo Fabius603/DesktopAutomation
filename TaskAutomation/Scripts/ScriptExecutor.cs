@@ -17,7 +17,11 @@ namespace TaskAutomation.Scripts
             _logger = logger;
         }
 
-        public async Task ExecuteScriptFile(string scriptPath, string arguments, CancellationToken ct = default)
+        public async Task ExecuteScriptFile(
+            string scriptPath,
+            string arguments,
+            CancellationToken ct = default,
+            Action<string, bool>? outputCallback = null)
         {
             if (string.IsNullOrWhiteSpace(scriptPath))
                 throw new ArgumentException("Script path is null/empty.", nameof(scriptPath));
@@ -50,12 +54,18 @@ namespace TaskAutomation.Scripts
             proc.OutputDataReceived += (_, e) =>
             {
                 if (e.Data != null)
+                {
                     _logger.LogDebug("[{Script}] STDOUT: {Line}", Path.GetFileName(scriptPath), e.Data);
+                    ForwardOutput(outputCallback, e.Data, isError: false, scriptPath);
+                }
             };
             proc.ErrorDataReceived += (_, e) =>
             {
                 if (e.Data != null)
+                {
                     _logger.LogWarning("[{Script}] STDERR: {Line}", Path.GetFileName(scriptPath), e.Data);
+                    ForwardOutput(outputCallback, e.Data, isError: true, scriptPath);
+                }
             };
 
             if (!proc.Start())
@@ -103,6 +113,26 @@ namespace TaskAutomation.Scripts
                 _logger.LogError("Skript {Script} beendet mit ExitCode {ExitCode} (Dauer {Duration} ms).",
                     scriptPath, proc.ExitCode, sw.ElapsedMilliseconds);
                 throw new InvalidOperationException($"Script '{scriptPath}' exited with code {proc.ExitCode}.");
+            }
+        }
+
+        private void ForwardOutput(
+            Action<string, bool>? outputCallback,
+            string line,
+            bool isError,
+            string scriptPath)
+        {
+            if (outputCallback == null) return;
+            try
+            {
+                outputCallback(line, isError);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Skriptausgabe von {Script} konnte nicht an das Job-Log weitergeleitet werden.",
+                    scriptPath);
             }
         }
 

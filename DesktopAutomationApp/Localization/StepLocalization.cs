@@ -19,9 +19,22 @@ public static class StepLocalization
     public static string Property(string propertyName, string? fallback = null) =>
         GetOrFallback($"Step.ResultProperty.{propertyName}", fallback ?? propertyName);
 
-    public static string PropertyPath(string propertyPath) => Property(propertyPath,
-        string.Join(" / ", propertyPath.Split('.').Select(segment =>
-            System.Text.RegularExpressions.Regex.Replace(segment, "(?<=[a-z0-9])([A-Z])", " $1"))));
+    public static string PropertyPath(string propertyPath)
+    {
+        var fullPathKey = $"Step.ResultProperty.{propertyPath}";
+        var fullPath = LocalizationService.Instance[fullPathKey];
+        if (fullPath != $"[{fullPathKey}]") return fullPath;
+
+        return string.Join(" / ", propertyPath.Split('.').Select(segment =>
+        {
+            var cleanSegment = segment.Replace("[]", string.Empty, StringComparison.Ordinal);
+            var segmentKey = $"Ui.Job.Steps.ResultProperty.{cleanSegment}";
+            var translated = LocalizationService.Instance[segmentKey];
+            return translated == $"[{segmentKey}]"
+                ? System.Text.RegularExpressions.Regex.Replace(cleanSegment, "(?<=[a-z0-9])([A-Z])", " $1")
+                : translated;
+        }));
+    }
 
     public static string ResultValueType(ResultPropertyDescriptor property)
     {
@@ -50,7 +63,7 @@ public static class StepLocalization
             descriptor.TypeName,
             descriptor.DisplayName,
             descriptor.Properties
-                .Select(p => new ResultPropertyDescriptor(p.Name, Property(p.Name, p.DisplayName), p.PropertyType,
+                .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(p.Name), p.PropertyType,
                     p.Description, p.IsNullable, p.Example, p.ValueKind, p.Cardinality))
                 .ToArray());
 
@@ -79,6 +92,14 @@ public static class StepLocalization
         return number.HasValue ? NumberedName(step.GetType(), number.Value) : Type(step.GetType());
     }
 
+    public static string ResultStepName(JobStep step, IEnumerable? steps)
+    {
+        var number = DisplayNumber(steps, step);
+        return number.HasValue
+            ? Loc.Format("Ui.Step.ResultSource.StepLabel", number.Value, Type(step.GetType()))
+            : Type(step.GetType());
+    }
+
     public static string ResultSourceName(
         JobStep step,
         IEnumerable? steps,
@@ -87,7 +108,7 @@ public static class StepLocalization
     {
         var resultValue = resultType.TypeName;
         if (!string.IsNullOrWhiteSpace(propertyName))
-            resultValue += "." + Property(propertyName, propertyName);
+            resultValue += "." + PropertyPath(propertyName);
         return Loc.Format("Ui.Step.ResultSource.FromStep", resultValue, NumberedName(step, steps));
     }
 

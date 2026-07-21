@@ -42,6 +42,7 @@ namespace TaskAutomation.Steps
         public IImageDisplayService ImageDisplayService { get; }
         public IDesktopResultOverlay DesktopResultOverlay { get; }
         public ExecutionLogSession? ExecutionLogSession { get; }
+        public IExecutionLogService ExecutionLogService { get; }
         public Job                  CurrentJob         { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
         public Func<Guid, Guid>?                    StartJobViaDispatcher { get; }
@@ -82,6 +83,7 @@ namespace TaskAutomation.Steps
             Func<Guid, CancellationToken, Task> executeJob,
             IDesktopCaptureService             desktopCaptureService,
             ExecutionLogSession?                executionLogSession = null,
+            IExecutionLogService?               executionLogService = null,
             Func<Guid, Guid>?                  startJobViaDispatcher  = null,
             Action<Guid>?                      cancelJobViaDispatcher = null,
             Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null)
@@ -96,6 +98,8 @@ namespace TaskAutomation.Steps
             ImageDisplayService        = imageDisplayService;
             DesktopResultOverlay       = desktopResultOverlay;
             ExecutionLogSession        = executionLogSession;
+            ExecutionLogService        = executionLogService
+                ?? throw new ArgumentNullException(nameof(executionLogService));
             CurrentJob                 = currentJob;
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;

@@ -473,6 +473,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
                     vm.TemplateMatchingStep_ImageSource.Load(t.Settings.ImageSource);
                     vm.DetectionDynamicRoiSource.Load(t.Settings.DynamicRoiSource);
+                    vm.UseDynamicRoi = t.Settings.DynamicRoiSource.IsConfigured;
                     break;
 
                 case ColorDetectionStep cd:
@@ -491,6 +492,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ColorDetectionStep_RoiH = cd.Settings.ROI.Height;
                     vm.ColorDetectionStep_ImageSource.Load(cd.Settings.ImageSource);
                     vm.DetectionDynamicRoiSource.Load(cd.Settings.DynamicRoiSource);
+                    vm.UseDynamicRoi = cd.Settings.DynamicRoiSource.IsConfigured;
                     break;
 
                 case PredictMovementStep pm:
@@ -591,6 +593,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
                     vm.YoloDetectionStep_ImageSource.Load(yd.Settings.ImageSource);
                     vm.DetectionDynamicRoiSource.Load(yd.Settings.DynamicRoiSource);
+                    vm.UseDynamicRoi = yd.Settings.DynamicRoiSource.IsConfigured;
                     break;
 
                 case TimeoutStep to:
@@ -605,6 +608,13 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ActiveProcessStep_UsesProcessSource = ap.Settings.Target.ProcessSource.IsConfigured;
                     break;
 
+                case GetProcessStep gp:
+                    vm.SelectedType = "GetProcess";
+                    vm.GetProcessStep_ProcessName = gp.Settings.Query.ProcessName;
+                    vm.GetProcessStep_ExecutablePath = gp.Settings.Query.ExecutablePath;
+                    vm.GetProcessStep_WindowTitleContains = gp.Settings.Query.WindowTitleContains;
+                    break;
+
                 case StartProcessStep sp:
                     vm.SelectedType = "StartProcess";
                     vm.StartProcessStep_Action = sp.Settings.Action;
@@ -612,6 +622,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.StartProcessStep_ProcessName = sp.Settings.Target.ProcessName;
                     vm.StartProcessStep_WindowTitleContains = sp.Settings.Target.WindowTitleContains;
                     vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
+                    vm.StartProcessStep_WorkingDirectory = sp.Settings.WorkingDirectory;
                     vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
                     vm.StartProcessStep_MonitorIndex = sp.Settings.MonitorIndex;
                     vm.StartProcessStep_PlacementMode = sp.Settings.PlacementMode;
@@ -650,6 +661,7 @@ namespace DesktopAutomationApp.ViewModels
                 case ActiveWindowStep aw:
                     vm.SelectedType = "ActiveWindow";
                     vm.ActiveWindowStep_ProcessName = aw.Settings.Target.ProcessName;
+                    vm.ActiveWindowStep_WindowTitleContains = aw.Settings.Target.WindowTitleContains;
                     vm.ActiveWindowStep_CacheMs = aw.Settings.CacheMs;
                     vm.ActiveWindowStep_ProcessSource.Load(aw.Settings.Target.ProcessSource);
                     vm.ActiveWindowStep_UsesProcessSource = aw.Settings.Target.ProcessSource.IsConfigured;
@@ -667,6 +679,7 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KeyPointMatchingStep_RoiH = km.Settings.ROI.Height;
                     vm.KeyPointMatchingStep_ImageSource.Load(km.Settings.ImageSource);
                     vm.DetectionDynamicRoiSource.Load(km.Settings.DynamicRoiSource);
+                    vm.UseDynamicRoi = km.Settings.DynamicRoiSource.IsConfigured;
                     break;
 
                 case DynamicRoiStep dr:
@@ -696,8 +709,9 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "EndIf";
                     break;
 
-                case TaskAutomation.Jobs.EndJobStep:
+                case TaskAutomation.Jobs.EndJobStep endJob:
                     vm.SelectedType = "EndJob";
+                    vm.EndJobStep_SkipEndSteps = endJob.Settings.SkipEndSteps;
                     break;
 
                 case TaskAutomation.Jobs.PointComparisonStep pcs:

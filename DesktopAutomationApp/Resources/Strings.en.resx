@@ -453,6 +453,9 @@
   <data name="Ui.Step.Settings.Confidence01" xml:space="preserve">
     <value>Confidence (0…1)</value>
   </data>
+  <data name="Ui.Step.Settings.ConfidencePercent" xml:space="preserve">
+    <value>Confidence (%)</value>
+  </data>
   <data name="Ui.Step.Settings.MatchMode" xml:space="preserve">
     <value>Match Mode</value>
   </data>
@@ -564,6 +567,18 @@
   <data name="Ui.Step.Settings.Arguments" xml:space="preserve">
     <value>Arguments</value>
   </data>
+  <data name="Ui.Step.Settings.ArgumentsPlaceholder" xml:space="preserve">
+    <value>e.g. --background --port 8080</value>
+  </data>
+  <data name="Ui.Step.Settings.WorkingDirectory" xml:space="preserve">
+    <value>Working directory</value>
+  </data>
+  <data name="Ui.Step.Settings.WorkingDirectoryPlaceholder" xml:space="preserve">
+    <value>optional, e.g. C:\Users</value>
+  </data>
+  <data name="Ui.Step.Settings.StartProcessArgumentsHint" xml:space="preserve">
+    <value>Arguments are passed directly to the program. Quote values containing spaces; shell operators such as &amp;&amp; or &gt; are not evaluated.</value>
+  </data>
   <data name="Ui.Step.Settings.Optional" xml:space="preserve">
     <value>optional</value>
   </data>
@@ -584,6 +599,9 @@
   </data>
   <data name="Ui.Step.Settings.Opacity" xml:space="preserve">
     <value>Opacity</value>
+  </data>
+  <data name="Ui.Step.Settings.OpacityPercent" xml:space="preserve">
+    <value>Opacity (%)</value>
   </data>
   <data name="Ui.Step.Settings.DisplayDurationMs" xml:space="preserve">
     <value>Display duration (ms)</value>
@@ -646,7 +664,13 @@
     <value>No configuration required. Ends the previous If/ElseIf/Else block.</value>
   </data>
   <data name="Ui.Step.Settings.EndJobDescription" xml:space="preserve">
-    <value>No configuration required. Ends the job immediately; subsequent steps are not executed.</value>
+    <value>Ends the job immediately; subsequent steps and further repetitions are not executed.</value>
+  </data>
+  <data name="Ui.Step.Settings.SkipEndSteps" xml:space="preserve">
+    <value>Skip steps in the “On job end” area</value>
+  </data>
+  <data name="Ui.Step.Settings.SkipEndStepsHint" xml:space="preserve">
+    <value>Only skips the steps configured there. Internal cleanup always runs.</value>
   </data>
   <data name="Ui.Step.Settings.BasicSettings" xml:space="preserve">
     <value>BASIC SETTINGS</value>
@@ -864,6 +888,9 @@
   </data>
   <data name="Ui.Job.Steps.Arguments" xml:space="preserve">
     <value>Arguments: </value>
+  </data>
+  <data name="Ui.Job.Steps.SkipEndStepsLabel" xml:space="preserve">
+    <value>Skip end steps: </value>
   </data>
   <data name="Ui.Job.Steps.WindowMode" xml:space="preserve">
     <value>Window mode: </value>
@@ -1422,6 +1449,12 @@ Error:
   <data name="Step.Category.Ablaufsteuerung" xml:space="preserve">
     <value>Flow control</value>
   </data>
+  <data name="Step.Category.Prozess" xml:space="preserve">
+    <value>Process</value>
+  </data>
+  <data name="Step.Category.Fenster" xml:space="preserve">
+    <value>Window</value>
+  </data>
   <data name="Step.Type.DesktopDuplication" xml:space="preserve">
     <value>Desktop duplication</value>
   </data>
@@ -1462,13 +1495,13 @@ Error:
     <value>Timeout</value>
   </data>
   <data name="Step.Type.ActiveProcess" xml:space="preserve">
-    <value>Is process active</value>
+    <value>Is process running?</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
     <value>Start/terminate process</value>
   </data>
   <data name="Step.Type.FocusProcess" xml:space="preserve">
-    <value>Control process window</value>
+    <value>Focus/minimize window</value>
   </data>
   <data name="Step.Type.ShowText" xml:space="preserve">
     <value>Show text on desktop</value>
@@ -1558,10 +1591,10 @@ Error:
     <value>Stops the current job immediately.</value>
   </data>
   <data name="Step.Description.ActiveProcess" xml:space="preserve">
-    <value>Checks whether a process is currently running.</value>
+    <value>Only checks whether a matching program instance is running; no visible window is required.</value>
   </data>
   <data name="Step.Description.ActiveWindow" xml:space="preserve">
-    <value>Checks whether a process window is in the foreground.</value>
+    <value>Checks whether a specific process window is in the foreground. The window title can be filtered optionally.</value>
   </data>
   <data name="Step.Description.PointComparison" xml:space="preserve">
     <value>Compares points with a reference point or axis expressions.</value>
@@ -1815,6 +1848,7 @@ Error:
   <data name="Ui.Step.Settings.MaxPredictionDistance" xml:space="preserve"><value>Max. prediction distance</value></data>
   <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. model error</value></data>
   <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. confidence</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidencePercent" xml:space="preserve"><value>Min. confidence (%)</value></data>
   <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Model: </value></data>
   <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Detection result whose detected positions are used as measurements for movement prediction.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic selects the most suitable model. Linear fits steady motion, Acceleration fits changing speed, and Kalman handles noisy measurements.</value></data>
@@ -1832,7 +1866,7 @@ Error:
   <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Creates an ROI from the best match for the next job iteration.</value></data>
   <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Detection result</value></data>
   <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Padding in pixels</value></data>
-  <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimum confidence (0–1)</value></data>
+  <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimum confidence (%)</value></data>
   <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Full-screen search after X ROI iterations (0 = never)</value></data>
   <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Remove dynamic ROI after X unsuccessful attempts (0 = never)</value></data>
   <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Use dynamic ROI</value></data>
@@ -1938,4 +1972,69 @@ Error:
   <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>No value selected</value></data>
   <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Select a result and property</value></data>
   <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Identify process by</value></data>
+  <data name="Step.Type.GetProcess" xml:space="preserve"><value>Get process</value></data>
+  <data name="Step.Description.GetProcess" xml:space="preserve"><value>Finds a running process by its characteristics and provides the concrete process reference to subsequent steps.</value></data>
+  <data name="Ui.Step.Settings.GetProcessHint" xml:space="preserve"><value>Enter at least a process name or program path. The optional window title narrows the search further.</value></data>
+  <data name="Ui.Job.Steps.ResultType.Boolean" xml:space="preserve"><value>Bool</value></data>
+  <data name="Ui.Job.Steps.ResultType.Integer" xml:space="preserve"><value>Integer</value></data>
+  <data name="Ui.Job.Steps.ResultType.Number" xml:space="preserve"><value>Number</value></data>
+  <data name="Ui.Job.Steps.ResultType.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Ui.Job.Steps.ResultType.DateTime" xml:space="preserve"><value>Date/time</value></data>
+  <data name="Ui.Job.Steps.ResultType.Image" xml:space="preserve"><value>Image</value></data>
+  <data name="Ui.Job.Steps.ResultType.Point" xml:space="preserve"><value>Point</value></data>
+  <data name="Ui.Job.Steps.ResultType.Rectangle" xml:space="preserve"><value>Rectangle</value></data>
+  <data name="Ui.Job.Steps.ResultType.Detection" xml:space="preserve"><value>Detection</value></data>
+  <data name="Ui.Job.Steps.ResultType.Process" xml:space="preserve"><value>Process</value></data>
+  <data name="Ui.Job.Steps.ResultType.Object" xml:space="preserve"><value>Object</value></data>
+  <data name="Ui.Job.Steps.ResultType.List" xml:space="preserve"><value>List</value></data>
+  <data name="Ui.Job.Steps.ResultType.Optional" xml:space="preserve"><value>optional</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Image" xml:space="preserve"><value>Image</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.HasImage" xml:space="preserve"><value>Image available</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Found" xml:space="preserve"><value>Found</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsActive" xml:space="preserve"><value>Is in foreground</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsFresh" xml:space="preserve"><value>Fresh capture</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsPredicted" xml:space="preserve"><value>Predicted</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsRunning" xml:space="preserve"><value>Process is running</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Matches" xml:space="preserve"><value>Matches</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.RoiReset" xml:space="preserve"><value>ROI reset</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.RoiUpdated" xml:space="preserve"><value>ROI updated</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.SourceCaptureIsFresh" xml:space="preserve"><value>Source capture is fresh</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.UsedDynamicRoi" xml:space="preserve"><value>Dynamic ROI used</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.CaptureTimestampUtc" xml:space="preserve"><value>Capture time (UTC)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.SourceCaptureTimestampUtc" xml:space="preserve"><value>Source capture time (UTC)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.StartTimeUtc" xml:space="preserve"><value>Process start (UTC)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.PredictedForUtc" xml:space="preserve"><value>Predicted for (UTC)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Confidence" xml:space="preserve"><value>Confidence</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ConsecutiveMisses" xml:space="preserve"><value>Consecutive misses</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.FullSearchInterval" xml:space="preserve"><value>Full search interval</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.MatchCount" xml:space="preserve"><value>Match count</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.TotalCount" xml:space="preserve"><value>Total count</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Count" xml:space="preserve"><value>Count</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ProcessId" xml:space="preserve"><value>Process ID</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.WindowHandle" xml:space="preserve"><value>Window handle</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Center" xml:space="preserve"><value>Center</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Offset" xml:space="preserve"><value>Offset</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Point" xml:space="preserve"><value>Point</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Bounds" xml:space="preserve"><value>Bounds</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.BoundingBox" xml:space="preserve"><value>Bounding box</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.GlobalBounds" xml:space="preserve"><value>Global bounds</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Process" xml:space="preserve"><value>Process</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ExecutablePath" xml:space="preserve"><value>Program path</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ProcessName" xml:space="preserve"><value>Process name</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.AppliedRoi" xml:space="preserve"><value>Applied ROI</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.AllDetections" xml:space="preserve"><value>All detections</value></data>
+  <data name="Ui.Job.Steps.DetailProperty.Query" xml:space="preserve"><value>Search criteria</value></data>
+  <data name="Ui.Job.Steps.DetailProperty.Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Ui.Job.Steps.DetailProperty.Target" xml:space="preserve"><value>Process target</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Location" xml:space="preserve"><value>Location</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.X" xml:space="preserve"><value>X</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Width" xml:space="preserve"><value>Width</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Height" xml:space="preserve"><value>Height</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Left" xml:space="preserve"><value>Left edge</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Top" xml:space="preserve"><value>Top edge</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Right" xml:space="preserve"><value>Right edge</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Bottom" xml:space="preserve"><value>Bottom edge</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsEmpty" xml:space="preserve"><value>Is empty</value></data>
+  <data name="Ui.Step.ResultSource.StepLabel" xml:space="preserve"><value>Step {0}: {1}</value></data>
 </root>

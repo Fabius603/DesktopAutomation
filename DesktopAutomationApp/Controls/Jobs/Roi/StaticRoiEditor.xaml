@@ -2,15 +2,15 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
     <UserControl.Resources>
         <Style x:Key="RoiFieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/><Setter Property="Margin" Value="0,0,0,4"/>
             <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
         </Style>
-        <Style x:Key="RoiNumber" TargetType="mah:NumericUpDown">
+        <Style x:Key="RoiNumber" TargetType="TextBox">
             <Setter Property="MinWidth" Value="88"/><Setter Property="Height" Value="30"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
     </UserControl.Resources>
     <Border Background="{DynamicResource App.Brush.Surface}" BorderBrush="{DynamicResource App.Brush.CardBorder}"
@@ -27,23 +27,23 @@
                 <UniformGrid Columns="4">
                     <StackPanel Margin="0,0,8,0">
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource RoiFieldLabel}"/>
-                        <mah:NumericUpDown Style="{StaticResource RoiNumber}" Minimum="-100000" Maximum="100000"
-                                           Value="{Binding X, ElementName=Root, Mode=TwoWay}"/>
+                        <TextBox Style="{StaticResource RoiNumber}"
+                                 Text="{Binding X, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Margin="0,0,8,0">
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource RoiFieldLabel}"/>
-                        <mah:NumericUpDown Style="{StaticResource RoiNumber}" Minimum="-100000" Maximum="100000"
-                                           Value="{Binding Y, ElementName=Root, Mode=TwoWay}"/>
+                        <TextBox Style="{StaticResource RoiNumber}"
+                                 Text="{Binding Y, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Margin="0,0,8,0">
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Style="{StaticResource RoiFieldLabel}"/>
-                        <mah:NumericUpDown Style="{StaticResource RoiNumber}" Minimum="0" Maximum="100000"
-                                           Value="{Binding RoiWidth, ElementName=Root, Mode=TwoWay}"/>
+                        <TextBox Style="{StaticResource RoiNumber}"
+                                 Text="{Binding RoiWidth, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel>
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Style="{StaticResource RoiFieldLabel}"/>
-                        <mah:NumericUpDown Style="{StaticResource RoiNumber}" Minimum="0" Maximum="100000"
-                                           Value="{Binding RoiHeight, ElementName=Root, Mode=TwoWay}"/>
+                        <TextBox Style="{StaticResource RoiNumber}"
+                                 Text="{Binding RoiHeight, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </UniformGrid>
             </Border>

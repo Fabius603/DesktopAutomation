@@ -24,5 +24,7 @@ namespace TaskAutomation.Steps
     public readonly record struct ActiveWindowCacheEntry(
         string ProcessName,
         bool IsActive,
+        RuntimeProcessReference? Process,
+        long WindowHandle,
         DateTime Timestamp);
 }

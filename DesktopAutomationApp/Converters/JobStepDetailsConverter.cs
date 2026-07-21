@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Data;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Services.Jobs;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -17,26 +18,15 @@ public sealed record JobStepDetails(IReadOnlyList<StepDetailGroup> Groups, StepR
 /// <summary>Creates a complete, read-only description directly from a step's settings and result types.</summary>
 public sealed class JobStepDetailsConverter : IMultiValueConverter
 {
+    private static readonly JobStepDetailsProvider Provider = new();
+
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         if (values.FirstOrDefault() is not JobStep step)
             return new JobStepDetails([], null);
 
         var steps = values.Skip(1).FirstOrDefault() as IEnumerable;
-        var settings = step.GetType().GetProperty("Settings")?.GetValue(step);
-        var items = new List<(string Group, StepDetailItem Item)>();
-        if (settings is IfConditionSettings conditionSettings)
-            AddConditions(conditionSettings, items, steps);
-        else if (settings is not null)
-            AddProperties(settings, string.Empty, items, steps, 0);
-
-        var order = new[] { "source", "detection", "roi", "general", "conditions", "advanced" };
-        var groups = items.GroupBy(x => x.Group)
-            .OrderBy(g => Array.IndexOf(order, g.Key))
-            .Select(g => new StepDetailGroup(GroupTitle(g.Key), g.Select(x => x.Item).ToArray()))
-            .ToArray();
-
-        return new JobStepDetails(groups, CreateResultDetails(step));
+        return Provider.GetDetails(step, steps);
     }
 
     private static void AddConditions(IfConditionSettings settings,
