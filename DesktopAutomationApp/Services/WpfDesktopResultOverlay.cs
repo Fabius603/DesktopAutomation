@@ -130,15 +130,10 @@ namespace DesktopAutomationApp.Services
                     return;
                 }
 
-                // Step läuft erneut, Text noch sichtbar → nur Timer verlängern
-                if (_textEntries.TryGetValue(stepKey, out var existing))
-                {
-                    existing.Timer?.Dispose();
-                    existing.Timer = durationMs > 0
-                        ? new Timer(_ => { lock (_lock) { ClearTextLocked(stepKey); } }, null, durationMs, Timeout.Infinite)
-                        : null;
-                    return;
-                }
+                // Der Step kann in einem wiederholenden Job einen neuen Ergebniswert liefern.
+                // Den sichtbaren Eintrag deshalb ersetzen, statt nur seinen Timer zu verlängern.
+                if (_textEntries.ContainsKey(stepKey))
+                    ClearTextLocked(stepKey);
 
                 // Neues Text-Item erstellen
                 var overlay = EnsureOverlay();

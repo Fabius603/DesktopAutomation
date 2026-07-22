@@ -203,6 +203,14 @@ namespace TaskAutomation.Logging
 
         public void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false)
         {
+            var droppedWrites = Interlocked.Exchange(ref _droppedWrites, 0);
+            if (droppedWrites > 0)
+                Write(
+                    session,
+                    ExecutionLogLevel.Warning,
+                    "Ein Teil der Logeinträge konnte nicht in die Logdatei geschrieben werden.",
+                    $"VerworfeneEinträge={droppedWrites}. Die In-App-Ansicht kann weitere Einträge enthalten.");
+
             session.EndedAt = DateTimeOffset.Now;
             var duration = session.EndedAt.Value - session.StartedAt;
             session.DurationMs = (long)duration.TotalMilliseconds;

@@ -27,7 +27,7 @@ namespace TaskAutomation.Steps
                 ? null
                 : (line, isError) => ctx.ExecutionLogService.Write(
                     ctx.ExecutionLogSession,
-                    isError ? ExecutionLogLevel.Warning : ExecutionLogLevel.Information,
+                    isError ? ExecutionLogLevel.Warning : ExecutionLogLevel.Debug,
                     isError ? $"Script-Fehlerausgabe: {scriptName}" : $"Script-Ausgabe: {scriptName}",
                     line,
                     step.Id,
