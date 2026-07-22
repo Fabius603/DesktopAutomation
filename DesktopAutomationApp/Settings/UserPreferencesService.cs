@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.IO;
+using Common.ApplicationData;
 
 namespace DesktopAutomationApp.Settings;
 
@@ -12,10 +13,7 @@ public sealed class UserPreferencesService : IUserPreferencesService
 
     public UserPreferencesService()
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DesktopAutomation");
-        _settingsPath = Path.Combine(directory, "settings.json");
+        _settingsPath = AppPaths.SettingsFile;
     }
 
     public async Task LoadAsync()

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.IO;
 using TaskAutomation.Automations;
+using Common.ApplicationData;
 
 namespace TaskAutomation.Logging;
 
@@ -55,9 +56,7 @@ public sealed class AutomationLogService : IAutomationLogService
 
     public AutomationLogService()
     {
-        _directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DesktopAutomation", "Logs", "Automations");
+        _directory = AppPaths.AutomationLogsDirectory;
         Directory.CreateDirectory(_directory);
     }
 

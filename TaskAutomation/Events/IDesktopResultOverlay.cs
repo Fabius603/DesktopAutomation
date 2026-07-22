@@ -23,8 +23,8 @@ namespace TaskAutomation.Events
 
         /// <summary>
         /// Zeigt einen Text an der angegebenen Position auf dem Desktop an.
-        /// Läuft der gleiche Step (gleicher <paramref name="stepKey"/>) erneut und der Text ist noch sichtbar,
-        /// wird nur der Timer verlängert und kein neues Item gezeichnet.
+        /// Läuft der gleiche Step (gleicher <paramref name="stepKey"/>) erneut, wird der sichtbare Text
+        /// einschließlich Darstellung und Lebensdauer durch die aktuellen Werte ersetzt.
         /// Leerer <paramref name="text"/> entfernt das Item dieses Steps.
         /// </summary>
         void ShowText(string stepKey, string text, float fontSize,

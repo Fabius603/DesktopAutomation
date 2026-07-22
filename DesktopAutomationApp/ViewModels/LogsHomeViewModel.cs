@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using Common.ApplicationData;
 using System.Windows.Input;
 
 namespace DesktopAutomationApp.ViewModels;
@@ -30,9 +31,7 @@ public sealed class LogsHomeViewModel : ViewModelBase
 
     private static void OpenLogFolder()
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DesktopAutomation", "Logs");
+        var directory = AppPaths.LogsDirectory;
         Directory.CreateDirectory(directory);
         Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
     }

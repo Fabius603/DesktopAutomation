@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using Common.ApplicationData;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -92,7 +93,7 @@ public sealed class AutomationLogsViewModel : ViewModelBase
     private void OpenLogFolder()
     {
         var directory = SelectedLog == null
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopAutomation", "Logs", "Automations")
+            ? AppPaths.AutomationLogsDirectory
             : Path.GetDirectoryName(SelectedLog.FilePath)!;
         Directory.CreateDirectory(directory);
         Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });

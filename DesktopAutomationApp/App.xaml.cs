@@ -17,6 +17,7 @@ using TaskAutomation.Automations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Common.JsonRepository;
+using Common.ApplicationData;
 using System.IO;
 using Serilog;
 using Serilog.Events;
@@ -66,10 +67,8 @@ namespace DesktopAutomationApp
         {
             InitializeComponent();
 
-            var logDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "DesktopAutomation",
-                "Logs");
+            AppPaths.MigrateLegacyData();
+            var logDirectory = AppPaths.LogsDirectory;
             var applicationLogService = new ApplicationLogService(logDirectory);
 
             // Logs must live outside Velopack's replaceable application directory.
@@ -109,9 +108,9 @@ namespace DesktopAutomationApp
                 .UseSerilog()
                 .ConfigureServices((ctx, services) =>
                 {
-                    services.AddJsonRepository<Job>("Configs/Job", options, j => j.Id.ToString());
-                    services.AddJsonRepository<Makro>("Configs/Makro", options, m => m.Id.ToString());
-                    services.AddJsonRepository<AutomationDefinition>("Configs/Automation", options, a => a.Id.ToString());
+                    services.AddJsonRepository<Job>(AppPaths.JobConfigDirectory, options, j => j.Id.ToString());
+                    services.AddJsonRepository<Makro>(AppPaths.MakroConfigDirectory, options, m => m.Id.ToString());
+                    services.AddJsonRepository<AutomationDefinition>(AppPaths.AutomationConfigDirectory, options, a => a.Id.ToString());
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
                     services.AddSingleton<IPreciseDelayService, WindowsPreciseDelayService>();
@@ -379,7 +378,6 @@ namespace DesktopAutomationApp
             try
             {
                 var newIcons = AccentIconFactory.Create(accent);
-                _mainWindow.Icon = newIcons.WindowIcon;
                 _trayIcon.Icon = newIcons.TrayIcon;
 
                 var oldIcons = _accentIcons;

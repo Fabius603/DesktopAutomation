@@ -7,6 +7,7 @@
                  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                  xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
                  Title="{Binding WindowTitle}"
+                 Icon="Assets/App.ico"
                  MinWidth="1300" MinHeight="600"
                  Background="{DynamicResource App.Brush.WindowBackground}"
                  WindowTitleBrush="{DynamicResource App.Brush.Accent}"

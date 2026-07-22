@@ -597,11 +597,19 @@ namespace TaskAutomation.Jobs
 
     public sealed class WindowsStateQuerySettings
     {
+        private Dictionary<string, string?> _parameters = new(StringComparer.OrdinalIgnoreCase);
+
         [JsonPropertyName("query_type")]
         public string QueryType { get; set; } = "network.connectivity";
 
         [JsonPropertyName("parameters")]
-        public Dictionary<string, string?> Parameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string?> Parameters
+        {
+            get => _parameters;
+            set => _parameters = value is null
+                ? new(StringComparer.OrdinalIgnoreCase)
+                : new(value, StringComparer.OrdinalIgnoreCase);
+        }
     }
 
     public sealed class EndJobSettings

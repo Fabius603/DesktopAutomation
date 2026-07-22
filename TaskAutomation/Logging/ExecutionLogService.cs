@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Orchestration;
+using Common.ApplicationData;
 
 namespace TaskAutomation.Logging
 {
@@ -125,11 +126,7 @@ namespace TaskAutomation.Logging
 
         public ExecutionLogService()
         {
-            _rootDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "DesktopAutomation",
-                "Logs",
-                "Executions");
+            _rootDirectory = AppPaths.ExecutionLogsDirectory;
             Directory.CreateDirectory(_rootDirectory);
             _counterFilePath = Path.Combine(_rootDirectory, "job-counters.json");
             LoadJobCounters();

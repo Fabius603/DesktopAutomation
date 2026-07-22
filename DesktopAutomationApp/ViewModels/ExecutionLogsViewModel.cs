@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using Common.ApplicationData;
 using System.Linq;
 using System.Windows;
 using System.Windows.Data;
@@ -233,7 +234,7 @@ namespace DesktopAutomationApp.ViewModels
         private void OpenLogFolder()
         {
             var directory = SelectedSession == null
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopAutomation", "Logs", "Executions", "Job")
+                ? AppPaths.JobExecutionLogsDirectory
                 : Path.GetDirectoryName(SelectedSession.FilePath)!;
             Directory.CreateDirectory(directory);
             Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });

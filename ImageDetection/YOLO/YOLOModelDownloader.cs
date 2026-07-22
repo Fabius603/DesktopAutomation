@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using Common.ApplicationData;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,9 +26,7 @@ namespace ImageDetection.YOLO
 
         public event EventHandler<ModelDownloadProgressEventArgs>? DownloadProgressChanged;
 
-        public string ModelFolderPath { get; } = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "DesktopAutomation", "YOLOModels");
+        public string ModelFolderPath { get; } = AppPaths.YoloModelsDirectory;
 
         public YOLOModelDownloader(ILogger<YOLOModelDownloader> logger, HttpClient? httpClient = null)
         {

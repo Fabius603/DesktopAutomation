@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.JsonRepository", "Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesktopAutomation.Application", "DesktopAutomation.Application\DesktopAutomation.Application.csproj", "{B9308D3D-FEED-4CD6-8745-C95E2CAAA4BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskAutomation.Tests", "tests\TaskAutomation.Tests\TaskAutomation.Tests.csproj", "{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,18 @@ Global
 		{B9308D3D-FEED-4CD6-8745-C95E2CAAA4BB}.Release|x64.Build.0 = Release|Any CPU
 		{B9308D3D-FEED-4CD6-8745-C95E2CAAA4BB}.Release|x86.ActiveCfg = Release|Any CPU
 		{B9308D3D-FEED-4CD6-8745-C95E2CAAA4BB}.Release|x86.Build.0 = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|x64.Build.0 = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Debug|x86.Build.0 = Debug|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x64.ActiveCfg = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x64.Build.0 = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x86.ActiveCfg = Release|Any CPU
+		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
