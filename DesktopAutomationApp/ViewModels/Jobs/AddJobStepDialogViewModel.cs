@@ -570,6 +570,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Bringt ein Prozessfenster in den Vordergrund oder minimiert es. Optional kann nach einem Fenstertitel gefiltert werden."),
                 new("ShowText",            "AnzeigenSpeichern",
                     "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
+                new("ContinueJob",        "AblaufSteuern",
+                    "Bricht den aktuellen Durchlauf ab und startet den Job wieder beim ersten Haupt-Step."),
                 new("EndJob",             "AblaufSteuern",
                     "Beendet den aktuellen Job sofort. Nachfolgende Steps werden nicht mehr ausgeführt. Bei wiederholenden Jobs wird auch die Wiederholungsschleife abgebrochen."),
                 new("ActiveProcess",      "ProgrammeFenster",
@@ -654,6 +656,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowElse   => SelectedType == "Else";
         public bool ShowEndIf  => SelectedType == "EndIf";
         public bool ShowEndJob  => SelectedType == "EndJob";
+        public bool ShowContinueJob => SelectedType == "ContinueJob";
 
         // Beschreibung kommt direkt aus dem StepTypeItem – kein separates switch mehr nötig.
         public string StepTypeDescription =>
@@ -2659,6 +2662,7 @@ namespace DesktopAutomationApp.ViewModels
                 },
                 "Else"  => new TaskAutomation.Jobs.ElseStep(),
                 "EndIf" => new TaskAutomation.Jobs.EndIfStep(),
+                "ContinueJob" => new TaskAutomation.Jobs.ContinueJobStep(),
                 "EndJob" => new TaskAutomation.Jobs.EndJobStep
                 {
                     Settings = new TaskAutomation.Jobs.EndJobSettings

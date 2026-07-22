@@ -1530,6 +1530,7 @@ Error:
   <data name="Step.Type.EndJob" xml:space="preserve">
     <value>End job</value>
   </data>
+  <data name="Step.Type.ContinueJob" xml:space="preserve"><value>Restart job</value></data>
   <data name="Step.Description.DesktopDuplication" xml:space="preserve">
     <value>Captures the selected monitor and provides the screenshot as an image source.</value>
   </data>
@@ -1584,6 +1585,8 @@ Error:
   <data name="Step.Description.EndJob" xml:space="preserve">
     <value>Stops the current job immediately.</value>
   </data>
+  <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Stops the current iteration and restarts at the first main step.</value></data>
+  <data name="Ui.Step.Settings.ContinueJobDescription" xml:space="preserve"><value>Like “continue” in a loop: subsequent steps are skipped and the job restarts at its first main step.</value></data>
   <data name="Step.Description.ActiveProcess" xml:space="preserve">
     <value>Only checks whether a matching program instance is running; no visible window is required.</value>
   </data>

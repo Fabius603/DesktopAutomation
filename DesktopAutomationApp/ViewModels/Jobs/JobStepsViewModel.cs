@@ -732,6 +732,9 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "EndJob";
                     vm.EndJobStep_SkipEndSteps = endJob.Settings.SkipEndSteps;
                     break;
+                case TaskAutomation.Jobs.ContinueJobStep:
+                    vm.SelectedType = "ContinueJob";
+                    break;
 
                 case TaskAutomation.Jobs.PointComparisonStep pcs:
                     vm.SelectedType = "PointComparison";

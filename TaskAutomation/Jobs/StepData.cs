@@ -27,6 +27,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ElseStep),     "else")]
     [JsonDerivedType(typeof(EndIfStep),    "end_if")]
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
+    [JsonDerivedType(typeof(ContinueJobStep), "continue_job")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
     [JsonDerivedType(typeof(GetProcessStep),    "get_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
@@ -563,6 +564,11 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("settings")]
         public EndJobSettings Settings { get; set; } = new();
+    }
+
+    /// <summary>Stops the current main-phase iteration and starts it again at the first step.</summary>
+    public sealed class ContinueJobStep : JobStep
+    {
     }
 
     public sealed class WindowsStateQueryStep : JobStep

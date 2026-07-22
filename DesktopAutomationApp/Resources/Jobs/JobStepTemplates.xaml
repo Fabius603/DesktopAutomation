@@ -29,6 +29,7 @@
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/ElseStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/EndIfStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/EndJobStep.xaml"/>
+        <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/ContinueJobStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/IfStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/TimeoutStep.xaml"/>
     </ResourceDictionary.MergedDictionaries>

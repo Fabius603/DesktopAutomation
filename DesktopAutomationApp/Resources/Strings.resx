@@ -1515,6 +1515,7 @@ Fehlermeldung:
   <data name="Step.Type.EndJob" xml:space="preserve">
     <value>Job beenden</value>
   </data>
+  <data name="Step.Type.ContinueJob" xml:space="preserve"><value>Job neu starten</value></data>
   <data name="Step.Description.DesktopDuplication" xml:space="preserve">
     <value>Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle bereit.</value>
   </data>
@@ -1569,6 +1570,8 @@ Fehlermeldung:
   <data name="Step.Description.EndJob" xml:space="preserve">
     <value>Beendet den aktuellen Job sofort.</value>
   </data>
+  <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Bricht den aktuellen Durchlauf ab und startet wieder beim ersten Haupt-Step.</value></data>
+  <data name="Ui.Step.Settings.ContinueJobDescription" xml:space="preserve"><value>Wie „continue“ in einer Schleife: Nachfolgende Steps werden übersprungen und der Job beginnt wieder beim ersten Haupt-Step.</value></data>
   <data name="Step.Description.ActiveProcess" xml:space="preserve">
     <value>Prüft nur, ob eine passende Programminstanz läuft; ein sichtbares Fenster ist nicht erforderlich.</value>
   </data>

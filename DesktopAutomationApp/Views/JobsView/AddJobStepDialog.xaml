@@ -92,6 +92,7 @@
                     <flow:ElseStepEditor/>
                     <flow:EndIfStepEditor/>
                     <flow:EndJobStepEditor/>
+                    <flow:ContinueJobStepEditor/>
                     <analysis:PointComparisonStepEditor/>
                     <windowsEditors:WindowsStateQueryStepEditor/>
                 </StackPanel>

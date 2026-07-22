@@ -491,6 +491,7 @@ namespace TaskAutomation.Jobs
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
                     var conditionSources = BuildConditionSources(job.StartSteps.Concat(steps).ToList());
+                    bool continueJob = false;
 
                     foreach (var step in steps)
                     {
@@ -618,6 +619,19 @@ namespace TaskAutomation.Jobs
                             break;
                         }
 
+                        if (step is ContinueJobStep)
+                        {
+                            _logger.LogInformation("Job '{JobName}' wird durch Continue-Step von vorne gestartet.", job.Name);
+                            _executionLogService.Write(
+                                executionLog,
+                                ExecutionLogLevel.Information,
+                                "Job-Runde durch Continue-Step neu gestartet.",
+                                stepId: step.Id,
+                                stepType: step.GetType().Name);
+                            continueJob = true;
+                            break;
+                        }
+
                         try
                         {
                             await ExecuteStepAsync(step, pipelineCtx, job, ct).ConfigureAwait(false);
@@ -651,6 +665,7 @@ namespace TaskAutomation.Jobs
 
                     if (jobEndedByStep) break;
                     ct.ThrowIfCancellationRequested();
+                    if (continueJob) continue;
                     if (!job.Repeating) break;
                 }
                 completionReason = jobEndedByStep
