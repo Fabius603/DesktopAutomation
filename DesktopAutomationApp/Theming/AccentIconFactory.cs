@@ -3,6 +3,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace DesktopAutomationApp.Theming;
 
@@ -12,7 +14,7 @@ internal static class AccentIconFactory
     public static AccentIconSet Create(System.Windows.Media.Color accent)
     {
         using var bitmap = DrawIcon(256, System.Drawing.Color.FromArgb(accent.R, accent.G, accent.B));
-        return new AccentIconSet(CreateTrayIcon(bitmap));
+        return new AccentIconSet(CreateImageSource(bitmap), CreateTrayIcon(bitmap));
     }
 
     private static Bitmap DrawIcon(int size, System.Drawing.Color accent)
@@ -59,6 +61,21 @@ internal static class AccentIconFactory
         return path;
     }
 
+    private static ImageSource CreateImageSource(Bitmap bitmap)
+    {
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, ImageFormat.Png);
+        stream.Position = 0;
+
+        var image = new BitmapImage();
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+        return image;
+    }
+
     private static Icon CreateTrayIcon(Bitmap source)
     {
         using var resized = new Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -88,7 +105,7 @@ internal static class AccentIconFactory
     private static extern bool DestroyIcon(IntPtr handle);
 }
 
-internal sealed record AccentIconSet(Icon TrayIcon) : IDisposable
+internal sealed record AccentIconSet(ImageSource WindowIcon, Icon TrayIcon) : IDisposable
 {
     public void Dispose() => TrayIcon.Dispose();
 }

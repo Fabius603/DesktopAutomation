@@ -378,6 +378,7 @@ namespace DesktopAutomationApp
             try
             {
                 var newIcons = AccentIconFactory.Create(accent);
+                _mainWindow.Icon = newIcons.WindowIcon;
                 _trayIcon.Icon = newIcons.TrayIcon;
 
                 var oldIcons = _accentIcons;
