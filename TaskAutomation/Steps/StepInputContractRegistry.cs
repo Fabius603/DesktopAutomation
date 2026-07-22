@@ -32,6 +32,19 @@ public static class StepInputContractRegistry
     private static readonly AcceptedResultShape Detections = new(ResultValueKind.Detection, ResultCardinality.Collection);
     private static readonly AcceptedResultShape Process = new(ResultValueKind.ProcessReference,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
+    private static readonly AcceptedResultShape[] DisplayableText =
+    [
+        new(ResultValueKind.Text, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Boolean, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Integer, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Number, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.DateTime, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Enum, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Point, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection),
+        new(ResultValueKind.Rectangle, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection),
+        new(ResultValueKind.Detection, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection),
+        new(ResultValueKind.ProcessReference, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection)
+    ];
 
     private static readonly Dictionary<Type, StepInputDescriptor[]> Contracts = new()
     {
@@ -47,10 +60,11 @@ public static class StepInputContractRegistry
         [typeof(ShowImageStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Points)],
         [typeof(VideoCreationStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Points)],
         [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(StartProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(ActiveWindowStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(PointComparisonStep)] = [Optional("points", CollectionConsumptionMode.AllValues, Points)]
+        [typeof(PointComparisonStep)] = [Optional("points", CollectionConsumptionMode.AllValues, Points)],
+        [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText)]
     };
 
     public static IReadOnlyList<StepInputDescriptor> Get(Type stepType) =>

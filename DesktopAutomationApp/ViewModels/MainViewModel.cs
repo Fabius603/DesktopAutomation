@@ -482,6 +482,17 @@ namespace DesktopAutomationApp.ViewModels
         private async Task NavigateAsync(object target, Func<Task>? prepareAsync = null)
         {
             if (IsNavigating || !await CheckNavigationGuardAsync()) return;
+
+            // Detailseiten keep their backing list view models alive. Clear both single and
+            // multi-selection when returning so the item that opened the editor is not still
+            // selected, regardless of whether navigation came from Back or the sidebar.
+            if (_currentContent is JobStepsViewModel && ReferenceEquals(target, _listJobs))
+                _listJobs.ClearSelection();
+            else if (_currentContent is MakroStepsViewModel && ReferenceEquals(target, _listMakros))
+                _listMakros.ClearSelection();
+            else if (_currentContent is AutomationDetailViewModel && ReferenceEquals(target, _listAutomations))
+                _listAutomations.ClearSelection();
+
             StartNavigationProgress();
             try
             {

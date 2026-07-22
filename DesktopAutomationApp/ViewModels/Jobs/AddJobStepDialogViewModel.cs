@@ -22,6 +22,8 @@ using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.ViewModels.WindowsIntegration;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -45,6 +47,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly Guid? _currentJobId;
         private readonly SemaphoreSlim _yoloLoadLock = new(1, 1);
         private bool _isInitialized;
+        public WindowsCapabilityPickerViewModel WindowsStatePicker { get; }
 
         public AddJobStepDialogViewModel(
             IJobExecutor ctx,
@@ -56,6 +59,9 @@ namespace DesktopAutomationApp.ViewModels
             _precedingSteps = precedingSteps;
             _allJobSteps = allJobSteps ?? precedingSteps;
             _currentJobId = currentJobId;
+            WindowsStatePicker = new WindowsCapabilityPickerViewModel(
+                new WindowsCapabilityCatalog(), WindowsCapabilityPickerMode.StateQuery);
+            WindowsStatePicker.Changed += () => OnChange(nameof(WindowsStatePicker));
             AvailableCaptureSteps = BuildStepItems(ResultValueKind.Image);
             AvailableDetectionSteps = BuildStepItems(ResultValueKind.Detection);
             var processDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == nameof(StartProcessResult));
@@ -94,10 +100,11 @@ namespace DesktopAutomationApp.ViewModels
             ShowImageStep_ImageSource = Picker<ShowImageStep>("image", allResultSources);
             ShowImageStep_DetectionsSource = Picker<ShowImageStep>("detections", allResultSources, false);
             ShowOnDesktopStep_DetectionsSource = Picker<ShowOnDesktopStep>("detections", allResultSources);
+            ShowTextStep_TextResult = Picker<ShowTextStep>("text", allResultSources);
             VideoCreationStep_ImageSource = Picker<VideoCreationStep>("image", allResultSources);
             VideoCreationStep_DetectionsSource = Picker<VideoCreationStep>("detections", allResultSources, false);
             ActiveProcessStep_ProcessSource = Picker<ActiveProcessStep>("process", allResultSources, false);
-            StartProcessStep_ProcessSource = Picker<StartProcessStep>("process", allResultSources, false);
+            StartProcessStep_ProcessSource = Picker<TerminateProcessStep>("process", allResultSources, false);
             FocusProcessStep_ProcessSource = Picker<FocusProcessStep>("process", allResultSources, false);
             ActiveWindowStep_ProcessSource = Picker<ActiveWindowStep>("process", allResultSources, false);
             PointComparisonStep_ReferencePointsSource = Picker<PointComparisonStep>("points", allResultSources);
@@ -107,6 +114,7 @@ namespace DesktopAutomationApp.ViewModels
                          KeyPointMatchingStep_ImageSource, PredictMovementStep_PointsSource, KlickOnPointStep_PointsSource,
                          KlickOnPoint3DStep_PointsSource, DynamicRoiStep_BoundsSource, DetectionDynamicRoiSource, ShowImageStep_ImageSource,
                          ShowImageStep_DetectionsSource, ShowOnDesktopStep_DetectionsSource, VideoCreationStep_ImageSource,
+                         ShowTextStep_TextResult,
                          VideoCreationStep_DetectionsSource, ActiveProcessStep_ProcessSource, StartProcessStep_ProcessSource,
                          FocusProcessStep_ProcessSource, ActiveWindowStep_ProcessSource
                          , PointComparisonStep_ReferencePointsSource
@@ -387,17 +395,16 @@ namespace DesktopAutomationApp.ViewModels
                 "ActiveProcess" => ActiveProcessStep_UsesProcessSource
                     ? ActiveProcessStep_ProcessSource.IsConfigured
                     : !string.IsNullOrWhiteSpace(ActiveProcessStep_ProcessName),
-                "StartProcess"  => StartProcessStep_IsStartAction
-                    ? ExecutablePathResolver.CanResolve(StartProcessStep_ExecutablePath)
-                      && StartProcessStep_MonitorIndex >= 0
-                    : StartProcessStep_UsesProcessSource
-                        ? StartProcessStep_ProcessSource.IsConfigured
-                        : !string.IsNullOrWhiteSpace(StartProcessStep_ProcessName),
+                "StartProcess"  => ExecutablePathResolver.CanResolve(StartProcessStep_ExecutablePath)
+                    && StartProcessStep_MonitorIndex >= 0,
+                "TerminateProcess" => StartProcessStep_UsesProcessSource
+                    ? StartProcessStep_ProcessSource.IsConfigured
+                    : !string.IsNullOrWhiteSpace(StartProcessStep_ProcessName),
                 "FocusProcess"  => FocusProcessStep_UsesProcessSource
                     ? FocusProcessStep_ProcessSource.IsConfigured
                     : ExecutablePathResolver.CanResolve(FocusProcessStep_ExecutablePath),
                 "ShowText"      =>
-                    !string.IsNullOrWhiteSpace(ShowTextStep_Text)
+                    (ShowTextStep_IsTaskResult ? ShowTextStep_TextResult.IsConfigured : !string.IsNullOrWhiteSpace(ShowTextStep_Text))
                     && ShowTextStep_FontSize > 0
                     && ShowTextStep_Opacity is >= 0 and <= 1
                     && ShowTextStep_DesktopIndex >= 0
@@ -554,7 +561,9 @@ namespace DesktopAutomationApp.ViewModels
                 new("Timeout",            "AblaufSteuern",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
                 new("StartProcess",       "ProgrammeFenster",
-                    "Startet ein Programm oder beendet laufende Prozesse anhand ihres Namens und optional ihres Fenstertitels."),
+                    "Startet ein Programm und stellt den gestarteten Prozess nachfolgenden Steps bereit."),
+                new("TerminateProcess",   "ProgrammeFenster",
+                    "Beendet laufende Prozesse anhand einer Prozessreferenz, ihres Namens und optional ihres Fenstertitels."),
                 new("GetProcess",         "ProgrammeFenster",
                     "Ermittelt einen laufenden Prozess anhand von Prozessname, Programmpfad und optionalem Fenstertitel und stellt ihn nachfolgenden Steps bereit."),
                 new("FocusProcess",       "ProgrammeFenster",
@@ -573,6 +582,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Vergleicht SIFT-Keypoints eines Templates mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis (\"Gefunden\") kann von einem KlickOnPoint-Step verwendet werden."),
                 new("DynamicRoi", "BildAuswerten",
                     "Übernimmt das beste Match einer Erkennung als ROI für die nächste Job-Runde."),
+                new("WindowsStateQuery", "WindowsSystem",
+                    "Fragt einen aktuellen Windows-Zustand ab. Das Ergebnis kann in If-Bedingungen verwendet werden."),
                 new("If",                 "AblaufSteuern",
                     "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist."),
             };
@@ -582,6 +593,7 @@ namespace DesktopAutomationApp.ViewModels
                 "BildAuswerten",
                 "MausTastatur",
                 "ProgrammeFenster",
+                "WindowsSystem",
                 "AnzeigenSpeichern",
                 "AblaufSteuern"
             ];
@@ -629,12 +641,14 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowActiveProcess => SelectedType == "ActiveProcess";
         public bool ShowGetProcess => SelectedType == "GetProcess";
         public bool ShowStartProcess  => SelectedType == "StartProcess";
+        public bool ShowTerminateProcess => SelectedType == "TerminateProcess";
         public bool ShowFocusProcess  => SelectedType == "FocusProcess";
         public bool ShowShowText       => SelectedType == "ShowText";
         public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
         public bool ShowKeyPointMatching => SelectedType == "KeyPointMatching";
         public bool ShowPointComparison => SelectedType == "PointComparison";
         public bool ShowDynamicRoi => SelectedType == "DynamicRoi";
+        public bool ShowWindowsStateQuery => SelectedType == "WindowsStateQuery";
         public bool ShowIf     => SelectedType == "If";
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
@@ -677,6 +691,9 @@ namespace DesktopAutomationApp.ViewModels
 
         public string StepOutput
             => StepPipelineRegistry.GetByName(SelectedType)?.Output ?? "–";
+
+        public void LoadWindowsStateQuery(WindowsStateQuerySettings settings) =>
+            WindowsStatePicker.Load(settings.QueryType, settings.Parameters);
 
         // ----- Quell-Step-Helfer -----
 
@@ -727,6 +744,7 @@ namespace DesktopAutomationApp.ViewModels
         public ResultBindingPickerViewModel ShowImageStep_ImageSource { get; }
         public ResultBindingPickerViewModel ShowImageStep_DetectionsSource { get; }
         public ResultBindingPickerViewModel ShowOnDesktopStep_DetectionsSource { get; }
+        public ResultBindingPickerViewModel ShowTextStep_TextResult { get; }
         public ResultBindingPickerViewModel VideoCreationStep_ImageSource { get; }
         public ResultBindingPickerViewModel VideoCreationStep_DetectionsSource { get; }
         public ResultBindingPickerViewModel ActiveProcessStep_ProcessSource { get; }
@@ -1932,6 +1950,19 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== ShowText Felder =====
+        private bool _showTextStep_IsTaskResult;
+        public bool ShowTextStep_IsTaskResult
+        {
+            get => _showTextStep_IsTaskResult;
+            set { _showTextStep_IsTaskResult = value; OnChange(); OnChange(nameof(ShowTextStep_IsExplicitText)); }
+        }
+
+        public bool ShowTextStep_IsExplicitText
+        {
+            get => !_showTextStep_IsTaskResult;
+            set { if (value) ShowTextStep_IsTaskResult = false; }
+        }
+
         private string _showTextStep_Text = string.Empty;
         public string ShowTextStep_Text
         {
@@ -2498,7 +2529,7 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new StartProcessSettings
                     {
-                        Action = StartProcessStep_Action,
+                        Action = StartProcessAction.Start,
                         ExecutablePath = StartProcessStep_ExecutablePath,
                         Arguments      = StartProcessStep_Arguments,
                         WorkingDirectory = StartProcessStep_WorkingDirectory,
@@ -2507,7 +2538,13 @@ namespace DesktopAutomationApp.ViewModels
                         PlacementMode = StartProcessStep_PlacementMode,
                         OffsetX = StartProcessStep_OffsetX,
                         OffsetY = StartProcessStep_OffsetY,
-                        WindowMode = StartProcessStep_WindowMode,
+                        WindowMode = StartProcessStep_WindowMode
+                    }
+                },
+                "TerminateProcess" => new TerminateProcessStep
+                {
+                    Settings = new TerminateProcessSettings
+                    {
                         Target = new ProcessTargetSettings
                         {
                             ProcessSource = StartProcessStep_UsesProcessSource
@@ -2542,7 +2579,9 @@ namespace DesktopAutomationApp.ViewModels
                 {
                     Settings = new ShowTextSettings
                     {
+                        TextSource   = ShowTextStep_IsTaskResult ? ShowTextSource.TaskResult : ShowTextSource.ExplicitText,
                         Text         = ShowTextStep_Text,
+                        TextResult   = ShowTextStep_TextResult.ToBinding(),
                         FontSize     = ShowTextStep_FontSize,
                         FontColor    = $"#{ShowTextStep_FontColorWpf.R:X2}{ShowTextStep_FontColorWpf.G:X2}{ShowTextStep_FontColorWpf.B:X2}",
                         Opacity      = ShowTextStep_Opacity,
@@ -2592,6 +2631,14 @@ namespace DesktopAutomationApp.ViewModels
                         MinimumConfidence = DynamicRoiStep_MinimumConfidence,
                         FullSearchInterval = DynamicRoiStep_FullSearchInterval,
                         ResetAfterMisses = DynamicRoiStep_ResetAfterMisses
+                    }
+                },
+                "WindowsStateQuery" => new WindowsStateQueryStep
+                {
+                    Settings = new WindowsStateQuerySettings
+                    {
+                        QueryType = WindowsStatePicker.SelectedCapability?.Id ?? string.Empty,
+                        Parameters = WindowsStatePicker.ToDictionary()
                     }
                 },
                 "If" => new TaskAutomation.Jobs.IfStep

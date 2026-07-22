@@ -1474,7 +1474,10 @@ Fehlermeldung:
     <value>Prozessstatus prüfen</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
-    <value>Prozess starten/beenden</value>
+    <value>Prozess starten</value>
+  </data>
+  <data name="Step.Type.TerminateProcess" xml:space="preserve">
+    <value>Prozess beenden</value>
   </data>
   <data name="Step.Type.FocusProcess" xml:space="preserve">
     <value>Fenster fokussieren/minimieren</value>
@@ -1492,7 +1495,7 @@ Fehlermeldung:
     <value>Bild anzeigen</value>
   </data>
   <data name="Step.Type.ShowOnDesktop" xml:space="preserve">
-    <value>Auf Desktop anzeigen</value>
+    <value>Erkennungsergebnis auf Desktop anzeigen</value>
   </data>
   <data name="Step.Type.VideoCreation" xml:space="preserve">
     <value>Video erstellen</value>
@@ -1537,7 +1540,7 @@ Fehlermeldung:
     <value>Zeigt das aktuelle Bild in einem Vorschaufenster an.</value>
   </data>
   <data name="Step.Description.ShowOnDesktop" xml:space="preserve">
-    <value>Zeichnet das Erkennungsergebnis als Overlay auf den Desktop.</value>
+    <value>Zeichnet Treffer, Mittelpunkte und Begrenzungsrahmen eines Erkennungsergebnisses als Overlay auf den Desktop.</value>
   </data>
   <data name="Step.Description.VideoCreation" xml:space="preserve">
     <value>Speichert den aktuellen Bildstrom als Videodatei.</value>
@@ -2132,4 +2135,39 @@ Fehlermeldung:
   <data name="Ui.Job.Steps.ResultProperty.Bottom" xml:space="preserve"><value>Untere Kante</value></data>
   <data name="Ui.Job.Steps.ResultProperty.IsEmpty" xml:space="preserve"><value>Ist leer</value></data>
   <data name="Ui.Step.ResultSource.StepLabel" xml:space="preserve"><value>Schritt {0}: {1}</value></data>
+  <data name="Ui.Windows.Category" xml:space="preserve"><value>Kategorie</value></data>
+  <data name="Ui.Windows.Capability" xml:space="preserve"><value>Windows-Funktion</value></data>
+  <data name="Ui.Windows.Enabled" xml:space="preserve"><value>Aktiviert</value></data>
+  <data name="Ui.Windows.StateQuery.Title" xml:space="preserve"><value>Windows-Zustand abfragen</value></data>
+  <data name="Ui.Windows.StateQuery.Description" xml:space="preserve"><value>Der Step liefert Status, Verfügbarkeit und die zur Abfrage passenden Ergebniswerte. Diese können in späteren If-Steps verglichen werden.</value></data>
+  <data name="Ui.Windows.Event" xml:space="preserve"><value>Windows-Ereignis</value></data>
+  <data name="Ui.Windows.DebounceSeconds" xml:space="preserve"><value>Entprellung (Sekunden)</value></data>
+  <data name="Ui.Windows.DelaySeconds" xml:space="preserve"><value>Verzögerung (Sekunden)</value></data>
+  <data name="Ui.Windows.DebounceInfo" xml:space="preserve"><value>Mindestabstand zwischen zwei akzeptierten Auslösungen. Weitere passende Ereignisse innerhalb dieses Zeitraums werden ignoriert.</value></data>
+  <data name="Ui.Windows.DelayInfo" xml:space="preserve"><value>Wartezeit nach einer akzeptierten Auslösung, bevor die Automation gestartet wird.</value></data>
+  <data name="Step.ResultValueType.Enum" xml:space="preserve"><value>Auswahlwert</value></data>
+  <data name="Ui.Job.Steps.ResultType.Enum" xml:space="preserve"><value>Auswahlwert</value></data>
+  <data name="Enum.AutomationTriggerKind.WindowsEvent" xml:space="preserve"><value>Windows-Ereignis</value></data>
+  <data name="Step.Type.WindowsStateQuery" xml:space="preserve"><value>Windows-Zustand abfragen</value></data>
+  <data name="Step.Category.WindowsSystem" xml:space="preserve"><value>Windows und System</value></data>
+  <data name="Enum.WindowsEventCategory.Network" xml:space="preserve"><value>Netzwerk und WLAN</value></data>
+  <data name="Enum.WindowsEventCategory.Audio" xml:space="preserve"><value>Audio und Lautstärke</value></data>
+  <data name="Enum.WindowsEventCategory.Session" xml:space="preserve"><value>Benutzer und Sitzung</value></data>
+  <data name="Enum.WindowsEventCategory.Power" xml:space="preserve"><value>Energie und Akku</value></data>
+  <data name="Enum.WindowsEventCategory.Display" xml:space="preserve"><value>Bildschirm und Monitore</value></data>
+  <data name="Enum.WindowsEventCategory.Device" xml:space="preserve"><value>USB und Hardwaregeräte</value></data>
+  <data name="Enum.WindowsEventCategory.Bluetooth" xml:space="preserve"><value>Bluetooth</value></data>
+  <data name="Enum.WindowsEventCategory.FileSystem" xml:space="preserve"><value>Dateien und Ordner</value></data>
+  <data name="Enum.WindowsEventCategory.Process" xml:space="preserve"><value>Prozesse und Programme</value></data>
+  <data name="Enum.WindowsEventCategory.Window" xml:space="preserve"><value>Fenster und Anwendungen</value></data>
+  <data name="Enum.WindowsEventCategory.Input" xml:space="preserve"><value>Tastatur, Maus und Eingabe</value></data>
+  <data name="Enum.WindowsEventCategory.Clipboard" xml:space="preserve"><value>Zwischenablage</value></data>
+  <data name="Enum.WindowsEventCategory.Printer" xml:space="preserve"><value>Drucker</value></data>
+  <data name="Enum.WindowsEventCategory.Storage" xml:space="preserve"><value>Laufwerke und Speicher</value></data>
+  <data name="Enum.WindowsEventCategory.SystemSettings" xml:space="preserve"><value>Uhrzeit und Systemeinstellungen</value></data>
+  <data name="Enum.WindowsEventCategory.Security" xml:space="preserve"><value>Windows-Sicherheit</value></data>
+  <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows-Updates</value></data>
+  <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Systemstart und Herunterfahren</value></data>
+  <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Textquelle</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Task-Ergebnis</value></data>
 </root>

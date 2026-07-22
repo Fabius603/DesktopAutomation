@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+                    xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
+                    xmlns:conv="clr-namespace:DesktopAutomationApp.Converters">
+<conv:RectToStringConverter x:Key="RectToStringConverter"/>
+        <conv:StepPipelineInfoConverter x:Key="PipelineInfoConverter"/>
+        <conv:StepBlockBorderConverter x:Key="StepBlockBorderConverter"/>
+        <conv:StepNumberConverter x:Key="StepNumberConverter"/>
+        <conv:SourceStepNameConverter x:Key="SourceStepNameConverter"/>
+        <conv:StepConditionDisplayConverter x:Key="StepConditionDisplayConverter"/>
+        <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
+
+        <!-- Gemeinsame Parameterzeile -->
+        <Style x:Key="ParamText" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+</ResourceDictionary>

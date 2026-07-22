@@ -91,6 +91,12 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateAllCommands();
         }
 
+        public void ClearSelection()
+        {
+            Selected = null;
+            SetSelectedItems(Array.Empty<EditableAutomation>());
+        }
+
         private async Task InitialLoadAsync() => await RefreshAllAsync();
 
         public async Task RefreshAllAsync()

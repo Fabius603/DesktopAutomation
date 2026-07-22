@@ -5,7 +5,7 @@ namespace TaskAutomation.Jobs;
 public enum ResultValueKind
 {
     Boolean, Integer, Number, Text, DateTime, Image, Point, Rectangle,
-    Detection, ProcessReference, ResultObject
+    Detection, ProcessReference, ResultObject, Enum
 }
 
 public enum ResultCardinality { Single, OptionalSingle, Collection }

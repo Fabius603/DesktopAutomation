@@ -50,6 +50,7 @@ public static class StepLocalization
             ResultValueKind.Rectangle => "Rectangle",
             ResultValueKind.ProcessReference => "Process",
             ResultValueKind.Detection => "Detection",
+            ResultValueKind.Enum => "Enum",
             _ => property.PropertyType.ToString()
         };
         var type = GetOrFallback($"Step.ResultValueType.{key}", key);
@@ -64,7 +65,7 @@ public static class StepLocalization
             descriptor.DisplayName,
             descriptor.Properties
                 .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(p.Name), p.PropertyType,
-                    p.Description, p.IsNullable, p.Example, p.ValueKind, p.Cardinality))
+                    p.Description, p.IsNullable, p.Example, p.ValueKind, p.Cardinality, p.EnumTypeName, p.EnumValues))
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>

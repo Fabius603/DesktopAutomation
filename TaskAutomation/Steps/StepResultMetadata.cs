@@ -2,10 +2,11 @@ using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using TaskAutomation.Jobs;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Steps;
 
-public enum ResultPropertyType { Bool, Double, Integer, String, DateTime }
+public enum ResultPropertyType { Bool, Double, Integer, String, DateTime, Enum }
 
 public sealed record ResultPropertyDescriptor(
     string Name,
@@ -15,7 +16,9 @@ public sealed record ResultPropertyDescriptor(
     bool IsNullable = false,
     string? Example = null,
     ResultValueKind ValueKind = ResultValueKind.Text,
-    ResultCardinality Cardinality = ResultCardinality.Single);
+    ResultCardinality Cardinality = ResultCardinality.Single,
+    string? EnumTypeName = null,
+    IReadOnlyList<string>? EnumValues = null);
 
 public sealed record ResultTypeDescriptor(
     string TypeName,
@@ -114,10 +117,24 @@ public static class StepResultMetadata
         steps.Take(Math.Clamp(consumerIndex, 0, steps.Count))
             .Select((step, index) => (step, index, output: StepPipelineRegistry.Get(step.GetType())?.Output))
             .Where(x => x.step.IsEnabled && !string.IsNullOrWhiteSpace(x.output) && x.output != "–")
-            .Select(x => new { x.step, x.index, ResultType = GetResultType(x.output!) })
+            .Select(x => new { x.step, x.index, ResultType = GetResultTypeForStep(x.step) })
             .Where(x => x.ResultType?.Properties.Length > 0)
             .Select(x => new ConditionResultSource(x.step, x.index, x.ResultType!))
             .ToArray();
+
+    public static ResultTypeDescriptor? GetResultTypeForStep(JobStep step)
+    {
+        var output = StepPipelineRegistry.Get(step.GetType())?.Output;
+        var descriptor = string.IsNullOrWhiteSpace(output) ? null : GetResultType(output);
+        if (descriptor is null || step is not WindowsStateQueryStep windowsStep) return descriptor;
+        var allowed = new WindowsCapabilityCatalog().Find(windowsStep.Settings.QueryType)?.ResultProperties;
+        if (allowed is null || allowed.Count == 0) return descriptor;
+        return descriptor with
+        {
+            Properties = descriptor.Properties
+                .Where(property => allowed.Contains(property.Name, StringComparer.OrdinalIgnoreCase)).ToArray()
+        };
+    }
 
     public static ResultPropertyDescriptor[]? GetProperties(string stepTypeName)
     {
@@ -140,6 +157,7 @@ public static class StepResultMetadata
 
     public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
         left.PropertyType == right.PropertyType
+        && (left.PropertyType != ResultPropertyType.Enum || left.EnumTypeName == right.EnumTypeName)
         && left.ValueKind == right.ValueKind
         && (left.Cardinality == ResultCardinality.Collection)
             == (right.Cardinality == ResultCardinality.Collection);
@@ -189,6 +207,10 @@ public static class StepResultMetadata
             case ResultPropertyType.Bool:
                 if (bool.TryParse(text, out var b)) { value = b; return true; }
                 return false;
+            case ResultPropertyType.Enum:
+                var enumValue = property.EnumValues?.FirstOrDefault(x => string.Equals(x, text, StringComparison.OrdinalIgnoreCase));
+                if (enumValue is not null) { value = enumValue; return true; }
+                return false;
             default: value = text; return true;
         }
     }
@@ -227,7 +249,7 @@ public static class StepResultMetadata
         }
 
         if (TryMapType(actual, out var mapped))
-            yield return Property(path, mapped, nullable, SemanticKind(actual), cardinality);
+            yield return Property(path, mapped, nullable, SemanticKind(actual), cardinality, actual.IsEnum ? actual : null);
 
         if (actual == typeof(System.Drawing.Point) || actual == typeof(System.Drawing.Rectangle))
             yield return Property(path, ResultPropertyType.String, nullable, SemanticKind(actual), cardinality);
@@ -258,10 +280,13 @@ public static class StepResultMetadata
     private static ResultPropertyDescriptor Property(
         string path, ResultPropertyType type, bool nullable,
         ResultValueKind valueKind = ResultValueKind.Text,
-        ResultCardinality cardinality = ResultCardinality.Single) =>
-        new(path, Humanize(path), type, Description(type, nullable), nullable, Example(path), valueKind, cardinality);
+        ResultCardinality cardinality = ResultCardinality.Single,
+        Type? enumType = null) =>
+        new(path, Humanize(path), type, Description(type, nullable), nullable, Example(path), valueKind, cardinality,
+            enumType?.FullName, enumType is null ? null : Enum.GetNames(enumType));
 
-    private static ResultValueKind SemanticKind(Type type) => type == typeof(bool) ? ResultValueKind.Boolean
+    private static ResultValueKind SemanticKind(Type type) => type.IsEnum ? ResultValueKind.Enum
+        : type == typeof(bool) ? ResultValueKind.Boolean
         : type == typeof(DateTime) ? ResultValueKind.DateTime
         : type == typeof(string) ? ResultValueKind.Text
         : type == typeof(System.Drawing.Bitmap) ? ResultValueKind.Image
@@ -277,6 +302,7 @@ public static class StepResultMetadata
         if (type == typeof(bool)) { result = ResultPropertyType.Bool; return true; }
         if (type == typeof(string)) { result = ResultPropertyType.String; return true; }
         if (type == typeof(DateTime)) { result = ResultPropertyType.DateTime; return true; }
+        if (type.IsEnum) { result = ResultPropertyType.Enum; return true; }
         if (type == typeof(System.Drawing.Bitmap) || type == typeof(RuntimeProcessReference))
         { result = ResultPropertyType.String; return true; }
         if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)) { result = ResultPropertyType.Integer; return true; }

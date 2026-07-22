@@ -44,6 +44,12 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateAllCommands();
         }
 
+        public void ClearSelection()
+        {
+            Selected = null;
+            SetSelectedItems(Array.Empty<Makro>());
+        }
+
         private Makro? _selected;
         public Makro? Selected
         {

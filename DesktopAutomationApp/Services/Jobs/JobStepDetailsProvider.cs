@@ -83,7 +83,15 @@ public sealed class JobStepDetailsProvider
     {
         var items = new List<(string Group, StepDetailItem Item)>();
         var settings = step.GetType().GetProperty("Settings")?.GetValue(step);
-        if (settings is IfConditionSettings conditions)
+        if (step is WindowsStateQueryStep windowsState)
+        {
+            var capability = new TaskAutomation.WindowsIntegration.WindowsCapabilityCatalog().Find(windowsState.Settings.QueryType);
+            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Capability"), capability?.DisplayName ?? windowsState.Settings.QueryType)));
+            foreach (var parameter in capability?.Parameters ?? [])
+                if (windowsState.Settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
+                    items.Add(("general", new StepDetailItem(parameter.DisplayName, value)));
+        }
+        else if (settings is IfConditionSettings conditions)
             AddConditions(conditions, items, steps);
         else if (settings is PointComparisonSettings comparison)
             AddPointComparison(comparison, items, steps);
@@ -254,7 +262,7 @@ public sealed class JobStepDetailsProvider
     {
         var output = StepPipelineRegistry.Get(step.GetType())?.Output;
         if (string.IsNullOrWhiteSpace(output) || output == "–") return null;
-        var descriptor = StepResultMetadata.GetResultType(output);
+        var descriptor = StepResultMetadata.GetResultTypeForStep(step);
         if (descriptor is null) return new StepResultDetails(output, []);
 
         // A selectable aggregate (for example Process or AllDetections) already
@@ -286,6 +294,7 @@ public sealed class JobStepDetailsProvider
             ResultValueKind.Rectangle => Loc.Get("Ui.Job.Steps.ResultType.Rectangle"),
             ResultValueKind.Detection => Loc.Get("Ui.Job.Steps.ResultType.Detection"),
             ResultValueKind.ProcessReference => Loc.Get("Ui.Job.Steps.ResultType.Process"),
+            ResultValueKind.Enum => Loc.Get("Ui.Job.Steps.ResultType.Enum"),
             _ => Loc.Get("Ui.Job.Steps.ResultType.Object")
         };
         return property.Cardinality switch

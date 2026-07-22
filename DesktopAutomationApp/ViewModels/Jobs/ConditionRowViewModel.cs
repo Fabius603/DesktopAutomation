@@ -10,6 +10,7 @@ using TaskAutomation.Steps;
 namespace DesktopAutomationApp.ViewModels;
 
 public sealed record SourceStepItem(string StepId, string DisplayName, ResultTypeDescriptor ResultType);
+public sealed record EnumConditionOption(string Value, string DisplayName);
 
 public sealed class ConditionSelectionNode
 {
@@ -42,6 +43,9 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         OnChange(nameof(ShowTextValue));
         OnChange(nameof(ShowDateValue));
         OnChange(nameof(ShowBooleanValue));
+        OnChange(nameof(ShowEnumValue));
+        OnChange(nameof(EnumValues));
+        OnChange(nameof(EnumOptions));
         OnChange(nameof(InputHint));
         OnChange(nameof(InputExample));
         NotifyValidation();
@@ -89,6 +93,17 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private bool? _comparisonBoolean;
     public bool? ComparisonBoolean { get => _comparisonBoolean; set { _comparisonBoolean = value; OnChange(); NotifyValidation(); } }
     public IReadOnlyList<bool> BooleanValues { get; } = [true, false];
+    private string? _comparisonEnum;
+    public string? ComparisonEnum { get => _comparisonEnum; set { _comparisonEnum = value; OnChange(); NotifyValidation(); } }
+    public IReadOnlyList<string> EnumValues => SelectedProperty?.EnumValues ?? [];
+    public IReadOnlyList<EnumConditionOption> EnumOptions => (SelectedProperty?.EnumValues ?? [])
+        .Select(value =>
+        {
+            var typeName = SelectedProperty?.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
+            var key = $"Enum.{typeName}.{value}";
+            var localized = Loc.Get(key);
+            return new EnumConditionOption(value, localized == $"[{key}]" ? value : localized);
+        }).ToArray();
 
     private ComparisonOperandKind _comparisonKind = ComparisonOperandKind.Literal;
     public ComparisonOperandKind ComparisonKind
@@ -133,6 +148,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.String;
     public bool ShowDateValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.DateTime;
     public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.Bool;
+    public bool ShowEnumValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.Enum;
     public bool IsIntegerValue => SelectedProperty?.PropertyType == ResultPropertyType.Integer;
     public bool CanRemove => _owner.Count > 1;
     public string SelectedPath => SelectedSourceStep is null || SelectedProperty is null
@@ -287,6 +303,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             ResultPropertyType.DateTime => ComparisonDate,
             ResultPropertyType.Bool => ComparisonBoolean,
             ResultPropertyType.String => ComparisonValue,
+            ResultPropertyType.Enum => ComparisonEnum,
             _ => null
         };
         return ConditionRules.FormatComparisonValue(SelectedProperty, editorValue);
@@ -330,6 +347,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 _comparisonDate = date.ToLocalTime();
             if (_selectedProperty.PropertyType == ResultPropertyType.Bool && parsed is bool boolean)
                 _comparisonBoolean = boolean;
+            if (_selectedProperty.PropertyType == ResultPropertyType.Enum)
+                _comparisonEnum = parsed?.ToString();
         }
         RefreshComparisonChoices();
         if (comparison.Kind == ComparisonOperandKind.JobResult)
@@ -340,7 +359,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                     && StepResultMetadata.AreComparable(_selectedProperty, p));
         }
         OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
-        OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(SelectedPath));
+        OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(ComparisonEnum)); OnChange(nameof(EnumValues)); OnChange(nameof(EnumOptions)); OnChange(nameof(SelectedPath));
         OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
         OnChange(nameof(SelectedComparisonSourceStep)); OnChange(nameof(SelectedComparisonProperty)); OnChange(nameof(ComparisonPath)); NotifyInput();
     }

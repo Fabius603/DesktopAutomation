@@ -157,6 +157,11 @@
                                                           Height="36"
                                                           VerticalContentAlignment="Center"
                                                           Visibility="{Binding ShowBooleanValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <ComboBox ItemsSource="{Binding EnumOptions}"
+                                                          DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                                          SelectedValue="{Binding ComparisonEnum, Mode=TwoWay}"
+                                                          MinHeight="36"
+                                                          Visibility="{Binding ShowEnumValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                 <jobs:ResultPathPicker ItemsSource="{Binding ComparisonSelectionTree}"
                                                                        DisplayText="{Binding ComparisonPath}"
                                                                        Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>

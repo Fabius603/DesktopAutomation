@@ -1,4 +1,5 @@
 using System.IO;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Automations;
 
@@ -15,7 +16,8 @@ public enum AutomationValidationError
     FileFilterRequired,
     WeekdayRequired,
     IntervalPositive,
-    ActiveWindowPair
+    ActiveWindowPair,
+    WindowsEventRequired
 }
 
 public sealed record AutomationValidationResult(bool IsValid, AutomationValidationError Error);
@@ -41,9 +43,19 @@ public static class AutomationValidation
             { Trigger: FileSystemAutomationTrigger { Filter: var filter } } when string.IsNullOrWhiteSpace(filter) => AutomationValidationError.FileFilterRequired,
             { Trigger: ScheduleAutomationTrigger { Days.Count: 0 } } => AutomationValidationError.WeekdayRequired,
             { Trigger: IntervalAutomationTrigger { Interval: var interval } } when interval <= TimeSpan.Zero => AutomationValidationError.IntervalPositive,
+            { Trigger: WindowsEventAutomationTrigger { EventType: var eventType } } when string.IsNullOrWhiteSpace(eventType) => AutomationValidationError.WindowsEventRequired,
+            { Trigger: WindowsEventAutomationTrigger windowsEvent } when !WindowsEventConfigured(windowsEvent) => AutomationValidationError.WindowsEventRequired,
             { RunPolicy: { EnabledFrom: var from, EnabledUntil: var until } } when from.HasValue != until.HasValue => AutomationValidationError.ActiveWindowPair,
             _ => AutomationValidationError.None
         };
         return new(error == AutomationValidationError.None, error);
+    }
+
+    private static bool WindowsEventConfigured(WindowsEventAutomationTrigger trigger)
+    {
+        var capability = new WindowsCapabilityCatalog().Find(trigger.EventType);
+        return capability?.SupportsEvents == true
+               && (capability.Parameters ?? []).All(parameter => !parameter.Required
+                   || trigger.Filters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
     }
 }

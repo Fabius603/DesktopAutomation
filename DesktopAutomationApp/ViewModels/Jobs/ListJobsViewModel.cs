@@ -44,6 +44,12 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateAllCommands();
         }
 
+        public void ClearSelection()
+        {
+            SelectedJob = null;
+            SetSelectedItems(Array.Empty<Job>());
+        }
+
         public ICommand RefreshCommand { get; }
         public ICommand OpenJobCommand { get; } // Parameter: Job
         public ICommand DeleteJobCommand { get; }

@@ -129,7 +129,12 @@ namespace TaskAutomation.Steps
             [typeof(StartProcessStep)] = new(
                 Prerequisites: [],
                 ResultType:    typeof(StartProcessResult),
-                DisplayName:   "Prozess starten/beenden"),
+                DisplayName:   "Prozess starten"),
+
+            [typeof(TerminateProcessStep)] = new(
+                Prerequisites: [],
+                ResultType:    typeof(TerminateProcessResult),
+                DisplayName:   "Prozess beenden"),
 
             [typeof(FocusProcessStep)] = new(
                 Prerequisites: [],
@@ -154,6 +159,12 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Punkte-Vergleich"),
 
+            [typeof(WindowsStateQueryStep)] = new(
+                Prerequisites:     [],
+                ResultType:        typeof(WindowsStateQueryResult),
+                IsConditionSource: true,
+                DisplayName:       "Windows-Zustand abfragen"),
+
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["Image"],
@@ -163,7 +174,7 @@ namespace TaskAutomation.Steps
             [typeof(ShowOnDesktopStep)] = new(
                 Prerequisites: ["Detections"],
                 ResultType:    typeof(ShowOnDesktopResult),
-                DisplayName:   "Auf Desktop anzeigen"),
+                DisplayName:   "Erkennungsergebnis auf Desktop anzeigen"),
 
             [typeof(VideoCreationStep)] = new(
                 Prerequisites: ["Image"],
@@ -219,12 +230,14 @@ namespace TaskAutomation.Steps
             ["ActiveProcess"]      = typeof(ActiveProcessStep),
             ["GetProcess"]         = typeof(GetProcessStep),
             ["StartProcess"]       = typeof(StartProcessStep),
+            ["TerminateProcess"]   = typeof(TerminateProcessStep),
             ["FocusProcess"]       = typeof(FocusProcessStep),
             ["ShowText"]           = typeof(ShowTextStep),
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
             ["PointComparison"]    = typeof(PointComparisonStep),
             ["DynamicRoi"]         = typeof(DynamicRoiStep),
+            ["WindowsStateQuery"]  = typeof(WindowsStateQueryStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),

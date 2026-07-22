@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using TaskAutomation.Hotkeys;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Automations
 {
@@ -50,7 +51,8 @@ namespace TaskAutomation.Automations
         ProcessExited,
         WindowEvent,
         FileSystemEvent,
-        SystemEvent
+        SystemEvent,
+        WindowsEvent
     }
 
     [JsonDerivedType(typeof(HotkeyAutomationTrigger), "hotkey")]
@@ -62,6 +64,7 @@ namespace TaskAutomation.Automations
     [JsonDerivedType(typeof(WindowEventAutomationTrigger), "window_event")]
     [JsonDerivedType(typeof(FileSystemAutomationTrigger), "file_system_event")]
     [JsonDerivedType(typeof(SystemEventAutomationTrigger), "system_event")]
+    [JsonDerivedType(typeof(WindowsEventAutomationTrigger), "windows_event")]
     public abstract class AutomationTrigger
     {
         [JsonPropertyName("kind")]
@@ -80,10 +83,18 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("virtual_key_code")]
         public uint VirtualKeyCode { get; set; }
 
+        [JsonPropertyName("debounce")]
+        public TimeSpan Debounce { get; set; } = TimeSpan.Zero;
+
+        [JsonPropertyName("delay_after_event")]
+        public TimeSpan DelayAfterEvent { get; set; } = TimeSpan.Zero;
+
         public override string GetDisplayText()
             => VirtualKeyCode == 0
                 ? "Hotkey nicht gesetzt"
-                : HotkeyTextFormatter.Format(Modifiers, VirtualKeyCode);
+                : HotkeyTextFormatter.Format(Modifiers, VirtualKeyCode)
+                  + (Debounce > TimeSpan.Zero ? $" · Mindestabstand {Debounce.TotalSeconds:0}s" : string.Empty)
+                  + (DelayAfterEvent > TimeSpan.Zero ? $" · nach {DelayAfterEvent.TotalSeconds:0}s" : string.Empty);
     }
 
     public sealed class OnceAtAutomationTrigger : AutomationTrigger
@@ -258,6 +269,25 @@ namespace TaskAutomation.Automations
         public SystemAutomationEventKind EventKind { get; set; } = SystemAutomationEventKind.SessionLocked;
 
         public override string GetDisplayText() => EventKind.ToString();
+    }
+
+    public sealed class WindowsEventAutomationTrigger : AutomationTrigger
+    {
+        public override AutomationTriggerKind Kind => AutomationTriggerKind.WindowsEvent;
+
+        [JsonPropertyName("event_type")]
+        public string EventType { get; set; } = "network.availability.changed";
+
+        [JsonPropertyName("filters")]
+        public Dictionary<string, string?> Filters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+        [JsonPropertyName("debounce")]
+        public TimeSpan Debounce { get; set; } = TimeSpan.FromSeconds(1);
+
+        [JsonPropertyName("delay_after_event")]
+        public TimeSpan DelayAfterEvent { get; set; }
+
+        public override string GetDisplayText() => EventType;
     }
 
     public sealed class AutomationAction

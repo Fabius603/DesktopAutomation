@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
 using DesktopAutomationApp.Localization;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.Models
 {
@@ -32,6 +33,7 @@ namespace DesktopAutomationApp.Models
         private AutomationTriggerKind _triggerKind = AutomationTriggerKind.Hotkey;
         private KeyModifiers _modifiers;
         private uint _virtualKeyCode;
+        private int _hotkeyDebounceSeconds;
         private DateTime _runAt = DateTime.Today.AddHours(8);
         private DateTime _scheduleTime = DateTime.Today.AddHours(8);
         private HashSet<DayOfWeek> _scheduleDays =
@@ -49,6 +51,9 @@ namespace DesktopAutomationApp.Models
         private bool _includeSubdirectories;
         private bool _waitUntilFileReady = true;
         private SystemAutomationEventKind _systemEventKind = SystemAutomationEventKind.SessionLocked;
+        private string _windowsEventType = "network.availability.changed";
+        private Dictionary<string, string?> _windowsEventFilters = new(StringComparer.OrdinalIgnoreCase);
+        private int _windowsEventDebounceSeconds = 1;
         private EditableAutomationAction _action = new();
         private AutomationAlreadyRunningBehavior _alreadyRunningBehavior = AutomationAlreadyRunningBehavior.Ignore;
         private int _cooldownSeconds;
@@ -81,6 +86,7 @@ namespace DesktopAutomationApp.Models
                 OnPropertyChanged(nameof(IsWindowEventTrigger));
                 OnPropertyChanged(nameof(IsFileSystemEventTrigger));
                 OnPropertyChanged(nameof(IsSystemEventTrigger));
+                OnPropertyChanged(nameof(IsWindowsEventTrigger));
                 OnPropertyChanged(nameof(DisplayTrigger));
             }
         }
@@ -93,9 +99,11 @@ namespace DesktopAutomationApp.Models
         public bool IsWindowEventTrigger => TriggerKind == AutomationTriggerKind.WindowEvent;
         public bool IsFileSystemEventTrigger => TriggerKind == AutomationTriggerKind.FileSystemEvent;
         public bool IsSystemEventTrigger => TriggerKind == AutomationTriggerKind.SystemEvent;
+        public bool IsWindowsEventTrigger => TriggerKind == AutomationTriggerKind.WindowsEvent;
 
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _virtualKeyCode; set { if (_virtualKeyCode != value) { _virtualKeyCode = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public int HotkeyDebounceSeconds { get => _hotkeyDebounceSeconds; set { if (_hotkeyDebounceSeconds != value) { _hotkeyDebounceSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public DateTime RunAt { get => _runAt; set { if (_runAt != value) { _runAt = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public DateTime ScheduleTime { get => _scheduleTime; set { if (_scheduleTime != value) { _scheduleTime = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public bool Monday { get => HasDay(DayOfWeek.Monday); set => SetDay(DayOfWeek.Monday, value); }
@@ -118,6 +126,9 @@ namespace DesktopAutomationApp.Models
         public bool IncludeSubdirectories { get => _includeSubdirectories; set { if (_includeSubdirectories != value) { _includeSubdirectories = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public bool WaitUntilFileReady { get => _waitUntilFileReady; set { if (_waitUntilFileReady != value) { _waitUntilFileReady = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public SystemAutomationEventKind SystemEventKind { get => _systemEventKind; set { if (_systemEventKind != value) { _systemEventKind = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public string WindowsEventType { get => _windowsEventType; set { if (_windowsEventType != value) { _windowsEventType = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public Dictionary<string, string?> WindowsEventFilters { get => _windowsEventFilters; set { _windowsEventFilters = value ?? new(StringComparer.OrdinalIgnoreCase); OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } }
+        public int WindowsEventDebounceSeconds { get => _windowsEventDebounceSeconds; set { if (_windowsEventDebounceSeconds != value) { _windowsEventDebounceSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
 
         public EditableAutomationAction Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayAction)); } } }
         public AutomationAlreadyRunningBehavior AlreadyRunningBehavior { get => _alreadyRunningBehavior; set { if (_alreadyRunningBehavior != value) { _alreadyRunningBehavior = value; OnPropertyChanged(); } } }
@@ -130,7 +141,7 @@ namespace DesktopAutomationApp.Models
         public string DisplayTrigger => AutomationDisplayFormatter.Trigger(ToDomain().Trigger);
         public string DisplayAction => AutomationDisplayFormatter.Action(ToDomain().Action);
         public string NextRunDisplay => _nextRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture)
-            ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited
+            ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited or AutomationTriggerKind.WindowsEvent
                 ? Loc.Get("Automation.EventBased") : Loc.Get("Automation.NotScheduled"));
         public string LastRunDisplay => AutomationDisplayFormatter.LastRun(_lastRunAt);
         public string RuntimeError => _lastError ?? string.Empty;
@@ -203,7 +214,9 @@ namespace DesktopAutomationApp.Models
                 AutomationTriggerKind.Hotkey => new HotkeyAutomationTrigger
                 {
                     Modifiers = Modifiers,
-                    VirtualKeyCode = VirtualKeyCode
+                    VirtualKeyCode = VirtualKeyCode,
+                    Debounce = TimeSpan.FromSeconds(Math.Max(0, HotkeyDebounceSeconds)),
+                    DelayAfterEvent = TimeSpan.FromSeconds(Math.Max(0, DelayAfterEventSeconds))
                 },
                 AutomationTriggerKind.OnceAt => new OnceAtAutomationTrigger
                 {
@@ -238,6 +251,13 @@ namespace DesktopAutomationApp.Models
                 {
                     EventKind = SystemEventKind
                 },
+                AutomationTriggerKind.WindowsEvent => new WindowsEventAutomationTrigger
+                {
+                    EventType = WindowsEventType,
+                    Filters = new Dictionary<string, string?>(WindowsEventFilters, StringComparer.OrdinalIgnoreCase),
+                    Debounce = TimeSpan.FromSeconds(Math.Max(0, WindowsEventDebounceSeconds)),
+                    DelayAfterEvent = TimeSpan.FromSeconds(Math.Max(0, DelayAfterEventSeconds))
+                },
                 AutomationTriggerKind.ProcessExited => new ProcessExitedAutomationTrigger
                 {
                     ProcessName = ProcessName,
@@ -260,6 +280,8 @@ namespace DesktopAutomationApp.Models
                 case HotkeyAutomationTrigger hotkey:
                     Modifiers = hotkey.Modifiers;
                     VirtualKeyCode = hotkey.VirtualKeyCode;
+                    HotkeyDebounceSeconds = (int)Math.Max(0, hotkey.Debounce.TotalSeconds);
+                    DelayAfterEventSeconds = (int)Math.Max(0, hotkey.DelayAfterEvent.TotalSeconds);
                     break;
                 case OnceAtAutomationTrigger once:
                     RunAt = once.RunAt.LocalDateTime;
@@ -293,6 +315,12 @@ namespace DesktopAutomationApp.Models
                     break;
                 case SystemEventAutomationTrigger systemEvent:
                     SystemEventKind = systemEvent.EventKind;
+                    break;
+                case WindowsEventAutomationTrigger windowsEvent:
+                    WindowsEventType = windowsEvent.EventType;
+                    WindowsEventFilters = new Dictionary<string, string?>(windowsEvent.Filters, StringComparer.OrdinalIgnoreCase);
+                    WindowsEventDebounceSeconds = (int)Math.Max(0, windowsEvent.Debounce.TotalSeconds);
+                    DelayAfterEventSeconds = (int)Math.Max(0, windowsEvent.DelayAfterEvent.TotalSeconds);
                     break;
             }
         }

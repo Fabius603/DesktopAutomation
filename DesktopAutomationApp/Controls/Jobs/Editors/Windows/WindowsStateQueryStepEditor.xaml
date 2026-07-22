@@ -1,0 +1,15 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Windows.WindowsStateQueryStepEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:windows="clr-namespace:DesktopAutomationApp.Controls.WindowsIntegration"
+             Visibility="{Binding ShowWindowsStateQuery, Converter={StaticResource BooleanToVisibilityConverter}}">
+    <StackPanel>
+        <TextBlock Text="{loc:Translate Key=Ui.Windows.StateQuery.Title}" Style="{StaticResource Heading2}" Margin="0,0,0,12"/>
+        <windows:WindowsCapabilityPicker DataContext="{Binding WindowsStatePicker}"/>
+        <Border Background="{DynamicResource App.Brush.AccentSubtle}" CornerRadius="5" Padding="10" Margin="0,8,0,0">
+            <TextBlock Text="{loc:Translate Key=Ui.Windows.StateQuery.Description}"
+                       TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+        </Border>
+    </StackPanel>
+</UserControl>

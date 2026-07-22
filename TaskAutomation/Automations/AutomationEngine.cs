@@ -319,7 +319,25 @@ namespace TaskAutomation.Automations
 
     public sealed class HotkeyAutomationTriggerProvider : IAutomationTriggerProvider
     {
+        private sealed class Registration(HotkeyAutomationTrigger trigger)
+        {
+            private readonly object _gate = new();
+            private DateTimeOffset? _lastAccepted;
+            public HotkeyAutomationTrigger Trigger { get; } = trigger;
+            public CancellationTokenSource Lifetime { get; } = new();
+            public bool TryAccept(DateTimeOffset now)
+            {
+                lock (_gate)
+                {
+                    if (Trigger.Debounce > TimeSpan.Zero && _lastAccepted is { } last && now - last < Trigger.Debounce) return false;
+                    _lastAccepted = now;
+                    return true;
+                }
+            }
+        }
+
         private readonly IGlobalHotkeyService _hotkeys;
+        private readonly ConcurrentDictionary<Guid, Registration> _registrations = new();
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Hotkey];
         public event Action<Guid>? Triggered;
 
@@ -334,24 +352,46 @@ namespace TaskAutomation.Automations
         public Task StopAsync(CancellationToken ct = default)
         {
             _hotkeys.AutomationHotkeyPressed -= OnHotkeyPressed;
+            foreach (var registration in _registrations.Values) registration.Lifetime.Cancel();
+            _registrations.Clear();
             return Task.CompletedTask;
         }
 
         public Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default)
         {
             if (automation.Trigger is HotkeyAutomationTrigger trigger)
+            {
+                if (_registrations.TryRemove(automation.Id, out var previous)) previous.Lifetime.Cancel();
+                _registrations[automation.Id] = new Registration(trigger);
                 _hotkeys.RegisterAutomationHotkey(automation.Id, trigger.Modifiers, trigger.VirtualKeyCode);
+            }
             return Task.CompletedTask;
         }
 
         public Task UnregisterAsync(Guid automationId, CancellationToken ct = default)
         {
+            if (_registrations.TryRemove(automationId, out var registration)) registration.Lifetime.Cancel();
             _hotkeys.UnregisterAutomationHotkey(automationId);
             return Task.CompletedTask;
         }
 
         public DateTimeOffset? GetNextRun(Guid automationId) => null;
-        private void OnHotkeyPressed(Guid id) => Triggered?.Invoke(id);
+        private void OnHotkeyPressed(Guid id)
+        {
+            if (!_registrations.TryGetValue(id, out var registration) || !registration.TryAccept(DateTimeOffset.UtcNow)) return;
+            if (registration.Trigger.DelayAfterEvent <= TimeSpan.Zero) Triggered?.Invoke(id);
+            else _ = FireAfterDelayAsync(id, registration);
+        }
+
+        private async Task FireAfterDelayAsync(Guid id, Registration registration)
+        {
+            try
+            {
+                await Task.Delay(registration.Trigger.DelayAfterEvent, registration.Lifetime.Token).ConfigureAwait(false);
+                if (_registrations.TryGetValue(id, out var current) && ReferenceEquals(current, registration)) Triggered?.Invoke(id);
+            }
+            catch (OperationCanceledException) when (registration.Lifetime.IsCancellationRequested) { }
+        }
     }
 
     public sealed class TimeAutomationTriggerProvider : IAutomationTriggerProvider

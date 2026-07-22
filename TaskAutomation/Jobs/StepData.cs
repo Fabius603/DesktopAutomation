@@ -30,12 +30,14 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
     [JsonDerivedType(typeof(GetProcessStep),    "get_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
+    [JsonDerivedType(typeof(TerminateProcessStep), "terminate_process")]
     [JsonDerivedType(typeof(FocusProcessStep),   "focus_process")]
     [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
     [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
     [JsonDerivedType(typeof(DynamicRoiStep), "dynamic_roi")]
+    [JsonDerivedType(typeof(WindowsStateQueryStep), "windows_state_query")]
     public abstract class JobStep : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -563,6 +565,21 @@ namespace TaskAutomation.Jobs
         public EndJobSettings Settings { get; set; } = new();
     }
 
+    public sealed class WindowsStateQueryStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public WindowsStateQuerySettings Settings { get; set; } = new();
+    }
+
+    public sealed class WindowsStateQuerySettings
+    {
+        [JsonPropertyName("query_type")]
+        public string QueryType { get; set; } = "network.connectivity";
+
+        [JsonPropertyName("parameters")]
+        public Dictionary<string, string?> Parameters { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
     public sealed class EndJobSettings
     {
         /// <summary>
@@ -702,8 +719,15 @@ namespace TaskAutomation.Jobs
 
     public sealed class ShowTextSettings
     {
+        [JsonPropertyName("text_source")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ShowTextSource TextSource { get; set; } = ShowTextSource.ExplicitText;
+
         [JsonPropertyName("text")]
         public string Text { get; set; } = string.Empty;
+
+        [JsonPropertyName("text_result")]
+        public ResultBinding TextResult { get; set; } = new();
 
         [JsonPropertyName("font_size")]
         public float FontSize { get; set; } = 24f;
@@ -736,6 +760,22 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("clear_on_job_end")]
         public bool ClearOnJobEnd { get; set; } = false;
     }
+
+    // ---- TerminateProcess ----
+    /// <summary>Beendet laufende Prozesse anhand einer Referenz oder ihrer Merkmale.</summary>
+    public sealed class TerminateProcessStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public TerminateProcessSettings Settings { get; set; } = new();
+    }
+
+    public sealed class TerminateProcessSettings
+    {
+        [JsonPropertyName("target")]
+        public ProcessTargetSettings Target { get; set; } = new();
+    }
+
+    public enum ShowTextSource { ExplicitText, TaskResult }
 
     public enum FocusProcessWindowMode
     {

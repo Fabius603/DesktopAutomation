@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Steps;
 
@@ -11,6 +12,38 @@ public abstract record StepResultBase
 {
     [ResultHidden]
     public bool WasExecuted { get; init; }
+}
+
+public sealed record WindowsStateQueryResult : StepResultBase
+{
+    public WindowsCapabilityStatus Status { get; init; } = WindowsCapabilityStatus.Success;
+    public bool IsAvailable { get; init; }
+    public DateTime CapturedAt { get; init; } = DateTime.UtcNow;
+    public string ErrorCode { get; init; } = string.Empty;
+    public string ErrorMessage { get; init; } = string.Empty;
+    public bool Exists { get; init; }
+    public bool IsActive { get; init; }
+    public bool IsConnected { get; init; }
+    public bool IsEnabled { get; init; }
+    public bool IsMuted { get; init; }
+    public bool IsCharging { get; init; }
+    public bool PendingRestart { get; init; }
+    public long Count { get; init; }
+    public long Value { get; init; }
+    public double Percentage { get; init; }
+    public double FreeSpaceGb { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Id { get; init; } = string.Empty;
+    public string Text { get; init; } = string.Empty;
+    public string Path { get; init; } = string.Empty;
+    public WindowsConnectivity Connectivity { get; init; } = WindowsConnectivity.Unknown;
+    public WindowsConnectionType ConnectionType { get; init; } = WindowsConnectionType.Unknown;
+    public WindowsPowerSource PowerSource { get; init; } = WindowsPowerSource.Unknown;
+    public WindowsSessionState SessionState { get; init; } = WindowsSessionState.Unknown;
+    public WindowsDeviceState DeviceState { get; init; } = WindowsDeviceState.Unknown;
+    public WindowsOnOffState OnOffState { get; init; } = WindowsOnOffState.Unknown;
+    public IReadOnlyList<string> Items { get; init; } = [];
+    public static readonly WindowsStateQueryResult Default = new();
 }
 
 public sealed record DetectionItem
@@ -162,6 +195,13 @@ public sealed record StartProcessResult : StepResultBase, IActionExecutionResult
     public string? ErrorMessage { get; init; }
     public RuntimeProcessReference? Process { get; init; }
     public static readonly StartProcessResult Default = new();
+}
+
+public sealed record TerminateProcessResult : StepResultBase, IActionExecutionResult
+{
+    public bool Success { get; init; }
+    public string? ErrorMessage { get; init; }
+    public static readonly TerminateProcessResult Default = new();
 }
 
 public sealed record DynamicRoiResult : StepResultBase

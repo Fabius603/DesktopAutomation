@@ -1,0 +1,69 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+                    xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
+                    xmlns:conv="clr-namespace:DesktopAutomationApp.Converters">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Resources/Jobs/Templates/Shared.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- ColorDetectionStep -->
+    <DataTemplate DataType="{x:Type jobs:ColorDetectionStep}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <Border Grid.Column="1"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ImageSource}"/>
+                        <Run>
+                            <Run.Text>
+                                <MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                                    <Binding Path="Settings.ImageSource"/>
+                                    <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                    <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                </MultiBinding>
+                            </Run.Text>
+                        </Run>
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Color}" VerticalAlignment="Center"/>
+                        <Border Width="18" Height="18"
+                                Background="{Binding Settings.ColorHex}"
+                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                                BorderThickness="1"
+                                CornerRadius="3"/>
+                        <TextBlock Text="{Binding Settings.ColorHex}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ConfidenceThreshold}"/><Run Text="{Binding Settings.ConfidenceThreshold, StringFormat={}{0:P0}}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinSize}"/><Run Text="{Binding Settings.MinSize}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MaxSize}"/><Run Text="{Binding Settings.MaxSize, Converter={StaticResource MaxSizeDisplayConverter}}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinWidth}"/><Run Text="{Binding Settings.MinWidth}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.MinHeight}"/><Run Text="{Binding Settings.MinHeight}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.Downscale}"/><Run Text="{Binding Settings.DownscaleFactor}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"
+                               Visibility="{Binding Settings.EnableROI, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.ROIXYWidthHeight}"/>
+                        <Run Text="{Binding Settings.ROI, Converter={StaticResource RectToStringConverter}}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+</ResourceDictionary>

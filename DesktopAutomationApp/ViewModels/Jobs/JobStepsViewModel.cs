@@ -173,6 +173,8 @@ namespace DesktopAutomationApp.ViewModels
             _runSteps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
             _steps = _runSteps;
             _endSteps = new ObservableCollection<JobStep>(Job.EndSteps ?? Enumerable.Empty<JobStep>());
+            _isStartSectionExpanded = _startSteps.Count > 0;
+            _isEndSectionExpanded = _endSteps.Count > 0;
             _savedStartSnapshot = DeepCloneSteps(_startSteps);
             _savedSnapshot = DeepCloneSteps(_runSteps);
             _savedEndSnapshot = DeepCloneSteps(_endSteps);
@@ -616,7 +618,9 @@ namespace DesktopAutomationApp.ViewModels
                     break;
 
                 case StartProcessStep sp:
-                    vm.SelectedType = "StartProcess";
+                    vm.SelectedType = sp.Settings.Action == StartProcessAction.Terminate
+                        ? "TerminateProcess"
+                        : "StartProcess";
                     vm.StartProcessStep_Action = sp.Settings.Action;
                     vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
                     vm.StartProcessStep_ProcessName = sp.Settings.Target.ProcessName;
@@ -633,6 +637,14 @@ namespace DesktopAutomationApp.ViewModels
                     vm.StartProcessStep_UsesProcessSource = sp.Settings.Target.ProcessSource.IsConfigured;
                     break;
 
+                case TerminateProcessStep tp:
+                    vm.SelectedType = "TerminateProcess";
+                    vm.StartProcessStep_ProcessName = tp.Settings.Target.ProcessName;
+                    vm.StartProcessStep_WindowTitleContains = tp.Settings.Target.WindowTitleContains;
+                    vm.StartProcessStep_ProcessSource.Load(tp.Settings.Target.ProcessSource);
+                    vm.StartProcessStep_UsesProcessSource = tp.Settings.Target.ProcessSource.IsConfigured;
+                    break;
+
                 case FocusProcessStep fp:
                     vm.SelectedType = "FocusProcess";
                     vm.FocusProcessStep_Action = fp.Settings.Action;
@@ -647,7 +659,9 @@ namespace DesktopAutomationApp.ViewModels
 
                 case ShowTextStep st:
                     vm.SelectedType               = "ShowText";
+                    vm.ShowTextStep_IsTaskResult  = st.Settings.TextSource == ShowTextSource.TaskResult;
                     vm.ShowTextStep_Text          = st.Settings.Text;
+                    vm.ShowTextStep_TextResult.Load(st.Settings.TextResult);
                     vm.ShowTextStep_FontSize      = st.Settings.FontSize;
                     vm.ShowTextStep_FontColorWpf  = HexToWpfColor(st.Settings.FontColor);
                     vm.ShowTextStep_Opacity       = st.Settings.Opacity;
@@ -707,6 +721,11 @@ namespace DesktopAutomationApp.ViewModels
 
                 case TaskAutomation.Jobs.EndIfStep:
                     vm.SelectedType = "EndIf";
+                    break;
+
+                case WindowsStateQueryStep windowsState:
+                    vm.SelectedType = "WindowsStateQuery";
+                    vm.LoadWindowsStateQuery(windowsState.Settings);
                     break;
 
                 case TaskAutomation.Jobs.EndJobStep endJob:

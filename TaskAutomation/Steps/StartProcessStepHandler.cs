@@ -57,12 +57,7 @@ namespace TaskAutomation.Steps
                     ErrorMessage = $"Programm '{configuredExecutable}' wurde nicht gefunden." };
             }
 
-            var startInfo = new ProcessStartInfo
-            {
-                FileName  = executablePath,
-                Arguments = step.Settings.Arguments ?? string.Empty,
-                UseShellExecute = true
-            };
+            var startInfo = CreateStartInfo(executablePath, step.Settings.Arguments);
 
             var workingDirectory = step.Settings.WorkingDirectory?.Trim();
             if (!string.IsNullOrEmpty(workingDirectory))
@@ -89,33 +84,34 @@ namespace TaskAutomation.Steps
                     ErrorMessage = "Prozess konnte nicht gestartet werden (Process.Start gab null zurück)." };
             }
 
-            await PositionMainWindowAsync(process, step.Settings, ctx.Logger, ct)
-                .ConfigureAwait(false);
-
-            var processReference = ProcessTargetResolver.CreateReference(process, executablePath);
-
-            if (step.Settings.WaitForExit)
-            {
-                try
-                {
-                    await process.WaitForExitAsync(ct).ConfigureAwait(false);
-                }
-                finally
-                {
-                    process.Dispose();
-                }
-            }
-            else
-            {
-                process.Dispose();
-            }
-
-            return new StartProcessResult
+            var processReference = ProcessTargetResolver.CreateReference(process, startInfo.FileName);
+            var result = new StartProcessResult
             {
                 WasExecuted = true,
                 Success = true,
                 Process = processReference
             };
+
+            // Make the running process available immediately. In particular, an end step must
+            // still be able to resolve and terminate it when WaitForExit is cancelled because
+            // the job is being stopped. The generic handler stores the result again on normal
+            // completion, which is intentional and keeps the standard execution path unchanged.
+            ctx.Results.Set<StartProcessStep>(result, step.Id);
+
+            try
+            {
+                await PositionMainWindowAsync(process, step.Settings, ctx.Logger, ct)
+                    .ConfigureAwait(false);
+
+                if (step.Settings.WaitForExit)
+                    await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                process.Dispose();
+            }
+
+            return result;
         }
 
         protected override StartProcessResult CreateDefault() => StartProcessResult.Default;
@@ -124,7 +120,11 @@ namespace TaskAutomation.Steps
             StartProcessSettings settings, IStepPipelineContext ctx, CancellationToken ct)
         {
             var target = settings.Target;
-            var processName = ProcessWindowMatcher.NormalizeProcessName(target.ProcessName);
+            var sourceReference = target.ProcessSource.IsConfigured
+                ? ResultBindingResolver.Resolve<RuntimeProcessReference>(ctx.Results, target.ProcessSource).FirstOrDefault
+                : null;
+            var processName = ProcessWindowMatcher.NormalizeProcessName(
+                sourceReference?.ProcessName ?? target.ProcessName);
             var matchingIds = ProcessTargetResolver.ResolveProcessIds(target, ctx.Results);
             if (matchingIds.Count == 0)
             {
@@ -151,7 +151,7 @@ namespace TaskAutomation.Steps
                 try
                 {
                     using var process = Process.GetProcessById(processId);
-                    process.Kill();
+                    process.Kill(entireProcessTree: true);
                     await process.WaitForExitAsync(ct).ConfigureAwait(false);
                     terminated++;
                     ctx.Logger.LogInformation(
@@ -178,6 +178,40 @@ namespace TaskAutomation.Steps
                 ? $"{terminated} Prozess(e) beendet; {errors.Count} Fehler: {string.Join("; ", errors)}"
                 : string.Join("; ", errors);
             return new StartProcessResult { WasExecuted = true, Success = false, ErrorMessage = errorMessage };
+        }
+
+        private static ProcessStartInfo CreateStartInfo(string executablePath, string? arguments)
+        {
+            var extension = System.IO.Path.GetExtension(executablePath);
+            if (extension.Equals(".bat", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals(".cmd", StringComparison.OrdinalIgnoreCase))
+            {
+                var commandInterpreter = Environment.GetEnvironmentVariable("ComSpec");
+                if (string.IsNullOrWhiteSpace(commandInterpreter))
+                    commandInterpreter = System.IO.Path.Combine(Environment.SystemDirectory, "cmd.exe");
+
+                var commandLine = $"\"{executablePath}\"";
+                if (!string.IsNullOrWhiteSpace(arguments))
+                    commandLine += " " + arguments;
+
+                var info = new ProcessStartInfo
+                {
+                    FileName = commandInterpreter,
+                    UseShellExecute = false
+                };
+                info.ArgumentList.Add("/d");
+                info.ArgumentList.Add("/s");
+                info.ArgumentList.Add("/c");
+                info.ArgumentList.Add(commandLine);
+                return info;
+            }
+
+            return new ProcessStartInfo
+            {
+                FileName = executablePath,
+                Arguments = arguments ?? string.Empty,
+                UseShellExecute = false
+            };
         }
 
         private static async Task PositionMainWindowAsync(

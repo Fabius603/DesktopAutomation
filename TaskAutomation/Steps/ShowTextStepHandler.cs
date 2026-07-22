@@ -18,6 +18,14 @@ namespace TaskAutomation.Steps
             ShowTextStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
             var s = step.Settings;
+            var text = s.Text;
+            if (s.TextSource == ShowTextSource.TaskResult)
+            {
+                var resolved = ResultBindingResolver.Resolve<object>(ctx.Results, s.TextResult);
+                if (!resolved.IsSuccess)
+                    throw new InvalidOperationException(resolved.Error ?? "Das ausgewählte Task-Ergebnis konnte nicht gelesen werden.");
+                text = FormatDisplayValue(resolved.FirstOrDefault);
+            }
 
             // Farbe parsen (#RRGGBB oder #AARRGGBB)
             if (!TryParseHexColor(s.FontColor, out byte r, out byte g, out byte b))
@@ -32,7 +40,7 @@ namespace TaskAutomation.Steps
 
             ctx.DesktopResultOverlay.ShowText(
                 stepKey:     step.Id,
-                text:        s.Text,
+                text:        text,
                 fontSize:    s.FontSize,
                 r: r, g: g, b: b, a: alpha,
                 desktopIndex: s.DesktopIndex,
@@ -43,12 +51,31 @@ namespace TaskAutomation.Steps
 
             ctx.Logger.LogInformation(
                 "ShowTextStepHandler: Text '{Text}' auf Monitor {Index} bei ({X},{Y}) angezeigt.",
-                s.Text, s.DesktopIndex, s.OffsetX, s.OffsetY);
+                text, s.DesktopIndex, s.OffsetX, s.OffsetY);
 
             return Task.FromResult(new ShowTextResult { WasExecuted = true, Success = true });
         }
 
         protected override ShowTextResult CreateDefault() => ShowTextResult.Default;
+
+        private static string FormatDisplayValue(object? value) => value switch
+        {
+            Point point => $"X: {point.X}, Y: {point.Y}",
+            Rectangle rectangle =>
+                $"X: {rectangle.X}, Y: {rectangle.Y}, Breite: {rectangle.Width}, Höhe: {rectangle.Height}",
+            DetectionItem detection => FormatDetection(detection),
+            RuntimeProcessReference process => string.IsNullOrWhiteSpace(process.ProcessName)
+                ? $"Prozess {process.ProcessId}"
+                : $"{process.ProcessName} (PID {process.ProcessId})",
+            _ => Convert.ToString(value, CultureInfo.CurrentCulture) ?? string.Empty
+        };
+
+        private static string FormatDetection(DetectionItem detection)
+        {
+            var text = $"Punkt X: {detection.Center.X}, Y: {detection.Center.Y}; Konfidenz: {detection.Confidence:P1}";
+            if (detection.BoundingBox is not { } bounds) return text;
+            return $"{text}; Bereich X: {bounds.X}, Y: {bounds.Y}, Breite: {bounds.Width}, Höhe: {bounds.Height}";
+        }
 
         // ── Hilfsmethoden ──────────────────────────────────────────────────────
 

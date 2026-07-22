@@ -1,5 +1,6 @@
 using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.Localization;
 
@@ -43,6 +44,8 @@ public static class AutomationDisplayFormatter
             fileSystem.DirectoryPath,
             fileSystem.Filter),
         SystemEventAutomationTrigger systemEvent => LocalizedEnum(systemEvent.EventKind),
+        WindowsEventAutomationTrigger windowsEvent =>
+            new WindowsCapabilityCatalog().Find(windowsEvent.EventType)?.DisplayName ?? windowsEvent.EventType,
         _ => trigger.Kind.ToString()
     };
 

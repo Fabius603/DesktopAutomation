@@ -38,6 +38,7 @@ using Velopack;
 using TaskAutomation.Timing;
 using DesktopAutomationApp.Logging;
 using System.Windows.Threading;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp
 {
@@ -132,12 +133,28 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IAutomationLogService, AutomationLogService>();
                     services.AddSingleton<IApplicationLogService>(applicationLogService);
                     services.AddSingleton<IAutomationEngine, AutomationEngine>();
+                    services.AddSingleton<IWindowsCapabilityCatalog, WindowsCapabilityCatalog>();
+                    services.AddSingleton<IWindowsStateProvider, DefaultWindowsStateProvider>();
+                    services.AddSingleton<IWindowsSystemStateService, WindowsSystemStateService>();
+                    services.AddSingleton<IWindowsEventSource, NativeWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, ProcessTraceWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, WlanWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, Win32MessageWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, CoreAudioWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, PrinterWindowsEventSource>();
+                    services.AddSingleton<IWindowsEventSource, EventLogWindowsEventSource>();
+                    services.AddSingleton<FileSystemWindowsEventSource>();
+                    services.AddSingleton<IWindowsSubscriptionEventSource>(sp => sp.GetRequiredService<FileSystemWindowsEventSource>());
+                    services.AddSingleton<InputIdleWindowsEventSource>();
+                    services.AddSingleton<IWindowsSubscriptionEventSource>(sp => sp.GetRequiredService<InputIdleWindowsEventSource>());
+                    services.AddSingleton<IWindowsSystemEventHub, WindowsSystemEventHub>();
                     services.AddSingleton<IAutomationTriggerProvider, HotkeyAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, TimeAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, ProcessAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, WindowAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, FileSystemAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, SystemAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, WindowsEventAutomationTriggerProvider>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();

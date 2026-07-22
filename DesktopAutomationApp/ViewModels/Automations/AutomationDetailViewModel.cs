@@ -11,6 +11,8 @@ using TaskAutomation.Automations;
 using TaskAutomation.Hotkeys;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services;
+using DesktopAutomationApp.ViewModels.WindowsIntegration;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -44,6 +46,7 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<SystemAutomationEventKind> SystemEventKinds { get; } = new();
         public ObservableCollection<ActionItem> Actions { get; } = new();
         public ObservableCollection<string> AvailableProcessNames { get; } = new();
+        public WindowsCapabilityPickerViewModel WindowsEventPicker { get; }
         public ListCollectionView ActionsView { get; }
 
         public ActionItem? SelectedAction
@@ -101,7 +104,9 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
         public string HotkeyCaptureStatus => IsCapturingHotkey ? Loc.Get("Automation.Hotkey.CapturePrompt") : string.Empty;
-        public string TriggerDescription => Loc.Get($"Automation.Trigger.Description.{EditedAutomation.TriggerKind}");
+        public string TriggerDescription => EditedAutomation.IsWindowsEventTrigger
+            ? WindowsEventPicker.SelectedCapability?.DisplayName ?? "Windows-Ereignis auswählen"
+            : Loc.Get($"Automation.Trigger.Description.{EditedAutomation.TriggerKind}");
 
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
@@ -121,6 +126,7 @@ namespace DesktopAutomationApp.ViewModels
             IJobApplicationService jobAppService,
             IMakroApplicationService makroAppService,
             IGlobalHotkeyService hotkeyService,
+            IWindowsCapabilityCatalog windowsCatalog,
             ILogger<AutomationDetailViewModel> log)
         {
             EditedAutomation = automation ?? throw new ArgumentNullException(nameof(automation));
@@ -133,7 +139,12 @@ namespace DesktopAutomationApp.ViewModels
             _isNew = automation.CreatedAt == automation.UpdatedAt && string.IsNullOrWhiteSpace(automation.Action.Name);
             _snapshot = automation.Clone();
 
-            foreach (AutomationTriggerKind kind in Enum.GetValues(typeof(AutomationTriggerKind)))
+            WindowsEventPicker = new WindowsCapabilityPickerViewModel(windowsCatalog, WindowsCapabilityPickerMode.Event,
+                automation.WindowsEventType, automation.WindowsEventFilters);
+            WindowsEventPicker.Changed += OnWindowsEventPickerChanged;
+
+            foreach (var kind in new[] { AutomationTriggerKind.Hotkey, AutomationTriggerKind.OnceAt,
+                         AutomationTriggerKind.Schedule, AutomationTriggerKind.Interval, AutomationTriggerKind.WindowsEvent })
                 TriggerKinds.Add(kind);
             foreach (IntervalUnit unit in Enum.GetValues(typeof(IntervalUnit)))
                 IntervalUnits.Add(unit);
@@ -281,6 +292,12 @@ namespace DesktopAutomationApp.ViewModels
 
         public async Task SaveAsync()
         {
+            SyncWindowsEvent();
+            if (EditedAutomation.IsWindowsEventTrigger && !WindowsEventPicker.IsValid)
+            {
+                _dialogService.ShowError("Bitte wähle ein Windows-Ereignis und fülle alle Pflichtfelder aus.", Loc.Get("Validation.Title"));
+                return;
+            }
             var automation = EditedAutomation.ToDomain();
             var validation = AutomationValidation.Validate(automation);
             if (!validation.IsValid)
@@ -297,6 +314,7 @@ namespace DesktopAutomationApp.ViewModels
         public void DiscardChanges()
         {
             CopyFrom(_snapshot, EditedAutomation);
+            WindowsEventPicker.Load(_snapshot.WindowsEventType, _snapshot.WindowsEventFilters);
             ResolveSelectedAction();
             HasUnsavedChanges = false;
         }
@@ -314,6 +332,7 @@ namespace DesktopAutomationApp.ViewModels
             AutomationValidationError.WeekdayRequired => Loc.Get("Validation.WeekdayRequired"),
             AutomationValidationError.IntervalPositive => Loc.Get("Validation.IntervalPositive"),
             AutomationValidationError.ActiveWindowPair => Loc.Get("Validation.ActiveWindowPair"),
+            AutomationValidationError.WindowsEventRequired => "Bitte wähle ein Windows-Ereignis aus.",
             _ => Loc.Get("Validation.Title")
         };
 
@@ -383,6 +402,19 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
         }
 
+        private void OnWindowsEventPickerChanged()
+        {
+            SyncWindowsEvent();
+            HasUnsavedChanges = true;
+            OnPropertyChanged(nameof(TriggerDescription));
+        }
+
+        private void SyncWindowsEvent()
+        {
+            EditedAutomation.WindowsEventType = WindowsEventPicker.SelectedCapability?.Id ?? string.Empty;
+            EditedAutomation.WindowsEventFilters = WindowsEventPicker.ToDictionary();
+        }
+
         private static void CopyFrom(EditableAutomation source, EditableAutomation target)
         {
             target.Name = source.Name;
@@ -391,6 +423,7 @@ namespace DesktopAutomationApp.ViewModels
             target.TriggerKind = source.TriggerKind;
             target.Modifiers = source.Modifiers;
             target.VirtualKeyCode = source.VirtualKeyCode;
+            target.HotkeyDebounceSeconds = source.HotkeyDebounceSeconds;
             target.RunAt = source.RunAt;
             target.ScheduleTime = source.ScheduleTime;
             target.Monday = source.Monday; target.Tuesday = source.Tuesday; target.Wednesday = source.Wednesday;
@@ -409,6 +442,9 @@ namespace DesktopAutomationApp.ViewModels
             target.IncludeSubdirectories = source.IncludeSubdirectories;
             target.WaitUntilFileReady = source.WaitUntilFileReady;
             target.SystemEventKind = source.SystemEventKind;
+            target.WindowsEventType = source.WindowsEventType;
+            target.WindowsEventFilters = new Dictionary<string, string?>(source.WindowsEventFilters, StringComparer.OrdinalIgnoreCase);
+            target.WindowsEventDebounceSeconds = source.WindowsEventDebounceSeconds;
             target.Action.Name = source.Action.Name;
             target.Action.JobId = source.Action.JobId;
             target.Action.MakroId = source.Action.MakroId;

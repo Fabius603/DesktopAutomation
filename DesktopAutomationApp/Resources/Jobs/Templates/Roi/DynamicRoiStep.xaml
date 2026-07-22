@@ -1,0 +1,31 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+                    xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
+                    xmlns:conv="clr-namespace:DesktopAutomationApp.Converters">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/Resources/Jobs/Templates/Shared.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- DynamicRoiStep -->
+    <DataTemplate DataType="{x:Type jobs:DynamicRoiStep}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
+                        <Run><Run.Text><MultiBinding Converter="{StaticResource SourceStepNameConverter}">
+                            <Binding Path="Settings.BoundsSource"/>
+                            <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                        </MultiBinding></Run.Text></Run>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiPadding}"/><Run Text="{Binding Settings.Padding}"/></TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiMinConfidence}"/><Run Text="{Binding Settings.MinimumConfidence, StringFormat={}{0:P0}}"/></TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiFullSearchInterval}"/><Run Text="{Binding Settings.FullSearchInterval}"/></TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.RoiResetAfterMisses}"/><Run Text="{Binding Settings.ResetAfterMisses}"/></TextBlock>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+</ResourceDictionary>

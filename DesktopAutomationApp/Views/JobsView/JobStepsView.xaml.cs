@@ -118,7 +118,7 @@ namespace DesktopAutomationApp.Views
             }
         }
 
-        private void EndSettingsButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void EndSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             EndSettingsPopup.IsOpen = !EndSettingsPopup.IsOpen;
             e.Handled = true;

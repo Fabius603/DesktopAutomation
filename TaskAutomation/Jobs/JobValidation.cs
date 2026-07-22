@@ -2,6 +2,7 @@ using System.Collections;
 using System.IO;
 using System.Reflection;
 using TaskAutomation.Steps;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Jobs;
 
@@ -169,8 +170,9 @@ public static class JobValidation
             StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate
                 ? ProcessTargetConfigured(s.Settings.Target)
                 : ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath) && s.Settings.MonitorIndex >= 0,
+            TerminateProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             FocusProcessStep s => ProcessTargetConfigured(s.Settings.Target),
-            ShowTextStep s => Text(s.Settings.Text) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
+            ShowTextStep s => (s.Settings.TextSource == ShowTextSource.TaskResult || Text(s.Settings.Text)) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
             ActiveWindowStep s => ProcessTargetConfigured(s.Settings.Target)
                                   && s.Settings.CacheMs >= 0,
             KeyPointMatchingStep s => ExistingFile(s.Settings.TemplatePath) && s.Settings.MinMatchCount > 0 && s.Settings.LowesRatioThreshold is > 0 and <= 1 && Roi(s.Settings.EnableROI, s.Settings.ROI),
@@ -179,6 +181,7 @@ public static class JobValidation
             PointComparisonStep s => PointComparison(s.Settings),
             DynamicRoiStep s => s.Settings.Padding >= 0 && Unit(s.Settings.MinimumConfidence)
                 && s.Settings.FullSearchInterval >= 0 && s.Settings.ResetAfterMisses >= 0,
+            WindowsStateQueryStep s => WindowsQueryConfigured(s.Settings),
             _ => true
         };
         return valid ? null : invalid;
@@ -199,7 +202,9 @@ public static class JobValidation
             if (source is null) return "Eine Bedingung verweist nicht auf einen gültigen vorherigen Step.";
             var output = StepPipelineRegistry.Get(source.GetType())?.Output;
             if (string.IsNullOrWhiteSpace(output) || output == "–") return "Der ausgewählte Step besitzt keinen auswertbaren Rückgabewert.";
-            if (!StepResultMetadata.TryGetProperty(output, condition.PropertyPath, out var property)) return "Die ausgewählte Rückgabeeigenschaft existiert nicht mehr.";
+            var property = StepResultMetadata.GetResultTypeForStep(source)?.Properties.FirstOrDefault(p =>
+                string.Equals(p.Name, condition.PropertyPath, StringComparison.OrdinalIgnoreCase));
+            if (property is null) return "Die ausgewählte Rückgabeeigenschaft existiert nicht mehr.";
             if (!ConditionRules.IsOperatorAllowed(property.PropertyType, condition.Operator))
                 return "Der Operator passt nicht zum Datentyp der ausgewählten Eigenschaft.";
             if (!ConditionRules.RequiresComparisonValue(condition.Operator)) continue;
@@ -219,8 +224,9 @@ public static class JobValidation
             var comparisonOutput = StepPipelineRegistry.Get(comparisonSource.GetType())?.Output;
             if (string.IsNullOrWhiteSpace(comparisonOutput) || comparisonOutput == "–")
                 return "Der ausgewählte JobResult-Step besitzt keinen auswertbaren Rückgabewert.";
-            if (string.IsNullOrWhiteSpace(comparison.PropertyPath)
-                || !StepResultMetadata.TryGetProperty(comparisonOutput, comparison.PropertyPath, out var comparisonProperty))
+            var comparisonProperty = StepResultMetadata.GetResultTypeForStep(comparisonSource)?.Properties.FirstOrDefault(p =>
+                string.Equals(p.Name, comparison.PropertyPath, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(comparison.PropertyPath) || comparisonProperty is null)
                 return "Die ausgewählte JobResult-Vergleichseigenschaft existiert nicht mehr.";
             if (!StepResultMetadata.AreComparable(property, comparisonProperty))
                 return "Beide Vergleichswerte müssen denselben Datentyp besitzen.";
@@ -262,6 +268,7 @@ public static class JobValidation
         ActiveProcessStep s => s.Settings.Target,
         GetProcessStep s => s.Settings.Query,
         StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate => s.Settings.Target,
+        TerminateProcessStep s => s.Settings.Target,
         FocusProcessStep s => s.Settings.Target,
         ActiveWindowStep s => s.Settings.Target,
         _ => null
@@ -302,6 +309,14 @@ public static class JobValidation
         return null;
     }
 
+    private static bool WindowsQueryConfigured(WindowsStateQuerySettings settings)
+    {
+        var capability = new WindowsCapabilityCatalog().Find(settings.QueryType);
+        return capability?.SupportsStateQuery == true
+               && (capability.Parameters ?? []).All(parameter => !parameter.Required
+                   || settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
+    }
+
     private static IEnumerable<(string Key, ResultBinding Binding)> GetResultBindings(JobStep step)
     {
         return step switch
@@ -328,8 +343,10 @@ public static class JobValidation
             ActiveProcessStep s => [("process", s.Settings.Target.ProcessSource)],
             StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate =>
                 [("process", s.Settings.Target.ProcessSource)],
+            TerminateProcessStep s => [("process", s.Settings.Target.ProcessSource)],
             FocusProcessStep s => [("process", s.Settings.Target.ProcessSource)],
             ActiveWindowStep s => [("process", s.Settings.Target.ProcessSource)],
+            ShowTextStep s when s.Settings.TextSource == ShowTextSource.TaskResult => [("text", s.Settings.TextResult)],
             _ => []
         };
     }

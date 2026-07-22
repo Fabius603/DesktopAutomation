@@ -1,0 +1,15 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation">
+ <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="/Resources/Jobs/Templates/Shared.xaml"/></ResourceDictionary.MergedDictionaries>
+ <DataTemplate DataType="{x:Type jobs:StartProcessStep}">
+  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <TextBlock Text="{Binding Converter={StaticResource StepDisplayNameConverter}}" FontWeight="Bold" VerticalAlignment="Top"/>
+   <StackPanel Grid.Column="2">
+    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.Program}"/><Run Text="{Binding Settings.ExecutablePath}"/></TextBlock>
+    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.Arguments}"/><Run Text="{Binding Settings.Arguments}"/></TextBlock>
+    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.Monitor}"/><Run Text="{Binding Settings.MonitorIndex}"/></TextBlock>
+    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.WindowMode}"/><Run Text="{Binding Settings.WindowMode}"/></TextBlock>
+    <TextBlock Style="{StaticResource ParamText}"><Run Text="{loc:Translate Key=Ui.Job.Steps.WaitForCompletion}"/><Run Text="{Binding Settings.WaitForExit, Converter={StaticResource InverseBooleanToContentConverter}, ConverterParameter='Nein,Ja'}"/></TextBlock>
+   </StackPanel>
+  </Grid>
+ </DataTemplate>
+</ResourceDictionary>

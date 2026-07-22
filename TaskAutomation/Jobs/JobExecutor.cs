@@ -26,6 +26,7 @@ using ImageDetection.YOLO;
 using TaskAutomation.Events;
 using TaskAutomation.Logging;
 using TaskAutomation.Timing;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Jobs
 {
@@ -80,6 +81,7 @@ namespace TaskAutomation.Jobs
             { typeof(ActiveProcessStep),       new ActiveProcessStepHandler()       },
             { typeof(GetProcessStep),          new GetProcessStepHandler()          },
             { typeof(StartProcessStep),        new StartProcessStepHandler()        },
+            { typeof(TerminateProcessStep),    new TerminateProcessStepHandler()    },
             { typeof(FocusProcessStep),         new FocusProcessStepHandler()        },
             { typeof(ShowTextStep),             new ShowTextStepHandler()            },
             { typeof(ActiveWindowStep),        new ActiveWindowStepHandler()        },
@@ -113,6 +115,7 @@ namespace TaskAutomation.Jobs
             IDesktopCaptureService desktopCaptureService,
             IExecutionLogService executionLogService,
             IPreciseDelayService preciseDelayService,
+            IWindowsSystemStateService windowsStateService,
             Lazy<IJobLauncher>? lazyLauncher = null)
         {
             _logger               = logger;
@@ -128,6 +131,7 @@ namespace TaskAutomation.Jobs
             _executionLogService = executionLogService;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
             _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
+            _stepHandlers[typeof(WindowsStateQueryStep)] = new WindowsStateQueryStepHandler(windowsStateService);
 
             _logger.LogInformation(
                 "JobExecutor initialisiert. Jobs: {Jobs}, Makros: {Makros}",

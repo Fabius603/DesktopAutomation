@@ -1489,7 +1489,10 @@ Error:
     <value>Check process status</value>
   </data>
   <data name="Step.Type.StartProcess" xml:space="preserve">
-    <value>Start/terminate process</value>
+    <value>Start process</value>
+  </data>
+  <data name="Step.Type.TerminateProcess" xml:space="preserve">
+    <value>Terminate process</value>
   </data>
   <data name="Step.Type.FocusProcess" xml:space="preserve">
     <value>Focus/minimize window</value>
@@ -1507,7 +1510,7 @@ Error:
     <value>Show image</value>
   </data>
   <data name="Step.Type.ShowOnDesktop" xml:space="preserve">
-    <value>Show on desktop</value>
+    <value>Show detection result on desktop</value>
   </data>
   <data name="Step.Type.VideoCreation" xml:space="preserve">
     <value>Create video</value>
@@ -1552,7 +1555,7 @@ Error:
     <value>Shows the current image in a preview window.</value>
   </data>
   <data name="Step.Description.ShowOnDesktop" xml:space="preserve">
-    <value>Draws the detection result as a desktop overlay.</value>
+    <value>Draws detections, center points, and bounding boxes as a desktop overlay.</value>
   </data>
   <data name="Step.Description.VideoCreation" xml:space="preserve">
     <value>Saves the current image stream as a video file.</value>
@@ -2028,4 +2031,39 @@ Error:
   <data name="Ui.Job.Steps.ResultProperty.Bottom" xml:space="preserve"><value>Bottom edge</value></data>
   <data name="Ui.Job.Steps.ResultProperty.IsEmpty" xml:space="preserve"><value>Is empty</value></data>
   <data name="Ui.Step.ResultSource.StepLabel" xml:space="preserve"><value>Step {0}: {1}</value></data>
+  <data name="Ui.Windows.Category" xml:space="preserve"><value>Category</value></data>
+  <data name="Ui.Windows.Capability" xml:space="preserve"><value>Windows capability</value></data>
+  <data name="Ui.Windows.Enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="Ui.Windows.StateQuery.Title" xml:space="preserve"><value>Query Windows state</value></data>
+  <data name="Ui.Windows.StateQuery.Description" xml:space="preserve"><value>The step returns status, availability, and query-specific result values. They can be compared in later If steps.</value></data>
+  <data name="Ui.Windows.Event" xml:space="preserve"><value>Windows event</value></data>
+  <data name="Ui.Windows.DebounceSeconds" xml:space="preserve"><value>Debounce (seconds)</value></data>
+  <data name="Ui.Windows.DelaySeconds" xml:space="preserve"><value>Delay (seconds)</value></data>
+  <data name="Ui.Windows.DebounceInfo" xml:space="preserve"><value>Minimum interval between two accepted triggers. Additional matching events within this period are ignored.</value></data>
+  <data name="Ui.Windows.DelayInfo" xml:space="preserve"><value>Time to wait after an accepted trigger before starting the automation.</value></data>
+  <data name="Step.ResultValueType.Enum" xml:space="preserve"><value>Enum</value></data>
+  <data name="Ui.Job.Steps.ResultType.Enum" xml:space="preserve"><value>Enum</value></data>
+  <data name="Enum.AutomationTriggerKind.WindowsEvent" xml:space="preserve"><value>Windows event</value></data>
+  <data name="Step.Type.WindowsStateQuery" xml:space="preserve"><value>Query Windows state</value></data>
+  <data name="Step.Category.WindowsSystem" xml:space="preserve"><value>Windows and system</value></data>
+  <data name="Enum.WindowsEventCategory.Network" xml:space="preserve"><value>Network and Wi-Fi</value></data>
+  <data name="Enum.WindowsEventCategory.Audio" xml:space="preserve"><value>Audio and volume</value></data>
+  <data name="Enum.WindowsEventCategory.Session" xml:space="preserve"><value>User and session</value></data>
+  <data name="Enum.WindowsEventCategory.Power" xml:space="preserve"><value>Power and battery</value></data>
+  <data name="Enum.WindowsEventCategory.Display" xml:space="preserve"><value>Displays and monitors</value></data>
+  <data name="Enum.WindowsEventCategory.Device" xml:space="preserve"><value>USB and hardware devices</value></data>
+  <data name="Enum.WindowsEventCategory.Bluetooth" xml:space="preserve"><value>Bluetooth</value></data>
+  <data name="Enum.WindowsEventCategory.FileSystem" xml:space="preserve"><value>Files and folders</value></data>
+  <data name="Enum.WindowsEventCategory.Process" xml:space="preserve"><value>Processes and programs</value></data>
+  <data name="Enum.WindowsEventCategory.Window" xml:space="preserve"><value>Windows and applications</value></data>
+  <data name="Enum.WindowsEventCategory.Input" xml:space="preserve"><value>Keyboard, mouse, and input</value></data>
+  <data name="Enum.WindowsEventCategory.Clipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="Enum.WindowsEventCategory.Printer" xml:space="preserve"><value>Printers</value></data>
+  <data name="Enum.WindowsEventCategory.Storage" xml:space="preserve"><value>Drives and storage</value></data>
+  <data name="Enum.WindowsEventCategory.SystemSettings" xml:space="preserve"><value>Time and system settings</value></data>
+  <data name="Enum.WindowsEventCategory.Security" xml:space="preserve"><value>Windows security</value></data>
+  <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows updates</value></data>
+  <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Startup and shutdown</value></data>
+  <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Text source</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Task result</value></data>
 </root>

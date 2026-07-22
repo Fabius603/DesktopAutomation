@@ -13,6 +13,7 @@
                  xmlns:process="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Process"
                  xmlns:roi="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Roi"
                  xmlns:flow="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Flow"
+                 xmlns:windowsEditors="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Windows"
                  WindowStartupLocation="CenterOwner"
                  Width="540" Height="560"
                  Title="{Binding DialogTitle}"
@@ -80,6 +81,7 @@
                     <process:ActiveProcessStepEditor/>
                     <process:GetProcessStepEditor/>
                     <process:StartProcessStepEditor/>
+                    <process:TerminateProcessStepEditor/>
                     <process:FocusProcessStepEditor/>
                     <output:ShowTextStepEditor/>
                     <process:ActiveWindowStepEditor/>
@@ -91,6 +93,7 @@
                     <flow:EndIfStepEditor/>
                     <flow:EndJobStepEditor/>
                     <analysis:PointComparisonStepEditor/>
+                    <windowsEditors:WindowsStateQueryStepEditor/>
                 </StackPanel>
             </Border>
         </ScrollViewer>

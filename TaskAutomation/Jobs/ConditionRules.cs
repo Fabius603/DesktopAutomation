@@ -23,6 +23,7 @@ public static class ConditionRules
     public static IReadOnlyList<ConditionOperator> GetOperators(ResultPropertyType propertyType) => propertyType switch
     {
         ResultPropertyType.Bool => BoolOperators,
+        ResultPropertyType.Enum => BoolOperators,
         ResultPropertyType.String => StringOperators,
         _ => OrderedOperators
     };
@@ -54,6 +55,7 @@ public static class ConditionRules
             ResultPropertyType.DateTime => ((DateTime)value).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
             ResultPropertyType.Bool => Convert.ToBoolean(value, CultureInfo.InvariantCulture).ToString(),
             ResultPropertyType.String => value.ToString(),
+            ResultPropertyType.Enum => value.ToString(),
             _ => null
         };
     }
