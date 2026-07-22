@@ -124,9 +124,14 @@ namespace TaskAutomation.Logging
         public event EventHandler<ExecutionLogEntry>? EntryWritten;
         public event EventHandler<ExecutionLogSession>? SessionChanged;
 
-        public ExecutionLogService()
+        public ExecutionLogService() : this(AppPaths.ExecutionLogsDirectory)
         {
-            _rootDirectory = AppPaths.ExecutionLogsDirectory;
+        }
+
+        internal ExecutionLogService(string rootDirectory)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
+            _rootDirectory = Path.GetFullPath(rootDirectory);
             Directory.CreateDirectory(_rootDirectory);
             _counterFilePath = Path.Combine(_rootDirectory, "job-counters.json");
             LoadJobCounters();

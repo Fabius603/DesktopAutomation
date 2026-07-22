@@ -39,6 +39,8 @@ using Velopack;
 using TaskAutomation.Timing;
 using DesktopAutomationApp.Logging;
 using System.Windows.Threading;
+using System.Windows.Interop;
+using System.Runtime.InteropServices;
 using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp
@@ -246,6 +248,7 @@ namespace DesktopAutomationApp
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             _mainWindow = mainWindow;
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
+            mainWindow.SourceInitialized += (_, _) => UpdateAccentIcons();
 
             SetupTrayIcon(mainWindow);
             _themeService.ThemeChanged += OnThemeChanged;
@@ -381,6 +384,13 @@ namespace DesktopAutomationApp
                 _mainWindow.Icon = newIcons.WindowIcon;
                 _trayIcon.Icon = newIcons.TrayIcon;
 
+                var windowHandle = new WindowInteropHelper(_mainWindow).Handle;
+                if (windowHandle != IntPtr.Zero)
+                {
+                    SendMessage(windowHandle, WmSetIcon, IconBig, newIcons.TrayIcon.Handle);
+                    SendMessage(windowHandle, WmSetIcon, IconSmall, newIcons.TrayIcon.Handle);
+                }
+
                 var oldIcons = _accentIcons;
                 _accentIcons = newIcons;
                 oldIcons?.Dispose();
@@ -390,6 +400,13 @@ namespace DesktopAutomationApp
                 Log.Warning(ex, "Das App-Icon konnte nicht an die Akzentfarbe angepasst werden.");
             }
         }
+
+        private const int WmSetIcon = 0x0080;
+        private static readonly IntPtr IconSmall = IntPtr.Zero;
+        private static readonly IntPtr IconBig = new(1);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr windowHandle, int message, IntPtr parameter, IntPtr value);
 
         private void ShowMainWindow(MainWindow mainWindow)
         {
