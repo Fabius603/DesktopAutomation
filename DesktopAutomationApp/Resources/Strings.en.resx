@@ -1531,6 +1531,8 @@ Error:
     <value>End job</value>
   </data>
   <data name="Step.Type.ContinueJob" xml:space="preserve"><value>Restart job</value></data>
+  <data name="Step.Type.BlockInput" xml:space="preserve"><value>Block input</value></data>
+  <data name="Step.Type.UnblockInput" xml:space="preserve"><value>Unblock input</value></data>
   <data name="Step.Description.DesktopDuplication" xml:space="preserve">
     <value>Captures the selected monitor and provides the screenshot as an image source.</value>
   </data>
@@ -1586,6 +1588,10 @@ Error:
     <value>Stops the current job immediately.</value>
   </data>
   <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Stops the current iteration and restarts at the first main step.</value></data>
+  <data name="Step.Description.BlockInput" xml:space="preserve"><value>Temporarily blocks physical mouse and keyboard input.</value></data>
+  <data name="Step.Description.UnblockInput" xml:space="preserve"><value>Re-enables blocked mouse and keyboard input.</value></data>
+  <data name="Ui.Step.Settings.SafetyTimeoutSeconds" xml:space="preserve"><value>Safety timeout (s)</value></data>
+  <data name="Ui.Step.Settings.UnblockInputDescription" xml:space="preserve"><value>Immediately releases a previously enabled input block.</value></data>
   <data name="Ui.Step.Settings.ContinueJobDescription" xml:space="preserve"><value>Like “continue” in a loop: subsequent steps are skipped and the job restarts at its first main step.</value></data>
   <data name="Step.Description.ActiveProcess" xml:space="preserve">
     <value>Only checks whether a matching program instance is running; no visible window is required.</value>
@@ -2069,4 +2075,24 @@ Error:
   <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Startup and shutdown</value></data>
   <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Text source</value></data>
   <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Task result</value></data>
+  <data name="Enum.AutomationTriggerKind.Webhook" xml:space="preserve"><value>Webhook</value></data>
+  <data name="Enum.WebhookNetworkMode.Offline" xml:space="preserve"><value>Offline (this PC only)</value></data>
+  <data name="Enum.WebhookNetworkMode.Lan" xml:space="preserve"><value>LAN</value></data>
+  <data name="Enum.WebhookNetworkMode.Online" xml:space="preserve"><value>Online</value></data>
+  <data name="Automation.Trigger.Description.Webhook" xml:space="preserve"><value>Starts the automation through an authenticated HTTP POST request.</value></data>
+  <data name="Automation.Trigger.Webhook" xml:space="preserve"><value>Webhook ({0})</value></data>
+  <data name="Ui.Webhook.Configuration" xml:space="preserve"><value>Webhook</value></data>
+  <data name="Ui.Webhook.NetworkMode" xml:space="preserve"><value>Availability</value></data>
+  <data name="Ui.Webhook.Port" xml:space="preserve"><value>Port</value></data>
+  <data name="Ui.Webhook.Url" xml:space="preserve"><value>Webhook URL</value></data>
+  <data name="Ui.Webhook.Secret" xml:space="preserve"><value>Webhook secret</value></data>
+  <data name="Ui.Webhook.Regenerate" xml:space="preserve"><value>Regenerate</value></data>
+  <data name="Ui.Webhook.AuthenticationHint" xml:space="preserve"><value>Send the secret as “Authorization: Bearer &lt;secret&gt;” or in the “X-Webhook-Secret” header. The request is accepted with HTTP 202.</value></data>
+  <data name="Ui.Common.Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Validation.WebhookConfigurationInvalid" xml:space="preserve"><value>The webhook configuration is invalid. Check the port, secret, and the public HTTPS base URL in online mode.</value></data>
+  <data name="Webhook.CopyFailed" xml:space="preserve"><value>The webhook value could not be copied to the clipboard.</value></data>
+  <data name="Ui.Webhook.OnlineBaseUrl" xml:space="preserve"><value>Public HTTPS base URL</value></data>
+  <data name="Ui.Webhook.OnlineBaseUrlPlaceholder" xml:space="preserve"><value>https://hooks.example.com</value></data>
+  <data name="Ui.Webhook.OnlineHint" xml:space="preserve"><value>The URL must be forwarded to this listener through a reverse proxy, VPN, or tunnel. Online webhooks can only be saved with a public HTTPS URL.</value></data>
+  <data name="Ui.Webhook.PowerShellCode" xml:space="preserve"><value>PowerShell invocation</value></data>
 </root>

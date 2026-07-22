@@ -54,6 +54,11 @@ namespace DesktopAutomationApp.Models
         private string _windowsEventType = "network.availability.changed";
         private Dictionary<string, string?> _windowsEventFilters = new(StringComparer.OrdinalIgnoreCase);
         private int _windowsEventDebounceSeconds = 1;
+        private Guid _webhookId = Guid.NewGuid();
+        private WebhookNetworkMode _webhookNetworkMode = WebhookNetworkMode.Offline;
+        private int _webhookPort = WebhookAutomationTrigger.DefaultPort;
+        private string _webhookSecret = WebhookAutomationTrigger.GenerateSecret();
+        private string _webhookOnlineBaseUrl = string.Empty;
         private EditableAutomationAction _action = new();
         private AutomationAlreadyRunningBehavior _alreadyRunningBehavior = AutomationAlreadyRunningBehavior.Ignore;
         private int _cooldownSeconds;
@@ -87,6 +92,7 @@ namespace DesktopAutomationApp.Models
                 OnPropertyChanged(nameof(IsFileSystemEventTrigger));
                 OnPropertyChanged(nameof(IsSystemEventTrigger));
                 OnPropertyChanged(nameof(IsWindowsEventTrigger));
+                OnPropertyChanged(nameof(IsWebhookTrigger));
                 OnPropertyChanged(nameof(DisplayTrigger));
             }
         }
@@ -100,6 +106,7 @@ namespace DesktopAutomationApp.Models
         public bool IsFileSystemEventTrigger => TriggerKind == AutomationTriggerKind.FileSystemEvent;
         public bool IsSystemEventTrigger => TriggerKind == AutomationTriggerKind.SystemEvent;
         public bool IsWindowsEventTrigger => TriggerKind == AutomationTriggerKind.WindowsEvent;
+        public bool IsWebhookTrigger => TriggerKind == AutomationTriggerKind.Webhook;
 
         public KeyModifiers Modifiers { get => _modifiers; set { if (_modifiers != value) { _modifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public uint VirtualKeyCode { get => _virtualKeyCode; set { if (_virtualKeyCode != value) { _virtualKeyCode = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
@@ -129,6 +136,36 @@ namespace DesktopAutomationApp.Models
         public string WindowsEventType { get => _windowsEventType; set { if (_windowsEventType != value) { _windowsEventType = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
         public Dictionary<string, string?> WindowsEventFilters { get => _windowsEventFilters; set { _windowsEventFilters = value ?? new(StringComparer.OrdinalIgnoreCase); OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } }
         public int WindowsEventDebounceSeconds { get => _windowsEventDebounceSeconds; set { if (_windowsEventDebounceSeconds != value) { _windowsEventDebounceSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public Guid WebhookId { get => _webhookId; set { if (_webhookId != value) { _webhookId = value; OnPropertyChanged(); OnPropertyChanged(nameof(WebhookUrl)); OnPropertyChanged(nameof(WebhookPowerShellCode)); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public WebhookNetworkMode WebhookNetworkMode { get => _webhookNetworkMode; set { if (_webhookNetworkMode != value) { _webhookNetworkMode = value; OnPropertyChanged(); OnPropertyChanged(nameof(WebhookUrl)); OnPropertyChanged(nameof(WebhookPowerShellCode)); OnPropertyChanged(nameof(IsWebhookOnline)); OnPropertyChanged(nameof(DisplayTrigger)); } } }
+        public int WebhookPort { get => _webhookPort; set { if (_webhookPort != value) { _webhookPort = value; OnPropertyChanged(); OnPropertyChanged(nameof(WebhookUrl)); OnPropertyChanged(nameof(WebhookPowerShellCode)); } } }
+        public string WebhookSecret { get => _webhookSecret; set { if (_webhookSecret != value) { _webhookSecret = value; OnPropertyChanged(); OnPropertyChanged(nameof(WebhookPowerShellCode)); } } }
+        public string WebhookOnlineBaseUrl { get => _webhookOnlineBaseUrl; set { if (_webhookOnlineBaseUrl != value) { _webhookOnlineBaseUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(WebhookUrl)); OnPropertyChanged(nameof(WebhookPowerShellCode)); } } }
+        public bool IsWebhookOnline => WebhookNetworkMode == WebhookNetworkMode.Online;
+        public string WebhookUrl
+        {
+            get
+            {
+                var path = $"/api/v1/webhooks/{WebhookId:D}";
+                if (WebhookNetworkMode == WebhookNetworkMode.Online)
+                    return string.IsNullOrWhiteSpace(WebhookOnlineBaseUrl)
+                        ? string.Empty
+                        : $"{WebhookOnlineBaseUrl.Trim().TrimEnd('/')}{path}";
+
+                var host = WebhookNetworkMode == WebhookNetworkMode.Offline ? "127.0.0.1" : Environment.MachineName;
+                return $"http://{host}:{WebhookPort}{path}";
+            }
+        }
+        public string WebhookPowerShellCode
+        {
+            get
+            {
+                var url = EscapePowerShellSingleQuoted(WebhookUrl);
+                var secret = EscapePowerShellSingleQuoted(WebhookSecret);
+                return $"$headers = @{{ Authorization = 'Bearer {secret}' }}{Environment.NewLine}"
+                     + $"Invoke-RestMethod -Method Post -Uri '{url}' -Headers $headers -ContentType 'application/json' -Body '{{}}'";
+            }
+        }
 
         public EditableAutomationAction Action { get => _action; set { if (!ReferenceEquals(_action, value) && value != null) { _action = value; OnPropertyChanged(); OnPropertyChanged(nameof(DisplayAction)); } } }
         public AutomationAlreadyRunningBehavior AlreadyRunningBehavior { get => _alreadyRunningBehavior; set { if (_alreadyRunningBehavior != value) { _alreadyRunningBehavior = value; OnPropertyChanged(); } } }
@@ -141,7 +178,7 @@ namespace DesktopAutomationApp.Models
         public string DisplayTrigger => AutomationDisplayFormatter.Trigger(ToDomain().Trigger);
         public string DisplayAction => AutomationDisplayFormatter.Action(ToDomain().Action);
         public string NextRunDisplay => _nextRunAt?.LocalDateTime.ToString("G", LocalizationService.Instance.CurrentCulture)
-            ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited or AutomationTriggerKind.WindowsEvent
+            ?? (TriggerKind is AutomationTriggerKind.Hotkey or AutomationTriggerKind.ProcessStarted or AutomationTriggerKind.ProcessExited or AutomationTriggerKind.WindowsEvent or AutomationTriggerKind.Webhook
                 ? Loc.Get("Automation.EventBased") : Loc.Get("Automation.NotScheduled"));
         public string LastRunDisplay => AutomationDisplayFormatter.LastRun(_lastRunAt);
         public string RuntimeError => _lastError ?? string.Empty;
@@ -258,6 +295,14 @@ namespace DesktopAutomationApp.Models
                     Debounce = TimeSpan.FromSeconds(Math.Max(0, WindowsEventDebounceSeconds)),
                     DelayAfterEvent = TimeSpan.FromSeconds(Math.Max(0, DelayAfterEventSeconds))
                 },
+                AutomationTriggerKind.Webhook => new WebhookAutomationTrigger
+                {
+                    HookId = WebhookId,
+                    NetworkMode = WebhookNetworkMode,
+                    Port = WebhookPort,
+                    Secret = WebhookSecret,
+                    OnlineBaseUrl = WebhookOnlineBaseUrl
+                },
                 AutomationTriggerKind.ProcessExited => new ProcessExitedAutomationTrigger
                 {
                     ProcessName = ProcessName,
@@ -322,6 +367,13 @@ namespace DesktopAutomationApp.Models
                     WindowsEventDebounceSeconds = (int)Math.Max(0, windowsEvent.Debounce.TotalSeconds);
                     DelayAfterEventSeconds = (int)Math.Max(0, windowsEvent.DelayAfterEvent.TotalSeconds);
                     break;
+                case WebhookAutomationTrigger webhook:
+                    WebhookId = webhook.HookId;
+                    WebhookNetworkMode = webhook.NetworkMode;
+                    WebhookPort = webhook.Port;
+                    WebhookSecret = webhook.Secret;
+                    WebhookOnlineBaseUrl = webhook.OnlineBaseUrl;
+                    break;
             }
         }
 
@@ -364,6 +416,8 @@ namespace DesktopAutomationApp.Models
             NotifyDayProperties();
             OnPropertyChanged(nameof(DisplayTrigger));
         }
+
+        private static string EscapePowerShellSingleQuoted(string value) => value.Replace("'", "''", StringComparison.Ordinal);
 
         private void NotifyDayProperties()
         {

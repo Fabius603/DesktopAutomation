@@ -558,6 +558,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Startet einen anderen Job und wartet optional auf dessen Abschluss, bevor der aktuelle Job fortgesetzt wird."),
                 new("ScriptExecution",    "ProgrammeFenster",
                     "Führt ein externes Skript aus (PowerShell, Python, Batch, …). Mit \"Fire and Forget\" wird nicht auf die Beendigung gewartet."),
+                new("BlockInput",         "AblaufSteuern", "Blockiert Maus und Tastatur bis zur Freigabe oder zum Sicherheits-Timeout."),
+                new("UnblockInput",       "AblaufSteuern", "Gibt Maus und Tastatur sofort wieder frei."),
                 new("Timeout",            "AblaufSteuern",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
                 new("StartProcess",       "ProgrammeFenster",
@@ -640,6 +642,8 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowKlickOnPoint3D => SelectedType == "KlickOnPoint3D";
         public bool ShowYoloDetection => SelectedType == "YoloDetection";
         public bool ShowTimeout => SelectedType == "Timeout";
+        public bool ShowBlockInput => SelectedType == "BlockInput";
+        public bool ShowUnblockInput => SelectedType == "UnblockInput";
         public bool ShowActiveProcess => SelectedType == "ActiveProcess";
         public bool ShowGetProcess => SelectedType == "GetProcess";
         public bool ShowStartProcess  => SelectedType == "StartProcess";
@@ -1697,6 +1701,8 @@ namespace DesktopAutomationApp.ViewModels
         // ===== Timeout Felder =====
         private int _timeoutStep_DelayMs = 1000;
         public int TimeoutStep_DelayMs { get => _timeoutStep_DelayMs; set { _timeoutStep_DelayMs = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        private int _blockInputStep_SafetyTimeoutSeconds = 30;
+        public int BlockInputStep_SafetyTimeoutSeconds { get => _blockInputStep_SafetyTimeoutSeconds; set { _blockInputStep_SafetyTimeoutSeconds = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
 
         // ===== ActiveProcess Felder =====
         private SourceStepItem? _activeProcessStep_SourceProcessStep;
@@ -2494,6 +2500,8 @@ namespace DesktopAutomationApp.ViewModels
                         DynamicRoiSource = GetDynamicRoiBinding()
                     }
                 },
+                "BlockInput" => new BlockInputStep { Settings = new BlockInputSettings { SafetyTimeoutSeconds = BlockInputStep_SafetyTimeoutSeconds } },
+                "UnblockInput" => new UnblockInputStep(),
                 "Timeout" => new TimeoutStep
                 {
                     Settings = new TimeoutSettings

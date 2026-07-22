@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 using TaskAutomation.Hotkeys;
 using TaskAutomation.WindowsIntegration;
 
@@ -52,7 +53,8 @@ namespace TaskAutomation.Automations
         WindowEvent,
         FileSystemEvent,
         SystemEvent,
-        WindowsEvent
+        WindowsEvent,
+        Webhook
     }
 
     [JsonDerivedType(typeof(HotkeyAutomationTrigger), "hotkey")]
@@ -65,6 +67,7 @@ namespace TaskAutomation.Automations
     [JsonDerivedType(typeof(FileSystemAutomationTrigger), "file_system_event")]
     [JsonDerivedType(typeof(SystemEventAutomationTrigger), "system_event")]
     [JsonDerivedType(typeof(WindowsEventAutomationTrigger), "windows_event")]
+    [JsonDerivedType(typeof(WebhookAutomationTrigger), "webhook")]
     public abstract class AutomationTrigger
     {
         [JsonPropertyName("kind")]
@@ -288,6 +291,40 @@ namespace TaskAutomation.Automations
         public TimeSpan DelayAfterEvent { get; set; }
 
         public override string GetDisplayText() => EventType;
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum WebhookNetworkMode
+    {
+        Offline,
+        Lan,
+        Online
+    }
+
+    public sealed class WebhookAutomationTrigger : AutomationTrigger
+    {
+        public const int DefaultPort = 17843;
+
+        public override AutomationTriggerKind Kind => AutomationTriggerKind.Webhook;
+
+        [JsonPropertyName("hook_id")]
+        public Guid HookId { get; set; } = Guid.NewGuid();
+
+        [JsonPropertyName("network_mode")]
+        public WebhookNetworkMode NetworkMode { get; set; } = WebhookNetworkMode.Offline;
+
+        [JsonPropertyName("port")]
+        public int Port { get; set; } = DefaultPort;
+
+        [JsonPropertyName("secret")]
+        public string Secret { get; set; } = GenerateSecret();
+
+        [JsonPropertyName("online_base_url")]
+        public string OnlineBaseUrl { get; set; } = string.Empty;
+
+        public override string GetDisplayText() => $"Webhook ({NetworkMode})";
+
+        public static string GenerateSecret() => Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     }
 
     public sealed class AutomationAction

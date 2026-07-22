@@ -602,6 +602,13 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "Timeout";
                     vm.TimeoutStep_DelayMs = to.Settings.DelayMs;
                     break;
+                case BlockInputStep blockInput:
+                    vm.SelectedType = "BlockInput";
+                    vm.BlockInputStep_SafetyTimeoutSeconds = blockInput.Settings.SafetyTimeoutSeconds;
+                    break;
+                case UnblockInputStep:
+                    vm.SelectedType = "UnblockInput";
+                    break;
 
                 case ActiveProcessStep ap:
                     vm.SelectedType = "ActiveProcess";

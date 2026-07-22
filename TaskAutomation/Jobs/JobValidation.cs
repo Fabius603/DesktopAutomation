@@ -165,6 +165,7 @@ public static class JobValidation
             KlickOnPoint3DStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0,
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
+            BlockInputStep s => s.Settings.SafetyTimeoutSeconds is >= 1 and <= 3600,
             ActiveProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             GetProcessStep s => ProcessQueryConfigured(s.Settings.Query),
             StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate

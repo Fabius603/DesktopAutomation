@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="HotkeyListener" Version="1.9.0" />
     <PackageReference Include="InputSimulator" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />

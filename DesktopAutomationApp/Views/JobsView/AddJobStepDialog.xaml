@@ -78,6 +78,8 @@
                     <interaction:KlickOnPoint3DStepEditor/>
                     <detection:YoloDetectionStepEditor/>
                     <flow:TimeoutStepEditor/>
+                    <flow:BlockInputStepEditor/>
+                    <flow:UnblockInputStepEditor/>
                     <process:ActiveProcessStepEditor/>
                     <process:GetProcessStepEditor/>
                     <process:StartProcessStepEditor/>

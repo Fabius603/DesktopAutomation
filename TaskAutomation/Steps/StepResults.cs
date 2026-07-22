@@ -177,6 +177,7 @@ public sealed record MakroExecutionResult : StepResultBase, IActionExecutionResu
 public sealed record ScriptExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ScriptExecutionResult Default = new(); }
 public sealed record JobExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly JobExecutionResult Default = new(); }
 public sealed record TimeoutResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly TimeoutResult Default = new(); }
+public sealed record InputControlResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly InputControlResult Default = new(); }
 public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult, IProcessReferenceResult
 {
     public bool Success { get; init; }

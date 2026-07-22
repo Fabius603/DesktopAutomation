@@ -28,6 +28,8 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(EndIfStep),    "end_if")]
     [JsonDerivedType(typeof(EndJobStep),   "end_job")]
     [JsonDerivedType(typeof(ContinueJobStep), "continue_job")]
+    [JsonDerivedType(typeof(BlockInputStep), "block_input")]
+    [JsonDerivedType(typeof(UnblockInputStep), "unblock_input")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
     [JsonDerivedType(typeof(GetProcessStep),    "get_process")]
     [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
@@ -568,6 +570,22 @@ namespace TaskAutomation.Jobs
 
     /// <summary>Stops the current main-phase iteration and starts it again at the first step.</summary>
     public sealed class ContinueJobStep : JobStep
+    {
+    }
+
+    public sealed class BlockInputStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public BlockInputSettings Settings { get; set; } = new();
+    }
+
+    public sealed class BlockInputSettings
+    {
+        [JsonPropertyName("safety_timeout_seconds")]
+        public int SafetyTimeoutSeconds { get; set; } = 30;
+    }
+
+    public sealed class UnblockInputStep : JobStep
     {
     }
 

@@ -44,6 +44,7 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<WindowAutomationEventKind> WindowEventKinds { get; } = new();
         public ObservableCollection<FileSystemAutomationEventKind> FileSystemEventKinds { get; } = new();
         public ObservableCollection<SystemAutomationEventKind> SystemEventKinds { get; } = new();
+        public ObservableCollection<WebhookNetworkMode> WebhookNetworkModes { get; } = new();
         public ObservableCollection<ActionItem> Actions { get; } = new();
         public ObservableCollection<string> AvailableProcessNames { get; } = new();
         public WindowsCapabilityPickerViewModel WindowsEventPicker { get; }
@@ -116,6 +117,10 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CaptureHotkeyCommand { get; }
         public ICommand BrowseFileSystemFolderCommand { get; }
         public ICommand ClearActiveWindowCommand { get; }
+        public ICommand CopyWebhookUrlCommand { get; }
+        public ICommand CopyWebhookSecretCommand { get; }
+        public ICommand CopyWebhookPowerShellCommand { get; }
+        public ICommand RegenerateWebhookSecretCommand { get; }
 
         public event Action? RequestBack;
 
@@ -144,7 +149,8 @@ namespace DesktopAutomationApp.ViewModels
             WindowsEventPicker.Changed += OnWindowsEventPickerChanged;
 
             foreach (var kind in new[] { AutomationTriggerKind.Hotkey, AutomationTriggerKind.OnceAt,
-                         AutomationTriggerKind.Schedule, AutomationTriggerKind.Interval, AutomationTriggerKind.WindowsEvent })
+                         AutomationTriggerKind.Schedule, AutomationTriggerKind.Interval, AutomationTriggerKind.WindowsEvent,
+                         AutomationTriggerKind.Webhook })
                 TriggerKinds.Add(kind);
             foreach (IntervalUnit unit in Enum.GetValues(typeof(IntervalUnit)))
                 IntervalUnits.Add(unit);
@@ -154,6 +160,8 @@ namespace DesktopAutomationApp.ViewModels
                 FileSystemEventKinds.Add(kind);
             foreach (SystemAutomationEventKind kind in Enum.GetValues(typeof(SystemAutomationEventKind)))
                 SystemEventKinds.Add(kind);
+            foreach (WebhookNetworkMode mode in Enum.GetValues(typeof(WebhookNetworkMode)))
+                WebhookNetworkModes.Add(mode);
 
             foreach (AutomationAlreadyRunningBehavior behavior in Enum.GetValues(typeof(AutomationAlreadyRunningBehavior)))
                 RunningBehaviors.Add(behavior);
@@ -174,6 +182,14 @@ namespace DesktopAutomationApp.ViewModels
                 EditedAutomation.EnabledUntil = null;
                 ReportDateTimeInputValidity("EnabledFrom", true);
                 ReportDateTimeInputValidity("EnabledUntil", true);
+            });
+            CopyWebhookUrlCommand = new RelayCommand(() => CopyToClipboard(EditedAutomation.WebhookUrl));
+            CopyWebhookSecretCommand = new RelayCommand(() => CopyToClipboard(EditedAutomation.WebhookSecret));
+            CopyWebhookPowerShellCommand = new RelayCommand(() => CopyToClipboard(EditedAutomation.WebhookPowerShellCode));
+            RegenerateWebhookSecretCommand = new RelayCommand(() =>
+            {
+                EditedAutomation.WebhookSecret = WebhookAutomationTrigger.GenerateSecret();
+                HasUnsavedChanges = true;
             });
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
@@ -333,6 +349,7 @@ namespace DesktopAutomationApp.ViewModels
             AutomationValidationError.IntervalPositive => Loc.Get("Validation.IntervalPositive"),
             AutomationValidationError.ActiveWindowPair => Loc.Get("Validation.ActiveWindowPair"),
             AutomationValidationError.WindowsEventRequired => "Bitte wähle ein Windows-Ereignis aus.",
+            AutomationValidationError.WebhookConfigurationInvalid => Loc.Get("Validation.WebhookConfigurationInvalid"),
             _ => Loc.Get("Validation.Title")
         };
 
@@ -445,6 +462,11 @@ namespace DesktopAutomationApp.ViewModels
             target.WindowsEventType = source.WindowsEventType;
             target.WindowsEventFilters = new Dictionary<string, string?>(source.WindowsEventFilters, StringComparer.OrdinalIgnoreCase);
             target.WindowsEventDebounceSeconds = source.WindowsEventDebounceSeconds;
+            target.WebhookId = source.WebhookId;
+            target.WebhookNetworkMode = source.WebhookNetworkMode;
+            target.WebhookPort = source.WebhookPort;
+            target.WebhookSecret = source.WebhookSecret;
+            target.WebhookOnlineBaseUrl = source.WebhookOnlineBaseUrl;
             target.Action.Name = source.Action.Name;
             target.Action.JobId = source.Action.JobId;
             target.Action.MakroId = source.Action.MakroId;
@@ -459,6 +481,19 @@ namespace DesktopAutomationApp.ViewModels
         {
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void CopyToClipboard(string value)
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(value);
+            }
+            catch (Exception ex)
+            {
+                _log.LogWarning(ex, "Webhook-Wert konnte nicht in die Zwischenablage kopiert werden.");
+                _dialogService.ShowError(Loc.Get("Webhook.CopyFailed"), Loc.Get("Validation.Title"));
+            }
         }
 
         private void OnCultureChanged(object? sender, EventArgs e)

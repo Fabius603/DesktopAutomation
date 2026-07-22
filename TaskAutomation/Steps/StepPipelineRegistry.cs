@@ -188,6 +188,8 @@ namespace TaskAutomation.Steps
             [typeof(EndIfStep)]  = new(Prerequisites: [], ResultType: null, DisplayName: "End If"),
             [typeof(EndJobStep)] = new(Prerequisites: [], ResultType: null, DisplayName: "Job beenden"),
             [typeof(ContinueJobStep)] = new(Prerequisites: [], ResultType: null, DisplayName: "Job neu starten"),
+            [typeof(BlockInputStep)] = new(Prerequisites: [], ResultType: typeof(InputControlResult), DisplayName: "Eingaben blockieren"),
+            [typeof(UnblockInputStep)] = new(Prerequisites: [], ResultType: typeof(InputControlResult), DisplayName: "Eingaben freigeben"),
         };
 
         /// <summary>Gibt die Pipeline-Info für den angegebenen Step-Typ zurück.</summary>
@@ -245,6 +247,8 @@ namespace TaskAutomation.Steps
             ["EndIf"]              = typeof(EndIfStep),
             ["EndJob"]             = typeof(EndJobStep),
             ["ContinueJob"]        = typeof(ContinueJobStep),
+            ["BlockInput"]         = typeof(BlockInputStep),
+            ["UnblockInput"]       = typeof(UnblockInputStep),
         };
 
         /// <summary>Gibt die Pipeline-Info für den Step-Typ-Namen zurück (z. B. "TemplateMatching").</summary>

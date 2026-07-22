@@ -17,7 +17,8 @@ public enum AutomationValidationError
     WeekdayRequired,
     IntervalPositive,
     ActiveWindowPair,
-    WindowsEventRequired
+    WindowsEventRequired,
+    WebhookConfigurationInvalid
 }
 
 public sealed record AutomationValidationResult(bool IsValid, AutomationValidationError Error);
@@ -45,6 +46,10 @@ public static class AutomationValidation
             { Trigger: IntervalAutomationTrigger { Interval: var interval } } when interval <= TimeSpan.Zero => AutomationValidationError.IntervalPositive,
             { Trigger: WindowsEventAutomationTrigger { EventType: var eventType } } when string.IsNullOrWhiteSpace(eventType) => AutomationValidationError.WindowsEventRequired,
             { Trigger: WindowsEventAutomationTrigger windowsEvent } when !WindowsEventConfigured(windowsEvent) => AutomationValidationError.WindowsEventRequired,
+            { Trigger: WebhookAutomationTrigger { HookId: var hookId } } when hookId == Guid.Empty => AutomationValidationError.WebhookConfigurationInvalid,
+            { Trigger: WebhookAutomationTrigger { Port: < 1024 or > 65535 } } => AutomationValidationError.WebhookConfigurationInvalid,
+            { Trigger: WebhookAutomationTrigger { Secret: var secret } } when string.IsNullOrWhiteSpace(secret) || secret.Length < 24 => AutomationValidationError.WebhookConfigurationInvalid,
+            { Trigger: WebhookAutomationTrigger { NetworkMode: WebhookNetworkMode.Online } webhook } when !ValidOnlineBaseUrl(webhook.OnlineBaseUrl) => AutomationValidationError.WebhookConfigurationInvalid,
             { RunPolicy: { EnabledFrom: var from, EnabledUntil: var until } } when from.HasValue != until.HasValue => AutomationValidationError.ActiveWindowPair,
             _ => AutomationValidationError.None
         };
@@ -58,4 +63,11 @@ public static class AutomationValidation
                && (capability.Parameters ?? []).All(parameter => !parameter.Required
                    || trigger.Filters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
     }
+
+    private static bool ValidOnlineBaseUrl(string value) =>
+        Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps
+        && !string.IsNullOrWhiteSpace(uri.Host)
+        && string.IsNullOrEmpty(uri.Query)
+        && string.IsNullOrEmpty(uri.Fragment);
 }

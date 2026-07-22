@@ -155,6 +155,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IAutomationTriggerProvider, FileSystemAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, SystemAutomationTriggerProvider>();
                     services.AddSingleton<IAutomationTriggerProvider, WindowsEventAutomationTriggerProvider>();
+                    services.AddSingleton<IAutomationTriggerProvider, WebhookAutomationTriggerProvider>();
 
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();

@@ -88,6 +88,8 @@ namespace TaskAutomation.Jobs
             { typeof(KeyPointMatchingStep),    new KeyPointMatchingStepHandler()    },
             { typeof(PointComparisonStep),     new PointComparisonStepHandler()     },
             { typeof(DynamicRoiStep),          new DynamicRoiStepHandler()          },
+            { typeof(BlockInputStep),          new BlockInputStepHandler()          },
+            { typeof(UnblockInputStep),        new UnblockInputStepHandler()        },
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
@@ -761,6 +763,7 @@ namespace TaskAutomation.Jobs
 
                 // Text-Overlay: bei Job-Ende aufräumen (ShowTextStep mit ClearOnJobEnd).
                 try { _desktopResultOverlay.OnJobEnded(); } catch { /* best-effort */ }
+                try { WindowsInputBlockController.Unblock(); } catch { /* best-effort */ }
 
                 if (recorderStarted && pipelineCtx.VideoRecorder != null)
                 {
@@ -1222,6 +1225,7 @@ namespace TaskAutomation.Jobs
         {
             if (!_disposed)
             {
+                try { WindowsInputBlockController.Unblock(); } catch { /* best-effort */ }
                 _disposed = true;
             }
         }
