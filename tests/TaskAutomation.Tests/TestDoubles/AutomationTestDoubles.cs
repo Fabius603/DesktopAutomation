@@ -60,11 +60,13 @@ internal sealed class RecordingJobDispatcher : IJobDispatcher
     public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
     public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
     public event Action? RunningJobsChanged;
+    public event Action? DebugSessionsChanged;
     public event Action? RunningMakrosChanged;
     public HashSet<Guid> MutableRunningJobs { get; } = [];
     public HashSet<Guid> MutableRunningMakros { get; } = [];
     public IReadOnlyCollection<RunningJobInstance> RunningJobInstances => [];
     public IReadOnlyCollection<Guid> RunningJobIds => MutableRunningJobs;
+    public IReadOnlyCollection<JobDebugSession> DebugSessions => [];
     public IReadOnlyCollection<Guid> RunningMakroIds => MutableRunningMakros;
     public List<(Guid Id, JobStartContext? Context)> StartedJobs { get; } = [];
     public List<Guid> CancelledJobDefinitions { get; } = [];
@@ -72,6 +74,10 @@ internal sealed class RecordingJobDispatcher : IJobDispatcher
     public List<Guid> CancelledMakros { get; } = [];
     public Guid StartJob(Guid id, JobStartContext? startContext = null)
     { StartedJobs.Add((id, startContext)); return Guid.NewGuid(); }
+    public JobDebugSession? StartDebugJob(Guid id) => null;
+    public void DebugStep(Guid instanceId) { }
+    public void DebugContinue(Guid instanceId) { }
+    public void CancelDebugJob(Guid instanceId) { }
     public Task StartJobAsync(Guid id, CancellationToken ct, JobStartContext? startContext = null)
     { StartJob(id, startContext); return Task.CompletedTask; }
     public void CancelJob(Guid instanceId) { }

@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Diagnostics;
 using System.IO;
@@ -32,17 +34,59 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobDispatcher _dispatcher;
 
         private readonly List<MakroBefehl> _originalSteps;
+        private readonly List<MakroGruppe> _originalGroups;
+        private MakroRecordingSettings _originalRecordingSettings;
+        private MakroRecordedEnvironment? _originalRecordedEnvironment;
         private Overlay _overlay;
         private MacroPreviewService.PreviewResult _lastPreview;
 
-        private readonly Stack<List<MakroBefehl>> _undoStack = new();
-        private readonly Stack<List<MakroBefehl>> _redoStack = new();
+        private readonly Stack<MacroSnapshot> _undoStack = new();
+        private readonly Stack<MacroSnapshot> _redoStack = new();
         private List<MakroBefehl> _clipboard = new();
+        private readonly HashSet<string> _collapsedGroupIds = new(StringComparer.Ordinal);
 
         public Makro Makro { get; }
         public string Title => Makro.Name;
 
-        public ObservableCollection<MakroBefehl> Steps { get; }
+        private readonly ObservableRangeCollection<MakroBefehl> _stepItems;
+        public ObservableCollection<MakroBefehl> Steps => _stepItems;
+        public ObservableCollection<MakroGruppe> Groups => Makro.Gruppen;
+        private readonly ObservableRangeCollection<MacroListItem> _visibleItems = new();
+        public IList<MacroListItem> VisibleItems => _visibleItems;
+        public ObservableCollection<MacroFilterOption> GroupFilterOptions { get; } = new();
+        public IReadOnlyList<MacroFilterOption> StepTypeFilterOptions { get; } =
+        [
+            new("all", Loc.Get("Ui.Macro.Filter.AllSteps")),
+            new("movement", Loc.Get("Ui.Macro.Filter.Movement")),
+            new("mouse", Loc.Get("Ui.Macro.Filter.Mouse")),
+            new("keyboard", Loc.Get("Ui.Macro.Filter.Keyboard")),
+            new("timeout", Loc.Get("Ui.Macro.Filter.Timeout"))
+        ];
+
+        private string _filterText = string.Empty;
+        public string FilterText
+        {
+            get => _filterText;
+            set { if (_filterText == value) return; _filterText = value ?? string.Empty; OnPropertyChanged(); RebuildVisibleItems(); }
+        }
+
+        private MacroFilterOption? _selectedGroupFilter;
+        public MacroFilterOption? SelectedGroupFilter
+        {
+            get => _selectedGroupFilter;
+            set { if (_selectedGroupFilter == value) return; _selectedGroupFilter = value; OnPropertyChanged(); if (!_updatingFilters) RebuildVisibleItems(); }
+        }
+
+        private MacroFilterOption? _selectedStepTypeFilter;
+        public MacroFilterOption? SelectedStepTypeFilter
+        {
+            get => _selectedStepTypeFilter;
+            set { if (_selectedStepTypeFilter == value) return; _selectedStepTypeFilter = value; OnPropertyChanged(); RebuildVisibleItems(); }
+        }
+
+        public int StepCount => Steps.Count;
+        public int GroupCount => Groups.Count;
+        public string TotalDurationDisplay => MakroTimeFormatter.FormatMicroseconds(MakroTimeline.GetTotalDurationMicroseconds(Steps));
 
         /// <summary>Incrementiert bei jeder Listenänderung; wird von Konvertern als Cache-Schlüssel genutzt.</summary>
         public int StepsVersion { get; private set; }
@@ -84,13 +128,12 @@ namespace DesktopAutomationApp.ViewModels
         }
         public string CaptureClickButtonText => Loc.Get(IsCapturingClick ? "Macro.CaptureClick.Running" : "Macro.CaptureClick.Start");
 
-        private bool _recordMousePath;
-        public bool RecordMousePath
+        public string RecordingModeText => Makro.RecordingSettings.Mode switch
         {
-            get => _recordMousePath;
-            set { if (_recordMousePath == value) return; _recordMousePath = value; OnPropertyChanged(); OnPropertyChanged(nameof(RecordMousePathText)); }
-        }
-        public string RecordMousePathText => RecordMousePath ? "Mauspfad: AN" : "Mauspfad: AUS";
+            MakroRecordingMode.ScreenAccurateAbsolute => Loc.Get("Ui.Macro.Recording.ScreenAccurate.Short"),
+            MakroRecordingMode.MotionFaithfulRelative => Loc.Get("Ui.Macro.Recording.MotionFaithful.Short"),
+            _ => Loc.Get("Ui.Macro.Recording.ClicksOnly.Short")
+        };
 
         private bool _isMakroRunning;
         public bool IsMakroRunning
@@ -117,9 +160,14 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CopyCommand { get; }
         public ICommand PasteCommand { get; }
         public ICommand DuplicateStepCommand { get; }
+        public ICommand CreateGroupCommand { get; }
+        public ICommand RemoveFromGroupCommand { get; }
+        public ICommand RenameGroupCommand { get; }
+        public ICommand DissolveGroupCommand { get; }
+        public ICommand ToggleGroupCommand { get; }
         public ICommand RecordStepsCommand { get; }
         public ICommand CaptureClickCommand { get; }
-        public ICommand ToggleMousePathCommand { get; }
+        public ICommand OpenRecordingSettingsCommand { get; }
         public ICommand PreviewOverviewCommand { get; }
         public ICommand PreviewPlaybackCommand { get; }
         public ICommand PreviewStopCommand { get; }
@@ -146,14 +194,21 @@ namespace DesktopAutomationApp.ViewModels
             _dispatcher = dispatcher;
 
             _originalSteps = new List<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
-            Steps = new ObservableCollection<MakroBefehl>(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
+            _originalGroups = makro.Gruppen.Select(CloneGroup).ToList();
+            _collapsedGroupIds.UnionWith(makro.Gruppen.Select(group => group.Id));
+            _originalRecordingSettings = makro.RecordingSettings.Clone();
+            _originalRecordedEnvironment = makro.RecordedEnvironment?.Clone();
+            _stepItems = new ObservableRangeCollection<MakroBefehl>();
+            _stepItems.ReplaceRange(makro.Befehle ?? Enumerable.Empty<MakroBefehl>());
             Steps.CollectionChanged += (_, _) =>
             {
                 StepsVersion++;
                 OnPropertyChanged(nameof(StepsVersion));
                 InvalidateAllCommands();
                 ValidateAndApply();
+                RecalculatePresentation();
             };
+            Groups.CollectionChanged += Groups_CollectionChanged;
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
@@ -173,10 +228,15 @@ namespace DesktopAutomationApp.ViewModels
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
             PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
             DuplicateStepCommand  = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
+            CreateGroupCommand     = new RelayCommand(async () => await CreateGroupAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
+            RemoveFromGroupCommand = new RelayCommand(RemoveSelectedFromGroup, () => GetSelection().Any(s => s.HasGroup));
+            RenameGroupCommand     = new RelayCommand<string?>(async id => await RenameGroupAsync(id), id => FindGroup(id) != null);
+            DissolveGroupCommand   = new RelayCommand<string?>(DissolveGroup, id => FindGroup(id) != null);
+            ToggleGroupCommand     = new RelayCommand<string?>(ToggleGroup, id => FindGroup(id) != null);
 
             RecordStepsCommand   = new RelayCommand(async () => await ToggleRecordAsync());
             CaptureClickCommand  = new RelayCommand(async () => await CaptureClickAsync(), () => !IsCapturingClick && !IsRecording);
-            ToggleMousePathCommand = new RelayCommand(() => { RecordMousePath = !RecordMousePath; InvalidateAllCommands(); });
+            OpenRecordingSettingsCommand = new RelayCommand(OpenRecordingSettings, () => !IsRecording);
 
             PreviewOverviewCommand = new RelayCommand(ShowOverview, CanPreview);
             PreviewPlaybackCommand = new RelayCommand(() => ShowPlayback(), CanPreview);
@@ -186,7 +246,11 @@ namespace DesktopAutomationApp.ViewModels
             StopMakroCommand  = new RelayCommand(() => _dispatcher.CancelMakro(Makro.Id), () => IsMakroRunning);
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
+            _hotkeys.RecordingHotkeyPressed += OnRecordingHotkeyPressed;
+            ApplyRecordingHotkey();
             IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
+            SelectedStepTypeFilter = StepTypeFilterOptions[0];
+            RecalculatePresentation();
             ValidateAndApply();
         }
 
@@ -204,20 +268,45 @@ namespace DesktopAutomationApp.ViewModels
         public void SetSelectedSteps(IEnumerable<object> items)
         {
             SelectedSteps.Clear();
-            SelectedSteps.AddRange(items.OfType<MakroBefehl>());
+            foreach (var item in items)
+            {
+                if (item is MacroStepListItem stepItem)
+                    SelectedSteps.Add(stepItem.Step);
+                else if (item is MacroGroupListItem groupItem)
+                    SelectedSteps.AddRange(Steps.Where(step => step.GroupId == groupItem.GroupId));
+                else if (item is MakroBefehl step)
+                    SelectedSteps.Add(step);
+            }
+            var distinct = SelectedSteps.Distinct().ToList();
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(distinct);
             if (SelectedSteps.Count > 0)
                 SelectedStep = SelectedSteps[^1];
             InvalidateAllCommands();
         }
+
+        private IEnumerable<MakroBefehl> GetSelection()
+            => SelectedSteps.Count > 0
+                ? SelectedSteps
+                : SelectedStep is not null ? [SelectedStep] : [];
 
         // ---------- INavigationGuard ----------
         public async Task SaveAsync() => await SaveInternal();
 
         public void DiscardChanges()
         {
-            Steps.Clear();
-            foreach (var s in _originalSteps)
-                Steps.Add(s);
+            _stepItems.ReplaceRange(_originalSteps);
+            Groups.CollectionChanged -= Groups_CollectionChanged;
+            Groups.Clear();
+            foreach (var group in _originalGroups.Select(CloneGroup))
+                Groups.Add(group);
+            _collapsedGroupIds.Clear();
+            _collapsedGroupIds.UnionWith(Groups.Select(group => group.Id));
+            Groups.CollectionChanged += Groups_CollectionChanged;
+            Makro.RecordingSettings = _originalRecordingSettings.Clone();
+            Makro.RecordedEnvironment = _originalRecordedEnvironment?.Clone();
+            ApplyRecordingHotkey();
+            OnPropertyChanged(nameof(RecordingModeText));
             HasUnsavedChanges = false;
         }
 
@@ -225,6 +314,7 @@ namespace DesktopAutomationApp.ViewModels
         private async Task SaveInternal()
         {
             Makro.Befehle = new ObservableCollection<MakroBefehl>(Steps);
+            RemoveUnusedGroups();
             var validation = MakroValidation.Validate(Makro);
             ApplyValidation(validation);
             if (!validation.IsValid)
@@ -236,12 +326,21 @@ namespace DesktopAutomationApp.ViewModels
             // Update snapshot for future cancel
             _originalSteps.Clear();
             _originalSteps.AddRange(Steps);
+            _originalGroups.Clear();
+            _originalGroups.AddRange(Groups.Select(CloneGroup));
+            _originalRecordingSettings = Makro.RecordingSettings.Clone();
+            _originalRecordedEnvironment = Makro.RecordedEnvironment?.Clone();
             HasUnsavedChanges = false;
         }
 
         private void ValidateAndApply()
         {
-            var draft = new Makro { Name = Makro.Name, Befehle = new ObservableCollection<MakroBefehl>(Steps) };
+            var draft = new Makro
+            {
+                Name = Makro.Name,
+                Befehle = new ObservableCollection<MakroBefehl>(Steps),
+                Gruppen = new ObservableCollection<MakroGruppe>(Groups)
+            };
             ApplyValidation(MakroValidation.Validate(draft));
         }
 
@@ -303,15 +402,70 @@ namespace DesktopAutomationApp.ViewModels
 
         private void MoveStep(StepDragDrop.MoveRequest request)
         {
-            if (!ReferenceEquals(request.Source, Steps)
-                || !ReferenceEquals(request.Target, Steps))
+            if (ReferenceEquals(request.Source, Steps) && ReferenceEquals(request.Target, Steps))
+            {
+                var targetIndex = Math.Clamp(request.TargetIndex, 0, Steps.Count);
+                if (targetIndex > request.SourceIndex) targetIndex--;
+                MoveToIndex(request.SourceIndex, targetIndex);
+                return;
+            }
+
+            if (!ReferenceEquals(request.Source, VisibleItems)
+                || !ReferenceEquals(request.Target, VisibleItems)
+                || request.SourceIndex < 0 || request.SourceIndex >= VisibleItems.Count)
                 return;
 
-            var targetIndex = Math.Clamp(request.TargetIndex, 0, Steps.Count);
-            if (targetIndex > request.SourceIndex)
-                targetIndex--;
+            if (VisibleItems[request.SourceIndex] is MacroGroupListItem sourceGroup)
+            {
+                MoveGroup(sourceGroup.GroupId, request.TargetIndex);
+                return;
+            }
+            if (VisibleItems[request.SourceIndex] is not MacroStepListItem sourceItem) return;
 
-            MoveToIndex(request.SourceIndex, targetIndex);
+            var from = Steps.IndexOf(sourceItem.Step);
+            var target = request.TargetIndex >= VisibleItems.Count
+                ? Steps.Count - 1
+                : VisibleItems[request.TargetIndex] switch
+                {
+                    MacroStepListItem targetStep => Steps.IndexOf(targetStep.Step),
+                    MacroGroupListItem targetGroup => Steps.ToList().FindIndex(step => step.GroupId == targetGroup.GroupId),
+                    _ => from
+                };
+            if (target > from) target--;
+            MoveToIndex(from, Math.Clamp(target, 0, Math.Max(0, Steps.Count - 1)));
+        }
+
+        private void MoveGroup(string groupId, int visibleTargetIndex)
+        {
+            var moving = Steps.Where(step => step.GroupId == groupId).ToList();
+            if (moving.Count == 0) return;
+            var movingSet = moving.ToHashSet();
+
+            MakroBefehl? anchor = null;
+            if (visibleTargetIndex < VisibleItems.Count)
+            {
+                anchor = VisibleItems[visibleTargetIndex] switch
+                {
+                    MacroGroupListItem targetGroup when targetGroup.GroupId != groupId
+                        => Steps.FirstOrDefault(step => step.GroupId == targetGroup.GroupId),
+                    MacroStepListItem targetStep when !movingSet.Contains(targetStep.Step) && targetStep.Step.GroupId is { } targetGroupId
+                        => Steps.FirstOrDefault(step => step.GroupId == targetGroupId),
+                    MacroStepListItem targetStep when !movingSet.Contains(targetStep.Step) => targetStep.Step,
+                    _ => null
+                };
+                if (anchor is null && VisibleItems[visibleTargetIndex] is MacroGroupListItem or MacroStepListItem)
+                    return;
+            }
+
+            var reordered = MakroGrouping.MoveGroupBefore(Steps, groupId, anchor);
+            if (Steps.SequenceEqual(reordered))
+                return;
+
+            PushUndo();
+            _stepItems.ReplaceRange(reordered);
+            SelectedStep = moving[^1];
+            HasUnsavedChanges = true;
+            InvalidateAllCommands();
         }
 
         private void EditStep(MakroBefehl? step)
@@ -372,13 +526,14 @@ namespace DesktopAutomationApp.ViewModels
         private void DuplicateStep(MakroBefehl? step)
         {
             if (step == null) return;
+            var sources = SelectedSteps.Count > 1 && SelectedSteps.Contains(step)
+                ? SelectedSteps.OrderBy(Steps.IndexOf).ToList()
+                : [step];
             PushUndo();
-            var clone = CloneStep(step);
-            int insertIndex = SelectedStep != null
-                ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
-                : Steps.Count;
-            Steps.Insert(insertIndex, clone);
-            SelectedStep = clone;
+            var clones = sources.Select(CloneStep).ToList();
+            var insertIndex = Math.Min(Steps.Count, sources.Max(Steps.IndexOf) + 1);
+            _stepItems.InsertRange(insertIndex, clones);
+            SelectedStep = clones[^1];
             HasUnsavedChanges = true;
         }
 
@@ -388,10 +543,13 @@ namespace DesktopAutomationApp.ViewModels
             return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
         }
 
+        private static MakroGruppe CloneGroup(MakroGruppe group)
+            => new() { Id = group.Id, Title = group.Title, IsAutomatic = group.IsAutomatic };
+
         // ---------- Undo / Redo ----------
         private void PushUndo()
         {
-            _undoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            _undoStack.Push(CreateSnapshot());
             _redoStack.Clear();
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
@@ -400,7 +558,7 @@ namespace DesktopAutomationApp.ViewModels
         private void Undo()
         {
             if (_undoStack.Count == 0) return;
-            _redoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            _redoStack.Push(CreateSnapshot());
             RestoreSnapshot(_undoStack.Pop());
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
@@ -409,19 +567,28 @@ namespace DesktopAutomationApp.ViewModels
         private void Redo()
         {
             if (_redoStack.Count == 0) return;
-            _undoStack.Push(Steps.Select(s => CloneStep(s)).ToList());
+            _undoStack.Push(CreateSnapshot());
             RestoreSnapshot(_redoStack.Pop());
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
         }
 
-        private void RestoreSnapshot(List<MakroBefehl> snapshot)
+        private MacroSnapshot CreateSnapshot()
+            => new(Steps.Select(CloneStep).ToList(), Groups.Select(CloneGroup).ToList());
+
+        private void RestoreSnapshot(MacroSnapshot snapshot)
         {
-            Steps.Clear();
-            foreach (var s in snapshot) Steps.Add(s);
+            _stepItems.ReplaceRange(snapshot.Steps);
+            Groups.CollectionChanged -= Groups_CollectionChanged;
+            Groups.Clear();
+            foreach (var group in snapshot.Groups) Groups.Add(group);
+            _collapsedGroupIds.Clear();
+            _collapsedGroupIds.UnionWith(Groups.Select(group => group.Id));
+            Groups.CollectionChanged += Groups_CollectionChanged;
             SelectedStep = null;
             SelectedSteps.Clear();
             HasUnsavedChanges = true;
+            RecalculatePresentation();
         }
 
         // ---------- Copy / Paste ----------
@@ -483,6 +650,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private static void Prefill(AddStepDialogViewModel vm, MakroBefehl step)
         {
+            vm.DelayBeforeMicroseconds = step.DelayBeforeMicroseconds;
             switch (step)
             {
                 case MouseMoveAbsoluteBefehl mm:
@@ -502,14 +670,231 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        // ---------- Groups, filters and timeline ----------
+        private void Groups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems is not null)
+                foreach (var group in e.NewItems.OfType<MakroGruppe>())
+                    _collapsedGroupIds.Add(group.Id);
+            if (e.OldItems is not null)
+                foreach (var group in e.OldItems.OfType<MakroGruppe>())
+                    _collapsedGroupIds.Remove(group.Id);
+            HasUnsavedChanges = true;
+            RecalculatePresentation();
+        }
+
+        private void RecalculatePresentation()
+        {
+            var timeline = MakroTimeline.Calculate(Steps);
+            var executionTimes = timeline.ToDictionary(entry => entry.Command, entry => entry.ExecutionTimeMicroseconds);
+            var groupsById = Groups.ToDictionary(group => group.Id, StringComparer.Ordinal);
+            var groupPresentations = Steps
+                .Where(step => step.GroupId is { Length: > 0 } && groupsById.ContainsKey(step.GroupId))
+                .GroupBy(step => step.GroupId!, StringComparer.Ordinal)
+                .ToDictionary(grouping => grouping.Key, grouping =>
+                {
+                    var groupedSteps = grouping.ToList();
+                    var first = groupedSteps[0];
+                    var last = groupedSteps[^1];
+                    var start = executionTimes.GetValueOrDefault(first);
+                    var end = executionTimes.GetValueOrDefault(last)
+                        + (last is TimeoutBefehl timeout ? timeout.Duration * 1_000L : 0);
+                    return new GroupPresentation(
+                        groupsById[grouping.Key].Title,
+                        $"{MakroTimeFormatter.FormatMicroseconds(Math.Max(0, end - start))} · {groupedSteps.Count} Steps");
+                }, StringComparer.Ordinal);
+
+            foreach (var step in Steps)
+            {
+                var executionTime = executionTimes.GetValueOrDefault(step);
+                if (step.GroupId is { Length: > 0 } groupId && groupPresentations.TryGetValue(groupId, out var presentation))
+                {
+                    step.SetDisplayMetadata(
+                        MakroTimeFormatter.FormatMicroseconds(executionTime),
+                        presentation.Title,
+                        presentation.Summary);
+                }
+                else
+                {
+                    step.SetDisplayMetadata(MakroTimeFormatter.FormatMicroseconds(executionTime));
+                }
+            }
+
+            RefreshGroupFilters();
+            OnPropertyChanged(nameof(StepCount));
+            OnPropertyChanged(nameof(GroupCount));
+            OnPropertyChanged(nameof(TotalDurationDisplay));
+            RebuildVisibleItems();
+        }
+
+        private bool _updatingFilters;
+        private void RefreshGroupFilters()
+        {
+            var selectedId = SelectedGroupFilter?.Id ?? "all";
+            _updatingFilters = true;
+            GroupFilterOptions.Clear();
+            GroupFilterOptions.Add(new MacroFilterOption("all", Loc.Get("Ui.Macro.Filter.AllGroups")));
+            GroupFilterOptions.Add(new MacroFilterOption("ungrouped", Loc.Get("Ui.Macro.Filter.Ungrouped")));
+            foreach (var group in Groups.OrderBy(group => group.Title, StringComparer.CurrentCultureIgnoreCase))
+                GroupFilterOptions.Add(new MacroFilterOption(group.Id, group.Title));
+            _selectedGroupFilter = GroupFilterOptions.FirstOrDefault(item => item.Id == selectedId) ?? GroupFilterOptions[0];
+            OnPropertyChanged(nameof(SelectedGroupFilter));
+            _updatingFilters = false;
+        }
+
+        private void RebuildVisibleItems()
+        {
+            var visibleItems = new List<MacroListItem>(Steps.Count + Groups.Count);
+            string? previousGroupId = null;
+            var groupSegmentOpen = false;
+            for (var index = 0; index < Steps.Count; index++)
+            {
+                var step = Steps[index];
+                if (!FilterStep(step)) continue;
+                if (step.GroupId is { Length: > 0 } groupId)
+                {
+                    if (!groupSegmentOpen || previousGroupId != groupId)
+                    {
+                        var group = FindGroup(groupId);
+                        if (group is not null)
+                            visibleItems.Add(new MacroGroupListItem(
+                                group.Id, group.Title, step.GroupSummaryDisplay, _collapsedGroupIds.Contains(group.Id)));
+                    }
+                    previousGroupId = groupId;
+                    groupSegmentOpen = true;
+                }
+                else
+                {
+                    previousGroupId = null;
+                    groupSegmentOpen = false;
+                }
+                if (step.GroupId is null || !_collapsedGroupIds.Contains(step.GroupId))
+                    visibleItems.Add(new MacroStepListItem(step, index + 1));
+            }
+            _visibleItems.ReplaceRange(visibleItems);
+        }
+
+        public MacroListItem? GetVisibleItem(MakroBefehl step)
+            => VisibleItems.OfType<MacroStepListItem>().FirstOrDefault(item => ReferenceEquals(item.Step, step));
+
+        private bool FilterStep(object item)
+        {
+            if (item is not MakroBefehl step) return false;
+            var typeFilter = SelectedStepTypeFilter?.Id ?? "all";
+            var typeMatches = typeFilter switch
+            {
+                "movement" => step is MouseMoveAbsoluteBefehl or MouseMoveRelativeBefehl,
+                "mouse" => step is MouseDownBefehl or MouseUpBefehl,
+                "keyboard" => step is KeyDownBefehl or KeyUpBefehl,
+                "timeout" => step is TimeoutBefehl,
+                _ => true
+            };
+            if (!typeMatches) return false;
+
+            var groupFilter = SelectedGroupFilter?.Id ?? "all";
+            if (groupFilter == "ungrouped" && step.HasGroup) return false;
+            if (groupFilter is not ("all" or "ungrouped") && step.GroupId != groupFilter) return false;
+
+            if (string.IsNullOrWhiteSpace(FilterText)) return true;
+            var search = FilterText.Trim();
+            return step.GetType().Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                || step.GroupTitleDisplay.Contains(search, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private async Task CreateGroupAsync()
+        {
+            var selected = GetSelection().OrderBy(Steps.IndexOf).ToList();
+            if (selected.Count == 0) return;
+            var title = await _dialogService.AskForNameAsync(
+                Loc.Get("Ui.Macro.Group.Create"),
+                Loc.Get("Ui.Macro.Group.Name"),
+                Loc.Format("Ui.Macro.Group.DefaultTitle", Groups.Count + 1));
+            if (string.IsNullOrWhiteSpace(title)) return;
+
+            PushUndo();
+            var group = new MakroGruppe { Title = title.Trim() };
+            Groups.Add(group);
+            foreach (var step in selected) step.GroupId = group.Id;
+            RemoveUnusedGroups();
+            HasUnsavedChanges = true;
+            RecalculatePresentation();
+        }
+
+        private void RemoveSelectedFromGroup()
+        {
+            var selected = GetSelection().Where(step => step.HasGroup).ToList();
+            if (selected.Count == 0) return;
+            PushUndo();
+            foreach (var step in selected) step.GroupId = null;
+            RemoveUnusedGroups();
+            HasUnsavedChanges = true;
+            RecalculatePresentation();
+        }
+
+        private async Task RenameGroupAsync(string? groupId)
+        {
+            var group = FindGroup(groupId);
+            if (group is null) return;
+            var title = await _dialogService.AskForNameAsync(
+                Loc.Get("Ui.Macro.Group.Rename"), Loc.Get("Ui.Macro.Group.Name"), group.Title);
+            if (string.IsNullOrWhiteSpace(title) || title.Trim() == group.Title) return;
+            PushUndo();
+            group.Title = title.Trim();
+            HasUnsavedChanges = true;
+            RecalculatePresentation();
+        }
+
+        private void DissolveGroup(string? groupId)
+        {
+            var group = FindGroup(groupId);
+            if (group is null) return;
+            PushUndo();
+            foreach (var step in Steps.Where(step => step.GroupId == group.Id)) step.GroupId = null;
+            Groups.Remove(group);
+            HasUnsavedChanges = true;
+            RecalculatePresentation();
+        }
+
+        private void ToggleGroup(string? groupId)
+        {
+            if (FindGroup(groupId) is null || groupId is null) return;
+            if (!_collapsedGroupIds.Add(groupId)) _collapsedGroupIds.Remove(groupId);
+            RebuildVisibleItems();
+        }
+
+        private MakroGruppe? FindGroup(string? groupId)
+            => string.IsNullOrWhiteSpace(groupId) ? null : Groups.FirstOrDefault(group => group.Id == groupId);
+
+        private void RemoveUnusedGroups()
+        {
+            var used = Steps.Where(step => step.GroupId is not null).Select(step => step.GroupId!).ToHashSet(StringComparer.Ordinal);
+            foreach (var group in Groups.Where(group => !used.Contains(group.Id)).ToList())
+                Groups.Remove(group);
+        }
+
         // ---------- Recording ----------
-        private async Task ToggleRecordAsync()
+        private void OpenRecordingSettings()
+        {
+            var dialog = new RecordingSettingsDialog(Makro.RecordingSettings.Clone(), _hotkeys)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            if (dialog.ShowDialog() != true)
+                return;
+
+            Makro.RecordingSettings = dialog.Settings;
+            ApplyRecordingHotkey();
+            OnPropertyChanged(nameof(RecordingModeText));
+            HasUnsavedChanges = true;
+        }
+
+        private async Task ToggleRecordAsync(bool triggeredByHotkey = false)
         {
             try
             {
                 if (!IsRecording)
                 {
-                    _hotkeys.StartRecordHotkeys();
+                    _hotkeys.StartRecordHotkeys(Makro.RecordingSettings);
                     IsRecording = true;
                     _log.LogInformation("Makro-Aufnahme gestartet.");
                 }
@@ -521,13 +906,33 @@ namespace DesktopAutomationApp.ViewModels
 
                     if (events == null || events.Count == 0) return;
 
-                    var mapped = MapCapturedEventsToSteps(events);
+                    var mappingSettings = Makro.RecordingSettings.Clone();
+                    if (triggeredByHotkey)
+                        mappingSettings.RemoveStopGesture = false;
+                    var mapped = MakroRecordingMapper.Map(events, mappingSettings, _hotkeys.FormatKey, _hotkeys.FormatMouseButton);
+                    var automaticGroups = mappingSettings.AutomaticMovementGroups
+                        ? MakroGrouping.CreateAutomaticMovementGroups(mapped, Loc.Get("Ui.Macro.Group.Movement"))
+                        : Array.Empty<MakroGruppe>();
+                    var desktop = ScreenHelper.GetVirtualDesktopBounds();
+                    var initialCursor = events.OfType<MouseMoveCaptured>().FirstOrDefault();
+                    Makro.RecordedEnvironment = new MakroRecordedEnvironment
+                    {
+                        VirtualDesktopX = desktop.X,
+                        VirtualDesktopY = desktop.Y,
+                        VirtualDesktopWidth = desktop.Width,
+                        VirtualDesktopHeight = desktop.Height,
+                        RecordedAtUtc = DateTime.UtcNow,
+                        StartCursorX = initialCursor?.X,
+                        StartCursorY = initialCursor?.Y
+                    };
                     int insertIndex = SelectedStep != null
                         ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
                         : Steps.Count;
 
-                    foreach (var s in mapped)
-                        Steps.Insert(insertIndex++, s);
+                    PushUndo();
+                    foreach (var group in automaticGroups)
+                        Groups.Add(group);
+                    _stepItems.InsertRange(insertIndex, mapped);
 
                     if (mapped.Count > 0)
                     {
@@ -576,71 +981,6 @@ namespace DesktopAutomationApp.ViewModels
             finally
             {
                 IsCapturingClick = false;
-            }
-        }
-
-        private List<MakroBefehl> MapCapturedEventsToSteps(IReadOnlyList<CapturedInputEvent> events)
-        {
-            var list = new List<MakroBefehl>(events.Count);
-            int? lastMouseX = null, lastMouseY = null;
-            int accumulatedTimeout = 0;
-
-            foreach (var ev in events)
-            {
-                switch (ev)
-                {
-                    case TimeoutEvent t:
-                        accumulatedTimeout += t.Milliseconds;
-                        break;
-                    case KeyDownCaptured kd:
-                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
-                        list.Add(new KeyDownBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, kd.VirtualKey) });
-                        break;
-                    case KeyUpCaptured ku:
-                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
-                        list.Add(new KeyUpBefehl { Key = _hotkeys.FormatKey(KeyModifiers.None, ku.VirtualKey) });
-                        break;
-                    case MouseMoveCaptured mm:
-                        if (RecordMousePath)
-                        {
-                            AddAccumulatedTimeout(list, ref accumulatedTimeout);
-                            list.Add(new MouseMoveAbsoluteBefehl { X = mm.X, Y = mm.Y });
-                            lastMouseX = mm.X; lastMouseY = mm.Y;
-                        }
-                        break;
-                    case MouseDownCaptured md:
-                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
-                        if (!RecordMousePath && (lastMouseX != md.X || lastMouseY != md.Y))
-                        {
-                            list.Add(new MouseMoveAbsoluteBefehl { X = md.X, Y = md.Y });
-                            lastMouseX = md.X; lastMouseY = md.Y;
-                        }
-                        list.Add(new MouseDownBefehl { Button = _hotkeys.FormatMouseButton(md.Button) });
-                        break;
-                    case MouseUpCaptured mu:
-                        AddAccumulatedTimeout(list, ref accumulatedTimeout);
-                        if (!RecordMousePath && (lastMouseX != mu.X || lastMouseY != mu.Y))
-                        {
-                            list.Add(new MouseMoveAbsoluteBefehl { X = mu.X, Y = mu.Y });
-                            lastMouseX = mu.X; lastMouseY = mu.Y;
-                        }
-                        list.Add(new MouseUpBefehl { Button = _hotkeys.FormatMouseButton(mu.Button) });
-                        break;
-                }
-            }
-
-            if (list.Count > 5) list.RemoveRange(list.Count - 5, 5);
-            else list.Clear();
-
-            return list;
-        }
-
-        private static void AddAccumulatedTimeout(List<MakroBefehl> list, ref int accumulatedTimeout)
-        {
-            if (accumulatedTimeout > 0)
-            {
-                list.Add(new TimeoutBefehl { Duration = accumulatedTimeout });
-                accumulatedTimeout = 0;
             }
         }
 
@@ -710,6 +1050,9 @@ namespace DesktopAutomationApp.ViewModels
         public new void Dispose()
         {
             _dispatcher.RunningMakrosChanged -= OnRunningMakrosChanged;
+            _hotkeys.RecordingHotkeyPressed -= OnRecordingHotkeyPressed;
+            Groups.CollectionChanged -= Groups_CollectionChanged;
+            _hotkeys.ClearRecordingHotkey();
             StopPreview();
             _overlay?.Dispose();
             _overlay = null;
@@ -722,6 +1065,14 @@ namespace DesktopAutomationApp.ViewModels
                 IsMakroRunning = _dispatcher.RunningMakroIds.Contains(Makro.Id);
             });
         }
+
+        private void ApplyRecordingHotkey()
+            => _hotkeys.SetRecordingHotkey(
+                Makro.RecordingSettings.RecordingHotkeyModifiers,
+                Makro.RecordingSettings.RecordingHotkeyVirtualKey);
+
+        private void OnRecordingHotkeyPressed()
+            => Application.Current?.Dispatcher?.InvokeAsync(() => _ = ToggleRecordAsync(triggeredByHotkey: true));
 
         // ---------- Command invalidation helper ----------
         private void InvalidateAllCommands()
@@ -740,8 +1091,26 @@ namespace DesktopAutomationApp.ViewModels
             (MoveStepDownCommand    as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
             (DeleteStepCommand      as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
             (DuplicateStepCommand   as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DeleteSelectedCommand  as RelayCommand)?.RaiseCanExecuteChanged();
+            (CopyCommand            as RelayCommand)?.RaiseCanExecuteChanged();
+            (PasteCommand           as RelayCommand)?.RaiseCanExecuteChanged();
+            (UndoCommand            as RelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand            as RelayCommand)?.RaiseCanExecuteChanged();
+            (CreateGroupCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (RemoveFromGroupCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (RenameGroupCommand     as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (DissolveGroupCommand   as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (ToggleGroupCommand     as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (OpenRecordingSettingsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
     }
+
+    public sealed record MacroFilterOption(string Id, string Label);
+    public abstract record MacroListItem;
+    public sealed record MacroStepListItem(MakroBefehl Step, int Number) : MacroListItem;
+    public sealed record MacroGroupListItem(string GroupId, string Title, string Summary, bool IsCollapsed) : MacroListItem;
+    internal sealed record MacroSnapshot(List<MakroBefehl> Steps, List<MakroGruppe> Groups);
+    internal sealed record GroupPresentation(string Title, string Summary);
 
     internal static class JsonOptions
     {

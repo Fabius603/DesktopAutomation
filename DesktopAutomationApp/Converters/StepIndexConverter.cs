@@ -18,10 +18,15 @@ namespace DesktopAutomationApp.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values?.Length < 2 || values[0] is not JobStep step || values[1] is not IList collection)
+            if (values?.Length < 2 || values[1] is not IList collection || values[0] is not { } item)
                 return string.Empty;
-            var number = StepLocalization.DisplayNumber(collection, step);
-            return number.HasValue ? $"{number.Value}.\u00A0" : string.Empty;
+            if (item is JobStep step)
+            {
+                var number = StepLocalization.DisplayNumber(collection, step);
+                return number.HasValue ? $"{number.Value}.\u00A0" : string.Empty;
+            }
+            var index = collection.IndexOf(item);
+            return index >= 0 ? $"{index + 1}.\u00A0" : string.Empty;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

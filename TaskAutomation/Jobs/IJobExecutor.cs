@@ -34,6 +34,7 @@ namespace TaskAutomation.Jobs
         Task ExecuteJob(Guid   jobId,   CancellationToken ct = default);
         Task ExecuteJob(Guid jobId, JobStartContext startContext, CancellationToken ct = default);
         Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation);
+        Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation, JobDebugSession? debugSession);
         Task ReloadJobsAsync();
         Task ReloadMakrosAsync();
 

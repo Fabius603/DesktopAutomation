@@ -492,5 +492,16 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
+
+        public void InsertRange(int index, IEnumerable<T> items)
+        {
+            CheckReentrancy();
+            foreach (var item in items)
+                Items.Insert(index++, item);
+
+            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
     }
 }

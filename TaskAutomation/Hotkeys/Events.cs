@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace TaskAutomation.Hotkeys
 {
-    public abstract record CapturedInputEvent;
+    public abstract record CapturedInputEvent
+    {
+        public long TimestampMicroseconds { get; init; }
+    }
 
     public sealed record TimeoutEvent(int Milliseconds) : CapturedInputEvent;
 

@@ -44,6 +44,64 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> _savedEndSnapshot;
         private int _savedEndPhaseTimeoutSeconds;
         private CancellationTokenSource? _validationCts;
+        private JobDebugSession? _debugSession;
+
+        public sealed class DebugContextValue : ViewModelBase
+        {
+            private bool _isExpanded;
+
+            public DebugContextValue(string key, JobDebugValueNode node)
+            {
+                Key = key;
+                Name = node.Name;
+                Value = node.DisplayValue;
+                TypeName = node.TypeName;
+                Children = node.Children
+                    .Select((child, index) => new DebugContextValue($"{key}/{index}:{child.Name}", child))
+                    .ToArray();
+                _isExpanded = Children.Count > 0;
+            }
+
+            public string Key { get; }
+            public string Name { get; }
+            public string Value { get; }
+            public string TypeName { get; }
+            public IReadOnlyList<DebugContextValue> Children { get; }
+            public bool IsExpanded
+            {
+                get => _isExpanded;
+                set => SetProperty(ref _isExpanded, value);
+            }
+
+            public void SetExpandedRecursively(bool expanded)
+            {
+                IsExpanded = expanded;
+                foreach (var child in Children) child.SetExpandedRecursively(expanded);
+            }
+        }
+
+        public sealed class DebugContextGroup : ViewModelBase
+        {
+            private bool _isExpanded = true;
+
+            public required string StepId { get; init; }
+            public required string Title { get; init; }
+            public required string Subtitle { get; init; }
+            public required IReadOnlyList<DebugContextValue> Values { get; init; }
+            public bool IsExpanded
+            {
+                get => _isExpanded;
+                set => SetProperty(ref _isExpanded, value);
+            }
+
+            public void SetExpandedRecursively(bool expanded)
+            {
+                IsExpanded = expanded;
+                foreach (var value in Values) value.SetExpandedRecursively(expanded);
+            }
+        }
+
+        private readonly ObservableCollection<DebugContextGroup> _debugContextGroups = [];
 
         /// <summary>All currently selected steps (synced from the view's ListBox.SelectedItems).</summary>
         public List<JobStep> SelectedSteps { get; } = new();
@@ -111,7 +169,14 @@ namespace DesktopAutomationApp.ViewModels
         public JobStep? SelectedStep
         {
             get => _selectedStep;
-            set { _selectedStep = value; OnPropertyChanged(); InvalidateAllCommands(); }
+            set
+            {
+                if (ReferenceEquals(_selectedStep, value)) return;
+                _selectedStep = value;
+                OnPropertyChanged();
+                NotifyDebugInspectorChanged();
+                InvalidateAllCommands();
+            }
         }
 
         private bool _hasUnsavedChanges;
@@ -135,6 +200,30 @@ namespace DesktopAutomationApp.ViewModels
             private set { _canRequestJobStop = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
+        public bool HasDebugSession => _debugSession != null;
+        public bool IsDebugActive => _debugSession?.State is JobDebugSessionState.Starting or JobDebugSessionState.Paused or JobDebugSessionState.Running;
+        public bool IsDebugPaused => _debugSession?.State == JobDebugSessionState.Paused;
+        public string DebugStatusText => _debugSession?.StatusText ?? string.Empty;
+        public bool HasDebugIteration => (_debugSession?.Iteration ?? 0) > 0;
+        public string DebugIterationText => HasDebugIteration
+            ? Loc.Format("Ui.Job.Debug.Iteration", _debugSession!.Iteration)
+            : string.Empty;
+        private bool _isDebugPanelOpen = true;
+        public bool IsDebugPanelOpen
+        {
+            get => _isDebugPanelOpen;
+            set
+            {
+                if (_isDebugPanelOpen == value) return;
+                _isDebugPanelOpen = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsDebugPanelVisible));
+            }
+        }
+        public bool IsDebugPanelVisible => HasDebugSession && IsDebugPanelOpen;
+        public ObservableCollection<DebugContextGroup> DebugContextGroups => _debugContextGroups;
+        public bool HasDebugContext => _debugContextGroups.Count > 0;
+
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
@@ -153,6 +242,15 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand PasteCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
+        public ICommand DebugJobCommand { get; }
+        public ICommand DebugStepCommand { get; }
+        public ICommand DebugContinueCommand { get; }
+        public ICommand CancelDebugCommand { get; }
+        public ICommand CloseDebuggerCommand { get; }
+        public ICommand ToggleDebugPanelCommand { get; }
+        public ICommand ExpandDebugContextCommand { get; }
+        public ICommand CollapseDebugContextCommand { get; }
+        public ICommand ToggleBreakpointCommand { get; }
         public ICommand AddElseIfCommand { get; }
         public ICommand AddElseCommand { get; }
         public ICommand MoveToStartSectionCommand { get; }
@@ -209,24 +307,24 @@ namespace DesktopAutomationApp.ViewModels
                 s.PropertyChanged += OnStepPropertyChanged;
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges);
-            CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
-            RenameCommand = new RelayCommand(async () => await Rename());
+            SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges && !IsDebugActive);
+            CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges && !IsDebugActive);
+            RenameCommand = new RelayCommand(async () => await Rename(), () => !IsDebugActive);
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
-            AddStepCommand    = new RelayCommand(async () => await AddStep());
+            AddStepCommand    = new RelayCommand(async () => await AddStep(), () => !IsDebugActive);
             EditStepCommand   = new RelayCommand<JobStep?>(
                 EditStep,
-                s => { var t = s ?? SelectedStep; return t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
-            MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => CanMoveRelative(s ?? SelectedStep, -1));
-            MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => CanMoveRelative(s ?? SelectedStep, +1));
-            ReorderStepCommand = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep);
-            DeleteStepCommand    = new RelayCommand<JobStep?>(async s => await DeleteStepAsync(s), s => (s ?? SelectedStep) != null);
-            DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
-            UndoCommand           = new RelayCommand(Undo, () => CanUndo);
-            RedoCommand           = new RelayCommand(Redo, () => CanRedo);
+                s => { var t = s ?? SelectedStep; return !IsDebugActive && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
+            MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => !IsDebugActive && CanMoveRelative(s ?? SelectedStep, -1));
+            MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => !IsDebugActive && CanMoveRelative(s ?? SelectedStep, +1));
+            ReorderStepCommand = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep, _ => !IsDebugActive);
+            DeleteStepCommand    = new RelayCommand<JobStep?>(async s => await DeleteStepAsync(s), s => !IsDebugActive && (s ?? SelectedStep) != null);
+            DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => !IsDebugActive && (SelectedSteps.Count > 0 || SelectedStep != null));
+            UndoCommand           = new RelayCommand(Undo, () => !IsDebugActive && CanUndo);
+            RedoCommand           = new RelayCommand(Redo, () => !IsDebugActive && CanRedo);
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
-            PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
+            PasteCommand          = new RelayCommand(Paste, () => !IsDebugActive && _clipboard.Count > 0);
 
             StartJobCommand = new RelayCommand(() =>
             {
@@ -237,20 +335,46 @@ namespace DesktopAutomationApp.ViewModels
             {
                 _dispatcher.CancelJobsByDefinition(Job.Id);
             }, () => CanRequestJobStop);
+            DebugJobCommand = new RelayCommand(StartDebugJob,
+                () => !IsJobRunning && !HasUnsavedChanges && AllSteps().Any(step => step.IsEnabled));
+            DebugStepCommand = new RelayCommand(
+                () => { if (_debugSession != null) _dispatcher.DebugStep(_debugSession.InstanceId); },
+                () => IsDebugPaused);
+            DebugContinueCommand = new RelayCommand(
+                () => { if (_debugSession != null) _dispatcher.DebugContinue(_debugSession.InstanceId); },
+                () => IsDebugPaused);
+            CancelDebugCommand = new RelayCommand(
+                () => { if (_debugSession != null) _dispatcher.CancelDebugJob(_debugSession.InstanceId); },
+                () => IsDebugActive);
+            CloseDebuggerCommand = new RelayCommand(CloseDebugger, () => HasDebugSession && !IsDebugActive);
+            ToggleDebugPanelCommand = new RelayCommand(
+                () => IsDebugPanelOpen = !IsDebugPanelOpen,
+                () => HasDebugSession);
+            ExpandDebugContextCommand = new RelayCommand(
+                () => SetDebugContextExpanded(true),
+                () => HasDebugContext);
+            CollapseDebugContextCommand = new RelayCommand(
+                () => SetDebugContextExpanded(false),
+                () => HasDebugContext);
+            ToggleBreakpointCommand = new RelayCommand<JobStep?>(
+                step => { if (step != null) step.IsBreakpoint = !step.IsBreakpoint; },
+                step => step != null);
 
-            AddElseIfCommand = new RelayCommand<JobStep?>(AddElseIf, CanAddElseIf);
-            AddElseCommand   = new RelayCommand<JobStep?>(AddElse, CanAddElse);
+            AddElseIfCommand = new RelayCommand<JobStep?>(AddElseIf, step => !IsDebugActive && CanAddElseIf(step));
+            AddElseCommand   = new RelayCommand<JobStep?>(AddElse, step => !IsDebugActive && CanAddElse(step));
             MoveToStartSectionCommand = new RelayCommand<JobStep?>(
                 step => MoveStepToSection(step, _startSteps),
-                step => CanMoveStepToSection(step, _startSteps));
+                step => !IsDebugActive && CanMoveStepToSection(step, _startSteps));
             MoveToRunSectionCommand = new RelayCommand<JobStep?>(
                 step => MoveStepToSection(step, _runSteps),
-                step => CanMoveStepToSection(step, _runSteps));
+                step => !IsDebugActive && CanMoveStepToSection(step, _runSteps));
             MoveToEndSectionCommand = new RelayCommand<JobStep?>(
                 step => MoveStepToSection(step, _endSteps),
-                step => CanMoveStepToSection(step, _endSteps));
+                step => !IsDebugActive && CanMoveStepToSection(step, _endSteps));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
+            _debugSession = _dispatcher.DebugSessions.FirstOrDefault(session => session.JobId == Job.Id);
+            if (_debugSession != null) _debugSession.Changed += OnDebugSessionChanged;
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
             CanRequestJobStop = _dispatcher.RunningJobInstances.Any(instance =>
                 instance.JobId == Job.Id && instance.State.CanRequestStop());
@@ -291,6 +415,117 @@ namespace DesktopAutomationApp.ViewModels
             NotifySectionStateChanged();
             InvalidateAllCommands();
             ScheduleValidation();
+        }
+
+        private void StartDebugJob()
+        {
+            CloseDebugger();
+            var session = _dispatcher.StartDebugJob(Job.Id);
+            if (session == null) return;
+            _debugSession = session;
+            IsDebugPanelOpen = true;
+            session.Changed += OnDebugSessionChanged;
+            NotifyDebugStateChanged();
+        }
+
+        private void CloseDebugger()
+        {
+            if (_debugSession != null)
+                _debugSession.Changed -= OnDebugSessionChanged;
+            _debugSession = null;
+            foreach (var step in AllSteps())
+            {
+                step.DebugState = JobStepDebugState.None;
+                step.DebugDetails = null;
+            }
+            IsDebugPanelOpen = false;
+            NotifyDebugStateChanged();
+        }
+
+        private void OnDebugSessionChanged()
+            => Application.Current?.Dispatcher?.InvokeAsync(NotifyDebugStateChanged);
+
+        private void NotifyDebugStateChanged()
+        {
+            if (_debugSession?.CurrentStepId is { } currentStepId)
+            {
+                var currentStep = AllSteps().FirstOrDefault(step => step.Id == currentStepId);
+                if (currentStep != null && !ReferenceEquals(SelectedStep, currentStep))
+                    SelectedStep = currentStep;
+            }
+            OnPropertyChanged(nameof(HasDebugSession));
+            OnPropertyChanged(nameof(IsDebugActive));
+            OnPropertyChanged(nameof(IsDebugPaused));
+            OnPropertyChanged(nameof(DebugStatusText));
+            OnPropertyChanged(nameof(HasDebugIteration));
+            OnPropertyChanged(nameof(DebugIterationText));
+            OnPropertyChanged(nameof(IsDebugPanelVisible));
+            NotifyDebugInspectorChanged();
+            InvalidateAllCommands();
+        }
+
+        private void NotifyDebugInspectorChanged()
+        {
+            RebuildDebugContext();
+            OnPropertyChanged(nameof(HasDebugContext));
+            (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CollapseDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void RebuildDebugContext()
+        {
+            var groupExpansion = _debugContextGroups.ToDictionary(group => group.StepId, group => group.IsExpanded);
+            var valueExpansion = new Dictionary<string, bool>();
+            foreach (var group in _debugContextGroups)
+                foreach (var value in group.Values)
+                    CaptureValueExpansion(value, valueExpansion);
+
+            _debugContextGroups.Clear();
+            if (_debugSession == null) return;
+
+            var snapshots = _debugSession.GetSnapshots().ToDictionary(snapshot => snapshot.StepId);
+            var steps = AllSteps();
+            for (var index = 0; index < steps.Count; index++)
+            {
+                var step = steps[index];
+                if (!snapshots.TryGetValue(step.Id, out var snapshot)
+                    || snapshot.State is not (JobStepDebugState.Completed or JobStepDebugState.Skipped or JobStepDebugState.Failed))
+                    continue;
+
+                var values = snapshot.OutputValues
+                    .Select((node, nodeIndex) => new DebugContextValue($"{step.Id}/{nodeIndex}:{node.Name}", node))
+                    .ToArray();
+                foreach (var value in values) RestoreValueExpansion(value, valueExpansion);
+
+                var iteration = snapshot.Iteration > 0
+                    ? $" · {Loc.Format("Ui.Job.Debug.Iteration", snapshot.Iteration)}"
+                    : string.Empty;
+                _debugContextGroups.Add(new DebugContextGroup
+                {
+                    StepId = step.Id,
+                    Title = $"{index + 1}. {snapshot.StepType}",
+                    Subtitle = $"{snapshot.State} · {snapshot.Phase}{iteration}",
+                    Values = values,
+                    IsExpanded = !groupExpansion.TryGetValue(step.Id, out var expanded) || expanded
+                });
+            }
+        }
+
+        private static void CaptureValueExpansion(DebugContextValue value, IDictionary<string, bool> states)
+        {
+            states[value.Key] = value.IsExpanded;
+            foreach (var child in value.Children) CaptureValueExpansion(child, states);
+        }
+
+        private static void RestoreValueExpansion(DebugContextValue value, IReadOnlyDictionary<string, bool> states)
+        {
+            if (states.TryGetValue(value.Key, out var expanded)) value.IsExpanded = expanded;
+            foreach (var child in value.Children) RestoreValueExpansion(child, states);
+        }
+
+        private void SetDebugContextExpanded(bool expanded)
+        {
+            foreach (var group in _debugContextGroups) group.SetExpandedRecursively(expanded);
         }
 
         private void NotifySectionStateChanged()
@@ -1466,6 +1701,7 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
             {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+                if (_debugSession != null) _debugSession.Changed -= OnDebugSessionChanged;
                 foreach (var step in _startSteps.Concat(_runSteps).Concat(_endSteps))
                     step.PropertyChanged -= OnStepPropertyChanged;
                 _validationCts?.Cancel();
@@ -1479,8 +1715,19 @@ namespace DesktopAutomationApp.ViewModels
         {
             (SaveCommand          as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand        as RelayCommand)?.RaiseCanExecuteChanged();
+            (RenameCommand        as RelayCommand)?.RaiseCanExecuteChanged();
+            (AddStepCommand       as RelayCommand)?.RaiseCanExecuteChanged();
             (StartJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
             (StopJobCommand       as RelayCommand)?.RaiseCanExecuteChanged();
+            (DebugJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
+            (DebugStepCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (DebugContinueCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelDebugCommand   as RelayCommand)?.RaiseCanExecuteChanged();
+            (CloseDebuggerCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ToggleDebugPanelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CollapseDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ToggleBreakpointCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (EditStepCommand      as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (MoveStepUpCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (MoveStepDownCommand  as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();

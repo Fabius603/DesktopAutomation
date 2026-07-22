@@ -21,7 +21,7 @@ namespace TaskAutomation.Orchestration
         private readonly IJobExecutor _executor;
 
         // instanceId → Jobdefinition und einheitliche Zustands-/Abbruchsteuerung
-        private sealed record RunningJobEntry(Guid JobId, string JobName, JobExecutionCancellation Cancellation);
+        private sealed record RunningJobEntry(Guid JobId, string JobName, JobExecutionCancellation Cancellation, JobDebugSession? DebugSession = null);
         private readonly ConcurrentDictionary<Guid, RunningJobEntry> _jobInstances = new();
 
         /// <summary>Maximale Anzahl gleichzeitig laufender Job-Instanzen.</summary>
@@ -45,6 +45,7 @@ namespace TaskAutomation.Orchestration
         /// Wird ausgelöst, wenn sich die Liste der laufenden Jobs ändert.
         /// </summary>
         public event Action? RunningJobsChanged;
+        public event Action? DebugSessionsChanged;
 
         /// <summary>
         /// Wird ausgelöst, wenn sich die Liste der laufenden Makros ändert.
@@ -67,6 +68,9 @@ namespace TaskAutomation.Orchestration
         public IReadOnlyCollection<Guid> RunningJobIds
             => _jobInstances.Values.Select(e => e.JobId).Distinct().ToArray();
 
+        public IReadOnlyCollection<JobDebugSession> DebugSessions
+            => _jobInstances.Values.Where(entry => entry.DebugSession != null).Select(entry => entry.DebugSession!).ToArray();
+
         /// <summary>
         /// IDs der aktuell laufenden Makros.
         /// </summary>
@@ -87,7 +91,7 @@ namespace TaskAutomation.Orchestration
         /// Startet eine neue Instanz des Jobs. Mehrere parallele Instanzen desselben Jobs
         /// sind ausdrücklich erlaubt. Gibt die Instanz-ID zurück.
         /// </summary>
-        private Guid StartJobInternal(Job job, JobStartContext startContext)
+        private Guid StartJobInternal(Job job, JobStartContext startContext, bool debug = false)
         {
             if (job.ActiveStepCount == 0)
             {
@@ -106,11 +110,13 @@ namespace TaskAutomation.Orchestration
 
             var instanceId = Guid.NewGuid();
             var cancellation = new JobExecutionCancellation();
+            var debugSession = debug ? new JobDebugSession(instanceId, job) : null;
             cancellation.StateChanged += _ => FireRunningJobsChanged();
-            var entry      = new RunningJobEntry(job.Id, job.Name, cancellation);
+            var entry      = new RunningJobEntry(job.Id, job.Name, cancellation, debugSession);
             _jobInstances[instanceId] = entry;
 
             FireRunningJobsChanged();
+            if (debugSession != null) DebugSessionsChanged?.Invoke();
 
             var jobId   = job.Id;
             var jobName = job.Name;
@@ -118,7 +124,7 @@ namespace TaskAutomation.Orchestration
             {
                 try
                 {
-                    await _executor.ExecuteJob(jobId, startContext, cancellation).ConfigureAwait(false);
+                    await _executor.ExecuteJob(jobId, startContext, cancellation, debugSession).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -130,9 +136,12 @@ namespace TaskAutomation.Orchestration
                 }
                 finally
                 {
+                    if (debugSession != null && debugSession.State is not (JobDebugSessionState.Completed or JobDebugSessionState.Cancelled or JobDebugSessionState.Failed))
+                        debugSession.Finish(cancellation.ExecutionToken.IsCancellationRequested ? JobDebugSessionState.Cancelled : JobDebugSessionState.Completed);
                     _jobInstances.TryRemove(instanceId, out _);
                     cancellation.Dispose();
                     FireRunningJobsChanged();
+                    if (debugSession != null) DebugSessionsChanged?.Invoke();
                 }
             });
 
@@ -317,6 +326,33 @@ namespace TaskAutomation.Orchestration
                 // ein aufrufender JobExecutionStep den Eltern-Job abbricht.
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 throw;
+            }
+        }
+
+        public JobDebugSession? StartDebugJob(Guid id)
+        {
+            var job = _executor.AllJobs.Values.FirstOrDefault(candidate => candidate.Id == id);
+            if (job == null || DebugSessions.Any(session => session.JobId == id)) return null;
+            var instanceId = StartJobInternal(job, JobStartContext.Manual, debug: true);
+            return DebugSessions.FirstOrDefault(session => session.InstanceId == instanceId);
+        }
+
+        public void DebugStep(Guid instanceId)
+        {
+            if (_jobInstances.TryGetValue(instanceId, out var entry)) entry.DebugSession?.Step();
+        }
+
+        public void DebugContinue(Guid instanceId)
+        {
+            if (_jobInstances.TryGetValue(instanceId, out var entry)) entry.DebugSession?.Continue();
+        }
+
+        public void CancelDebugJob(Guid instanceId)
+        {
+            if (_jobInstances.TryGetValue(instanceId, out var entry) && entry.DebugSession != null)
+            {
+                entry.Cancellation.ForceStop();
+                entry.DebugSession.Finish(JobDebugSessionState.Cancelled);
             }
         }
 

@@ -68,9 +68,10 @@ public sealed class JobExecutionCancellation : IDisposable
             break;
         }
 
-        var firstRequest = Interlocked.Exchange(ref _forceStopRequested, 1) == 0;
         CancelSafely(_executionCts);
         CancelSafely(_endPhaseCts);
+        // Publish the force-stop flag only after both observable tokens are cancelled.
+        var firstRequest = Interlocked.Exchange(ref _forceStopRequested, 1) == 0;
         return firstRequest;
     }
 

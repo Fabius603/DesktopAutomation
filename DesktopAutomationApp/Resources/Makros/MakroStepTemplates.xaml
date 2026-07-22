@@ -190,8 +190,8 @@
                         <ColumnDefinition Width="12"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.DurationMs}" Style="{StaticResource ParamLabel}"/>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Duration}" Style="{StaticResource ParamValue}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.Duration}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding DurationDisplay}" Style="{StaticResource ParamValue}"/>
                 </Grid>
             </Grid>
         </DataTemplate>

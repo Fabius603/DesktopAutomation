@@ -13,95 +13,121 @@ namespace TaskAutomation.Makros
 {
     public class MakroExecutor : IMakroExecutor
     {
-        private readonly InputSimulator _sim;
+        private readonly IInputController _input;
         private readonly ILogger<MakroExecutor> _logger;
         private readonly IPreciseDelayService _delayService;
 
         public MakroExecutor(
             ILogger<MakroExecutor> logger,
-            IPreciseDelayService delayService)
+            IPreciseDelayService delayService,
+            IInputController input)
         {
             _logger = logger;
             _delayService = delayService;
-            _sim = new InputSimulator();
+            _input = input;
         }
 
 
         public async Task ExecuteMakro(Makro makro, DxgiResources dxgi, CancellationToken ct)
         {
+            ArgumentNullException.ThrowIfNull(makro);
+            WarnIfAbsoluteRecordingEnvironmentChanged(makro);
             // Alle Timeout-Befehle liegen auf einer absoluten Stopwatch-Zeitachse.
             // Dadurch wird eine Abweichung nicht auf nachfolgende Wartezeiten addiert.
             long scheduledElapsedMs = 0;
+            long scheduledElapsedUs = 0;
             var startedAt = Stopwatch.GetTimestamp();
+            var pressedMouseButtons = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var pressedKeys = new HashSet<VirtualKeyCode>();
 
-            foreach (var befehl in makro.Befehle)
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                switch (befehl)
+                foreach (var befehl in makro.Befehle)
                 {
-                    case MouseMoveAbsoluteBefehl m:
-                        var xy = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
-                        _sim.Mouse.MoveMouseToPositionOnVirtualDesktop(xy.Item1, xy.Item2);
-                        break;
+                    ct.ThrowIfCancellationRequested();
+                    if (befehl.DelayBeforeMicroseconds is > 0)
+                    {
+                        scheduledElapsedUs += befehl.DelayBeforeMicroseconds.Value;
+                        var preciseTarget = PreciseTime.AddMicroseconds(startedAt, scheduledElapsedUs + scheduledElapsedMs * 1_000L);
+                        await _delayService.DelayUntilAsync(preciseTarget, ct).ConfigureAwait(false);
+                    }
 
-                    case MouseMoveRelativeBefehl m:
-                        _sim.Mouse.MoveMouseBy(m.DeltaX, m.DeltaY);
-                        break;
+                    switch (befehl)
+                    {
+                        case MouseMoveAbsoluteBefehl m:
+                            var xy = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
+                            _input.MoveAbsolute(xy.Item1, xy.Item2);
+                            break;
 
-                    case MouseDownBefehl m:
-                        PressMouse(m.Button, down: true);
-                        break;
+                        case MouseMoveRelativeBefehl m:
+                            _input.MoveRelative(m.DeltaX, m.DeltaY);
+                            break;
 
-                    case MouseUpBefehl m:
-                        PressMouse(m.Button, down: false);
-                        break;
+                        case MouseDownBefehl m:
+                            _input.MouseButton(m.Button, true);
+                            pressedMouseButtons.Add(m.Button);
+                            break;
 
-                    case KeyDownBefehl k:
-                        if (MapKey(k.Key, out var vkDown))
-                            _sim.Keyboard.KeyDown(vkDown);
-                        break;
+                        case MouseUpBefehl m:
+                            _input.MouseButton(m.Button, false);
+                            pressedMouseButtons.Remove(m.Button);
+                            break;
 
-                    case KeyUpBefehl k:
-                        if (MapKey(k.Key, out var vkUp))
-                            _sim.Keyboard.KeyUp(vkUp);
-                        break;
+                        case KeyDownBefehl k when TryMapKey(k.Key, out var vkDown):
+                            _input.Key(vkDown, true);
+                            pressedKeys.Add(vkDown);
+                            break;
 
-                    case TimeoutBefehl t:
-                        scheduledElapsedMs += t.Duration;
-                        var targetTimestamp = PreciseTime.AddMilliseconds(startedAt, scheduledElapsedMs);
-                        await _delayService.DelayUntilAsync(targetTimestamp, ct).ConfigureAwait(false);
-                        break;
+                        case KeyUpBefehl k when TryMapKey(k.Key, out var vkUp):
+                            _input.Key(vkUp, false);
+                            pressedKeys.Remove(vkUp);
+                            break;
 
-                    default:
-                        _logger.LogError("Unbekannter Befehlstyp: {Typ}", befehl.GetType().Name);
-                        break;
+                        case TimeoutBefehl t:
+                            scheduledElapsedMs += t.Duration;
+                            var targetTimestamp = PreciseTime.AddMicroseconds(startedAt, scheduledElapsedUs + scheduledElapsedMs * 1_000L);
+                            await _delayService.DelayUntilAsync(targetTimestamp, ct).ConfigureAwait(false);
+                            break;
+
+                        default:
+                            _logger.LogError("Unbekannter oder ungueltiger Befehlstyp: {Typ}", befehl.GetType().Name);
+                            break;
+                    }
                 }
             }
-        }
-
-        private void PressMouse(string button, bool down)
-        {
-            switch (button.ToLower())
+            finally
             {
-                case "left":
-                    if (down) _sim.Mouse.LeftButtonDown();
-                    else _sim.Mouse.LeftButtonUp();
-                    break;
-                case "right":
-                    if (down) _sim.Mouse.RightButtonDown();
-                    else _sim.Mouse.RightButtonUp();
-                    break;
-                case "middle":
-                    if (down) _sim.Mouse.XButtonDown(2);
-                    else _sim.Mouse.XButtonUp(2);
-                    break;
-                default:
-                    _logger.LogError("Unbekannter Maustaste: {Button}", button);
-                    break;
+                foreach (var key in pressedKeys)
+                    TryRelease(() => _input.Key(key, false), $"Taste {key}");
+                foreach (var button in pressedMouseButtons)
+                    TryRelease(() => _input.MouseButton(button, false), $"Maustaste {button}");
             }
         }
 
-        private bool MapKey(string key, out VirtualKeyCode code)
+        private void WarnIfAbsoluteRecordingEnvironmentChanged(Makro makro)
+        {
+            if (makro.RecordingSettings.Mode != MakroRecordingMode.ScreenAccurateAbsolute
+                || makro.RecordedEnvironment is not { } recorded)
+                return;
+
+            var current = ScreenHelper.GetVirtualDesktopBounds();
+            if (current.X != recorded.VirtualDesktopX || current.Y != recorded.VirtualDesktopY
+                || current.Width != recorded.VirtualDesktopWidth || current.Height != recorded.VirtualDesktopHeight)
+            {
+                _logger.LogWarning(
+                    "Das bildschirmgenaue Makro wurde fuer Desktop {RecordedX},{RecordedY} {RecordedWidth}x{RecordedHeight} aufgenommen, aktuell ist {CurrentX},{CurrentY} {CurrentWidth}x{CurrentHeight} aktiv.",
+                    recorded.VirtualDesktopX, recorded.VirtualDesktopY, recorded.VirtualDesktopWidth, recorded.VirtualDesktopHeight,
+                    current.X, current.Y, current.Width, current.Height);
+            }
+        }
+
+        private void TryRelease(Action release, string description)
+        {
+            try { release(); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Freigabe von {Input} fehlgeschlagen.", description); }
+        }
+
+        private bool TryMapKey(string key, out VirtualKeyCode code)
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentException("Key darf nicht leer sein.");
@@ -114,10 +140,11 @@ namespace TaskAutomation.Makros
                 key = "VK_" + key;
             }
 
-            if (!Enum.TryParse(typeof(VirtualKeyCode), key, ignoreCase: true, out var result))
+            if (!Enum.TryParse<VirtualKeyCode>(key, ignoreCase: true, out code))
+            {
                 _logger.LogError("Unbekannter Key: {Key}", key);
-
-            code = (VirtualKeyCode)result;
+                return false;
+            }
             return true;
         }
     }

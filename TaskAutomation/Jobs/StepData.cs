@@ -6,6 +6,16 @@ using OpenCvSharp;
 
 namespace TaskAutomation.Jobs
 {
+    public enum JobStepDebugState
+    {
+        None,
+        Waiting,
+        Running,
+        Completed,
+        Skipped,
+        Failed
+    }
+
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
     [JsonDerivedType(typeof(ColorDetectionStep), "color_detection")]
@@ -85,6 +95,30 @@ namespace TaskAutomation.Jobs
         {
             ValidationError = error;
             IsValid = isValid;
+        }
+
+        private bool _isBreakpoint;
+        [JsonIgnore]
+        public bool IsBreakpoint
+        {
+            get => _isBreakpoint;
+            set { if (_isBreakpoint != value) { _isBreakpoint = value; OnPropertyChanged(); } }
+        }
+
+        private JobStepDebugState _debugState;
+        [JsonIgnore]
+        public JobStepDebugState DebugState
+        {
+            get => _debugState;
+            set { if (_debugState != value) { _debugState = value; OnPropertyChanged(); } }
+        }
+
+        private string? _debugDetails;
+        [JsonIgnore]
+        public string? DebugDetails
+        {
+            get => _debugDetails;
+            set { if (_debugDetails != value) { _debugDetails = value; OnPropertyChanged(); } }
         }
     }
 

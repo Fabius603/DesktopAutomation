@@ -50,13 +50,13 @@ namespace TaskAutomation.Makros
 
             return type switch
             {
-                "mouseMoveAbsolute" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options),
-                "mouseMoveRelative" => JsonSerializer.Deserialize<MouseMoveRelativeBefehl>(root.GetRawText(), options),
+                "mouseMoveAbsolute" or "mouse_move_absolute" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options),
+                "mouseMoveRelative" or "mouse_move_relative" => JsonSerializer.Deserialize<MouseMoveRelativeBefehl>(root.GetRawText(), options),
                 "mouseMove" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options), // Legacy compatibility
-                "mouseDown" => JsonSerializer.Deserialize<MouseDownBefehl>(root.GetRawText(), options),
-                "mouseUp" => JsonSerializer.Deserialize<MouseUpBefehl>(root.GetRawText(), options),
-                "keyDown" => JsonSerializer.Deserialize<KeyDownBefehl>(root.GetRawText(), options),
-                "keyUp" => JsonSerializer.Deserialize<KeyUpBefehl>(root.GetRawText(), options),
+                "mouseDown" or "mouse_down" => JsonSerializer.Deserialize<MouseDownBefehl>(root.GetRawText(), options),
+                "mouseUp" or "mouse_up" => JsonSerializer.Deserialize<MouseUpBefehl>(root.GetRawText(), options),
+                "keyDown" or "key_down" => JsonSerializer.Deserialize<KeyDownBefehl>(root.GetRawText(), options),
+                "keyUp" or "key_up" => JsonSerializer.Deserialize<KeyUpBefehl>(root.GetRawText(), options),
                 "timeout" => JsonSerializer.Deserialize<TimeoutBefehl>(root.GetRawText(), options),
                 _ => throw new NotSupportedException($"Unbekannter Makro-Typ: {type}")
             };

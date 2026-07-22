@@ -202,6 +202,9 @@ namespace TaskAutomation.Jobs
         }
 
         public Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation)
+            => ExecuteJob(jobId, startContext, cancellation, null);
+
+        public Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation, JobDebugSession? debugSession)
         {
             ArgumentNullException.ThrowIfNull(cancellation);
             var job = AllJobs.Values.FirstOrDefault(j => j.Id == jobId);
@@ -212,7 +215,7 @@ namespace TaskAutomation.Jobs
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobId.ToString(), new ArgumentException(errorMessage)));
                 return Task.CompletedTask;
             }
-            return ExecuteJobAsync(job, startContext, cancellation);
+            return ExecuteJobAsync(job, startContext, cancellation, debugSession);
         }
 
         private async Task ExecuteJobAsync(string jobName, CancellationToken ct)
@@ -232,7 +235,7 @@ namespace TaskAutomation.Jobs
             await ExecuteJobAsync(job, JobStartContext.Unknown, cancellation).ConfigureAwait(false);
         }
 
-        private async Task ExecuteJobAsync(Job job, JobStartContext startContext, JobExecutionCancellation cancellation)
+        private async Task ExecuteJobAsync(Job job, JobStartContext startContext, JobExecutionCancellation cancellation, JobDebugSession? debugSession = null)
         {
             var ct = cancellation.ExecutionToken;
             if (job == null)
@@ -473,7 +476,8 @@ namespace TaskAutomation.Jobs
                     pipelineCtx,
                     job,
                     ct,
-                    continueAfterStepError: false).ConfigureAwait(false);
+                    continueAfterStepError: false,
+                    debugSession: debugSession).ConfigureAwait(false);
                 bool jobEndedByStep = startPhaseEndJob != null;
                 if (startPhaseEndJob != null)
                     runEndSteps = !startPhaseEndJob.Settings.SkipEndSteps;
@@ -485,6 +489,7 @@ namespace TaskAutomation.Jobs
                 while (!jobEndedByStep)
                 {
                     iteration++;
+                    debugSession?.SetIteration(iteration);
                     var iterationStopwatch = Stopwatch.StartNew();
                     pipelineCtx.ResetResults(startStepIds);
                     var logRoutineIteration = !job.Repeating || iteration <= 3 || iteration % 100 == 0;
@@ -505,6 +510,9 @@ namespace TaskAutomation.Jobs
 
                         bool parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
 
+                        if (debugSession != null && step is IfStep or ElseIfStep or ElseStep or EndIfStep)
+                            await debugSession.BeforeStepAsync(step, "Hauptphase", ct, BuildStepStartDetails(step, "Hauptphase", iteration)).ConfigureAwait(false);
+
                         // ── Control-flow steps: handle without executing ────────
                         if (step is IfStep ifStep)
                         {
@@ -517,6 +525,7 @@ namespace TaskAutomation.Jobs
                                 evaluation.Details,
                                 stepId: step.Id, stepType: step.GetType().Name);
                             branchStack.Push(new BranchFrame(parentActive, condMet, condMet));
+                            debugSession?.MarkCompleted(step, evaluation.Details);
                             continue;
                         }
 
@@ -553,6 +562,7 @@ namespace TaskAutomation.Jobs
                                     "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
                                     stepId: step.Id, stepType: step.GetType().Name);
                             }
+                            debugSession?.MarkCompleted(step);
                             continue;
                         }
 
@@ -578,6 +588,7 @@ namespace TaskAutomation.Jobs
                                     "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
                                     stepId: step.Id, stepType: step.GetType().Name);
                             }
+                            debugSession?.MarkCompleted(step);
                             continue;
                         }
 
@@ -585,12 +596,14 @@ namespace TaskAutomation.Jobs
                         {
                             if (branchStack.Count > 0)
                                 branchStack.Pop();
+                            debugSession?.MarkCompleted(step);
                             continue;
                         }
 
                         // ── Regular step: execute only when current branch is active ──
                         if (!parentActive)
                         {
+                            debugSession?.MarkSkipped(step, "Inaktiver Bedingungszweig.");
                             _executionLogService.Write(executionLog, ExecutionLogLevel.Debug,
                                 "Step wegen inaktivem Bedingungszweig übersprungen.",
                                 stepId: step.Id, stepType: step.GetType().Name);
@@ -600,6 +613,7 @@ namespace TaskAutomation.Jobs
                         // ── Disabled step: skip without executing ─────────────────────
                         if (!step.IsEnabled)
                         {
+                            debugSession?.MarkSkipped(step, "Step ist deaktiviert.");
                             _executionLogService.Write(
                                 executionLog,
                                 ExecutionLogLevel.Debug,
@@ -608,6 +622,9 @@ namespace TaskAutomation.Jobs
                                 stepType: step.GetType().Name);
                             continue;
                         }
+
+                        if (debugSession != null)
+                            await debugSession.BeforeStepAsync(step, "Hauptphase", ct, BuildStepStartDetails(step, "Hauptphase", iteration)).ConfigureAwait(false);
 
                         // ── EndJob: immediately stop the job ──────────────────────────
                         if (step is EndJobStep endJobStep)
@@ -622,6 +639,7 @@ namespace TaskAutomation.Jobs
                                 stepType: step.GetType().Name);
                             jobEndedByStep = true;
                             runEndSteps = !endJobStep.Settings.SkipEndSteps;
+                            debugSession?.MarkCompleted(step, "Job durch EndJob beendet.");
                             break;
                         }
 
@@ -635,6 +653,7 @@ namespace TaskAutomation.Jobs
                                 stepId: step.Id,
                                 stepType: step.GetType().Name);
                             continueJob = true;
+                            debugSession?.MarkCompleted(step, "Nächste Job-Runde angefordert.");
                             break;
                         }
 
@@ -643,10 +662,17 @@ namespace TaskAutomation.Jobs
                             await ExecuteStepAsync(
                                 step, pipelineCtx, job, ct, "Durchlauf", iteration, logRoutineIteration)
                                 .ConfigureAwait(false);
+                            var debugResult = pipelineCtx.Results.GetRaw(step.Id);
+                            debugSession?.MarkCompleted(
+                                step,
+                                BuildStepResultDetails(step, debugResult, pipelineCtx.Results),
+                                debugResult);
                         }
                         catch (OperationCanceledException) { throw; }
                         catch (Exception ex)
                         {
+                            if (debugSession != null)
+                                await debugSession.PauseAfterFailureAsync(step, ex, ct).ConfigureAwait(false);
                             _executionLogService.Write(
                                 executionLog,
                                 ExecutionLogLevel.Error,
@@ -719,7 +745,8 @@ namespace TaskAutomation.Jobs
                 }
                 else using (var endTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation.EndPhaseToken))
                 {
-                    endTimeoutCts.CancelAfter(endPhaseTimeout);
+                    if (debugSession == null)
+                        endTimeoutCts.CancelAfter(endPhaseTimeout);
                     try
                     {
                         pipelineCtx.ResetResults(job.StartSteps.Concat(job.Steps).Select(step => step.Id));
@@ -735,7 +762,8 @@ namespace TaskAutomation.Jobs
                             {
                                 jobCompletedSuccessfully = false;
                                 completionReason = JobCompletionReason.StepFailed;
-                            }).ConfigureAwait(false);
+                            },
+                            debugSession: debugSession).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
@@ -823,6 +851,12 @@ namespace TaskAutomation.Jobs
                         ? JobExecutionState.Failed
                         : JobExecutionState.Completed;
                 cancellation.MarkCompleted(finalState);
+                debugSession?.Finish(finalState switch
+                {
+                    JobExecutionState.Completed => JobDebugSessionState.Completed,
+                    JobExecutionState.Cancelled => JobDebugSessionState.Cancelled,
+                    _ => JobDebugSessionState.Failed
+                });
                 _executionLogService.Complete(
                     executionLog,
                     jobCompletedSuccessfully,
@@ -841,7 +875,8 @@ namespace TaskAutomation.Jobs
             CancellationToken ct,
             bool continueAfterStepError,
             IReadOnlyList<JobStep>? precedingSteps = null,
-            Action? onStepError = null)
+            Action? onStepError = null,
+            JobDebugSession? debugSession = null)
         {
             var steps = configuredSteps ?? [];
             if (steps.Count == 0)
@@ -867,6 +902,9 @@ namespace TaskAutomation.Jobs
                 ct.ThrowIfCancellationRequested();
                 bool parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
 
+                if (debugSession != null && step is IfStep or ElseIfStep or ElseStep or EndIfStep)
+                    await debugSession.BeforeStepAsync(step, phaseName, ct, BuildStepStartDetails(step, phaseName, null)).ConfigureAwait(false);
+
                 if (step is IfStep ifStep)
                 {
                     var evaluation = parentActive
@@ -881,6 +919,7 @@ namespace TaskAutomation.Jobs
                         stepId: step.Id,
                         stepType: step.GetType().Name);
                     branchStack.Push(new BranchFrame(parentActive, conditionMet, conditionMet));
+                    debugSession?.MarkCompleted(step, evaluation.Details);
                     continue;
                 }
 
@@ -894,6 +933,7 @@ namespace TaskAutomation.Jobs
                             "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
                             stepId: step.Id,
                             stepType: step.GetType().Name);
+                        debugSession?.MarkSkipped(step, "ELSE-IF steht außerhalb eines IF-Blocks.");
                         continue;
                     }
 
@@ -915,6 +955,7 @@ namespace TaskAutomation.Jobs
                     {
                         branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
                     }
+                    debugSession?.MarkCompleted(step);
                     continue;
                 }
 
@@ -928,12 +969,14 @@ namespace TaskAutomation.Jobs
                             "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
                             stepId: step.Id,
                             stepType: step.GetType().Name);
+                        debugSession?.MarkSkipped(step, "ELSE steht außerhalb eines IF-Blocks.");
                         continue;
                     }
 
                     var top = branchStack.Pop();
                     bool executeElse = top.ParentActive && !top.AnyMatched;
                     branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
+                    debugSession?.MarkCompleted(step, executeElse ? "ELSE-Zweig aktiv." : "ELSE-Zweig inaktiv.");
                     continue;
                 }
 
@@ -958,11 +1001,13 @@ namespace TaskAutomation.Jobs
                             stepId: step.Id,
                             stepType: step.GetType().Name);
                     }
+                    debugSession?.MarkCompleted(step);
                     continue;
                 }
 
                 if (!parentActive)
                 {
+                    debugSession?.MarkSkipped(step, "Inaktiver Bedingungszweig.");
                     _executionLogService.Write(
                         pipelineCtx.ExecutionLogSession,
                         ExecutionLogLevel.Debug,
@@ -974,6 +1019,7 @@ namespace TaskAutomation.Jobs
 
                 if (!step.IsEnabled)
                 {
+                    debugSession?.MarkSkipped(step, "Step ist deaktiviert.");
                     _executionLogService.Write(
                         pipelineCtx.ExecutionLogSession,
                         ExecutionLogLevel.Debug,
@@ -983,6 +1029,9 @@ namespace TaskAutomation.Jobs
                     continue;
                 }
 
+                if (debugSession != null)
+                    await debugSession.BeforeStepAsync(step, phaseName, ct, BuildStepStartDetails(step, phaseName, null)).ConfigureAwait(false);
+
                 if (step is EndJobStep endJobStep)
                 {
                     _executionLogService.Write(
@@ -991,16 +1040,24 @@ namespace TaskAutomation.Jobs
                         $"{phaseName} durch EndJob-Step beendet.",
                         stepId: step.Id,
                         stepType: step.GetType().Name);
+                    debugSession?.MarkCompleted(step, $"{phaseName} durch EndJob beendet.");
                     return endJobStep;
                 }
 
                 try
                 {
                     await ExecuteStepAsync(step, pipelineCtx, job, ct, phaseName).ConfigureAwait(false);
+                    var debugResult = pipelineCtx.Results.GetRaw(step.Id);
+                    debugSession?.MarkCompleted(
+                        step,
+                        BuildStepResultDetails(step, debugResult, pipelineCtx.Results),
+                        debugResult);
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
+                    if (debugSession != null)
+                        await debugSession.PauseAfterFailureAsync(step, ex, ct).ConfigureAwait(false);
                     _executionLogService.Write(
                         pipelineCtx.ExecutionLogSession,
                         ExecutionLogLevel.Error,

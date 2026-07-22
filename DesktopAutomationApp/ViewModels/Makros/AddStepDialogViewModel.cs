@@ -10,6 +10,8 @@ namespace DesktopAutomationApp.ViewModels
 {
     public sealed class AddStepDialogViewModel : INotifyPropertyChanged
     {
+        public sealed record TimeUnitOption(string Label, double Microseconds);
+
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnChange([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
@@ -19,6 +21,8 @@ namespace DesktopAutomationApp.ViewModels
         public AddStepDialogViewModel(IGlobalHotkeyService capture)
         {
             _capture = capture;
+            _selectedDelayUnit = DelayUnits[1];
+            _selectedDurationUnit = DurationUnits[0];
             CaptureKeyCommand = new RelayCommand(async () => await CaptureKeyAsync(), () => ShowKey && !IsCapturing);
         }
 
@@ -80,8 +84,32 @@ namespace DesktopAutomationApp.ViewModels
         private string _key = string.Empty; // Anzeige, z. B. "Ctrl+Alt+M"
         public string Key { get => _key; set { _key = value; OnChange(); } }
 
-        private int _duration = 100;
-        public int Duration { get => _duration; set { _duration = value; OnChange(); } }
+        public IReadOnlyList<TimeUnitOption> DelayUnits { get; } =
+        [new("µs", 1), new("ms", 1_000), new("s", 1_000_000), new("min", 60_000_000), new("h", 3_600_000_000)];
+        public IReadOnlyList<TimeUnitOption> DurationUnits { get; } =
+        [new("ms", 1_000), new("s", 1_000_000), new("min", 60_000_000), new("h", 3_600_000_000)];
+
+        private double _durationValue = 100;
+        public double DurationValue { get => _durationValue; set { _durationValue = value; OnChange(); } }
+        private TimeUnitOption _selectedDurationUnit;
+        public TimeUnitOption SelectedDurationUnit { get => _selectedDurationUnit; set { _selectedDurationUnit = value; OnChange(); } }
+        public int Duration
+        {
+            get => checked((int)Math.Round(DurationValue * SelectedDurationUnit.Microseconds / 1_000d));
+            set => SetDuration(value);
+        }
+
+        private double? _delayBeforeValue;
+        public double? DelayBeforeValue { get => _delayBeforeValue; set { _delayBeforeValue = value; OnChange(); } }
+        private TimeUnitOption _selectedDelayUnit;
+        public TimeUnitOption SelectedDelayUnit { get => _selectedDelayUnit; set { _selectedDelayUnit = value; OnChange(); } }
+        public long? DelayBeforeMicroseconds
+        {
+            get => DelayBeforeValue.HasValue
+                ? checked((long)Math.Round(DelayBeforeValue.Value * SelectedDelayUnit.Microseconds))
+                : null;
+            set => SetDelay(value);
+        }
 
         private bool _isCapturing;
         public bool IsCapturing { get => _isCapturing; private set { _isCapturing = value; OnChange(); (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
@@ -106,14 +134,46 @@ namespace DesktopAutomationApp.ViewModels
                 "Timeout" => new TimeoutBefehl { Duration = Duration },
                 _ => null
             };
+            if (CreatedStep is not null)
+                CreatedStep.DelayBeforeMicroseconds = DelayBeforeMicroseconds;
         }
 
         public bool CanConfirm()
         {
-            CreateStep();
+            try { CreateStep(); }
+            catch (OverflowException)
+            {
+                ValidationError = Loc.Get("Ui.Macro.StepEditor.TimeInvalid");
+                return false;
+            }
             var result = CreatedStep == null ? null : MakroValidation.ValidateCommand(CreatedStep);
             ValidationError = result == null || result.IsValid ? null : MakroValidation.Describe(result.Error);
             return result?.IsValid == true;
+        }
+
+        private void SetDelay(long? microseconds)
+        {
+            if (!microseconds.HasValue)
+            {
+                DelayBeforeValue = null;
+                SelectedDelayUnit = DelayUnits[1];
+                return;
+            }
+            SelectedDelayUnit = BestUnit(DelayUnits, microseconds.Value);
+            DelayBeforeValue = microseconds.Value / SelectedDelayUnit.Microseconds;
+        }
+
+        private void SetDuration(int milliseconds)
+        {
+            var microseconds = milliseconds * 1_000L;
+            SelectedDurationUnit = BestUnit(DurationUnits, microseconds);
+            DurationValue = microseconds / SelectedDurationUnit.Microseconds;
+        }
+
+        private static TimeUnitOption BestUnit(IReadOnlyList<TimeUnitOption> units, long microseconds)
+        {
+            var absolute = Math.Abs((double)microseconds);
+            return units.Last(unit => absolute >= unit.Microseconds || ReferenceEquals(unit, units[0]));
         }
 
         private string? _validationError;

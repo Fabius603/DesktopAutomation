@@ -33,6 +33,9 @@ internal sealed class ControllableJobExecutor : IJobExecutor
     }
 
     public Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation)
+        => ExecuteJob(jobId, startContext, cancellation, null);
+
+    public Task ExecuteJob(Guid jobId, JobStartContext startContext, JobExecutionCancellation cancellation, JobDebugSession? debugSession)
     {
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (_gate) Invocations.Add(new(jobId, startContext, cancellation, completion));

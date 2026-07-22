@@ -11,6 +11,7 @@ using Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TaskAutomation.Jobs;
+using TaskAutomation.Makros;
 
 namespace TaskAutomation.Hotkeys
 {
@@ -73,6 +74,10 @@ namespace TaskAutomation.Hotkeys
         [DllImport("user32.dll")]
         private static extern short GetKeyState(int nVirtKey);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetCursorPos(out POINT point);
+
         #region WinAPI für die Message-Loop
         [DllImport("user32.dll")]
         private static extern bool GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
@@ -123,20 +128,25 @@ namespace TaskAutomation.Hotkeys
 
         public event Action? PausedChanged;
         public event Action? EmergencyStopPressed;
+        public event Action? RecordingHotkeyPressed;
 
         // VK_F10 – globaler Notfall-Stop (bypasses Pause-Zustand)
         private const uint VK_F10 = 0x79;
+        private volatile uint _recordingHotkeyVirtualKey;
+        private KeyModifiers _recordingHotkeyModifiers;
+        private volatile bool _recordingHotkeyActivationInProgress;
+        private KeyModifiers _suppressedRecordingHotkeyModifiers;
 
         // --- Aufnahmezustand für StartRecordHotkeys/StopRecordHotkeys ---
         private volatile bool _isHotkeyRecording;
         private readonly object _recordLock = new();
         private List<CapturedInputEvent>? _recordBuffer;
         private Stopwatch? _recordSw;
-        private TimeSpan _lastAt;
+        private MakroRecordingSettings _recordingSettings = new();
+        private long _lastMouseTimestampMicroseconds;
 
         // MouseMove throttling für Aufnahme
         private (int x, int y) _lastMousePos = (-1, -1);
-        private const int MouseMoveThreshold = 5; // Mindestabstand in Pixeln
 
         public GlobalHotkeyService(ILogger<GlobalHotkeyService> logger)
         {
@@ -287,10 +297,19 @@ namespace TaskAutomation.Hotkeys
                                 break; // Capturing beendet, keine weitere Verarbeitung
                             }
 
+                            // Der Aufnahme-Hotkey steuert die UI und wird niemals selbst aufgezeichnet.
+                            if (IsRecordingHotkey(vk))
+                            {
+                                _recordingHotkeyActivationInProgress = true;
+                                _suppressedRecordingHotkeyModifiers = _recordingHotkeyModifiers;
+                                _workQueue.Add(() => RecordingHotkeyPressed?.Invoke());
+                                break;
+                            }
+
                             // ----- RECORDING: KeyDown protokollieren, kein Matching -----
                             if (_isHotkeyRecording)
                             {
-                                AddWithTimeout(new KeyDownCaptured(vk));
+                                AddRecordedEvent(new KeyDownCaptured(vk));
                                 break;
                             }
 
@@ -309,10 +328,25 @@ namespace TaskAutomation.Hotkeys
                     case WM_SYSKEYUP:
                         _downKeys.Remove(vk);
 
+                        // Auch die KeyUp-Flanke des Aufnahme-Hotkeys gehoert nicht ins Makro.
+                        if (vk == _recordingHotkeyVirtualKey && _recordingHotkeyActivationInProgress)
+                        {
+                            _recordingHotkeyActivationInProgress = false;
+                            break;
+                        }
+
+                        var releasedModifier = ModifierForVirtualKey(vk);
+                        if (releasedModifier != KeyModifiers.None
+                            && (_suppressedRecordingHotkeyModifiers & releasedModifier) != 0)
+                        {
+                            _suppressedRecordingHotkeyModifiers &= ~releasedModifier;
+                            break;
+                        }
+
                         // RECORDING: KeyUp protokollieren, kein Matching
                         if (_isHotkeyRecording)
                         {
-                            AddWithTimeout(new KeyUpCaptured(vk));
+                            AddRecordedEvent(new KeyUpCaptured(vk));
                             break;
                         }
                         break;
@@ -331,25 +365,28 @@ namespace TaskAutomation.Hotkeys
 
                 switch (msg)
                 {
-                    case WM_LBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Left, x, y)); break;
-                    case WM_LBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Left, x, y)); break;
-                    case WM_RBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Right, x, y)); break;
-                    case WM_RBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Right, x, y)); break;
-                    case WM_MBUTTONDOWN: AddWithTimeout(new MouseDownCaptured(MouseButtons.Middle, x, y)); break;
-                    case WM_MBUTTONUP: AddWithTimeout(new MouseUpCaptured(MouseButtons.Middle, x, y)); break;
+                    case WM_LBUTTONDOWN: AddRecordedEvent(new MouseDownCaptured(MouseButtons.Left, x, y)); break;
+                    case WM_LBUTTONUP: AddRecordedEvent(new MouseUpCaptured(MouseButtons.Left, x, y)); break;
+                    case WM_RBUTTONDOWN: AddRecordedEvent(new MouseDownCaptured(MouseButtons.Right, x, y)); break;
+                    case WM_RBUTTONUP: AddRecordedEvent(new MouseUpCaptured(MouseButtons.Right, x, y)); break;
+                    case WM_MBUTTONDOWN: AddRecordedEvent(new MouseDownCaptured(MouseButtons.Middle, x, y)); break;
+                    case WM_MBUTTONUP: AddRecordedEvent(new MouseUpCaptured(MouseButtons.Middle, x, y)); break;
                     case WM_XBUTTONDOWN:
-                        AddWithTimeout(new MouseDownCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        AddRecordedEvent(new MouseDownCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
                         break;
                     case WM_XBUTTONUP:
-                        AddWithTimeout(new MouseUpCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        AddRecordedEvent(new MouseUpCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
                         break;
                     case WM_MOUSEMOVE:
-                        // Throttling: nur bei signifikanter Bewegung aufnehmen
-                        if (Math.Abs(x - _lastMousePos.x) >= MouseMoveThreshold || 
-                            Math.Abs(y - _lastMousePos.y) >= MouseMoveThreshold)
+                        var nowUs = ElapsedMicroseconds();
+                        var distanceReached = Math.Abs(x - _lastMousePos.x) >= _recordingSettings.MinimumDistancePixels ||
+                                              Math.Abs(y - _lastMousePos.y) >= _recordingSettings.MinimumDistancePixels;
+                        var intervalReached = nowUs - _lastMouseTimestampMicroseconds >= _recordingSettings.MinimumIntervalMicroseconds;
+                        if (_recordingSettings.Mode != MakroRecordingMode.ClicksOnly && distanceReached && intervalReached)
                         {
                             _lastMousePos = (x, y);
-                            AddWithTimeout(new MouseMoveCaptured(x, y));
+                            _lastMouseTimestampMicroseconds = nowUs;
+                            AddRecordedEvent(new MouseMoveCaptured(x, y), nowUs);
                         }
                         break;
                 }
@@ -374,6 +411,38 @@ namespace TaskAutomation.Hotkeys
             }
 
             return matched;
+        }
+
+        private bool IsRecordingHotkey(uint virtualKeyCode)
+            => virtualKeyCode != 0
+               && virtualKeyCode == _recordingHotkeyVirtualKey
+               && GetCurrentModifiers() == _recordingHotkeyModifiers;
+
+        private static KeyModifiers ModifierForVirtualKey(uint virtualKeyCode) => virtualKeyCode switch
+        {
+            0x10 or 0xA0 or 0xA1 => KeyModifiers.Shift,
+            0x11 or 0xA2 or 0xA3 => KeyModifiers.Control,
+            0x12 or 0xA4 or 0xA5 => KeyModifiers.Alt,
+            0x5B or 0x5C => KeyModifiers.Windows,
+            _ => KeyModifiers.None
+        };
+
+        public void SetRecordingHotkey(KeyModifiers modifiers, uint virtualKeyCode)
+        {
+            if (virtualKeyCode == 0 || IsModifierVk(virtualKeyCode))
+                throw new ArgumentException("Der Aufnahme-Hotkey benoetigt eine Nicht-Modifier-Taste.", nameof(virtualKeyCode));
+            if (virtualKeyCode == VK_F10)
+                throw new ArgumentException("F10 ist fuer den Notfall-Stopp reserviert.", nameof(virtualKeyCode));
+            _recordingHotkeyModifiers = modifiers;
+            _recordingHotkeyVirtualKey = virtualKeyCode;
+        }
+
+        public void ClearRecordingHotkey()
+        {
+            _recordingHotkeyVirtualKey = 0;
+            _recordingHotkeyModifiers = KeyModifiers.None;
+            _recordingHotkeyActivationInProgress = false;
+            _suppressedRecordingHotkeyModifiers = KeyModifiers.None;
         }
 
         /// <summary>
@@ -435,14 +504,20 @@ namespace TaskAutomation.Hotkeys
         /// Beginnt die Aufzeichnung von KeyDown/KeyUp und MouseDown/MouseUp.
         /// Während der Aufzeichnung werden keine Hotkeys gematcht.
         /// </summary>
-        public void StartRecordHotkeys()
+        public void StartRecordHotkeys(MakroRecordingSettings? settings = null)
         {
             lock (_recordLock)
             {
                 if (_isHotkeyRecording) return;
+                _recordingSettings = (settings ?? new MakroRecordingSettings()).Clone();
                 _recordBuffer = new List<CapturedInputEvent>(256);
                 _recordSw = Stopwatch.StartNew();
-                _lastAt = TimeSpan.Zero;
+                _lastMouseTimestampMicroseconds = 0;
+                if (GetCursorPos(out var cursor))
+                {
+                    _lastMousePos = (cursor.x, cursor.y);
+                    _recordBuffer.Add(new MouseMoveCaptured(cursor.x, cursor.y) { TimestampMicroseconds = 0 });
+                }
                 _isHotkeyRecording = true;
                 _logger.LogInformation("Hotkey-Aufnahme gestartet.");
             }
@@ -468,24 +543,16 @@ namespace TaskAutomation.Hotkeys
             }
         }
 
-        private void AddWithTimeout(CapturedInputEvent ev)
+        private long ElapsedMicroseconds()
+            => _recordSw is null ? 0 : _recordSw.ElapsedTicks * 1_000_000L / Stopwatch.Frequency;
+
+        private void AddRecordedEvent(CapturedInputEvent ev, long? timestampMicroseconds = null)
         {
             lock (_recordLock)
             {
                 if (!_isHotkeyRecording || _recordBuffer is null || _recordSw is null)
                     return;
-
-                var now = _recordSw.Elapsed;
-                var delta = now - _lastAt;
-
-                // minimale Schwelle gegen Jitter (0ms/1ms Events)
-                if (delta.TotalMilliseconds > 0.5)
-                {
-                    _recordBuffer.Add(new TimeoutEvent((int)Math.Round(delta.TotalMilliseconds)));
-                }
-
-                _recordBuffer.Add(ev);
-                _lastAt = now;
+                _recordBuffer.Add(ev with { TimestampMicroseconds = timestampMicroseconds ?? ElapsedMicroseconds() });
             }
         }
 

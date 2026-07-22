@@ -2095,4 +2095,84 @@ Error:
   <data name="Ui.Webhook.OnlineBaseUrlPlaceholder" xml:space="preserve"><value>https://hooks.example.com</value></data>
   <data name="Ui.Webhook.OnlineHint" xml:space="preserve"><value>The URL must be forwarded to this listener through a reverse proxy, VPN, or tunnel. Online webhooks can only be saved with a public HTTPS URL.</value></data>
   <data name="Ui.Webhook.PowerShellCode" xml:space="preserve"><value>PowerShell invocation</value></data>
+  <data name="Ui.Macro.Recording.Settings" xml:space="preserve"><value>Recording settings</value></data>
+  <data name="Ui.Macro.Recording.Mode" xml:space="preserve"><value>Recording mode</value></data>
+  <data name="Ui.Macro.Recording.ScreenAccurate" xml:space="preserve"><value>Screen accurate (absolute screen coordinates)</value></data>
+  <data name="Ui.Macro.Recording.ScreenAccurate.Help" xml:space="preserve"><value>Reproduces the visible cursor path on the same monitor layout.</value></data>
+  <data name="Ui.Macro.Recording.MotionFaithful" xml:space="preserve"><value>Motion faithful (relative movement)</value></data>
+  <data name="Ui.Macro.Recording.MotionFaithful.Help" xml:space="preserve"><value>Reproduces movement deltas relative to the cursor position at playback start.</value></data>
+  <data name="Ui.Macro.Recording.ClicksOnly" xml:space="preserve"><value>Clicks and keyboard only</value></data>
+  <data name="Ui.Macro.Recording.Interval" xml:space="preserve"><value>Minimum recording interval (µs)</value></data>
+  <data name="Ui.Macro.Recording.Distance" xml:space="preserve"><value>Minimum movement (pixels)</value></data>
+  <data name="Ui.Macro.Recording.Keyboard" xml:space="preserve"><value>Record keyboard input</value></data>
+  <data name="Ui.Macro.Recording.MouseButtons" xml:space="preserve"><value>Record mouse buttons</value></data>
+  <data name="Ui.Macro.Recording.RemoveStop" xml:space="preserve"><value>Remove the click used to stop recording</value></data>
+  <data name="Ui.Macro.Recording.Recommendation" xml:space="preserve"><value>Recommended: 1000 µs and 0 pixels for high accuracy. Smaller intervals create larger macro files.</value></data>
+  <data name="Ui.Macro.Recording.ScreenAccurate.Short" xml:space="preserve"><value>Screen accurate</value></data>
+  <data name="Ui.Macro.Recording.MotionFaithful.Short" xml:space="preserve"><value>Motion faithful</value></data>
+  <data name="Ui.Macro.Recording.ClicksOnly.Short" xml:space="preserve"><value>Clicks only</value></data>
+  <data name="Ui.Macro.Recording.Settings.Help" xml:space="preserve"><value>Choose how precisely mouse and keyboard input are recorded.</value></data>
+  <data name="Ui.Macro.Recording.ClicksOnly.Help" xml:space="preserve"><value>Stores click positions and keyboard input without the full mouse path.</value></data>
+  <data name="Ui.Macro.Recording.Precision" xml:space="preserve"><value>Recording precision</value></data>
+  <data name="Ui.Macro.Recording.IntervalMs" xml:space="preserve"><value>Minimum interval (ms)</value></data>
+  <data name="Ui.Macro.Recording.Interval.Help" xml:space="preserve"><value>Smaller values capture more intermediate points.</value></data>
+  <data name="Ui.Macro.Recording.Distance.Help" xml:space="preserve"><value>0 records even the smallest movements.</value></data>
+  <data name="Ui.Macro.Recording.Inputs" xml:space="preserve"><value>Recorded input</value></data>
+  <data name="Ui.Macro.Recording.RemoveStop.Help" xml:space="preserve"><value>Prevents the click on “Stop recording” from becoming part of the macro.</value></data>
+  <data name="Ui.Macro.Recording.Hotkey" xml:space="preserve"><value>Start / stop recording</value></data>
+  <data name="Ui.Macro.Recording.Hotkey.Help" xml:space="preserve"><value>The hotkey is not stored as input while recording.</value></data>
+  <data name="Ui.Macro.Recording.Hotkey.Capture" xml:space="preserve"><value>Capture hotkey</value></data>
+  <data name="Ui.Macro.Recording.Hotkey.Invalid" xml:space="preserve"><value>This hotkey cannot be used. F10 is reserved for emergency stop.</value></data>
+  <data name="Ui.Macro.StepEditor.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Ui.Macro.StepEditor.TimeInvalid" xml:space="preserve"><value>The time value is too large or invalid.</value></data>
+  <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Delay before</value></data>
+  <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Time since the previous step; value and unit can be selected freely.</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatic movement groups</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups.Help" xml:space="preserve"><value>Combines consecutive mouse movements into clear groups after recording.</value></data>
+  <data name="Ui.Macro.Stats.Duration" xml:space="preserve"><value>Total duration</value></data>
+  <data name="Ui.Macro.Stats.Steps" xml:space="preserve"><value>Steps</value></data>
+  <data name="Ui.Macro.Stats.Groups" xml:space="preserve"><value>Groups</value></data>
+  <data name="Ui.Macro.Filter.Search" xml:space="preserve"><value>Search</value></data>
+  <data name="Ui.Macro.Filter.AllSteps" xml:space="preserve"><value>All steps</value></data>
+  <data name="Ui.Macro.Filter.Movement" xml:space="preserve"><value>Mouse movements</value></data>
+  <data name="Ui.Macro.Filter.Mouse" xml:space="preserve"><value>Mouse buttons</value></data>
+  <data name="Ui.Macro.Filter.Keyboard" xml:space="preserve"><value>Keyboard</value></data>
+  <data name="Ui.Macro.Filter.Timeout" xml:space="preserve"><value>Wait</value></data>
+  <data name="Ui.Macro.Filter.AllGroups" xml:space="preserve"><value>All groups</value></data>
+  <data name="Ui.Macro.Filter.Ungrouped" xml:space="preserve"><value>Without group</value></data>
+  <data name="Ui.Macro.Group.Create" xml:space="preserve"><value>Create group</value></data>
+  <data name="Ui.Macro.Group.RemoveSelected" xml:space="preserve"><value>Remove from group</value></data>
+  <data name="Ui.Macro.Group.Rename" xml:space="preserve"><value>Rename group</value></data>
+  <data name="Ui.Macro.Group.Dissolve" xml:space="preserve"><value>Dissolve group</value></data>
+  <data name="Ui.Macro.Group.Name" xml:space="preserve"><value>Group name</value></data>
+  <data name="Ui.Macro.Group.DefaultTitle" xml:space="preserve"><value>Section {0}</value></data>
+  <data name="Ui.Macro.Group.Movement" xml:space="preserve"><value>Movement</value></data>
+  <data name="Ui.Macro.Group.Toggle" xml:space="preserve"><value>Expand/collapse</value></data>
+  <data name="Ui.Macro.Step.ExecutionTime" xml:space="preserve"><value>Execution after macro start</value></data>
+  <data name="Ui.Job.Debug.Start" xml:space="preserve"><value>Debug</value></data>
+  <data name="Ui.Job.Debug.StartTooltip" xml:space="preserve"><value>Start the saved job in single-step mode</value></data>
+  <data name="Ui.Job.Debug.Title" xml:space="preserve"><value>Job debugger</value></data>
+  <data name="Ui.Job.Debug.Next" xml:space="preserve"><value>Next step</value></data>
+  <data name="Ui.Job.Debug.Continue" xml:space="preserve"><value>Continue</value></data>
+  <data name="Ui.Job.Debug.ToggleBreakpoint" xml:space="preserve"><value>Toggle breakpoint</value></data>
+  <data name="Ui.Job.Debug.Iteration" xml:space="preserve"><value>Iteration {0}</value></data>
+  <data name="Ui.Job.Debug.Panel.Title" xml:space="preserve"><value>Debug inspector</value></data>
+  <data name="Ui.Job.Debug.Panel.Toggle" xml:space="preserve"><value>Show or hide debug inspector</value></data>
+  <data name="Ui.Job.Debug.Panel.SelectStep" xml:space="preserve"><value>Click a step to display its snapshot.</value></data>
+  <data name="Ui.Job.Debug.Panel.Inputs" xml:space="preserve"><value>Inputs</value></data>
+  <data name="Ui.Job.Debug.Panel.Result" xml:space="preserve"><value>Result</value></data>
+  <data name="Ui.Job.Debug.Panel.Context" xml:space="preserve"><value>Context</value></data>
+  <data name="Ui.Job.Debug.Panel.Runtime" xml:space="preserve"><value>Runtime</value></data>
+  <data name="Ui.Job.Debug.Panel.Phase" xml:space="preserve"><value>Phase</value></data>
+  <data name="Ui.Job.Debug.Panel.Iteration" xml:space="preserve"><value>Iteration</value></data>
+  <data name="Ui.Job.Debug.Panel.ResolvedInputs" xml:space="preserve"><value>Resolved inputs</value></data>
+  <data name="Ui.Job.Debug.Panel.ResultValue" xml:space="preserve"><value>Return value</value></data>
+  <data name="Ui.Job.Debug.Panel.State" xml:space="preserve"><value>State</value></data>
+  <data name="Ui.Job.Debug.Panel.Started" xml:space="preserve"><value>Started</value></data>
+  <data name="Ui.Job.Debug.Panel.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Ui.Job.Debug.Panel.CurrentContext" xml:space="preserve"><value>Current context · Outputs by step</value></data>
+  <data name="Ui.Job.Debug.Panel.EmptyContext" xml:space="preserve"><value>No step outputs are available in the current context yet.</value></data>
+  <data name="Ui.Job.Debug.Panel.ExpandAll" xml:space="preserve"><value>Expand all outputs</value></data>
+  <data name="Ui.Job.Debug.Panel.CollapseAll" xml:space="preserve"><value>Collapse all outputs</value></data>
+  <data name="Ui.Common.Close" xml:space="preserve"><value>Close</value></data>
 </root>

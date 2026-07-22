@@ -8,6 +8,8 @@ public enum MakroValidationError
     MouseButtonInvalid,
     KeyRequired,
     DurationInvalid,
+    RecordingSettingsInvalid,
+    CommandTimingInvalid,
     UnknownCommand
 }
 
@@ -23,6 +25,8 @@ public static class MakroValidation
         MakroValidationError.MouseButtonInvalid => "Die Maustaste ist ungueltig.",
         MakroValidationError.KeyRequired => "Es wurde keine Taste ausgewaehlt.",
         MakroValidationError.DurationInvalid => "Die Dauer darf nicht negativ sein.",
+        MakroValidationError.RecordingSettingsInvalid => "Die Aufnahmeeinstellungen sind ungueltig.",
+        MakroValidationError.CommandTimingInvalid => "Die Befehlsverzoegerung darf nicht negativ sein.",
         MakroValidationError.UnknownCommand => "Das Makro enthaelt einen unbekannten Befehl.",
         _ => string.Empty
     };
@@ -33,17 +37,24 @@ public static class MakroValidation
     public static MakroValidationResult Validate(Makro makro)
     {
         var commands = makro.Befehle.Select(ValidateCommand).ToList();
+        var settingsValid = makro.RecordingSettings.MinimumIntervalMicroseconds is >= 0 and <= 1_000_000
+                            && makro.RecordingSettings.MinimumDistancePixels is >= 0 and <= 10_000
+                            && makro.RecordingSettings.RecordingHotkeyVirtualKey is > 0 and not 0x79;
         var error = string.IsNullOrWhiteSpace(makro.Name)
             ? MakroValidationError.NameRequired
             : makro.Befehle.Count == 0
                 ? MakroValidationError.CommandRequired
+            : !settingsValid
+                ? MakroValidationError.RecordingSettingsInvalid
             : commands.FirstOrDefault(r => !r.IsValid)?.Error ?? MakroValidationError.None;
         return new(error == MakroValidationError.None, error, commands);
     }
 
     public static MakroCommandValidationResult ValidateCommand(MakroBefehl command)
     {
-        var error = command switch
+        var error = command.DelayBeforeMicroseconds < 0
+            ? MakroValidationError.CommandTimingInvalid
+            : command switch
         {
             MouseMoveAbsoluteBefehl => MakroValidationError.None,
             MouseMoveRelativeBefehl => MakroValidationError.None,
@@ -61,5 +72,5 @@ public static class MakroValidation
     }
 
     private static bool IsMouseButton(string? button)
-        => button?.ToLowerInvariant() is "left" or "right" or "middle";
+        => button?.ToLowerInvariant() is "left" or "right" or "middle" or "x1" or "x2";
 }

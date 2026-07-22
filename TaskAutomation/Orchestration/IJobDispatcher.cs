@@ -27,6 +27,7 @@ namespace TaskAutomation.Orchestration
 
         /// <summary>Wird ausgelöst, wenn sich die Liste der laufenden Jobs ändert.</summary>
         event Action? RunningJobsChanged;
+        event Action? DebugSessionsChanged;
 
         /// <summary>Wird ausgelöst, wenn sich die Liste der laufenden Makros ändert.</summary>
         event Action? RunningMakrosChanged;
@@ -40,6 +41,7 @@ namespace TaskAutomation.Orchestration
         /// Distinct-Job-IDs aller aktuell laufenden Instanzen (nur für "läuft irgendetwas"-Prüfungen).
         /// </summary>
         IReadOnlyCollection<Guid> RunningJobIds { get; }
+        IReadOnlyCollection<JobDebugSession> DebugSessions { get; }
 
         /// <summary>IDs der aktuell laufenden Makros.</summary>
         IReadOnlyCollection<Guid> RunningMakroIds { get; }
@@ -49,6 +51,10 @@ namespace TaskAutomation.Orchestration
         /// Gibt die eindeutige Instanz-ID zurück, mit der diese Ausführung gestoppt werden kann.
         /// </summary>
         Guid StartJob(Guid id, JobStartContext? startContext = null);
+        JobDebugSession? StartDebugJob(Guid id);
+        void DebugStep(Guid instanceId);
+        void DebugContinue(Guid instanceId);
+        void CancelDebugJob(Guid instanceId);
 
         /// <summary>
         /// Startet eine neue Instanz und wartet auf deren Abschluss (registriert sie in RunningJobInstances).

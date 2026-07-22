@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-                 Title="{Binding DialogTitle}" Height="300" Width="460"
+                 Title="{Binding DialogTitle}" Height="350" Width="480"
                  WindowStartupLocation="CenterOwner"
                  ResizeMode="NoResize" ShowInTaskbar="False"
                  Style="{StaticResource DialogWindowStyle}">
@@ -77,10 +77,24 @@
             </StackPanel>
 
             <!-- Timeout -->
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding ShowDuration, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DurationMs}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBox Width="80" Text="{Binding Duration}"/>
-            </StackPanel>
+            <Grid Margin="0,8,0,0" Visibility="{Binding ShowDuration, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="110"/><ColumnDefinition Width="74"/></Grid.ColumnDefinitions>
+                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Duration}" VerticalAlignment="Center"/>
+                <mah:NumericUpDown Grid.Column="1" Value="{Binding DurationValue}" Minimum="0" Maximum="1000000" Interval="1" StringFormat="{}{0:0.###}"/>
+                <ComboBox Grid.Column="2" ItemsSource="{Binding DurationUnits}" SelectedItem="{Binding SelectedDurationUnit}" DisplayMemberPath="Label" Margin="8,0,0,0"/>
+            </Grid>
+
+            <Border Height="1" Background="{DynamicResource App.Brush.CardBorder}" Margin="0,14,0,12"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="110"/><ColumnDefinition Width="74"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DelayBefore}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DelayBefore.Help}" FontSize="11"
+                               Foreground="{DynamicResource App.Brush.TextMuted}" TextWrapping="Wrap"/>
+                </StackPanel>
+                <mah:NumericUpDown Grid.Column="1" Value="{Binding DelayBeforeValue, TargetNullValue=''}" Minimum="0" Maximum="1000000" Interval="1" StringFormat="{}{0:0.###}" VerticalAlignment="Center"/>
+                <ComboBox Grid.Column="2" ItemsSource="{Binding DelayUnits}" SelectedItem="{Binding SelectedDelayUnit}" DisplayMemberPath="Label" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </Grid>
         </StackPanel>
 
         <!-- Buttons -->

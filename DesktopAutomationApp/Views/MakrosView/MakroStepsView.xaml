@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:mak="clr-namespace:TaskAutomation.Makros;assembly=TaskAutomation"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -67,10 +68,14 @@
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFileCommand}" Margin="0,0,12,0" ToolTip="{loc:Translate Key=Ui.Logs.OpenFile}">
                     <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14"/>
                 </Button>
+                <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="{loc:Translate Key=Ui.Macro.Stats.Duration}"/><TextBlock Text="{Binding TotalDurationDisplay}" FontWeight="SemiBold" Margin="5,0,0,0"/></StackPanel>
+                </Border>
+                <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="{loc:Translate Key=Ui.Macro.Stats.Steps}"/><TextBlock Text="{Binding StepCount}" FontWeight="SemiBold" Margin="5,0,0,0"/></StackPanel>
+                </Border>
                 <Border Style="{StaticResource CountBadge}" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Steps.Count, StringFormat='({0})'}"
-                               Foreground="{DynamicResource App.Brush.Accent}"
-                               FontSize="13"/>
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="{loc:Translate Key=Ui.Macro.Stats.Groups}"/><TextBlock Text="{Binding GroupCount}" FontWeight="SemiBold" Margin="5,0,0,0"/></StackPanel>
                 </Border>
             </StackPanel>
         </DockPanel>
@@ -139,25 +144,31 @@
                         </Button.Style>
                     </Button>
 
-                    <!-- Mauspfad umschalten -->
-                    <Button Command="{Binding ToggleMousePathCommand}"
-                            Content="{Binding RecordMousePathText}"
+                    <!-- Aufnahme-Einstellungen -->
+                    <Button Command="{Binding OpenRecordingSettingsCommand}"
                             Margin="0,0,0,0"
                             FontSize="13"
-                            ToolTip="{loc:Translate Key=Ui.Macro.Steps.ToggleRecordMousePathOrClicksOnly}">
+                            ToolTip="{loc:Translate Key=Ui.Macro.Recording.Settings}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource ButtonToolbar}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RecordMousePath}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource App.Brush.Accent}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsRecording}" Value="True">
                                         <Setter Property="IsEnabled" Value="False"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Cog" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding RecordingModeText}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ButtonToolbar}" Command="{Binding CreateGroupCommand}" Margin="8,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="FolderPlusOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Macro.Group.Create}"/>
+                        </StackPanel>
                     </Button>
 
                     <Border Style="{StaticResource ToolbarSeparator}"/>
@@ -183,9 +194,21 @@
                     </Button>
                 </StackPanel>
 
+                <!-- Filter -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="190"/><ColumnDefinition Width="190"/></Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"
+                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Macro.Filter.Search}"
+                             ToolTip="{loc:Translate Key=Ui.Macro.Filter.Search}"/>
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding StepTypeFilterOptions}" SelectedItem="{Binding SelectedStepTypeFilter}"
+                              DisplayMemberPath="Label" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding GroupFilterOptions}" SelectedItem="{Binding SelectedGroupFilter}"
+                              DisplayMemberPath="Label"/>
+                </Grid>
+
                 <!-- Steps-Liste -->
                 <ListBox x:Name="StepsList"
-                         ItemsSource="{Binding Steps}"
+                         ItemsSource="{Binding VisibleItems}"
                          SelectionMode="Extended"
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -193,9 +216,42 @@
                          VirtualizingStackPanel.ScrollUnit="Pixel"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
+                         VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                          SelectionChanged="StepsList_SelectionChanged"
-                         ItemContainerStyle="{StaticResource StepCardListBoxItemStyle}"
+                         PreviewMouseRightButtonDown="StepsList_PreviewMouseRightButtonDown"
                          behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}">
+
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource StepCardListBoxItemStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Step.HasGroup}" Value="True">
+                                    <Setter Property="Margin" Value="24,0,0,6"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBox.ContextMenu>
+                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+                                     Opened="StepsContextMenu_Opened">
+                            <MenuItem x:Name="GroupToggleMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Toggle}"
+                                      Command="{Binding ToggleGroupCommand}"
+                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem x:Name="GroupRenameMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Rename}"
+                                      Command="{Binding RenameGroupCommand}"
+                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            <MenuItem x:Name="GroupDissolveMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Dissolve}"
+                                      Command="{Binding DissolveGroupCommand}"
+                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+
+                            <MenuItem x:Name="StepCreateGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Create}" Command="{Binding CreateGroupCommand}"/>
+                            <MenuItem x:Name="StepRemoveGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.RemoveSelected}" Command="{Binding RemoveFromGroupCommand}"/>
+                            <Separator x:Name="StepContextSeparator"/>
+                            <MenuItem x:Name="StepCopyMenuItem" Header="{loc:Translate Key=Ui.Common.Copy}" Command="{Binding CopyCommand}"/>
+                            <MenuItem x:Name="StepDuplicateMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}" Command="{Binding DuplicateStepCommand}" CommandParameter="{Binding SelectedStep}"/>
+                            <MenuItem x:Name="StepDeleteMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}" Command="{Binding DeleteSelectedCommand}"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
 
                     <ListBox.InputBindings>
                         <KeyBinding Key="Delete"             Command="{Binding DeleteSelectedCommand}"/>
@@ -204,14 +260,17 @@
                         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
                         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}"/>
                     </ListBox.InputBindings>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
+                    <ListBox.Resources>
+                        <DataTemplate DataType="{x:Type vm:MacroStepListItem}">
                             <Grid Grid.IsSharedSizeScope="True">
-                                <Grid.ToolTip><ToolTip Content="{Binding ValidationMessage}"/></Grid.ToolTip>
+                                <Grid.ToolTip><ToolTip Content="{Binding Step.ValidationMessage}"/></Grid.ToolTip>
                                 <Grid.Style>
                                     <Style TargetType="Grid">
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsValid}" Value="False">
+                                            <DataTrigger Binding="{Binding Step.HasGroup}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Step.IsValid}" Value="False">
                                                 <Setter Property="Background" Value="#30FF0000"/>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -230,19 +289,24 @@
                                            VerticalAlignment="Top"
                                            Margin="0,0,12,0"
                                            Foreground="{DynamicResource MahApps.Brushes.Accent}">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource StepNumberConverter}">
-                                            <Binding/>
-                                            <Binding RelativeSource="{RelativeSource AncestorType=ListBox}" Path="ItemsSource"/>
-                                            <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
+                                    <TextBlock.Text><Binding Path="Number" StringFormat="{}{0}.&#160;"/></TextBlock.Text>
                                 </TextBlock>
 
                                 <!-- Inhalt via implizite DataTemplates -->
-                                <StackPanel Grid.Column="1">
-                                    <ContentPresenter Content="{Binding}"/>
-                                </StackPanel>
+                                <Grid Grid.Column="1">
+                                    <ContentPresenter Content="{Binding Step}" Margin="0,0,140,0"/>
+                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Padding="8,3" CornerRadius="10"
+                                            Background="{DynamicResource App.Brush.AccentSubtle}"
+                                            ToolTip="{loc:Translate Key=Ui.Macro.Step.ExecutionTime}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconMaterial Kind="TimerOutline" Width="12" Height="12"
+                                                                        Foreground="{DynamicResource App.Brush.Accent}" Margin="0,0,5,0"/>
+                                            <TextBlock Text="{Binding Step.ExecutionTimeDisplay}" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource App.Brush.Accent}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
 
                                 <!-- Aktionen -->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal"
@@ -251,37 +315,78 @@
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
                                             ToolTip="{loc:Translate Key=Ui.Common.EditStep}"
                                             Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding Step}">
                                         <iconPacks:PackIconMaterial Kind="Pencil"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
                                             ToolTip="{loc:Translate Key=Ui.Common.MoveStepUp}"
                                             Command="{Binding DataContext.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding Step}">
                                         <iconPacks:PackIconMaterial Kind="ArrowUp"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
                                             ToolTip="{loc:Translate Key=Ui.Common.MoveStepDown}"
                                             Command="{Binding DataContext.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding Step}">
                                         <iconPacks:PackIconMaterial Kind="ArrowDown"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
                                             ToolTip="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}"
                                             Command="{Binding DataContext.DuplicateStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding Step}">
                                         <iconPacks:PackIconMaterial Kind="ContentDuplicate"/>
                                     </Button>
                                     <Button Style="{StaticResource ButtonIconDanger}"
                                             ToolTip="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}"
                                             Command="{Binding DataContext.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
+                                            CommandParameter="{Binding Step}">
                                         <iconPacks:PackIconMaterial Kind="Delete"/>
                                     </Button>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
+
+                        <DataTemplate DataType="{x:Type vm:MacroGroupListItem}">
+                            <Border Margin="0,10,0,5" Padding="12,10" CornerRadius="7"
+                                    Background="{DynamicResource App.Brush.SurfaceHover}"
+                                    BorderBrush="{DynamicResource MahApps.Brushes.Accent}" BorderThickness="4,1,1,1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Button Style="{StaticResource ButtonIcon}" Margin="0,0,9,0"
+                                            Command="{Binding DataContext.ToggleGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding GroupId}">
+                                        <iconPacks:PackIconMaterial Width="17" Height="17" Foreground="{DynamicResource MahApps.Brushes.Accent}">
+                                            <iconPacks:PackIconMaterial.Style>
+                                                <Style TargetType="iconPacks:PackIconMaterial">
+                                                    <Setter Property="Kind" Value="ChevronDown"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding IsCollapsed}" Value="True"><Setter Property="Kind" Value="ChevronRight"/></DataTrigger></Style.Triggers>
+                                                </Style>
+                                            </iconPacks:PackIconMaterial.Style>
+                                        </iconPacks:PackIconMaterial>
+                                    </Button>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding Summary}" Margin="10,1,0,0" FontSize="12"
+                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <Button Style="{StaticResource ButtonIcon}" Margin="0,0,6,0"
+                                                ToolTip="{loc:Translate Key=Ui.Macro.Group.Rename}"
+                                                Command="{Binding DataContext.RenameGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding GroupId}">
+                                            <iconPacks:PackIconMaterial Kind="Pencil"/>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonIconDanger}"
+                                                ToolTip="{loc:Translate Key=Ui.Macro.Group.Dissolve}"
+                                                Command="{Binding DataContext.DissolveGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding GroupId}">
+                                            <iconPacks:PackIconMaterial Kind="FolderRemoveOutline"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.Resources>
                 </ListBox>
 
             </DockPanel>

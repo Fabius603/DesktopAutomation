@@ -62,10 +62,18 @@ namespace DesktopAutomationApp.Services.Preview
 
             // Letzter Mauspunkt (nur zur Node/Segment-Bildung hilfreich)
             (float x, float y)? lastPos = null;
+            if (makro.RecordingSettings.Mode == MakroRecordingMode.MotionFaithfulRelative
+                && makro.RecordedEnvironment is { StartCursorX: { } startX, StartCursorY: { } startY })
+            {
+                lastPos = (startX, startY);
+                mousePositions.Add((lastPos.Value, 0));
+            }
             int nodeIdx = 0;
 
             foreach (var cmd in makro.Befehle)
             {
+                if (cmd.DelayBeforeMicroseconds is > 0)
+                    t += cmd.DelayBeforeMicroseconds.Value / 1_000_000d;
                 switch (cmd)
                 {
                     case MouseMoveAbsoluteBefehl m:
