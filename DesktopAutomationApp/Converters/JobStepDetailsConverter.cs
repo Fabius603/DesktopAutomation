@@ -12,13 +12,24 @@ namespace DesktopAutomationApp.Converters;
 
 public sealed record StepDetailItem(string Name, string Value);
 public sealed record StepDetailGroup(string Title, IReadOnlyList<StepDetailItem> Items);
-public sealed record StepResultDetails(string TypeName, IReadOnlyList<StepDetailItem> Properties);
+public sealed record StepResultPropertyDetails(
+    string Name,
+    string TypeName,
+    string Description,
+    IReadOnlyList<StepResultPropertyDetails> Children);
+public sealed record StepResultDetails(
+    string TypeName,
+    IReadOnlyList<StepResultPropertyDetails> Properties);
 public sealed record JobStepDetails(IReadOnlyList<StepDetailGroup> Groups, StepResultDetails? Result);
 
 /// <summary>Creates a complete, read-only description directly from a step's settings and result types.</summary>
 public sealed class JobStepDetailsConverter : IMultiValueConverter
 {
     private static readonly JobStepDetailsProvider Provider = new();
+    private int _cacheVersion = int.MinValue;
+    private IEnumerable? _cacheSteps;
+    private Dictionary<JobStep, JobStepDetails> _cache =
+        new(ReferenceEqualityComparer.Instance);
 
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
@@ -26,7 +37,16 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
             return new JobStepDetails([], null);
 
         var steps = values.Skip(1).FirstOrDefault() as IEnumerable;
-        return Provider.GetDetails(step, steps);
+        var version = values.Length > 2 && values[2] is int value ? value : 0;
+        if (!ReferenceEquals(steps, _cacheSteps) || version != _cacheVersion)
+        {
+            _cache = new Dictionary<JobStep, JobStepDetails>(ReferenceEqualityComparer.Instance);
+            _cacheSteps = steps;
+            _cacheVersion = version;
+        }
+        if (!_cache.TryGetValue(step, out var details))
+            _cache[step] = details = Provider.GetDetails(step, steps);
+        return details;
     }
 
     private static void AddConditions(IfConditionSettings settings,
@@ -78,17 +98,29 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
 
     private static StepResultDetails? CreateResultDetails(JobStep step)
     {
-        var output = StepPipelineRegistry.Get(step.GetType())?.Output;
-        if (string.IsNullOrWhiteSpace(output) || output == "–") return new StepResultDetails("–", []);
-        if (step is DynamicRoiStep) output = nameof(DynamicRoiResult);
-
-        var type = typeof(StepResultBase).Assembly.GetType($"TaskAutomation.Steps.{output}");
-        if (type is null) return new StepResultDetails(output, []);
-        var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-            .Select(p => new StepDetailItem(Humanize(p.Name), FriendlyType(p.PropertyType)))
+        var contract = StepResultMetadata.GetResultTypeForStep(step);
+        if (contract is null) return new StepResultDetails("–", []);
+        var properties = contract.PropertyTree
+            .Select(node => CreateResultPropertyDetails(node, string.Empty, contract.TypeName))
             .ToArray();
-        return new StepResultDetails(output, properties);
+        return new StepResultDetails(contract.DisplayName, properties);
+    }
+
+    private static StepResultPropertyDetails CreateResultPropertyDetails(
+        ResultPropertyNode node,
+        string parentPath,
+        string resultTypeName)
+    {
+        var path = string.IsNullOrWhiteSpace(parentPath)
+            ? node.Segment
+            : $"{parentPath}.{node.Segment}";
+        return new StepResultPropertyDetails(
+            StepLocalization.PropertyPath(resultTypeName, path),
+            node.Property is null ? string.Empty : StepLocalization.ResultValueType(node.Property),
+            node.Property is null
+                ? string.Empty
+                : StepLocalization.PropertyDescription(resultTypeName, node.Property),
+            node.Children.Select(child => CreateResultPropertyDetails(child, path, resultTypeName)).ToArray());
     }
 
     private static string GetGroup(string name)
@@ -175,9 +207,7 @@ public sealed class StepBranchSummaryConverter : IMultiValueConverter
         if (step is not IfStep and not ElseIfStep) return string.Empty;
         var settings = step is IfStep i ? i.Settings : ((ElseIfStep)step).Settings;
         var steps = values.Skip(1).FirstOrDefault() as IList;
-        var join = settings.MatchMode == ConditionMatchMode.All ? " AND " : " OR ";
-        return string.Join(join, settings.Conditions.Select(condition =>
-            ConditionDisplayFormatter.Format(condition, steps)));
+        return ConditionDisplayFormatter.FormatSummary(settings, steps);
     }
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }

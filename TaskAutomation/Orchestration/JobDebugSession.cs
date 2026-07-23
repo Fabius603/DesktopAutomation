@@ -22,12 +22,14 @@ public sealed class JobDebugStepSnapshot
 
     public string StepId { get; }
     public string StepType { get; internal set; } = string.Empty;
+    public string? ResultTypeName { get; internal set; }
     public string Phase { get; internal set; } = string.Empty;
     public int Iteration { get; internal set; }
     public JobStepDebugState State { get; internal set; }
     public string? InputDetails { get; internal set; }
     public string? ResultDetails { get; internal set; }
     public IReadOnlyList<JobDebugValueNode> OutputValues { get; internal set; } = [];
+    public ConditionDebugEvaluation? ConditionEvaluation { get; internal set; }
     public DateTimeOffset? StartedAt { get; internal set; }
     public DateTimeOffset? FinishedAt { get; internal set; }
     public TimeSpan? Duration => StartedAt.HasValue && FinishedAt.HasValue
@@ -35,11 +37,35 @@ public sealed class JobDebugStepSnapshot
         : null;
 }
 
+public enum ConditionDebugState
+{
+    Met,
+    NotMet,
+    NotEvaluated,
+    Unavailable
+}
+
+public sealed record ConditionDebugItem(
+    StepCondition Definition,
+    ConditionDebugState State,
+    string? ActualValue,
+    string? ExpectedValue,
+    string? Diagnostic = null);
+
+public sealed record ConditionDebugEvaluation(
+    ConditionMatchMode MatchMode,
+    ConditionDebugState State,
+    IReadOnlyList<ConditionDebugItem> Conditions,
+    bool BranchExecuted,
+    string? Diagnostic = null);
+
 public sealed record JobDebugValueNode(
     string Name,
     string DisplayValue,
     string TypeName,
-    IReadOnlyList<JobDebugValueNode> Children)
+    IReadOnlyList<JobDebugValueNode> Children,
+    string? PropertyPath = null,
+    int? CollectionCount = null)
 {
     public bool HasChildren => Children.Count > 0;
 }
@@ -49,7 +75,9 @@ public sealed class JobDebugSession
     private readonly object _gate = new();
     private readonly Dictionary<string, JobDebugStepSnapshot> _snapshots = new();
     private TaskCompletionSource<bool>? _resumeSignal;
+    private JobStep? _currentStep;
     private bool _pauseBeforeNext = true;
+    private volatile bool _suppressIntermediateChanges;
 
     internal JobDebugSession(Guid instanceId, Job job)
     {
@@ -70,8 +98,10 @@ public sealed class JobDebugSession
     public string? CurrentStepId { get; private set; }
     public string Phase { get; private set; } = string.Empty;
     public int Iteration { get; private set; }
+    public bool IsAtIterationEnd { get; private set; }
     public string StatusText { get; private set; } = "Debugger wird gestartet.";
     public event Action? Changed;
+    public event Action? IterationChanged;
 
     public JobDebugStepSnapshot? GetSnapshot(string stepId)
     {
@@ -85,11 +115,23 @@ public sealed class JobDebugSession
             return _snapshots.Values.ToArray();
     }
 
-    internal void SetIteration(int iteration)
+    internal void SetIteration(int iteration, IEnumerable<string>? retainedResultStepIds = null)
     {
         if (Iteration == iteration) return;
-        Iteration = iteration;
-        Changed?.Invoke();
+        lock (_gate)
+        {
+            Iteration = iteration;
+            var retainedIds = (retainedResultStepIds ?? [])
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var stepId in _snapshots.Keys
+                         .Where(stepId => !retainedIds.Contains(stepId))
+                         .ToArray())
+                _snapshots.Remove(stepId);
+        }
+        if (_suppressIntermediateChanges)
+            IterationChanged?.Invoke();
+        else
+            PublishChanged();
     }
 
     internal async Task BeforeStepAsync(JobStep step, string phase, CancellationToken cancellationToken, string? details = null)
@@ -97,9 +139,12 @@ public sealed class JobDebugSession
         Task? waitTask = null;
         lock (_gate)
         {
+            IsAtIterationEnd = false;
             CurrentStepId = step.Id;
+            _currentStep = step;
             Phase = phase;
-            step.DebugDetails = details;
+            if (!_suppressIntermediateChanges)
+                step.DebugDetails = details;
             var snapshot = GetOrCreateSnapshot(step);
             snapshot.StepType = step.GetType().Name;
             snapshot.Phase = phase;
@@ -123,12 +168,12 @@ public sealed class JobDebugSession
                 waitTask = _resumeSignal.Task;
             }
         }
-        Changed?.Invoke();
+        PublishChanged(waitTask != null);
         if (waitTask == null) return;
         await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
         lock (_gate)
             SetRunning(step, phase);
-        Changed?.Invoke();
+        PublishChanged();
     }
 
     public void Step()
@@ -137,41 +182,66 @@ public sealed class JobDebugSession
         {
             if (State != JobDebugSessionState.Paused) return;
             _pauseBeforeNext = true;
+            _suppressIntermediateChanges = false;
             _resumeSignal?.TrySetResult(true);
         }
     }
 
     public void Continue()
     {
+        var resumed = false;
         lock (_gate)
         {
             if (State != JobDebugSessionState.Paused) return;
             _pauseBeforeNext = false;
+            if (_currentStep is { DebugState: JobStepDebugState.Waiting } currentStep)
+            {
+                currentStep.DebugState = JobStepDebugState.None;
+                currentStep.DebugDetails = null;
+            }
+            _suppressIntermediateChanges = true;
+            State = JobDebugSessionState.Running;
+            StatusText = $"{Phase}: Ausführung wird fortgesetzt.";
             _resumeSignal?.TrySetResult(true);
+            resumed = true;
         }
+        if (resumed)
+            PublishChanged(force: true);
     }
 
-    internal void MarkCompleted(JobStep step, string? details = null, object? result = null)
+    internal void MarkCompleted(
+        JobStep step,
+        string? details = null,
+        object? result = null,
+        ConditionDebugEvaluation? conditionEvaluation = null)
     {
         lock (_gate)
         {
-            step.DebugDetails = details;
-            step.DebugState = JobStepDebugState.Completed;
+            if (!_suppressIntermediateChanges)
+            {
+                step.DebugDetails = details;
+                step.DebugState = JobStepDebugState.Completed;
+            }
             var snapshot = GetOrCreateSnapshot(step);
             snapshot.State = JobStepDebugState.Completed;
             snapshot.ResultDetails = details;
+            snapshot.ResultTypeName = result?.GetType().Name;
             snapshot.OutputValues = JobDebugValueFormatter.CreateOutputValues(result, details);
+            snapshot.ConditionEvaluation = conditionEvaluation;
             snapshot.FinishedAt = DateTimeOffset.Now;
         }
-        Changed?.Invoke();
+        PublishChanged();
     }
 
     internal void MarkSkipped(JobStep step, string reason)
     {
         lock (_gate)
         {
-            step.DebugDetails = reason;
-            step.DebugState = JobStepDebugState.Skipped;
+            if (!_suppressIntermediateChanges)
+            {
+                step.DebugDetails = reason;
+                step.DebugState = JobStepDebugState.Skipped;
+            }
             var snapshot = GetOrCreateSnapshot(step);
             snapshot.StepType = step.GetType().Name;
             snapshot.Phase = Phase;
@@ -181,7 +251,31 @@ public sealed class JobDebugSession
             snapshot.OutputValues = JobDebugValueFormatter.CreateOutputValues(null, reason);
             snapshot.FinishedAt = DateTimeOffset.Now;
         }
-        Changed?.Invoke();
+        PublishChanged();
+    }
+
+    internal async Task PauseAfterIterationAsync(CancellationToken cancellationToken)
+    {
+        Task waitTask;
+        lock (_gate)
+        {
+            if (!_pauseBeforeNext)
+                return;
+
+            IsAtIterationEnd = true;
+            State = JobDebugSessionState.Paused;
+            StatusText = $"Iteration {Iteration} abgeschlossen.";
+            _resumeSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            waitTask = _resumeSignal.Task;
+        }
+        PublishChanged(force: true);
+        await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        lock (_gate)
+        {
+            IsAtIterationEnd = false;
+            State = JobDebugSessionState.Running;
+        }
+        PublishChanged();
     }
 
     internal async Task PauseAfterFailureAsync(JobStep step, Exception exception, CancellationToken cancellationToken)
@@ -201,13 +295,14 @@ public sealed class JobDebugSession
             _resumeSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             waitTask = _resumeSignal.Task;
         }
-        Changed?.Invoke();
+        PublishChanged(force: true);
         await waitTask.WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     internal void Finish(JobDebugSessionState state)
     {
         State = state;
+        IsAtIterationEnd = false;
         CurrentStepId = null;
         StatusText = state switch
         {
@@ -217,15 +312,22 @@ public sealed class JobDebugSession
         };
         lock (_gate)
             _resumeSignal?.TrySetResult(true);
-        Changed?.Invoke();
+        PublishChanged(force: true);
     }
 
     private void SetRunning(JobStep step, string phase)
     {
-        step.DebugState = JobStepDebugState.Running;
+        if (!_suppressIntermediateChanges)
+            step.DebugState = JobStepDebugState.Running;
         GetOrCreateSnapshot(step).State = JobStepDebugState.Running;
         State = JobDebugSessionState.Running;
         StatusText = $"{phase}: {step.GetType().Name} wird ausgeführt.";
+    }
+
+    private void PublishChanged(bool force = false)
+    {
+        if (force || !_suppressIntermediateChanges)
+            Changed?.Invoke();
     }
 
     private JobDebugStepSnapshot GetOrCreateSnapshot(JobStep step)
@@ -245,7 +347,7 @@ internal static class JobDebugValueFormatter
     public static IReadOnlyList<JobDebugValueNode> CreateOutputValues(object? result, string? fallback)
     {
         if (result != null)
-            return BuildObjectChildren(result, 0, new HashSet<object>(ReferenceEqualityComparer.Instance));
+            return BuildObjectChildren(result, 0, new HashSet<object>(ReferenceEqualityComparer.Instance), null);
         return string.IsNullOrWhiteSpace(fallback)
             ? []
             : [new JobDebugValueNode("Status", fallback, "String", [])];
@@ -254,7 +356,8 @@ internal static class JobDebugValueFormatter
     private static IReadOnlyList<JobDebugValueNode> BuildObjectChildren(
         object value,
         int depth,
-        HashSet<object> visited)
+        HashSet<object> visited,
+        string? parentPath)
     {
         if (depth >= MaxDepth) return [];
         var type = value.GetType();
@@ -269,7 +372,12 @@ internal static class JobDebugValueFormatter
 
             if (value is IEnumerable enumerable && value is not string)
                 return enumerable.Cast<object?>().Take(MaxItems)
-                    .Select((item, index) => CreateNode($"[{index}]", item, depth + 1, visited))
+                    .Select((item, index) => CreateNode(
+                        $"[{index}]",
+                        item,
+                        depth + 1,
+                        visited,
+                        childPath: parentPath is null ? null : $"{parentPath}[]"))
                     .ToArray();
 
             return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -282,7 +390,16 @@ internal static class JobDebugValueFormatter
                     object? propertyValue;
                     try { propertyValue = property.GetValue(value); }
                     catch { propertyValue = null; }
-                    return CreateNode(Humanize(property.Name), propertyValue, depth + 1, visited);
+                    var propertyPath = string.IsNullOrWhiteSpace(parentPath)
+                        ? property.Name
+                        : $"{parentPath}.{property.Name}";
+                    return CreateNode(
+                        Humanize(property.Name),
+                        propertyValue,
+                        depth + 1,
+                        visited,
+                        propertyPath,
+                        propertyPath);
                 })
                 .ToArray();
         }
@@ -292,20 +409,30 @@ internal static class JobDebugValueFormatter
         }
     }
 
-    private static JobDebugValueNode CreateNode(string name, object? value, int depth, HashSet<object> visited)
+    private static JobDebugValueNode CreateNode(
+        string name,
+        object? value,
+        int depth,
+        HashSet<object> visited,
+        string? propertyPath = null,
+        string? childPath = null)
     {
-        if (value == null) return new JobDebugValueNode(name, "null", "null", []);
+        if (value == null) return new JobDebugValueNode(name, "null", "null", [], propertyPath);
         var type = value.GetType();
         if (IsSimple(type))
-            return new JobDebugValueNode(name, FormatSimple(value), FriendlyTypeName(type), []);
+            return new JobDebugValueNode(
+                name, FormatSimple(value), FriendlyTypeName(type), [], propertyPath);
         if (value is System.Drawing.Bitmap bitmap)
-            return new JobDebugValueNode(name, $"{bitmap.Width} × {bitmap.Height} px", "Bitmap", []);
+            return new JobDebugValueNode(
+                name, $"{bitmap.Width} × {bitmap.Height} px", "Bitmap", [], propertyPath);
 
-        var children = BuildObjectChildren(value, depth, visited);
+        var children = BuildObjectChildren(value, depth, visited, childPath ?? propertyPath);
+        int? collectionCount = value is ICollection countable ? countable.Count : null;
         var summary = value is ICollection collection
             ? $"{collection.Count} Elemente"
             : FriendlyTypeName(type);
-        return new JobDebugValueNode(name, summary, FriendlyTypeName(type), children);
+        return new JobDebugValueNode(
+            name, summary, FriendlyTypeName(type), children, propertyPath, collectionCount);
     }
 
     private static bool IsSimple(Type type)

@@ -10,8 +10,10 @@ public sealed class JobResultStoreTests
     public void Get_WhenNothingStored_ReturnsSharedDefault()
     {
         var store = new JobResultStore();
-        Assert.Same(WindowsStateQueryResult.Default, store.Get<WindowsStateQueryStep, WindowsStateQueryResult>());
-        Assert.Same(WindowsStateQueryResult.Default, store.GetById<WindowsStateQueryResult>("missing"));
+        var byType = store.Get<WindowsStateQueryStep, AudioVolumeQueryResult>();
+        var byId = store.GetById<AudioVolumeQueryResult>("missing");
+        Assert.Same(byType, byId);
+        Assert.False(byType.WasExecuted);
         Assert.Null(store.GetRaw("missing"));
     }
 
@@ -19,10 +21,10 @@ public sealed class JobResultStoreTests
     public void Set_IndexesResultByTypeAndIdCaseInsensitively()
     {
         var store = new JobResultStore();
-        var result = new WindowsStateQueryResult { WasExecuted = true, Percentage = 42 };
+        var result = new AudioVolumeQueryResult { WasExecuted = true, Percentage = 42 };
         store.Set<WindowsStateQueryStep>(result, "Audio-Step");
-        Assert.Same(result, store.Get<WindowsStateQueryStep, WindowsStateQueryResult>());
-        Assert.Same(result, store.GetById<WindowsStateQueryResult>("audio-step"));
+        Assert.Same(result, store.Get<WindowsStateQueryStep, AudioVolumeQueryResult>());
+        Assert.Same(result, store.GetById<AudioVolumeQueryResult>("audio-step"));
         Assert.Same(result, store.GetRaw("AUDIO-STEP"));
     }
 
@@ -30,20 +32,20 @@ public sealed class JobResultStoreTests
     public void Set_MultipleStepsOfSameType_PreservesEachIdAndLatestType()
     {
         var store = new JobResultStore();
-        var first = new WindowsStateQueryResult { Percentage = 10 };
-        var second = new WindowsStateQueryResult { Percentage = 90 };
+        var first = new AudioVolumeQueryResult { Percentage = 10 };
+        var second = new AudioVolumeQueryResult { Percentage = 90 };
         store.Set<WindowsStateQueryStep>(first, "first");
         store.Set<WindowsStateQueryStep>(second, "second");
-        Assert.Same(first, store.GetById<WindowsStateQueryResult>("first"));
-        Assert.Same(second, store.GetById<WindowsStateQueryResult>("second"));
-        Assert.Same(second, store.Get<WindowsStateQueryStep, WindowsStateQueryResult>());
+        Assert.Same(first, store.GetById<AudioVolumeQueryResult>("first"));
+        Assert.Same(second, store.GetById<AudioVolumeQueryResult>("second"));
+        Assert.Same(second, store.Get<WindowsStateQueryStep, AudioVolumeQueryResult>());
     }
 
     [Fact]
     public void RetainOnly_RemovesOtherResults()
     {
         var store = new JobResultStore();
-        store.Set<WindowsStateQueryStep>(new WindowsStateQueryResult(), "keep");
+        store.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult(), "keep");
         store.Set<ShowTextStep>(new ShowTextResult(), "remove");
         store.RetainOnly(["KEEP"]);
         Assert.NotNull(store.GetRaw("keep"));

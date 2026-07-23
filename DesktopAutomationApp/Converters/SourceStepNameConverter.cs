@@ -51,13 +51,13 @@ namespace DesktopAutomationApp.Converters
 
             var source = list.Cast<object>().OfType<JobStep>()
                 .FirstOrDefault(step => step.Id == binding.SourceStepId);
-            var output = source is null ? null : StepPipelineRegistry.Get(source.GetType())?.Output;
-            var property = string.IsNullOrWhiteSpace(output)
-                ? null
-                : StepResultMetadata.GetResultType(output)?.Properties.FirstOrDefault(candidate =>
-                    candidate.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
+            var resultType = source is null ? null : StepResultMetadata.GetResultTypeForStep(source);
+            var property = resultType?.Properties.FirstOrDefault(candidate =>
+                (!string.IsNullOrWhiteSpace(binding.PropertyId)
+                 && candidate.StableId.Equals(binding.PropertyId, StringComparison.OrdinalIgnoreCase))
+                || candidate.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
             var propertyName = property is null
-                ? binding.PropertyPath
+                ? binding.PropertyId ?? binding.PropertyPath
                 : StepLocalization.PropertyPath(property.Name);
             var cardinality = property?.Cardinality == ResultCardinality.Collection ? " · Liste" : string.Empty;
             return $"{name}  →  {propertyName}{cardinality}";

@@ -181,7 +181,7 @@
     <value>Jobs</value>
   </data>
   <data name="Ui.Yolo.YOLODownloads" xml:space="preserve">
-    <value>YOLO Downloads</value>
+    <value>YOLO-Modelle</value>
   </data>
   <data name="Ui.App.Logs" xml:space="preserve">
     <value>Logs</value>
@@ -2279,4 +2279,369 @@ Fehlermeldung:
   <data name="Ui.Job.Debug.Panel.ExpandAll" xml:space="preserve"><value>Alle Ausgaben ausklappen</value></data>
   <data name="Ui.Job.Debug.Panel.CollapseAll" xml:space="preserve"><value>Alle Ausgaben einklappen</value></data>
   <data name="Ui.Common.Close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="Ui.Job.Debug.Value.True" xml:space="preserve"><value>Wahr</value></data>
+  <data name="Ui.Job.Debug.Value.False" xml:space="preserve"><value>Falsch</value></data>
+  <data name="Ui.Job.Debug.Value.Null" xml:space="preserve"><value>Kein Wert</value></data>
+  <data name="Ui.Job.Debug.Value.CollectionCount" xml:space="preserve"><value>{0} Elemente</value></data>
+  <data name="Ui.Job.Debug.State.None" xml:space="preserve"><value>Nicht gestartet</value></data>
+  <data name="Ui.Job.Debug.State.Waiting" xml:space="preserve"><value>Wartet</value></data>
+  <data name="Ui.Job.Debug.State.Running" xml:space="preserve"><value>Wird ausgeführt</value></data>
+  <data name="Ui.Job.Debug.State.Completed" xml:space="preserve"><value>Abgeschlossen</value></data>
+  <data name="Ui.Job.Debug.State.Skipped" xml:space="preserve"><value>Übersprungen</value></data>
+  <data name="Ui.Job.Debug.State.Failed" xml:space="preserve"><value>Fehlgeschlagen</value></data>
+  <data name="Ui.Job.Debug.Phase.Start" xml:space="preserve"><value>Startphase</value></data>
+  <data name="Ui.Job.Debug.Phase.Run" xml:space="preserve"><value>Hauptphase</value></data>
+  <data name="Ui.Job.Debug.Phase.End" xml:space="preserve"><value>Endphase</value></data>
+  <data name="Ui.Job.Debug.Status.Starting" xml:space="preserve"><value>Debugger wird gestartet.</value></data>
+  <data name="Ui.Job.Debug.Status.Running" xml:space="preserve"><value>{0}: {1} wird ausgeführt.</value></data>
+  <data name="Ui.Job.Debug.Status.Paused" xml:space="preserve"><value>Pausiert vor {0}: {1}</value></data>
+  <data name="Ui.Job.Debug.Status.IterationCompleted" xml:space="preserve"><value>Iteration {0} abgeschlossen. „Nächster Step“ oder „Weiter“ startet die nächste Iteration.</value></data>
+  <data name="Ui.Job.Debug.Status.Error" xml:space="preserve"><value>Fehler in {0}: {1}</value></data>
+  <data name="Ui.Job.Debug.Status.Completed" xml:space="preserve"><value>Debug-Ausführung erfolgreich abgeschlossen.</value></data>
+  <data name="Ui.Job.Debug.Status.Cancelled" xml:space="preserve"><value>Debug-Ausführung abgebrochen.</value></data>
+  <data name="Ui.Job.Debug.Status.Failed" xml:space="preserve"><value>Debug-Ausführung fehlgeschlagen.</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.CapturedAt" xml:space="preserve"><value>Erfasst am</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ErrorCode" xml:space="preserve"><value>Fehlercode</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ErrorMessage" xml:space="preserve"><value>Fehlermeldung</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsConnected" xml:space="preserve"><value>Verbunden</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Connectivity" xml:space="preserve"><value>Netzwerkverbindung</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.ConnectionType" xml:space="preserve"><value>Verbindungstyp</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Items" xml:space="preserve"><value>Einträge</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Exists" xml:space="preserve"><value>Vorhanden</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.DeviceState" xml:space="preserve"><value>Gerätestatus</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsMuted" xml:space="preserve"><value>Stummgeschaltet</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Percentage" xml:space="preserve"><value>Prozentwert</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Id" xml:space="preserve"><value>ID</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.OnOffState" xml:space="preserve"><value>Ein-/Aus-Status</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.SessionState" xml:space="preserve"><value>Sitzungsstatus</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsCharging" xml:space="preserve"><value>Wird geladen</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.PowerSource" xml:space="preserve"><value>Stromquelle</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Path" xml:space="preserve"><value>Pfad</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Value" xml:space="preserve"><value>Wert</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.FreeSpaceGb" xml:space="preserve"><value>Freier Speicher (GB)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.IsEnabled" xml:space="preserve"><value>Aktiviert</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.PendingRestart" xml:space="preserve"><value>Neustart ausstehend</value></data>
+  <data name="Enum.WindowsCapabilityStatus.Success" xml:space="preserve"><value>Erfolgreich</value></data>
+  <data name="Enum.WindowsCapabilityStatus.Unsupported" xml:space="preserve"><value>Nicht unterstützt</value></data>
+  <data name="Enum.WindowsCapabilityStatus.AccessDenied" xml:space="preserve"><value>Zugriff verweigert</value></data>
+  <data name="Enum.WindowsCapabilityStatus.Timeout" xml:space="preserve"><value>Zeitüberschreitung</value></data>
+  <data name="Enum.WindowsCapabilityStatus.Failed" xml:space="preserve"><value>Fehlgeschlagen</value></data>
+  <data name="Enum.WindowsConnectivity.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsConnectivity.Disconnected" xml:space="preserve"><value>Getrennt</value></data>
+  <data name="Enum.WindowsConnectivity.LocalNetwork" xml:space="preserve"><value>Lokales Netzwerk</value></data>
+  <data name="Enum.WindowsConnectivity.Internet" xml:space="preserve"><value>Internet</value></data>
+  <data name="Enum.WindowsConnectionType.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsConnectionType.Ethernet" xml:space="preserve"><value>Ethernet</value></data>
+  <data name="Enum.WindowsConnectionType.WiFi" xml:space="preserve"><value>WLAN</value></data>
+  <data name="Enum.WindowsConnectionType.Mobile" xml:space="preserve"><value>Mobilfunk</value></data>
+  <data name="Enum.WindowsConnectionType.Virtual" xml:space="preserve"><value>Virtuell</value></data>
+  <data name="Enum.WindowsPowerSource.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsPowerSource.Ac" xml:space="preserve"><value>Netzbetrieb</value></data>
+  <data name="Enum.WindowsPowerSource.Battery" xml:space="preserve"><value>Akkubetrieb</value></data>
+  <data name="Enum.WindowsSessionState.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsSessionState.Active" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="Enum.WindowsSessionState.Locked" xml:space="preserve"><value>Gesperrt</value></data>
+  <data name="Enum.WindowsSessionState.Disconnected" xml:space="preserve"><value>Getrennt</value></data>
+  <data name="Enum.WindowsDeviceState.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsDeviceState.Connected" xml:space="preserve"><value>Verbunden</value></data>
+  <data name="Enum.WindowsDeviceState.Disconnected" xml:space="preserve"><value>Getrennt</value></data>
+  <data name="Enum.WindowsDeviceState.Disabled" xml:space="preserve"><value>Deaktiviert</value></data>
+  <data name="Enum.WindowsDeviceState.Error" xml:space="preserve"><value>Fehler</value></data>
+  <data name="Enum.WindowsOnOffState.Unknown" xml:space="preserve"><value>Unbekannt</value></data>
+  <data name="Enum.WindowsOnOffState.Off" xml:space="preserve"><value>Aus</value></data>
+  <data name="Enum.WindowsOnOffState.On" xml:space="preserve"><value>Ein</value></data>
+  <data name="Ui.ReleaseNotes.Title" xml:space="preserve"><value>Versionshinweise</value></data>
+  <data name="Ui.ReleaseNotes.Heading" xml:space="preserve"><value>Was ist neu?</value></data>
+  <data name="Ui.ReleaseNotes.Description" xml:space="preserve"><value>Neue Funktionen, Verbesserungen und Fehlerbehebungen in DesktopAutomation.</value></data>
+  <data name="Ui.ReleaseNotes.SettingsTitle" xml:space="preserve"><value>Versionshinweise</value></data>
+  <data name="Ui.ReleaseNotes.SettingsDescription" xml:space="preserve"><value>Zeigt die Neuerungen der installierten Versionen an.</value></data>
+  <data name="Ui.ReleaseNotes.Show" xml:space="preserve"><value>Anzeigen</value></data>
+  <data name="Ui.ReleaseNotes.Category.Added" xml:space="preserve"><value>Neu</value></data>
+  <data name="Ui.ReleaseNotes.Category.Changed" xml:space="preserve"><value>Geändert</value></data>
+  <data name="Ui.ReleaseNotes.Category.Fixed" xml:space="preserve"><value>Behoben</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Name" xml:space="preserve"><value>Primärer Netzwerkadapter</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Count" xml:space="preserve"><value>Aktive Netzwerkadapter</value></data>
+  <data name="Step.ResultProperty.NetworkConnectivityQueryResult.Items" xml:space="preserve"><value>Namen der aktiven Netzwerkadapter</value></data>
+  <data name="Step.ResultProperty.AudioDevicesQueryResult.Name" xml:space="preserve"><value>Erstes Audiogerät</value></data>
+  <data name="Step.ResultProperty.AudioDevicesQueryResult.Count" xml:space="preserve"><value>Anzahl gefundener Audiogeräte</value></data>
+  <data name="Step.ResultProperty.AudioDevicesQueryResult.Items" xml:space="preserve"><value>Gefundene Audiogeräte</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.Exists" xml:space="preserve"><value>Audioausgabegerät vorhanden</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.Percentage" xml:space="preserve"><value>Lautstärke (%)</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.Id" xml:space="preserve"><value>ID des Audioausgabegeräts</value></data>
+  <data name="Step.ResultProperty.AudioVolumeQueryResult.OnOffState" xml:space="preserve"><value>Status des Audioausgabegeräts</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.IsActive" xml:space="preserve"><value>Benutzersitzung aktiv</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.Name" xml:space="preserve"><value>Angemeldeter Benutzer</value></data>
+  <data name="Step.ResultProperty.SessionStateQueryResult.Id" xml:space="preserve"><value>Sitzungs-ID</value></data>
+  <data name="Step.ResultProperty.PowerStatusQueryResult.IsConnected" xml:space="preserve"><value>Netzteil angeschlossen</value></data>
+  <data name="Step.ResultProperty.PowerStatusQueryResult.Percentage" xml:space="preserve"><value>Akkustand (%)</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.IsConnected" xml:space="preserve"><value>Mindestens ein Monitor angeschlossen</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl Monitore</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Name" xml:space="preserve"><value>Primärer Monitor</value></data>
+  <data name="Step.ResultProperty.MonitorCollectionQueryResult.Items" xml:space="preserve"><value>Angeschlossene Monitore</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Exists" xml:space="preserve"><value>Passendes Gerät gefunden</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.IsConnected" xml:space="preserve"><value>Passendes Gerät verbunden</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Count" xml:space="preserve"><value>Anzahl passender Geräte</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Name" xml:space="preserve"><value>Erstes passendes Gerät</value></data>
+  <data name="Step.ResultProperty.DeviceCollectionQueryResult.Items" xml:space="preserve"><value>Passende Geräte</value></data>
+  <data name="Step.ResultProperty.FileSystemPathQueryResult.Exists" xml:space="preserve"><value>Datei oder Ordner vorhanden</value></data>
+  <data name="Step.ResultProperty.FileSystemPathQueryResult.Count" xml:space="preserve"><value>Anzahl enthaltener Einträge</value></data>
+  <data name="Step.ResultProperty.FileSystemPathQueryResult.Value" xml:space="preserve"><value>Dateigröße (Bytes)</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Exists" xml:space="preserve"><value>Prozess läuft</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Count" xml:space="preserve"><value>Anzahl laufender Instanzen</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Name" xml:space="preserve"><value>Gesuchter Prozessname</value></data>
+  <data name="Step.ResultProperty.ProcessRunningQueryResult.Id" xml:space="preserve"><value>Prozess-ID der ersten Instanz</value></data>
+  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Exists" xml:space="preserve"><value>Vordergrundfenster vorhanden</value></data>
+  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Name" xml:space="preserve"><value>Prozess des Vordergrundfensters</value></data>
+  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Text" xml:space="preserve"><value>Fenstertitel</value></data>
+  <data name="Step.ResultProperty.ForegroundWindowQueryResult.Id" xml:space="preserve"><value>Prozess-ID des Vordergrundfensters</value></data>
+  <data name="Step.ResultProperty.InputIdleQueryResult.IdleMilliseconds" xml:space="preserve"><value>Zeit seit letzter Eingabe (ms)</value></data>
+  <data name="Step.ResultProperty.InputIdleQueryResult.IdleSeconds" xml:space="preserve"><value>Zeit seit letzter Eingabe (Sekunden)</value></data>
+  <data name="Step.ResultProperty.ClipboardContentQueryResult.Exists" xml:space="preserve"><value>Zwischenablage enthält Daten</value></data>
+  <data name="Step.ResultProperty.ClipboardContentQueryResult.Name" xml:space="preserve"><value>Inhaltstyp</value></data>
+  <data name="Step.ResultProperty.PrinterStatusQueryResult.Count" xml:space="preserve"><value>Anzahl gefundener Drucker</value></data>
+  <data name="Step.ResultProperty.PrinterStatusQueryResult.Name" xml:space="preserve"><value>Erster gefundener Drucker</value></data>
+  <data name="Step.ResultProperty.PrinterStatusQueryResult.Items" xml:space="preserve"><value>Gefundene Drucker</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.Exists" xml:space="preserve"><value>Passendes Laufwerk vorhanden</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.IsConnected" xml:space="preserve"><value>Passendes Laufwerk bereit</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.Count" xml:space="preserve"><value>Anzahl bereiter Laufwerke</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.Name" xml:space="preserve"><value>Erstes bereites Laufwerk</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.FreeSpaceGb" xml:space="preserve"><value>Gesamter freier Speicher (GB)</value></data>
+  <data name="Step.ResultProperty.StorageDrivesQueryResult.Items" xml:space="preserve"><value>Bereite Laufwerke</value></data>
+  <data name="Step.ResultProperty.SystemSettingsQueryResult.Name" xml:space="preserve"><value>Windows-Zeitzone</value></data>
+  <data name="Step.ResultProperty.SystemSettingsQueryResult.Text" xml:space="preserve"><value>Windows-Anzeigesprache</value></data>
+  <data name="Step.ResultProperty.SystemSettingsQueryResult.IsEnabled" xml:space="preserve"><value>Dunkler App-Modus aktiviert</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.Exists" xml:space="preserve"><value>Windows-Firewalldienst vorhanden</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.IsEnabled" xml:space="preserve"><value>Windows-Firewalldienst aktiviert</value></data>
+  <data name="Step.ResultProperty.SecurityStatusQueryResult.OnOffState" xml:space="preserve"><value>Status des Windows-Firewalldiensts</value></data>
+  <data name="Step.ResultProperty.SystemLifecycleQueryResult.UptimeMilliseconds" xml:space="preserve"><value>Systemlaufzeit (ms)</value></data>
+  <data name="Step.ResultProperty.SystemLifecycleQueryResult.UptimeSeconds" xml:space="preserve"><value>Systemlaufzeit (Sekunden)</value></data>
+  <data name="Step.ResultProperty.SystemLifecycleQueryResult.OperatingSystemVersion" xml:space="preserve"><value>Windows-Version</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.Status" xml:space="preserve"><value>Zeigt, ob die Windows-Abfrage erfolgreich war oder warum sie nicht ausgeführt werden konnte.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.CapturedAt" xml:space="preserve"><value>Zeitpunkt, zu dem Windows den Zustand ermittelt hat.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorCode" xml:space="preserve"><value>Technischer Fehlercode; bei erfolgreicher Abfrage leer.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorMessage" xml:space="preserve"><value>Fehlerbeschreibung; bei erfolgreicher Abfrage leer.</value></data>
+  <data name="Ui.Job.Steps.Unsaved" xml:space="preserve"><value>Ungespeichert</value></data>
+  <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Job bearbeiten</value></data>
+  <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job wird ausgeführt</value></data>
+  <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} ausgewählt</value></data>
+  <data name="Ui.Job.Steps.ProblemCount" xml:space="preserve"><value>{0} Probleme</value></data>
+  <data name="Ui.Job.Steps.EnableStep" xml:space="preserve"><value>Step aktivieren</value></data>
+  <data name="Ui.Job.Steps.DisableStep" xml:space="preserve"><value>Step deaktivieren</value></data>
+  <data name="Ui.Common.Undo" xml:space="preserve"><value>Rückgängig</value></data>
+  <data name="Ui.Common.Redo" xml:space="preserve"><value>Wiederholen</value></data>
+  <data name="Ui.Common.Edit" xml:space="preserve"><value>Bearbeiten</value></data>
+  <data name="Ui.Common.Paste" xml:space="preserve"><value>Einfügen</value></data>
+  <data name="Ui.Job.Steps.RunOptions" xml:space="preserve"><value>Ausführungsart auswählen</value></data>
+  <data name="Ui.Job.Condition.NoConditions" xml:space="preserve"><value>Keine Bedingungen konfiguriert</value></data>
+  <data name="Ui.Job.Condition.AllBadge" xml:space="preserve"><value>ALLE</value></data>
+  <data name="Ui.Job.Condition.AnyBadge" xml:space="preserve"><value>MINDESTENS EINE</value></data>
+  <data name="Ui.Job.Condition.Count" xml:space="preserve"><value>{0} Bedingungen</value></data>
+  <data name="Ui.Job.Condition.More" xml:space="preserve"><value>+{0} weitere</value></data>
+  <data name="Ui.Job.Debug.Condition.Expression" xml:space="preserve"><value>Ausdruck</value></data>
+  <data name="Ui.Job.Debug.Condition.ActualValue" xml:space="preserve"><value>Tatsächlicher Wert</value></data>
+  <data name="Ui.Job.Debug.Condition.ExpectedValue" xml:space="preserve"><value>Vergleichswert</value></data>
+  <data name="Ui.Job.Debug.Condition.Diagnostic" xml:space="preserve"><value>Hinweis</value></data>
+  <data name="Ui.Job.Debug.Condition.Number" xml:space="preserve"><value>Bedingung {0}</value></data>
+  <data name="Ui.Job.Debug.Condition.OverallResult" xml:space="preserve"><value>Gesamtergebnis</value></data>
+  <data name="Ui.Job.Debug.Condition.Branch" xml:space="preserve"><value>Zweig</value></data>
+  <data name="Ui.Job.Debug.Condition.Executed" xml:space="preserve"><value>Wird ausgeführt</value></data>
+  <data name="Ui.Job.Debug.Condition.Skipped" xml:space="preserve"><value>Wird übersprungen</value></data>
+  <data name="Ui.Job.Debug.Condition.State.Met" xml:space="preserve"><value>Erfüllt</value></data>
+  <data name="Ui.Job.Debug.Condition.State.NotMet" xml:space="preserve"><value>Nicht erfüllt</value></data>
+  <data name="Ui.Job.Debug.Condition.State.NotEvaluated" xml:space="preserve"><value>Nicht ausgewertet</value></data>
+  <data name="Ui.Job.Debug.Condition.State.Unavailable" xml:space="preserve"><value>Wert nicht verfügbar</value></data>
+  <data name="Ui.Windows.EventDescription" xml:space="preserve"><value>Löst die Automation aus, wenn „{0}“ eintritt.</value></data>
+  <data name="Ui.Windows.QueryDescription" xml:space="preserve"><value>Liest den aktuellen Windows-Zustand „{0}“.</value></data>
+  <data name="Ui.Windows.RequiresElevation" xml:space="preserve"><value>Für diese Funktion können Administratorrechte erforderlich sein.</value></data>
+  <data name="Windows.Parameter.ssid" xml:space="preserve"><value>WLAN-Name (SSID)</value></data>
+  <data name="Windows.Parameter.path" xml:space="preserve"><value>Datei oder Ordner</value></data>
+  <data name="Windows.Parameter.include_subdirectories" xml:space="preserve"><value>Unterordner</value></data>
+  <data name="Windows.Parameter.ProcessName" xml:space="preserve"><value>Prozessname</value></data>
+  <data name="Windows.Parameter.Drive" xml:space="preserve"><value>Laufwerk</value></data>
+  <data name="Windows.Parameter.threshold_ms" xml:space="preserve"><value>Leerlaufgrenze (ms)</value></data>
+  <data name="Windows.Parameter.filter_value" xml:space="preserve"><value>Filter</value></data>
+  <data name="Windows.Parameter.Placeholder.ssid" xml:space="preserve"><value>Mein WLAN</value></data>
+  <data name="Windows.Parameter.Placeholder.path" xml:space="preserve"><value>C:\Pfad</value></data>
+  <data name="Windows.Parameter.Placeholder.name" xml:space="preserve"><value>Name</value></data>
+  <data name="Windows.Parameter.Placeholder.ProcessName" xml:space="preserve"><value>notepad</value></data>
+  <data name="Windows.Parameter.Placeholder.Drive" xml:space="preserve"><value>C:</value></data>
+  <data name="Windows.Parameter.Placeholder.filter_value" xml:space="preserve"><value>Name enthält …</value></data>
+  <data name="Windows.Capability.network.availability.changed" xml:space="preserve"><value>Netzwerkverfügbarkeit geändert</value></data>
+  <data name="Windows.Capability.network.address.changed" xml:space="preserve"><value>Netzwerkadresse geändert</value></data>
+  <data name="Windows.Capability.network.connected" xml:space="preserve"><value>Netzwerk verfügbar</value></data>
+  <data name="Windows.Capability.network.disconnected" xml:space="preserve"><value>Netzwerk nicht verfügbar</value></data>
+  <data name="Windows.Capability.network.wifi.changed" xml:space="preserve"><value>WLAN-Ereignis</value></data>
+  <data name="Windows.Capability.network.wifi.connecting" xml:space="preserve"><value>WLAN-Verbindung wird aufgebaut</value></data>
+  <data name="Windows.Capability.network.wifi.connected" xml:space="preserve"><value>WLAN verbunden</value></data>
+  <data name="Windows.Capability.network.wifi.connection_failed" xml:space="preserve"><value>WLAN-Verbindung fehlgeschlagen</value></data>
+  <data name="Windows.Capability.network.wifi.disconnecting" xml:space="preserve"><value>WLAN wird getrennt</value></data>
+  <data name="Windows.Capability.network.wifi.disconnected" xml:space="preserve"><value>WLAN-Verbindung getrennt</value></data>
+  <data name="Windows.Capability.network.wifi.associating" xml:space="preserve"><value>WLAN-Zuordnung wird aufgebaut</value></data>
+  <data name="Windows.Capability.network.wifi.associated" xml:space="preserve"><value>WLAN zugeordnet</value></data>
+  <data name="Windows.Capability.network.wifi.authenticating" xml:space="preserve"><value>WLAN wird authentifiziert</value></data>
+  <data name="Windows.Capability.network.wifi.roaming_started" xml:space="preserve"><value>WLAN-Roaming gestartet</value></data>
+  <data name="Windows.Capability.network.wifi.roaming_completed" xml:space="preserve"><value>WLAN-Roaming abgeschlossen</value></data>
+  <data name="Windows.Capability.network.wifi.radio_state_changed" xml:space="preserve"><value>WLAN-Funkstatus geändert</value></data>
+  <data name="Windows.Capability.network.wifi.signal_quality_changed" xml:space="preserve"><value>WLAN-Signalstärke geändert</value></data>
+  <data name="Windows.Capability.network.wifi.scan_completed" xml:space="preserve"><value>WLAN-Suche abgeschlossen</value></data>
+  <data name="Windows.Capability.network.wifi.scan_failed" xml:space="preserve"><value>WLAN-Suche fehlgeschlagen</value></data>
+  <data name="Windows.Capability.network.wifi.adapter_added" xml:space="preserve"><value>WLAN-Schnittstelle hinzugefügt oder aktiviert</value></data>
+  <data name="Windows.Capability.network.wifi.adapter_removed" xml:space="preserve"><value>WLAN-Schnittstelle entfernt oder deaktiviert</value></data>
+  <data name="Windows.Capability.network.wifi.profile_changed" xml:space="preserve"><value>WLAN-Profil geändert</value></data>
+  <data name="Windows.Capability.network.wifi.network_available" xml:space="preserve"><value>WLAN-Netzwerk verfügbar</value></data>
+  <data name="Windows.Capability.network.wifi.network_unavailable" xml:space="preserve"><value>WLAN-Netzwerk nicht verfügbar</value></data>
+  <data name="Windows.Capability.network.wifi.autoconfig_enabled" xml:space="preserve"><value>WLAN-Autokonfiguration aktiviert</value></data>
+  <data name="Windows.Capability.network.wifi.autoconfig_disabled" xml:space="preserve"><value>WLAN-Autokonfiguration deaktiviert</value></data>
+  <data name="Windows.Capability.network.connectivity" xml:space="preserve"><value>Aktuelle Netzwerkverbindung</value></data>
+  <data name="Windows.Capability.audio.device.changed" xml:space="preserve"><value>Audiogerät geändert</value></data>
+  <data name="Windows.Capability.audio.device.added" xml:space="preserve"><value>Audiogerät hinzugefügt</value></data>
+  <data name="Windows.Capability.audio.device.removed" xml:space="preserve"><value>Audiogerät entfernt</value></data>
+  <data name="Windows.Capability.audio.device.default_changed" xml:space="preserve"><value>Standard-Audiogerät geändert</value></data>
+  <data name="Windows.Capability.audio.device.connected" xml:space="preserve"><value>Audiogerät verbunden</value></data>
+  <data name="Windows.Capability.audio.device.disconnected" xml:space="preserve"><value>Audiogerät getrennt</value></data>
+  <data name="Windows.Capability.audio.device.state_changed" xml:space="preserve"><value>Audiogerätestatus geändert</value></data>
+  <data name="Windows.Capability.audio.device.property_changed" xml:space="preserve"><value>Audiogeräteeigenschaft geändert</value></data>
+  <data name="Windows.Capability.audio.volume.changed" xml:space="preserve"><value>Lautstärke geändert</value></data>
+  <data name="Windows.Capability.audio.volume.level_changed" xml:space="preserve"><value>Lautstärkepegel geändert</value></data>
+  <data name="Windows.Capability.audio.volume.muted" xml:space="preserve"><value>Audio stummgeschaltet</value></data>
+  <data name="Windows.Capability.audio.volume.unmuted" xml:space="preserve"><value>Stummschaltung aufgehoben</value></data>
+  <data name="Windows.Capability.audio.devices" xml:space="preserve"><value>Audiogeräte</value></data>
+  <data name="Windows.Capability.audio.volume" xml:space="preserve"><value>Lautstärke und Stummschaltung</value></data>
+  <data name="Windows.Capability.session.state.changed" xml:space="preserve"><value>Windows-Sitzung geändert</value></data>
+  <data name="Windows.Capability.session.state" xml:space="preserve"><value>Aktuelle Windows-Sitzung</value></data>
+  <data name="Windows.Capability.session.locked" xml:space="preserve"><value>Sitzung gesperrt</value></data>
+  <data name="Windows.Capability.session.unlocked" xml:space="preserve"><value>Sitzung entsperrt</value></data>
+  <data name="Windows.Capability.session.logged_on" xml:space="preserve"><value>Benutzer angemeldet</value></data>
+  <data name="Windows.Capability.session.logged_off" xml:space="preserve"><value>Benutzer abgemeldet</value></data>
+  <data name="Windows.Capability.session.remote_connected" xml:space="preserve"><value>Remotesitzung verbunden</value></data>
+  <data name="Windows.Capability.session.remote_disconnected" xml:space="preserve"><value>Remotesitzung getrennt</value></data>
+  <data name="Windows.Capability.session.console_connected" xml:space="preserve"><value>Konsolensitzung verbunden</value></data>
+  <data name="Windows.Capability.session.console_disconnected" xml:space="preserve"><value>Konsolensitzung getrennt</value></data>
+  <data name="Windows.Capability.power.mode.changed" xml:space="preserve"><value>Energiemodus geändert</value></data>
+  <data name="Windows.Capability.power.status" xml:space="preserve"><value>Akku und Energiequelle</value></data>
+  <data name="Windows.Capability.power.suspended" xml:space="preserve"><value>Standby gestartet</value></data>
+  <data name="Windows.Capability.power.resumed" xml:space="preserve"><value>Standby beendet</value></data>
+  <data name="Windows.Capability.power.status.changed" xml:space="preserve"><value>Energiestatus geändert</value></data>
+  <data name="Windows.Capability.power.ac_connected" xml:space="preserve"><value>Netzteil angeschlossen</value></data>
+  <data name="Windows.Capability.power.ac_disconnected" xml:space="preserve"><value>Netzteil getrennt</value></data>
+  <data name="Windows.Capability.power.charging_started" xml:space="preserve"><value>Laden begonnen</value></data>
+  <data name="Windows.Capability.power.charging_stopped" xml:space="preserve"><value>Laden beendet</value></data>
+  <data name="Windows.Capability.power.battery_level_changed" xml:space="preserve"><value>Akkustand geändert</value></data>
+  <data name="Windows.Capability.display.settings.changed" xml:space="preserve"><value>Bildschirmeinstellungen geändert</value></data>
+  <data name="Windows.Capability.display.monitors" xml:space="preserve"><value>Angeschlossene Monitore</value></data>
+  <data name="Windows.Capability.display.connected" xml:space="preserve"><value>Bildschirm verbunden</value></data>
+  <data name="Windows.Capability.display.disconnected" xml:space="preserve"><value>Bildschirm getrennt</value></data>
+  <data name="Windows.Capability.display.configuration.changed" xml:space="preserve"><value>Bildschirmkonfiguration geändert</value></data>
+  <data name="Windows.Capability.display.orientation_changed" xml:space="preserve"><value>Bildschirmausrichtung geändert</value></data>
+  <data name="Windows.Capability.display.resolution_changed" xml:space="preserve"><value>Bildschirmauflösung geändert</value></data>
+  <data name="Windows.Capability.display.primary_changed" xml:space="preserve"><value>Hauptbildschirm geändert</value></data>
+  <data name="Windows.Capability.device.hardware.changed" xml:space="preserve"><value>Hardwaregerät geändert</value></data>
+  <data name="Windows.Capability.device.hardware.connected" xml:space="preserve"><value>Hardwaregerät verbunden</value></data>
+  <data name="Windows.Capability.device.hardware.disconnected" xml:space="preserve"><value>Hardwaregerät getrennt</value></data>
+  <data name="Windows.Capability.device.usb.changed" xml:space="preserve"><value>USB-Gerät geändert</value></data>
+  <data name="Windows.Capability.device.hardware.updated" xml:space="preserve"><value>Hardwarekonfiguration aktualisiert</value></data>
+  <data name="Windows.Capability.device.usb.connected" xml:space="preserve"><value>USB-Gerät verbunden</value></data>
+  <data name="Windows.Capability.device.usb.disconnected" xml:space="preserve"><value>USB-Gerät getrennt</value></data>
+  <data name="Windows.Capability.device.hardware" xml:space="preserve"><value>Hardwaregeräte</value></data>
+  <data name="Windows.Capability.device.usb" xml:space="preserve"><value>USB-Geräte</value></data>
+  <data name="Windows.Capability.bluetooth.state.changed" xml:space="preserve"><value>Bluetooth-Geräteliste geändert</value></data>
+  <data name="Windows.Capability.bluetooth.devices" xml:space="preserve"><value>Bluetooth-Geräte</value></data>
+  <data name="Windows.Capability.filesystem.changed" xml:space="preserve"><value>Datei oder Ordner geändert</value></data>
+  <data name="Windows.Capability.filesystem.created" xml:space="preserve"><value>Datei oder Ordner erstellt</value></data>
+  <data name="Windows.Capability.filesystem.deleted" xml:space="preserve"><value>Datei oder Ordner gelöscht</value></data>
+  <data name="Windows.Capability.filesystem.renamed" xml:space="preserve"><value>Datei oder Ordner umbenannt</value></data>
+  <data name="Windows.Capability.filesystem.path" xml:space="preserve"><value>Datei- oder Ordnerzustand</value></data>
+  <data name="Windows.Capability.process.started" xml:space="preserve"><value>Prozess gestartet</value></data>
+  <data name="Windows.Capability.process.exited" xml:space="preserve"><value>Prozess beendet</value></data>
+  <data name="Windows.Capability.process.running" xml:space="preserve"><value>Läuft ein Prozess?</value></data>
+  <data name="Windows.Capability.window.changed" xml:space="preserve"><value>Fenster geändert</value></data>
+  <data name="Windows.Capability.window.opened" xml:space="preserve"><value>Fenster geöffnet</value></data>
+  <data name="Windows.Capability.window.closed" xml:space="preserve"><value>Fenster geschlossen</value></data>
+  <data name="Windows.Capability.window.focused" xml:space="preserve"><value>Fenster in den Vordergrund gewechselt</value></data>
+  <data name="Windows.Capability.window.minimized" xml:space="preserve"><value>Fenster minimiert</value></data>
+  <data name="Windows.Capability.window.restored" xml:space="preserve"><value>Fenster wiederhergestellt</value></data>
+  <data name="Windows.Capability.window.shown" xml:space="preserve"><value>Fenster angezeigt</value></data>
+  <data name="Windows.Capability.window.hidden" xml:space="preserve"><value>Fenster ausgeblendet</value></data>
+  <data name="Windows.Capability.window.moved_or_resized" xml:space="preserve"><value>Fenster verschoben oder skaliert</value></data>
+  <data name="Windows.Capability.window.foreground" xml:space="preserve"><value>Aktives Fenster</value></data>
+  <data name="Windows.Capability.input.idle.changed" xml:space="preserve"><value>Leerlaufgrenze erreicht oder verlassen</value></data>
+  <data name="Windows.Capability.input.idle.entered" xml:space="preserve"><value>Leerlaufgrenze erreicht</value></data>
+  <data name="Windows.Capability.input.idle.left" xml:space="preserve"><value>Leerlauf beendet</value></data>
+  <data name="Windows.Capability.input.idle" xml:space="preserve"><value>Zeit seit letzter Eingabe</value></data>
+  <data name="Windows.Capability.clipboard.changed" xml:space="preserve"><value>Zwischenablage geändert</value></data>
+  <data name="Windows.Capability.clipboard.content_changed" xml:space="preserve"><value>Zwischenablageninhalt geändert</value></data>
+  <data name="Windows.Capability.clipboard.text_changed" xml:space="preserve"><value>Text in Zwischenablage</value></data>
+  <data name="Windows.Capability.clipboard.image_changed" xml:space="preserve"><value>Bild in Zwischenablage</value></data>
+  <data name="Windows.Capability.clipboard.files_changed" xml:space="preserve"><value>Dateien in Zwischenablage</value></data>
+  <data name="Windows.Capability.clipboard.cleared" xml:space="preserve"><value>Zwischenablage geleert</value></data>
+  <data name="Windows.Capability.clipboard.content" xml:space="preserve"><value>Zwischenablageninhalt</value></data>
+  <data name="Windows.Capability.printer.queue.changed" xml:space="preserve"><value>Druckerwarteschlange geändert</value></data>
+  <data name="Windows.Capability.printer.job.added" xml:space="preserve"><value>Druckauftrag hinzugefügt</value></data>
+  <data name="Windows.Capability.printer.job.changed" xml:space="preserve"><value>Druckauftrag geändert</value></data>
+  <data name="Windows.Capability.printer.job.deleted" xml:space="preserve"><value>Druckauftrag entfernt</value></data>
+  <data name="Windows.Capability.printer.state.changed" xml:space="preserve"><value>Weiteres Druckerereignis</value></data>
+  <data name="Windows.Capability.printer.status" xml:space="preserve"><value>Druckerstatus</value></data>
+  <data name="Windows.Capability.printer.added" xml:space="preserve"><value>Drucker hinzugefügt</value></data>
+  <data name="Windows.Capability.printer.removed" xml:space="preserve"><value>Drucker entfernt</value></data>
+  <data name="Windows.Capability.printer.connection_failed" xml:space="preserve"><value>Druckerverbindung fehlgeschlagen</value></data>
+  <data name="Windows.Capability.printer.settings_changed" xml:space="preserve"><value>Druckerstatus oder Einstellungen geändert</value></data>
+  <data name="Windows.Capability.storage.drive.changed" xml:space="preserve"><value>Laufwerk geändert</value></data>
+  <data name="Windows.Capability.storage.drive.mounted" xml:space="preserve"><value>Laufwerk eingebunden</value></data>
+  <data name="Windows.Capability.storage.drive.unmounted" xml:space="preserve"><value>Laufwerk entfernt</value></data>
+  <data name="Windows.Capability.storage.drives" xml:space="preserve"><value>Laufwerke und freier Speicher</value></data>
+  <data name="Windows.Capability.storage.media.inserted" xml:space="preserve"><value>Wechselmedium eingelegt</value></data>
+  <data name="Windows.Capability.storage.media.removed" xml:space="preserve"><value>Wechselmedium entfernt</value></data>
+  <data name="Windows.Capability.system.time.changed" xml:space="preserve"><value>Systemzeit geändert</value></data>
+  <data name="Windows.Capability.system.settings.changed" xml:space="preserve"><value>Systemeinstellung geändert</value></data>
+  <data name="Windows.Capability.system.time.clock_adjusted" xml:space="preserve"><value>Systemuhr angepasst</value></data>
+  <data name="Windows.Capability.system.settings.locale_changed" xml:space="preserve"><value>Region oder Sprache geändert</value></data>
+  <data name="Windows.Capability.system.time.timezone_changed" xml:space="preserve"><value>Zeitzone geändert</value></data>
+  <data name="Windows.Capability.system.settings.colors_changed" xml:space="preserve"><value>Farben geändert</value></data>
+  <data name="Windows.Capability.system.settings.desktop_changed" xml:space="preserve"><value>Desktop-Einstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.general_changed" xml:space="preserve"><value>Allgemeine Systemeinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.icons_changed" xml:space="preserve"><value>Symbole geändert</value></data>
+  <data name="Windows.Capability.system.settings.keyboard_changed" xml:space="preserve"><value>Tastatureinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.menu_changed" xml:space="preserve"><value>Menüeinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.mouse_changed" xml:space="preserve"><value>Mauseinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.power_changed" xml:space="preserve"><value>Energieeinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings.screensaver_changed" xml:space="preserve"><value>Bildschirmschoner geändert</value></data>
+  <data name="Windows.Capability.system.settings.window_changed" xml:space="preserve"><value>Fenstereinstellung geändert</value></data>
+  <data name="Windows.Capability.system.settings" xml:space="preserve"><value>Zeit, Sprache und Darstellung</value></data>
+  <data name="Windows.Capability.security.state.changed" xml:space="preserve"><value>Windows-Sicherheit geändert</value></data>
+  <data name="Windows.Capability.security.threat.detected" xml:space="preserve"><value>Bedrohung erkannt</value></data>
+  <data name="Windows.Capability.security.threat.action_taken" xml:space="preserve"><value>Sicherheitsmaßnahme ausgeführt</value></data>
+  <data name="Windows.Capability.security.settings.changed" xml:space="preserve"><value>Sicherheitseinstellung geändert</value></data>
+  <data name="Windows.Capability.security.status" xml:space="preserve"><value>Windows-Sicherheitsstatus</value></data>
+  <data name="Windows.Capability.windows_update.changed" xml:space="preserve"><value>Windows Update geändert</value></data>
+  <data name="Windows.Capability.windows_update.download_started" xml:space="preserve"><value>Update-Download gestartet</value></data>
+  <data name="Windows.Capability.windows_update.downloaded" xml:space="preserve"><value>Update heruntergeladen</value></data>
+  <data name="Windows.Capability.windows_update.installed" xml:space="preserve"><value>Update installiert</value></data>
+  <data name="Windows.Capability.windows_update.failed" xml:space="preserve"><value>Update fehlgeschlagen</value></data>
+  <data name="Windows.Capability.windows_update.restart_required" xml:space="preserve"><value>Update erfordert Neustart</value></data>
+  <data name="Windows.Capability.windows_update.status" xml:space="preserve"><value>Windows-Update-Status</value></data>
+  <data name="Windows.Capability.system.lifecycle.changed" xml:space="preserve"><value>Abmelden oder Herunterfahren</value></data>
+  <data name="Windows.Capability.system.lifecycle" xml:space="preserve"><value>Systemlaufzeit</value></data>
+  <data name="Windows.Capability.system.lifecycle.logoff" xml:space="preserve"><value>Benutzer wird abgemeldet</value></data>
+  <data name="Windows.Capability.system.lifecycle.shutdown" xml:space="preserve"><value>Windows wird heruntergefahren</value></data>
+  <data name="Yolo.SelectOnnxTitle" xml:space="preserve">
+    <value>ONNX-Modell auswählen</value>
+  </data>
+  <data name="Yolo.OnnxFilter" xml:space="preserve">
+    <value>ONNX-Modelle (*.onnx)|*.onnx</value>
+  </data>
+  <data name="Yolo.Model.yolo11n.DisplayName" xml:space="preserve">
+    <value>YOLO11 Nano</value>
+  </data>
+  <data name="Yolo.Model.yolo11n.Description" xml:space="preserve">
+    <value>Allgemeine Objekterkennung mit 80 Klassen wie Personen, Fahrzeugen und Tieren. Schnell und ressourcenschonend.</value>
+  </data>
+  <data name="Yolo.Model.screenparser.DisplayName" xml:space="preserve">
+    <value>ScreenParser</value>
+  </data>
+  <data name="Yolo.Model.screenparser.Description" xml:space="preserve">
+    <value>Erkennt 55 Elemente von Benutzeroberflächen wie Buttons, Eingabefelder, Menüs, Listen und Symbole. Für Bildschirmaufnahmen optimiert und leistungsintensiver als YOLO11 Nano.</value>
+  </data>
 </root>

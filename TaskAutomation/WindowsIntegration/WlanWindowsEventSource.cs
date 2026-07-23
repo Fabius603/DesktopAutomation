@@ -33,12 +33,16 @@ public sealed class WlanWindowsEventSource : IWindowsEventSource
 
     private void OnNotification(ref NotificationData notification, IntPtr context)
     {
+        var connection = notification.Source == SourceAcm && IsAcmConnectionNotification(notification.Code)
+            ? TryReadConnection(notification.Data, notification.DataSize)
+            : null;
         var type = notification.Source switch
         {
-            SourceAcm => AcmType(notification.Code), SourceMsm => MsmType(notification.Code), _ => null
+            SourceAcm => AcmType(notification.Code, connection?.ReasonCode),
+            SourceMsm => MsmType(notification.Code),
+            _ => null
         };
         if (type is null) return;
-        var connection = TryReadConnection(notification.Data, notification.DataSize);
         var data = new Dictionary<string, string?>
         {
             ["change"] = type.Split('.').Last(), ["interface_id"] = notification.InterfaceGuid.ToString(),
@@ -48,25 +52,28 @@ public sealed class WlanWindowsEventSource : IWindowsEventSource
         EventReceived?.Invoke(new WindowsSystemEvent(type, WindowsEventCategory.Network, DateTimeOffset.Now, notification.InterfaceGuid.ToString(), data));
     }
 
-    private static string? AcmType(uint code) => code switch
+    internal static string? AcmType(uint code, uint? reasonCode = null) => code switch
     {
         1 => "network.wifi.autoconfig_enabled", 2 => "network.wifi.autoconfig_disabled", 7 => "network.wifi.scan_completed",
-        8 => "network.wifi.scan_failed", 9 => "network.wifi.connecting", 10 => "network.wifi.connected",
+        8 => "network.wifi.scan_failed", 9 => "network.wifi.connecting",
+        10 => reasonCode == 0 ? "network.wifi.connected" : "network.wifi.connection_failed",
         11 => "network.wifi.connection_failed", 13 => "network.wifi.adapter_added", 14 => "network.wifi.adapter_removed",
         15 or 16 => "network.wifi.profile_changed", 18 => "network.wifi.network_unavailable", 19 => "network.wifi.network_available",
         20 => "network.wifi.disconnecting", 21 => "network.wifi.disconnected", _ => null
     };
-    private static string? MsmType(uint code) => code switch
+    internal static string? MsmType(uint code) => code switch
     {
         1 => "network.wifi.associating", 2 => "network.wifi.associated", 3 => "network.wifi.authenticating",
-        4 => "network.wifi.connected", 5 => "network.wifi.roaming_started", 6 => "network.wifi.roaming_completed",
-        7 => "network.wifi.radio_state_changed", 8 => "network.wifi.signal_quality_changed", 9 => "network.wifi.disconnecting",
-        10 => "network.wifi.disconnected", _ => null
+        5 => "network.wifi.roaming_started", 6 => "network.wifi.roaming_completed",
+        7 => "network.wifi.radio_state_changed", 8 => "network.wifi.signal_quality_changed",
+        _ => null
     };
+
+    private static bool IsAcmConnectionNotification(uint code) => code is 9 or 10 or 11 or 20 or 21;
 
     private static ConnectionData? TryReadConnection(IntPtr pointer, uint size)
     {
-        if (pointer == IntPtr.Zero || size < 556) return null;
+        if (pointer == IntPtr.Zero || size < Marshal.SizeOf<ConnectionNotificationData>()) return null;
         try
         {
             var raw = Marshal.PtrToStructure<ConnectionNotificationData>(pointer);

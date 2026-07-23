@@ -4,7 +4,7 @@ namespace TaskAutomation.Steps;
 
 public sealed record AcceptedResultShape(ResultValueKind ValueKind, params ResultCardinality[] Cardinalities)
 {
-    public bool Accepts(ResultPropertyDescriptor property) => ValueKind == property.ValueKind
+    public bool Accepts(ResultPropertyDescriptor property) => ValueKind == property.DataType
         && (Cardinalities.Length == 0 || Cardinalities.Contains(property.Cardinality));
 }
 
@@ -18,6 +18,17 @@ public sealed record StepInputDescriptor(
     params AcceptedResultShape[] AcceptedShapes)
 {
     public bool Accepts(ResultPropertyDescriptor property) => AcceptedShapes.Any(shape => shape.Accepts(property));
+
+    public ResultPropertyDescriptor? FindPreferredProperty(IEnumerable<ResultPropertyDescriptor> properties)
+    {
+        var candidates = properties.ToArray();
+        foreach (var shape in AcceptedShapes)
+        {
+            var match = candidates.FirstOrDefault(shape.Accepts);
+            if (match is not null) return match;
+        }
+        return null;
+    }
 }
 
 /// <summary>Backend-owned input contract. UI and validation only show paths accepted here.</summary>
@@ -56,9 +67,9 @@ public static class StepInputContractRegistry
         [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(DynamicRoiStep)] = [Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles)],
-        [typeof(ShowOnDesktopStep)] = [Required("detections", CollectionConsumptionMode.AllValues, Detections, Points)],
-        [typeof(ShowImageStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Points)],
-        [typeof(VideoCreationStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Points)],
+        [typeof(ShowOnDesktopStep)] = [Required("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
+        [typeof(ShowImageStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
+        [typeof(VideoCreationStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
         [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],

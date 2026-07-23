@@ -45,7 +45,9 @@ public static class AutomationDisplayFormatter
             fileSystem.Filter),
         SystemEventAutomationTrigger systemEvent => LocalizedEnum(systemEvent.EventKind),
         WindowsEventAutomationTrigger windowsEvent =>
-            new WindowsCapabilityCatalog().Find(windowsEvent.EventType)?.DisplayName ?? windowsEvent.EventType,
+            new WindowsCapabilityCatalog().Find(windowsEvent.EventType) is { } capability
+                ? WindowsCapabilityLocalization.DisplayName(capability)
+                : windowsEvent.EventType,
         WebhookAutomationTrigger webhook => Loc.Format("Automation.Trigger.Webhook", LocalizedEnum(webhook.NetworkMode)),
         _ => trigger.Kind.ToString()
     };

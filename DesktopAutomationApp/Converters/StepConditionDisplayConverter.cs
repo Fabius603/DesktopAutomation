@@ -52,6 +52,21 @@ namespace DesktopAutomationApp.Converters
             return $"{source} → {property} {operatorText} {operandText}";
         }
 
+        public static string FormatSummary(IfConditionSettings settings, IList? steps)
+        {
+            if (settings.Conditions.Count == 0)
+                return Loc.Get("Ui.Job.Condition.NoConditions");
+            if (settings.Conditions.Count == 1)
+                return Format(settings.Conditions[0], steps);
+
+            var mode = settings.MatchMode == ConditionMatchMode.All
+                ? Loc.Get("Ui.Job.Condition.AllBadge")
+                : Loc.Get("Ui.Job.Condition.AnyBadge");
+            var first = Format(settings.Conditions[0], steps);
+            return $"{mode} · {Loc.Format("Ui.Job.Condition.Count", settings.Conditions.Count)} · "
+                   + $"{first} · {Loc.Format("Ui.Job.Condition.More", settings.Conditions.Count - 1)}";
+        }
+
         private static string ResolveStep(
             string? stepId,
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap) =>
@@ -65,23 +80,25 @@ namespace DesktopAutomationApp.Converters
             return string.IsNullOrWhiteSpace(property) ? Loc.Get("Common.Value") : property;
         }
 
-        private static ResultPropertyType? ResolvePropertyType(
+        private static ResultValueKind? ResolvePropertyType(
             StepCondition condition,
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap)
         {
             if (!stepMap.TryGetValue(condition.SourceStepId, out var source)) return null;
-            var output = StepPipelineRegistry.Get(source.Step.GetType())?.Output;
-            return output is not null && StepResultMetadata.TryGetProperty(output, condition.PropertyPath, out var property)
-                ? property.PropertyType
+            var resultType = StepResultMetadata.GetResultTypeForStep(source.Step);
+            return resultType is not null
+                   && StepResultMetadata.TryGetProperty(
+                       resultType, condition.PropertyId, condition.PropertyPath, out var property)
+                ? property.DataType
                 : null;
         }
 
-        private static string FormatLiteral(string? value, ResultPropertyType? propertyType)
+        private static string FormatLiteral(string? value, ResultValueKind? propertyType)
         {
             if (value is null) return "?";
-            if (propertyType == ResultPropertyType.String)
+            if (propertyType == ResultValueKind.Text)
                 return $"\"{value}\"";
-            if (propertyType == ResultPropertyType.Bool && bool.TryParse(value, out var boolean))
+            if (propertyType == ResultValueKind.Boolean && bool.TryParse(value, out var boolean))
                 return boolean ? "true" : "false";
             return value;
         }

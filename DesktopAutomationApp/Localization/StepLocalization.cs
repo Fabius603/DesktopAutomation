@@ -20,7 +20,17 @@ public static class StepLocalization
         GetOrFallback($"Step.ResultProperty.{propertyName}", fallback ?? propertyName);
 
     public static string PropertyPath(string propertyPath)
+        => PropertyPath(null, propertyPath);
+
+    public static string PropertyPath(string? resultTypeName, string propertyPath)
     {
+        if (!string.IsNullOrWhiteSpace(resultTypeName))
+        {
+            var typeSpecificKey = $"Step.ResultProperty.{resultTypeName}.{propertyPath}";
+            var typeSpecific = LocalizationService.Instance[typeSpecificKey];
+            if (typeSpecific != $"[{typeSpecificKey}]") return typeSpecific;
+        }
+
         var fullPathKey = $"Step.ResultProperty.{propertyPath}";
         var fullPath = LocalizationService.Instance[fullPathKey];
         if (fullPath != $"[{fullPathKey}]") return fullPath;
@@ -36,9 +46,25 @@ public static class StepLocalization
         }));
     }
 
+    public static string PropertyDescription(string resultTypeName, ResultPropertyDescriptor property)
+    {
+        var key = $"Step.ResultPropertyDescription.{resultTypeName}.{property.Name}";
+        var localized = LocalizationService.Instance[key];
+        if (localized != $"[{key}]") return localized;
+
+        if (typeof(WindowsStateQueryResult).IsAssignableFrom(
+                typeof(WindowsStateQueryResult).Assembly.GetType($"TaskAutomation.Steps.{resultTypeName}")))
+        {
+            var commonKey = $"Step.ResultPropertyDescription.WindowsStateQueryResult.{property.Name}";
+            var common = LocalizationService.Instance[commonKey];
+            if (common != $"[{commonKey}]") return common;
+        }
+        return property.Description ?? string.Empty;
+    }
+
     public static string ResultValueType(ResultPropertyDescriptor property)
     {
-        var key = property.ValueKind switch
+        var key = property.DataType switch
         {
             ResultValueKind.Boolean => "Boolean",
             ResultValueKind.Integer => "Integer",
@@ -51,7 +77,7 @@ public static class StepLocalization
             ResultValueKind.ProcessReference => "Process",
             ResultValueKind.Detection => "Detection",
             ResultValueKind.Enum => "Enum",
-            _ => property.PropertyType.ToString()
+            _ => property.DataType.ToString()
         };
         var type = GetOrFallback($"Step.ResultValueType.{key}", key);
         return property.Cardinality == ResultCardinality.Collection
@@ -64,8 +90,9 @@ public static class StepLocalization
             descriptor.TypeName,
             descriptor.DisplayName,
             descriptor.Properties
-                .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(p.Name), p.PropertyType,
-                    p.Description, p.IsNullable, p.Example, p.ValueKind, p.Cardinality, p.EnumTypeName, p.EnumValues))
+                .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(descriptor.TypeName, p.Name), p.DataType,
+                    PropertyDescription(descriptor.TypeName, p), p.IsNullable, p.Example, p.Cardinality, p.EnumTypeName,
+                    p.EnumValues, p.StableId))
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>

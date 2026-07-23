@@ -20,6 +20,7 @@ namespace ImageDetection.YOLO
 
         List<string> GetAvailableModels();
         List<string> GetClassesForModel(string modelKey);
+        float GetRecommendedConfidenceThreshold(string modelKey);
 
         /// <summary>
         /// Sucht das gegebene Objekt im Bitmap. Optional ROI (in Bildpixeln), Confidence-Threshold (0..1).

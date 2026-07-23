@@ -16,14 +16,23 @@ namespace DesktopAutomationApp.Converters
     /// </summary>
     public class StepNumberConverter : IMultiValueConverter
     {
+        private int _cacheVersion = int.MinValue;
+        private IList? _cacheCollection;
+        private Dictionary<JobStep, int> _numbers =
+            new(ReferenceEqualityComparer.Instance);
+
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values?.Length < 2 || values[1] is not IList collection || values[0] is not { } item)
                 return string.Empty;
             if (item is JobStep step)
             {
-                var number = StepLocalization.DisplayNumber(collection, step);
-                return number.HasValue ? $"{number.Value}.\u00A0" : string.Empty;
+                var version = values.Length > 2 && values[2] is int value ? value : 0;
+                if (!ReferenceEquals(collection, _cacheCollection) || version != _cacheVersion)
+                    RebuildCache(collection, version);
+                return _numbers.TryGetValue(step, out var number)
+                    ? $"{number}.\u00A0"
+                    : string.Empty;
             }
             var index = collection.IndexOf(item);
             return index >= 0 ? $"{index + 1}.\u00A0" : string.Empty;
@@ -31,5 +40,20 @@ namespace DesktopAutomationApp.Converters
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
+
+        private void RebuildCache(IList collection, int version)
+        {
+            var numbers = new Dictionary<JobStep, int>(
+                collection.Count, ReferenceEqualityComparer.Instance);
+            var number = 0;
+            foreach (var item in collection)
+            {
+                if (item is not JobStep step || !StepLocalization.IsNumbered(step)) continue;
+                numbers[step] = ++number;
+            }
+            _numbers = numbers;
+            _cacheCollection = collection;
+            _cacheVersion = version;
+        }
     }
 }

@@ -41,6 +41,7 @@
             <conv:PointAxisOperatorConverter x:Key="PointAxisOperatorConverter" />
             <conv:MaxSizeDisplayConverter x:Key="MaxSizeDisplayConverter" />
             <conv:LocalizedEnumConverter x:Key="LocalizedEnumConverter" />
+            <conv:WindowsCapabilityDisplayNameConverter x:Key="WindowsCapabilityDisplayNameConverter" />
             <conv:MacroStepTypeConverter x:Key="MacroStepTypeConverter" />
 
             <!-- ViewModel -> View Mapping -->

@@ -13,9 +13,9 @@
                  WindowTitleBrush="{DynamicResource App.Brush.Accent}"
                  NonActiveWindowTitleBrush="{DynamicResource App.Brush.AccentDark}"
                  TitleForeground="White"
-                 BorderBrush="{DynamicResource App.Brush.AccentDark}"
-                 BorderThickness="1"
-                 GlowBrush="{DynamicResource App.Brush.AccentDark}"
+                 BorderBrush="Transparent"
+                 BorderThickness="0"
+                 GlowBrush="Transparent"
                  WindowStartupLocation="CenterScreen">
     <mah:MetroWindow.TitleTemplate>
         <DataTemplate>

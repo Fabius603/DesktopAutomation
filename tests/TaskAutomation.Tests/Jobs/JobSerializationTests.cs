@@ -49,6 +49,29 @@ public sealed class JobSerializationTests
     }
 
     [Fact]
+    public void RoundTrip_PreservesStableResultPropertyIds()
+    {
+        var step = new ShowTextStep
+        {
+            Settings = new()
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    SourceStepId = "audio",
+                    PropertyId = "volume_percentage",
+                    PropertyPath = "Percentage"
+                }
+            }
+        };
+
+        var restored = Assert.IsType<ShowTextStep>(
+            JsonSerializer.Deserialize<JobStep>(JsonSerializer.Serialize<JobStep>(step)));
+        Assert.Equal("volume_percentage", restored.Settings.TextResult.PropertyId);
+        Assert.Equal("Percentage", restored.Settings.TextResult.PropertyPath);
+    }
+
+    [Fact]
     public void NewJobStepIds_AreUniqueAndNonEmpty()
     {
         var ids = Enumerable.Range(0, 100).Select(_ => new TimeoutStep().Id).ToArray();

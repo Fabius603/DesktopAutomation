@@ -16,6 +16,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Behaviors;
+using DesktopAutomationApp.Localization;
+using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Views
 {
@@ -71,6 +73,26 @@ namespace DesktopAutomationApp.Views
             finally { _syncingSelection = false; }
         }
 
+        private void DebugInspector_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (DebugInspectorColumn == null) return;
+            DebugInspectorColumn.Width = e.NewValue is true
+                ? new GridLength(360)
+                : new GridLength(0);
+        }
+
+        private void DebugTree_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (DebugContextScrollViewer == null) return;
+            var lines = Math.Max(1, Math.Abs(e.Delta) / Mouse.MouseWheelDeltaForOneLine) * 3;
+            for (var index = 0; index < lines; index++)
+            {
+                if (e.Delta > 0) DebugContextScrollViewer.LineUp();
+                else DebugContextScrollViewer.LineDown();
+            }
+            e.Handled = true;
+        }
+
         // ── View → VM: sync multi-selection to VM ──
         private void StepsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -101,6 +123,62 @@ namespace DesktopAutomationApp.Views
             e.Handled = true;
         }
 
+        private void StepsList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not ListBox list
+                || ItemsControl.ContainerFromElement(
+                    list, e.OriginalSource as DependencyObject) is not ListBoxItem item
+                || item.DataContext is not JobStep step
+                || DataContext is not JobStepsViewModel vm)
+                return;
+
+            if (!item.IsSelected)
+            {
+                list.SelectedItems.Clear();
+                item.IsSelected = true;
+            }
+
+            var menu = new ContextMenu { PlacementTarget = item };
+            AddMenuItem(menu, Loc.Get("Ui.Common.Edit"), vm.EditStepCommand, step);
+            if (step.CanBeDisabled)
+                AddMenuItem(menu, Loc.Get(step.IsEnabled
+                    ? "Ui.Job.Steps.DisableStep"
+                    : "Ui.Job.Steps.EnableStep"), vm.ToggleStepEnabledCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Debug.ToggleBreakpoint"), vm.ToggleBreakpointCommand, step);
+            menu.Items.Add(new Separator());
+            AddMenuItem(menu, Loc.Get("Ui.Common.Copy"), vm.CopyCommand);
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), vm.MoveStepUpCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), vm.MoveStepDownCommand, step);
+            menu.Items.Add(new Separator());
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToStart"), vm.MoveToStartSectionCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToRun"), vm.MoveToRunSectionCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToEnd"), vm.MoveToEndSectionCommand, step);
+            if (vm.AddElseIfCommand.CanExecute(step) || vm.AddElseCommand.CanExecute(step))
+            {
+                menu.Items.Add(new Separator());
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElseIf"), vm.AddElseIfCommand, step);
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), vm.AddElseCommand, step);
+            }
+            menu.Items.Add(new Separator());
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.DeleteStep"), vm.DeleteStepCommand, step);
+            menu.IsOpen = true;
+            e.Handled = true;
+        }
+
+        private static void AddMenuItem(
+            ItemsControl menu,
+            string header,
+            ICommand command,
+            object? parameter = null)
+        {
+            menu.Items.Add(new MenuItem
+            {
+                Header = header,
+                Command = command,
+                CommandParameter = parameter
+            });
+        }
+
         private IEnumerable<ListBox> AllStepLists()
         {
             yield return StartStepsList;
@@ -117,6 +195,9 @@ namespace DesktopAutomationApp.Views
                 e.Handled = true;
             }
         }
+
+        private void HeaderMoreButton_Click(object sender, RoutedEventArgs e)
+            => StepMoreButton_Click(sender, e);
 
         private void EndSettingsButton_Click(object sender, RoutedEventArgs e)
         {

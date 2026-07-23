@@ -525,6 +525,10 @@ namespace TaskAutomation.Jobs
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? SourceStepId { get; set; }
 
+        [JsonPropertyName("property_id")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? PropertyId { get; set; }
+
         [JsonPropertyName("property_path")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? PropertyPath { get; set; }
@@ -534,6 +538,10 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("source_step_id")]
         public string SourceStepId { get; set; } = "";
+
+        [JsonPropertyName("property_id")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? PropertyId { get; set; }
 
         [JsonPropertyName("property_path")]
         public string PropertyPath { get; set; } = "";

@@ -95,6 +95,7 @@ internal sealed class NoOpYoloManager : IYoloManager
     public bool HasSession(string modelKey) => false;
     public List<string> GetAvailableModels() => [];
     public List<string> GetClassesForModel(string modelKey) => [];
+    public float GetRecommendedConfidenceThreshold(string modelKey) => 0.5f;
     public Task<IDetectionResult?> DetectAsync(string modelKey, string objectName, Bitmap bitmap, float threshold,
         Rectangle? roi = null, CancellationToken ct = default) => Task.FromResult<IDetectionResult?>(null);
     public bool UnloadModel(string modelKey) => true;
@@ -127,6 +128,7 @@ internal sealed class RecordingYoloManager : IYoloManager
     public bool HasSession(string modelKey) => false;
     public List<string> GetAvailableModels() => [];
     public List<string> GetClassesForModel(string modelKey) => [];
+    public float GetRecommendedConfidenceThreshold(string modelKey) => 0.5f;
     public bool UnloadModel(string modelKey) => true;
     public void Dispose() { }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

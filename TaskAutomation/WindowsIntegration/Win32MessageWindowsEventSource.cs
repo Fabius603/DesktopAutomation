@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Management;
 
 namespace TaskAutomation.WindowsIntegration;
 
@@ -49,6 +48,15 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
         EventReceived?.Invoke(new WindowsSystemEvent(type, category, DateTimeOffset.Now, resourceId, data));
     }
 
+    internal static string ClassifyClipboard(bool hasAnyFormat, bool hasFiles, bool hasImage, bool hasText)
+    {
+        if (!hasAnyFormat) return "clipboard.cleared";
+        if (hasFiles) return "clipboard.files_changed";
+        if (hasImage) return "clipboard.image_changed";
+        if (hasText) return "clipboard.text_changed";
+        return "clipboard.content_changed";
+    }
+
     private sealed class MessageWindow : NativeWindow, IDisposable
     {
         private const int WmClipboardUpdate = 0x031D;
@@ -64,7 +72,6 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
         private readonly List<IntPtr> _windowHooks = [];
         private readonly Dictionary<IntPtr, WindowState> _knownWindows = [];
         private WinEventDelegate? _winEventCallback;
-        private BluetoothSnapshot _bluetooth = ReadBluetooth();
 
         public MessageWindow(Action<string, WindowsEventCategory, string?, Dictionary<string, string?>> emit)
         {
@@ -100,7 +107,6 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
                 if (message.WParam.ToInt32() is DbtDeviceArrival or DbtDeviceRemoveComplete) OnDeviceChanged(message.WParam.ToInt32(), message.LParam);
                 else if (message.WParam.ToInt32() == 0x0007)
                     EmitBoth("device.hardware.changed", "device.hardware.updated", WindowsEventCategory.Device, null, new() { ["change"] = "updated", ["name"] = "", ["filter_value"] = "" });
-                RefreshBluetooth();
             }
             base.WndProc(ref message);
         }
@@ -111,11 +117,19 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
             var format = "unknown";
             try
             {
-                if (!Clipboard.ContainsData(DataFormats.Text) && !Clipboard.ContainsImage() && !Clipboard.ContainsFileDropList())
-                { concrete = "clipboard.cleared"; format = "empty"; }
-                else if (Clipboard.ContainsFileDropList()) { concrete = "clipboard.files_changed"; format = "files"; }
-                else if (Clipboard.ContainsImage()) { concrete = "clipboard.image_changed"; format = "image"; }
-                else if (Clipboard.ContainsText()) { concrete = "clipboard.text_changed"; format = "text"; }
+                var formats = Clipboard.GetDataObject()?.GetFormats(false) ?? [];
+                var hasFiles = Clipboard.ContainsFileDropList();
+                var hasImage = Clipboard.ContainsImage();
+                var hasText = Clipboard.ContainsText();
+                concrete = ClassifyClipboard(formats.Length > 0, hasFiles, hasImage, hasText);
+                format = concrete switch
+                {
+                    "clipboard.cleared" => "empty",
+                    "clipboard.files_changed" => "files",
+                    "clipboard.image_changed" => "image",
+                    "clipboard.text_changed" => "text",
+                    _ => formats.FirstOrDefault() ?? "unknown"
+                };
             }
             catch (ExternalException) { format = "busy"; }
             var data = new Dictionary<string, string?> { ["change"] = concrete.Split('.').Last(), ["format"] = format };
@@ -137,52 +151,13 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
             var upper = path.ToUpperInvariant();
             if (upper.Contains("USB")) EmitBoth("device.usb.changed", $"device.usb.{action}", WindowsEventCategory.Device, path, data);
             if (upper.Contains("BTH") || upper.Contains("BLUETOOTH"))
-                EmitBoth("bluetooth.state.changed", $"bluetooth.device.{action}", WindowsEventCategory.Bluetooth, path, data);
-            if (upper.Contains("SWD#MMDEVAPI") || upper.Contains("AUDIO"))
-                EmitBoth("audio.device.changed", $"audio.device.{action}", WindowsEventCategory.Audio, path, data);
+                _emit("bluetooth.state.changed", WindowsEventCategory.Bluetooth, path, data);
             if (pointer != IntPtr.Zero && Marshal.ReadInt32(pointer, 4) == DbtDevTypeVolume || upper.Contains("STORAGE") || upper.Contains("VOLUME"))
             {
                 EmitBoth("storage.drive.changed", $"storage.drive.{(action == "connected" ? "mounted" : "unmounted")}", WindowsEventCategory.Storage, path, data);
                 if (pointer != IntPtr.Zero && Marshal.ReadInt32(pointer, 4) == DbtDevTypeVolume && (Marshal.ReadInt16(pointer, 16) & 1) != 0)
                     _emit(action == "connected" ? "storage.media.inserted" : "storage.media.removed", WindowsEventCategory.Storage, path, data);
             }
-        }
-
-        private void RefreshBluetooth()
-        {
-            var current = ReadBluetooth();
-            foreach (var id in current.DeviceIds.Except(_bluetooth.DeviceIds, StringComparer.OrdinalIgnoreCase))
-                EmitBluetooth("bluetooth.device.paired", "paired", id);
-            foreach (var id in _bluetooth.DeviceIds.Except(current.DeviceIds, StringComparer.OrdinalIgnoreCase))
-                EmitBluetooth("bluetooth.device.unpaired", "unpaired", id);
-            if (current.RadioEnabled != _bluetooth.RadioEnabled)
-                EmitBluetooth(current.RadioEnabled ? "bluetooth.radio.enabled" : "bluetooth.radio.disabled", current.RadioEnabled ? "enabled" : "disabled", current.RadioName);
-            _bluetooth = current;
-        }
-
-        private void EmitBluetooth(string concrete, string change, string? id)
-        {
-            var data = new Dictionary<string, string?> { ["change"] = change, ["name"] = id, ["filter_value"] = id };
-            _emit("bluetooth.state.changed", WindowsEventCategory.Bluetooth, id, data);
-            _emit(concrete, WindowsEventCategory.Bluetooth, id, data);
-        }
-
-        private static BluetoothSnapshot ReadBluetooth()
-        {
-            try
-            {
-                using var searcher = new ManagementObjectSearcher("SELECT DeviceID,Name,ConfigManagerErrorCode FROM Win32_PnPEntity WHERE PNPClass='Bluetooth'");
-                using var results = searcher.Get();
-                var items = results.Cast<ManagementObject>().Select(x => new
-                {
-                    Id = x["DeviceID"]?.ToString() ?? string.Empty, Name = x["Name"]?.ToString() ?? string.Empty,
-                    Error = Convert.ToUInt32(x["ConfigManagerErrorCode"] ?? 0)
-                }).ToArray();
-                var radios = items.Where(x => x.Name.Contains("radio", StringComparison.OrdinalIgnoreCase) || x.Name.Contains("adapter", StringComparison.OrdinalIgnoreCase)).ToArray();
-                var deviceIds = items.Where(x => !radios.Contains(x) && x.Id.Length > 0).Select(x => x.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                return new BluetoothSnapshot(deviceIds, radios.Any(x => x.Error == 0), radios.FirstOrDefault()?.Name ?? string.Empty);
-            }
-            catch { return new BluetoothSnapshot([], false, string.Empty); }
         }
 
         private void OnWinEvent(IntPtr hook, uint eventType, IntPtr window, int objectId, int childId, uint thread, uint time)
@@ -303,8 +278,6 @@ public sealed class Win32MessageWindowsEventSource : IWindowsEventSource
             foreach (var hook in _windowHooks) UnhookWinEvent(hook);
             DestroyHandle();
         }
-
-        private sealed record BluetoothSnapshot(HashSet<string> DeviceIds, bool RadioEnabled, string RadioName);
 
         private delegate void WinEventDelegate(IntPtr hook, uint eventType, IntPtr window, int objectId, int childId, uint thread, uint time);
         [StructLayout(LayoutKind.Sequential)] private struct DeviceBroadcastDeviceInterface { public int Size; public int DeviceType; public int Reserved; public Guid ClassGuid; }

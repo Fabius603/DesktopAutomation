@@ -38,9 +38,15 @@ public static class ResultBindingResolver
             return Failure<T>(ResultResolutionStatus.SourceNotExecuted, source,
                 $"Der Quell-Step '{binding.SourceStepId}' wurde noch nicht ausgeführt.");
 
-        if (!TryReadPath(source, binding.PropertyPath, out var raw))
+        var propertyPath = binding.PropertyPath;
+        if (!string.IsNullOrWhiteSpace(binding.PropertyId)
+            && StepResultMetadata.TryGetProperty(
+                source.GetType(), binding.PropertyId, binding.PropertyPath, out var property))
+            propertyPath = property.Name;
+
+        if (string.IsNullOrWhiteSpace(propertyPath) || !TryReadPath(source, propertyPath, out var raw))
             return Failure<T>(ResultResolutionStatus.PropertyNotFound, source,
-                $"Die Eigenschaft '{binding.PropertyPath}' existiert im Ergebnis nicht.");
+                $"Die Ergebnis-Eigenschaft '{binding.PropertyId ?? binding.PropertyPath}' existiert im Ergebnis nicht.");
         if (raw is null)
             return Failure<T>(ResultResolutionStatus.ValueIsNull, source,
                 $"Die Eigenschaft '{binding.PropertyPath}' enthält keinen Wert.");
@@ -73,19 +79,36 @@ public static class ResultBindingResolver
         if (items.IsSuccess) return items;
 
         var points = Resolve<System.Drawing.Point>(results, binding);
-        if (!points.IsSuccess)
-            return new(points.Status, Array.Empty<DetectionItem>(), points.SourceResult, points.Error);
+        if (points.IsSuccess)
+        {
+            var pointSource = points.SourceResult as IDetectionStepResult;
+            return new(ResultResolutionStatus.Success,
+                points.Values.Select((point, index) => new DetectionItem
+                {
+                    Center = point,
+                    BoundingBox = pointSource?.AllDetections.ElementAtOrDefault(index)?.BoundingBox
+                                  ?? (index == 0 ? pointSource?.BoundingBox : null),
+                    Confidence = pointSource?.AllDetections.ElementAtOrDefault(index)?.Confidence
+                                 ?? pointSource?.Confidence ?? 0
+                }).ToArray(), points.SourceResult);
+        }
 
-        var source = points.SourceResult as IDetectionStepResult;
+        var rectangles = Resolve<System.Drawing.Rectangle>(results, binding);
+        if (!rectangles.IsSuccess)
+            return new(rectangles.Status, Array.Empty<DetectionItem>(),
+                rectangles.SourceResult, rectangles.Error);
+
+        var rectangleSource = rectangles.SourceResult as IDetectionStepResult;
         return new(ResultResolutionStatus.Success,
-            points.Values.Select((point, index) => new DetectionItem
+            rectangles.Values.Select((rectangle, index) => new DetectionItem
             {
-                Center = point,
-                BoundingBox = source?.AllDetections.ElementAtOrDefault(index)?.BoundingBox
-                              ?? (index == 0 ? source?.BoundingBox : null),
-                Confidence = source?.AllDetections.ElementAtOrDefault(index)?.Confidence
-                             ?? source?.Confidence ?? 0
-            }).ToArray(), points.SourceResult);
+                Center = new System.Drawing.Point(
+                    rectangle.Left + rectangle.Width / 2,
+                    rectangle.Top + rectangle.Height / 2),
+                BoundingBox = rectangle,
+                Confidence = rectangleSource?.AllDetections.ElementAtOrDefault(index)?.Confidence
+                             ?? rectangleSource?.Confidence ?? 0
+            }).ToArray(), rectangles.SourceResult);
     }
 
     public static bool TryReadPath(object source, string propertyPath, out object? value)

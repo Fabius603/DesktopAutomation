@@ -17,11 +17,18 @@ public sealed class ResultBinding
     [JsonPropertyName("source_step_id")]
     public string SourceStepId { get; set; } = string.Empty;
 
+    /// <summary>Stable backend-owned property identity that survives CLR member renames.</summary>
+    [JsonPropertyName("property_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? PropertyId { get; set; }
+
+    /// <summary>Legacy CLR property path retained for backwards compatibility.</summary>
     [JsonPropertyName("property_path")]
     public string PropertyPath { get; set; } = string.Empty;
 
     [JsonIgnore]
     public bool IsConfigured => !string.IsNullOrWhiteSpace(SourceStepId)
-                                && !string.IsNullOrWhiteSpace(PropertyPath);
+                                && (!string.IsNullOrWhiteSpace(PropertyId)
+                                    || !string.IsNullOrWhiteSpace(PropertyPath));
 
 }

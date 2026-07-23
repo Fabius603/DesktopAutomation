@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using TaskAutomation.Steps;
 using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Tests.WindowsIntegration;
@@ -8,9 +9,10 @@ public sealed class WindowsSystemStateServiceTests
     [Fact]
     public async Task QueryAsync_SelectsSupportingProviderCaseInsensitively()
     {
-        var provider = new ProviderStub("audio.volume", new WindowsStateSnapshot { Percentage = 33 });
+        var provider = new ProviderStub("audio.volume", new AudioVolumeQueryResult { Percentage = 33 });
         var service = new WindowsSystemStateService([provider]);
-        var result = await service.QueryAsync(new WindowsStateQuery { QueryType = "AUDIO.VOLUME" });
+        var result = Assert.IsType<AudioVolumeQueryResult>(
+            await service.QueryAsync(new WindowsStateQuery { QueryType = "AUDIO.VOLUME" }));
         Assert.Equal(33, result.Percentage);
         Assert.Equal(1, provider.CallCount);
     }
@@ -18,11 +20,11 @@ public sealed class WindowsSystemStateServiceTests
     [Fact]
     public async Task QueryAsync_UnknownQuery_ReturnsUnsupportedWithoutCallingProvider()
     {
-        var provider = new ProviderStub("audio.volume", new WindowsStateSnapshot());
+        var provider = new ProviderStub("audio.volume", new AudioVolumeQueryResult());
         var result = await new WindowsSystemStateService([provider])
             .QueryAsync(new WindowsStateQuery { QueryType = "unknown" });
         Assert.Equal(WindowsCapabilityStatus.Unsupported, result.Status);
-        Assert.False(result.IsAvailable);
+        Assert.Equal(WindowsCapabilityStatus.Unsupported, result.Status);
         Assert.Equal("UNSUPPORTED_QUERY", result.ErrorCode);
         Assert.Equal(0, provider.CallCount);
     }
@@ -46,14 +48,14 @@ public sealed class WindowsSystemStateServiceTests
             catalog.Capabilities.Select(capability => capability.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
-    private sealed class ProviderStub(string query, WindowsStateSnapshot snapshot) : IWindowsStateProvider
+    private sealed class ProviderStub(string query, WindowsStateQueryResult result) : IWindowsStateProvider
     {
         public IReadOnlyCollection<string> SupportedQueries { get; } = [query];
         public int CallCount { get; private set; }
-        public Task<WindowsStateSnapshot> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken)
+        public Task<WindowsStateQueryResult> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken)
         {
             CallCount++;
-            return Task.FromResult(snapshot);
+            return Task.FromResult(result);
         }
     }
 }

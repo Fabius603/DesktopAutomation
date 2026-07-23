@@ -20,19 +20,20 @@ public static class ConditionRules
         ConditionOperator.LessThan, ConditionOperator.GreaterThanOrEqual, ConditionOperator.LessThanOrEqual
     ];
 
-    public static IReadOnlyList<ConditionOperator> GetOperators(ResultPropertyType propertyType) => propertyType switch
+    public static IReadOnlyList<ConditionOperator> GetOperators(ResultValueKind dataType) => dataType switch
     {
-        ResultPropertyType.Bool => BoolOperators,
-        ResultPropertyType.Enum => BoolOperators,
-        ResultPropertyType.String => StringOperators,
-        _ => OrderedOperators
+        ResultValueKind.Boolean => BoolOperators,
+        ResultValueKind.Enum => BoolOperators,
+        ResultValueKind.Text => StringOperators,
+        ResultValueKind.Integer or ResultValueKind.Number or ResultValueKind.DateTime => OrderedOperators,
+        _ => []
     };
 
-    public static bool IsOperatorAllowed(ResultPropertyType propertyType, ConditionOperator conditionOperator) =>
-        GetOperators(propertyType).Contains(conditionOperator)
-        || propertyType == ResultPropertyType.Bool
+    public static bool IsOperatorAllowed(ResultValueKind dataType, ConditionOperator conditionOperator) =>
+        GetOperators(dataType).Contains(conditionOperator)
+        || dataType == ResultValueKind.Boolean
             && conditionOperator is ConditionOperator.IsTrue or ConditionOperator.IsFalse
-        || propertyType == ResultPropertyType.String
+        || dataType == ResultValueKind.Text
             && conditionOperator is ConditionOperator.IsEmpty or ConditionOperator.IsNotEmpty;
 
     public static bool RequiresComparisonValue(ConditionOperator conditionOperator) => conditionOperator is not
@@ -41,21 +42,21 @@ public static class ConditionRules
     public static bool IsComparisonValueValid(ResultPropertyDescriptor property, ConditionOperator conditionOperator, string? value)
     {
         if (!RequiresComparisonValue(conditionOperator)) return true;
-        if (property.PropertyType == ResultPropertyType.String) return value is not null;
+        if (property.DataType == ResultValueKind.Text) return value is not null;
         return StepResultMetadata.TryParseComparison(property, value, out _);
     }
 
     public static string? FormatComparisonValue(ResultPropertyDescriptor property, object? value)
     {
         if (value is null) return null;
-        return property.PropertyType switch
+        return property.DataType switch
         {
-            ResultPropertyType.Double => Convert.ToDouble(value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture),
-            ResultPropertyType.Integer => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
-            ResultPropertyType.DateTime => ((DateTime)value).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
-            ResultPropertyType.Bool => Convert.ToBoolean(value, CultureInfo.InvariantCulture).ToString(),
-            ResultPropertyType.String => value.ToString(),
-            ResultPropertyType.Enum => value.ToString(),
+            ResultValueKind.Number => Convert.ToDouble(value, CultureInfo.InvariantCulture).ToString("R", CultureInfo.InvariantCulture),
+            ResultValueKind.Integer => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
+            ResultValueKind.DateTime => ((DateTime)value).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+            ResultValueKind.Boolean => Convert.ToBoolean(value, CultureInfo.InvariantCulture).ToString(),
+            ResultValueKind.Text => value.ToString(),
+            ResultValueKind.Enum => value.ToString(),
             _ => null
         };
     }

@@ -17,16 +17,19 @@ using System.IO;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Behaviors;
+using DesktopAutomationApp.Converters;
+using DesktopAutomationApp.Services.Jobs;
+using System.Threading;
 
 namespace DesktopAutomationApp.ViewModels
 {
     public sealed class JobStepsViewModel : ViewModelBase, INavigationGuard
     {
         private readonly IJobExecutor _jobExecutionContext;
-        private readonly ObservableCollection<JobStep> _startSteps;
-        private readonly ObservableCollection<JobStep> _runSteps;
-        private ObservableCollection<JobStep> _steps;
-        private readonly ObservableCollection<JobStep> _endSteps;
+        private readonly ObservableRangeCollection<JobStep> _startSteps;
+        private readonly ObservableRangeCollection<JobStep> _runSteps;
+        private ObservableRangeCollection<JobStep> _steps;
+        private readonly ObservableRangeCollection<JobStep> _endSteps;
         private readonly IJobApplicationService _jobAppService;
         private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
@@ -44,28 +47,45 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> _savedEndSnapshot;
         private int _savedEndPhaseTimeoutSeconds;
         private CancellationTokenSource? _validationCts;
+        private int _validationGeneration;
         private JobDebugSession? _debugSession;
+        private readonly HashSet<JobStep> _subscribedSteps =
+            new(ReferenceEqualityComparer.Instance);
+        private readonly SemaphoreSlim _mutationGate = new(1, 1);
+        private bool _isMutationBusy;
+        private IReadOnlyList<JobStep> _allJobStepsSnapshot = Array.Empty<JobStep>();
+        private int _collectionUpdateDepth;
+        private bool _collectionRefreshPending;
 
         public sealed class DebugContextValue : ViewModelBase
         {
             private bool _isExpanded;
 
-            public DebugContextValue(string key, JobDebugValueNode node)
+            public DebugContextValue(string key, JobDebugValueNode node, string? resultTypeName)
             {
                 Key = key;
-                Name = node.Name;
-                Value = node.DisplayValue;
+                Name = string.IsNullOrWhiteSpace(node.PropertyPath)
+                    ? node.Name
+                    : StepLocalization.PropertyPath(resultTypeName, node.PropertyPath);
+                Value = LocalizeValue(node);
                 TypeName = node.TypeName;
+                ConditionState = node.TypeName == nameof(ConditionDebugState)
+                    ? node.DisplayValue
+                    : null;
+                Description = ResolveDescription(resultTypeName, node) ?? TypeName;
                 Children = node.Children
-                    .Select((child, index) => new DebugContextValue($"{key}/{index}:{child.Name}", child))
+                    .Select((child, index) => new DebugContextValue(
+                        $"{key}/{index}:{child.Name}", child, resultTypeName))
                     .ToArray();
-                _isExpanded = Children.Count > 0;
+                _isExpanded = false;
             }
 
             public string Key { get; }
             public string Name { get; }
             public string Value { get; }
             public string TypeName { get; }
+            public string? ConditionState { get; }
+            public string Description { get; }
             public IReadOnlyList<DebugContextValue> Children { get; }
             public bool IsExpanded
             {
@@ -77,6 +97,35 @@ namespace DesktopAutomationApp.ViewModels
             {
                 IsExpanded = expanded;
                 foreach (var child in Children) child.SetExpandedRecursively(expanded);
+            }
+
+            private static string LocalizeValue(JobDebugValueNode node)
+            {
+                if (node.TypeName == nameof(ConditionDebugState))
+                    return Loc.Get($"Ui.Job.Debug.Condition.State.{node.DisplayValue}");
+                if (node.CollectionCount is { } count)
+                    return Loc.Format("Ui.Job.Debug.Value.CollectionCount", count);
+                if (node.TypeName == "null")
+                    return Loc.Get("Ui.Job.Debug.Value.Null");
+                if (node.TypeName == nameof(Boolean))
+                    return Loc.Get(node.DisplayValue == bool.TrueString
+                        ? "Ui.Job.Debug.Value.True"
+                        : "Ui.Job.Debug.Value.False");
+
+                var enumKey = $"Enum.{node.TypeName}.{node.DisplayValue}";
+                var enumValue = Loc.Get(enumKey);
+                return enumValue == $"[{enumKey}]" ? node.DisplayValue : enumValue;
+            }
+
+            private static string? ResolveDescription(string? resultTypeName, JobDebugValueNode node)
+            {
+                if (string.IsNullOrWhiteSpace(resultTypeName)
+                    || string.IsNullOrWhiteSpace(node.PropertyPath)
+                    || !StepResultMetadata.TryGetProperty(
+                        resultTypeName, node.PropertyPath, out var property))
+                    return null;
+                var description = StepLocalization.PropertyDescription(resultTypeName, property);
+                return string.IsNullOrWhiteSpace(description) ? null : description;
             }
         }
 
@@ -108,6 +157,17 @@ namespace DesktopAutomationApp.ViewModels
 
         public bool CanUndo => _undoStack.Count > 0;
         public bool CanRedo => _redoStack.Count > 0;
+        public bool IsMutationBusy
+        {
+            get => _isMutationBusy;
+            private set
+            {
+                if (_isMutationBusy == value) return;
+                _isMutationBusy = value;
+                OnPropertyChanged();
+                InvalidateMutationCommands();
+            }
+        }
 
         public Job Job { get; }
         public string Title => Job.Name;
@@ -115,7 +175,7 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<JobStep> Steps => _runSteps;
         public ObservableCollection<JobStep> StartSteps => _startSteps;
         public ObservableCollection<JobStep> EndSteps => _endSteps;
-        public IReadOnlyList<JobStep> AllJobSteps => AllSteps();
+        public IReadOnlyList<JobStep> AllJobSteps => _allJobStepsSnapshot;
 
         private int _endPhaseTimeoutSeconds;
         public int EndPhaseTimeoutSeconds
@@ -140,6 +200,11 @@ namespace DesktopAutomationApp.ViewModels
         public bool HasStartStepErrors => _startSteps.Any(s => !s.IsValid);
         public bool HasStepErrors => _runSteps.Any(s => !s.IsValid);
         public bool HasEndStepErrors => _endSteps.Any(s => !s.IsValid);
+        public int ValidationErrorCount => AllSteps().Count(step => !step.IsValid);
+        public int SelectedStepCount => SelectedSteps.Count;
+        public bool HasSelectedSteps => SelectedStepCount > 0;
+        public string SelectedStepsSummary => Loc.Format("Ui.Job.Steps.SelectedCount", SelectedStepCount);
+        public string ValidationSummary => Loc.Format("Ui.Job.Steps.ProblemCount", ValidationErrorCount);
 
         private bool _isStartSectionExpanded;
         public bool IsStartSectionExpanded
@@ -175,7 +240,7 @@ namespace DesktopAutomationApp.ViewModels
                 _selectedStep = value;
                 OnPropertyChanged();
                 NotifyDebugInspectorChanged();
-                InvalidateAllCommands();
+                InvalidateSelectionCommands();
             }
         }
 
@@ -183,27 +248,48 @@ namespace DesktopAutomationApp.ViewModels
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
-            private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
+            private set
+            {
+                if (_hasUnsavedChanges == value) return;
+                _hasUnsavedChanges = value;
+                OnPropertyChanged();
+                InvalidateSaveCommands();
+            }
         }
 
         private bool _isJobRunning;
         public bool IsJobRunning
         {
             get => _isJobRunning;
-            private set { _isJobRunning = value; OnPropertyChanged(); InvalidateAllCommands(); }
+            private set
+            {
+                _isJobRunning = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsEditContextVisible));
+                OnPropertyChanged(nameof(IsRunContextVisible));
+                InvalidateAllCommands();
+            }
         }
 
         private bool _canRequestJobStop;
         public bool CanRequestJobStop
         {
             get => _canRequestJobStop;
-            private set { _canRequestJobStop = value; OnPropertyChanged(); InvalidateAllCommands(); }
+            private set
+            {
+                if (_canRequestJobStop == value) return;
+                _canRequestJobStop = value;
+                OnPropertyChanged();
+                (StopJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
         public bool HasDebugSession => _debugSession != null;
+        public bool IsEditContextVisible => !HasDebugSession && !IsJobRunning;
+        public bool IsRunContextVisible => !HasDebugSession && IsJobRunning;
         public bool IsDebugActive => _debugSession?.State is JobDebugSessionState.Starting or JobDebugSessionState.Paused or JobDebugSessionState.Running;
         public bool IsDebugPaused => _debugSession?.State == JobDebugSessionState.Paused;
-        public string DebugStatusText => _debugSession?.StatusText ?? string.Empty;
+        public string DebugStatusText => LocalizeDebugStatus();
         public bool HasDebugIteration => (_debugSession?.Iteration ?? 0) > 0;
         public string DebugIterationText => HasDebugIteration
             ? Loc.Format("Ui.Job.Debug.Iteration", _debugSession!.Iteration)
@@ -240,7 +326,6 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand RedoCommand { get; }
         public ICommand CopyCommand { get; }
         public ICommand PasteCommand { get; }
-        public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand DebugJobCommand { get; }
         public ICommand DebugStepCommand { get; }
@@ -251,6 +336,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ExpandDebugContextCommand { get; }
         public ICommand CollapseDebugContextCommand { get; }
         public ICommand ToggleBreakpointCommand { get; }
+        public ICommand ToggleStepEnabledCommand { get; }
         public ICommand AddElseIfCommand { get; }
         public ICommand AddElseCommand { get; }
         public ICommand MoveToStartSectionCommand { get; }
@@ -267,10 +353,14 @@ namespace DesktopAutomationApp.ViewModels
             _dialogService = dialogService;
             _dispatcher = dispatcher;
 
-            _startSteps = new ObservableCollection<JobStep>(Job.StartSteps ?? Enumerable.Empty<JobStep>());
-            _runSteps = new ObservableCollection<JobStep>(Job.Steps ?? Enumerable.Empty<JobStep>());
+            _startSteps = new ObservableRangeCollection<JobStep>();
+            _startSteps.ReplaceRange(Job.StartSteps ?? Enumerable.Empty<JobStep>());
+            _runSteps = new ObservableRangeCollection<JobStep>();
+            _runSteps.ReplaceRange(Job.Steps ?? Enumerable.Empty<JobStep>());
             _steps = _runSteps;
-            _endSteps = new ObservableCollection<JobStep>(Job.EndSteps ?? Enumerable.Empty<JobStep>());
+            _endSteps = new ObservableRangeCollection<JobStep>();
+            _endSteps.ReplaceRange(Job.EndSteps ?? Enumerable.Empty<JobStep>());
+            RefreshAllStepsSnapshot();
             _isStartSectionExpanded = _startSteps.Count > 0;
             _isEndSectionExpanded = _endSteps.Count > 0;
             _savedStartSnapshot = DeepCloneSteps(_startSteps);
@@ -285,52 +375,32 @@ namespace DesktopAutomationApp.ViewModels
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
             // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
             // Konverter in der View (StepPrerequisiteStateConverter) neu ausgewertet werden.
-            _runSteps.CollectionChanged += (_, e) =>
-            {
-                if (e.OldItems != null)
-                    foreach (JobStep s in e.OldItems) s.PropertyChanged -= OnStepPropertyChanged;
-                if (e.NewItems != null)
-                    foreach (JobStep s in e.NewItems) s.PropertyChanged += OnStepPropertyChanged;
-
-                StepsVersion++;
-                OnPropertyChanged(nameof(StepsVersion));
-                NotifySectionStateChanged();
-                InvalidateAllCommands();
-                ScheduleValidation();
-            };
-
+            _runSteps.CollectionChanged += OnSectionCollectionChanged;
             _startSteps.CollectionChanged += OnSectionCollectionChanged;
             _endSteps.CollectionChanged += OnSectionCollectionChanged;
 
-            // Initiale Steps abonnieren
-            foreach (var s in _startSteps.Concat(_runSteps).Concat(_endSteps))
-                s.PropertyChanged += OnStepPropertyChanged;
+            ReconcileStepSubscriptions();
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand   = new RelayCommand(async () => await Save(), () => HasUnsavedChanges && !IsDebugActive);
+            SaveCommand   = new AsyncRelayCommand(Save, () => HasUnsavedChanges && !IsDebugActive && !IsMutationBusy);
             CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges && !IsDebugActive);
-            RenameCommand = new RelayCommand(async () => await Rename(), () => !IsDebugActive);
+            RenameCommand = new AsyncRelayCommand(Rename, () => !IsDebugActive);
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
-            AddStepCommand    = new RelayCommand(async () => await AddStep(), () => !IsDebugActive);
-            EditStepCommand   = new RelayCommand<JobStep?>(
+            AddStepCommand    = new AsyncRelayCommand(AddStep, () => !IsDebugActive && !IsMutationBusy);
+            EditStepCommand   = new AsyncRelayCommand<JobStep?>(
                 EditStep,
-                s => { var t = s ?? SelectedStep; return !IsDebugActive && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
-            MoveStepUpCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, -1), s => !IsDebugActive && CanMoveRelative(s ?? SelectedStep, -1));
-            MoveStepDownCommand = new RelayCommand<JobStep?>(s => MoveRelative(s ?? SelectedStep, +1), s => !IsDebugActive && CanMoveRelative(s ?? SelectedStep, +1));
-            ReorderStepCommand = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep, _ => !IsDebugActive);
-            DeleteStepCommand    = new RelayCommand<JobStep?>(async s => await DeleteStepAsync(s), s => !IsDebugActive && (s ?? SelectedStep) != null);
-            DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => !IsDebugActive && (SelectedSteps.Count > 0 || SelectedStep != null));
-            UndoCommand           = new RelayCommand(Undo, () => !IsDebugActive && CanUndo);
-            RedoCommand           = new RelayCommand(Redo, () => !IsDebugActive && CanRedo);
-            CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
-            PasteCommand          = new RelayCommand(Paste, () => !IsDebugActive && _clipboard.Count > 0);
+                s => { var t = s ?? SelectedStep; return !IsDebugActive && !IsMutationBusy && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
+            MoveStepUpCommand = new AsyncRelayCommand<JobStep?>(s => MoveRelativeAsync(s ?? SelectedStep, -1), s => !IsDebugActive && !IsMutationBusy && CanMoveRelative(s ?? SelectedStep, -1));
+            MoveStepDownCommand = new AsyncRelayCommand<JobStep?>(s => MoveRelativeAsync(s ?? SelectedStep, +1), s => !IsDebugActive && !IsMutationBusy && CanMoveRelative(s ?? SelectedStep, +1));
+            ReorderStepCommand = new AsyncRelayCommand<StepDragDrop.MoveRequest>(MoveStepAsync, _ => !IsDebugActive && !IsMutationBusy);
+            DeleteStepCommand = new AsyncRelayCommand<JobStep?>(DeleteStepAsync, s => !IsDebugActive && !IsMutationBusy && (s ?? SelectedStep) != null);
+            DeleteSelectedCommand = new AsyncRelayCommand(DeleteSelectedAsync, () => !IsDebugActive && !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
+            UndoCommand           = new AsyncRelayCommand(UndoAsync, () => !IsDebugActive && !IsMutationBusy && CanUndo);
+            RedoCommand           = new AsyncRelayCommand(RedoAsync, () => !IsDebugActive && !IsMutationBusy && CanRedo);
+            CopyCommand           = new AsyncRelayCommand(CopySelectedAsync, () => !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
+            PasteCommand          = new AsyncRelayCommand(PasteAsync, () => !IsDebugActive && !IsMutationBusy && _clipboard.Count > 0);
 
-            StartJobCommand = new RelayCommand(() =>
-            {
-                try { _dispatcher.StartJob(Job.Id); }
-                catch (JobLimitExceededException) { /* kein Popup – wird still ignoriert */ }
-            }, () => !IsJobRunning && _startSteps.Concat(_runSteps).Concat(_endSteps).Any(s => s.IsEnabled));
             StopJobCommand = new RelayCommand(() =>
             {
                 _dispatcher.CancelJobsByDefinition(Job.Id);
@@ -338,10 +408,18 @@ namespace DesktopAutomationApp.ViewModels
             DebugJobCommand = new RelayCommand(StartDebugJob,
                 () => !IsJobRunning && !HasUnsavedChanges && AllSteps().Any(step => step.IsEnabled));
             DebugStepCommand = new RelayCommand(
-                () => { if (_debugSession != null) _dispatcher.DebugStep(_debugSession.InstanceId); },
+                () =>
+                {
+                    if (_debugSession != null) _dispatcher.DebugStep(_debugSession.InstanceId);
+                    InvalidateDebugCommands();
+                },
                 () => IsDebugPaused);
             DebugContinueCommand = new RelayCommand(
-                () => { if (_debugSession != null) _dispatcher.DebugContinue(_debugSession.InstanceId); },
+                () =>
+                {
+                    if (_debugSession != null) _dispatcher.DebugContinue(_debugSession.InstanceId);
+                    InvalidateDebugCommands();
+                },
                 () => IsDebugPaused);
             CancelDebugCommand = new RelayCommand(
                 () => { if (_debugSession != null) _dispatcher.CancelDebugJob(_debugSession.InstanceId); },
@@ -357,24 +435,31 @@ namespace DesktopAutomationApp.ViewModels
                 () => SetDebugContextExpanded(false),
                 () => HasDebugContext);
             ToggleBreakpointCommand = new RelayCommand<JobStep?>(
-                step => { if (step != null) step.IsBreakpoint = !step.IsBreakpoint; },
+                ToggleBreakpoint,
                 step => step != null);
+            ToggleStepEnabledCommand = new RelayCommand<JobStep?>(
+                step => { if (step != null) step.IsEnabled = !step.IsEnabled; },
+                step => !IsDebugActive && step?.CanBeDisabled == true);
 
-            AddElseIfCommand = new RelayCommand<JobStep?>(AddElseIf, step => !IsDebugActive && CanAddElseIf(step));
-            AddElseCommand   = new RelayCommand<JobStep?>(AddElse, step => !IsDebugActive && CanAddElse(step));
-            MoveToStartSectionCommand = new RelayCommand<JobStep?>(
-                step => MoveStepToSection(step, _startSteps),
-                step => !IsDebugActive && CanMoveStepToSection(step, _startSteps));
-            MoveToRunSectionCommand = new RelayCommand<JobStep?>(
-                step => MoveStepToSection(step, _runSteps),
-                step => !IsDebugActive && CanMoveStepToSection(step, _runSteps));
-            MoveToEndSectionCommand = new RelayCommand<JobStep?>(
-                step => MoveStepToSection(step, _endSteps),
-                step => !IsDebugActive && CanMoveStepToSection(step, _endSteps));
+            AddElseIfCommand = new AsyncRelayCommand<JobStep?>(AddElseIfAsync, step => !IsDebugActive && !IsMutationBusy && CanAddElseIf(step));
+            AddElseCommand   = new AsyncRelayCommand<JobStep?>(AddElseAsync, step => !IsDebugActive && !IsMutationBusy && CanAddElse(step));
+            MoveToStartSectionCommand = new AsyncRelayCommand<JobStep?>(
+                step => MoveStepToSectionAsync(step, _startSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _startSteps));
+            MoveToRunSectionCommand = new AsyncRelayCommand<JobStep?>(
+                step => MoveStepToSectionAsync(step, _runSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _runSteps));
+            MoveToEndSectionCommand = new AsyncRelayCommand<JobStep?>(
+                step => MoveStepToSectionAsync(step, _endSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _endSteps));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _debugSession = _dispatcher.DebugSessions.FirstOrDefault(session => session.JobId == Job.Id);
-            if (_debugSession != null) _debugSession.Changed += OnDebugSessionChanged;
+            if (_debugSession != null)
+            {
+                _debugSession.Changed += OnDebugSessionChanged;
+                _debugSession.IterationChanged += OnDebugIterationChanged;
+            }
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
             CanRequestJobStop = _dispatcher.RunningJobInstances.Any(instance =>
                 instance.JobId == Job.Id && instance.State.CanRequestStop());
@@ -398,40 +483,109 @@ namespace DesktopAutomationApp.ViewModels
             {
                 JobValidation.RemoveInvalidSourceSelections(AllSteps());
                 HasUnsavedChanges = true;
-                InvalidateAllCommands();
+                InvalidateStructureCommands();
+                (DebugJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 ScheduleValidation();
             }
         }
 
         private void OnSectionCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            if (e.OldItems != null)
-                foreach (JobStep s in e.OldItems) s.PropertyChanged -= OnStepPropertyChanged;
-            if (e.NewItems != null)
-                foreach (JobStep s in e.NewItems) s.PropertyChanged += OnStepPropertyChanged;
+            if (_collectionUpdateDepth > 0)
+            {
+                _collectionRefreshPending = true;
+                return;
+            }
+            CompleteCollectionRefresh();
+        }
 
+        private void CompleteCollectionRefresh()
+        {
+            ReconcileStepSubscriptions();
+            RefreshAllStepsSnapshot();
             StepsVersion++;
             OnPropertyChanged(nameof(StepsVersion));
             NotifySectionStateChanged();
-            InvalidateAllCommands();
+            InvalidateStructureCommands();
             ScheduleValidation();
+        }
+
+        private void BeginCollectionUpdate() => _collectionUpdateDepth++;
+
+        private void EndCollectionUpdate()
+        {
+            if (_collectionUpdateDepth == 0 || --_collectionUpdateDepth > 0) return;
+            if (!_collectionRefreshPending) return;
+            _collectionRefreshPending = false;
+            CompleteCollectionRefresh();
+        }
+
+        private void RefreshAllStepsSnapshot()
+        {
+            _allJobStepsSnapshot = _startSteps.Concat(_runSteps).Concat(_endSteps).ToArray();
+            OnPropertyChanged(nameof(AllJobSteps));
+        }
+
+        private void ReconcileStepSubscriptions()
+        {
+            var current = new HashSet<JobStep>(AllSteps(), ReferenceEqualityComparer.Instance);
+            foreach (var removed in _subscribedSteps.Where(step => !current.Contains(step)).ToArray())
+            {
+                removed.PropertyChanged -= OnStepPropertyChanged;
+                _subscribedSteps.Remove(removed);
+            }
+            foreach (var added in current.Where(step => !_subscribedSteps.Contains(step)))
+            {
+                added.PropertyChanged += OnStepPropertyChanged;
+                _subscribedSteps.Add(added);
+            }
         }
 
         private void StartDebugJob()
         {
+            SynchronizeBreakpointsWithRuntimeJob();
             CloseDebugger();
             var session = _dispatcher.StartDebugJob(Job.Id);
             if (session == null) return;
             _debugSession = session;
             IsDebugPanelOpen = true;
             session.Changed += OnDebugSessionChanged;
+            session.IterationChanged += OnDebugIterationChanged;
             NotifyDebugStateChanged();
+        }
+
+        private void ToggleBreakpoint(JobStep? step)
+        {
+            if (step == null) return;
+            step.IsBreakpoint = !step.IsBreakpoint;
+            SynchronizeBreakpointWithRuntimeJob(step);
+        }
+
+        private void SynchronizeBreakpointsWithRuntimeJob()
+        {
+            foreach (var step in AllSteps())
+                SynchronizeBreakpointWithRuntimeJob(step);
+        }
+
+        private void SynchronizeBreakpointWithRuntimeJob(JobStep source)
+        {
+            var runtimeJob = _jobExecutionContext.AllJobs.Values
+                .FirstOrDefault(candidate => candidate.Id == Job.Id);
+            var runtimeStep = runtimeJob?.StartSteps
+                .Concat(runtimeJob.Steps)
+                .Concat(runtimeJob.EndSteps)
+                .FirstOrDefault(candidate => candidate.Id == source.Id);
+            if (runtimeStep != null)
+                runtimeStep.IsBreakpoint = source.IsBreakpoint;
         }
 
         private void CloseDebugger()
         {
             if (_debugSession != null)
+            {
                 _debugSession.Changed -= OnDebugSessionChanged;
+                _debugSession.IterationChanged -= OnDebugIterationChanged;
+            }
             _debugSession = null;
             foreach (var step in AllSteps())
             {
@@ -444,6 +598,13 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnDebugSessionChanged()
             => Application.Current?.Dispatcher?.InvokeAsync(NotifyDebugStateChanged);
+
+        private void OnDebugIterationChanged()
+            => Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(HasDebugIteration));
+                OnPropertyChanged(nameof(DebugIterationText));
+            });
 
         private void NotifyDebugStateChanged()
         {
@@ -460,8 +621,11 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(HasDebugIteration));
             OnPropertyChanged(nameof(DebugIterationText));
             OnPropertyChanged(nameof(IsDebugPanelVisible));
+            OnPropertyChanged(nameof(IsEditContextVisible));
+            OnPropertyChanged(nameof(IsRunContextVisible));
             NotifyDebugInspectorChanged();
-            InvalidateAllCommands();
+            InvalidateSelectionCommands();
+            InvalidateDebugCommands();
         }
 
         private void NotifyDebugInspectorChanged()
@@ -488,12 +652,17 @@ namespace DesktopAutomationApp.ViewModels
             for (var index = 0; index < steps.Count; index++)
             {
                 var step = steps[index];
-                if (!snapshots.TryGetValue(step.Id, out var snapshot)
+                if (!step.IsEnabled
+                    || !snapshots.TryGetValue(step.Id, out var snapshot)
                     || snapshot.State is not (JobStepDebugState.Completed or JobStepDebugState.Skipped or JobStepDebugState.Failed))
                     continue;
 
-                var values = snapshot.OutputValues
-                    .Select((node, nodeIndex) => new DebugContextValue($"{step.Id}/{nodeIndex}:{node.Name}", node))
+                var outputNodes = snapshot.ConditionEvaluation is { } conditionEvaluation
+                    ? BuildConditionDebugNodes(conditionEvaluation, steps)
+                    : snapshot.OutputValues;
+                var values = outputNodes
+                    .Select((node, nodeIndex) => new DebugContextValue(
+                        $"{step.Id}/{nodeIndex}:{node.Name}", node, snapshot.ResultTypeName))
                     .ToArray();
                 foreach (var value in values) RestoreValueExpansion(value, valueExpansion);
 
@@ -503,12 +672,85 @@ namespace DesktopAutomationApp.ViewModels
                 _debugContextGroups.Add(new DebugContextGroup
                 {
                     StepId = step.Id,
-                    Title = $"{index + 1}. {snapshot.StepType}",
-                    Subtitle = $"{snapshot.State} · {snapshot.Phase}{iteration}",
+                    Title = $"{index + 1}. {StepLocalization.Type(snapshot.StepType)}",
+                    Subtitle = $"{LocalizeDebugState(snapshot.State)} · {LocalizeDebugPhase(snapshot.Phase)}{iteration}",
                     Values = values,
                     IsExpanded = !groupExpansion.TryGetValue(step.Id, out var expanded) || expanded
                 });
             }
+        }
+
+        private static IReadOnlyList<JobDebugValueNode> BuildConditionDebugNodes(
+            ConditionDebugEvaluation evaluation,
+            IList<JobStep> steps)
+        {
+            var conditionNodes = evaluation.Conditions
+                .Select((item, index) =>
+                {
+                    var children = new List<JobDebugValueNode>
+                    {
+                        new(
+                            Loc.Get("Ui.Job.Debug.Condition.Expression"),
+                            ConditionDisplayFormatter.Format(item.Definition, steps as System.Collections.IList),
+                            "String",
+                            []),
+                        new(
+                            Loc.Get("Ui.Job.Debug.Condition.ActualValue"),
+                            item.ActualValue ?? string.Empty,
+                            "String",
+                            []),
+                        new(
+                            Loc.Get("Ui.Job.Debug.Condition.ExpectedValue"),
+                            item.ExpectedValue ?? string.Empty,
+                            "String",
+                            [])
+                    };
+                    if (!string.IsNullOrWhiteSpace(item.Diagnostic))
+                        children.Add(new JobDebugValueNode(
+                            Loc.Get("Ui.Job.Debug.Condition.Diagnostic"),
+                            item.Diagnostic,
+                            "String",
+                            []));
+                    return new JobDebugValueNode(
+                        Loc.Format("Ui.Job.Debug.Condition.Number", index + 1),
+                        item.State.ToString(),
+                        nameof(ConditionDebugState),
+                        children);
+                })
+                .ToArray();
+
+            var mode = evaluation.MatchMode == ConditionMatchMode.All
+                ? Loc.Get("Ui.Step.Settings.AllAND")
+                : Loc.Get("Ui.Step.Settings.OneOR");
+            var nodes = new List<JobDebugValueNode>
+            {
+                new(Loc.Get("Ui.Step.Settings.ConditionMatchMode"), mode, "String", []),
+                new(
+                    Loc.Get("Ui.Job.Debug.Condition.OverallResult"),
+                    evaluation.State.ToString(),
+                    nameof(ConditionDebugState),
+                    []),
+                new(
+                    Loc.Get("Ui.Job.Debug.Condition.Branch"),
+                    evaluation.BranchExecuted
+                        ? Loc.Get("Ui.Job.Debug.Condition.Executed")
+                        : Loc.Get("Ui.Job.Debug.Condition.Skipped"),
+                    "String",
+                    []),
+                new(
+                    Loc.Get("Ui.Job.Steps.DetailsConditions"),
+                    $"{conditionNodes.Length}",
+                    "Collection",
+                    conditionNodes,
+                    CollectionCount: conditionNodes.Length)
+            };
+            if (!string.IsNullOrWhiteSpace(evaluation.Diagnostic))
+                nodes.Add(new JobDebugValueNode(
+                    Loc.Get("Ui.Job.Debug.Condition.Diagnostic"),
+                    evaluation.Diagnostic,
+                    "String",
+                    []));
+            return nodes;
         }
 
         private static void CaptureValueExpansion(DebugContextValue value, IDictionary<string, bool> states)
@@ -521,6 +763,53 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (states.TryGetValue(value.Key, out var expanded)) value.IsExpanded = expanded;
             foreach (var child in value.Children) RestoreValueExpansion(child, states);
+        }
+
+        private static string LocalizeDebugState(JobStepDebugState state) =>
+            Loc.Get($"Ui.Job.Debug.State.{state}");
+
+        private string LocalizeDebugStatus()
+        {
+            if (_debugSession == null) return string.Empty;
+            var step = _debugSession.CurrentStepId is { } stepId
+                ? AllSteps().FirstOrDefault(candidate => candidate.Id == stepId)
+                : null;
+            var stepName = step is null
+                ? string.Empty
+                : StepLocalization.Type(step.GetType());
+            var phase = LocalizeDebugPhase(_debugSession.Phase);
+
+            return _debugSession.State switch
+            {
+                JobDebugSessionState.Starting => Loc.Get("Ui.Job.Debug.Status.Starting"),
+                JobDebugSessionState.Running => Loc.Format(
+                    "Ui.Job.Debug.Status.Running", phase, stepName),
+                JobDebugSessionState.Paused when _debugSession.StatusText.StartsWith(
+                    "Fehler in ", StringComparison.Ordinal) => Loc.Format(
+                        "Ui.Job.Debug.Status.Error",
+                        stepName,
+                        _debugSession.StatusText.Split(": ", 2).ElementAtOrDefault(1) ?? string.Empty),
+                JobDebugSessionState.Paused when _debugSession.IsAtIterationEnd => Loc.Format(
+                    "Ui.Job.Debug.Status.IterationCompleted", _debugSession.Iteration),
+                JobDebugSessionState.Paused => Loc.Format(
+                    "Ui.Job.Debug.Status.Paused", phase, stepName),
+                JobDebugSessionState.Completed => Loc.Get("Ui.Job.Debug.Status.Completed"),
+                JobDebugSessionState.Cancelled => Loc.Get("Ui.Job.Debug.Status.Cancelled"),
+                JobDebugSessionState.Failed => Loc.Get("Ui.Job.Debug.Status.Failed"),
+                _ => _debugSession.StatusText
+            };
+        }
+
+        private static string LocalizeDebugPhase(string phase)
+        {
+            var key = phase switch
+            {
+                "Startphase" => "Start",
+                "Hauptphase" or "Durchlauf" => "Run",
+                "Endphase" => "End",
+                _ => null
+            };
+            return key is null ? phase : Loc.Get($"Ui.Job.Debug.Phase.{key}");
         }
 
         private void SetDebugContextExpanded(bool expanded)
@@ -536,16 +825,21 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(HasStartStepErrors));
             OnPropertyChanged(nameof(HasStepErrors));
             OnPropertyChanged(nameof(HasEndStepErrors));
+            OnPropertyChanged(nameof(ValidationErrorCount));
+            OnPropertyChanged(nameof(ValidationSummary));
             OnPropertyChanged(nameof(AllJobSteps));
         }
 
         // ---------- Selection sync (called from code-behind) ----------
         public void SetSelectedSteps(IEnumerable<object> items, System.Collections.IList? section = null)
         {
-            if (section is ObservableCollection<JobStep> typedSection && IsKnownSection(typedSection))
+            if (section is ObservableRangeCollection<JobStep> typedSection && IsKnownSection(typedSection))
                 _steps = typedSection;
             SelectedSteps.Clear();
             SelectedSteps.AddRange(items.OfType<JobStep>());
+            OnPropertyChanged(nameof(SelectedStepCount));
+            OnPropertyChanged(nameof(HasSelectedSteps));
+            OnPropertyChanged(nameof(SelectedStepsSummary));
             // Keep SelectedStep in sync with the last selected item
             if (SelectedSteps.Count > 0)
                 SelectedStep = SelectedSteps[^1];
@@ -557,15 +851,17 @@ namespace DesktopAutomationApp.ViewModels
 
         public void DiscardChanges()
         {
-            _startSteps.Clear();
-            foreach (var s in DeepCloneSteps(_savedStartSnapshot))
-                _startSteps.Add(s);
-            _runSteps.Clear();
-            foreach (var s in DeepCloneSteps(_savedSnapshot))
-                _runSteps.Add(s);
-            _endSteps.Clear();
-            foreach (var s in DeepCloneSteps(_savedEndSnapshot))
-                _endSteps.Add(s);
+            BeginCollectionUpdate();
+            try
+            {
+                _startSteps.ReplaceRange(DeepCloneSteps(_savedStartSnapshot));
+                _runSteps.ReplaceRange(DeepCloneSteps(_savedSnapshot));
+                _endSteps.ReplaceRange(DeepCloneSteps(_savedEndSnapshot));
+            }
+            finally
+            {
+                EndCollectionUpdate();
+            }
             Job.StartSteps = DeepCloneSteps(_savedStartSnapshot);
             Job.Steps = DeepCloneSteps(_savedSnapshot);
             Job.EndSteps = DeepCloneSteps(_savedEndSnapshot);
@@ -580,14 +876,19 @@ namespace DesktopAutomationApp.ViewModels
         private async Task Save()
         {
             JobValidation.RemoveInvalidSourceSelections(AllSteps());
+            _validationCts?.Cancel();
+            var generation = ++_validationGeneration;
+            var serialized = await JobStepsSnapshotService.SerializeAsync(
+                _startSteps.ToArray(), _runSteps.ToArray(), _endSteps.ToArray());
+            var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized);
             var validation = await Task.Run(() => JobValidation.ValidateJob(new Job
             {
-                StartSteps = _startSteps.ToList(),
-                Steps = _runSteps.ToList(),
-                EndSteps = _endSteps.ToList(),
+                StartSteps = materialized.StartSteps.ToList(),
+                Steps = materialized.RunSteps.ToList(),
+                EndSteps = materialized.EndSteps.ToList(),
                 EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds
             }));
-            ApplyValidation(validation);
+            ApplyValidation(validation, generation);
             if (!validation.IsValid)
             {
                 var errors = validation.Steps.Where(s => !s.IsValid).Select(s => s.Error).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct();
@@ -599,9 +900,12 @@ namespace DesktopAutomationApp.ViewModels
             Job.EndSteps = _endSteps.ToList();
             Job.EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
             await _jobAppService.SaveJobAsync(Job);
-            _savedStartSnapshot = DeepCloneSteps(_startSteps);
-            _savedSnapshot = DeepCloneSteps(_runSteps);
-            _savedEndSnapshot = DeepCloneSteps(_endSteps);
+            var savedSerialized = await JobStepsSnapshotService.SerializeAsync(
+                _startSteps.ToArray(), _runSteps.ToArray(), _endSteps.ToArray());
+            var savedMaterialized = await JobStepsSnapshotService.DeserializeAsync(savedSerialized);
+            _savedStartSnapshot = savedMaterialized.StartSteps.ToList();
+            _savedSnapshot = savedMaterialized.RunSteps.ToList();
+            _savedEndSnapshot = savedMaterialized.EndSteps.ToList();
             _savedEndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
             HasUnsavedChanges = false;
         }
@@ -627,7 +931,9 @@ namespace DesktopAutomationApp.ViewModels
                 : _steps.Count;
 
             var precedingSteps = GetPrecedingSteps(_steps, insertIndex);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, AllSteps())
+            var allSteps = AllSteps();
+            var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources)
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -642,13 +948,17 @@ namespace DesktopAutomationApp.ViewModels
                         insertIndex++;
                 }
 
-                _steps.Insert(insertIndex, vm.CreatedStep);
+                await RunMutationAsync(async () =>
+                {
+                    await PushUndoAsync();
+                    var insertion = vm.CreatedStep is TaskAutomation.Jobs.IfStep
+                        ? new JobStep[] { vm.CreatedStep, new TaskAutomation.Jobs.EndIfStep() }
+                        : [vm.CreatedStep];
+                    _steps.InsertRange(insertIndex, insertion);
                 // If-Abfrage: automatisch EndIf direkt dahinter einfügen
-                if (vm.CreatedStep is TaskAutomation.Jobs.IfStep)
-                    _steps.Insert(insertIndex + 1, new TaskAutomation.Jobs.EndIfStep());
-                SelectedStep = vm.CreatedStep;
-                PushUndo();
-                HasUnsavedChanges = true;
+                    SelectedStep = vm.CreatedStep;
+                    HasUnsavedChanges = true;
+                });
             }
         }
 
@@ -663,7 +973,7 @@ namespace DesktopAutomationApp.ViewModels
             return res == true;
         }
 
-        private void EditStep(JobStep? step = null)
+        private async Task EditStep(JobStep? step = null)
         {
             var target = step ?? SelectedStep;
             if (target == null) return;
@@ -675,22 +985,29 @@ namespace DesktopAutomationApp.ViewModels
             // Only steps before the edited one count as "preceding" for
             // prerequisite evaluation.
             var precedingSteps = GetPrecedingSteps(_steps, idx);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, AllSteps())
-                {
-                    Mode = StepDialogMode.Edit,
-                    IsTypeLocked = target is TaskAutomation.Jobs.ElseIfStep
-                };
-            Prefill(vm, target);
+            var allSteps = AllSteps();
+            var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
+            var vm = new AddJobStepDialogViewModel(
+                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources);
+            using (vm.DeferNotifications())
+            {
+                vm.Mode = StepDialogMode.Edit;
+                vm.IsTypeLocked = target is TaskAutomation.Jobs.ElseIfStep;
+                Prefill(vm, target);
+            }
 
             ShowDialogWithVm(vm, out bool? result);
 
             if (result != true || vm.CreatedStep == null) return;
 
             vm.CreatedStep.Id = target.Id;   // preserve original ID
-            PushUndo();
-            _steps[idx] = vm.CreatedStep;
-            SelectedStep = vm.CreatedStep;
-            HasUnsavedChanges = true;
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                _steps[idx] = vm.CreatedStep;
+                SelectedStep = vm.CreatedStep;
+                HasUnsavedChanges = true;
+            });
         }
 
         // ---------- Prefill ----------
@@ -1017,26 +1334,30 @@ namespace DesktopAutomationApp.ViewModels
             if (idx < 0) return false;
             var newIdx = idx + delta;
             if (newIdx < 0 || newIdx >= section.Count) return false;
-            _steps = section;
-            return !WouldViolateIfStructure(idx, newIdx);
+            return !WouldViolateIfStructure(section, idx, newIdx);
         }
 
-        private void MoveRelative(JobStep? step, int delta)
+        private async Task MoveRelativeAsync(JobStep? step, int delta)
         {
             if (!CanMoveRelative(step, delta) || step == null) return;
 
-            var idx = _steps.IndexOf(step);
+            var section = FindSection(step);
+            if (section is null) return;
+            var idx = section.IndexOf(step);
             var newIdx = idx + delta;
 
-            PushUndo();
-            _steps.RemoveAt(idx);
-            _steps.Insert(newIdx, step);
-
-            JobValidation.RemoveInvalidSourceSelections(AllSteps());
-
-            SelectedStep = step;
-            HasUnsavedChanges = true;
-            InvalidateAllCommands();
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                var reordered = section.ToList();
+                reordered.RemoveAt(idx);
+                reordered.Insert(newIdx, step);
+                section.ReplaceRange(reordered);
+                _steps = section;
+                JobValidation.RemoveInvalidSourceSelections(AllSteps());
+                SelectedStep = step;
+                HasUnsavedChanges = true;
+            });
         }
 
         private static System.Windows.Media.Color HexToWpfColor(string? hex)
@@ -1059,25 +1380,11 @@ namespace DesktopAutomationApp.ViewModels
             return System.Windows.Media.Colors.White;
         }
 
-        private void MoveToIndex(int from, int to)
+        private async Task MoveStepAsync(StepDragDrop.MoveRequest? request)
         {
-            if (from < 0 || from >= _steps.Count || to < 0 || to >= _steps.Count || from == to) return;
-            if (WouldViolateIfStructure(from, to)) return;
-            PushUndo();
-            var step = _steps[from];
-            _steps.RemoveAt(from);
-            _steps.Insert(to, step);
-            JobValidation.RemoveInvalidSourceSelections(AllSteps());
-            SelectedStep = step;
-            HasUnsavedChanges = true;
-            InvalidateAllCommands();
-            ScheduleValidation();
-        }
-
-        private void MoveStep(StepDragDrop.MoveRequest request)
-        {
-            if (request.Source is not ObservableCollection<JobStep> source
-                || request.Target is not ObservableCollection<JobStep> target
+            if (request is null) return;
+            if (request.Source is not ObservableRangeCollection<JobStep> source
+                || request.Target is not ObservableRangeCollection<JobStep> target
                 || !IsKnownSection(source)
                 || !IsKnownSection(target)
                 || request.SourceIndex < 0
@@ -1125,47 +1432,60 @@ namespace DesktopAutomationApp.ViewModels
                 && first == insertIndex)
                 return;
 
-            PushUndo();
-            for (int i = last; i >= first; i--)
-                source.RemoveAt(i);
-            for (int i = 0; i < moving.Count; i++)
-                target.Insert(insertIndex + i, moving[i]);
-
-            JobValidation.RemoveInvalidSourceSelections(AllSteps());
-
-            SelectedStep = moving[0];
-            _steps = target;
-            SelectedSteps.Clear();
-            SelectedSteps.AddRange(moving);
-            HasUnsavedChanges = true;
-            ExpandSection(target);
-            InvalidateAllCommands();
-            ScheduleValidation();
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                if (ReferenceEquals(source, target))
+                {
+                    source.ReplaceRange(targetSimulation);
+                }
+                else
+                {
+                    BeginCollectionUpdate();
+                    try
+                    {
+                        source.ReplaceRange(sourceSimulation);
+                        target.ReplaceRange(targetSimulation);
+                    }
+                    finally
+                    {
+                        EndCollectionUpdate();
+                    }
+                }
+                JobValidation.RemoveInvalidSourceSelections(AllSteps());
+                SelectedStep = moving[0];
+                _steps = target;
+                SelectedSteps.Clear();
+                SelectedSteps.AddRange(moving);
+                HasUnsavedChanges = true;
+                ExpandSection(target);
+                InvalidateSelectionCommands();
+            });
         }
 
-        private bool CanMoveStepToSection(JobStep? step, ObservableCollection<JobStep> target)
+        private bool CanMoveStepToSection(JobStep? step, ObservableRangeCollection<JobStep> target)
             => step != null
                && FindSection(step) is { } source
                && !ReferenceEquals(source, target);
 
-        private void MoveStepToSection(JobStep? step, ObservableCollection<JobStep> target)
+        private Task MoveStepToSectionAsync(JobStep? step, ObservableRangeCollection<JobStep> target)
         {
             if (step == null || FindSection(step) is not { } source || ReferenceEquals(source, target))
-                return;
+                return Task.CompletedTask;
 
-            MoveStep(new StepDragDrop.MoveRequest(
+            return MoveStepAsync(new StepDragDrop.MoveRequest(
                 source,
                 source.IndexOf(step),
                 target,
                 target.Count));
         }
 
-        private bool IsKnownSection(ObservableCollection<JobStep> section)
+        private bool IsKnownSection(ObservableRangeCollection<JobStep> section)
             => ReferenceEquals(section, _startSteps)
                || ReferenceEquals(section, _runSteps)
                || ReferenceEquals(section, _endSteps);
 
-        private ObservableCollection<JobStep>? FindSection(JobStep step)
+        private ObservableRangeCollection<JobStep>? FindSection(JobStep step)
         {
             if (_startSteps.Contains(step)) return _startSteps;
             if (_runSteps.Contains(step)) return _runSteps;
@@ -1176,7 +1496,7 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> AllSteps()
             => _startSteps.Concat(_runSteps).Concat(_endSteps).ToList();
 
-        private List<JobStep> GetPrecedingSteps(ObservableCollection<JobStep> section, int index)
+        private List<JobStep> GetPrecedingSteps(ObservableRangeCollection<JobStep> section, int index)
         {
             IEnumerable<JobStep> precedingPhases = ReferenceEquals(section, _runSteps)
                 ? _startSteps
@@ -1186,7 +1506,7 @@ namespace DesktopAutomationApp.ViewModels
             return precedingPhases.Concat(section.Take(Math.Clamp(index, 0, section.Count))).ToList();
         }
 
-        private void ExpandSection(ObservableCollection<JobStep> section)
+        private void ExpandSection(ObservableRangeCollection<JobStep> section)
         {
             if (ReferenceEquals(section, _startSteps)) IsStartSectionExpanded = true;
             else if (ReferenceEquals(section, _runSteps)) IsRunSectionExpanded = true;
@@ -1228,32 +1548,43 @@ namespace DesktopAutomationApp.ViewModels
         {
             _validationCts?.Cancel();
             var cts = _validationCts = new CancellationTokenSource();
-            var startSnapshot = _startSteps.ToList();
-            var snapshot = _runSteps.ToList();
-            var endSnapshot = _endSteps.ToList();
-            _ = Task.Run(async () =>
+            var generation = ++_validationGeneration;
+            var startSnapshot = _startSteps.ToArray();
+            var runSnapshot = _runSteps.ToArray();
+            var endSnapshot = _endSteps.ToArray();
+            _ = ValidateAsync();
+
+            async Task ValidateAsync()
             {
                 try
                 {
                     await Task.Delay(120, cts.Token);
-                    var result = JobValidation.ValidateJob(new Job
+                    var serialized = await JobStepsSnapshotService.SerializeAsync(
+                        startSnapshot, runSnapshot, endSnapshot, cts.Token);
+                    var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized, cts.Token);
+                    var result = await Task.Run(() => JobValidation.ValidateJob(new Job
                     {
-                        StartSteps = startSnapshot,
-                        Steps = snapshot,
-                        EndSteps = endSnapshot
-                    });
-                    if (cts.IsCancellationRequested) return;
-                    await Application.Current.Dispatcher.InvokeAsync(() => ApplyValidation(result));
+                        StartSteps = materialized.StartSteps.ToList(),
+                        Steps = materialized.RunSteps.ToList(),
+                        EndSteps = materialized.EndSteps.ToList()
+                    }), cts.Token);
+                    if (cts.IsCancellationRequested || generation != _validationGeneration) return;
+                    await Application.Current.Dispatcher.InvokeAsync(() => ApplyValidation(result, generation));
                 }
                 catch (OperationCanceledException) { }
-            });
+            }
         }
 
-        private void ApplyValidation(JobValidationResult validation)
+        private void ApplyValidation(JobValidationResult validation, int generation)
         {
+            if (generation != _validationGeneration) return;
+            var liveSteps = AllSteps()
+                .GroupBy(step => step.Id)
+                .ToDictionary(group => group.Key, group => group.First());
             foreach (var result in validation.Steps)
             {
-                result.Step.SetValidationResult(result.IsValid, result.Error);
+                if (liveSteps.TryGetValue(result.Step.Id, out var liveStep))
+                    liveStep.SetValidationResult(result.IsValid, result.Error);
             }
             NotifySectionStateChanged();
         }
@@ -1269,10 +1600,10 @@ namespace DesktopAutomationApp.ViewModels
 
             if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title"))) return;
 
-            PushUndo();
             var idx = _steps.IndexOf(target);
             if (idx < 0) return;
 
+            var indicesToRemove = new SortedSet<int>();
             if (isIfOrEndIf)
             {
                 int ifIdx    = target is TaskAutomation.Jobs.IfStep ? idx : FindOwningIfStep(idx);
@@ -1281,7 +1612,6 @@ namespace DesktopAutomationApp.ViewModels
                 if (ifIdx >= 0 && endIfIdx > ifIdx)
                 {
                     // Collect indices of If/ElseIf/Else/EndIf steps only — preserve regular steps inside.
-                    var indicesToRemove = new List<int>();
                     for (int i = ifIdx; i <= endIfIdx; i++)
                     {
                         if (_steps[i] is TaskAutomation.Jobs.IfStep
@@ -1292,27 +1622,25 @@ namespace DesktopAutomationApp.ViewModels
                             indicesToRemove.Add(i);
                         }
                     }
-                    // Remove from highest index downward to keep indices stable.
-                    for (int i = indicesToRemove.Count - 1; i >= 0; i--)
-                        _steps.RemoveAt(indicesToRemove[i]);
-                    SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, ifIdx - 1));
                 }
                 else
                 {
-                    _steps.RemoveAt(idx);
-                    SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, idx - 1));
+                    indicesToRemove.Add(idx);
                 }
             }
             else
             {
-                var next = _steps.ElementAtOrDefault(Math.Max(0, idx - 1))
-                          ?? _steps.ElementAtOrDefault(idx + 1);
-                _steps.RemoveAt(idx);
-                SelectedStep = next;
+                indicesToRemove.Add(idx);
             }
 
-            HasUnsavedChanges = true;
-            InvalidateAllCommands();
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                var remaining = _steps.Where((_, index) => !indicesToRemove.Contains(index)).ToList();
+                _steps.ReplaceRange(remaining);
+                SelectedStep = remaining.ElementAtOrDefault(Math.Max(0, idx - 1));
+                HasUnsavedChanges = true;
+            });
         }
 
         private void OnRunningJobsChanged()
@@ -1329,79 +1657,132 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Undo / Redo ----------
-        private void PushUndo()
+        private async Task PushUndoAsync()
         {
-            _undoStack.Push(CreateSnapshot());
+            _undoStack.Push(await CreateSnapshotAsync());
             _redoStack.Clear();
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
+            InvalidateHistoryCommands();
         }
 
-        private void Undo()
+        private async Task UndoAsync()
         {
             if (_undoStack.Count == 0) return;
-            _redoStack.Push(CreateSnapshot());
-            RestoreSnapshot(_undoStack.Pop());
-            OnPropertyChanged(nameof(CanUndo));
-            OnPropertyChanged(nameof(CanRedo));
+            await RunMutationAsync(async () =>
+            {
+                _redoStack.Push(await CreateSnapshotAsync());
+                RestoreSnapshot(_undoStack.Pop());
+                OnPropertyChanged(nameof(CanUndo));
+                OnPropertyChanged(nameof(CanRedo));
+                InvalidateHistoryCommands();
+            });
         }
 
-        private void Redo()
+        private async Task RedoAsync()
         {
             if (_redoStack.Count == 0) return;
-            _undoStack.Push(CreateSnapshot());
-            RestoreSnapshot(_redoStack.Pop());
-            OnPropertyChanged(nameof(CanUndo));
-            OnPropertyChanged(nameof(CanRedo));
+            await RunMutationAsync(async () =>
+            {
+                _undoStack.Push(await CreateSnapshotAsync());
+                RestoreSnapshot(_redoStack.Pop());
+                OnPropertyChanged(nameof(CanUndo));
+                OnPropertyChanged(nameof(CanRedo));
+                InvalidateHistoryCommands();
+            });
         }
 
-        private JobStepsSnapshot CreateSnapshot()
-            => new(
-                DeepCloneSteps(_startSteps),
-                DeepCloneSteps(_runSteps),
-                DeepCloneSteps(_endSteps));
+        private async Task<JobStepsSnapshot> CreateSnapshotAsync()
+        {
+            var serialized = await JobStepsSnapshotService.SerializeAsync(
+                _startSteps.ToArray(), _runSteps.ToArray(), _endSteps.ToArray());
+            var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized);
+            return new JobStepsSnapshot(
+                materialized.StartSteps.ToList(),
+                materialized.RunSteps.ToList(),
+                materialized.EndSteps.ToList());
+        }
 
         private void RestoreSnapshot(JobStepsSnapshot snapshot)
         {
-            _startSteps.Clear();
-            foreach (var s in snapshot.StartSteps) _startSteps.Add(s);
-            _runSteps.Clear();
-            foreach (var s in snapshot.RunSteps) _runSteps.Add(s);
-            _steps = _runSteps;
-            _endSteps.Clear();
-            foreach (var s in snapshot.EndSteps) _endSteps.Add(s);
+            BeginCollectionUpdate();
+            try
+            {
+                _startSteps.ReplaceRange(snapshot.StartSteps);
+                _runSteps.ReplaceRange(snapshot.RunSteps);
+                _steps = _runSteps;
+                _endSteps.ReplaceRange(snapshot.EndSteps);
+            }
+            finally
+            {
+                EndCollectionUpdate();
+            }
             SelectedStep = null;
             SelectedSteps.Clear();
             HasUnsavedChanges = true;
         }
 
         // ---------- Copy / Paste ----------
-        private void CopySelected()
+        private async Task CopySelectedAsync()
         {
             var sources = SelectedSteps.Count > 0
                 ? SelectedSteps.OrderBy(s => _steps.IndexOf(s)).ToList()
                 : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
             if (sources == null) return;
-            _clipboard = DeepCloneSteps(sources, newIds: false);
-            InvalidateAllCommands();
+            await RunMutationAsync(async () =>
+            {
+                _clipboard = (await JobStepsSnapshotService.CloneAsync(sources, newIds: false)).ToList();
+                InvalidateClipboardCommands();
+            });
         }
 
-        private void Paste()
+        private async Task PasteAsync()
         {
             if (_clipboard.Count == 0) return;
 
-            int insertAt = SelectedStep != null
-                ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
-                : _steps.Count;
+            await RunMutationAsync(async () =>
+            {
+                int insertAt = SelectedStep != null
+                    ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
+                    : _steps.Count;
 
-            // Clone again so multiple pastes produce independent copies with fresh IDs.
-            var toInsert = DeepCloneSteps(_clipboard, newIds: true);
-            PushUndo();
-            for (int i = 0; i < toInsert.Count; i++)
-                _steps.Insert(insertAt + i, toInsert[i]);
+                var toInsert = (await JobStepsSnapshotService.CloneAsync(_clipboard, newIds: true)).ToList();
+                await PushUndoAsync();
+                _steps.InsertRange(insertAt, toInsert);
+                SelectedStep = toInsert[^1];
+                HasUnsavedChanges = true;
+            });
+        }
 
-            SelectedStep = toInsert[^1];
-            HasUnsavedChanges = true;
+        private async Task RunMutationAsync(Func<Task> action)
+        {
+            await _mutationGate.WaitAsync();
+            IsMutationBusy = true;
+            try
+            {
+                await action();
+            }
+            finally
+            {
+                IsMutationBusy = false;
+                _mutationGate.Release();
+            }
+        }
+
+        private async Task<AddJobStepDialogViewModel.PreparedSources> PrepareDialogSourcesAsync(
+            IReadOnlyList<JobStep> precedingSteps)
+        {
+            await _mutationGate.WaitAsync();
+            IsMutationBusy = true;
+            try
+            {
+                return await AddJobStepDialogViewModel.PrepareSourcesAsync(precedingSteps);
+            }
+            finally
+            {
+                IsMutationBusy = false;
+                _mutationGate.Release();
+            }
         }
 
         // ---------- Delete selected ----------
@@ -1420,8 +1801,6 @@ namespace DesktopAutomationApp.ViewModels
 
             if (!await _dialogService.ConfirmAsync(message, Loc.Get("Dialog.Delete.Title")))
                 return;
-
-            PushUndo();
 
             // Collect all indices to remove (handle If/EndIf structure steps).
             var indicesToRemove = new SortedSet<int>(Comparer<int>.Create((a, b) => b.CompareTo(a))); // descending
@@ -1447,13 +1826,17 @@ namespace DesktopAutomationApp.ViewModels
                 else { indicesToRemove.Add(idx); }
             }
 
-            int firstRemoved = indicesToRemove.Min;
-            foreach (var i in indicesToRemove) _steps.RemoveAt(i);
-
-            SelectedStep = _steps.ElementAtOrDefault(Math.Max(0, firstRemoved - 1));
-            SelectedSteps.Clear();
-            HasUnsavedChanges = true;
-            InvalidateAllCommands();
+            if (indicesToRemove.Count == 0) return;
+            int firstRemoved = indicesToRemove.DefaultIfEmpty(0).Min();
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                var remaining = _steps.Where((_, index) => !indicesToRemove.Contains(index)).ToList();
+                _steps.ReplaceRange(remaining);
+                SelectedStep = remaining.ElementAtOrDefault(Math.Max(0, firstRemoved - 1));
+                SelectedSteps.Clear();
+                HasUnsavedChanges = true;
+            });
         }
 
         // ---------- Deep clone helpers ----------
@@ -1513,10 +1896,10 @@ namespace DesktopAutomationApp.ViewModels
         /// Valid order within every block: If → ElseIf* → Else? → EndIf
         /// Works by simulating the move on a copy and validating the result.
         /// </summary>
-        private bool WouldViolateIfStructure(int from, int to)
+        private static bool WouldViolateIfStructure(IReadOnlyList<JobStep> steps, int from, int to)
         {
             if (from == to) return false;
-            var step = _steps[from];
+            var step = steps[from];
 
             // Regular steps cannot break the control-flow structure.
             if (step is not (TaskAutomation.Jobs.IfStep     or
@@ -1525,7 +1908,7 @@ namespace DesktopAutomationApp.ViewModels
                              TaskAutomation.Jobs.EndIfStep))
                 return false;
 
-            var sim = new System.Collections.Generic.List<JobStep>(_steps);
+            var sim = new System.Collections.Generic.List<JobStep>(steps);
             sim.RemoveAt(from);
             sim.Insert(to, step);
             return !JobValidation.IsIfStructureAllowed(sim);
@@ -1619,7 +2002,7 @@ namespace DesktopAutomationApp.ViewModels
             return false;
         }
 
-        private void AddElseIf(JobStep? step)
+        private async Task AddElseIfAsync(JobStep? step)
         {
             if (step == null) return;
             int idx = _steps.IndexOf(step);
@@ -1636,7 +2019,9 @@ namespace DesktopAutomationApp.ViewModels
             int insertIdx = FindInsertBeforeElseOrEndIf(ifIdx, endIfIdx);
 
             var precedingSteps = GetPrecedingSteps(_steps, insertIdx);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, AllSteps())
+            var allSteps = AllSteps();
+            var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources)
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 
@@ -1644,14 +2029,17 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result == true && vm.CreatedStep != null)
             {
-                _steps.Insert(insertIdx, vm.CreatedStep);
-                SelectedStep = vm.CreatedStep;
-                HasUnsavedChanges = true;
-                InvalidateAllCommands();
+                await RunMutationAsync(async () =>
+                {
+                    await PushUndoAsync();
+                    _steps.InsertRange(insertIdx, [vm.CreatedStep]);
+                    SelectedStep = vm.CreatedStep;
+                    HasUnsavedChanges = true;
+                });
             }
         }
 
-        private void AddElse(JobStep? step)
+        private async Task AddElseAsync(JobStep? step)
         {
             if (step == null) return;
             int idx = _steps.IndexOf(step);
@@ -1665,9 +2053,14 @@ namespace DesktopAutomationApp.ViewModels
             if (endIfIdx < 0 || HasElseInBlock(ifIdx, endIfIdx)) return;
 
             // Guard already passed above: HasElseInBlock returned false
-            _steps.Insert(endIfIdx, new TaskAutomation.Jobs.ElseStep());
-            HasUnsavedChanges = true;
-            InvalidateAllCommands();
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                var elseStep = new TaskAutomation.Jobs.ElseStep();
+                _steps.InsertRange(endIfIdx, [elseStep]);
+                SelectedStep = elseStep;
+                HasUnsavedChanges = true;
+            });
         }
 
         private bool CanAddElse(JobStep? step)
@@ -1701,7 +2094,11 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
             {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
-                if (_debugSession != null) _debugSession.Changed -= OnDebugSessionChanged;
+                if (_debugSession != null)
+                {
+                    _debugSession.Changed -= OnDebugSessionChanged;
+                    _debugSession.IterationChanged -= OnDebugIterationChanged;
+                }
                 foreach (var step in _startSteps.Concat(_runSteps).Concat(_endSteps))
                     step.PropertyChanged -= OnStepPropertyChanged;
                 _validationCts?.Cancel();
@@ -1711,37 +2108,83 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Command invalidation helper ----------
-        private void InvalidateAllCommands()
+        private void InvalidateSelectionCommands()
         {
-            (SaveCommand          as RelayCommand)?.RaiseCanExecuteChanged();
-            (CancelCommand        as RelayCommand)?.RaiseCanExecuteChanged();
-            (RenameCommand        as RelayCommand)?.RaiseCanExecuteChanged();
-            (AddStepCommand       as RelayCommand)?.RaiseCanExecuteChanged();
-            (StartJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
-            (StopJobCommand       as RelayCommand)?.RaiseCanExecuteChanged();
-            (DebugJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
-            (DebugStepCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteSelectedCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (CopyCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void InvalidateHistoryCommands()
+        {
+            (UndoCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void InvalidateClipboardCommands()
+            => (PasteCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+
+        private void InvalidateSaveCommands()
+        {
+            (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (DebugJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void InvalidateDebugCommands()
+        {
+            (DebugStepCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DebugContinueCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (CancelDebugCommand   as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelDebugCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CloseDebuggerCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ToggleDebugPanelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void InvalidateStructureCommands()
+        {
+            (MoveStepUpCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseIfCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToStartSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToRunSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToEndSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            InvalidateSelectionCommands();
+        }
+
+        private void InvalidateMutationCommands()
+        {
+            (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (AddStepCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepUpCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (ReorderStepCommand as AsyncRelayCommand<StepDragDrop.MoveRequest>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (DeleteSelectedCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (UndoCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (CopyCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (PasteCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (AddElseIfCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (AddElseCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToStartSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToRunSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (MoveToEndSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+        }
+
+        private void InvalidateAllCommands()
+        {
+            InvalidateSaveCommands();
+            InvalidateMutationCommands();
+            (RenameCommand        as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (StopJobCommand       as RelayCommand)?.RaiseCanExecuteChanged();
+            InvalidateDebugCommands();
             (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CollapseDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ToggleBreakpointCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (EditStepCommand      as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveStepUpCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveStepDownCommand  as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (DeleteStepCommand    as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (DeleteSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (UndoCommand          as RelayCommand)?.RaiseCanExecuteChanged();
-            (RedoCommand          as RelayCommand)?.RaiseCanExecuteChanged();
-            (CopyCommand          as RelayCommand)?.RaiseCanExecuteChanged();
-            (PasteCommand         as RelayCommand)?.RaiseCanExecuteChanged();
-            (AddElseIfCommand     as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (AddElseCommand       as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveToStartSectionCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveToRunSectionCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (MoveToEndSectionCommand   as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (ToggleStepEnabledCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
         }
 
     }

@@ -1,0 +1,352 @@
+[
+  {
+    "version": "1.5.4",
+    "date": "2026-07-23",
+    "sections": [
+      {
+        "title": {
+          "de": "YOLO-Modelle",
+          "en": "YOLO models"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "YOLO11 Nano und ScreenParser können direkt in der Modellverwaltung heruntergeladen werden; ScreenParser ergänzt 55 Klassen für Benutzeroberflächen.",
+            "en": "YOLO11 Nano and ScreenParser can be downloaded directly from model management; ScreenParser adds 55 user-interface classes."
+          },
+          {
+            "category": "Fixed",
+            "de": "Lokal hinzugefügte ONNX-Modelle können jetzt in Jobs geladen und ausgeführt werden.",
+            "en": "Locally added ONNX models can now be loaded and executed in jobs."
+          },
+          {
+            "category": "Fixed",
+            "de": "Neue ScreenParser-Schritte verwenden eine passende Erkennungsschwelle, und Ergebnisanzeigen wählen standardmäßig alle Erkennungen einschließlich Begrenzungsrahmen statt nur der Mittelpunkte.",
+            "en": "New ScreenParser steps use a suitable detection threshold, and result displays now select all detections including bounding boxes by default instead of center points only."
+          },
+          {
+            "category": "Fixed",
+            "de": "ScreenParser behandelt die Modellklassen „Search Field“ und „Search Bar“ bei der Erkennung gemeinsam, damit sichtbare Suchfelder nicht durch die uneinheitliche Modellklassifizierung verworfen werden.",
+            "en": "ScreenParser treats the model classes Search Field and Search Bar as equivalent during detection so visible search fields are not discarded due to inconsistent model classification."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die YOLO-Bildvorverarbeitung verwendet jetzt modellgerechte bilineare Skalierung und graue Randflächen, sodass ScreenParser seine trainierte Erkennungsqualität erreicht.",
+            "en": "YOLO image preprocessing now uses model-compatible bilinear resizing and gray padding so ScreenParser can achieve its trained detection quality."
+          },
+          {
+            "category": "Fixed",
+            "de": "„Erkennungsergebnis auf Desktop anzeigen“, „Bild anzeigen“ und der Video-Step unterstützen wieder die beste Bounding Box sowie Listen von Bounding Boxes als direkte Ergebnisquelle.",
+            "en": "Show detection result on desktop, Show image, and the video step once again support the best bounding box and lists of bounding boxes as direct result sources."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Makro-Aufzeichnung und -Bearbeitung",
+          "en": "Macro recording and editing"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Makros werden mit präzisem Timing aufgezeichnet und mit einer hochauflösenden Zeitsteuerung wiedergegeben.",
+            "en": "Macros are recorded with precise timing and replayed using high-resolution timing."
+          },
+          {
+            "category": "Added",
+            "de": "Der neue Aufnahmedialog bietet Einstellungen für Aufnahmemodus, Intervall und Aufnahme-Hotkey.",
+            "en": "The new recording dialog provides settings for recording mode, interval, and recording hotkey."
+          },
+          {
+            "category": "Added",
+            "de": "Der Aufnahme-Hotkey kann frei konfiguriert werden und wird nicht als Makro-Eingabe aufgezeichnet.",
+            "en": "The recording hotkey can be configured freely and is excluded from recorded macro input."
+          },
+          {
+            "category": "Added",
+            "de": "Makro-Schritte können in Gruppen organisiert, ein- und ausgeklappt, umbenannt, aufgelöst und als Block verschoben werden.",
+            "en": "Macro steps can be organized into groups, collapsed or expanded, renamed, dissolved, and moved as a block."
+          },
+          {
+            "category": "Added",
+            "de": "Filter und zeilenspezifische Kontextmenüs erleichtern die Bearbeitung von Makro-Schritten und Gruppen.",
+            "en": "Filters and row-specific context menus make editing macro steps and groups easier."
+          },
+          {
+            "category": "Changed",
+            "de": "Das Makroformat speichert zusätzlich Gruppen, Aufnahmeeinstellungen und Informationen zur Aufnahmeumgebung.",
+            "en": "The macro format now also stores groups, recording settings, and recording environment information."
+          },
+          {
+            "category": "Changed",
+            "de": "Die Eingabewiedergabe wurde vereinheitlicht und die Validierung von Timing- und Aufnahmeeinstellungen erweitert.",
+            "en": "Input replay was unified and validation for timing and recording settings was expanded."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Job-Debugger",
+          "en": "Job debugger"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Jobs können mit Breakpoints und den Aktionen „Nächster Step“ und „Weiter“ schrittweise untersucht werden.",
+            "en": "Jobs can be inspected step by step using breakpoints and the Next step and Continue actions."
+          },
+          {
+            "category": "Added",
+            "de": "Der Debug-Inspektor zeigt den aktuellen Kontext als aufklappbaren Baum mit Step-Ausgaben, Untereigenschaften und Ergebniswerten.",
+            "en": "The debug inspector shows the current context as an expandable tree containing step outputs, nested properties, and result values."
+          },
+          {
+            "category": "Changed",
+            "de": "In der Step-Liste startet die primäre Aktion jetzt direkt den Debugger; eine normale Job-Ausführung wird dort nicht mehr angeboten.",
+            "en": "The primary action in the step list now starts the debugger directly; normal job execution is no longer offered there."
+          },
+          {
+            "category": "Changed",
+            "de": "Während „Weiter“ aktualisiert die Oberfläche nur noch die Iteration, damit Step-Liste und Debug-Kontext nicht flimmern.",
+            "en": "While Continue is active, the interface now updates only the iteration to prevent flickering in the step list and debug context."
+          },
+          {
+            "category": "Fixed",
+            "de": "Beim Klick auf „Weiter“ wird die gelbe Markierung des zuvor pausierten Steps sofort entfernt.",
+            "en": "Clicking Continue now immediately clears the yellow marker from the previously paused step."
+          },
+          {
+            "category": "Fixed",
+            "de": "„Nächster Step“ und „Weiter“ werden während einer laufenden Ausführung zuverlässig deaktiviert.",
+            "en": "Next step and Continue are now reliably disabled while execution is running."
+          },
+          {
+            "category": "Fixed",
+            "de": "Auswertungsdetails von Else-If-Steps bleiben im Debugger erhalten.",
+            "en": "Evaluation details for Else If steps are now retained in the debugger."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "If-Bedingungen",
+          "en": "If conditions"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "If- und Else-If-Bedingungen werden in Step-Liste, Step-Details und Debugger einheitlich mit Step-Name, Eigenschaft, Operator und Vergleichswert dargestellt.",
+            "en": "If and Else If conditions are now displayed consistently in the step list, step details, and debugger using the step name, property, operator, and comparison value."
+          },
+          {
+            "category": "Changed",
+            "de": "Mehrere Bedingungen erhalten eine kompakte Zusammenfassung mit Verknüpfungsmodus, Anzahl, erster Bedingung und der Anzahl weiterer Bedingungen.",
+            "en": "Multiple conditions now receive a compact summary containing the match mode, count, first condition, and number of remaining conditions."
+          },
+          {
+            "category": "Added",
+            "de": "Der Debugger zeigt für Bedingungen Ausdruck, tatsächlichen Wert, Vergleichswert, Gesamtergebnis und die Entscheidung über den ausgeführten Zweig.",
+            "en": "For conditions, the debugger now shows the expression, actual value, expected value, overall result, and branch decision."
+          },
+          {
+            "category": "Added",
+            "de": "Bedingungsergebnisse unterscheiden sichtbar zwischen „Erfüllt“, „Nicht erfüllt“, „Nicht ausgewertet“ und „Wert nicht verfügbar“.",
+            "en": "Condition results now visibly distinguish between Met, Not met, Not evaluated, and Value unavailable."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Step-Ergebnisse und Windows-Integration",
+          "en": "Step results and Windows integration"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Step-Ergebnisse verwenden erweiterte, typisierte Verträge mit stabilen Eigenschafts-IDs, Anzeigenamen und Beschreibungen.",
+            "en": "Step results now use expanded typed contracts with stable property IDs, display names, and descriptions."
+          },
+          {
+            "category": "Changed",
+            "de": "Result-Bindings und Bedingungen lösen Eigenschaften bevorzugt über stabile IDs auf und bleiben zu älteren gespeicherten Pfaden kompatibel.",
+            "en": "Result bindings and conditions now resolve properties primarily through stable IDs while remaining compatible with older stored paths."
+          },
+          {
+            "category": "Added",
+            "de": "Windows-Statusabfragen liefern abfragespezifische Ergebnistypen mit auswählbaren, dokumentierten Eigenschaften.",
+            "en": "Windows state queries now return query-specific result types with selectable and documented properties."
+          },
+          {
+            "category": "Changed",
+            "de": "Nicht unterstützte oder verweigerte Windows-Abfragen liefern einen eindeutigen Status und Fehlercode statt eines irreführenden False-Werts.",
+            "en": "Unsupported or denied Windows queries now return an explicit status and error code instead of a misleading false value."
+          },
+          {
+            "category": "Added",
+            "de": "Der Windows-Fähigkeitskatalog enthält zusätzliche Sicherheitsereignisse und Metadaten zu Ergebnisverträgen.",
+            "en": "The Windows capability catalog now contains additional security events and result contract metadata."
+          },
+          {
+            "category": "Fixed",
+            "de": "Eine fehlerhaft konfigurierte Windows-Automation verhindert nicht mehr, dass die übrigen Automationen geladen und registriert werden.",
+            "en": "An incorrectly configured Windows automation no longer prevents the remaining automations from loading and registering."
+          },
+          {
+            "category": "Fixed",
+            "de": "Druckerereignisse bieten keinen wirkungslosen Namensfilter mehr an; bereits gespeicherte Druckerfilter blockieren die Automation nicht länger.",
+            "en": "Printer events no longer offer an ineffective name filter, and previously saved printer filters no longer block the automation."
+          },
+          {
+            "category": "Fixed",
+            "de": "Verzögerte Windows-Ereignisse lösen nach dem Entfernen oder erneuten Registrieren einer Automation keinen veralteten Lauf mehr aus.",
+            "en": "Delayed Windows events no longer start a stale run after an automation is removed or registered again."
+          },
+          {
+            "category": "Fixed",
+            "de": "Unbekannte Windows-Update- und Sicherheitsereignisse starten eine Automation nicht mehr doppelt.",
+            "en": "Unknown Windows Update and security events no longer start an automation twice."
+          },
+          {
+            "category": "Fixed",
+            "de": "Windows-Update-Ereignisse werden aus den richtigen Ereignisprotokollen gelesen und korrekt als Download, Installation, Fehler oder erforderlicher Neustart eingeordnet.",
+            "en": "Windows Update events are now read from the correct event logs and classified correctly as downloads, installations, failures, or required restarts."
+          },
+          {
+            "category": "Fixed",
+            "de": "WLAN-Verbindungen gelten nur noch bei einem erfolgreichen Windows-Reason-Code als verbunden; nicht verfügbare SSID-Filter werden nicht mehr angeboten.",
+            "en": "Wi-Fi connections are now considered connected only when Windows reports a successful reason code, and unavailable SSID filters are no longer offered."
+          },
+          {
+            "category": "Changed",
+            "de": "Unzuverlässige Bluetooth-Unterereignisse wurden durch das stabile Ereignis „Bluetooth-Geräteliste geändert“ ersetzt; bestehende Automationen werden kompatibel auf dieses Ereignis abgebildet.",
+            "en": "Unreliable Bluetooth subevents were replaced by the stable Bluetooth device list changed event; existing automations are mapped to it for compatibility."
+          },
+          {
+            "category": "Fixed",
+            "de": "Sicherheits-, Audio-, Zwischenablage- und Druckerereignisse werden anhand ihrer tatsächlichen Windows-Bedeutung klassifiziert; kombinierte Druckeränderungen lösen alle passenden Unterereignisse aus.",
+            "en": "Security, audio, clipboard, and printer events are now classified by their actual Windows meaning, and combined printer changes trigger every matching subevent."
+          },
+          {
+            "category": "Changed",
+            "de": "Windows-Ereignisse und Statusabfragen besitzen jetzt einheitliche deutsche und englische Namen sowie eine kurze Beschreibung im Auswahlfeld.",
+            "en": "Windows events and state queries now have consistent German and English names plus a short description in the picker."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Erscheinungsbild",
+          "en": "Appearance"
+        },
+        "changes": [
+          {
+            "category": "Fixed",
+            "de": "Der Akzentfarben-Rand um das Hauptfenster wurde entfernt.",
+            "en": "The accent-colored border around the main window has been removed."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Job-Editor und Bedienung",
+          "en": "Job editor and usability"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Hinzufügen, Bearbeiten, Verschieben, Kopieren, Einfügen, Rückgängig und Wiederholen blockieren die Oberfläche nicht mehr durch synchrone Dateizugriffe.",
+            "en": "Adding, editing, moving, copying, pasting, undoing, and redoing no longer block the interface with synchronous file access."
+          },
+          {
+            "category": "Changed",
+            "de": "Step-Listen werden bei größeren Änderungen gesammelt aktualisiert, wodurch Auswahl, Drag-and-drop und umfangreiche Jobs flüssiger reagieren.",
+            "en": "Step lists are now updated in batches for larger changes, making selection, drag and drop, and large jobs more responsive."
+          },
+          {
+            "category": "Changed",
+            "de": "Der Dialog zum Hinzufügen und Bearbeiten von Steps lädt Ergebnisquellen vorab, aktualisiert Auswahllisten gesammelt und lädt YOLO-Modelle nur bei Bedarf.",
+            "en": "The add and edit step dialog now prepares result sources in advance, updates selection lists in batches, and loads YOLO models only when needed."
+          },
+          {
+            "category": "Changed",
+            "de": "Step-Details und Blockdarstellung verwenden zwischengespeicherte Metadaten, um wiederholte Berechnungen in großen Listen zu vermeiden.",
+            "en": "Step details and block visuals now use cached metadata to avoid repeated calculations in large lists."
+          },
+          {
+            "category": "Changed",
+            "de": "Scrollbereiche reagieren langsamer und präziser auf Touchpads und Mausräder.",
+            "en": "Scrollable areas now respond more slowly and precisely to touchpads and mouse wheels."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Versionshinweise",
+          "en": "Release notes"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Versionshinweise werden nach einem Update einmal automatisch angezeigt und bleiben über die Einstellungen erreichbar.",
+            "en": "Release notes are shown once after an update and remain available from Settings."
+          },
+          {
+            "category": "Changed",
+            "de": "Die Release Notes werden ab jetzt bei jeder nutzerrelevanten Änderung verbindlich mitgepflegt.",
+            "en": "Release notes are now required to be maintained for every user-facing change."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Qualität",
+          "en": "Quality"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Die Testabdeckung wurde für Makro-Aufzeichnung, Gruppierung, Serialisierung, Job-Debugger, Kontrollfluss, Result-Bindings, Step-Metadaten und Windows-Statusabfragen erweitert.",
+            "en": "Test coverage was expanded for macro recording, grouping, serialization, job debugging, control flow, result bindings, step metadata, and Windows state queries."
+          },
+          {
+            "category": "Changed",
+            "de": "Interne Verträge und Dokumentation für neue Job-Steps und Step-Ergebnisse wurden vereinheitlicht.",
+            "en": "Internal contracts and documentation for new job steps and step results were standardized."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "version": "1.5.3",
+    "date": "2026-07-23",
+    "sections": [
+      {
+        "title": {
+          "de": "Bedienung",
+          "en": "Usability"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Scrollbereiche reagieren jetzt langsamer und präziser auf Touchpads und Mausräder.",
+            "en": "Scrollable areas now respond more slowly and precisely to touchpads and mouse wheels."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Versionshinweise",
+          "en": "Release notes"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Versionshinweise werden nach einem Update einmal automatisch angezeigt und bleiben über die Einstellungen erreichbar.",
+            "en": "Release notes are shown once after an update and remain available from Settings."
+          }
+        ]
+      }
+    ]
+  }
+]

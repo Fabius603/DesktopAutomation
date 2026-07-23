@@ -5,6 +5,7 @@ using DesktopAutomationApp.Theming;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using DesktopAutomationApp.Services;
 
 namespace DesktopAutomationApp.ViewModels;
 
@@ -15,6 +16,7 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IThemeService _theme;
     private readonly IWindowsStartupRegistrationService _startupRegistration;
     private readonly ILogger<SettingsViewModel> _log;
+    private readonly IReleaseNotesService _releaseNotes;
     private bool _isLoading = true;
     private LanguageOption? _selectedLanguage;
     private ThemeOption? _selectedTheme;
@@ -84,18 +86,23 @@ public sealed class SettingsViewModel : ViewModelBase
         set { if (SetAndChanged(ref _startInBackgroundAtWindowsStartup, value)) _ = ApplyAsync(); }
     }
 
+    public RelayCommand ShowReleaseNotesCommand { get; }
+
     public SettingsViewModel(
         IUserPreferencesService preferences,
         ILocalizationService localization,
         IThemeService theme,
         IWindowsStartupRegistrationService startupRegistration,
+        IReleaseNotesService releaseNotes,
         ILogger<SettingsViewModel> log)
     {
         _preferences = preferences;
         _localization = localization;
         _theme = theme;
         _startupRegistration = startupRegistration;
+        _releaseNotes = releaseNotes;
         _log = log;
+        ShowReleaseNotesCommand = new RelayCommand(async () => await _releaseNotes.ShowAllAsync());
         var current = preferences.Current;
         _selectedLanguage = Languages.FirstOrDefault(x => x.CultureName == current.Culture) ?? Languages[0];
         _selectedTheme = Themes.FirstOrDefault(x => x.Mode == current.ThemeMode) ?? Themes[0];

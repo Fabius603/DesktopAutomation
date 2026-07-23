@@ -5,18 +5,19 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Steps;
 
 namespace TaskAutomation.WindowsIntegration;
 
 public interface IWindowsStateProvider
 {
     IReadOnlyCollection<string> SupportedQueries { get; }
-    Task<WindowsStateSnapshot> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken);
+    Task<WindowsStateQueryResult> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken);
 }
 
 public interface IWindowsSystemStateService
 {
-    Task<WindowsStateSnapshot> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken = default);
+    Task<WindowsStateQueryResult> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken = default);
 }
 
 public sealed class WindowsSystemStateService : IWindowsSystemStateService
@@ -25,11 +26,17 @@ public sealed class WindowsSystemStateService : IWindowsSystemStateService
 
     public WindowsSystemStateService(IEnumerable<IWindowsStateProvider> providers) => _providers = providers.ToArray();
 
-    public Task<WindowsStateSnapshot> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken = default)
+    public Task<WindowsStateQueryResult> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken = default)
     {
         var provider = _providers.FirstOrDefault(p => p.SupportedQueries.Contains(query.QueryType, StringComparer.OrdinalIgnoreCase));
         return provider is null
-            ? Task.FromResult(Failure(WindowsCapabilityStatus.Unsupported, "UNSUPPORTED_QUERY", $"Unbekannte Windows-Abfrage: {query.QueryType}"))
+            ? Task.FromResult<WindowsStateQueryResult>(new UnsupportedWindowsQueryResult
+            {
+                Status = WindowsCapabilityStatus.Unsupported,
+                ErrorCode = "UNSUPPORTED_QUERY",
+                ErrorMessage = $"Unbekannte Windows-Abfrage: {query.QueryType}",
+                CapturedAt = DateTime.UtcNow
+            })
             : provider.QueryAsync(query, cancellationToken);
     }
 
@@ -53,22 +60,27 @@ public sealed class DefaultWindowsStateProvider : IWindowsStateProvider
         "storage.drives", "system.settings", "security.status", "windows_update.status", "system.lifecycle"
     };
 
-    public async Task<WindowsStateSnapshot> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken)
+    public async Task<WindowsStateQueryResult> QueryAsync(WindowsStateQuery query, CancellationToken cancellationToken)
     {
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return await Task.Run(() => Query(query), cancellationToken).ConfigureAwait(false);
+            var snapshot = await Task.Run(() => Query(query), cancellationToken).ConfigureAwait(false);
+            return (WindowsStateQueryResult)WindowsQueryResultRegistry.Create(query.QueryType, snapshot);
         }
-        catch (UnauthorizedAccessException ex) { return Fail(WindowsCapabilityStatus.AccessDenied, "ACCESS_DENIED", ex); }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return Fail(WindowsCapabilityStatus.Timeout, "TIMEOUT", null); }
-        catch (COMException ex) when ((uint)ex.HResult == 0x80070005) { return Fail(WindowsCapabilityStatus.AccessDenied, "ACCESS_DENIED", ex); }
+        catch (UnauthorizedAccessException ex) { return FailureResult(query.QueryType, WindowsCapabilityStatus.AccessDenied, "ACCESS_DENIED", ex); }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return FailureResult(query.QueryType, WindowsCapabilityStatus.Timeout, "TIMEOUT", null); }
+        catch (COMException ex) when ((uint)ex.HResult == 0x80070005) { return FailureResult(query.QueryType, WindowsCapabilityStatus.AccessDenied, "ACCESS_DENIED", ex); }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Windows-Zustandsabfrage {QueryType} fehlgeschlagen.", query.QueryType);
-            return Fail(WindowsCapabilityStatus.Failed, "QUERY_FAILED", ex);
+            return FailureResult(query.QueryType, WindowsCapabilityStatus.Failed, "QUERY_FAILED", ex);
         }
     }
+
+    private static WindowsStateQueryResult FailureResult(
+        string queryType, WindowsCapabilityStatus status, string code, Exception? exception) =>
+        (WindowsStateQueryResult)WindowsQueryResultRegistry.Create(queryType, Fail(status, code, exception));
 
     private static WindowsStateSnapshot Query(WindowsStateQuery query) => query.QueryType.ToLowerInvariant() switch
     {

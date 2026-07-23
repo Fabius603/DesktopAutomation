@@ -148,6 +148,24 @@ namespace ImageDetection.YOLO
             }
         }
 
+        public float GetRecommendedConfidenceThreshold(string modelKey)
+        {
+            try
+            {
+                var manifest = ModelManifestProvider.LoadManifest(_downloader.ModelFolderPath);
+                return manifest.Models.TryGetValue(modelKey, out var entry)
+                    ? Math.Clamp(entry.RecommendedConfidenceThreshold ?? 0.5f, 0f, 1f)
+                    : 0.5f;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Konnte die empfohlene Konfidenz für Modell {ModelKey} nicht ermitteln.",
+                    modelKey);
+                return 0.5f;
+            }
+        }
+
         private Task<InferenceSession> CreateSessionAsync(YOLOModel model, CancellationToken ct)
         {
             return Task.Run(() =>
@@ -277,8 +295,8 @@ namespace ImageDetection.YOLO
             if (inputName is null)
                 return new DetectionResult { Success = false };
 
-            int classId = IndexOfLabel(labels, objectName);
-            if (classId < 0)
+            var classIds = YoloModelCompatibility.ResolveRequestedClassIds(labels, objectName);
+            if (classIds.Length == 0)
                 return new DetectionResult { Success = false };
 
             // ROI clampen
@@ -287,7 +305,10 @@ namespace ImageDetection.YOLO
             if (useRoi.Width <= 0 || useRoi.Height <= 0)
                 return new DetectionResult { Success = false };
 
-            var buf = GetOrCreateBuffers(modelKey, _opt.InputSize);
+            var inputSize = YoloModelCompatibility.ResolveSquareInputSize(
+                session.InputMetadata,
+                _opt.InputSize);
+            var buf = GetOrCreateBuffers(modelKey, inputSize);
 
 
             // Preprocessing: direkt ROI -> Letterbox -> Tensor
@@ -311,12 +332,13 @@ namespace ImageDetection.YOLO
 
             // Kein DenseTensor-Wrapper – direkt auf buf.Output arbeiten
             var (isCHW, num, attrs) = InterpretDims(buf.OutputDims!);
+            YoloModelCompatibility.ValidateDetectionOutput(buf.OutputDims!, labels.Count);
 
             var allList = DecodeDetections(
                 buf.Output!, buf.OutputDims!, isCHW, num, attrs, threshold,
-                _opt.InputSize, scale, padX, padY,
+                inputSize, scale, padX, padY,
                 roiOffsetInImage: useRoi.Location,
-                requiredClassId: classId);
+                requiredClassIds: classIds);
 
             if (allList.Count == 0)
                 return new DetectionResult { Success = false };
@@ -439,98 +461,10 @@ namespace ImageDetection.YOLO
 
         // ------------ Utilities ------------
 
-        private static int IndexOfLabel(IReadOnlyList<string> labels, string name)
-        {
-            for (int i = 0; i < labels.Count; i++)
-                if (string.Equals(labels[i], name, StringComparison.OrdinalIgnoreCase))
-                    return i;
-            return -1;
-        }
-
         /// <summary> Letterbox-Resize (Proportionen halten) → NCHW Float32 [0..1] </summary>
         private static (float scale, float padX, float padY)
         PreprocessIntoBuffers(Bitmap src, Rectangle srcRect, YoloBuffers buf)
-        {
-            int inputSize = buf.Size;
-
-            // Skalierung & Padding berechnen
-            int w0 = srcRect.Width, h0 = srcRect.Height;
-            float scale = Math.Min((float)inputSize / w0, (float)inputSize / h0);
-            int nw = (int)Math.Round(w0 * scale);
-            int nh = (int)Math.Round(h0 * scale);
-            float padX = (inputSize - nw) * 0.5f;
-            float padY = (inputSize - nh) * 0.5f;
-            int padXi = (int)padX;
-            int padYi = (int)padY;
-
-            // Quelle direkt per LockBits lesen – kein GDI+ DrawImage-Overhead
-            var srcBd = src.LockBits(srcRect,
-                System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            try
-            {
-                unsafe
-                {
-                    byte* srcBase = (byte*)srcBd.Scan0;
-                    int srcStride = srcBd.Stride;
-                    int plane = inputSize * inputSize;
-                    var dst = buf.Input;
-
-                    float scaleInv = 1f / scale;
-                    const float norm = 1f / 255f;
-
-                    for (int ty = 0; ty < inputSize; ty++)
-                    {
-                        int rowBase = ty * inputSize;
-
-                        // Pixel im Letterbox-Canvas der in der Paddingfläche liegt → schwarz
-                        if (ty < padYi || ty >= padYi + nh)
-                        {
-                            int off = rowBase;
-                            for (int tx = 0; tx < inputSize; tx++, off++)
-                            {
-                                dst[0 * plane + off] = 0f;
-                                dst[1 * plane + off] = 0f;
-                                dst[2 * plane + off] = 0f;
-                            }
-                            continue;
-                        }
-
-                        // y-Koordinate im Quellbild (nearest-neighbor in Y)
-                        int sy = (int)((ty - padYi + 0.5f) * scaleInv);
-                        if (sy >= h0) sy = h0 - 1;
-                        byte* srcRow = srcBase + sy * srcStride;
-
-                        for (int tx = 0; tx < inputSize; tx++)
-                        {
-                            int p = rowBase + tx;
-
-                            if (tx < padXi || tx >= padXi + nw)
-                            {
-                                dst[0 * plane + p] = 0f;
-                                dst[1 * plane + p] = 0f;
-                                dst[2 * plane + p] = 0f;
-                                continue;
-                            }
-
-                            int sx = (int)((tx - padXi + 0.5f) * scaleInv);
-                            if (sx >= w0) sx = w0 - 1;
-
-                            byte* px = srcRow + sx * 4; // BGRA
-                            dst[0 * plane + p] = px[2] * norm; // R
-                            dst[1 * plane + p] = px[1] * norm; // G
-                            dst[2 * plane + p] = px[0] * norm; // B
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                src.UnlockBits(srcBd);
-            }
-
-            return (scale, padX, padY);
-        }
+            => YoloImagePreprocessor.Preprocess(src, srcRect, buf);
 
         private static (bool isCHW, int num, int attrs) InterpretDims(int[] dims)
         {
@@ -560,12 +494,11 @@ namespace ImageDetection.YOLO
             float padX,
             float padY,
             Point roiOffsetInImage,
-            int requiredClassId)
+            IReadOnlyList<int> requiredClassIds)
         {
             int numClasses = attrs - 4;
             bool hasObj = (attrs == numClasses + 5);
             int baseCls = hasObj ? 5 : 4;
-            int clsOff  = baseCls + requiredClassId;
 
             var hits = new List<(RectangleF box, float score)>();
 
@@ -574,7 +507,9 @@ namespace ImageDetection.YOLO
                 // dims = [1, attrs, num]  → flat index: [0, a, k] = a*num + k
                 for (int k = 0; k < num; k++)
                 {
-                    float s = output[clsOff * num + k];
+                    float s = 0f;
+                    foreach (var classId in requiredClassIds)
+                        s = Math.Max(s, output[(baseCls + classId) * num + k]);
                     if (hasObj) s *= output[4 * num + k];
                     if (s < threshold) continue;
 
@@ -590,7 +525,9 @@ namespace ImageDetection.YOLO
                 for (int k = 0; k < num; k++)
                 {
                     int off = k * attrs;
-                    float s = output[off + clsOff];
+                    float s = 0f;
+                    foreach (var classId in requiredClassIds)
+                        s = Math.Max(s, output[off + baseCls + classId]);
                     if (hasObj) s *= output[off + 4];
                     if (s < threshold) continue;
 

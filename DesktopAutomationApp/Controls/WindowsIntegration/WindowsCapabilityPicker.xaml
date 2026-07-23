@@ -11,7 +11,15 @@
         </ComboBox>
         <TextBlock Text="{loc:Translate Key=Ui.Windows.Capability}" Margin="0,0,0,4" Foreground="{DynamicResource App.Brush.TextMuted}"/>
         <ComboBox ItemsSource="{Binding Capabilities}" SelectedItem="{Binding SelectedCapability}"
-                  DisplayMemberPath="DisplayName" MinHeight="34" Margin="0,0,0,10"/>
+                  MinHeight="34" Margin="0,0,0,4">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Converter={StaticResource WindowsCapabilityDisplayNameConverter}}"/>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TextBlock Text="{Binding SelectedCapabilityDescription}" Margin="0,0,0,10"
+                   Foreground="{DynamicResource App.Brush.TextMuted}" TextWrapping="Wrap"/>
 
         <ItemsControl ItemsSource="{Binding Parameters}">
             <ItemsControl.ItemTemplate>
@@ -19,7 +27,7 @@
                     <StackPanel Margin="0,0,0,9">
                         <TextBlock Text="{Binding DisplayName}" Margin="0,0,0,4" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                         <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                 mah:TextBoxHelper.Watermark="{Binding Descriptor.Placeholder}">
+                                 mah:TextBoxHelper.Watermark="{Binding Placeholder}">
                             <TextBox.Style>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                     <Setter Property="Visibility" Value="Visible"/>

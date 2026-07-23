@@ -102,8 +102,15 @@ namespace DesktopAutomationApp.Converters
                     map[s] = items;
                 }
 
-                var output = StepPipelineRegistry.Get(s.GetType())?.Output;
-                if (output != null) available.Add(output);
+                var result = StepResultMetadata.GetResultTypeForStep(s);
+                if (result is not null)
+                {
+                    available.Add(result.TypeName);
+                    if (result.Properties.Any(p => p.DataType == ResultValueKind.Image)) available.Add("Image");
+                    if (result.Properties.Any(p => p.DataType == ResultValueKind.Point)) available.Add("Points");
+                    if (result.Properties.Any(p => p.DataType == ResultValueKind.Rectangle)) available.Add("Rectangles");
+                    if (result.Properties.Any(p => p.DataType == ResultValueKind.Detection)) available.Add("Detections");
+                }
             }
 
             return map;

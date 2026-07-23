@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\App.ico</ApplicationIcon>
-    <Version>1.5.3</Version>
+    <Version>1.5.4</Version>
     <StartupObject>DesktopAutomationApp.App</StartupObject>
   </PropertyGroup>
 
@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <None Remove="Assets\App.ico" />
+    <None Remove="Resources\ReleaseNotes.json" />
+    <EmbeddedResource Include="Resources\ReleaseNotes.json" />
   </ItemGroup>
 
   <ItemGroup>

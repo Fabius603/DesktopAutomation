@@ -30,40 +30,103 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class AddJobStepDialogViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+        private int _notificationDeferral;
+        private bool _notificationPending;
+
         private void OnChange([CallerMemberName] string? p = null)
         {
+            if (_notificationDeferral > 0)
+            {
+                _notificationPending = true;
+                return;
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
             RaiseConfirmCanExecuteChanged();
         }
 
+        public IDisposable DeferNotifications()
+        {
+            _notificationDeferral++;
+            return new NotificationScope(this);
+        }
+
+        private void EndNotificationDeferral()
+        {
+            if (_notificationDeferral == 0 || --_notificationDeferral > 0) return;
+            if (!_notificationPending) return;
+            _notificationPending = false;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+            RaiseConfirmCanExecuteChanged();
+        }
+
+        private sealed class NotificationScope(AddJobStepDialogViewModel owner) : IDisposable
+        {
+            private AddJobStepDialogViewModel? _owner = owner;
+            public void Dispose()
+            {
+                _owner?.EndNotificationDeferral();
+                _owner = null;
+            }
+        }
+
         private void RaiseConfirmCanExecuteChanged()
         {
+            if (_notificationDeferral > 0)
+            {
+                _notificationPending = true;
+                return;
+            }
             (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private readonly IJobExecutor _ctx;
         private readonly IReadOnlyList<JobStep> _precedingSteps;
         private readonly IReadOnlyList<JobStep> _allJobSteps;
+        private readonly IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> _sourceItemsByKind;
+        private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
         private readonly Guid? _currentJobId;
         private readonly SemaphoreSlim _yoloLoadLock = new(1, 1);
         private bool _isInitialized;
         public WindowsCapabilityPickerViewModel WindowsStatePicker { get; }
+        public ObservableCollection<Job> AvailableJobs { get; }
+        public ObservableCollection<Makro> AvailableMakros { get; }
+
+        public sealed record PreparedSources(
+            IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> ByKind,
+            IReadOnlyList<SourceStepItem> Conditions);
+
+        public static Task<PreparedSources> PrepareSourcesAsync(
+            IReadOnlyList<JobStep> precedingSteps,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => new PreparedSources(
+                BuildSourceCatalog(precedingSteps),
+                BuildConditionSourceCatalog(precedingSteps)), cancellationToken);
 
         public AddJobStepDialogViewModel(
             IJobExecutor ctx,
             IReadOnlyList<JobStep> precedingSteps,
             Guid? currentJobId = null,
-            IReadOnlyList<JobStep>? allJobSteps = null)
+            IReadOnlyList<JobStep>? allJobSteps = null,
+            PreparedSources? preparedSources = null)
         {
             _ctx = ctx;
             _precedingSteps = precedingSteps;
             _allJobSteps = allJobSteps ?? precedingSteps;
             _currentJobId = currentJobId;
+            AvailableJobs = new ObservableCollection<Job>(
+                (_ctx.AllJobs?.Values ?? Enumerable.Empty<Job>())
+                .Where(job => job.Id != _currentJobId)
+                .OrderBy(job => job.Name));
+            AvailableMakros = new ObservableCollection<Makro>(
+                (_ctx.AllMakros?.Values ?? Enumerable.Empty<Makro>())
+                .OrderBy(makro => makro.Name));
             WindowsStatePicker = new WindowsCapabilityPickerViewModel(
                 new WindowsCapabilityCatalog(), WindowsCapabilityPickerMode.StateQuery);
             WindowsStatePicker.Changed += () => OnChange(nameof(WindowsStatePicker));
-            AvailableCaptureSteps = BuildStepItems(ResultValueKind.Image);
-            AvailableDetectionSteps = BuildStepItems(ResultValueKind.Detection);
+            _sourceItemsByKind = preparedSources?.ByKind ?? BuildSourceCatalog(precedingSteps);
+            _conditionSourceSteps = preparedSources?.Conditions ?? BuildConditionSourceCatalog(precedingSteps);
+            AvailableCaptureSteps = GetStepItems(ResultValueKind.Image);
+            AvailableDetectionSteps = GetStepItems(ResultValueKind.Detection);
             var processDescriptor = StepResultMetadata.ResultTypes.First(r => r.TypeName == nameof(StartProcessResult));
             AvailableProcessSteps = new[]
                 {
@@ -72,12 +135,12 @@ namespace DesktopAutomationApp.ViewModels
                         Loc.Get("Ui.Step.ProcessSource.SearchByCharacteristics"),
                         processDescriptor)
                 }
-                .Concat(BuildStepItems(ResultValueKind.ProcessReference).Where(item =>
+                .Concat(GetStepItems(ResultValueKind.ProcessReference).Where(item =>
                     CanProvideProcessReference(_precedingSteps.FirstOrDefault(step => step.Id == item.StepId))))
                 .DistinctBy(item => item.StepId)
                 .ToList();
             var detectionDescriptor = StepResultMetadata.ResultTypes.First(r =>
-                r.Properties.Any(property => property.ValueKind == ResultValueKind.Detection));
+                r.Properties.Any(property => property.DataType == ResultValueKind.Detection));
             AvailableOptionalDetectionSteps = new[]
                 {
                     new SourceStepItem(
@@ -87,7 +150,7 @@ namespace DesktopAutomationApp.ViewModels
                 }
                 .Concat(AvailableDetectionSteps)
                 .ToList();
-            var allResultSources = GetConditionSourceSteps();
+            var allResultSources = _conditionSourceSteps;
             TemplateMatchingStep_ImageSource = Picker<TemplateMatchingStep>("image", allResultSources);
             ColorDetectionStep_ImageSource = Picker<ColorDetectionStep>("image", allResultSources);
             YoloDetectionStep_ImageSource = Picker<YOLODetectionStep>("image", allResultSources);
@@ -169,17 +232,14 @@ namespace DesktopAutomationApp.ViewModels
             try
             {
                 var programs = await InstalledProgramDiscovery.DiscoverAsync();
-                foreach (var program in programs)
-                {
-                    AvailableStartPrograms.Add(program);
-                    if (!string.IsNullOrWhiteSpace(program.ProcessName))
-                    {
-                        if (program.IsDirectExecutable)
-                            AvailableExecutablePrograms.Add(program);
-                        if (!AvailableProcessNames.Contains(program.ProcessName, StringComparer.OrdinalIgnoreCase))
-                            AvailableProcessNames.Add(program.ProcessName);
-                    }
-                }
+                _availableStartPrograms.ReplaceRange(programs);
+                _availableExecutablePrograms.ReplaceRange(
+                    programs.Where(program => program.IsDirectExecutable
+                                              && !string.IsNullOrWhiteSpace(program.ProcessName)));
+                _availableProcessNames.ReplaceRange(
+                    programs.Select(program => program.ProcessName)
+                        .Where(name => !string.IsNullOrWhiteSpace(name))
+                        .Distinct(StringComparer.OrdinalIgnoreCase));
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
@@ -273,7 +333,8 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (_isInitialized) return;
             _isInitialized = true;
-            await LoadYoloModelsAsync();
+            if (SelectedType == "YoloDetection")
+                await LoadYoloModelsAsync();
         }
 
         private StepDialogMode _mode = StepDialogMode.Add;
@@ -620,8 +681,7 @@ namespace DesktopAutomationApp.ViewModels
                 _selectedType = value;
                 // string.Empty = INotifyPropertyChanged-Konvention für "alle Properties neu auswerten".
                 // Deckt alle Show*, StepTypeDescription, StepPrerequisites und StepOutput auf einmal ab.
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
-                (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                OnChange(string.Empty);
                 if (_isInitialized && value == "YoloDetection")
                     _ = LoadYoloModelsAsync();
             }
@@ -677,11 +737,11 @@ namespace DesktopAutomationApp.ViewModels
                 var info = StepPipelineRegistry.Get(step.GetType());
                 if (info == null) continue;
                 set.Add(info.Output);
-                var result = StepResultMetadata.GetResultType(info.Output);
-                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Image) == true) set.Add("Image");
-                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Point) == true) set.Add("Points");
-                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Rectangle) == true) set.Add("Rectangles");
-                if (result?.Properties.Any(property => property.ValueKind == ResultValueKind.Detection) == true) set.Add("Detections");
+                var result = StepResultMetadata.GetResultTypeForStep(step);
+                if (result?.Properties.Any(property => property.DataType == ResultValueKind.Image) == true) set.Add("Image");
+                if (result?.Properties.Any(property => property.DataType == ResultValueKind.Point) == true) set.Add("Points");
+                if (result?.Properties.Any(property => property.DataType == ResultValueKind.Rectangle) == true) set.Add("Rectangles");
+                if (result?.Properties.Any(property => property.DataType == ResultValueKind.Detection) == true) set.Add("Detections");
             }
             return set;
         }
@@ -707,31 +767,48 @@ namespace DesktopAutomationApp.ViewModels
         /// <summary>
         /// Builds a list of all preceding steps that produce a result of the given type name.
         /// </summary>
-        private IReadOnlyList<SourceStepItem> BuildStepItems(ResultValueKind valueKind)
+        private static IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> BuildSourceCatalog(
+            IReadOnlyList<JobStep> precedingSteps)
         {
-            var items = new List<SourceStepItem>();
-            for (int i = 0; i < _precedingSteps.Count; i++)
+            var result = new Dictionary<ResultValueKind, List<SourceStepItem>>();
+            var displayNumber = 0;
+            for (int i = 0; i < precedingSteps.Count; i++)
             {
-                var step = _precedingSteps[i];
-                var info = TaskAutomation.Steps.StepPipelineRegistry.Get(step.GetType());
-                if (info is null) continue;
-                var descriptor = TaskAutomation.Steps.StepResultMetadata.ResultTypes
-                    .FirstOrDefault(r => r.TypeName == info.Output);
-                if (descriptor?.Properties.Any(property => property.ValueKind == valueKind) != true) continue;
-                var name = StepLocalization.ResultStepName(step, _precedingSteps);
-                items.Add(new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor)));
+                var step = precedingSteps[i];
+                var descriptor = TaskAutomation.Steps.StepResultMetadata.GetResultTypeForStep(step);
+                if (descriptor is null) continue;
+                if (StepLocalization.IsNumbered(step)) displayNumber++;
+                var name = StepLocalization.IsNumbered(step)
+                    ? Loc.Format("Ui.Step.ResultSource.StepLabel", displayNumber, StepLocalization.Type(step.GetType()))
+                    : StepLocalization.Type(step.GetType());
+                var item = new SourceStepItem(step.Id, name, StepLocalization.ResultType(descriptor));
+                foreach (var kind in descriptor.Properties.Select(property => property.DataType).Distinct())
+                {
+                    if (!result.TryGetValue(kind, out var items))
+                        result[kind] = items = [];
+                    items.Add(item);
+                }
             }
-            return items;
+            return result.ToDictionary(
+                pair => pair.Key,
+                pair => (IReadOnlyList<SourceStepItem>)pair.Value);
         }
+
+        private IReadOnlyList<SourceStepItem> GetStepItems(ResultValueKind valueKind)
+            => _sourceItemsByKind.TryGetValue(valueKind, out var items) ? items : [];
+
+        private static IReadOnlyList<SourceStepItem> BuildConditionSourceCatalog(
+            IReadOnlyList<JobStep> precedingSteps)
+            => StepResultMetadata.GetConditionSources(precedingSteps, precedingSteps.Count)
+                .Select(source => new SourceStepItem(
+                    source.Step.Id,
+                    StepLocalization.ResultStepName(source.Step, precedingSteps),
+                    StepLocalization.ResultType(source.ResultType)))
+                .ToArray();
 
         /// <summary>All preceding steps that produce any evaluable result, for use in condition rows.</summary>
         private IReadOnlyList<SourceStepItem> GetConditionSourceSteps()
-            => StepResultMetadata.GetConditionSources(_precedingSteps, _precedingSteps.Count)
-                .Select(source => new SourceStepItem(
-                    source.Step.Id,
-                    StepLocalization.ResultStepName(source.Step, _precedingSteps),
-                    StepLocalization.ResultType(source.ResultType)))
-                .ToArray();
+            => _conditionSourceSteps;
 
         private static ResultBindingPickerViewModel Picker<TStep>(
             string key, IReadOnlyList<SourceStepItem> sources, bool selectDefault = true)
@@ -1095,9 +1172,14 @@ namespace DesktopAutomationApp.ViewModels
         { 
             get => _yoloDetectionStep_Model; 
             set 
-            { 
+            {
+                var modelChanged = !string.Equals(
+                    _yoloDetectionStep_Model, value, StringComparison.OrdinalIgnoreCase);
                 _yoloDetectionStep_Model = value; 
                 OnChange(); 
+                if (modelChanged && !string.IsNullOrWhiteSpace(value) && _ctx.YoloManager is not null)
+                    YoloDetectionStep_ConfidenceThreshold =
+                        _ctx.YoloManager.GetRecommendedConfidenceThreshold(value);
                 if (_isInitialized)
                     _ = LoadYoloClassesAsync(value);
                 (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
@@ -1127,8 +1209,8 @@ namespace DesktopAutomationApp.ViewModels
         public int YoloDetectionStep_RoiH { get => _yoloDetectionStep_RoiH; set { _yoloDetectionStep_RoiH = value; OnChange(); } }
 
         // Die Collections werden im Hintergrund gefüllt; die Getter dürfen keine I/O ausführen.
-        private readonly ObservableCollection<string> _yoloModels = new();
-        private readonly ObservableCollection<string> _yoloClasses = new();
+        private readonly ObservableRangeCollection<string> _yoloModels = new();
+        private readonly ObservableRangeCollection<string> _yoloClasses = new();
 
         // YOLO Listen Properties
         public ObservableCollection<string> YoloDetectionStep_AvailableModels
@@ -1193,7 +1275,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (_yoloModels.Count == 0)
                 {
                     var models = await Task.Run(() => _ctx.YoloManager?.GetAvailableModels() ?? new List<string>());
-                    foreach (var model in models) _yoloModels.Add(model);
+                    _yoloModels.ReplaceRange(models);
                 }
                 if (string.IsNullOrWhiteSpace(YoloDetectionStep_Model))
                     YoloDetectionStep_Model = _yoloModels.FirstOrDefault() ?? string.Empty;
@@ -1216,8 +1298,7 @@ namespace DesktopAutomationApp.ViewModels
             if (string.IsNullOrWhiteSpace(model)) return;
             var classes = await Task.Run(() => _ctx.YoloManager?.GetClassesForModel(model) ?? new List<string>());
             if (!string.Equals(model, YoloDetectionStep_Model, StringComparison.Ordinal)) return;
-            _yoloClasses.Clear();
-            foreach (var item in classes) _yoloClasses.Add(item);
+            _yoloClasses.ReplaceRange(classes);
             if (string.IsNullOrWhiteSpace(YoloDetectionStep_ClassName))
                 YoloDetectionStep_ClassName = _yoloClasses.FirstOrDefault() ?? string.Empty;
         }
@@ -1623,18 +1704,6 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ===== JobExecution Felder =====
-        public ObservableCollection<Job> AvailableJobs
-        {
-            get
-            {
-                var allJobs = _ctx.AllJobs?.Values?.Where(j => j != null) ?? Enumerable.Empty<Job>();
-                var availableJobs = allJobs
-                    .Where(j => j.Id != _currentJobId)
-                    .OrderBy(j => j.Name);
-                return new ObservableCollection<Job>(availableJobs);
-            }
-        }
-
         private Job? _jobExecutionStep_SelectedJob;
         public Job? JobExecutionStep_SelectedJob
         {
@@ -1667,9 +1736,6 @@ namespace DesktopAutomationApp.ViewModels
         public bool JobExecutionStep_WaitForCompletion { get => _jobExecutionStep_WaitForCompletion; set { _jobExecutionStep_WaitForCompletion = value; OnChange(); } }
 
         // ===== MakroExecution Felder =====
-        public ObservableCollection<Makro> AvailableMakros => new ObservableCollection<Makro>(
-            _ctx.AllMakros?.Values?.OrderBy(m => m.Name) ?? Enumerable.Empty<Makro>());
-
         private Makro? _makroExecutionStep_SelectedMakro;
         public Makro? MakroExecutionStep_SelectedMakro
         {
@@ -1761,9 +1827,12 @@ namespace DesktopAutomationApp.ViewModels
             set { _startProcessStep_UsesProcessSource = value; OnChange(); }
         }
 
-        public ObservableCollection<InstalledProgramSuggestion> AvailableStartPrograms { get; } = new();
-        public ObservableCollection<InstalledProgramSuggestion> AvailableExecutablePrograms { get; } = new();
-        public ObservableCollection<string> AvailableProcessNames { get; } = new();
+        private readonly ObservableRangeCollection<InstalledProgramSuggestion> _availableStartPrograms = new();
+        private readonly ObservableRangeCollection<InstalledProgramSuggestion> _availableExecutablePrograms = new();
+        private readonly ObservableRangeCollection<string> _availableProcessNames = new();
+        public ObservableCollection<InstalledProgramSuggestion> AvailableStartPrograms => _availableStartPrograms;
+        public ObservableCollection<InstalledProgramSuggestion> AvailableExecutablePrograms => _availableExecutablePrograms;
+        public ObservableCollection<string> AvailableProcessNames => _availableProcessNames;
 
         private StartProcessAction _startProcessStep_Action = StartProcessAction.Start;
         public StartProcessAction StartProcessStep_Action

@@ -8,18 +8,13 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class WindowsStateQueryStepHandlerTests
 {
     [Fact]
-    public async Task ExecuteAsync_MapsCompleteSnapshotAndStoresResult()
+    public async Task ExecuteAsync_MarksTypedServiceResultAndStoresIt()
     {
         var capturedAt = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
-        var snapshot = new WindowsStateSnapshot
+        var snapshot = new AudioVolumeQueryResult
         {
-            Status = WindowsCapabilityStatus.Success, CapturedAt = capturedAt, Exists = true, IsActive = true,
-            IsConnected = true, IsEnabled = true, IsMuted = true, IsCharging = true, PendingRestart = true,
-            Count = 3, Value = 12, Percentage = 72.5, FreeSpaceGb = 8.25, Name = "Device", Id = "id",
-            Text = "text", Path = "path", Connectivity = WindowsConnectivity.Internet,
-            ConnectionType = WindowsConnectionType.WiFi, PowerSource = WindowsPowerSource.Ac,
-            SessionState = WindowsSessionState.Active, DeviceState = WindowsDeviceState.Connected,
-            OnOffState = WindowsOnOffState.On, Items = ["one", "two"]
+            Status = WindowsCapabilityStatus.Success, CapturedAt = capturedAt, Exists = true,
+            IsMuted = true, Percentage = 72.5, Id = "id", OnOffState = WindowsOnOffState.On
         };
         var service = new SequenceWindowsStateService(snapshot);
         var context = new PipelineContextStub();
@@ -28,14 +23,13 @@ public sealed class WindowsStateQueryStepHandlerTests
             Id = "audio", Settings = new() { QueryType = "audio.volume", Parameters = new() { ["X"] = "Y" } }
         };
 
-        var result = Assert.IsType<WindowsStateQueryResult>(await new WindowsStateQueryStepHandler(service)
+        var result = Assert.IsType<AudioVolumeQueryResult>(await new WindowsStateQueryStepHandler(service)
             .ExecuteAsync(step, context, CancellationToken.None));
 
         Assert.True(result.WasExecuted);
         Assert.Equal(72.5, result.Percentage);
         Assert.True(result.IsMuted);
         Assert.Equal(capturedAt, result.CapturedAt);
-        Assert.Equal(["one", "two"], result.Items);
         Assert.Same(result, context.Results.GetRaw("audio"));
         Assert.Equal("audio.volume", service.Queries.Single().QueryType);
         Assert.Equal("Y", service.Queries.Single().Parameters["x"]);
@@ -45,14 +39,14 @@ public sealed class WindowsStateQueryStepHandlerTests
     public async Task ExecuteAsync_RepeatedCallsUseFreshServiceValues()
     {
         var service = new SequenceWindowsStateService(
-            new WindowsStateSnapshot { Percentage = 25, IsMuted = false },
-            new WindowsStateSnapshot { Percentage = 70, IsMuted = true });
+            new AudioVolumeQueryResult { Percentage = 25, IsMuted = false },
+            new AudioVolumeQueryResult { Percentage = 70, IsMuted = true });
         var handler = new WindowsStateQueryStepHandler(service);
         var context = new PipelineContextStub();
         var step = new WindowsStateQueryStep { Id = "audio", Settings = new() { QueryType = "audio.volume" } };
 
-        var first = Assert.IsType<WindowsStateQueryResult>(await handler.ExecuteAsync(step, context, default));
-        var second = Assert.IsType<WindowsStateQueryResult>(await handler.ExecuteAsync(step, context, default));
+        var first = Assert.IsType<AudioVolumeQueryResult>(await handler.ExecuteAsync(step, context, default));
+        var second = Assert.IsType<AudioVolumeQueryResult>(await handler.ExecuteAsync(step, context, default));
 
         Assert.Equal(25, first.Percentage);
         Assert.False(first.IsMuted);
@@ -65,11 +59,11 @@ public sealed class WindowsStateQueryStepHandlerTests
     [Fact]
     public async Task ExecuteAsync_FailureSnapshotRemainsDistinguishableFromFalseState()
     {
-        var service = new SequenceWindowsStateService(new WindowsStateSnapshot
+        var service = new SequenceWindowsStateService(new NetworkConnectivityQueryResult
             { Status = WindowsCapabilityStatus.AccessDenied, ErrorCode = "ACCESS_DENIED", ErrorMessage = "denied" });
-        var result = Assert.IsType<WindowsStateQueryResult>(await new WindowsStateQueryStepHandler(service)
+        var result = Assert.IsType<NetworkConnectivityQueryResult>(await new WindowsStateQueryStepHandler(service)
             .ExecuteAsync(new WindowsStateQueryStep(), new PipelineContextStub(), default));
-        Assert.False(result.IsAvailable);
+        Assert.NotEqual(WindowsCapabilityStatus.Success, result.Status);
         Assert.Equal(WindowsCapabilityStatus.AccessDenied, result.Status);
         Assert.Equal("ACCESS_DENIED", result.ErrorCode);
     }
@@ -77,7 +71,7 @@ public sealed class WindowsStateQueryStepHandlerTests
     [Fact]
     public async Task ExecuteAsync_CancelledTokenDoesNotQueryService()
     {
-        var service = new SequenceWindowsStateService(new WindowsStateSnapshot());
+        var service = new SequenceWindowsStateService(new NetworkConnectivityQueryResult());
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new WindowsStateQueryStepHandler(service)

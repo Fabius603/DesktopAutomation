@@ -53,7 +53,6 @@ public static class StepDragDrop
         list.DragOver -= OnDragOver;
         list.DragLeave -= OnDragLeave;
         list.Drop -= OnDrop;
-        list.PreviewMouseWheel -= OnMouseWheel;
         list.AllowDrop = false;
 
         if (e.NewValue is not ICommand)
@@ -65,7 +64,6 @@ public static class StepDragDrop
         list.DragOver += OnDragOver;
         list.DragLeave += OnDragLeave;
         list.Drop += OnDrop;
-        list.PreviewMouseWheel += OnMouseWheel;
     }
 
     private static void OnMouseDown(object sender, MouseButtonEventArgs e)
@@ -267,14 +265,6 @@ public static class StepDragDrop
         _indicator = null;
         _indicatorOwner = null;
         _targetIndex = -1;
-    }
-
-    private static void OnMouseWheel(object sender, MouseWheelEventArgs e)
-    {
-        if (sender is not ListBox list || FindAncestorScrollViewer(list) is not { } scroller)
-            return;
-        scroller.ScrollToVerticalOffset(scroller.VerticalOffset - e.Delta / 120.0 * 56.0);
-        e.Handled = true;
     }
 
     private static void ScrollAtEdge(ListBox list, DragEventArgs e)

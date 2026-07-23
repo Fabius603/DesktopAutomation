@@ -75,18 +75,31 @@ public sealed class WindowsSystemEventHub : IWindowsSystemEventHub
     public IDisposable Subscribe(WindowsEventSubscription subscription, Action<WindowsSystemEvent> handler)
     {
         if (string.IsNullOrWhiteSpace(subscription.EventType)) throw new ArgumentException("EventType fehlt.", nameof(subscription));
-        var descriptor = _catalog.Find(subscription.EventType)
+        var normalizedEventType = WindowsCapabilityCatalog.NormalizeEventId(subscription.EventType);
+        var descriptor = _catalog.Find(normalizedEventType)
             ?? throw new NotSupportedException($"Unbekanntes Windows-Ereignis: {subscription.EventType}");
         if (!descriptor.SupportsEvents) throw new NotSupportedException($"{subscription.EventType} ist kein Ereignis.");
 
+        var supportedFilters = (descriptor.Parameters ?? [])
+            .Select(parameter => parameter.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var effectiveSubscription = new WindowsEventSubscription
+        {
+            EventType = normalizedEventType,
+            Debounce = subscription.Debounce,
+            Filters = subscription.Filters
+                .Where(filter => supportedFilters.Contains(filter.Key))
+                .ToDictionary(filter => filter.Key, filter => filter.Value, StringComparer.OrdinalIgnoreCase)
+        };
+
         var id = Guid.NewGuid();
         Registration? registration = null;
-        var nativeSubscriptions = _subscriptionSources.Where(x => x.Supports(subscription.EventType))
-            .Select(x => x.Subscribe(subscription, systemEvent =>
+        var nativeSubscriptions = _subscriptionSources.Where(x => x.Supports(effectiveSubscription.EventType))
+            .Select(x => x.Subscribe(effectiveSubscription, systemEvent =>
             {
                 if (registration is not null) DispatchIfMatching(registration, systemEvent);
             })).ToArray();
-        registration = new Registration(id, subscription, handler, nativeSubscriptions);
+        registration = new Registration(id, effectiveSubscription, handler, nativeSubscriptions);
         _registrations[id] = registration;
 
         return new CallbackDisposable(() =>

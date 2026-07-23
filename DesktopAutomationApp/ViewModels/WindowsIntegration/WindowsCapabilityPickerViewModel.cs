@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using DesktopAutomationApp.Localization;
 using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.ViewModels.WindowsIntegration;
@@ -12,7 +13,8 @@ public sealed class WindowsParameterValueViewModel : INotifyPropertyChanged
     private string? _value;
     public WindowsParameterDescriptor Descriptor { get; }
     public string? Value { get => _value; set { if (_value == value) return; _value = value; OnPropertyChanged(); ValueChanged?.Invoke(); } }
-    public string DisplayName => Descriptor.DisplayName + (Descriptor.Required ? " *" : string.Empty);
+    public string DisplayName => WindowsCapabilityLocalization.ParameterName(Descriptor) + (Descriptor.Required ? " *" : string.Empty);
+    public string? Placeholder => WindowsCapabilityLocalization.ParameterPlaceholder(Descriptor);
     public bool IsBoolean => Descriptor.Type == WindowsParameterType.Boolean;
     public bool BooleanValue
     {
@@ -55,14 +57,25 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
     public WindowsCapabilityDescriptor? SelectedCapability
     {
         get => _selectedCapability;
-        set { if (_selectedCapability == value) return; _selectedCapability = value; OnPropertyChanged(); RefreshParameters(); Changed?.Invoke(); }
+        set
+        {
+            if (_selectedCapability == value) return;
+            _selectedCapability = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedCapabilityDescription));
+            RefreshParameters();
+            Changed?.Invoke();
+        }
     }
 
     public bool IsValid => SelectedCapability is not null && Parameters.All(p =>
         !p.Descriptor.Required || !string.IsNullOrWhiteSpace(p.Value));
     public bool RequiresElevation => SelectedCapability?.Requirements?.RequiresElevation == true;
+    public string SelectedCapabilityDescription => SelectedCapability is null
+        ? string.Empty
+        : WindowsCapabilityLocalization.Description(SelectedCapability, _mode == WindowsCapabilityPickerMode.Event);
     public string AvailabilityHint => RequiresElevation
-        ? "Für diese Funktion können Administratorrechte erforderlich sein."
+        ? Loc.Get("Ui.Windows.RequiresElevation")
         : string.Empty;
 
     public WindowsCapabilityPickerViewModel(IWindowsCapabilityCatalog catalog, WindowsCapabilityPickerMode mode,
@@ -96,10 +109,12 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
     {
         Capabilities.Clear();
         if (SelectedCategory.HasValue)
-            foreach (var capability in _catalog.Capabilities.Where(x => x.Category == SelectedCategory && IsSupported(x)).OrderBy(x => x.DisplayName))
+            foreach (var capability in _catalog.Capabilities.Where(x => x.Category == SelectedCategory && IsSupported(x))
+                         .OrderBy(WindowsCapabilityLocalization.DisplayName))
                 Capabilities.Add(capability);
         _selectedCapability = selected is not null && Capabilities.Contains(selected) ? selected : Capabilities.FirstOrDefault();
         OnPropertyChanged(nameof(SelectedCapability));
+        OnPropertyChanged(nameof(SelectedCapabilityDescription));
         RefreshParameters(values);
     }
 

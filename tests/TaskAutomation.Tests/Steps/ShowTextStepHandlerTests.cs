@@ -64,9 +64,9 @@ public sealed class ShowTextStepHandlerTests
             }
         };
         var handler = new ShowTextStepHandler();
-        context.Results.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true, Percentage = 25 }, "audio");
+        context.Results.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult { WasExecuted = true, Percentage = 25 }, "audio");
         await handler.ExecuteAsync(step, context, default);
-        context.Results.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true, Percentage = 70 }, "audio");
+        context.Results.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult { WasExecuted = true, Percentage = 70 }, "audio");
         await handler.ExecuteAsync(step, context, default);
         Assert.Equal(["25", "70"], overlay.TextCalls.Select(call => call.Text));
     }
@@ -76,7 +76,7 @@ public sealed class ShowTextStepHandlerTests
     {
         var overlay = new RecordingDesktopResultOverlay();
         var context = new PipelineContextStub { DesktopResultOverlay = overlay };
-        context.Results.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true, IsMuted = true }, "audio");
+        context.Results.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult { WasExecuted = true, IsMuted = true }, "audio");
         var step = new ShowTextStep { Settings = new() { TextSource = ShowTextSource.TaskResult,
             TextResult = new() { SourceStepId = "audio", PropertyPath = "IsMuted" } } };
         await new ShowTextStepHandler().ExecuteAsync(step, context, default);

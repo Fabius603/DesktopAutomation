@@ -1,3 +1,5 @@
+using TaskAutomation.Steps;
+
 namespace TaskAutomation.WindowsIntegration;
 
 public interface IWindowsCapabilityCatalog
@@ -8,10 +10,21 @@ public interface IWindowsCapabilityCatalog
 
 public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
 {
+    private static readonly IReadOnlyDictionary<string, string> LegacyEventAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["bluetooth.device.connected"] = "bluetooth.state.changed",
+            ["bluetooth.device.disconnected"] = "bluetooth.state.changed",
+            ["bluetooth.device.paired"] = "bluetooth.state.changed",
+            ["bluetooth.device.unpaired"] = "bluetooth.state.changed",
+            ["bluetooth.radio.enabled"] = "bluetooth.state.changed",
+            ["bluetooth.radio.disabled"] = "bluetooth.state.changed"
+        };
+
     private static readonly IReadOnlyDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["network.availability.changed"] = "Netzwerkverfügbarkeit geändert", ["network.address.changed"] = "Netzwerkadresse geändert",
-        ["network.connected"] = "Netzwerk verbunden", ["network.disconnected"] = "Netzwerk getrennt", ["network.wifi.changed"] = "WLAN-Ereignis",
+        ["network.connected"] = "Netzwerk verfügbar", ["network.disconnected"] = "Netzwerk nicht verfügbar", ["network.wifi.changed"] = "WLAN-Ereignis",
         ["network.wifi.connecting"] = "WLAN-Verbindung wird aufgebaut", ["network.wifi.connected"] = "WLAN verbunden",
         ["network.wifi.connection_failed"] = "WLAN-Verbindung fehlgeschlagen", ["network.wifi.disconnecting"] = "WLAN wird getrennt",
         ["network.wifi.disconnected"] = "WLAN-Verbindung getrennt", ["network.wifi.associating"] = "WLAN-Zuordnung wird aufgebaut",
@@ -19,7 +32,7 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         ["network.wifi.roaming_started"] = "WLAN-Roaming gestartet", ["network.wifi.roaming_completed"] = "WLAN-Roaming abgeschlossen",
         ["network.wifi.radio_state_changed"] = "WLAN-Funkstatus geändert", ["network.wifi.signal_quality_changed"] = "WLAN-Signalstärke geändert",
         ["network.wifi.scan_completed"] = "WLAN-Suche abgeschlossen", ["network.wifi.scan_failed"] = "WLAN-Suche fehlgeschlagen",
-        ["network.wifi.adapter_added"] = "WLAN-Adapter hinzugefügt", ["network.wifi.adapter_removed"] = "WLAN-Adapter entfernt",
+        ["network.wifi.adapter_added"] = "WLAN-Schnittstelle hinzugefügt oder aktiviert", ["network.wifi.adapter_removed"] = "WLAN-Schnittstelle entfernt oder deaktiviert",
         ["network.wifi.profile_changed"] = "WLAN-Profil geändert", ["network.wifi.network_available"] = "WLAN-Netzwerk verfügbar",
         ["network.wifi.network_unavailable"] = "WLAN-Netzwerk nicht verfügbar", ["network.wifi.autoconfig_enabled"] = "WLAN-Autokonfiguration aktiviert",
         ["network.wifi.autoconfig_disabled"] = "WLAN-Autokonfiguration deaktiviert",
@@ -50,16 +63,13 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         ["device.hardware.updated"] = "Hardwarekonfiguration aktualisiert",
         ["device.usb.connected"] = "USB-Gerät verbunden", ["device.usb.disconnected"] = "USB-Gerät getrennt",
         ["device.hardware"] = "Hardwaregeräte", ["device.usb"] = "USB-Geräte",
-        ["bluetooth.state.changed"] = "Bluetooth geändert", ["bluetooth.device.connected"] = "Bluetooth-Gerät verbunden",
-        ["bluetooth.device.disconnected"] = "Bluetooth-Gerät getrennt", ["bluetooth.devices"] = "Bluetooth-Geräte",
-        ["bluetooth.device.paired"] = "Bluetooth-Gerät gekoppelt", ["bluetooth.device.unpaired"] = "Bluetooth-Kopplung entfernt",
-        ["bluetooth.radio.enabled"] = "Bluetooth aktiviert", ["bluetooth.radio.disabled"] = "Bluetooth deaktiviert",
+        ["bluetooth.state.changed"] = "Bluetooth-Geräteliste geändert", ["bluetooth.devices"] = "Bluetooth-Geräte",
         ["filesystem.changed"] = "Datei oder Ordner geändert", ["filesystem.created"] = "Datei oder Ordner erstellt",
         ["filesystem.deleted"] = "Datei oder Ordner gelöscht", ["filesystem.renamed"] = "Datei oder Ordner umbenannt",
         ["filesystem.path"] = "Datei- oder Ordnerzustand",
         ["process.started"] = "Prozess gestartet", ["process.exited"] = "Prozess beendet", ["process.running"] = "Läuft ein Prozess?",
         ["window.changed"] = "Fenster geändert", ["window.opened"] = "Fenster geöffnet", ["window.closed"] = "Fenster geschlossen",
-        ["window.focused"] = "Fenster fokussiert", ["window.minimized"] = "Fenster minimiert", ["window.restored"] = "Fenster wiederhergestellt",
+        ["window.focused"] = "Fenster in den Vordergrund gewechselt", ["window.minimized"] = "Fenster minimiert", ["window.restored"] = "Fenster wiederhergestellt",
         ["window.shown"] = "Fenster angezeigt", ["window.hidden"] = "Fenster ausgeblendet", ["window.moved_or_resized"] = "Fenster verschoben oder skaliert",
         ["window.foreground"] = "Aktives Fenster",
         ["input.idle.changed"] = "Leerlaufgrenze erreicht oder verlassen", ["input.idle.entered"] = "Leerlaufgrenze erreicht",
@@ -70,9 +80,9 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         ["clipboard.content"] = "Zwischenablageninhalt",
         ["printer.queue.changed"] = "Druckerwarteschlange geändert", ["printer.job.added"] = "Druckauftrag hinzugefügt",
         ["printer.job.changed"] = "Druckauftrag geändert", ["printer.job.deleted"] = "Druckauftrag entfernt",
-        ["printer.state.changed"] = "Druckerstatus geändert", ["printer.status"] = "Druckerstatus",
+        ["printer.state.changed"] = "Weiteres Druckerereignis", ["printer.status"] = "Druckerstatus",
         ["printer.added"] = "Drucker hinzugefügt", ["printer.removed"] = "Drucker entfernt",
-        ["printer.connection_failed"] = "Druckerverbindung fehlgeschlagen", ["printer.settings_changed"] = "Druckereinstellung geändert",
+        ["printer.connection_failed"] = "Druckerverbindung fehlgeschlagen", ["printer.settings_changed"] = "Druckerstatus oder Einstellungen geändert",
         ["storage.drive.changed"] = "Laufwerk geändert", ["storage.drive.mounted"] = "Laufwerk eingebunden",
         ["storage.drive.unmounted"] = "Laufwerk entfernt", ["storage.drives"] = "Laufwerke und freier Speicher",
         ["storage.media.inserted"] = "Wechselmedium eingelegt", ["storage.media.removed"] = "Wechselmedium entfernt",
@@ -92,12 +102,16 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         ["windows_update.downloaded"] = "Update heruntergeladen", ["windows_update.installed"] = "Update installiert",
         ["windows_update.failed"] = "Update fehlgeschlagen", ["windows_update.restart_required"] = "Update erfordert Neustart",
         ["windows_update.status"] = "Windows-Update-Status",
-        ["system.lifecycle.changed"] = "Start, Herunterfahren oder Sitzung beendet", ["system.lifecycle"] = "Systemlaufzeit",
+        ["system.lifecycle.changed"] = "Abmelden oder Herunterfahren", ["system.lifecycle"] = "Systemlaufzeit",
         ["system.lifecycle.logoff"] = "Benutzer wird abgemeldet", ["system.lifecycle.shutdown"] = "Windows wird heruntergefahren"
     };
 
     public IReadOnlyCollection<WindowsCapabilityDescriptor> Capabilities { get; } = BuildCapabilities();
-    public WindowsCapabilityDescriptor? Find(string id) => Capabilities.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase));
+    public WindowsCapabilityDescriptor? Find(string id) =>
+        Capabilities.FirstOrDefault(x => string.Equals(x.Id, NormalizeEventId(id), StringComparison.OrdinalIgnoreCase));
+
+    public static string NormalizeEventId(string id) =>
+        LegacyEventAliases.GetValueOrDefault(id, id);
 
     private static IReadOnlyCollection<WindowsCapabilityDescriptor> BuildCapabilities()
     {
@@ -128,8 +142,7 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
             "display.orientation_changed", "display.resolution_changed", "display.primary_changed"); Q("display.monitors", WindowsEventCategory.Display);
         E(WindowsEventCategory.Device, "device.hardware", "device.hardware.changed", "device.hardware.connected", "device.hardware.disconnected", "device.hardware.updated");
         E(WindowsEventCategory.Device, "device.usb", "device.usb.changed", "device.usb.connected", "device.usb.disconnected"); Q("device.hardware", WindowsEventCategory.Device); Q("device.usb", WindowsEventCategory.Device);
-        E(WindowsEventCategory.Bluetooth, "bluetooth.devices", "bluetooth.state.changed", "bluetooth.device.connected", "bluetooth.device.disconnected",
-            "bluetooth.device.paired", "bluetooth.device.unpaired", "bluetooth.radio.enabled", "bluetooth.radio.disabled"); Q("bluetooth.devices", WindowsEventCategory.Bluetooth);
+        E(WindowsEventCategory.Bluetooth, "bluetooth.devices", "bluetooth.state.changed"); Q("bluetooth.devices", WindowsEventCategory.Bluetooth);
         E(WindowsEventCategory.FileSystem, "filesystem.path", "filesystem.changed", "filesystem.created", "filesystem.deleted", "filesystem.renamed"); Q("filesystem.path", WindowsEventCategory.FileSystem);
         E(WindowsEventCategory.Process, "process.running", "process.started", "process.exited"); Q("process.running", WindowsEventCategory.Process);
         E(WindowsEventCategory.Window, "window.foreground", "window.changed", "window.opened", "window.closed", "window.focused", "window.minimized", "window.restored",
@@ -144,7 +157,8 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
             "system.settings.locale_changed", "system.settings.colors_changed", "system.settings.desktop_changed", "system.settings.general_changed",
             "system.settings.icons_changed", "system.settings.keyboard_changed", "system.settings.menu_changed", "system.settings.mouse_changed",
             "system.settings.power_changed", "system.settings.screensaver_changed", "system.settings.window_changed"); Q("system.settings", WindowsEventCategory.SystemSettings);
-        foreach (var id in new[] { "security.state.changed", "security.threat.detected", "security.threat.action_taken", "security.settings.changed" }) result.Add(Create(id, WindowsEventCategory.Security, true, true, "security.status", true));
+        foreach (var id in new[] { "security.state.changed", "security.threat.detected", "security.threat.action_taken", "security.settings.changed" })
+            result.Add(Create(id, WindowsEventCategory.Security, true, false, "security.status", true));
         Q("security.status", WindowsEventCategory.Security, true);
         E(WindowsEventCategory.WindowsUpdate, "windows_update.status", "windows_update.changed", "windows_update.download_started", "windows_update.downloaded", "windows_update.installed", "windows_update.failed", "windows_update.restart_required"); Q("windows_update.status", WindowsEventCategory.WindowsUpdate);
         E(WindowsEventCategory.SystemLifecycle, "system.lifecycle", "system.lifecycle.changed", "system.lifecycle.logoff", "system.lifecycle.shutdown"); Q("system.lifecycle", WindowsEventCategory.SystemLifecycle);
@@ -153,11 +167,13 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
 
     private static WindowsCapabilityDescriptor Create(string id, WindowsEventCategory category, bool events, bool query,
         string? relatedQuery = null, bool admin = false) => new(id, category, Names.GetValueOrDefault(id, id), events, query, relatedQuery,
-        new WindowsCapabilityRequirements(admin), Parameters(id), ResultProperties(id));
+        new WindowsCapabilityRequirements(admin), Parameters(id),
+        query ? WindowsQueryResultRegistry.GetResultTypeName(id) : null);
 
     private static IReadOnlyList<WindowsParameterDescriptor> Parameters(string id)
     {
-        if (id.StartsWith("network.wifi.", StringComparison.OrdinalIgnoreCase))
+        if (id is "network.wifi.connecting" or "network.wifi.connected" or "network.wifi.connection_failed"
+            or "network.wifi.disconnecting" or "network.wifi.disconnected")
             return [new("ssid", "WLAN-Name (SSID)", WindowsParameterType.Text, Placeholder: "Mein WLAN")];
         if (id == "filesystem.path") return [new("path", "Datei oder Ordner", WindowsParameterType.FilePath, true, Placeholder: "C:\\Pfad")];
         if (id.StartsWith("filesystem.", StringComparison.OrdinalIgnoreCase))
@@ -166,24 +182,9 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         if (id.StartsWith("storage.drive.", StringComparison.OrdinalIgnoreCase) || id == "storage.drives") return [new("name", "Laufwerk", WindowsParameterType.Drive, Placeholder: "C:")];
         if (id.StartsWith("input.idle.", StringComparison.OrdinalIgnoreCase)) return [new("threshold_ms", "Leerlaufgrenze (ms)", WindowsParameterType.Duration, true, "60000")];
         if (id.StartsWith("device.", StringComparison.OrdinalIgnoreCase) || id.StartsWith("audio.device.", StringComparison.OrdinalIgnoreCase)
-            || id.StartsWith("bluetooth.", StringComparison.OrdinalIgnoreCase) || id.StartsWith("printer.", StringComparison.OrdinalIgnoreCase))
+            || id.StartsWith("bluetooth.", StringComparison.OrdinalIgnoreCase))
             return [new("filter_value", "Filter", WindowsParameterType.Text, Placeholder: "Name enthält …")];
         return [];
     }
 
-    private static IReadOnlyList<string> ResultProperties(string id) => id switch
-    {
-        "network.connectivity" => Common("IsConnected", "Connectivity", "ConnectionType", "Name", "Count", "Items.Count"),
-        "audio.devices" => Common("Exists", "Count", "Name", "DeviceState", "Items.Count"), "audio.volume" => Common("Exists", "IsMuted", "Percentage", "OnOffState", "Id"),
-        "session.state" => Common("IsActive", "Name", "Id", "SessionState"), "power.status" => Common("IsConnected", "IsCharging", "Percentage", "PowerSource"),
-        "display.monitors" => Common("IsConnected", "Count", "Name", "Items.Count"),
-        "device.hardware" or "device.usb" or "bluetooth.devices" => Common("Exists", "IsConnected", "Count", "Name", "DeviceState", "Items.Count"),
-        "filesystem.path" => Common("Exists", "IsActive", "Path", "Count", "Value"), "process.running" => Common("Exists", "IsActive", "Count", "Name", "Id"),
-        "window.foreground" => Common("Exists", "IsActive", "Name", "Text", "Id"), "input.idle" => Common("Value", "Percentage"),
-        "clipboard.content" => Common("Exists", "Name", "Text"), "printer.status" => Common("Exists", "Count", "Name", "DeviceState", "Items.Count"),
-        "storage.drives" => Common("Exists", "IsConnected", "Count", "Name", "FreeSpaceGb", "Items.Count"), "system.settings" => Common("Name", "Text", "IsEnabled"),
-        "security.status" => Common("Exists", "IsEnabled", "OnOffState"), "windows_update.status" => Common("PendingRestart", "IsActive"),
-        "system.lifecycle" => Common("Value", "Percentage", "Text"), _ => Common()
-    };
-    private static string[] Common(params string[] values) => ["Status", "IsAvailable", "CapturedAt", "ErrorCode", "ErrorMessage", .. values];
 }

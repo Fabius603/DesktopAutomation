@@ -1,7 +1,18 @@
 {
   "yolo11n": {
-    "url": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.onnx",
+    "url": "https://raw.githubusercontent.com/Fabius603/DesktopAutomation/d82eb0ebf1632d40994c5b7140451df5429fdf3c/models/Yolo/yolo11n.onnx",
+    "sha256": "634279b40c07c6391472c51ad45b81ebc48706a9a1fe72dd3396322acd0c053b",
+    "size": 10930182,
+    "recommendedConfidenceThreshold": 0.5,
     "displayName": "YOLO11 Nano",
     "description": "Offizielles YOLO11 Nano Detektionsmodell von Ultralytics. Erkennt 80 COCO-Klassen (Personen, Autos, Tiere, …)."
+  },
+  "screenparser": {
+    "url": "https://raw.githubusercontent.com/Fabius603/DesktopAutomation/d82eb0ebf1632d40994c5b7140451df5429fdf3c/models/Yolo/screenparser.onnx",
+    "sha256": "c8f251a730a72be388ae24619a90610cdf7b4161f92378c24f0f89f8623e8e19",
+    "size": 102171365,
+    "recommendedConfidenceThreshold": 0.1,
+    "displayName": "ScreenParser",
+    "description": "Erkennt 55 Elemente von Benutzeroberflächen wie Buttons, Eingabefelder, Menüs, Listen und Symbole. Für Bildschirmaufnahmen optimiert; benötigt mehr Leistung als YOLO11 Nano."
   }
 }

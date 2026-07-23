@@ -21,4 +21,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\TaskAutomation\TaskAutomation.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\DesktopAutomationApp\ViewModels\ObservableRangeCollection.cs"
+             Link="DesktopAutomationApp\ObservableRangeCollection.cs" />
+    <Compile Include="..\..\DesktopAutomationApp\Services\Jobs\JobStepsSnapshotService.cs"
+             Link="DesktopAutomationApp\JobStepsSnapshotService.cs" />
+  </ItemGroup>
 </Project>

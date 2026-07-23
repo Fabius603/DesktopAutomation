@@ -25,8 +25,11 @@ public sealed class ResultBindingPickerViewModel : INotifyPropertyChanged
         ClearCommand = new RelayCommand(Clear);
         if (selectDefault)
         {
-            var source = _sources.FirstOrDefault(s => s.ResultType.Properties.Any(contract.Accepts));
-            var property = source?.ResultType.Properties.FirstOrDefault(contract.Accepts);
+            var source = _sources.FirstOrDefault(s =>
+                contract.FindPreferredProperty(s.ResultType.Properties) is not null);
+            var property = source is null
+                ? null
+                : contract.FindPreferredProperty(source.ResultType.Properties);
             if (source is not null && property is not null) Select(source, property);
         }
     }
@@ -54,6 +57,7 @@ public sealed class ResultBindingPickerViewModel : INotifyPropertyChanged
     public ResultBinding ToBinding() => new()
     {
         SourceStepId = _selectedSource?.StepId ?? string.Empty,
+        PropertyId = _selectedProperty?.StableId,
         PropertyPath = _selectedProperty?.Name ?? string.Empty
     };
 
@@ -61,7 +65,10 @@ public sealed class ResultBindingPickerViewModel : INotifyPropertyChanged
     {
         var source = _sources.FirstOrDefault(item => item.StepId == binding?.SourceStepId);
         var property = source?.ResultType.Properties.FirstOrDefault(item =>
-            item.Name.Equals(binding?.PropertyPath, StringComparison.OrdinalIgnoreCase) && _contract.Accepts(item));
+            ((!string.IsNullOrWhiteSpace(binding?.PropertyId)
+              && item.StableId.Equals(binding.PropertyId, StringComparison.OrdinalIgnoreCase))
+             || item.Name.Equals(binding?.PropertyPath, StringComparison.OrdinalIgnoreCase))
+            && _contract.Accepts(item));
         if (source is not null && property is not null) Select(source, property);
         else if (!_contract.Required) Clear();
     }

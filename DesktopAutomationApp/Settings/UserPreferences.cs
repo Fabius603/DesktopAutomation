@@ -15,4 +15,5 @@ public sealed class UserPreferences
     public string Accent { get; set; } = "Blue";
     public bool StartWithWindows { get; set; } = true;
     public bool StartInBackgroundAtWindowsStartup { get; set; } = true;
+    public string LastSeenReleaseNotesVersion { get; set; } = string.Empty;
 }

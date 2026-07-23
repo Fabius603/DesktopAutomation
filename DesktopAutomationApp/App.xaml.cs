@@ -42,6 +42,7 @@ using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using TaskAutomation.WindowsIntegration;
+using DesktopAutomationApp.Behaviors;
 
 namespace DesktopAutomationApp
 {
@@ -68,6 +69,7 @@ namespace DesktopAutomationApp
         public App()
         {
             InitializeComponent();
+            GlobalScrollBehavior.Initialize();
 
             AppPaths.MigrateLegacyData();
             var logDirectory = AppPaths.LogsDirectory;
@@ -131,6 +133,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IImageDisplayService, WpfImageDisplayService>();
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
+                    services.AddSingleton<IReleaseNotesService, ReleaseNotesService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
                     services.AddSingleton<IAutomationLogService, AutomationLogService>();
                     services.AddSingleton<IApplicationLogService>(applicationLogService);
@@ -417,6 +420,7 @@ namespace DesktopAutomationApp
             mainWindow.Show();
             mainWindow.ShowActivated = true;
             mainWindow.Activate();
+            _ = _host.Services.GetRequiredService<IReleaseNotesService>().ShowIfNewAsync();
 
             // Ein kurzes Topmost-Umschalten stellt sicher, dass Windows das frisch gestartete
             // Fenster auch vor bereits geöffneten Fenstern platziert.

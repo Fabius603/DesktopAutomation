@@ -151,21 +151,27 @@ namespace DesktopAutomationApp.Converters
 
     public sealed class StepBlockVisualConverter : IMultiValueConverter
     {
+        private sealed record Layout(bool InBlock, bool Start, bool End, bool Branch, bool Inner);
+        private int _cacheVersion = int.MinValue;
+        private IList? _cacheCollection;
+        private Dictionary<JobStep, Layout> _layout =
+            new(ReferenceEqualityComparer.Instance);
+
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values.Length < 2 || values[0] is not JobStep step || values[1] is not IList steps)
                 return DependencyProperty.UnsetValue;
-            var index = steps.IndexOf(step);
-            var inBlock = false;
-            for (var i = 0; i <= index && i < steps.Count; i++)
-            {
-                if (steps[i] is IfStep) inBlock = true;
-                if (i < index && steps[i] is EndIfStep) inBlock = false;
-            }
-            var start = step is IfStep;
-            var end = step is EndIfStep && inBlock;
-            var branch = step is ElseIfStep or ElseStep;
-            var inner = inBlock && !start && !end && !branch;
+            var version = values.Length > 2 && values[2] is int value ? value : 0;
+            if (!ReferenceEquals(steps, _cacheCollection) || version != _cacheVersion)
+                RebuildCache(steps, version);
+            if (!_layout.TryGetValue(step, out var layout))
+                return DependencyProperty.UnsetValue;
+
+            var inBlock = layout.InBlock;
+            var start = layout.Start;
+            var end = layout.End;
+            var branch = layout.Branch;
+            var inner = layout.Inner;
             return (parameter as string) switch
             {
                 // Keep the block connected internally, but separate its closing
@@ -180,6 +186,28 @@ namespace DesktopAutomationApp.Converters
                 "cardBackground" => start || branch ? FindBrush("App.Brush.SurfaceHover") : FindBrush("App.Brush.Surface"),
                 _ => DependencyProperty.UnsetValue
             };
+        }
+
+        private void RebuildCache(IList steps, int version)
+        {
+            var layout = new Dictionary<JobStep, Layout>(
+                steps.Count, ReferenceEqualityComparer.Instance);
+            var inBlock = false;
+            foreach (var item in steps)
+            {
+                if (item is not JobStep step) continue;
+                if (step is IfStep) inBlock = true;
+                var start = step is IfStep;
+                var end = step is EndIfStep && inBlock;
+                var branch = step is ElseIfStep or ElseStep;
+                layout[step] = new Layout(
+                    inBlock, start, end, branch,
+                    inBlock && !start && !end && !branch);
+                if (step is EndIfStep) inBlock = false;
+            }
+            _layout = layout;
+            _cacheCollection = steps;
+            _cacheVersion = version;
         }
 
         private static Brush FindBrush(string key) => Application.Current?.TryFindResource(key) as Brush ?? Brushes.Transparent;

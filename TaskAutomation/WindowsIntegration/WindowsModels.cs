@@ -45,7 +45,7 @@ public sealed class WindowsStateQuery
 /// Stable union result for all Windows queries. Irrelevant properties retain their neutral value.
 /// This deliberately gives the job condition system a statically discoverable contract.
 /// </summary>
-public sealed record WindowsStateSnapshot
+internal sealed record WindowsStateSnapshot
 {
     public WindowsCapabilityStatus Status { get; init; } = WindowsCapabilityStatus.Success;
     public bool IsAvailable => Status == WindowsCapabilityStatus.Success;
@@ -105,4 +105,4 @@ public sealed record WindowsCapabilityDescriptor(
     string? RelatedQuery = null,
     WindowsCapabilityRequirements? Requirements = null,
     IReadOnlyList<WindowsParameterDescriptor>? Parameters = null,
-    IReadOnlyList<string>? ResultProperties = null);
+    string? ResultTypeName = null);

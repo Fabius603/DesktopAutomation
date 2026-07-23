@@ -22,7 +22,7 @@ public sealed class ResultBindingResolverTests
     [Fact]
     public void Resolve_WhenSourceWasNotExecuted_ReturnsSourceNotExecuted()
     {
-        _store.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = false, Text = "old" }, "source");
+        _store.Set<WindowsStateQueryStep>(new ClipboardContentQueryResult { WasExecuted = false, Text = "old" }, "source");
         Assert.Equal(ResultResolutionStatus.SourceNotExecuted,
             ResultBindingResolver.Resolve<object>(_store, Binding("source", "Text")).Status);
     }
@@ -30,16 +30,30 @@ public sealed class ResultBindingResolverTests
     [Fact]
     public void Resolve_ReadsPropertyCaseInsensitively()
     {
-        _store.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true, Percentage = 72.5 }, "source");
+        _store.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult { WasExecuted = true, Percentage = 72.5 }, "source");
         var result = ResultBindingResolver.Resolve<object>(_store, Binding("SOURCE", "percentage"));
         Assert.Equal(ResultResolutionStatus.Success, result.Status);
         Assert.Equal(72.5, Assert.IsType<double>(result.FirstOrDefault));
     }
 
     [Fact]
+    public void Resolve_ReadsPropertyByStableIdWithoutLegacyPath()
+    {
+        _store.Set<WindowsStateQueryStep>(
+            new AudioVolumeQueryResult { WasExecuted = true, Percentage = 42.5 }, "source");
+        var result = ResultBindingResolver.Resolve<double>(_store, new ResultBinding
+        {
+            SourceStepId = "source",
+            PropertyId = "volume_percentage"
+        });
+        Assert.Equal(ResultResolutionStatus.Success, result.Status);
+        Assert.Equal(42.5, result.FirstOrDefault);
+    }
+
+    [Fact]
     public void Resolve_WhenPropertyMissing_ReturnsPropertyNotFound()
     {
-        _store.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true }, "source");
+        _store.Set<WindowsStateQueryStep>(new AudioVolumeQueryResult { WasExecuted = true }, "source");
         Assert.Equal(ResultResolutionStatus.PropertyNotFound,
             ResultBindingResolver.Resolve<object>(_store, Binding("source", "DoesNotExist")).Status);
     }
@@ -55,7 +69,7 @@ public sealed class ResultBindingResolverTests
     [Fact]
     public void Resolve_WhenRequestedTypeDoesNotMatch_ReturnsTypeMismatch()
     {
-        _store.Set<WindowsStateQueryStep>(new WindowsStateQueryResult { WasExecuted = true, Text = "abc" }, "source");
+        _store.Set<WindowsStateQueryStep>(new ClipboardContentQueryResult { WasExecuted = true, Text = "abc" }, "source");
         Assert.Equal(ResultResolutionStatus.TypeMismatch,
             ResultBindingResolver.Resolve<Point>(_store, Binding("source", "Text")).Status);
     }

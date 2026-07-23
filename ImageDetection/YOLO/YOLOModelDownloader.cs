@@ -26,44 +26,52 @@ namespace ImageDetection.YOLO
 
         public event EventHandler<ModelDownloadProgressEventArgs>? DownloadProgressChanged;
 
-        public string ModelFolderPath { get; } = AppPaths.YoloModelsDirectory;
+        public string ModelFolderPath { get; }
 
-        public YOLOModelDownloader(ILogger<YOLOModelDownloader> logger, HttpClient? httpClient = null)
+        public YOLOModelDownloader(
+            ILogger<YOLOModelDownloader> logger,
+            HttpClient? httpClient = null,
+            string? modelFolderPath = null)
         {
             _httpClient = httpClient ?? new HttpClient();
             _logger = logger;
+            ModelFolderPath = modelFolderPath ?? AppPaths.YoloModelsDirectory;
         }
 
         public async Task<YOLOModel> DownloadModelAsync(string modelKey, CancellationToken ct = default)
         {
-            var manifest = ModelManifestProvider.LoadManifest(ModelFolderPath);
-            if (!manifest.Models.TryGetValue(modelKey, out var entry))
-                throw new InvalidOperationException($"Model '{modelKey}' nicht im Manifest.");
+            if (string.IsNullOrWhiteSpace(modelKey))
+                throw new ArgumentException("Ein Modellschlüssel ist erforderlich.", nameof(modelKey));
 
             Directory.CreateDirectory(ModelFolderPath);
-
             var onnxPath = Path.Combine(ModelFolderPath, modelKey + ".onnx");
+            var manifest = ModelManifestProvider.LoadManifest(ModelFolderPath);
+            var isCatalogModel = manifest.Models.TryGetValue(modelKey, out var entry);
 
             // parallele Downloads auf denselben Pfad vermeiden
             var gate = _pathLocks.GetOrAdd(onnxPath, _ => new SemaphoreSlim(1, 1));
             await gate.WaitAsync(ct);
             try
             {
+                if (!isCatalogModel)
+                {
+                    if (!File.Exists(onnxPath))
+                        throw new InvalidOperationException($"Model '{modelKey}' nicht im Manifest und nicht lokal installiert.");
+
+                    await EnsureLabelsSidecarAsync(modelKey, onnxPath, ct);
+                    Report(modelKey, ModelDownloadStatus.Completed, 100, "Lokales Modell");
+                    return CreateModel(modelKey, onnxPath);
+                }
+
                 // Bereits vorhanden & Hash ok (oder kein Hash angegeben) → fertig
                 bool alreadyValid = File.Exists(onnxPath) &&
-                    (string.IsNullOrEmpty(entry.Sha256) || await VerifySha256Async(onnxPath, entry.Sha256, ct));
+                    (string.IsNullOrEmpty(entry!.Sha256) || await VerifySha256Async(onnxPath, entry.Sha256, ct));
 
                 if (alreadyValid)
                 {
                     Report(modelKey, ModelDownloadStatus.Completed, 100, "Bereits vorhanden");
-                    return new YOLOModel
-                    {
-                        Id = modelKey,
-                        Name = modelKey,
-                        OnnxPath = onnxPath,
-                        OnnxSizeBytes = new FileInfo(onnxPath).Length,
-                        CreatedUtc = DateTime.UtcNow
-                    };
+                    await EnsureLabelsSidecarAsync(modelKey, onnxPath, ct);
+                    return CreateModel(modelKey, onnxPath);
                 }
 
                 Report(modelKey, ModelDownloadStatus.DownloadingOnnx, 0);
@@ -71,7 +79,7 @@ namespace ImageDetection.YOLO
 
                 await DownloadWithHashAsync(
                     http: _httpClient,
-                    url: entry.Url,
+                    url: entry!.Url,
                     target: onnxPath,
                     expectedSha256: entry.Sha256,   // null = kein Hash-Check
                     progress: progress,
@@ -79,14 +87,7 @@ namespace ImageDetection.YOLO
 
                 Report(modelKey, ModelDownloadStatus.Completed, 100);
 
-                var model = new YOLOModel
-                {
-                    Id = modelKey,
-                    Name = modelKey,
-                    OnnxPath = onnxPath,
-                    OnnxSizeBytes = new FileInfo(onnxPath).Length,
-                    CreatedUtc = DateTime.UtcNow
-                };
+                var model = CreateModel(modelKey, onnxPath);
 
                 await EnsureLabelsSidecarAsync(modelKey, model.OnnxPath, ct);
 
@@ -98,6 +99,15 @@ namespace ImageDetection.YOLO
                 if (gate.CurrentCount == 1) _pathLocks.TryRemove(onnxPath, out _);
             }
         }
+
+        private static YOLOModel CreateModel(string modelKey, string onnxPath) => new()
+        {
+            Id = modelKey,
+            Name = modelKey,
+            OnnxPath = onnxPath,
+            OnnxSizeBytes = new FileInfo(onnxPath).Length,
+            CreatedUtc = DateTime.UtcNow
+        };
 
         public async Task<bool> UninstallModelAsync(string modelKey, CancellationToken ct = default)
         {

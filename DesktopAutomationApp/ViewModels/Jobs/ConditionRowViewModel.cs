@@ -144,12 +144,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool ShowComparisonValue => ConditionRules.RequiresComparisonValue(SelectedOperator);
     public bool ShowLiteralComparisonValue => ShowComparisonValue && ComparisonIsLiteral;
     public bool ShowJobResultComparisonValue => ShowComparisonValue && ComparisonIsJobResult;
-    public bool ShowNumericValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType is ResultPropertyType.Double or ResultPropertyType.Integer;
-    public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.String;
-    public bool ShowDateValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.DateTime;
-    public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.Bool;
-    public bool ShowEnumValue => ShowLiteralComparisonValue && SelectedProperty?.PropertyType == ResultPropertyType.Enum;
-    public bool IsIntegerValue => SelectedProperty?.PropertyType == ResultPropertyType.Integer;
+    public bool ShowNumericValue => ShowLiteralComparisonValue && SelectedProperty?.DataType is ResultValueKind.Number or ResultValueKind.Integer;
+    public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Text;
+    public bool ShowDateValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.DateTime;
+    public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Boolean;
+    public bool ShowEnumValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Enum;
+    public bool IsIntegerValue => SelectedProperty?.DataType == ResultValueKind.Integer;
     public bool CanRemove => _owner.Count > 1;
     public string SelectedPath => SelectedSourceStep is null || SelectedProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
@@ -158,12 +158,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
         : $"{SelectedComparisonSourceStep.DisplayName}  →  {SelectedComparisonProperty.DisplayName}";
     public string InputHint => SelectedProperty?.Description ?? "";
-    public string InputExample => SelectedProperty?.Example ?? (SelectedProperty?.PropertyType switch
+    public string InputExample => SelectedProperty?.Example ?? (SelectedProperty?.DataType switch
     {
-        ResultPropertyType.Double => Loc.Get("Ui.Step.IfEditor.ExampleDecimal"),
-        ResultPropertyType.Integer => Loc.Get("Ui.Step.IfEditor.ExampleInteger"),
-        ResultPropertyType.String => Loc.Get("Ui.Step.IfEditor.ExampleText"),
-        ResultPropertyType.DateTime => Loc.Get("Ui.Step.IfEditor.ExampleDate"),
+        ResultValueKind.Number => Loc.Get("Ui.Step.IfEditor.ExampleDecimal"),
+        ResultValueKind.Integer => Loc.Get("Ui.Step.IfEditor.ExampleInteger"),
+        ResultValueKind.Text => Loc.Get("Ui.Step.IfEditor.ExampleText"),
+        ResultValueKind.DateTime => Loc.Get("Ui.Step.IfEditor.ExampleDate"),
         _ => string.Empty
     });
     public bool IsComparisonValueValid => SelectedProperty is not null &&
@@ -282,6 +282,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         return new StepCondition
         {
             SourceStepId = SelectedSourceStep?.StepId ?? "",
+            PropertyId = SelectedProperty?.StableId,
             PropertyPath = SelectedProperty?.Name ?? "",
             Operator = SelectedOperator,
             Comparison = ShowComparisonValue ? new ComparisonOperand
@@ -289,6 +290,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 Kind = ComparisonKind,
                 Value = ComparisonIsLiteral ? GetLiteralComparisonValue() : null,
                 SourceStepId = ComparisonIsJobResult ? SelectedComparisonSourceStep?.StepId : null,
+                PropertyId = ComparisonIsJobResult ? SelectedComparisonProperty?.StableId : null,
                 PropertyPath = ComparisonIsJobResult ? SelectedComparisonProperty?.Name : null
             } : null
         };
@@ -297,13 +299,13 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private string? GetLiteralComparisonValue()
     {
         if (SelectedProperty is null || !ShowComparisonValue || !ComparisonIsLiteral) return null;
-        object? editorValue = SelectedProperty.PropertyType switch
+        object? editorValue = SelectedProperty.DataType switch
         {
-            ResultPropertyType.Double or ResultPropertyType.Integer => ComparisonNumber,
-            ResultPropertyType.DateTime => ComparisonDate,
-            ResultPropertyType.Bool => ComparisonBoolean,
-            ResultPropertyType.String => ComparisonValue,
-            ResultPropertyType.Enum => ComparisonEnum,
+            ResultValueKind.Number or ResultValueKind.Integer => ComparisonNumber,
+            ResultValueKind.DateTime => ComparisonDate,
+            ResultValueKind.Boolean => ComparisonBoolean,
+            ResultValueKind.Text => ComparisonValue,
+            ResultValueKind.Enum => ComparisonEnum,
             _ => null
         };
         return ConditionRules.FormatComparisonValue(SelectedProperty, editorValue);
@@ -312,7 +314,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public void LoadFrom(StepCondition condition)
     {
         _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == condition.SourceStepId);
-        _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p => p.Name == condition.PropertyPath);
+        _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p =>
+            (!string.IsNullOrWhiteSpace(condition.PropertyId)
+             && p.StableId.Equals(condition.PropertyId, StringComparison.OrdinalIgnoreCase))
+            || p.Name.Equals(condition.PropertyPath, StringComparison.OrdinalIgnoreCase));
         RefreshOperators();
         var comparison = condition.EffectiveComparison;
         var editorOperator = condition.Operator;
@@ -341,13 +346,13 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _comparisonValue = comparison.Value ?? "";
         if (_selectedProperty is not null && StepResultMetadata.TryParseComparison(_selectedProperty, comparison.Value, out var parsed))
         {
-            if (_selectedProperty.PropertyType is ResultPropertyType.Double or ResultPropertyType.Integer)
+            if (_selectedProperty.DataType is ResultValueKind.Number or ResultValueKind.Integer)
                 _comparisonNumber = Convert.ToDouble(parsed);
-            if (_selectedProperty.PropertyType == ResultPropertyType.DateTime && parsed is DateTime date)
+            if (_selectedProperty.DataType == ResultValueKind.DateTime && parsed is DateTime date)
                 _comparisonDate = date.ToLocalTime();
-            if (_selectedProperty.PropertyType == ResultPropertyType.Bool && parsed is bool boolean)
+            if (_selectedProperty.DataType == ResultValueKind.Boolean && parsed is bool boolean)
                 _comparisonBoolean = boolean;
-            if (_selectedProperty.PropertyType == ResultPropertyType.Enum)
+            if (_selectedProperty.DataType == ResultValueKind.Enum)
                 _comparisonEnum = parsed?.ToString();
         }
         RefreshComparisonChoices();
@@ -355,7 +360,11 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         {
             _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == comparison.SourceStepId);
             _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
-                .FirstOrDefault(p => p.Name == comparison.PropertyPath && _selectedProperty is not null
+                .FirstOrDefault(p =>
+                    ((!string.IsNullOrWhiteSpace(comparison.PropertyId)
+                      && p.StableId.Equals(comparison.PropertyId, StringComparison.OrdinalIgnoreCase))
+                     || p.Name.Equals(comparison.PropertyPath, StringComparison.OrdinalIgnoreCase))
+                    && _selectedProperty is not null
                     && StepResultMetadata.AreComparable(_selectedProperty, p));
         }
         OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
@@ -368,7 +377,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     {
         AvailableOperators.Clear();
         if (_selectedProperty is not null)
-            foreach (var op in ConditionRules.GetOperators(_selectedProperty.PropertyType)) AvailableOperators.Add(op);
+            foreach (var op in ConditionRules.GetOperators(_selectedProperty.DataType)) AvailableOperators.Add(op);
         SelectedOperator = AvailableOperators.FirstOrDefault(); NotifyInput();
     }
 

@@ -19,6 +19,41 @@
                  Title="{Binding DialogTitle}"
                  ResizeMode="CanResize" ShowInTaskbar="False"
                  Style="{StaticResource DialogWindowStyle}">
+    <mah:MetroWindow.Resources>
+        <DataTemplate x:Key="TemplateMatchingEditor"><detection:TemplateMatchingStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ColorDetectionEditor"><detection:ColorDetectionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="PredictMovementEditor"><analysis:PredictMovementStepEditor/></DataTemplate>
+        <DataTemplate x:Key="DesktopDuplicationEditor"><capture:DesktopDuplicationStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ShowImageEditor"><output:ShowImageStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ShowOnDesktopEditor"><output:ShowOnDesktopStepEditor/></DataTemplate>
+        <DataTemplate x:Key="VideoCreationEditor"><output:VideoCreationStepEditor/></DataTemplate>
+        <DataTemplate x:Key="MakroExecutionEditor"><execution:MakroExecutionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="JobExecutionEditor"><execution:JobExecutionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ScriptExecutionEditor"><execution:ScriptExecutionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="KlickOnPointEditor"><interaction:KlickOnPointStepEditor/></DataTemplate>
+        <DataTemplate x:Key="KlickOnPoint3DEditor"><interaction:KlickOnPoint3DStepEditor/></DataTemplate>
+        <DataTemplate x:Key="YoloDetectionEditor"><detection:YoloDetectionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="TimeoutEditor"><flow:TimeoutStepEditor/></DataTemplate>
+        <DataTemplate x:Key="BlockInputEditor"><flow:BlockInputStepEditor/></DataTemplate>
+        <DataTemplate x:Key="UnblockInputEditor"><flow:UnblockInputStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ActiveProcessEditor"><process:ActiveProcessStepEditor/></DataTemplate>
+        <DataTemplate x:Key="GetProcessEditor"><process:GetProcessStepEditor/></DataTemplate>
+        <DataTemplate x:Key="StartProcessEditor"><process:StartProcessStepEditor/></DataTemplate>
+        <DataTemplate x:Key="TerminateProcessEditor"><process:TerminateProcessStepEditor/></DataTemplate>
+        <DataTemplate x:Key="FocusProcessEditor"><process:FocusProcessStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ShowTextEditor"><output:ShowTextStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ActiveWindowEditor"><process:ActiveWindowStepEditor/></DataTemplate>
+        <DataTemplate x:Key="KeyPointMatchingEditor"><detection:KeyPointMatchingStepEditor/></DataTemplate>
+        <DataTemplate x:Key="DynamicRoiEditor"><roi:DynamicRoiStepEditor/></DataTemplate>
+        <DataTemplate x:Key="IfEditor"><flow:IfStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ElseIfEditor"><flow:ElseIfStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ElseEditor"><flow:ElseStepEditor/></DataTemplate>
+        <DataTemplate x:Key="EndIfEditor"><flow:EndIfStepEditor/></DataTemplate>
+        <DataTemplate x:Key="EndJobEditor"><flow:EndJobStepEditor/></DataTemplate>
+        <DataTemplate x:Key="ContinueJobEditor"><flow:ContinueJobStepEditor/></DataTemplate>
+        <DataTemplate x:Key="PointComparisonEditor"><analysis:PointComparisonStepEditor/></DataTemplate>
+        <DataTemplate x:Key="WindowsStateQueryEditor"><windowsEditors:WindowsStateQueryStepEditor/></DataTemplate>
+    </mah:MetroWindow.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -63,41 +98,48 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
             <Border Background="{DynamicResource App.Brush.Surface}" CornerRadius="6" Padding="14,12">
-                <StackPanel>
-                    <detection:TemplateMatchingStepEditor/>
-                    <detection:ColorDetectionStepEditor/>
-                    <analysis:PredictMovementStepEditor/>
-                    <capture:DesktopDuplicationStepEditor/>
-                    <output:ShowImageStepEditor/>
-                    <output:ShowOnDesktopStepEditor/>
-                    <output:VideoCreationStepEditor/>
-                    <execution:MakroExecutionStepEditor/>
-                    <execution:JobExecutionStepEditor/>
-                    <execution:ScriptExecutionStepEditor/>
-                    <interaction:KlickOnPointStepEditor/>
-                    <interaction:KlickOnPoint3DStepEditor/>
-                    <detection:YoloDetectionStepEditor/>
-                    <flow:TimeoutStepEditor/>
-                    <flow:BlockInputStepEditor/>
-                    <flow:UnblockInputStepEditor/>
-                    <process:ActiveProcessStepEditor/>
-                    <process:GetProcessStepEditor/>
-                    <process:StartProcessStepEditor/>
-                    <process:TerminateProcessStepEditor/>
-                    <process:FocusProcessStepEditor/>
-                    <output:ShowTextStepEditor/>
-                    <process:ActiveWindowStepEditor/>
-                    <detection:KeyPointMatchingStepEditor/>
-                    <roi:DynamicRoiStepEditor/>
-                    <flow:IfStepEditor/>
-                    <flow:ElseIfStepEditor/>
-                    <flow:ElseStepEditor/>
-                    <flow:EndIfStepEditor/>
-                    <flow:EndJobStepEditor/>
-                    <flow:ContinueJobStepEditor/>
-                    <analysis:PointComparisonStepEditor/>
-                    <windowsEditors:WindowsStateQueryStepEditor/>
-                </StackPanel>
+                <ContentControl Content="{Binding}">
+                    <ContentControl.Style>
+                        <Style TargetType="ContentControl">
+                            <Setter Property="ContentTemplate" Value="{StaticResource TemplateMatchingEditor}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="TemplateMatching"><Setter Property="ContentTemplate" Value="{StaticResource TemplateMatchingEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ColorDetection"><Setter Property="ContentTemplate" Value="{StaticResource ColorDetectionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="PredictMovement"><Setter Property="ContentTemplate" Value="{StaticResource PredictMovementEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="DesktopDuplication"><Setter Property="ContentTemplate" Value="{StaticResource DesktopDuplicationEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ShowImage"><Setter Property="ContentTemplate" Value="{StaticResource ShowImageEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ShowOnDesktop"><Setter Property="ContentTemplate" Value="{StaticResource ShowOnDesktopEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="VideoCreation"><Setter Property="ContentTemplate" Value="{StaticResource VideoCreationEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="MakroExecution"><Setter Property="ContentTemplate" Value="{StaticResource MakroExecutionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="JobExecution"><Setter Property="ContentTemplate" Value="{StaticResource JobExecutionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ScriptExecution"><Setter Property="ContentTemplate" Value="{StaticResource ScriptExecutionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="KlickOnPoint"><Setter Property="ContentTemplate" Value="{StaticResource KlickOnPointEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="KlickOnPoint3D"><Setter Property="ContentTemplate" Value="{StaticResource KlickOnPoint3DEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="YoloDetection"><Setter Property="ContentTemplate" Value="{StaticResource YoloDetectionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="Timeout"><Setter Property="ContentTemplate" Value="{StaticResource TimeoutEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="BlockInput"><Setter Property="ContentTemplate" Value="{StaticResource BlockInputEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="UnblockInput"><Setter Property="ContentTemplate" Value="{StaticResource UnblockInputEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ActiveProcess"><Setter Property="ContentTemplate" Value="{StaticResource ActiveProcessEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="GetProcess"><Setter Property="ContentTemplate" Value="{StaticResource GetProcessEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="StartProcess"><Setter Property="ContentTemplate" Value="{StaticResource StartProcessEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="TerminateProcess"><Setter Property="ContentTemplate" Value="{StaticResource TerminateProcessEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="FocusProcess"><Setter Property="ContentTemplate" Value="{StaticResource FocusProcessEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ShowText"><Setter Property="ContentTemplate" Value="{StaticResource ShowTextEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ActiveWindow"><Setter Property="ContentTemplate" Value="{StaticResource ActiveWindowEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="KeyPointMatching"><Setter Property="ContentTemplate" Value="{StaticResource KeyPointMatchingEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="DynamicRoi"><Setter Property="ContentTemplate" Value="{StaticResource DynamicRoiEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="If"><Setter Property="ContentTemplate" Value="{StaticResource IfEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ElseIf"><Setter Property="ContentTemplate" Value="{StaticResource ElseIfEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="Else"><Setter Property="ContentTemplate" Value="{StaticResource ElseEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="EndIf"><Setter Property="ContentTemplate" Value="{StaticResource EndIfEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="EndJob"><Setter Property="ContentTemplate" Value="{StaticResource EndJobEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="ContinueJob"><Setter Property="ContentTemplate" Value="{StaticResource ContinueJobEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="PointComparison"><Setter Property="ContentTemplate" Value="{StaticResource PointComparisonEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="WindowsStateQuery"><Setter Property="ContentTemplate" Value="{StaticResource WindowsStateQueryEditor}"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContentControl.Style>
+                </ContentControl>
             </Border>
         </ScrollViewer>
 

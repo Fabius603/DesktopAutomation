@@ -89,7 +89,7 @@
                 </Border>
             </Grid>
 
-            <Border Style="{StaticResource CardBorderStyle}" Margin="0">
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
                         <Border Style="{StaticResource SettingsSectionIcon}">
@@ -127,6 +127,35 @@
                         </Grid>
                     </Border>
                 </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource SettingsSectionIcon}">
+                        <iconPacks:PackIconMaterial Kind="NewspaperVariantOutline"
+                                                    Width="19"
+                                                    Height="19"
+                                                    Foreground="{DynamicResource App.Brush.Accent}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                        <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsTitle}"
+                                   Style="{StaticResource Heading2}"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsDescription}"
+                                   Style="{StaticResource SettingsDescription}"/>
+                    </StackPanel>
+                    <Button Grid.Column="2"
+                            Command="{Binding ShowReleaseNotesCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            VerticalAlignment="Center"
+                            Content="{loc:Translate Key=Ui.ReleaseNotes.Show}"/>
+                </Grid>
             </Border>
         </StackPanel>
     </ScrollViewer>

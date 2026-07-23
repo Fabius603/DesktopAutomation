@@ -19,5 +19,7 @@ namespace ImageDetection.Model
         public string Description { get; set; } = "";
         [JsonPropertyName("displayName")]
         public string DisplayName { get; set; } = "";
+        [JsonPropertyName("recommendedConfidenceThreshold")]
+        public float? RecommendedConfidenceThreshold { get; set; }
     }
 }

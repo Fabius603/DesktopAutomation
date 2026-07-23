@@ -1,0 +1,100 @@
+<mah:MetroWindow x:Class="DesktopAutomationApp.Views.ReleaseNotesWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+                 Title="{loc:Translate Key=Ui.ReleaseNotes.Title}"
+                 Width="700"
+                 Height="620"
+                 MinWidth="520"
+                 MinHeight="420"
+                 WindowStartupLocation="CenterOwner"
+                 ShowInTaskbar="False"
+                 Style="{StaticResource DialogWindowStyle}">
+    <Grid Margin="24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.Heading}" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.Description}"
+                       Margin="0,6,0,0"
+                       Foreground="{DynamicResource App.Brush.TextMuted}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,8,14">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,12">
+                                    <TextBlock DockPanel.Dock="Right"
+                                               Text="{Binding Date}"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Background="{DynamicResource App.Brush.AccentSubtle}"
+                                                CornerRadius="6"
+                                                Padding="8,4">
+                                            <TextBlock Text="{Binding Version, StringFormat=v{0}}"
+                                                       Foreground="{DynamicResource App.Brush.Accent}"
+                                                       FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                </DockPanel>
+
+                                <ItemsControl ItemsSource="{Binding Sections}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,4,0,12">
+                                                <TextBlock Text="{Binding Title}"
+                                                           Style="{StaticResource Heading2}"
+                                                           Margin="0,0,0,6"/>
+                                                <ItemsControl ItemsSource="{Binding Changes}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,4">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="95"/>
+                                                                    <ColumnDefinition Width="12"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding Category}"
+                                                                           Foreground="{DynamicResource App.Brush.Accent}"
+                                                                           FontWeight="SemiBold"/>
+                                                                <TextBlock Grid.Column="2"
+                                                                           Text="{Binding Text}"
+                                                                           TextWrapping="Wrap"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Button Grid.Row="4"
+                HorizontalAlignment="Right"
+                MinWidth="100"
+                IsDefault="True"
+                IsCancel="True"
+                Click="Close_Click"
+                Content="{loc:Translate Key=Ui.Common.Close}"/>
+    </Grid>
+</mah:MetroWindow>

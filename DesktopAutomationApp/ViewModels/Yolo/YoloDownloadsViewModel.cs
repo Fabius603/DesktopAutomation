@@ -89,8 +89,14 @@ namespace DesktopAutomationApp.ViewModels
                         Models.Add(new YoloModelEntry
                         {
                             ModelKey = modelKey,
-                            DisplayName = manifestEntry.DisplayName ?? modelKey,
-                            Description = manifestEntry.Description ?? "",
+                            DisplayName = GetLocalizedModelText(
+                                modelKey,
+                                "DisplayName",
+                                manifestEntry.DisplayName ?? modelKey),
+                            Description = GetLocalizedModelText(
+                                modelKey,
+                                "Description",
+                                manifestEntry.Description ?? ""),
                             IsInstalled = isInstalled,
                             FileSizeBytes = fileSize,
                             IsLocal = false
@@ -214,8 +220,8 @@ namespace DesktopAutomationApp.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Title = "ONNX-Modelldatei auswählen",
-                Filter = "ONNX-Modelle (*.onnx)|*.onnx",
+                Title = Loc.Get("Yolo.SelectOnnxTitle"),
+                Filter = Loc.Get("Yolo.OnnxFilter"),
                 Multiselect = false
             };
 
@@ -243,6 +249,13 @@ namespace DesktopAutomationApp.ViewModels
         private static long TryGetFileSize(string path)        {
             try { return new FileInfo(path).Length; }
             catch { return 0L; }
+        }
+
+        private static string GetLocalizedModelText(string modelKey, string property, string fallback)
+        {
+            var resourceKey = $"Yolo.Model.{modelKey}.{property}";
+            var value = Loc.Get(resourceKey);
+            return value == $"[{resourceKey}]" ? fallback : value;
         }
 
         protected override void Dispose(bool disposing)

@@ -6,19 +6,51 @@ using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Steps;
 
-public enum ResultPropertyType { Bool, Double, Integer, String, DateTime, Enum }
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class ResultPropertyAttribute(string id) : Attribute
+{
+    public string Id { get; } = id;
+    public ResultValueKind? DataType { get; init; }
+    public string? DisplayName { get; init; }
+    public string? Description { get; init; }
+}
 
 public sealed record ResultPropertyDescriptor(
     string Name,
     string DisplayName,
-    ResultPropertyType PropertyType,
+    ResultValueKind DataType,
     string? Description = null,
     bool IsNullable = false,
     string? Example = null,
-    ResultValueKind ValueKind = ResultValueKind.Text,
     ResultCardinality Cardinality = ResultCardinality.Single,
     string? EnumTypeName = null,
-    IReadOnlyList<string>? EnumValues = null);
+    IReadOnlyList<string>? EnumValues = null,
+    string? Id = null)
+{
+    public string StableId => string.IsNullOrWhiteSpace(Id)
+        ? ResultContractIds.FromPropertyPath(Name)
+        : Id;
+}
+
+public static class ResultContractIds
+{
+    public static string FromPropertyPath(string path)
+    {
+        var result = new System.Text.StringBuilder(path.Length + 8);
+        foreach (var character in path.Replace("[]", string.Empty, StringComparison.Ordinal))
+        {
+            if (character == '.')
+            {
+                if (result.Length > 0 && result[^1] != '.') result.Append('.');
+                continue;
+            }
+            if (char.IsUpper(character) && result.Length > 0 && result[^1] is not '.' and not '_')
+                result.Append('_');
+            result.Append(char.ToLowerInvariant(character));
+        }
+        return result.ToString();
+    }
+}
 
 public sealed record ResultTypeDescriptor(
     string TypeName,
@@ -115,34 +147,21 @@ public static class StepResultMetadata
 
     public static IReadOnlyList<ConditionResultSource> GetConditionSources(IReadOnlyList<JobStep> steps, int consumerIndex) =>
         steps.Take(Math.Clamp(consumerIndex, 0, steps.Count))
-            .Select((step, index) => (step, index, output: StepPipelineRegistry.Get(step.GetType())?.Output))
-            .Where(x => x.step.IsEnabled && !string.IsNullOrWhiteSpace(x.output) && x.output != "–")
-            .Select(x => new { x.step, x.index, ResultType = GetResultTypeForStep(x.step) })
+            .Where(step => step.IsEnabled)
+            .Select((step, index) => new { step, index, ResultType = GetResultTypeForStep(step) })
             .Where(x => x.ResultType?.Properties.Length > 0)
             .Select(x => new ConditionResultSource(x.step, x.index, x.ResultType!))
             .ToArray();
 
     public static ResultTypeDescriptor? GetResultTypeForStep(JobStep step)
-    {
-        var output = StepPipelineRegistry.Get(step.GetType())?.Output;
-        var descriptor = string.IsNullOrWhiteSpace(output) ? null : GetResultType(output);
-        if (descriptor is null || step is not WindowsStateQueryStep windowsStep) return descriptor;
-        var allowed = new WindowsCapabilityCatalog().Find(windowsStep.Settings.QueryType)?.ResultProperties;
-        if (allowed is null || allowed.Count == 0) return descriptor;
-        return descriptor with
-        {
-            Properties = descriptor.Properties
-                .Where(property => allowed.Contains(property.Name, StringComparer.OrdinalIgnoreCase)).ToArray()
-        };
-    }
+        => StepResultContractRegistry.Resolve(step);
 
     public static ResultPropertyDescriptor[]? GetProperties(string stepTypeName)
     {
         var stepType = typeof(TaskAutomation.Jobs.JobStep).Assembly.GetTypes()
             .FirstOrDefault(t => t.Name == stepTypeName && typeof(TaskAutomation.Jobs.JobStep).IsAssignableFrom(t));
-        var output = stepType is null ? null : StepPipelineRegistry.Get(stepType)?.Output;
-        if (stepType == typeof(TaskAutomation.Jobs.DynamicRoiStep)) output = nameof(DynamicRoiResult);
-        return output is null ? null : GetResultType(output)?.Properties;
+        if (stepType is null || Activator.CreateInstance(stepType) is not JobStep step) return null;
+        return GetResultTypeForStep(step)?.Properties;
     }
 
     public static bool HasResult(string stepTypeName) => GetProperties(stepTypeName)?.Length > 0;
@@ -155,10 +174,44 @@ public static class StepResultMetadata
         return descriptor is not null;
     }
 
+    public static bool TryGetProperty(
+        ResultTypeDescriptor resultType,
+        ResultBinding binding,
+        out ResultPropertyDescriptor descriptor) =>
+        TryGetProperty(resultType, binding.PropertyId, binding.PropertyPath, out descriptor);
+
+    public static bool TryGetProperty(
+        ResultTypeDescriptor resultType,
+        string? propertyId,
+        string? propertyPath,
+        out ResultPropertyDescriptor descriptor)
+    {
+        descriptor = resultType.Properties.FirstOrDefault(property =>
+            !string.IsNullOrWhiteSpace(propertyId)
+            && string.Equals(property.StableId, propertyId, StringComparison.OrdinalIgnoreCase))
+            ?? resultType.Properties.FirstOrDefault(property =>
+                string.Equals(property.Name, propertyPath, StringComparison.OrdinalIgnoreCase))!;
+        return descriptor is not null;
+    }
+
+    public static bool TryGetProperty(
+        Type resultType,
+        string? propertyId,
+        string? propertyPath,
+        out ResultPropertyDescriptor descriptor)
+    {
+        var contract = GetResultType(resultType.Name);
+        descriptor = contract?.Properties.FirstOrDefault(property =>
+            !string.IsNullOrWhiteSpace(propertyId)
+            && string.Equals(property.StableId, propertyId, StringComparison.OrdinalIgnoreCase))
+            ?? contract?.Properties.FirstOrDefault(property =>
+                string.Equals(property.Name, propertyPath, StringComparison.OrdinalIgnoreCase))!;
+        return descriptor is not null;
+    }
+
     public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
-        left.PropertyType == right.PropertyType
-        && (left.PropertyType != ResultPropertyType.Enum || left.EnumTypeName == right.EnumTypeName)
-        && left.ValueKind == right.ValueKind
+        left.DataType == right.DataType
+        && (left.DataType != ResultValueKind.Enum || left.EnumTypeName == right.EnumTypeName)
         && (left.Cardinality == ResultCardinality.Collection)
             == (right.Cardinality == ResultCardinality.Collection);
 
@@ -193,21 +246,21 @@ public static class StepResultMetadata
     {
         value = null;
         if (text is null) return false;
-        switch (property.PropertyType)
+        switch (property.DataType)
         {
-            case ResultPropertyType.Double:
+            case ResultValueKind.Number:
                 if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var d)) { value = d; return true; }
                 return false;
-            case ResultPropertyType.Integer:
+            case ResultValueKind.Integer:
                 if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i)) { value = i; return true; }
                 return false;
-            case ResultPropertyType.DateTime:
+            case ResultValueKind.DateTime:
                 if (DateTime.TryParseExact(text, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt)) { value = dt; return true; }
                 return false;
-            case ResultPropertyType.Bool:
+            case ResultValueKind.Boolean:
                 if (bool.TryParse(text, out var b)) { value = b; return true; }
                 return false;
-            case ResultPropertyType.Enum:
+            case ResultValueKind.Enum:
                 var enumValue = property.EnumValues?.FirstOrDefault(x => string.Equals(x, text, StringComparison.OrdinalIgnoreCase));
                 if (enumValue is not null) { value = enumValue; return true; }
                 return false;
@@ -221,12 +274,20 @@ public static class StepResultMetadata
     {
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                      .Where(property => property.CanRead && !IsHidden(type, property)))
-            foreach (var descriptor in BuildProperty(property.PropertyType, property.Name))
+        {
+            var attribute = GetResultPropertyAttribute(type, property)
+                ?? throw new InvalidOperationException(
+                    $"Result property {type.Name}.{property.Name} requires an explicit ResultProperty ID.");
+            foreach (var descriptor in BuildProperty(property.PropertyType, property.Name,
+                         attribute: attribute, stableId: attribute.Id))
                 yield return descriptor;
+        }
     }
 
     private static IEnumerable<ResultPropertyDescriptor> BuildProperty(Type declaredType, string path,
-        ResultCardinality? forcedCardinality = null)
+        ResultCardinality? forcedCardinality = null,
+        ResultPropertyAttribute? attribute = null,
+        string? stableId = null)
     {
         var actual = Nullable.GetUnderlyingType(declaredType) ?? declaredType;
         var nullable = Nullable.GetUnderlyingType(declaredType) is not null || !declaredType.IsValueType;
@@ -236,30 +297,50 @@ public static class StepResultMetadata
         if (TryGetCollectionItemType(actual, out var itemType))
         {
             if (itemType == typeof(DetectionItem))
-                yield return Property(path, ResultPropertyType.String, false,
-                    ResultValueKind.Detection, ResultCardinality.Collection);
-            yield return Property($"{path}.Count", ResultPropertyType.Integer, false,
-                ResultValueKind.Integer, ResultCardinality.Single);
-            if (itemType is not null)
+                yield return Property(path, ResultValueKind.Detection, false, ResultCardinality.Collection,
+                    stableId: stableId);
+            else if (itemType is not null && TryMapType(itemType, out var itemDataType))
+                yield return Property(path, itemDataType, false, ResultCardinality.Collection,
+                    stableId: stableId);
+
+            yield return Property($"{path}.Count", ResultValueKind.Integer, false, ResultCardinality.Single,
+                stableId: $"{stableId}.count");
+            if (itemType == typeof(DetectionItem) || itemType == typeof(RuntimeProcessReference))
                 foreach (var child in itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                              .Where(property => property.CanRead && !IsHidden(itemType, property)))
-                    foreach (var descriptor in BuildProperty(child.PropertyType, $"{path}[].{child.Name}", ResultCardinality.Collection))
+                {
+                    var childAttribute = GetResultPropertyAttribute(itemType, child)
+                        ?? throw new InvalidOperationException(
+                            $"Result property {itemType.Name}.{child.Name} requires an explicit ResultProperty ID.");
+                    foreach (var descriptor in BuildProperty(
+                                 child.PropertyType,
+                                 $"{path}[].{child.Name}",
+                                 ResultCardinality.Collection,
+                                 childAttribute,
+                                 $"{stableId}.{childAttribute.Id}"))
                         yield return descriptor;
+                }
             yield break;
         }
 
         if (TryMapType(actual, out var mapped))
-            yield return Property(path, mapped, nullable, SemanticKind(actual), cardinality, actual.IsEnum ? actual : null);
+            yield return Property(path, attribute?.DataType ?? mapped, nullable,
+                cardinality, actual.IsEnum ? actual : null, attribute, stableId);
 
         if (actual == typeof(System.Drawing.Point) || actual == typeof(System.Drawing.Rectangle))
-            yield return Property(path, ResultPropertyType.String, nullable, SemanticKind(actual), cardinality);
+            yield return Property(path, attribute?.DataType ?? SemanticKind(actual), nullable,
+                cardinality, attribute: attribute, stableId: stableId);
 
         if (actual is not null && (actual == typeof(System.Drawing.Point)
                                    || actual == typeof(System.Drawing.Rectangle)
                                    || actual == typeof(RuntimeProcessReference)))
                 foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                          .Where(property => property.CanRead && !IsHidden(actual, property)))
-                foreach (var descriptor in BuildProperty(child.PropertyType, $"{path}.{child.Name}", cardinality))
+                foreach (var descriptor in BuildProperty(
+                             child.PropertyType,
+                             $"{path}.{child.Name}",
+                             cardinality,
+                             stableId: $"{stableId}.{ResultContractIds.FromPropertyPath(child.Name)}"))
                     yield return descriptor;
     }
 
@@ -267,6 +348,14 @@ public static class StepResultMetadata
         property.GetCustomAttribute<ResultHiddenAttribute>(inherit: true) is not null
         || ownerType.GetInterfaces().Any(interfaceType =>
             interfaceType.GetProperty(property.Name)?.GetCustomAttribute<ResultHiddenAttribute>(inherit: true) is not null);
+
+    private static ResultPropertyAttribute? GetResultPropertyAttribute(Type ownerType, PropertyInfo property) =>
+        property.GetCustomAttribute<ResultPropertyAttribute>(inherit: true)
+        ?? ownerType.GetInterfaces()
+            .Select(interfaceType => interfaceType.GetProperty(property.Name))
+            .Where(interfaceProperty => interfaceProperty is not null)
+            .Select(interfaceProperty => interfaceProperty!.GetCustomAttribute<ResultPropertyAttribute>(inherit: true))
+            .FirstOrDefault(attribute => attribute is not null);
 
     private static bool TryGetCollectionItemType(Type type, out Type? itemType)
     {
@@ -278,12 +367,15 @@ public static class StepResultMetadata
     }
 
     private static ResultPropertyDescriptor Property(
-        string path, ResultPropertyType type, bool nullable,
-        ResultValueKind valueKind = ResultValueKind.Text,
+        string path, ResultValueKind dataType, bool nullable,
         ResultCardinality cardinality = ResultCardinality.Single,
-        Type? enumType = null) =>
-        new(path, Humanize(path), type, Description(type, nullable), nullable, Example(path), valueKind, cardinality,
-            enumType?.FullName, enumType is null ? null : Enum.GetNames(enumType));
+        Type? enumType = null,
+        ResultPropertyAttribute? attribute = null,
+        string? stableId = null) =>
+        new(path, attribute?.DisplayName ?? Humanize(path), dataType,
+            attribute?.Description ?? Description(dataType, nullable), nullable, Example(path), cardinality,
+            enumType?.FullName, enumType is null ? null : Enum.GetNames(enumType),
+            stableId ?? attribute?.Id ?? ResultContractIds.FromPropertyPath(path));
 
     private static ResultValueKind SemanticKind(Type type) => type.IsEnum ? ResultValueKind.Enum
         : type == typeof(bool) ? ResultValueKind.Boolean
@@ -297,21 +389,21 @@ public static class StepResultMetadata
         : type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)
             ? ResultValueKind.Integer
             : ResultValueKind.Number;
-    private static bool TryMapType(Type type, out ResultPropertyType result)
+    private static bool TryMapType(Type type, out ResultValueKind result)
     {
-        if (type == typeof(bool)) { result = ResultPropertyType.Bool; return true; }
-        if (type == typeof(string)) { result = ResultPropertyType.String; return true; }
-        if (type == typeof(DateTime)) { result = ResultPropertyType.DateTime; return true; }
-        if (type.IsEnum) { result = ResultPropertyType.Enum; return true; }
+        if (type == typeof(bool)) { result = ResultValueKind.Boolean; return true; }
+        if (type == typeof(string)) { result = ResultValueKind.Text; return true; }
+        if (type == typeof(DateTime)) { result = ResultValueKind.DateTime; return true; }
+        if (type.IsEnum) { result = ResultValueKind.Enum; return true; }
         if (type == typeof(System.Drawing.Bitmap) || type == typeof(RuntimeProcessReference))
-        { result = ResultPropertyType.String; return true; }
-        if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)) { result = ResultPropertyType.Integer; return true; }
-        if (type == typeof(float) || type == typeof(double) || type == typeof(decimal)) { result = ResultPropertyType.Double; return true; }
+        { result = SemanticKind(type); return true; }
+        if (type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)) { result = ResultValueKind.Integer; return true; }
+        if (type == typeof(float) || type == typeof(double) || type == typeof(decimal)) { result = ResultValueKind.Number; return true; }
         result = default; return false;
     }
     private static string Humanize(string path) => string.Join(" / ", path.Split('.').Select(s =>
         System.Text.RegularExpressions.Regex.Replace(s, "(?<=[a-z0-9])([A-Z])", " $1")));
-    private static string Description(ResultPropertyType type, bool nullable) =>
+    private static string Description(ResultValueKind type, bool nullable) =>
         $"{type}{(nullable ? ", kann leer sein" : string.Empty)}";
     private static string? Example(string path) => path switch
     {

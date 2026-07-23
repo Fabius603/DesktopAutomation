@@ -6,7 +6,7 @@ namespace TaskAutomation.Automations;
 public sealed class WindowsEventAutomationTriggerProvider : IAutomationTriggerProvider
 {
     private readonly IWindowsSystemEventHub _hub;
-    private readonly ConcurrentDictionary<Guid, IDisposable> _subscriptions = new();
+    private readonly ConcurrentDictionary<Guid, Registration> _subscriptions = new();
     public WindowsEventAutomationTriggerProvider(IWindowsSystemEventHub hub) => _hub = hub;
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.WindowsEvent];
@@ -25,16 +25,22 @@ public sealed class WindowsEventAutomationTriggerProvider : IAutomationTriggerPr
     {
         if (automation.Trigger is not WindowsEventAutomationTrigger trigger) return Task.CompletedTask;
         _subscriptions.TryRemove(automation.Id, out var old); old?.Dispose();
-        _subscriptions[automation.Id] = _hub.Subscribe(new WindowsEventSubscription
+        Registration? registration = null;
+        var lifetime = new CancellationTokenSource();
+        var subscription = _hub.Subscribe(new WindowsEventSubscription
         {
             EventType = trigger.EventType,
             Filters = new Dictionary<string, string?>(trigger.Filters, StringComparer.OrdinalIgnoreCase),
             Debounce = trigger.Debounce
         }, systemEvent =>
         {
+            var current = registration;
+            if (current is null || !IsCurrent(automation.Id, current)) return;
             if (trigger.DelayAfterEvent <= TimeSpan.Zero) Triggered?.Invoke(automation.Id);
-            else _ = DelayedTriggerAsync(automation.Id, trigger.DelayAfterEvent);
+            else _ = DelayedTriggerAsync(automation.Id, current, trigger.DelayAfterEvent);
         });
+        registration = new Registration(subscription, lifetime);
+        _subscriptions[automation.Id] = registration;
         return Task.CompletedTask;
     }
 
@@ -46,9 +52,30 @@ public sealed class WindowsEventAutomationTriggerProvider : IAutomationTriggerPr
 
     public DateTimeOffset? GetNextRun(Guid automationId) => null;
 
-    private async Task DelayedTriggerAsync(Guid id, TimeSpan delay)
+    private bool IsCurrent(Guid id, Registration registration) =>
+        _subscriptions.TryGetValue(id, out var current) && ReferenceEquals(current, registration);
+
+    private async Task DelayedTriggerAsync(Guid id, Registration registration, TimeSpan delay)
     {
-        await Task.Delay(delay).ConfigureAwait(false);
-        if (_subscriptions.ContainsKey(id)) Triggered?.Invoke(id);
+        try
+        {
+            await Task.Delay(delay, registration.Lifetime.Token).ConfigureAwait(false);
+            if (IsCurrent(id, registration)) Triggered?.Invoke(id);
+        }
+        catch (OperationCanceledException) when (registration.Lifetime.IsCancellationRequested)
+        {
+        }
+    }
+
+    private sealed class Registration(IDisposable subscription, CancellationTokenSource lifetime) : IDisposable
+    {
+        public CancellationTokenSource Lifetime { get; } = lifetime;
+
+        public void Dispose()
+        {
+            Lifetime.Cancel();
+            subscription.Dispose();
+            Lifetime.Dispose();
+        }
     }
 }

@@ -463,45 +463,4 @@ namespace DesktopAutomationApp.ViewModels
         }
     }
 
-    internal sealed class ObservableRangeCollection<T> : ObservableCollection<T>
-    {
-        public bool AddRangeBounded(IEnumerable<T> items, int maximumCount)
-        {
-            CheckReentrancy();
-            foreach (var item in items)
-                Items.Add(item);
-
-            var removeCount = Math.Max(0, Items.Count - maximumCount);
-            for (var index = 0; index < removeCount; index++)
-                Items.RemoveAt(0);
-
-            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-            return removeCount > 0;
-        }
-
-        public void ReplaceRange(IEnumerable<T> items)
-        {
-            CheckReentrancy();
-            Items.Clear();
-            foreach (var item in items)
-                Items.Add(item);
-
-            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-        }
-
-        public void InsertRange(int index, IEnumerable<T> items)
-        {
-            CheckReentrancy();
-            foreach (var item in items)
-                Items.Insert(index++, item);
-
-            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
-            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-        }
-    }
 }

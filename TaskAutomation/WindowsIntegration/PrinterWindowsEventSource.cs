@@ -52,18 +52,25 @@ public sealed class PrinterWindowsEventSource : IWindowsEventSource
         {
             if (WaitForSingleObject(_notification, 0xFFFFFFFF) != 0 || _stopping) break;
             if (!FindNextPrinterChangeNotification(_notification, out var change, IntPtr.Zero, IntPtr.Zero)) break;
-            var concrete = (change & PrinterChangeAddJob) != 0 ? "printer.job.added"
-                : (change & PrinterChangeDeleteJob) != 0 ? "printer.job.deleted"
-                : (change & PrinterChangeSetJob) != 0 ? "printer.job.changed"
-                : (change & PrinterChangeAddPrinter) != 0 ? "printer.added"
-                : (change & PrinterChangeDeletePrinter) != 0 ? "printer.removed"
-                : (change & PrinterChangeFailedConnectionPrinter) != 0 ? "printer.connection_failed"
-                : (change & PrinterChangeSetPrinter) != 0 ? "printer.settings_changed"
-                : "printer.state.changed";
-            var data = new Dictionary<string, string?> { ["change"] = concrete.Split('.').Last(), ["flags"] = change.ToString() };
+            var eventTypes = GetEventTypes(change);
+            var data = new Dictionary<string, string?> { ["change"] = string.Join(",", eventTypes), ["flags"] = change.ToString() };
             EventReceived?.Invoke(new WindowsSystemEvent("printer.queue.changed", WindowsEventCategory.Printer, DateTimeOffset.Now, Data: data));
-            EventReceived?.Invoke(new WindowsSystemEvent(concrete, WindowsEventCategory.Printer, DateTimeOffset.Now, Data: data));
+            foreach (var eventType in eventTypes)
+                EventReceived?.Invoke(new WindowsSystemEvent(eventType, WindowsEventCategory.Printer, DateTimeOffset.Now, Data: data));
         }
+    }
+
+    internal static IReadOnlyList<string> GetEventTypes(uint change)
+    {
+        var result = new List<string>();
+        if ((change & PrinterChangeAddJob) != 0) result.Add("printer.job.added");
+        if ((change & PrinterChangeDeleteJob) != 0) result.Add("printer.job.deleted");
+        if ((change & PrinterChangeSetJob) != 0) result.Add("printer.job.changed");
+        if ((change & PrinterChangeAddPrinter) != 0) result.Add("printer.added");
+        if ((change & PrinterChangeDeletePrinter) != 0) result.Add("printer.removed");
+        if ((change & PrinterChangeFailedConnectionPrinter) != 0) result.Add("printer.connection_failed");
+        if ((change & PrinterChangeSetPrinter) != 0) result.Add("printer.settings_changed");
+        return result.Count == 0 ? ["printer.state.changed"] : result;
     }
 
     [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool OpenPrinter(string? name, out IntPtr printer, IntPtr defaults);

@@ -40,6 +40,32 @@ public sealed class ShowImageStepHandlerTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_DirectBoundingBoxDisplaysProcessedImage()
+    {
+        using var bitmap = new Bitmap(30, 30);
+        var display = new NoOpImageDisplayService();
+        var context = Context(display, bitmap);
+        context.Results.Set<YOLODetectionStep>(new YOLODetectionResult
+        {
+            WasExecuted = true,
+            Found = true,
+            BoundingBox = new Rectangle(5, 5, 10, 10),
+            Confidence = .9
+        }, "detect");
+        var step = Step();
+        step.Settings.DetectionsSource = new()
+            { SourceStepId = "detect", PropertyPath = "BoundingBox" };
+
+        var result = Assert.IsType<ShowImageResult>(
+            await new ShowImageStepHandler().ExecuteAsync(step, context, default));
+
+        var call = Assert.Single(display.DisplayCalls);
+        Assert.NotSame(bitmap, call.Image);
+        Assert.Equal(ImageDisplayType.Processed, call.DisplayType);
+        Assert.True(result.Success);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_MissingImageReturnsFailureWithoutOpeningWindow()
     {
         var display = new NoOpImageDisplayService();

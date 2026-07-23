@@ -20,6 +20,26 @@ public sealed class AutomationEngineTests
     }
 
     [Fact]
+    public async Task StartAsync_WhenOneRegistrationFails_RegistersRemainingAutomations()
+    {
+        var failing = Definition();
+        var valid = Definition();
+        var repository = new AutomationRepository(failing, valid);
+        var provider = new PartiallyFailingTriggerProvider(failing.Id);
+        var logs = new RecordingAutomationLogService();
+        var engine = new AutomationEngine(repository, new RecordingJobDispatcher(), [provider],
+            NullLogger<AutomationEngine>.Instance, logs);
+
+        await engine.StartAsync();
+
+        Assert.Equal([valid.Id], provider.Registered);
+        Assert.Equal("registration failed", engine.GetRuntimeInfo(failing.Id).LastError);
+        Assert.Contains(logs.Entries, entry => entry.AutomationId == failing.Id
+            && entry.Level == ExecutionLogLevel.Error
+            && entry.Details == "registration failed");
+    }
+
+    [Fact]
     public async Task StopAsync_IsIdempotentAndStopsProvidersOnce()
     {
         var setup = Setup(Definition());
@@ -153,4 +173,22 @@ public sealed class AutomationEngineTests
 
     private sealed record SetupResult(AutomationEngine Engine, AutomationRepository Repository,
         RecordingJobDispatcher Dispatcher, ManualAutomationTriggerProvider Provider, RecordingAutomationLogService Logs);
+
+    private sealed class PartiallyFailingTriggerProvider(Guid failingId) : IAutomationTriggerProvider
+    {
+        public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Hotkey];
+        public event Action<Guid>? Triggered;
+        public List<Guid> Registered { get; } = [];
+        public Task StartAsync(CancellationToken ct = default) => Task.CompletedTask;
+        public Task StopAsync(CancellationToken ct = default) => Task.CompletedTask;
+        public Task UnregisterAsync(Guid automationId, CancellationToken ct = default) => Task.CompletedTask;
+        public DateTimeOffset? GetNextRun(Guid automationId) => null;
+
+        public Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default)
+        {
+            if (automation.Id == failingId) throw new InvalidOperationException("registration failed");
+            Registered.Add(automation.Id);
+            return Task.CompletedTask;
+        }
+    }
 }

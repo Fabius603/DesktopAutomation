@@ -61,8 +61,12 @@ public sealed class CoreAudioWindowsEventSource : IWindowsEventSource, IMMNotifi
 
     public int OnDeviceStateChanged(string deviceId, uint newState)
     {
-        EmitBoth("audio.device.changed", "audio.device.state_changed", WindowsEventCategory.Audio, deviceId,
-            DeviceData(deviceId, "state_changed", newState.ToString()));
+        var values = DeviceData(deviceId, "state_changed", newState.ToString());
+        EmitBoth("audio.device.changed", "audio.device.state_changed", WindowsEventCategory.Audio, deviceId, values);
+        if (newState == 0x00000001)
+            EventReceived?.Invoke(new WindowsSystemEvent("audio.device.connected", WindowsEventCategory.Audio, DateTimeOffset.Now, deviceId, values));
+        else if (newState is 0x00000004 or 0x00000008)
+            EventReceived?.Invoke(new WindowsSystemEvent("audio.device.disconnected", WindowsEventCategory.Audio, DateTimeOffset.Now, deviceId, values));
         return 0;
     }
     public int OnDeviceAdded(string deviceId) { EmitBoth("audio.device.changed", "audio.device.added", WindowsEventCategory.Audio, deviceId, DeviceData(deviceId, "added")); return 0; }

@@ -192,7 +192,7 @@ public static class JobValidation
     {
         var rows = conditions.ToList();
         return rows.Count > 0 && rows.All(c =>
-            Text(c.SourceStepId) && Text(c.PropertyPath));
+            Text(c.SourceStepId) && (Text(c.PropertyId) || Text(c.PropertyPath)));
     }
 
     private static string? ValidateConditions(IReadOnlyList<JobStep> steps, int conditionStepIndex, IEnumerable<StepCondition> conditions)
@@ -201,12 +201,14 @@ public static class JobValidation
         {
             var source = steps.Take(conditionStepIndex).FirstOrDefault(s => s.Id == condition.SourceStepId && s.IsEnabled);
             if (source is null) return "Eine Bedingung verweist nicht auf einen gültigen vorherigen Step.";
-            var output = StepPipelineRegistry.Get(source.GetType())?.Output;
-            if (string.IsNullOrWhiteSpace(output) || output == "–") return "Der ausgewählte Step besitzt keinen auswertbaren Rückgabewert.";
-            var property = StepResultMetadata.GetResultTypeForStep(source)?.Properties.FirstOrDefault(p =>
-                string.Equals(p.Name, condition.PropertyPath, StringComparison.OrdinalIgnoreCase));
+            if (StepResultMetadata.GetResultTypeForStep(source) is null)
+                return "Der ausgewählte Step besitzt keinen auswertbaren Rückgabewert.";
+            var property = FindProperty(
+                StepResultMetadata.GetResultTypeForStep(source),
+                condition.PropertyId,
+                condition.PropertyPath);
             if (property is null) return "Die ausgewählte Rückgabeeigenschaft existiert nicht mehr.";
-            if (!ConditionRules.IsOperatorAllowed(property.PropertyType, condition.Operator))
+            if (!ConditionRules.IsOperatorAllowed(property.DataType, condition.Operator))
                 return "Der Operator passt nicht zum Datentyp der ausgewählten Eigenschaft.";
             if (!ConditionRules.RequiresComparisonValue(condition.Operator)) continue;
 
@@ -222,12 +224,15 @@ public static class JobValidation
                 .FirstOrDefault(s => s.Id == comparison.SourceStepId && s.IsEnabled);
             if (comparisonSource is null)
                 return "Der JobResult-Vergleich verweist nicht auf einen gültigen vorherigen Step.";
-            var comparisonOutput = StepPipelineRegistry.Get(comparisonSource.GetType())?.Output;
-            if (string.IsNullOrWhiteSpace(comparisonOutput) || comparisonOutput == "–")
+            if (StepResultMetadata.GetResultTypeForStep(comparisonSource) is null)
                 return "Der ausgewählte JobResult-Step besitzt keinen auswertbaren Rückgabewert.";
-            var comparisonProperty = StepResultMetadata.GetResultTypeForStep(comparisonSource)?.Properties.FirstOrDefault(p =>
-                string.Equals(p.Name, comparison.PropertyPath, StringComparison.OrdinalIgnoreCase));
-            if (string.IsNullOrWhiteSpace(comparison.PropertyPath) || comparisonProperty is null)
+            var comparisonProperty = FindProperty(
+                StepResultMetadata.GetResultTypeForStep(comparisonSource),
+                comparison.PropertyId,
+                comparison.PropertyPath);
+            if ((string.IsNullOrWhiteSpace(comparison.PropertyId)
+                 && string.IsNullOrWhiteSpace(comparison.PropertyPath))
+                || comparisonProperty is null)
                 return "Die ausgewählte JobResult-Vergleichseigenschaft existiert nicht mehr.";
             if (!StepResultMetadata.AreComparable(property, comparisonProperty))
                 return "Beide Vergleichswerte müssen denselben Datentyp besitzen.";
@@ -300,14 +305,27 @@ public static class JobValidation
             var source = steps.Take(Math.Max(0, consumerIndex))
                 .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
             if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
-            var output = StepPipelineRegistry.Get(source.GetType())?.Output;
-            if (string.IsNullOrWhiteSpace(output)
-                || !StepResultMetadata.TryGetProperty(output, binding.PropertyPath, out var property))
-                return $"Die Ergebnis-Eigenschaft '{binding.PropertyPath}' existiert für den Quell-Step nicht.";
+            var resultType = StepResultMetadata.GetResultTypeForStep(source);
+            if (resultType is null
+                || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
+                return $"Die Ergebnis-Eigenschaft '{binding.PropertyId ?? binding.PropertyPath}' existiert für den Quell-Step nicht.";
             if (!contract.Accepts(property))
-                return $"Die Ergebnis-Eigenschaft '{binding.PropertyPath}' ist für die Eingabe '{key}' nicht erlaubt.";
+                return $"Die Ergebnis-Eigenschaft '{property.DisplayName}' ist für die Eingabe '{key}' nicht erlaubt.";
         }
         return null;
+    }
+
+    private static ResultPropertyDescriptor? FindProperty(
+        ResultTypeDescriptor? resultType,
+        string? propertyId,
+        string? propertyPath)
+    {
+        if (resultType is null) return null;
+        return resultType.Properties.FirstOrDefault(property =>
+                   !string.IsNullOrWhiteSpace(propertyId)
+                   && property.StableId.Equals(propertyId, StringComparison.OrdinalIgnoreCase))
+               ?? resultType.Properties.FirstOrDefault(property =>
+                   property.Name.Equals(propertyPath, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool WindowsQueryConfigured(WindowsStateQuerySettings settings)

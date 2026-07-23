@@ -86,10 +86,11 @@ public sealed class JobStepDetailsProvider
         if (step is WindowsStateQueryStep windowsState)
         {
             var capability = new TaskAutomation.WindowsIntegration.WindowsCapabilityCatalog().Find(windowsState.Settings.QueryType);
-            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Capability"), capability?.DisplayName ?? windowsState.Settings.QueryType)));
+            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Capability"),
+                capability is null ? windowsState.Settings.QueryType : WindowsCapabilityLocalization.DisplayName(capability))));
             foreach (var parameter in capability?.Parameters ?? [])
                 if (windowsState.Settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
-                    items.Add(("general", new StepDetailItem(parameter.DisplayName, value)));
+                    items.Add(("general", new StepDetailItem(WindowsCapabilityLocalization.ParameterName(parameter), value)));
         }
         else if (settings is IfConditionSettings conditions)
             AddConditions(conditions, items, steps);
@@ -253,36 +254,46 @@ public sealed class JobStepDetailsProvider
     private static string FormatBinding(ResultBinding binding, IEnumerable? steps)
     {
         var source = ResolveStep(binding.SourceStepId, steps) ?? binding.SourceStepId;
-        return string.IsNullOrWhiteSpace(binding.PropertyPath)
+        var property = string.IsNullOrWhiteSpace(binding.PropertyPath)
+            ? binding.PropertyId
+            : binding.PropertyPath;
+        return string.IsNullOrWhiteSpace(property)
             ? source
-            : $"{source} → {LocalizedPropertyName(binding.PropertyPath)}";
+            : $"{source} → {LocalizedPropertyName(property)}";
     }
 
     private static StepResultDetails? CreateResultDetails(JobStep step)
     {
-        var output = StepPipelineRegistry.Get(step.GetType())?.Output;
-        if (string.IsNullOrWhiteSpace(output) || output == "–") return null;
         var descriptor = StepResultMetadata.GetResultTypeForStep(step);
-        if (descriptor is null) return new StepResultDetails(output, []);
+        if (descriptor is null) return null;
 
-        // A selectable aggregate (for example Process or AllDetections) already
-        // describes its payload; listing every child field makes the card noisy.
-        var aggregateRoots = descriptor.Properties
-            .Where(property => property.ValueKind is ResultValueKind.ProcessReference
-                               or ResultValueKind.Detection)
-            .Select(property => property.Name.Split('.')[0])
-            .ToHashSet(StringComparer.Ordinal);
-        var properties = descriptor.Properties
-            .Where(property => !aggregateRoots.Any(root => property.Name.StartsWith(root + ".", StringComparison.Ordinal)))
-            .Select(property => new StepDetailItem(LocalizedPropertyName(property.Name), FriendlyType(property)))
+        var properties = descriptor.PropertyTree
+            .Select(node => CreateResultPropertyDetails(node, string.Empty, descriptor.TypeName))
             .ToArray();
         if (properties.Length == 0) return null;
         return new StepResultDetails(descriptor.DisplayName, properties);
     }
 
+    private static StepResultPropertyDetails CreateResultPropertyDetails(
+        ResultPropertyNode node,
+        string parentPath,
+        string resultTypeName)
+    {
+        var path = string.IsNullOrWhiteSpace(parentPath)
+            ? node.Segment
+            : $"{parentPath}.{node.Segment}";
+        return new StepResultPropertyDetails(
+            StepLocalization.PropertyPath(resultTypeName, path),
+            node.Property is null ? string.Empty : FriendlyType(node.Property),
+            node.Property is null
+                ? string.Empty
+                : StepLocalization.PropertyDescription(resultTypeName, node.Property),
+            node.Children.Select(child => CreateResultPropertyDetails(child, path, resultTypeName)).ToArray());
+    }
+
     private static string FriendlyType(ResultPropertyDescriptor property)
     {
-        var semanticType = property.ValueKind switch
+        var semanticType = property.DataType switch
         {
             ResultValueKind.Boolean => Loc.Get("Ui.Job.Steps.ResultType.Boolean"),
             ResultValueKind.Integer => Loc.Get("Ui.Job.Steps.ResultType.Integer"),

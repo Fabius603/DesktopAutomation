@@ -103,9 +103,23 @@ namespace TaskAutomation.Automations
                         continue;
                     }
 
-                    await provider.RegisterAsync(automation, ct).ConfigureAwait(false);
-                    _automationLogs.Write(automation.Id, ExecutionLogLevel.Information,
-                        "Trigger registriert.", $"Typ: {automation.Trigger.Kind}");
+                    try
+                    {
+                        await provider.RegisterAsync(automation, ct).ConfigureAwait(false);
+                        _automationLogs.Write(automation.Id, ExecutionLogLevel.Information,
+                            "Trigger registriert.", $"Typ: {automation.Trigger.Kind}");
+                    }
+                    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _runtime[automation.Id] = new AutomationRuntimeInfo(automation.LastRunAt, LastError: ex.Message);
+                        _log.LogError(ex, "Trigger für Automation {AutomationId} konnte nicht registriert werden.", automation.Id);
+                        _automationLogs.Write(automation.Id, ExecutionLogLevel.Error,
+                            "Trigger konnte nicht registriert werden.", ex.Message);
+                    }
                 }
 
                 foreach (var automation in definitions)
