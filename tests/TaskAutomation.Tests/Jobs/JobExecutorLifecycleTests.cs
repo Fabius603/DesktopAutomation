@@ -86,6 +86,33 @@ public sealed class JobExecutorLifecycleTests
     }
 
     [Fact]
+    public async Task ExecuteJob_RepeatingJobLogsEveryIterationAndStep()
+    {
+        using var cts = new CancellationTokenSource();
+        var step = Text("run");
+        var job = Job("repeat", run: [step]);
+        job.Repeating = true;
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+        builder.Overlay.OnShowText = _ =>
+        {
+            if (builder.Overlay.TextCalls.Count == 5) cts.Cancel();
+        };
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id, cts.Token);
+
+        Assert.Equal(
+            Enumerable.Range(1, 5).Select(iteration => $"Job-Runde {iteration} gestartet."),
+            builder.Logs.Entries
+                .Where(entry => entry.Message.StartsWith("Job-Runde ") && entry.Message.EndsWith(" gestartet."))
+                .Select(entry => entry.Message));
+        Assert.Equal(5, builder.Logs.Entries.Count(entry =>
+            entry.Message == "Step gestartet." && entry.StepId == step.Id));
+        Assert.Equal(5, builder.Logs.Entries.Count(entry =>
+            entry.Message == "Step abgeschlossen." && entry.StepId == step.Id));
+    }
+
+    [Fact]
     public async Task ExecuteJob_UnknownIdRaisesJobErrorWithoutStartingSession()
     {
         var builder = new JobExecutorTestBuilder();

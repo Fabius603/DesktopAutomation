@@ -24,41 +24,173 @@
             <conv:StepRegularSummaryVisibilityConverter x:Key="StepRegularSummaryVisibilityConverter"/>
             <conv:StepBranchSummaryConverter x:Key="StepBranchSummaryConverter"/>
             <HierarchicalDataTemplate x:Key="DebugContextValueTemplate" ItemsSource="{Binding Children}">
-                <Grid Margin="2,3" ToolTip="{Binding Description}">
+                <Border Margin="0,2" Padding="7,5" CornerRadius="4"
+                        Background="Transparent" ToolTip="{Binding Description}">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" MinWidth="100"/>
+                        <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding Name}" Margin="0,0,10,0"
+                    <TextBlock Text="{Binding Name}" Margin="0,0,12,0"
+                               VerticalAlignment="Center" TextWrapping="Wrap"
                                Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold"
-                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                    <Border Grid.Column="1" HorizontalAlignment="Right" CornerRadius="9"
+                            Padding="7,2" MaxWidth="260">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding ConditionState}" Value="Met">
-                                        <Setter Property="Foreground" Value="#43A047"/>
+                                        <Setter Property="Background" Value="#1F43A047"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding ConditionState}" Value="NotMet">
-                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
+                                        <Setter Property="Background" Value="#20E53935"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding ConditionState}" Value="NotEvaluated">
-                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+                                        <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding ConditionState}" Value="Unavailable">
-                                        <Setter Property="Foreground" Value="#F9A825"/>
+                                        <Setter Property="Background" Value="#20F9A825"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsTrue}" Value="True">
+                                        <Setter Property="Background" Value="#1F43A047"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                        </Border.Style>
+                        <TextBlock Text="{Binding Value}" FontWeight="SemiBold"
+                                   TextWrapping="Wrap" TextTrimming="CharacterEllipsis">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConditionState}" Value="Met">
+                                            <Setter Property="Foreground" Value="#43A047"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConditionState}" Value="NotMet">
+                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConditionState}" Value="NotEvaluated">
+                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ConditionState}" Value="Unavailable">
+                                            <Setter Property="Foreground" Value="#F9A825"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsNull}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+                                            <Setter Property="FontStyle" Value="Italic"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
                 </Grid>
+                </Border>
             </HierarchicalDataTemplate>
             <Style x:Key="DebugContextTreeItemStyle" TargetType="TreeViewItem">
                 <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                <Setter Property="Padding" Value="1"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TreeViewItem">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ToggleButton x:Name="PropertyExpander"
+                                              Grid.Row="0" Grid.Column="0"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              Width="18" Height="24"
+                                              Background="Transparent" BorderThickness="0"
+                                              FocusVisualStyle="{x:Null}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border x:Name="ArrowBackground" CornerRadius="4"
+                                                    Background="Transparent">
+                                                <iconPacks:PackIconMaterial x:Name="Arrow"
+                                                    Kind="ChevronRight" Width="13" Height="13"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Arrow" Property="Kind" Value="ChevronDown"/>
+                                                    <Setter TargetName="Arrow" Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                                                    <Setter TargetName="ArrowBackground" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Arrow" Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                                                    <Setter TargetName="ArrowBackground" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <Border x:Name="PropertyHeader" Grid.Row="0" Grid.Column="1"
+                                        Background="Transparent">
+                                    <ContentPresenter ContentSource="Header"
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Center"/>
+                                </Border>
+                                <ItemsPresenter x:Name="PropertyChildren"
+                                                Grid.Row="1" Grid.Column="1"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="HasItems" Value="False">
+                                    <Setter TargetName="PropertyExpander" Property="Visibility" Value="Hidden"/>
+                                </Trigger>
+                                <Trigger Property="IsExpanded" Value="False">
+                                    <Setter TargetName="PropertyChildren" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="DebugResultExpanderStyle" TargetType="Expander">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Margin" Value="0,0,0,10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Expander">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ToggleButton Grid.Row="0"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              HorizontalContentAlignment="Stretch"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              Padding="0"
+                                              FocusVisualStyle="{x:Null}">
+                                    <ContentPresenter Content="{TemplateBinding Header}"
+                                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                      HorizontalAlignment="Stretch"/>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ResultContent"
+                                                  Grid.Row="1"
+                                                  ContentSource="Content"
+                                                  HorizontalAlignment="Stretch"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="False">
+                                    <Setter TargetName="ResultContent" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
             <HierarchicalDataTemplate x:Key="StepResultPropertyTemplate" ItemsSource="{Binding Children}">
                 <Grid Margin="2,3" ToolTip="{Binding Description}">
@@ -888,8 +1020,8 @@
                           Background="Transparent" ResizeDirection="Columns"
                           Visibility="{Binding IsDebugPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-            <Border Grid.Column="2" MinWidth="280" MaxWidth="600"
-                    Margin="0" Padding="14" CornerRadius="8"
+            <Border Grid.Column="2" MinWidth="320" MaxWidth="640"
+                    Margin="0" Padding="16" CornerRadius="8"
                     Background="{DynamicResource App.Brush.CardBackground}"
                     BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1"
                     IsVisibleChanged="DebugInspector_IsVisibleChanged"
@@ -900,17 +1032,21 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,8">
+                    <DockPanel Margin="0,0,0,3">
                         <Button DockPanel.Dock="Right" Style="{StaticResource ButtonIcon}"
                                 Command="{Binding ToggleDebugPanelCommand}"
                                 ToolTip="{loc:Translate Key=Ui.Common.Close}">
                             <iconPacks:PackIconMaterial Kind="Close" Width="15" Height="15"/>
                         </Button>
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Debug.Panel.Title}"
-                                   FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Debug.Panel.Title}"
+                                       FontSize="17" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding DebugContextResultCountText}" Margin="0,2,0,0"
+                                       FontSize="11" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                        </StackPanel>
                     </DockPanel>
-                    <DockPanel Grid.Row="1" Margin="0,0,0,8">
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <DockPanel Grid.Row="1" Margin="0,8,0,10">
+                        <!--<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Style="{StaticResource ButtonIcon}" Command="{Binding ExpandDebugContextCommand}"
                                     ToolTip="{loc:Translate Key=Ui.Job.Debug.Panel.ExpandAll}" Margin="0,0,4,0">
                                 <iconPacks:PackIconMaterial Kind="UnfoldMoreHorizontal" Width="15" Height="15"/>
@@ -919,9 +1055,9 @@
                                     ToolTip="{loc:Translate Key=Ui.Job.Debug.Panel.CollapseAll}">
                                 <iconPacks:PackIconMaterial Kind="UnfoldLessHorizontal" Width="15" Height="15"/>
                             </Button>
-                        </StackPanel>
+                        </StackPanel>-->
                         <TextBlock Text="{loc:Translate Key=Ui.Job.Debug.Panel.CurrentContext}"
-                                   Foreground="{DynamicResource App.Brush.TextSecondary}"
+                                   FontSize="11" Foreground="{DynamicResource App.Brush.TextMuted}"
                                    VerticalAlignment="Center"/>
                     </DockPanel>
                     <Grid Grid.Row="2">
@@ -932,27 +1068,120 @@
                                       VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                                       PanningMode="VerticalOnly"
                                       Visibility="{Binding HasDebugContext, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <ItemsControl ItemsSource="{Binding DebugContextGroups}">
+                            <ItemsControl ItemsSource="{Binding DebugContextGroups}"
+                                          HorizontalContentAlignment="Stretch">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}" Margin="0,0,0,8">
+                                        <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                                                  Style="{StaticResource DebugResultExpanderStyle}">
                                             <Expander.Header>
-                                                <Border Padding="8,7" CornerRadius="6"
-                                                        Background="{DynamicResource App.Brush.SurfaceHover}">
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding Subtitle}" Margin="0,2,0,0" FontSize="10"
-                                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                                    </StackPanel>
+                                                <Border Padding="10,9" CornerRadius="6"
+                                                        Background="{DynamicResource App.Brush.SurfaceHover}"
+                                                        BorderThickness="1">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static jobs:JobStepDebugState.Failed}">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="26"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="20" Height="20" CornerRadius="4"
+                                                                VerticalAlignment="Top"
+                                                                Background="{DynamicResource App.Brush.Surface}">
+                                                            <iconPacks:PackIconMaterial Width="14" Height="14"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Foreground="{DynamicResource App.Brush.TextSecondary}">
+                                                                <iconPacks:PackIconMaterial.Style>
+                                                                    <Style TargetType="iconPacks:PackIconMaterial">
+                                                                        <Setter Property="Kind" Value="ChevronRight"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType={x:Type Expander}}}" Value="True">
+                                                                                <Setter Property="Kind" Value="ChevronDown"/>
+                                                                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </iconPacks:PackIconMaterial.Style>
+                                                            </iconPacks:PackIconMaterial>
+                                                        </Border>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold"
+                                                                   TextWrapping="Wrap" Margin="0,0,8,0"/>
+                                                        <Border Grid.Column="2" Padding="7,2" CornerRadius="9"
+                                                                VerticalAlignment="Top">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#1F43A047"/>
+                                                                    <Setter Property="TextElement.Foreground" Value="#43A047"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static jobs:JobStepDebugState.Skipped}">
+                                                                            <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
+                                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding State}" Value="{x:Static jobs:JobStepDebugState.Failed}">
+                                                                            <Setter Property="Background" Value="#20E53935"/>
+                                                                            <Setter Property="TextElement.Foreground" Value="{DynamicResource App.Brush.Danger}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <iconPacks:PackIconMaterial Width="11" Height="11"
+                                                                    VerticalAlignment="Center" Margin="0,0,4,0">
+                                                                    <iconPacks:PackIconMaterial.Style>
+                                                                        <Style TargetType="iconPacks:PackIconMaterial">
+                                                                            <Setter Property="Kind" Value="CheckCircle"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static jobs:JobStepDebugState.Skipped}">
+                                                                                    <Setter Property="Kind" Value="MinusCircle"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static jobs:JobStepDebugState.Failed}">
+                                                                                    <Setter Property="Kind" Value="AlertCircle"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </iconPacks:PackIconMaterial.Style>
+                                                                </iconPacks:PackIconMaterial>
+                                                                <TextBlock Text="{Binding Status}" FontSize="9"
+                                                                           FontWeight="SemiBold" TextWrapping="NoWrap"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                                   Text="{Binding Summary}" Margin="0,5,0,0"
+                                                                   FontSize="10" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"
+                                                                   MaxHeight="30"/>
+                                                    </Grid>
                                                 </Border>
                                             </Expander.Header>
-                                            <TreeView ItemsSource="{Binding Values}" Margin="8,4,0,0"
-                                                      Background="Transparent" BorderThickness="0"
-                                                      PreviewMouseWheel="DebugTree_PreviewMouseWheel"
-                                                      ItemTemplate="{StaticResource DebugContextValueTemplate}"
-                                                      ItemContainerStyle="{StaticResource DebugContextTreeItemStyle}"
-                                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                                            <Grid Margin="10,7,2,2">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{Binding Subtitle}" Margin="1,0,0,5" FontSize="10"
+                                                           Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                                <TreeView Grid.Row="1" ItemsSource="{Binding Values}"
+                                                          Background="Transparent" BorderThickness="0"
+                                                          PreviewMouseWheel="DebugTree_PreviewMouseWheel"
+                                                          ItemTemplate="{StaticResource DebugContextValueTemplate}"
+                                                          ItemContainerStyle="{StaticResource DebugContextTreeItemStyle}"
+                                                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
+                                            </Grid>
                                         </Expander>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

@@ -8,11 +8,16 @@ always be maintained together with the implementation.
 For every user-facing feature, behavior change, performance improvement, or bug fix:
 
 1. Add or update an entry in `DesktopAutomationApp/Resources/ReleaseNotes.json` in the
-   same change. Do not wait for a separate release task.
+   same change. Do not wait for a separate release task. New changes belong to the
+   next higher version after the latest existing release; never append them to an
+   older or already released version. If the next-version entry does not exist yet,
+   create it and increment `<Version>` in `DesktopAutomationApp/DesktopAutomationApp.csproj`
+   to the same version.
 2. Write both German (`de`) and English (`en`) text. Describe the observable result for
    users rather than internal implementation details.
 3. Use only the existing categories `Added`, `Changed`, and `Fixed`.
-4. Keep the newest version first. Preserve older release entries unchanged.
+4. Keep the newest version first. Preserve every older release entry, including its
+   date and sections, unchanged.
 5. The newest release-note version must match `<Version>` in
    `DesktopAutomationApp/DesktopAutomationApp.csproj`.
 6. Before preparing a release, compare the repository against the previous release

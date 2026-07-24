@@ -7,6 +7,8 @@ namespace DesktopAutomationApp.Services;
 
 public interface IUpdateService
 {
+    event Action<UpdateCheckResult>? UpdateChecked;
+
     Task<UpdateCheckResult> CheckForUpdateAsync();
 
     Task<bool> DownloadUpdateAsync(IProgress<int>? progress = null);
@@ -29,35 +31,52 @@ public sealed class UpdateService : IUpdateService
 
     private UpdateInfo? _availableUpdate;
     private readonly ILogger<UpdateService> _log;
+    private readonly SemaphoreSlim _checkLock = new(1, 1);
+
+    public event Action<UpdateCheckResult>? UpdateChecked;
 
     public UpdateService(ILogger<UpdateService> log) => _log = log;
 
     public async Task<UpdateCheckResult> CheckForUpdateAsync()
     {
-        var currentVersion = _updateManager.CurrentVersion?.ToString() ?? GetAssemblyVersion();
-        _log.LogInformation("Update-Prüfung gestartet. Aktuelle Version: {Version}", currentVersion);
-
-        // A regular IDE/publish launch has no Velopack installation metadata.
-        if (!_updateManager.IsInstalled)
+        await _checkLock.WaitAsync();
+        try
         {
-            _log.LogInformation("Update-Prüfung übersprungen: Die Anwendung wird nicht über Velopack ausgeführt.");
-            return new UpdateCheckResult(false, string.Empty, RepositoryUrl + "/releases", currentVersion);
-        }
+            var currentVersion = _updateManager.CurrentVersion?.ToString() ?? GetAssemblyVersion();
+            _log.LogInformation("Update-Prüfung gestartet. Aktuelle Version: {Version}", currentVersion);
 
-        _availableUpdate = await _updateManager.CheckForUpdatesAsync();
-        if (_availableUpdate is null)
+            // A regular IDE/publish launch has no Velopack installation metadata.
+            if (!_updateManager.IsInstalled)
+            {
+                _log.LogInformation("Update-Prüfung übersprungen: Die Anwendung wird nicht über Velopack ausgeführt.");
+                return Publish(new UpdateCheckResult(false, string.Empty, RepositoryUrl + "/releases", currentVersion));
+            }
+
+            _availableUpdate = await _updateManager.CheckForUpdatesAsync();
+            if (_availableUpdate is null)
+            {
+                _log.LogInformation("Update-Prüfung abgeschlossen: Keine neue Version verfügbar.");
+                return Publish(new UpdateCheckResult(false, string.Empty, RepositoryUrl + "/releases", currentVersion));
+            }
+
+            _log.LogInformation("Update verfügbar: {CurrentVersion} -> {LatestVersion}", currentVersion, _availableUpdate.TargetFullRelease.Version);
+
+            return Publish(new UpdateCheckResult(
+                true,
+                _availableUpdate.TargetFullRelease.Version.ToString(),
+                RepositoryUrl + "/releases/tag/v" + _availableUpdate.TargetFullRelease.Version,
+                currentVersion));
+        }
+        finally
         {
-            _log.LogInformation("Update-Prüfung abgeschlossen: Keine neue Version verfügbar.");
-            return new UpdateCheckResult(false, string.Empty, RepositoryUrl + "/releases", currentVersion);
+            _checkLock.Release();
         }
+    }
 
-        _log.LogInformation("Update verfügbar: {CurrentVersion} -> {LatestVersion}", currentVersion, _availableUpdate.TargetFullRelease.Version);
-
-        return new UpdateCheckResult(
-            true,
-            _availableUpdate.TargetFullRelease.Version.ToString(),
-            RepositoryUrl + "/releases/tag/v" + _availableUpdate.TargetFullRelease.Version,
-            currentVersion);
+    private UpdateCheckResult Publish(UpdateCheckResult result)
+    {
+        UpdateChecked?.Invoke(result);
+        return result;
     }
 
     public async Task<bool> DownloadUpdateAsync(IProgress<int>? progress = null)

@@ -72,7 +72,8 @@ namespace DesktopAutomationApp.ViewModels
                 ConditionState = node.TypeName == nameof(ConditionDebugState)
                     ? node.DisplayValue
                     : null;
-                Description = ResolveDescription(resultTypeName, node) ?? TypeName;
+                Description = ResolveDescription(resultTypeName, node)
+                    ?? StepLocalization.DebugValueType(TypeName);
                 Children = node.Children
                     .Select((child, index) => new DebugContextValue(
                         $"{key}/{index}:{child.Name}", child, resultTypeName))
@@ -87,6 +88,10 @@ namespace DesktopAutomationApp.ViewModels
             public string? ConditionState { get; }
             public string Description { get; }
             public IReadOnlyList<DebugContextValue> Children { get; }
+            public bool HasChildren => Children.Count > 0;
+            public bool IsBoolean => TypeName == nameof(Boolean);
+            public bool IsNull => TypeName == "null";
+            public bool IsTrue => IsBoolean && Value == Loc.Get("Ui.Job.Debug.Value.True");
             public bool IsExpanded
             {
                 get => _isExpanded;
@@ -105,6 +110,8 @@ namespace DesktopAutomationApp.ViewModels
                     return Loc.Get($"Ui.Job.Debug.Condition.State.{node.DisplayValue}");
                 if (node.CollectionCount is { } count)
                     return Loc.Format("Ui.Job.Debug.Value.CollectionCount", count);
+                if (node.Children.Count > 0)
+                    return StepLocalization.DebugValueType(node.TypeName);
                 if (node.TypeName == "null")
                     return Loc.Get("Ui.Job.Debug.Value.Null");
                 if (node.TypeName == nameof(Boolean))
@@ -136,6 +143,9 @@ namespace DesktopAutomationApp.ViewModels
             public required string StepId { get; init; }
             public required string Title { get; init; }
             public required string Subtitle { get; init; }
+            public required string Status { get; init; }
+            public required string Summary { get; init; }
+            public required JobStepDebugState State { get; init; }
             public required IReadOnlyList<DebugContextValue> Values { get; init; }
             public bool IsExpanded
             {
@@ -309,6 +319,8 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsDebugPanelVisible => HasDebugSession && IsDebugPanelOpen;
         public ObservableCollection<DebugContextGroup> DebugContextGroups => _debugContextGroups;
         public bool HasDebugContext => _debugContextGroups.Count > 0;
+        public string DebugContextResultCountText => Loc.Format(
+            "Ui.Job.Debug.Panel.ResultCount", _debugContextGroups.Count);
 
         public ICommand BackCommand { get; }
         public ICommand SaveCommand { get; }
@@ -632,6 +644,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             RebuildDebugContext();
             OnPropertyChanged(nameof(HasDebugContext));
+            OnPropertyChanged(nameof(DebugContextResultCountText));
             (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CollapseDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
@@ -649,6 +662,14 @@ namespace DesktopAutomationApp.ViewModels
 
             var snapshots = _debugSession.GetSnapshots().ToDictionary(snapshot => snapshot.StepId);
             var steps = AllSteps();
+            var visibleStepIds = steps
+                .Where(step => step.IsEnabled
+                    && snapshots.TryGetValue(step.Id, out var snapshot)
+                    && snapshot.State is JobStepDebugState.Completed or JobStepDebugState.Skipped or JobStepDebugState.Failed)
+                .Select(step => step.Id)
+                .ToArray();
+            var newestStepId = visibleStepIds.LastOrDefault();
+
             for (var index = 0; index < steps.Count; index++)
             {
                 var step = steps[index];
@@ -665,6 +686,14 @@ namespace DesktopAutomationApp.ViewModels
                         $"{step.Id}/{nodeIndex}:{node.Name}", node, snapshot.ResultTypeName))
                     .ToArray();
                 foreach (var value in values) RestoreValueExpansion(value, valueExpansion);
+                var summary = string.Join(" · ", values
+                    .Where(value => !value.HasChildren)
+                    .Take(2)
+                    .Select(value => $"{value.Name}: {value.Value}"));
+                if (string.IsNullOrWhiteSpace(summary))
+                    summary = values.FirstOrDefault() is { } first
+                        ? $"{first.Name}: {first.Value}"
+                        : Loc.Get("Ui.Job.Debug.Panel.NoReturnValues");
 
                 var iteration = snapshot.Iteration > 0
                     ? $" · {Loc.Format("Ui.Job.Debug.Iteration", snapshot.Iteration)}"
@@ -674,8 +703,13 @@ namespace DesktopAutomationApp.ViewModels
                     StepId = step.Id,
                     Title = $"{index + 1}. {StepLocalization.Type(snapshot.StepType)}",
                     Subtitle = $"{LocalizeDebugState(snapshot.State)} · {LocalizeDebugPhase(snapshot.Phase)}{iteration}",
+                    Status = LocalizeDebugState(snapshot.State),
+                    Summary = summary,
+                    State = snapshot.State,
                     Values = values,
-                    IsExpanded = !groupExpansion.TryGetValue(step.Id, out var expanded) || expanded
+                    IsExpanded = groupExpansion.TryGetValue(step.Id, out var expanded)
+                        ? expanded
+                        : step.Id == newestStepId
                 });
             }
         }

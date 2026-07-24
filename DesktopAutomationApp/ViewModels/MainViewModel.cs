@@ -28,6 +28,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobDispatcher _jobDispatcher;
         private readonly IUpdateService _updateService;
         private readonly IDialogService _dialogService;
+        private readonly UpdateCheckScheduler _updateCheckScheduler;
 
         private bool _hasUpdate;
         private string _latestVersion = string.Empty;
@@ -185,6 +186,7 @@ namespace DesktopAutomationApp.ViewModels
             _jobDispatcher = jobDispatcher;
             _updateService = updateService;
             _dialogService = dialogService;
+            _updateService.UpdateChecked += OnUpdateChecked;
             _start = startViewModel;
 
             OpenUpdateCommand = new RelayCommand(() =>
@@ -240,25 +242,40 @@ namespace DesktopAutomationApp.ViewModels
             // Startseite
             CurrentContent = _start;
 
-            // Update-Check im Hintergrund
-            _ = CheckForUpdateAsync();
+            // Sofort prüfen und anschließend auch bei langem Tray-Betrieb regelmäßig wiederholen.
+            _updateCheckScheduler = new UpdateCheckScheduler(
+                CheckForUpdateAsync,
+                TimeSpan.FromHours(2));
         }
 
         private async Task CheckForUpdateAsync()
         {
             try
             {
-                var result = await _updateService.CheckForUpdateAsync();
-                if (!result.HasUpdate) return;
-
-                _updateUrl = result.ReleaseUrl;
-                LatestVersion = result.LatestVersion;
-                HasUpdate = true;
+                await _updateService.CheckForUpdateAsync();
             }
             catch
             {
                 // Update-Check darf niemals den App-Start blockieren oder abstürzen
             }
+        }
+
+        private void OnUpdateChecked(UpdateCheckResult result)
+        {
+            if (!result.HasUpdate) return;
+
+            void ApplyResult()
+            {
+                _updateUrl = result.ReleaseUrl;
+                LatestVersion = result.LatestVersion;
+                HasUpdate = true;
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher is not null && !dispatcher.CheckAccess())
+                dispatcher.BeginInvoke(ApplyResult);
+            else
+                ApplyResult();
         }
 
         private async Task InstallUpdateAsync()
@@ -388,6 +405,17 @@ namespace DesktopAutomationApp.ViewModels
                 UpdateStatusText = Loc.Get("Update.Error");
                 return false;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _updateService.UpdateChecked -= OnUpdateChecked;
+                _updateCheckScheduler.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         private void OpenJobDetails(Job job)

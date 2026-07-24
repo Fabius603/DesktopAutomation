@@ -17,12 +17,15 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly IWindowsStartupRegistrationService _startupRegistration;
     private readonly ILogger<SettingsViewModel> _log;
     private readonly IReleaseNotesService _releaseNotes;
+    private readonly IUpdateService _updateService;
     private bool _isLoading = true;
     private LanguageOption? _selectedLanguage;
     private ThemeOption? _selectedTheme;
     private AccentOption? _selectedAccent;
     private bool _startWithWindows;
     private bool _startInBackgroundAtWindowsStartup;
+    private bool _isCheckingForUpdates;
+    private string _updateCheckStatus = string.Empty;
 
     public ObservableCollection<LanguageOption> Languages { get; } =
     [
@@ -87,6 +90,23 @@ public sealed class SettingsViewModel : ViewModelBase
     }
 
     public RelayCommand ShowReleaseNotesCommand { get; }
+    public RelayCommand CheckForUpdatesCommand { get; }
+
+    public bool IsCheckingForUpdates
+    {
+        get => _isCheckingForUpdates;
+        private set
+        {
+            SetProperty(ref _isCheckingForUpdates, value);
+            CheckForUpdatesCommand?.RaiseCanExecuteChanged();
+        }
+    }
+
+    public string UpdateCheckStatus
+    {
+        get => _updateCheckStatus;
+        private set => SetProperty(ref _updateCheckStatus, value);
+    }
 
     public SettingsViewModel(
         IUserPreferencesService preferences,
@@ -94,6 +114,7 @@ public sealed class SettingsViewModel : ViewModelBase
         IThemeService theme,
         IWindowsStartupRegistrationService startupRegistration,
         IReleaseNotesService releaseNotes,
+        IUpdateService updateService,
         ILogger<SettingsViewModel> log)
     {
         _preferences = preferences;
@@ -101,8 +122,12 @@ public sealed class SettingsViewModel : ViewModelBase
         _theme = theme;
         _startupRegistration = startupRegistration;
         _releaseNotes = releaseNotes;
+        _updateService = updateService;
         _log = log;
         ShowReleaseNotesCommand = new RelayCommand(async () => await _releaseNotes.ShowAllAsync());
+        CheckForUpdatesCommand = new RelayCommand(
+            async () => await CheckForUpdatesAsync(),
+            () => !IsCheckingForUpdates);
         var current = preferences.Current;
         _selectedLanguage = Languages.FirstOrDefault(x => x.CultureName == current.Culture) ?? Languages[0];
         _selectedTheme = Themes.FirstOrDefault(x => x.Mode == current.ThemeMode) ?? Themes[0];
@@ -114,6 +139,28 @@ public sealed class SettingsViewModel : ViewModelBase
             foreach (var option in Themes) option.Refresh();
         };
         _isLoading = false;
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        IsCheckingForUpdates = true;
+        UpdateCheckStatus = Loc.Get("Settings.Updates.Checking");
+        try
+        {
+            var result = await _updateService.CheckForUpdateAsync();
+            UpdateCheckStatus = result.HasUpdate
+                ? Loc.Format("Settings.Updates.Available", result.LatestVersion)
+                : Loc.Get("Settings.Updates.Current");
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Die manuelle Update-Prüfung ist fehlgeschlagen.");
+            UpdateCheckStatus = Loc.Get("Settings.Updates.Error");
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
+        }
     }
 
     private bool SetAndChanged<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

@@ -494,12 +494,10 @@ namespace TaskAutomation.Jobs
                     debugSession?.SetIteration(
                         iteration,
                         startStepIds.Where(stepId => pipelineCtx.Results.GetRaw(stepId) != null));
-                    var logRoutineIteration = !job.Repeating || iteration <= 3 || iteration % 100 == 0;
-                    if (logRoutineIteration)
-                        _executionLogService.Write(
-                            executionLog,
-                            ExecutionLogLevel.Debug,
-                            $"Job-Runde {iteration} gestartet.");
+                    _executionLogService.Write(
+                        executionLog,
+                        ExecutionLogLevel.Debug,
+                        $"Job-Runde {iteration} gestartet.");
 
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
@@ -669,7 +667,7 @@ namespace TaskAutomation.Jobs
                         try
                         {
                             await ExecuteStepAsync(
-                                step, pipelineCtx, job, ct, "Durchlauf", iteration, logRoutineIteration)
+                                step, pipelineCtx, job, ct, "Durchlauf", iteration)
                                 .ConfigureAwait(false);
                             var debugResult = pipelineCtx.Results.GetRaw(step.Id);
                             debugSession?.MarkCompleted(
@@ -699,13 +697,12 @@ namespace TaskAutomation.Jobs
                     }
 
                     iterationStopwatch.Stop();
-                    if (logRoutineIteration)
-                        _executionLogService.Write(
-                            executionLog,
-                            ExecutionLogLevel.Debug,
-                            $"Job-Runde {iteration} beendet.",
-                            $"Durchgangsdauer={iterationStopwatch.ElapsedMilliseconds} ms",
-                            durationMs: iterationStopwatch.ElapsedMilliseconds);
+                    _executionLogService.Write(
+                        executionLog,
+                        ExecutionLogLevel.Debug,
+                        $"Job-Runde {iteration} beendet.",
+                        $"Durchgangsdauer={iterationStopwatch.ElapsedMilliseconds} ms",
+                        durationMs: iterationStopwatch.ElapsedMilliseconds);
 
                     if (jobEndedByStep) break;
                     ct.ThrowIfCancellationRequested();
@@ -1106,8 +1103,7 @@ namespace TaskAutomation.Jobs
             Job job,
             CancellationToken ct,
             string phaseName,
-            int? iteration = null,
-            bool logRoutineDetails = true)
+            int? iteration = null)
         {
             if (!_stepHandlers.TryGetValue(step.GetType(), out var handler))
             {
@@ -1119,7 +1115,7 @@ namespace TaskAutomation.Jobs
             var stopwatch = Stopwatch.StartNew();
             try
             {
-                if (ctx.ExecutionLogSession != null && logRoutineDetails)
+                if (ctx.ExecutionLogSession != null)
                 {
                     _executionLogService.Write(
                         ctx.ExecutionLogSession,
@@ -1137,17 +1133,16 @@ namespace TaskAutomation.Jobs
                 {
                     var result = ctx.Results.GetRaw(step.Id);
                     var level = GetStepResultLevel(result);
-                    if (logRoutineDetails || level != ExecutionLogLevel.Information)
-                        _executionLogService.Write(
-                            ctx.ExecutionLogSession,
-                            level,
-                            level == ExecutionLogLevel.Warning
-                                ? "Step mit Warnung abgeschlossen."
-                                : "Step abgeschlossen.",
-                            BuildStepResultDetails(step, result, ctx.Results),
-                            step.Id,
-                            step.GetType().Name,
-                            stopwatch.ElapsedMilliseconds);
+                    _executionLogService.Write(
+                        ctx.ExecutionLogSession,
+                        level,
+                        level == ExecutionLogLevel.Warning
+                            ? "Step mit Warnung abgeschlossen."
+                            : "Step abgeschlossen.",
+                        BuildStepResultDetails(step, result, ctx.Results),
+                        step.Id,
+                        step.GetType().Name,
+                        stopwatch.ElapsedMilliseconds);
                 }
             }
             catch (OperationCanceledException)

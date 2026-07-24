@@ -1312,6 +1312,27 @@
   <data name="Update.Error" xml:space="preserve">
     <value>Fehler beim Update.</value>
   </data>
+  <data name="Settings.Updates.Title" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Settings.Updates.Description" xml:space="preserve">
+    <value>Die Anwendung sucht beim Start und danach alle zwei Stunden nach neuen Versionen.</value>
+  </data>
+  <data name="Settings.Updates.CheckNow" xml:space="preserve">
+    <value>Jetzt prüfen</value>
+  </data>
+  <data name="Settings.Updates.Checking" xml:space="preserve">
+    <value>Updates werden gesucht …</value>
+  </data>
+  <data name="Settings.Updates.Current" xml:space="preserve">
+    <value>Die Anwendung ist auf dem neuesten Stand.</value>
+  </data>
+  <data name="Settings.Updates.Available" xml:space="preserve">
+    <value>Version {0} ist verfügbar.</value>
+  </data>
+  <data name="Settings.Updates.Error" xml:space="preserve">
+    <value>Die Update-Prüfung ist fehlgeschlagen.</value>
+  </data>
   <data name="Error.JobExecution.Title" xml:space="preserve">
     <value>Job-Ausführungsfehler</value>
   </data>
@@ -2155,6 +2176,8 @@ Fehlermeldung:
   <data name="Ui.Windows.DebounceInfo" xml:space="preserve"><value>Mindestabstand zwischen zwei akzeptierten Auslösungen. Weitere passende Ereignisse innerhalb dieses Zeitraums werden ignoriert.</value></data>
   <data name="Ui.Windows.DelayInfo" xml:space="preserve"><value>Wartezeit nach einer akzeptierten Auslösung, bevor die Automation gestartet wird.</value></data>
   <data name="Step.ResultValueType.Enum" xml:space="preserve"><value>Auswahlwert</value></data>
+  <data name="Step.ResultValueType.Duration" xml:space="preserve"><value>Dauer</value></data>
+  <data name="Step.ResultValueType.ResultObject" xml:space="preserve"><value>Ergebnisobjekt</value></data>
   <data name="Ui.Job.Steps.ResultType.Enum" xml:space="preserve"><value>Auswahlwert</value></data>
   <data name="Enum.AutomationTriggerKind.WindowsEvent" xml:space="preserve"><value>Windows-Ereignis</value></data>
   <data name="Step.Type.WindowsStateQuery" xml:space="preserve"><value>Windows-Zustand abfragen</value></data>
@@ -2260,7 +2283,7 @@ Fehlermeldung:
   <data name="Ui.Job.Debug.Continue" xml:space="preserve"><value>Weiter</value></data>
   <data name="Ui.Job.Debug.ToggleBreakpoint" xml:space="preserve"><value>Breakpoint umschalten</value></data>
   <data name="Ui.Job.Debug.Iteration" xml:space="preserve"><value>Iteration {0}</value></data>
-  <data name="Ui.Job.Debug.Panel.Title" xml:space="preserve"><value>Debug-Inspektor</value></data>
+  <data name="Ui.Job.Debug.Panel.Title" xml:space="preserve"><value>Step-Ergebnisse</value></data>
   <data name="Ui.Job.Debug.Panel.Toggle" xml:space="preserve"><value>Debug-Inspektor ein- oder ausblenden</value></data>
   <data name="Ui.Job.Debug.Panel.SelectStep" xml:space="preserve"><value>Einen Step anklicken, um dessen Snapshot anzuzeigen.</value></data>
   <data name="Ui.Job.Debug.Panel.Inputs" xml:space="preserve"><value>Eingaben</value></data>
@@ -2274,10 +2297,12 @@ Fehlermeldung:
   <data name="Ui.Job.Debug.Panel.State" xml:space="preserve"><value>Status</value></data>
   <data name="Ui.Job.Debug.Panel.Started" xml:space="preserve"><value>Gestartet</value></data>
   <data name="Ui.Job.Debug.Panel.Duration" xml:space="preserve"><value>Dauer</value></data>
-  <data name="Ui.Job.Debug.Panel.CurrentContext" xml:space="preserve"><value>Aktueller Kontext · Ausgaben nach Step</value></data>
+  <data name="Ui.Job.Debug.Panel.CurrentContext" xml:space="preserve"><value>Aktueller Kontext</value></data>
   <data name="Ui.Job.Debug.Panel.EmptyContext" xml:space="preserve"><value>Noch keine Step-Ausgaben im aktuellen Kontext.</value></data>
   <data name="Ui.Job.Debug.Panel.ExpandAll" xml:space="preserve"><value>Alle Ausgaben ausklappen</value></data>
   <data name="Ui.Job.Debug.Panel.CollapseAll" xml:space="preserve"><value>Alle Ausgaben einklappen</value></data>
+  <data name="Ui.Job.Debug.Panel.ResultCount" xml:space="preserve"><value>{0} Step-Ergebnisse</value></data>
+  <data name="Ui.Job.Debug.Panel.NoReturnValues" xml:space="preserve"><value>Keine Rückgabewerte</value></data>
   <data name="Ui.Common.Close" xml:space="preserve"><value>Schließen</value></data>
   <data name="Ui.Job.Debug.Value.True" xml:space="preserve"><value>Wahr</value></data>
   <data name="Ui.Job.Debug.Value.False" xml:space="preserve"><value>Falsch</value></data>

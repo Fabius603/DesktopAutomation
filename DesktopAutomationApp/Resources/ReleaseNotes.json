@@ -1,5 +1,55 @@
 [
   {
+    "version": "1.5.5",
+    "date": "2026-07-24",
+    "sections": [
+      {
+        "title": {
+          "de": "Anwendungsupdates",
+          "en": "Application updates"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "DesktopAutomation sucht während des laufenden Betriebs alle zwei Stunden nach Updates, sodass neue Versionen auch bei dauerhaftem Tray-Betrieb erkannt werden.",
+            "en": "DesktopAutomation checks for updates every two hours while running, so new versions are also detected during continuous tray operation."
+          },
+          {
+            "category": "Added",
+            "de": "In den Einstellungen kann jederzeit sofort nach einer neuen Version gesucht werden.",
+            "en": "A check for a new version can now be started at any time from Settings."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Job-Protokolle",
+          "en": "Job logs"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Wiederholende Jobs protokollieren jetzt jede ausgeführte Runde und deren reguläre Step-Einträge, statt spätere Runden zusammenzufassen.",
+            "en": "Repeating jobs now log every executed iteration and its regular step entries instead of condensing later iterations."
+          }
+        ]
+      },
+      {
+        "title": {
+          "de": "Job-Debugger",
+          "en": "Job debugger"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Step-Rückgabewerte erscheinen im Debugger jetzt als übersichtliche Ergebniskarten mit Status, Kurzfassung sowie übersetzten Datentypen und verschachtelten Werten.",
+            "en": "Step return values in the debugger are now presented as clear result cards with status, summaries, and localized data types and nested values."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.4",
     "date": "2026-07-23",
     "sections": [

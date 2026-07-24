@@ -85,6 +85,9 @@ public static class StepLocalization
             : type;
     }
 
+    public static string DebugValueType(string typeName) =>
+        DebugValueTypeLocalization.Localize(typeName, GetOrFallback);
+
     public static ResultTypeDescriptor ResultType(ResultTypeDescriptor descriptor) =>
         new(
             descriptor.TypeName,

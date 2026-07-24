@@ -26,5 +26,9 @@
              Link="DesktopAutomationApp\ObservableRangeCollection.cs" />
     <Compile Include="..\..\DesktopAutomationApp\Services\Jobs\JobStepsSnapshotService.cs"
              Link="DesktopAutomationApp\JobStepsSnapshotService.cs" />
+    <Compile Include="..\..\DesktopAutomationApp\Services\UpdateCheckScheduler.cs"
+             Link="DesktopAutomationApp\UpdateCheckScheduler.cs" />
+    <Compile Include="..\..\DesktopAutomationApp\Localization\DebugValueTypeLocalization.cs"
+             Link="DesktopAutomationApp\DebugValueTypeLocalization.cs" />
   </ItemGroup>
 </Project>
