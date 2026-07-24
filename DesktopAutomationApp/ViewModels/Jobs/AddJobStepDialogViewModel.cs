@@ -85,11 +85,13 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> _sourceItemsByKind;
         private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
         private readonly Guid? _currentJobId;
+        private readonly ICameraCaptureService _cameraCaptureService;
         private readonly SemaphoreSlim _yoloLoadLock = new(1, 1);
         private bool _isInitialized;
         public WindowsCapabilityPickerViewModel WindowsStatePicker { get; }
         public ObservableCollection<Job> AvailableJobs { get; }
         public ObservableCollection<Makro> AvailableMakros { get; }
+        public ObservableCollection<CameraDeviceInfo> AvailableCameras { get; } = new();
 
         public sealed record PreparedSources(
             IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> ByKind,
@@ -107,12 +109,15 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyList<JobStep> precedingSteps,
             Guid? currentJobId = null,
             IReadOnlyList<JobStep>? allJobSteps = null,
-            PreparedSources? preparedSources = null)
+            PreparedSources? preparedSources = null,
+            ICameraCaptureService? cameraCaptureService = null)
         {
             _ctx = ctx;
             _precedingSteps = precedingSteps;
             _allJobSteps = allJobSteps ?? precedingSteps;
             _currentJobId = currentJobId;
+            _cameraCaptureService = cameraCaptureService
+                ?? throw new ArgumentNullException(nameof(cameraCaptureService));
             AvailableJobs = new ObservableCollection<Job>(
                 (_ctx.AllJobs?.Values ?? Enumerable.Empty<Job>())
                 .Where(job => job.Id != _currentJobId)
@@ -202,6 +207,7 @@ namespace DesktopAutomationApp.ViewModels
             CaptureKeyPointMatchingRoiCommand = new RelayCommand(CaptureKeyPointMatchingRoi);
             CaptureColorDetectionRoiCommand = new RelayCommand(CaptureColorDetectionRoi);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
+            RefreshCamerasCommand = new RelayCommand(() => _ = LoadAvailableCamerasAsync());
             ChooseMonitorForShowTextCommand = new RelayCommand(ChooseMonitorForShowText);
             ChooseMonitorForStartProcessCommand = new RelayCommand(ChooseMonitorForStartProcess);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
@@ -335,6 +341,8 @@ namespace DesktopAutomationApp.ViewModels
             _isInitialized = true;
             if (SelectedType == "YoloDetection")
                 await LoadYoloModelsAsync();
+            if (SelectedType == "CameraCapture")
+                await LoadAvailableCamerasAsync();
         }
 
         private StepDialogMode _mode = StepDialogMode.Add;
@@ -373,6 +381,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CaptureKeyPointMatchingRoiCommand { get; }
         public ICommand CaptureColorDetectionRoiCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
+        public ICommand RefreshCamerasCommand { get; }
         public ICommand ChooseMonitorForShowTextCommand { get; }
         public ICommand ChooseMonitorForStartProcessCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
@@ -595,6 +604,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 new("DesktopDuplication", "BildAufnehmen",
                     "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit."),
+                new("CameraCapture", "BildAufnehmen",
+                    "Nimmt ein Einzelbild mit der ausgewählten Kamera auf und stellt es als Bildquelle für nachfolgende Steps bereit."),
                 new("TemplateMatching",   "BildAuswerten",
                     "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden."),
                 new("ColorDetection",     "BildAuswerten",
@@ -684,6 +695,8 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(string.Empty);
                 if (_isInitialized && value == "YoloDetection")
                     _ = LoadYoloModelsAsync();
+                if (_isInitialized && value == "CameraCapture")
+                    _ = LoadAvailableCamerasAsync();
             }
         }
 
@@ -691,6 +704,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowColorDetection => SelectedType == "ColorDetection";
         public bool ShowPredictMovement => SelectedType == "PredictMovement";
         public bool ShowDesktopDuplication => SelectedType == "DesktopDuplication";
+        public bool ShowCameraCapture => SelectedType == "CameraCapture";
         //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
         public bool ShowShowOnDesktop => SelectedType == "ShowOnDesktop";
@@ -1652,6 +1666,85 @@ namespace DesktopAutomationApp.ViewModels
         private bool _desktopDuplicationStep_CaptureCursor;
         public bool DesktopDuplicationStep_CaptureCursor { get => _desktopDuplicationStep_CaptureCursor; set { _desktopDuplicationStep_CaptureCursor = value; OnChange(); } }
 
+        // ===== CameraCapture Felder =====
+        private string _cameraCaptureStepCameraId = string.Empty;
+        private string _cameraCaptureStepCameraName = string.Empty;
+        private CameraDeviceInfo? _cameraCaptureStepSelectedCamera;
+        private bool _isLoadingCameras;
+        private string _cameraLoadStatus = string.Empty;
+
+        public CameraDeviceInfo? CameraCaptureStep_SelectedCamera
+        {
+            get => _cameraCaptureStepSelectedCamera;
+            set
+            {
+                _cameraCaptureStepSelectedCamera = value;
+                if (value is not null)
+                {
+                    _cameraCaptureStepCameraId = value.Id;
+                    if (value.Index >= 0 || string.IsNullOrWhiteSpace(_cameraCaptureStepCameraName))
+                        _cameraCaptureStepCameraName = value.Name;
+                }
+                OnChange();
+            }
+        }
+
+        public bool IsLoadingCameras
+        {
+            get => _isLoadingCameras;
+            private set { _isLoadingCameras = value; OnChange(); }
+        }
+
+        public string CameraLoadStatus
+        {
+            get => _cameraLoadStatus;
+            private set { _cameraLoadStatus = value; OnChange(); }
+        }
+
+        public void LoadCameraSelection(string cameraId, string cameraName)
+        {
+            _cameraCaptureStepCameraId = cameraId ?? string.Empty;
+            _cameraCaptureStepCameraName = cameraName ?? string.Empty;
+        }
+
+        private async Task LoadAvailableCamerasAsync()
+        {
+            if (IsLoadingCameras) return;
+            IsLoadingCameras = true;
+            CameraLoadStatus = Loc.Get("Ui.Step.Camera.Loading");
+            try
+            {
+                var devices = await Task.Run(_cameraCaptureService.GetAvailableCameras);
+                AvailableCameras.Clear();
+                foreach (var device in devices)
+                    AvailableCameras.Add(device);
+
+                var selected = AvailableCameras.FirstOrDefault(camera =>
+                    string.Equals(camera.Id, _cameraCaptureStepCameraId, StringComparison.OrdinalIgnoreCase));
+                if (selected is null && !string.IsNullOrWhiteSpace(_cameraCaptureStepCameraId))
+                {
+                    selected = new CameraDeviceInfo(
+                        _cameraCaptureStepCameraId,
+                        Loc.Format("Ui.Step.Camera.Unavailable", _cameraCaptureStepCameraName),
+                        -1);
+                    AvailableCameras.Add(selected);
+                }
+
+                CameraCaptureStep_SelectedCamera = selected ?? AvailableCameras.FirstOrDefault();
+                CameraLoadStatus = devices.Count == 0
+                    ? Loc.Get("Ui.Step.Camera.NoneFound")
+                    : Loc.Format("Ui.Step.Camera.FoundCount", devices.Count);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                CameraLoadStatus = Loc.Format("Ui.Step.Camera.LoadFailed", ex.Message);
+            }
+            finally
+            {
+                IsLoadingCameras = false;
+            }
+        }
+
         // ===== ProcessDuplication Felder =====
         //private string _processName = string.Empty;
         //public string ProcessName { get => _processName; set { _processName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
@@ -2469,6 +2562,14 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         DesktopIdx    = DesktopDuplicationStep_DesktopIdx,
                         CaptureCursor = DesktopDuplicationStep_CaptureCursor
+                    }
+                },
+                "CameraCapture" => new CameraCaptureStep
+                {
+                    Settings = new CameraCaptureSettings
+                    {
+                        CameraId = _cameraCaptureStepCameraId,
+                        CameraName = _cameraCaptureStepCameraName
                     }
                 },
                 //"ProcessDuplication" => new ProcessDuplicationStep

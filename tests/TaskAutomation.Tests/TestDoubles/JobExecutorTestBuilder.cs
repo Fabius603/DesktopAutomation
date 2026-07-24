@@ -31,6 +31,7 @@ internal sealed class JobExecutorTestBuilder
             new NoOpImageDisplayService(),
             Overlay,
             new NoOpDesktopCaptureService(),
+            new NoOpCameraCaptureService(),
             Logs,
             Delay,
             WindowsStates);

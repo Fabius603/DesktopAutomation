@@ -41,6 +41,11 @@ namespace TaskAutomation.Steps
                 ResultType:    typeof(DesktopDuplicationResult),
                 DisplayName:   "Desktop-Duplizierung"),
 
+            [typeof(CameraCaptureStep)] = new(
+                Prerequisites: [],
+                ResultType:    typeof(CameraCaptureResult),
+                DisplayName:   "Kameraaufnahme"),
+
             [typeof(ProcessDuplicationStep)] = new(
                 Prerequisites: [],
                 ResultType:    typeof(ProcessDuplicationResult),
@@ -217,6 +222,7 @@ namespace TaskAutomation.Steps
         private static readonly Dictionary<string, Type> _nameMap = new(StringComparer.OrdinalIgnoreCase)
         {
             ["DesktopDuplication"] = typeof(DesktopDuplicationStep),
+            ["CameraCapture"]      = typeof(CameraCaptureStep),
             ["TemplateMatching"]   = typeof(TemplateMatchingStep),
             ["ColorDetection"]     = typeof(ColorDetectionStep),
             ["PredictMovement"]    = typeof(PredictMovementStep),

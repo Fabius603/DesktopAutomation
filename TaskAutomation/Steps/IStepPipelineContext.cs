@@ -82,6 +82,7 @@ namespace TaskAutomation.Steps
         /// eigenen <c>DesktopDuplicator</c>-Instanz.
         /// </summary>
         IDesktopCaptureService DesktopCaptureService { get; }
+        ICameraCaptureService CameraCaptureService { get; }
 
         /// <summary>
         /// Alle in diesem Job-Lauf geöffneten Bildvorschau-Fenster (WindowName).

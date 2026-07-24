@@ -24,6 +24,7 @@
         <DataTemplate x:Key="ColorDetectionEditor"><detection:ColorDetectionStepEditor/></DataTemplate>
         <DataTemplate x:Key="PredictMovementEditor"><analysis:PredictMovementStepEditor/></DataTemplate>
         <DataTemplate x:Key="DesktopDuplicationEditor"><capture:DesktopDuplicationStepEditor/></DataTemplate>
+        <DataTemplate x:Key="CameraCaptureEditor"><capture:CameraCaptureStepEditor/></DataTemplate>
         <DataTemplate x:Key="ShowImageEditor"><output:ShowImageStepEditor/></DataTemplate>
         <DataTemplate x:Key="ShowOnDesktopEditor"><output:ShowOnDesktopStepEditor/></DataTemplate>
         <DataTemplate x:Key="VideoCreationEditor"><output:VideoCreationStepEditor/></DataTemplate>
@@ -107,6 +108,7 @@
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ColorDetection"><Setter Property="ContentTemplate" Value="{StaticResource ColorDetectionEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="PredictMovement"><Setter Property="ContentTemplate" Value="{StaticResource PredictMovementEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="DesktopDuplication"><Setter Property="ContentTemplate" Value="{StaticResource DesktopDuplicationEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="CameraCapture"><Setter Property="ContentTemplate" Value="{StaticResource CameraCaptureEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ShowImage"><Setter Property="ContentTemplate" Value="{StaticResource ShowImageEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ShowOnDesktop"><Setter Property="ContentTemplate" Value="{StaticResource ShowOnDesktopEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="VideoCreation"><Setter Property="ContentTemplate" Value="{StaticResource VideoCreationEditor}"/></DataTrigger>

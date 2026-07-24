@@ -50,6 +50,7 @@ namespace TaskAutomation.Steps
         public Action<Guid>?                        CancelJobViaDispatcher { get; }
 
         public IDesktopCaptureService DesktopCaptureService { get; }
+        public ICameraCaptureService CameraCaptureService { get; }
         public ISet<string>  OpenedWindowNames    { get; } = new HashSet<string>(StringComparer.Ordinal);
         public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
         public ProcessDuplicator?   ProcessDuplicator  { get; set; }
@@ -82,6 +83,7 @@ namespace TaskAutomation.Steps
             Job                                currentJob,
             Func<Guid, CancellationToken, Task> executeJob,
             IDesktopCaptureService             desktopCaptureService,
+            ICameraCaptureService              cameraCaptureService,
             ExecutionLogSession?                executionLogSession = null,
             IExecutionLogService?               executionLogService = null,
             Func<Guid, Guid>?                  startJobViaDispatcher  = null,
@@ -103,6 +105,7 @@ namespace TaskAutomation.Steps
             CurrentJob                 = currentJob;
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;
+            CameraCaptureService       = cameraCaptureService;
             StartJobViaDispatcher      = startJobViaDispatcher;
             CancelJobViaDispatcher     = cancelJobViaDispatcher;
             StartJobViaDispatcherAsync = startJobViaDispatcherAsync;

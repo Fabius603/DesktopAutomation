@@ -16,6 +16,7 @@ public sealed class JobStepDetailsProvider
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["BoundsSource"] = "Ui.Step.DynamicRoi.Source",
+            ["CameraName"] = "Ui.Step.Camera.Camera",
             ["CaptureCursor"] = "Ui.Step.Settings.CaptureMousePointer",
             ["ClearOnJobEnd"] = "Ui.Step.Settings.RemoveWhenJobEnds",
             ["ColorHex"] = "Ui.Step.Settings.Color",
@@ -168,6 +169,7 @@ public sealed class JobStepDetailsProvider
         var name = property.Name;
         if (value is ResultBinding binding) return binding.IsConfigured;
         if (value is null) return false;
+        if (owner is CameraCaptureSettings && name == nameof(CameraCaptureSettings.CameraId)) return false;
 
         if (owner is ProcessTargetSettings target)
             return target.ProcessSource.IsConfigured

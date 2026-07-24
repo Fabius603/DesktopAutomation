@@ -42,6 +42,7 @@ namespace TaskAutomation.Jobs
         private readonly IScriptExecutor _scriptExecutor;
         private readonly IYoloManager _yoloManager;
         private readonly IDesktopCaptureService _desktopCaptureService;
+        private readonly ICameraCaptureService _cameraCaptureService;
         private readonly IExecutionLogService _executionLogService;
         private bool _disposed = false;
 
@@ -66,6 +67,7 @@ namespace TaskAutomation.Jobs
         {
             { typeof(ProcessDuplicationStep),  new ProcessDuplicationStepHandler()  },
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
+            { typeof(CameraCaptureStep),       new CameraCaptureStepHandler()       },
             { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
             { typeof(ColorDetectionStep),      new ColorDetectionStepHandler()      },
             { typeof(PredictMovementStep),     new PredictMovementStepHandler()     },
@@ -115,6 +117,7 @@ namespace TaskAutomation.Jobs
             IImageDisplayService imageDisplayService,
             IDesktopResultOverlay desktopResultOverlay,
             IDesktopCaptureService desktopCaptureService,
+            ICameraCaptureService cameraCaptureService,
             IExecutionLogService executionLogService,
             IPreciseDelayService preciseDelayService,
             IWindowsSystemStateService windowsStateService,
@@ -130,6 +133,7 @@ namespace TaskAutomation.Jobs
             _imageDisplayService  = imageDisplayService;
             _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
+            _cameraCaptureService = cameraCaptureService;
             _executionLogService = executionLogService;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
             _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
@@ -358,6 +362,7 @@ namespace TaskAutomation.Jobs
                     job,
                     ExecuteJob,
                     _desktopCaptureService,
+                    _cameraCaptureService,
                     executionLog,
                     _executionLogService,
                     launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
@@ -1277,6 +1282,9 @@ namespace TaskAutomation.Jobs
                 case DesktopDuplicationStep capture:
                     parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");
                     parts.Add($"CaptureCursor={capture.Settings.CaptureCursor}");
+                    break;
+                case CameraCaptureStep camera:
+                    parts.Add($"Camera={camera.Settings.CameraName}");
                     break;
                 case ProcessDuplicationStep processCapture:
                     parts.Add($"Process={processCapture.Settings.ProcessName}");

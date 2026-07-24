@@ -22,6 +22,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(PredictMovementStep), "predict_movement")]
     [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
+    [JsonDerivedType(typeof(CameraCaptureStep), "camera_capture")]
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
     [JsonDerivedType(typeof(ShowOnDesktopStep), "show_on_desktop")]
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
@@ -280,6 +281,22 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("capture_cursor")]
         public bool CaptureCursor { get; set; } = false;
+    }
+
+    // ---- CameraCapture ----
+    public sealed class CameraCaptureStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public CameraCaptureSettings Settings { get; set; } = new();
+    }
+
+    public sealed class CameraCaptureSettings
+    {
+        [JsonPropertyName("camera_id")]
+        public string CameraId { get; set; } = string.Empty;
+
+        [JsonPropertyName("camera_name")]
+        public string CameraName { get; set; } = string.Empty;
     }
 
     // ---- ProcessDuplication ----

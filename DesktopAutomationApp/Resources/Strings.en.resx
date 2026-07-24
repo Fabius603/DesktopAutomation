@@ -2565,4 +2565,14 @@ Error:
   <data name="Yolo.Model.screenparser.Description" xml:space="preserve">
     <value>Detects 55 user-interface elements such as buttons, input fields, menus, lists, and icons. Optimized for screenshots and more resource-intensive than YOLO11 Nano.</value>
   </data>
+  <data name="Step.Type.CameraCapture" xml:space="preserve"><value>Capture camera image</value></data>
+  <data name="Step.Description.CameraCapture" xml:space="preserve"><value>Captures a still image with the selected camera and provides it as an image source for subsequent steps.</value></data>
+  <data name="Ui.Step.Camera.Camera" xml:space="preserve"><value>Camera</value></data>
+  <data name="Ui.Step.Camera.CameraWithColon" xml:space="preserve"><value>Camera: </value></data>
+  <data name="Ui.Step.Camera.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Ui.Step.Camera.Loading" xml:space="preserve"><value>Searching for cameras…</value></data>
+  <data name="Ui.Step.Camera.NoneFound" xml:space="preserve"><value>No camera found. Check the connection and Windows camera permission.</value></data>
+  <data name="Ui.Step.Camera.FoundCount" xml:space="preserve"><value>Available cameras: {0}</value></data>
+  <data name="Ui.Step.Camera.LoadFailed" xml:space="preserve"><value>Cameras could not be loaded: {0}</value></data>
+  <data name="Ui.Step.Camera.Unavailable" xml:space="preserve"><value>{0} (unavailable)</value></data>
 </root>

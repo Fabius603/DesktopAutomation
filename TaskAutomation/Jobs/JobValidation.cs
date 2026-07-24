@@ -156,6 +156,7 @@ public static class JobValidation
                 && s.Settings.MaxPredictionDistance >= 0 && s.Settings.MaxFitError >= 0 && Unit(s.Settings.MinimumConfidence)
                 && new[] { "Linear", "Acceleration", "Kalman", "Automatic" }.Contains(s.Settings.PredictionModel),
             DesktopDuplicationStep s => s.Settings.DesktopIdx >= 0,
+            CameraCaptureStep s => Text(s.Settings.CameraId),
             ShowImageStep s => Text(s.Settings.WindowName),
             VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName),
             MakroExecutionStep s => s.Settings.MakroId != null,

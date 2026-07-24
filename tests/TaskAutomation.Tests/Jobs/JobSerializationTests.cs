@@ -72,6 +72,27 @@ public sealed class JobSerializationTests
     }
 
     [Fact]
+    public void RoundTrip_PreservesCameraCaptureDeviceSelection()
+    {
+        JobStep step = new CameraCaptureStep
+        {
+            Settings = new()
+            {
+                CameraId = "@device:pnp:camera-id",
+                CameraName = "USB Camera"
+            }
+        };
+
+        var json = JsonSerializer.Serialize(step);
+        var restored = Assert.IsType<CameraCaptureStep>(
+            JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Contains("\"type\":\"camera_capture\"", json);
+        Assert.Equal("@device:pnp:camera-id", restored.Settings.CameraId);
+        Assert.Equal("USB Camera", restored.Settings.CameraName);
+    }
+
+    [Fact]
     public void NewJobStepIds_AreUniqueAndNonEmpty()
     {
         var ids = Enumerable.Range(0, 100).Select(_ => new TimeoutStep().Id).ToArray();

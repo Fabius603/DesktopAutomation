@@ -14,6 +14,17 @@ public sealed class JobValidationTests
         Assert.True(JobValidation.ValidateStep([step], step).IsValid);
     }
 
+    [Fact]
+    public void ValidateStep_CameraCaptureRequiresSelectedDevice()
+    {
+        var missing = new CameraCaptureStep();
+        var configured = new CameraCaptureStep
+            { Settings = new() { CameraId = "@device:pnp:camera-id", CameraName = "USB Camera" } };
+
+        Assert.False(JobValidation.ValidateStep([missing], missing).IsValid);
+        Assert.True(JobValidation.ValidateStep([configured], configured).IsValid);
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(1.01)]

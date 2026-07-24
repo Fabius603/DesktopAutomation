@@ -33,6 +33,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobApplicationService _jobAppService;
         private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
+        private readonly ICameraCaptureService _cameraCaptureService;
 
         private sealed record JobStepsSnapshot(
             List<JobStep> StartSteps,
@@ -357,13 +358,14 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher)
+        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher, ICameraCaptureService cameraCaptureService)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
             _jobAppService = jobAppService;
             _dialogService = dialogService;
             _dispatcher = dispatcher;
+            _cameraCaptureService = cameraCaptureService;
 
             _startSteps = new ObservableRangeCollection<JobStep>();
             _startSteps.ReplaceRange(Job.StartSteps ?? Enumerable.Empty<JobStep>());
@@ -976,7 +978,7 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIndex);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService)
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -1031,7 +1033,7 @@ namespace DesktopAutomationApp.ViewModels
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
             var vm = new AddJobStepDialogViewModel(
-                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources);
+                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService);
             using (vm.DeferNotifications())
             {
                 vm.Mode = StepDialogMode.Edit;
@@ -1110,6 +1112,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "DesktopDuplication";
                     vm.DesktopDuplicationStep_DesktopIdx    = d.Settings.DesktopIdx;
                     vm.DesktopDuplicationStep_CaptureCursor = d.Settings.CaptureCursor;
+                    break;
+
+                case CameraCaptureStep camera:
+                    vm.SelectedType = "CameraCapture";
+                    vm.LoadCameraSelection(camera.Settings.CameraId, camera.Settings.CameraName);
                     break;
 
                 case ShowImageStep si:
@@ -2064,7 +2071,7 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIdx);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService)
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 

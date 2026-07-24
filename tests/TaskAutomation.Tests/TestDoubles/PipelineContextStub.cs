@@ -37,6 +37,7 @@ internal sealed class PipelineContextStub : IStepPipelineContext
     public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; init; }
     public Action<Guid>? CancelJobViaDispatcher { get; init; }
     public IDesktopCaptureService DesktopCaptureService { get; init; } = new NoOpDesktopCaptureService();
+    public ICameraCaptureService CameraCaptureService { get; init; } = new NoOpCameraCaptureService();
     public ISet<string> OpenedWindowNames { get; } = new HashSet<string>();
     public IList<Guid> ChildJobInstanceIds { get; } = new List<Guid>();
     public ProcessDuplicator? ProcessDuplicator { get; set; }

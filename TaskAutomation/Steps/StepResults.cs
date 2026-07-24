@@ -99,6 +99,18 @@ public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResu
     public static readonly DesktopDuplicationResult Default = new();
 }
 
+public sealed record CameraCaptureResult : StepResultBase, ICaptureStepResult
+{
+    public Bitmap? Image { get; init; }
+    public Rectangle Bounds { get; init; }
+    public Point Offset { get; init; }
+    public bool IsFresh { get; init; } = true;
+    public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    [ResultProperty("has_image")]
+    public bool HasImage => Image is not null;
+    public static readonly CameraCaptureResult Default = new();
+}
+
 public sealed record ProcessDuplicationResult : StepResultBase, ICaptureStepResult
 {
     public Bitmap? Image { get; init; }

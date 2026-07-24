@@ -1,5 +1,24 @@
 [
   {
+    "version": "1.5.6",
+    "date": "2026-07-24",
+    "sections": [
+      {
+        "title": {
+          "de": "Bildaufnahme",
+          "en": "Image capture"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Jobs können jetzt Einzelbilder von auswählbaren angeschlossenen Kameras aufnehmen und als Bildquelle für nachfolgende Steps verwenden. Unterschiedliche Kameras können parallel genutzt werden, während gemeinsame Zugriffe auf dasselbe Gerät sicher koordiniert werden.",
+            "en": "Jobs can now capture still images from selectable connected cameras and use them as image sources for subsequent steps. Different cameras can be used in parallel, while shared access to the same device is coordinated safely."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.5",
     "date": "2026-07-24",
     "sections": [

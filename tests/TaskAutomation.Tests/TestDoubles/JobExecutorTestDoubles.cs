@@ -153,6 +153,16 @@ internal sealed class NoOpDesktopCaptureService : IDesktopCaptureService
     public void Dispose() { }
 }
 
+internal sealed class NoOpCameraCaptureService : ICameraCaptureService
+{
+    public IReadOnlyList<CameraDeviceInfo> GetAvailableCameras() => [];
+
+    public Task<CameraCaptureFrame> CaptureAsync(string cameraId, CancellationToken cancellationToken) =>
+        Task.FromException<CameraCaptureFrame>(new InvalidOperationException("No camera configured."));
+
+    public void Dispose() { }
+}
+
 internal sealed class ControlledDelayService : IPreciseDelayService
 {
     public int Calls { get; private set; }
