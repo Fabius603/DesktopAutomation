@@ -196,7 +196,7 @@
     <value>Jobs</value>
   </data>
   <data name="Ui.Yolo.YOLODownloads" xml:space="preserve">
-    <value>YOLO models</value>
+    <value>Model downloads</value>
   </data>
   <data name="Ui.App.Logs" xml:space="preserve">
     <value>Logs</value>
