@@ -44,6 +44,11 @@
             "category": "Changed",
             "de": "Step-Rückgabewerte erscheinen im Debugger jetzt als übersichtliche Ergebniskarten mit Status, Kurzfassung sowie übersetzten Datentypen und verschachtelten Werten.",
             "en": "Step return values in the debugger are now presented as clear result cards with status, summaries, and localized data types and nested values."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die Step-Nummern im Debugger stimmen jetzt in allen Job-Bereichen mit den Nummern der Step-Ansicht überein.",
+            "en": "Step numbers in the debugger now match the numbers shown in the step view across all job sections."
           }
         ]
       }

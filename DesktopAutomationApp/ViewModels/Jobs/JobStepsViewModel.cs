@@ -698,10 +698,19 @@ namespace DesktopAutomationApp.ViewModels
                 var iteration = snapshot.Iteration > 0
                     ? $" · {Loc.Format("Ui.Job.Debug.Iteration", snapshot.Iteration)}"
                     : string.Empty;
+                var numberingScope = _startSteps.Contains(step)
+                    ? _startSteps
+                    : _endSteps.Contains(step)
+                        ? _endSteps
+                        : _steps;
+                var displayNumber = StepLocalization.DisplayNumber(numberingScope, step);
+                var stepTitle = displayNumber.HasValue
+                    ? $"{displayNumber.Value}. {StepLocalization.Type(snapshot.StepType)}"
+                    : StepLocalization.Type(snapshot.StepType);
                 _debugContextGroups.Add(new DebugContextGroup
                 {
                     StepId = step.Id,
-                    Title = $"{index + 1}. {StepLocalization.Type(snapshot.StepType)}",
+                    Title = stepTitle,
                     Subtitle = $"{LocalizeDebugState(snapshot.State)} · {LocalizeDebugPhase(snapshot.Phase)}{iteration}",
                     Status = LocalizeDebugState(snapshot.State),
                     Summary = summary,

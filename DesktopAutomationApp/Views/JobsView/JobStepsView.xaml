@@ -1020,7 +1020,7 @@
                           Background="Transparent" ResizeDirection="Columns"
                           Visibility="{Binding IsDebugPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-            <Border Grid.Column="2" MinWidth="320" MaxWidth="640"
+            <Border Grid.Column="2" MinWidth="320"
                     Margin="0" Padding="16" CornerRadius="8"
                     Background="{DynamicResource App.Brush.CardBackground}"
                     BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1"
