@@ -23,6 +23,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
     [JsonDerivedType(typeof(CameraCaptureStep), "camera_capture")]
+    [JsonDerivedType(typeof(FileSystemOperationStep), "file_system_operation")]
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
     [JsonDerivedType(typeof(ShowOnDesktopStep), "show_on_desktop")]
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
@@ -297,6 +298,61 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("camera_name")]
         public string CameraName { get; set; } = string.Empty;
+    }
+
+    // ---- FileSystemOperation ----
+    public enum FileSystemOperation { Copy, Move, Rename, Delete }
+    public enum FileSystemPathSource { ExplicitPath, TaskResult }
+
+    public sealed class FileSystemOperationStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public FileSystemOperationSettings Settings { get; set; } = new();
+    }
+
+    public sealed class FileSystemOperationSettings
+    {
+        [JsonPropertyName("operation")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public FileSystemOperation Operation { get; set; } = FileSystemOperation.Copy;
+
+        [JsonPropertyName("source_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public FileSystemPathSource SourceMode { get; set; } = FileSystemPathSource.ExplicitPath;
+
+        [JsonPropertyName("source_path")]
+        public string SourcePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("source_result")]
+        public ResultBinding SourceResult { get; set; } = new();
+
+        [JsonPropertyName("target_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public FileSystemPathSource TargetMode { get; set; } = FileSystemPathSource.ExplicitPath;
+
+        [JsonPropertyName("target_path")]
+        public string TargetPath { get; set; } = string.Empty;
+
+        [JsonPropertyName("target_result")]
+        public ResultBinding TargetResult { get; set; } = new();
+
+        [JsonPropertyName("new_name")]
+        public string NewName { get; set; } = string.Empty;
+
+        [JsonPropertyName("filter")]
+        public string Filter { get; set; } = string.Empty;
+
+        [JsonPropertyName("create_parent_directories")]
+        public bool CreateParentDirectories { get; set; } = true;
+
+        [JsonPropertyName("retry_locked_files")]
+        public bool RetryLockedFiles { get; set; } = true;
+
+        [JsonPropertyName("retry_count")]
+        public int RetryCount { get; set; } = 3;
+
+        [JsonPropertyName("retry_delay_ms")]
+        public int RetryDelayMs { get; set; } = 100;
     }
 
     // ---- ProcessDuplication ----

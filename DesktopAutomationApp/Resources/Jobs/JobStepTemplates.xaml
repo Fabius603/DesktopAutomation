@@ -26,6 +26,7 @@
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/JobExecutionStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/MakroExecutionStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/ScriptExecutionStep.xaml"/>
+        <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/FileSystemOperationStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/ElseIfStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/ElseStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Flow/EndIfStep.xaml"/>

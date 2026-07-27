@@ -68,6 +68,7 @@ namespace TaskAutomation.Jobs
             { typeof(ProcessDuplicationStep),  new ProcessDuplicationStepHandler()  },
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
             { typeof(CameraCaptureStep),       new CameraCaptureStepHandler()       },
+            { typeof(FileSystemOperationStep), new FileSystemOperationStepHandler() },
             { typeof(TemplateMatchingStep),    new TemplateMatchingStepHandler()    },
             { typeof(ColorDetectionStep),      new ColorDetectionStepHandler()      },
             { typeof(PredictMovementStep),     new PredictMovementStepHandler()     },
@@ -1285,6 +1286,9 @@ namespace TaskAutomation.Jobs
                     break;
                 case CameraCaptureStep camera:
                     parts.Add($"Camera={camera.Settings.CameraName}");
+                    break;
+                case FileSystemOperationStep fileSystem:
+                    parts.Add($"Operation={fileSystem.Settings.Operation}");
                     break;
                 case ProcessDuplicationStep processCapture:
                     parts.Add($"Process={processCapture.Settings.ProcessName}");

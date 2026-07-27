@@ -1,5 +1,29 @@
 [
   {
+    "version": "1.5.7",
+    "date": "2026-07-27",
+    "sections": [
+      {
+        "title": {
+          "de": "Dateien und Ordner",
+          "en": "Files and folders"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Jobs können Dateien und Ordner jetzt über direkt eingegebene Pfade oder Ergebnisse vorheriger Steps kopieren, verschieben, umbenennen und optional gefiltert löschen. Fehlende Zielordner und vorübergehend gesperrte Dateien werden konfigurierbar behandelt.",
+            "en": "Jobs can now copy, move, rename, and optionally filter-delete files and folders using directly entered paths or results from previous steps. Missing target folders and temporarily locked files can be handled with configurable behavior."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die erweiterten Wiederholungseinstellungen des Datei- und Ordner-Steps bleiben auch bei langen Beschriftungen vollständig lesbar.",
+            "en": "The advanced retry settings of the file and folder step remain fully readable even with long labels."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.6",
     "date": "2026-07-24",
     "sections": [

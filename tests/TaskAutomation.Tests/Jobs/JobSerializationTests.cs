@@ -93,6 +93,35 @@ public sealed class JobSerializationTests
     }
 
     [Fact]
+    public void RoundTrip_PreservesFileSystemOperationPathSourcesAndRetryDefaults()
+    {
+        JobStep step = new FileSystemOperationStep
+        {
+            Settings = new()
+            {
+                Operation = FileSystemOperation.Move,
+                SourceMode = FileSystemPathSource.TaskResult,
+                SourceResult = new() { SourceStepId = "source", PropertyId = "path", PropertyPath = "Path" },
+                TargetMode = FileSystemPathSource.TaskResult,
+                TargetResult = new() { SourceStepId = "target", PropertyId = "path", PropertyPath = "Path" }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(step);
+        var restored = Assert.IsType<FileSystemOperationStep>(
+            JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Contains("\"type\":\"file_system_operation\"", json);
+        Assert.Equal(FileSystemOperation.Move, restored.Settings.Operation);
+        Assert.Equal("source", restored.Settings.SourceResult.SourceStepId);
+        Assert.Equal("target", restored.Settings.TargetResult.SourceStepId);
+        Assert.True(restored.Settings.CreateParentDirectories);
+        Assert.True(restored.Settings.RetryLockedFiles);
+        Assert.Equal(3, restored.Settings.RetryCount);
+        Assert.Equal(100, restored.Settings.RetryDelayMs);
+    }
+
+    [Fact]
     public void NewJobStepIds_AreUniqueAndNonEmpty()
     {
         var ids = Enumerable.Range(0, 100).Select(_ => new TimeoutStep().Id).ToArray();

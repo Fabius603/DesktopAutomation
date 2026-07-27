@@ -25,6 +25,30 @@ public sealed class JobValidationTests
         Assert.True(JobValidation.ValidateStep([configured], configured).IsValid);
     }
 
+    [Fact]
+    public void ValidateStep_FileSystemOperationRequiresConfiguredActivePathSources()
+    {
+        var source = new WindowsStateQueryStep
+            { Id = "source", Settings = new() { QueryType = "filesystem.path", Parameters = new() { ["path"] = "C:\\source" } } };
+        var target = new WindowsStateQueryStep
+            { Id = "target", Settings = new() { QueryType = "filesystem.path", Parameters = new() { ["path"] = "C:\\target" } } };
+        var operation = new FileSystemOperationStep
+        {
+            Settings = new()
+            {
+                Operation = FileSystemOperation.Copy,
+                SourceMode = FileSystemPathSource.TaskResult,
+                SourceResult = new() { SourceStepId = "source", PropertyId = "path", PropertyPath = "Path" },
+                TargetMode = FileSystemPathSource.TaskResult,
+                TargetResult = new() { SourceStepId = "target", PropertyId = "path", PropertyPath = "Path" }
+            }
+        };
+
+        Assert.True(JobValidation.ValidateStep([source, target, operation], operation).IsValid);
+        operation.Settings.TargetResult = new();
+        Assert.False(JobValidation.ValidateStep([source, target, operation], operation).IsValid);
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(1.01)]

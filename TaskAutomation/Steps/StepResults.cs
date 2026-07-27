@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using TaskAutomation.Jobs;
 using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Steps;
@@ -109,6 +110,33 @@ public sealed record CameraCaptureResult : StepResultBase, ICaptureStepResult
     [ResultProperty("has_image")]
     public bool HasImage => Image is not null;
     public static readonly CameraCaptureResult Default = new();
+}
+
+public enum FileSystemItemType { File, Directory, Multiple }
+
+public sealed record FileSystemOperationResult : StepResultBase
+{
+    [ResultProperty("operation")]
+    public FileSystemOperation Operation { get; init; }
+    [ResultProperty("source_path")]
+    public string SourcePath { get; init; } = string.Empty;
+    [ResultProperty("target_path")]
+    public string TargetPath { get; init; } = string.Empty;
+    [ResultProperty("item_type")]
+    public FileSystemItemType ItemType { get; init; }
+    [ResultProperty("affected_count")]
+    public int AffectedCount { get; init; }
+    [ResultProperty("affected_file_count")]
+    public int AffectedFileCount { get; init; }
+    [ResultProperty("affected_directory_count")]
+    public int AffectedDirectoryCount { get; init; }
+    [ResultProperty("affected_bytes")]
+    public long AffectedBytes { get; init; }
+    [ResultProperty("affected_paths")]
+    public IReadOnlyList<string> AffectedPaths { get; init; } = Array.Empty<string>();
+    [ResultProperty("completed_at_utc")]
+    public DateTime CompletedAtUtc { get; init; }
+    public static readonly FileSystemOperationResult Default = new();
 }
 
 public sealed record ProcessDuplicationResult : StepResultBase, ICaptureStepResult

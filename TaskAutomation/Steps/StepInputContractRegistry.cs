@@ -43,6 +43,8 @@ public static class StepInputContractRegistry
     private static readonly AcceptedResultShape Detections = new(ResultValueKind.Detection, ResultCardinality.Collection);
     private static readonly AcceptedResultShape Process = new(ResultValueKind.ProcessReference,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
+    private static readonly AcceptedResultShape Text = new(ResultValueKind.Text,
+        ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape[] DisplayableText =
     [
         new(ResultValueKind.Text, ResultCardinality.Single, ResultCardinality.OptionalSingle),
@@ -75,7 +77,12 @@ public static class StepInputContractRegistry
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(ActiveWindowStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(PointComparisonStep)] = [Optional("points", CollectionConsumptionMode.AllValues, Points)],
-        [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText)]
+        [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText)],
+        [typeof(FileSystemOperationStep)] =
+        [
+            Optional("source", CollectionConsumptionMode.NotApplicable, Text),
+            Optional("target", CollectionConsumptionMode.NotApplicable, Text)
+        ]
     };
 
     public static IReadOnlyList<StepInputDescriptor> Get(Type stepType) =>

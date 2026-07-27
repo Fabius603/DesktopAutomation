@@ -157,6 +157,7 @@ public static class JobValidation
                 && new[] { "Linear", "Acceleration", "Kalman", "Automatic" }.Contains(s.Settings.PredictionModel),
             DesktopDuplicationStep s => s.Settings.DesktopIdx >= 0,
             CameraCaptureStep s => Text(s.Settings.CameraId),
+            FileSystemOperationStep s => FileSystemOperationConfigured(s.Settings),
             ShowImageStep s => Text(s.Settings.WindowName),
             VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName),
             MakroExecutionStep s => s.Settings.MakroId != null,
@@ -367,8 +368,37 @@ public static class JobValidation
             FocusProcessStep s => [("process", s.Settings.Target.ProcessSource)],
             ActiveWindowStep s => [("process", s.Settings.Target.ProcessSource)],
             ShowTextStep s when s.Settings.TextSource == ShowTextSource.TaskResult => [("text", s.Settings.TextResult)],
+            FileSystemOperationStep s =>
+                (s.Settings.SourceMode == FileSystemPathSource.TaskResult
+                    ? new[] { ("source", s.Settings.SourceResult) }
+                    : Array.Empty<(string, ResultBinding)>())
+                .Concat(s.Settings.Operation is FileSystemOperation.Copy or FileSystemOperation.Move
+                        && s.Settings.TargetMode == FileSystemPathSource.TaskResult
+                    ? new[] { ("target", s.Settings.TargetResult) }
+                    : Array.Empty<(string, ResultBinding)>()),
             _ => []
         };
+    }
+
+    private static bool FileSystemOperationConfigured(FileSystemOperationSettings settings)
+    {
+        var source = settings.SourceMode == FileSystemPathSource.TaskResult
+            ? settings.SourceResult.IsConfigured
+            : Text(settings.SourcePath);
+        var target = settings.Operation is not (FileSystemOperation.Copy or FileSystemOperation.Move)
+            || (settings.TargetMode == FileSystemPathSource.TaskResult
+                ? settings.TargetResult.IsConfigured
+                : Text(settings.TargetPath));
+        var action = settings.Operation != FileSystemOperation.Rename
+            || Text(settings.NewName)
+               && settings.NewName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0
+               && string.Equals(Path.GetFileName(settings.NewName), settings.NewName, StringComparison.Ordinal);
+        var filter = settings.Operation != FileSystemOperation.Delete
+            || string.IsNullOrWhiteSpace(settings.Filter)
+            || settings.Filter.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .All(value => value.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) < 0);
+        return source && target && action && filter
+            && settings.RetryCount >= 0 && settings.RetryDelayMs >= 0;
     }
 
     private static bool ProducesProcessReference(JobStep? step) => step switch

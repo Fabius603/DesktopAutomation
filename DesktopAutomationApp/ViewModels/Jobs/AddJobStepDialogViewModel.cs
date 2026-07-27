@@ -169,6 +169,8 @@ namespace DesktopAutomationApp.ViewModels
             ShowImageStep_DetectionsSource = Picker<ShowImageStep>("detections", allResultSources, false);
             ShowOnDesktopStep_DetectionsSource = Picker<ShowOnDesktopStep>("detections", allResultSources);
             ShowTextStep_TextResult = Picker<ShowTextStep>("text", allResultSources);
+            FileSystemOperationStep_SourceResult = Picker<FileSystemOperationStep>("source", allResultSources, false);
+            FileSystemOperationStep_TargetResult = Picker<FileSystemOperationStep>("target", allResultSources, false);
             VideoCreationStep_ImageSource = Picker<VideoCreationStep>("image", allResultSources);
             VideoCreationStep_DetectionsSource = Picker<VideoCreationStep>("detections", allResultSources, false);
             ActiveProcessStep_ProcessSource = Picker<ActiveProcessStep>("process", allResultSources, false);
@@ -183,6 +185,7 @@ namespace DesktopAutomationApp.ViewModels
                          KlickOnPoint3DStep_PointsSource, DynamicRoiStep_BoundsSource, DetectionDynamicRoiSource, ShowImageStep_ImageSource,
                          ShowImageStep_DetectionsSource, ShowOnDesktopStep_DetectionsSource, VideoCreationStep_ImageSource,
                          ShowTextStep_TextResult,
+                         FileSystemOperationStep_SourceResult, FileSystemOperationStep_TargetResult,
                          VideoCreationStep_DetectionsSource, ActiveProcessStep_ProcessSource, StartProcessStep_ProcessSource,
                          FocusProcessStep_ProcessSource, ActiveWindowStep_ProcessSource
                          , PointComparisonStep_ReferencePointsSource
@@ -204,6 +207,8 @@ namespace DesktopAutomationApp.ViewModels
             BrowseExecutablePathCommand = new RelayCommand(BrowseExecutablePath);
             BrowseFocusProcessPathCommand = new RelayCommand(BrowseFocusProcessPath);
             BrowseKeyPointMatchingTemplatePathCommand = new RelayCommand(BrowseKeyPointMatchingTemplatePath);
+            BrowseFileSystemSourceCommand = new RelayCommand(BrowseFileSystemSource);
+            BrowseFileSystemTargetCommand = new RelayCommand(BrowseFileSystemTarget);
             CaptureKeyPointMatchingRoiCommand = new RelayCommand(CaptureKeyPointMatchingRoi);
             CaptureColorDetectionRoiCommand = new RelayCommand(CaptureColorDetectionRoi);
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
@@ -378,6 +383,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseExecutablePathCommand { get; }
         public ICommand BrowseFocusProcessPathCommand { get; }
         public ICommand BrowseKeyPointMatchingTemplatePathCommand { get; }
+        public ICommand BrowseFileSystemSourceCommand { get; }
+        public ICommand BrowseFileSystemTargetCommand { get; }
         public ICommand CaptureKeyPointMatchingRoiCommand { get; }
         public ICommand CaptureColorDetectionRoiCommand { get; }
         public ICommand ChooseMonitorCommand { get; }
@@ -606,6 +613,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle für nachfolgende Steps bereit."),
                 new("CameraCapture", "BildAufnehmen",
                     "Nimmt ein Einzelbild mit der ausgewählten Kamera auf und stellt es als Bildquelle für nachfolgende Steps bereit."),
+                new("FileSystemOperation", "DateienOrdner",
+                    "Kopiert, verschiebt, benennt Dateien und Ordner um oder löscht sie optional anhand eines Filters."),
                 new("TemplateMatching",   "BildAuswerten",
                     "Vergleicht ein Bild-Template mit der Bildquelle aus einem Erfassungs-Step. Das Ergebnis kann von einem Click on Point Step verwendet werden."),
                 new("ColorDetection",     "BildAuswerten",
@@ -669,6 +678,7 @@ namespace DesktopAutomationApp.ViewModels
                 "BildAuswerten",
                 "MausTastatur",
                 "ProgrammeFenster",
+                "DateienOrdner",
                 "WindowsSystem",
                 "AnzeigenSpeichern",
                 "AblaufSteuern"
@@ -705,6 +715,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowPredictMovement => SelectedType == "PredictMovement";
         public bool ShowDesktopDuplication => SelectedType == "DesktopDuplication";
         public bool ShowCameraCapture => SelectedType == "CameraCapture";
+        public bool ShowFileSystemOperation => SelectedType == "FileSystemOperation";
         //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
         public bool ShowShowOnDesktop => SelectedType == "ShowOnDesktop";
@@ -843,6 +854,8 @@ namespace DesktopAutomationApp.ViewModels
         public ResultBindingPickerViewModel ShowImageStep_DetectionsSource { get; }
         public ResultBindingPickerViewModel ShowOnDesktopStep_DetectionsSource { get; }
         public ResultBindingPickerViewModel ShowTextStep_TextResult { get; }
+        public ResultBindingPickerViewModel FileSystemOperationStep_SourceResult { get; }
+        public ResultBindingPickerViewModel FileSystemOperationStep_TargetResult { get; }
         public ResultBindingPickerViewModel VideoCreationStep_ImageSource { get; }
         public ResultBindingPickerViewModel VideoCreationStep_DetectionsSource { get; }
         public ResultBindingPickerViewModel ActiveProcessStep_ProcessSource { get; }
@@ -1745,6 +1758,116 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        // ===== FileSystemOperation Felder =====
+        private FileSystemOperation _fileSystemOperationStepOperation = FileSystemOperation.Copy;
+        private FileSystemPathSource _fileSystemOperationStepSourceMode = FileSystemPathSource.ExplicitPath;
+        private string _fileSystemOperationStepSourcePath = string.Empty;
+        private FileSystemPathSource _fileSystemOperationStepTargetMode = FileSystemPathSource.ExplicitPath;
+        private string _fileSystemOperationStepTargetPath = string.Empty;
+        private string _fileSystemOperationStepNewName = string.Empty;
+        private string _fileSystemOperationStepFilter = string.Empty;
+        private bool _fileSystemOperationStepCreateParentDirectories = true;
+        private bool _fileSystemOperationStepRetryLockedFiles = true;
+        private int _fileSystemOperationStepRetryCount = 3;
+        private int _fileSystemOperationStepRetryDelayMs = 100;
+
+        public FileSystemOperation FileSystemOperationStep_Operation
+        {
+            get => _fileSystemOperationStepOperation;
+            set { _fileSystemOperationStepOperation = value; OnChange(string.Empty); }
+        }
+        public bool FileSystemOperationStep_IsCopy { get => FileSystemOperationStep_Operation == FileSystemOperation.Copy; set { if (value) FileSystemOperationStep_Operation = FileSystemOperation.Copy; } }
+        public bool FileSystemOperationStep_IsMove { get => FileSystemOperationStep_Operation == FileSystemOperation.Move; set { if (value) FileSystemOperationStep_Operation = FileSystemOperation.Move; } }
+        public bool FileSystemOperationStep_IsRename { get => FileSystemOperationStep_Operation == FileSystemOperation.Rename; set { if (value) FileSystemOperationStep_Operation = FileSystemOperation.Rename; } }
+        public bool FileSystemOperationStep_IsDelete { get => FileSystemOperationStep_Operation == FileSystemOperation.Delete; set { if (value) FileSystemOperationStep_Operation = FileSystemOperation.Delete; } }
+        public bool FileSystemOperationStep_ShowTarget => FileSystemOperationStep_Operation is FileSystemOperation.Copy or FileSystemOperation.Move;
+        public bool FileSystemOperationStep_ShowNewName => FileSystemOperationStep_Operation == FileSystemOperation.Rename;
+        public bool FileSystemOperationStep_ShowFilter => FileSystemOperationStep_Operation == FileSystemOperation.Delete;
+        public bool FileSystemOperationStep_ShowCreateParents => FileSystemOperationStep_ShowTarget;
+
+        public bool FileSystemOperationStep_IsExplicitSource
+        {
+            get => _fileSystemOperationStepSourceMode == FileSystemPathSource.ExplicitPath;
+            set { if (value) { _fileSystemOperationStepSourceMode = FileSystemPathSource.ExplicitPath; OnChange(string.Empty); } }
+        }
+        public bool FileSystemOperationStep_IsResultSource
+        {
+            get => _fileSystemOperationStepSourceMode == FileSystemPathSource.TaskResult;
+            set { if (value) { _fileSystemOperationStepSourceMode = FileSystemPathSource.TaskResult; OnChange(string.Empty); } }
+        }
+        public string FileSystemOperationStep_SourcePath
+        {
+            get => _fileSystemOperationStepSourcePath;
+            set { _fileSystemOperationStepSourcePath = value; OnChange(); }
+        }
+        public bool FileSystemOperationStep_IsExplicitTarget
+        {
+            get => _fileSystemOperationStepTargetMode == FileSystemPathSource.ExplicitPath;
+            set { if (value) { _fileSystemOperationStepTargetMode = FileSystemPathSource.ExplicitPath; OnChange(string.Empty); } }
+        }
+        public bool FileSystemOperationStep_IsResultTarget
+        {
+            get => _fileSystemOperationStepTargetMode == FileSystemPathSource.TaskResult;
+            set { if (value) { _fileSystemOperationStepTargetMode = FileSystemPathSource.TaskResult; OnChange(string.Empty); } }
+        }
+        public string FileSystemOperationStep_TargetPath
+        {
+            get => _fileSystemOperationStepTargetPath;
+            set { _fileSystemOperationStepTargetPath = value; OnChange(); }
+        }
+        public string FileSystemOperationStep_NewName { get => _fileSystemOperationStepNewName; set { _fileSystemOperationStepNewName = value; OnChange(); } }
+        public string FileSystemOperationStep_Filter { get => _fileSystemOperationStepFilter; set { _fileSystemOperationStepFilter = value; OnChange(); } }
+        public bool FileSystemOperationStep_CreateParentDirectories { get => _fileSystemOperationStepCreateParentDirectories; set { _fileSystemOperationStepCreateParentDirectories = value; OnChange(); } }
+        public bool FileSystemOperationStep_RetryLockedFiles { get => _fileSystemOperationStepRetryLockedFiles; set { _fileSystemOperationStepRetryLockedFiles = value; OnChange(string.Empty); } }
+        public int FileSystemOperationStep_RetryCount { get => _fileSystemOperationStepRetryCount; set { _fileSystemOperationStepRetryCount = value; OnChange(); } }
+        public int FileSystemOperationStep_RetryDelayMs { get => _fileSystemOperationStepRetryDelayMs; set { _fileSystemOperationStepRetryDelayMs = value; OnChange(); } }
+
+        private void BrowseFileSystemSource()
+        {
+            if (TryBrowseFileOrFolder(FileSystemOperationStep_SourcePath, out var selected))
+                FileSystemOperationStep_SourcePath = selected;
+        }
+
+        private void BrowseFileSystemTarget()
+        {
+            if (TryBrowseFileOrFolder(FileSystemOperationStep_TargetPath, out var selected))
+                FileSystemOperationStep_TargetPath = selected;
+        }
+
+        private static bool TryBrowseFileOrFolder(string currentPath, out string selectedPath)
+        {
+            const string folderPlaceholder = "Ordner auswählen";
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = Loc.Get("Ui.Step.FileSystem.BrowseTitle"),
+                Filter = Loc.Get("Ui.Step.FileSystem.AllFilesFilter"),
+                CheckFileExists = false,
+                ValidateNames = false,
+                Multiselect = false,
+                FileName = folderPlaceholder
+            };
+            try
+            {
+                var initial = string.IsNullOrWhiteSpace(currentPath)
+                    ? null
+                    : Directory.Exists(currentPath) ? currentPath : Path.GetDirectoryName(currentPath);
+                if (!string.IsNullOrWhiteSpace(initial) && Directory.Exists(initial))
+                    dialog.InitialDirectory = initial;
+            }
+            catch (ArgumentException) { }
+
+            if (dialog.ShowDialog() != true)
+            {
+                selectedPath = string.Empty;
+                return false;
+            }
+
+            selectedPath = File.Exists(dialog.FileName)
+                ? dialog.FileName
+                : Path.GetDirectoryName(dialog.FileName) ?? dialog.FileName;
+            return true;
+        }
+
         // ===== ProcessDuplication Felder =====
         //private string _processName = string.Empty;
         //public string ProcessName { get => _processName; set { _processName = value; OnChange(); (ConfirmCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
@@ -2570,6 +2693,25 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         CameraId = _cameraCaptureStepCameraId,
                         CameraName = _cameraCaptureStepCameraName
+                    }
+                },
+                "FileSystemOperation" => new FileSystemOperationStep
+                {
+                    Settings = new FileSystemOperationSettings
+                    {
+                        Operation = FileSystemOperationStep_Operation,
+                        SourceMode = _fileSystemOperationStepSourceMode,
+                        SourcePath = FileSystemOperationStep_SourcePath,
+                        SourceResult = FileSystemOperationStep_SourceResult.ToBinding(),
+                        TargetMode = _fileSystemOperationStepTargetMode,
+                        TargetPath = FileSystemOperationStep_TargetPath,
+                        TargetResult = FileSystemOperationStep_TargetResult.ToBinding(),
+                        NewName = FileSystemOperationStep_NewName,
+                        Filter = FileSystemOperationStep_Filter,
+                        CreateParentDirectories = FileSystemOperationStep_CreateParentDirectories,
+                        RetryLockedFiles = FileSystemOperationStep_RetryLockedFiles,
+                        RetryCount = FileSystemOperationStep_RetryCount,
+                        RetryDelayMs = FileSystemOperationStep_RetryDelayMs
                     }
                 },
                 //"ProcessDuplication" => new ProcessDuplicationStep

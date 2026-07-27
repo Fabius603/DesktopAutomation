@@ -2679,4 +2679,43 @@ Fehlermeldung:
   <data name="Ui.Step.Camera.FoundCount" xml:space="preserve"><value>Verfügbare Kameras: {0}</value></data>
   <data name="Ui.Step.Camera.LoadFailed" xml:space="preserve"><value>Kameras konnten nicht geladen werden: {0}</value></data>
   <data name="Ui.Step.Camera.Unavailable" xml:space="preserve"><value>{0} (nicht verfügbar)</value></data>
+  <data name="Step.Category.DateienOrdner" xml:space="preserve"><value>Dateien und Ordner</value></data>
+  <data name="Step.Type.FileSystemOperation" xml:space="preserve"><value>Datei oder Ordner bearbeiten</value></data>
+  <data name="Step.Description.FileSystemOperation" xml:space="preserve"><value>Kopiert, verschiebt, benennt Dateien und Ordner um oder löscht sie optional anhand eines Filters.</value></data>
+  <data name="Ui.Step.FileSystem.Operation" xml:space="preserve"><value>Aktion</value></data>
+  <data name="Ui.Step.FileSystem.OperationWithColon" xml:space="preserve"><value>Aktion: </value></data>
+  <data name="Ui.Step.FileSystem.Copy" xml:space="preserve"><value>Kopieren</value></data>
+  <data name="Ui.Step.FileSystem.Move" xml:space="preserve"><value>Verschieben</value></data>
+  <data name="Ui.Step.FileSystem.Rename" xml:space="preserve"><value>Umbenennen</value></data>
+  <data name="Ui.Step.FileSystem.Delete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Ui.Step.FileSystem.Source" xml:space="preserve"><value>Quelle</value></data>
+  <data name="Ui.Step.FileSystem.Target" xml:space="preserve"><value>Ziel</value></data>
+  <data name="Ui.Step.FileSystem.ExplicitPath" xml:space="preserve"><value>Pfad eingeben</value></data>
+  <data name="Ui.Step.FileSystem.StepResult" xml:space="preserve"><value>Ergebnis eines vorherigen Steps</value></data>
+  <data name="Ui.Step.FileSystem.NewName" xml:space="preserve"><value>Neuer Name</value></data>
+  <data name="Ui.Step.FileSystem.Filter" xml:space="preserve"><value>Optionaler Filter</value></data>
+  <data name="Ui.Step.FileSystem.FilterHint" xml:space="preserve"><value>Mehrere Filter mit Semikolon trennen, zum Beispiel *.tmp;*.log. Der Filter gilt nur für direkte Einträge im gewählten Ordner.</value></data>
+  <data name="Ui.Step.FileSystem.CreateParents" xml:space="preserve"><value>Fehlende übergeordnete Ordner automatisch erstellen</value></data>
+  <data name="Ui.Step.FileSystem.RetryLocked" xml:space="preserve"><value>Bei gesperrten Dateien wiederholen</value></data>
+  <data name="Ui.Step.FileSystem.RetryCount" xml:space="preserve"><value>Anzahl der Wiederholungen</value></data>
+  <data name="Ui.Step.FileSystem.RetryDelay" xml:space="preserve"><value>Wartezeit zwischen Versuchen (ms)</value></data>
+  <data name="Ui.Step.FileSystem.BrowseTitle" xml:space="preserve"><value>Datei oder Ordner auswählen</value></data>
+  <data name="Ui.Step.FileSystem.AllFilesFilter" xml:space="preserve"><value>Alle Dateien (*.*)|*.*</value></data>
+  <data name="Enum.FileSystemOperation.Copy" xml:space="preserve"><value>Kopieren</value></data>
+  <data name="Enum.FileSystemOperation.Move" xml:space="preserve"><value>Verschieben</value></data>
+  <data name="Enum.FileSystemOperation.Rename" xml:space="preserve"><value>Umbenennen</value></data>
+  <data name="Enum.FileSystemOperation.Delete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Enum.FileSystemItemType.File" xml:space="preserve"><value>Datei</value></data>
+  <data name="Enum.FileSystemItemType.Directory" xml:space="preserve"><value>Ordner</value></data>
+  <data name="Enum.FileSystemItemType.Multiple" xml:space="preserve"><value>Mehrere Einträge</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.Operation" xml:space="preserve"><value>Ausgeführte Aktion</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.SourcePath" xml:space="preserve"><value>Vollständiger Quellpfad</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.TargetPath" xml:space="preserve"><value>Vollständiger Zielpfad</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.ItemType" xml:space="preserve"><value>Art des Eintrags</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedCount" xml:space="preserve"><value>Bearbeitete Einträge</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedFileCount" xml:space="preserve"><value>Bearbeitete Dateien</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedDirectoryCount" xml:space="preserve"><value>Bearbeitete Ordner</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedBytes" xml:space="preserve"><value>Bearbeitete Bytes</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedPaths" xml:space="preserve"><value>Bearbeitete Pfade</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.CompletedAtUtc" xml:space="preserve"><value>Abgeschlossen am (UTC)</value></data>
 </root>

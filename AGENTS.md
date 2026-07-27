@@ -7,12 +7,15 @@ always be maintained together with the implementation.
 
 For every user-facing feature, behavior change, performance improvement, or bug fix:
 
-1. Add or update an entry in `DesktopAutomationApp/Resources/ReleaseNotes.json` in the
-   same change. Do not wait for a separate release task. New changes belong to the
-   next higher version after the latest existing release; never append them to an
-   older or already released version. If the next-version entry does not exist yet,
-   create it and increment `<Version>` in `DesktopAutomationApp/DesktopAutomationApp.csproj`
-   to the same version.
+1. Determine the current released version from Git `HEAD`, not from modified files in
+   the working tree. Read `<Version>` from
+   `git show HEAD:DesktopAutomationApp/DesktopAutomationApp.csproj`, increment its patch
+   component by exactly one, and use that version for all new changes. For example, if
+   Git `HEAD` contains `1.5.6`, new release notes and the working-tree project version
+   must use `1.5.7`. Never append new changes to the version currently stored in Git
+   `HEAD`, even if it is also the newest entry in `ReleaseNotes.json`. Create or update
+   the next-version entry and set `<Version>` in the working-tree
+   `DesktopAutomationApp/DesktopAutomationApp.csproj` to that same version.
 2. Write both German (`de`) and English (`en`) text. Describe the observable result for
    users rather than internal implementation details.
 3. Use only the existing categories `Added`, `Changed`, and `Fixed`.

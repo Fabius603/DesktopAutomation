@@ -1119,6 +1119,29 @@ namespace DesktopAutomationApp.ViewModels
                     vm.LoadCameraSelection(camera.Settings.CameraId, camera.Settings.CameraName);
                     break;
 
+                case FileSystemOperationStep fileSystem:
+                    vm.SelectedType = "FileSystemOperation";
+                    vm.FileSystemOperationStep_Operation = fileSystem.Settings.Operation;
+                    vm.FileSystemOperationStep_IsExplicitSource =
+                        fileSystem.Settings.SourceMode == FileSystemPathSource.ExplicitPath;
+                    vm.FileSystemOperationStep_IsResultSource =
+                        fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult;
+                    vm.FileSystemOperationStep_SourcePath = fileSystem.Settings.SourcePath;
+                    vm.FileSystemOperationStep_SourceResult.Load(fileSystem.Settings.SourceResult);
+                    vm.FileSystemOperationStep_IsExplicitTarget =
+                        fileSystem.Settings.TargetMode == FileSystemPathSource.ExplicitPath;
+                    vm.FileSystemOperationStep_IsResultTarget =
+                        fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult;
+                    vm.FileSystemOperationStep_TargetPath = fileSystem.Settings.TargetPath;
+                    vm.FileSystemOperationStep_TargetResult.Load(fileSystem.Settings.TargetResult);
+                    vm.FileSystemOperationStep_NewName = fileSystem.Settings.NewName;
+                    vm.FileSystemOperationStep_Filter = fileSystem.Settings.Filter;
+                    vm.FileSystemOperationStep_CreateParentDirectories = fileSystem.Settings.CreateParentDirectories;
+                    vm.FileSystemOperationStep_RetryLockedFiles = fileSystem.Settings.RetryLockedFiles;
+                    vm.FileSystemOperationStep_RetryCount = fileSystem.Settings.RetryCount;
+                    vm.FileSystemOperationStep_RetryDelayMs = fileSystem.Settings.RetryDelayMs;
+                    break;
+
                 case ShowImageStep si:
                     vm.SelectedType = "ShowImage";
                     vm.ShowImageStep_WindowName = si.Settings.WindowName;

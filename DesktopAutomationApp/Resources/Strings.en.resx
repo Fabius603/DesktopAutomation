@@ -2575,4 +2575,43 @@ Error:
   <data name="Ui.Step.Camera.FoundCount" xml:space="preserve"><value>Available cameras: {0}</value></data>
   <data name="Ui.Step.Camera.LoadFailed" xml:space="preserve"><value>Cameras could not be loaded: {0}</value></data>
   <data name="Ui.Step.Camera.Unavailable" xml:space="preserve"><value>{0} (unavailable)</value></data>
+  <data name="Step.Category.DateienOrdner" xml:space="preserve"><value>Files and folders</value></data>
+  <data name="Step.Type.FileSystemOperation" xml:space="preserve"><value>Edit file or folder</value></data>
+  <data name="Step.Description.FileSystemOperation" xml:space="preserve"><value>Copies, moves, renames, or deletes files and folders, optionally using a filter.</value></data>
+  <data name="Ui.Step.FileSystem.Operation" xml:space="preserve"><value>Action</value></data>
+  <data name="Ui.Step.FileSystem.OperationWithColon" xml:space="preserve"><value>Action: </value></data>
+  <data name="Ui.Step.FileSystem.Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Ui.Step.FileSystem.Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Ui.Step.FileSystem.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Ui.Step.FileSystem.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Ui.Step.FileSystem.Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Ui.Step.FileSystem.Target" xml:space="preserve"><value>Target</value></data>
+  <data name="Ui.Step.FileSystem.ExplicitPath" xml:space="preserve"><value>Enter path</value></data>
+  <data name="Ui.Step.FileSystem.StepResult" xml:space="preserve"><value>Result from a previous step</value></data>
+  <data name="Ui.Step.FileSystem.NewName" xml:space="preserve"><value>New name</value></data>
+  <data name="Ui.Step.FileSystem.Filter" xml:space="preserve"><value>Optional filter</value></data>
+  <data name="Ui.Step.FileSystem.FilterHint" xml:space="preserve"><value>Separate multiple filters with semicolons, for example *.tmp;*.log. The filter applies only to direct entries in the selected folder.</value></data>
+  <data name="Ui.Step.FileSystem.CreateParents" xml:space="preserve"><value>Automatically create missing parent folders</value></data>
+  <data name="Ui.Step.FileSystem.RetryLocked" xml:space="preserve"><value>Retry locked files</value></data>
+  <data name="Ui.Step.FileSystem.RetryCount" xml:space="preserve"><value>Number of retries</value></data>
+  <data name="Ui.Step.FileSystem.RetryDelay" xml:space="preserve"><value>Delay between attempts (ms)</value></data>
+  <data name="Ui.Step.FileSystem.BrowseTitle" xml:space="preserve"><value>Select file or folder</value></data>
+  <data name="Ui.Step.FileSystem.AllFilesFilter" xml:space="preserve"><value>All files (*.*)|*.*</value></data>
+  <data name="Enum.FileSystemOperation.Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Enum.FileSystemOperation.Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Enum.FileSystemOperation.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Enum.FileSystemOperation.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Enum.FileSystemItemType.File" xml:space="preserve"><value>File</value></data>
+  <data name="Enum.FileSystemItemType.Directory" xml:space="preserve"><value>Folder</value></data>
+  <data name="Enum.FileSystemItemType.Multiple" xml:space="preserve"><value>Multiple entries</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.Operation" xml:space="preserve"><value>Performed action</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.SourcePath" xml:space="preserve"><value>Full source path</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.TargetPath" xml:space="preserve"><value>Full target path</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.ItemType" xml:space="preserve"><value>Item type</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedCount" xml:space="preserve"><value>Affected entries</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedFileCount" xml:space="preserve"><value>Affected files</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedDirectoryCount" xml:space="preserve"><value>Affected folders</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedBytes" xml:space="preserve"><value>Affected bytes</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.AffectedPaths" xml:space="preserve"><value>Affected paths</value></data>
+  <data name="Step.ResultProperty.FileSystemOperationResult.CompletedAtUtc" xml:space="preserve"><value>Completed at (UTC)</value></data>
 </root>

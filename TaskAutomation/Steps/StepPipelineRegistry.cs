@@ -51,6 +51,12 @@ namespace TaskAutomation.Steps
                 ResultType:    typeof(ProcessDuplicationResult),
                 DisplayName:   "Prozess-Fensteraufnahme"),
 
+            [typeof(FileSystemOperationStep)] = new(
+                Prerequisites: [],
+                ResultType: typeof(FileSystemOperationResult),
+                IsConditionSource: true,
+                DisplayName: "Datei oder Ordner bearbeiten"),
+
             // ── Erkennung ──────────────────────────────────────────────────────
             [typeof(TemplateMatchingStep)] = new(
                 Prerequisites:     ["Image"],
@@ -223,6 +229,7 @@ namespace TaskAutomation.Steps
         {
             ["DesktopDuplication"] = typeof(DesktopDuplicationStep),
             ["CameraCapture"]      = typeof(CameraCaptureStep),
+            ["FileSystemOperation"] = typeof(FileSystemOperationStep),
             ["TemplateMatching"]   = typeof(TemplateMatchingStep),
             ["ColorDetection"]     = typeof(ColorDetectionStep),
             ["PredictMovement"]    = typeof(PredictMovementStep),

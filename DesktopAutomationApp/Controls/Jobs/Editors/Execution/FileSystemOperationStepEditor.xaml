@@ -1,0 +1,96 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Execution.FileSystemOperationStepEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared"
+             xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs">
+    <StackPanel>
+        <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.Operation}"
+                   Style="{StaticResource StepFieldLabel}" Margin="0,0,0,6"/>
+        <WrapPanel Margin="0,0,0,12">
+            <RadioButton GroupName="FileSystemOperation" Content="{loc:Translate Key=Ui.Step.FileSystem.Copy}"
+                         IsChecked="{Binding FileSystemOperationStep_IsCopy}" Margin="0,0,14,6"/>
+            <RadioButton GroupName="FileSystemOperation" Content="{loc:Translate Key=Ui.Step.FileSystem.Move}"
+                         IsChecked="{Binding FileSystemOperationStep_IsMove}" Margin="0,0,14,6"/>
+            <RadioButton GroupName="FileSystemOperation" Content="{loc:Translate Key=Ui.Step.FileSystem.Rename}"
+                         IsChecked="{Binding FileSystemOperationStep_IsRename}" Margin="0,0,14,6"/>
+            <RadioButton GroupName="FileSystemOperation" Content="{loc:Translate Key=Ui.Step.FileSystem.Delete}"
+                         IsChecked="{Binding FileSystemOperationStep_IsDelete}" Margin="0,0,0,6"/>
+        </WrapPanel>
+
+        <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.Source}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <RadioButton GroupName="FileSystemSource" Content="{loc:Translate Key=Ui.Step.FileSystem.ExplicitPath}"
+                         IsChecked="{Binding FileSystemOperationStep_IsExplicitSource}" Margin="0,0,16,0"/>
+            <RadioButton GroupName="FileSystemSource" Content="{loc:Translate Key=Ui.Step.FileSystem.StepResult}"
+                         IsChecked="{Binding FileSystemOperationStep_IsResultSource}"/>
+        </StackPanel>
+        <shared:PathPickerField PathValue="{Binding FileSystemOperationStep_SourcePath}"
+                                BrowseCommand="{Binding BrowseFileSystemSourceCommand}"
+                                Visibility="{Binding FileSystemOperationStep_IsExplicitSource, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,0,10"/>
+        <Grid Visibility="{Binding FileSystemOperationStep_IsResultSource, Converter={StaticResource BooleanToVisibilityConverter}}"
+              Margin="0,0,0,10">
+            <jobs:ResultBindingPicker DataContext="{Binding FileSystemOperationStep_SourceResult}"/>
+        </Grid>
+
+        <StackPanel Visibility="{Binding FileSystemOperationStep_ShowTarget, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.Target}" FontWeight="SemiBold" Margin="0,2,0,6"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <RadioButton GroupName="FileSystemTarget" Content="{loc:Translate Key=Ui.Step.FileSystem.ExplicitPath}"
+                             IsChecked="{Binding FileSystemOperationStep_IsExplicitTarget}" Margin="0,0,16,0"/>
+                <RadioButton GroupName="FileSystemTarget" Content="{loc:Translate Key=Ui.Step.FileSystem.StepResult}"
+                             IsChecked="{Binding FileSystemOperationStep_IsResultTarget}"/>
+            </StackPanel>
+            <shared:PathPickerField PathValue="{Binding FileSystemOperationStep_TargetPath}"
+                                    BrowseCommand="{Binding BrowseFileSystemTargetCommand}"
+                                    Visibility="{Binding FileSystemOperationStep_IsExplicitTarget, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,0,10"/>
+            <Grid Visibility="{Binding FileSystemOperationStep_IsResultTarget, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Margin="0,0,0,10">
+                <jobs:ResultBindingPicker DataContext="{Binding FileSystemOperationStep_TargetResult}"/>
+            </Grid>
+        </StackPanel>
+
+        <Grid Style="{StaticResource StepFieldGrid}"
+              Visibility="{Binding FileSystemOperationStep_ShowNewName, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.NewName}" Style="{StaticResource StepFieldLabel}"/>
+            <TextBox Grid.Column="1" Text="{Binding FileSystemOperationStep_NewName, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <Grid Style="{StaticResource StepFieldGrid}"
+              Visibility="{Binding FileSystemOperationStep_ShowFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.Filter}" Style="{StaticResource StepFieldLabel}"/>
+            <TextBox Grid.Column="1" Text="{Binding FileSystemOperationStep_Filter, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.FilterHint}"
+                   Foreground="{DynamicResource App.Brush.TextMuted}" TextWrapping="Wrap" Margin="140,-4,0,10"
+                   Visibility="{Binding FileSystemOperationStep_ShowFilter, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <CheckBox Content="{loc:Translate Key=Ui.Step.FileSystem.CreateParents}"
+                  IsChecked="{Binding FileSystemOperationStep_CreateParentDirectories}"
+                  Visibility="{Binding FileSystemOperationStep_ShowCreateParents, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Margin="0,0,0,8"/>
+
+        <Expander Style="{StaticResource StepAdvancedExpander}">
+            <StackPanel Margin="0,10,0,0">
+                <CheckBox Content="{loc:Translate Key=Ui.Step.FileSystem.RetryLocked}"
+                          IsChecked="{Binding FileSystemOperationStep_RetryLockedFiles}" Margin="0,0,0,8"/>
+                <StackPanel Visibility="{Binding FileSystemOperationStep_RetryLockedFiles, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,0,8">
+                    <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.RetryCount}"
+                               Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
+                    <TextBox Width="100" HorizontalAlignment="Left"
+                             Text="{Binding FileSystemOperationStep_RetryCount, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Visibility="{Binding FileSystemOperationStep_RetryLockedFiles, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{loc:Translate Key=Ui.Step.FileSystem.RetryDelay}"
+                               Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
+                    <TextBox Width="100" HorizontalAlignment="Left"
+                             Text="{Binding FileSystemOperationStep_RetryDelayMs, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

@@ -31,6 +31,7 @@
         <DataTemplate x:Key="MakroExecutionEditor"><execution:MakroExecutionStepEditor/></DataTemplate>
         <DataTemplate x:Key="JobExecutionEditor"><execution:JobExecutionStepEditor/></DataTemplate>
         <DataTemplate x:Key="ScriptExecutionEditor"><execution:ScriptExecutionStepEditor/></DataTemplate>
+        <DataTemplate x:Key="FileSystemOperationEditor"><execution:FileSystemOperationStepEditor/></DataTemplate>
         <DataTemplate x:Key="KlickOnPointEditor"><interaction:KlickOnPointStepEditor/></DataTemplate>
         <DataTemplate x:Key="KlickOnPoint3DEditor"><interaction:KlickOnPoint3DStepEditor/></DataTemplate>
         <DataTemplate x:Key="YoloDetectionEditor"><detection:YoloDetectionStepEditor/></DataTemplate>
@@ -115,6 +116,7 @@
                                 <DataTrigger Binding="{Binding SelectedType}" Value="MakroExecution"><Setter Property="ContentTemplate" Value="{StaticResource MakroExecutionEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="JobExecution"><Setter Property="ContentTemplate" Value="{StaticResource JobExecutionEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ScriptExecution"><Setter Property="ContentTemplate" Value="{StaticResource ScriptExecutionEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="FileSystemOperation"><Setter Property="ContentTemplate" Value="{StaticResource FileSystemOperationEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="KlickOnPoint"><Setter Property="ContentTemplate" Value="{StaticResource KlickOnPointEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="KlickOnPoint3D"><Setter Property="ContentTemplate" Value="{StaticResource KlickOnPoint3DEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="YoloDetection"><Setter Property="ContentTemplate" Value="{StaticResource YoloDetectionEditor}"/></DataTrigger>

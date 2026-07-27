@@ -20,6 +20,7 @@ public sealed class JobStepDetailsProvider
             ["CaptureCursor"] = "Ui.Step.Settings.CaptureMousePointer",
             ["ClearOnJobEnd"] = "Ui.Step.Settings.RemoveWhenJobEnds",
             ["ColorHex"] = "Ui.Step.Settings.Color",
+            ["CreateParentDirectories"] = "Ui.Step.FileSystem.CreateParents",
             ["CombineMode"] = "Ui.Step.Settings.CombineWith",
             ["ConfidenceThreshold"] = "Ui.Step.Settings.ConfidencePercent",
             ["DelayMs"] = "Ui.Step.Settings.WaitTimeMs",
@@ -32,7 +33,10 @@ public sealed class JobStepDetailsProvider
             ["ExpressionSettings"] = "Ui.Step.Settings.AxisExpressions",
             ["Expressions"] = "Ui.Step.Settings.AxisExpressions",
             ["FontSize"] = "Ui.Step.Settings.FontSizePt",
+            ["Filter"] = "Ui.Step.FileSystem.Filter",
             ["FullSearchInterval"] = "Ui.Step.DynamicRoi.FullSearchInterval",
+            ["NewName"] = "Ui.Step.FileSystem.NewName",
+            ["Operation"] = "Ui.Step.FileSystem.Operation",
             ["ImageSource"] = "Ui.Step.Settings.ImageSource",
             ["JobId"] = "Ui.Step.Settings.Job",
             ["JobName"] = "Ui.Step.Settings.Job",
@@ -65,13 +69,20 @@ public sealed class JobStepDetailsProvider
             ["ReferenceY"] = "Ui.Step.Settings.Y",
             ["ResetAfterMisses"] = "Ui.Step.DynamicRoi.ResetAfterMisses",
             ["ResetDistanceThreshold"] = "Ui.Step.Settings.ResetAtDistance",
+            ["RetryCount"] = "Ui.Step.FileSystem.RetryCount",
+            ["RetryDelayMs"] = "Ui.Step.FileSystem.RetryDelay",
+            ["RetryLockedFiles"] = "Ui.Step.FileSystem.RetryLocked",
             ["ROI"] = "Ui.Step.Settings.ROI",
             ["ScriptPath"] = "Ui.Step.Settings.ScriptPath",
+            ["SourcePath"] = "Ui.Step.FileSystem.Source",
+            ["SourceResult"] = "Ui.Step.FileSystem.Source",
             ["Settings"] = "Ui.Job.Steps.DetailProperty.Settings",
             ["SkipEndSteps"] = "Ui.Step.Settings.SkipEndSteps",
             ["Source"] = "Ui.Step.Settings.PointSource",
             ["SourceStepId"] = "Ui.Step.Settings.SourceStep",
             ["Target"] = "Ui.Job.Steps.DetailProperty.Target",
+            ["TargetPath"] = "Ui.Step.FileSystem.Target",
+            ["TargetResult"] = "Ui.Step.FileSystem.Target",
             ["TemplateMatchMode"] = "Ui.Step.Settings.MatchMode",
             ["TemplatePath"] = "Ui.Step.Settings.Template",
             ["Text"] = "Ui.Step.Settings.DisplayText",
@@ -170,6 +181,35 @@ public sealed class JobStepDetailsProvider
         if (value is ResultBinding binding) return binding.IsConfigured;
         if (value is null) return false;
         if (owner is CameraCaptureSettings && name == nameof(CameraCaptureSettings.CameraId)) return false;
+        if (owner is FileSystemOperationSettings fileSystem)
+        {
+            if (name is nameof(FileSystemOperationSettings.SourceMode)
+                or nameof(FileSystemOperationSettings.TargetMode))
+                return false;
+            if (name == nameof(FileSystemOperationSettings.SourcePath))
+                return fileSystem.SourceMode == FileSystemPathSource.ExplicitPath;
+            if (name == nameof(FileSystemOperationSettings.SourceResult))
+                return fileSystem.SourceMode == FileSystemPathSource.TaskResult;
+            if (name is nameof(FileSystemOperationSettings.TargetPath)
+                or nameof(FileSystemOperationSettings.TargetResult))
+            {
+                if (fileSystem.Operation is not (FileSystemOperation.Copy or FileSystemOperation.Move))
+                    return false;
+                return name == nameof(FileSystemOperationSettings.TargetPath)
+                    ? fileSystem.TargetMode == FileSystemPathSource.ExplicitPath
+                    : fileSystem.TargetMode == FileSystemPathSource.TaskResult;
+            }
+            if (name == nameof(FileSystemOperationSettings.NewName))
+                return fileSystem.Operation == FileSystemOperation.Rename;
+            if (name == nameof(FileSystemOperationSettings.Filter))
+                return fileSystem.Operation == FileSystemOperation.Delete
+                    && !string.IsNullOrWhiteSpace(fileSystem.Filter);
+            if (name == nameof(FileSystemOperationSettings.CreateParentDirectories))
+                return fileSystem.Operation is FileSystemOperation.Copy or FileSystemOperation.Move;
+            if (name is nameof(FileSystemOperationSettings.RetryCount)
+                or nameof(FileSystemOperationSettings.RetryDelayMs))
+                return fileSystem.RetryLockedFiles;
+        }
 
         if (owner is ProcessTargetSettings target)
             return target.ProcessSource.IsConfigured
