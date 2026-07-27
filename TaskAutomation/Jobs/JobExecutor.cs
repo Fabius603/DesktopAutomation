@@ -75,6 +75,7 @@ namespace TaskAutomation.Jobs
             { typeof(ShowImageStep),           new ShowImageStepHandler()           },
             { typeof(ShowOnDesktopStep),        new ShowOnDesktopStepHandler()       },
             { typeof(VideoCreationStep),       new VideoCreationStepHandler()       },
+            { typeof(SaveImageStep),           new SaveImageStepHandler()           },
             { typeof(MakroExecutionStep),      new MakroExecutionStepHandler()      },
             { typeof(ScriptExecutionStep),     new ScriptExecutionStepHandler()     },
             { typeof(KlickOnPointStep),        new KlickOnPointStepHandler()        },
@@ -811,12 +812,14 @@ namespace TaskAutomation.Jobs
                 foreach (var winName in pipelineCtx.OpenedWindowNames)
                     try { _imageDisplayService.CloseWindow(winName); } catch { /* best-effort */ }
 
-                // Desktop-Ergebnis-Overlay leeren (ShowOnDesktopStep).
-                if (job.EnumerateAllSteps().OfType<ShowOnDesktopStep>().Any())
-                    try { _desktopResultOverlay.Clear(); } catch { /* best-effort */ }
+                // Nur Anzeigen dieses Jobs aufräumen; parallele Jobs bleiben sichtbar.
+                var overlayStepKeys = job.EnumerateAllSteps()
+                    .Where(step => step is ShowOnDesktopStep or ShowTextStep)
+                    .Select(step => step.Id)
+                    .ToArray();
 
-                // Text-Overlay: bei Job-Ende aufräumen (ShowTextStep mit ClearOnJobEnd).
-                try { _desktopResultOverlay.OnJobEnded(); } catch { /* best-effort */ }
+                // Dauerhafte Texte bleiben erhalten, alle Erkennungsanzeigen dieses Jobs werden entfernt.
+                try { _desktopResultOverlay.OnJobEnded(overlayStepKeys); } catch { /* best-effort */ }
                 try { WindowsInputBlockController.Unblock(); } catch { /* best-effort */ }
 
                 if (recorderStarted && pipelineCtx.VideoRecorder != null)
@@ -1305,6 +1308,9 @@ namespace TaskAutomation.Jobs
                     parts.Add(!video.Settings.DetectionsSource.IsConfigured
                         ? "DetectionOverlay=None"
                         : $"DetectionOverlay={video.Settings.DetectionsSource.SourceStepId}.{video.Settings.DetectionsSource.PropertyPath}");
+                    break;
+                case SaveImageStep saveImage:
+                    parts.Add($"Output={Path.Combine(saveImage.Settings.SavePath, saveImage.Settings.FileName)}");
                     break;
                 case ScriptExecutionStep script:
                     parts.Add($"Script={script.Settings.ScriptPath}");

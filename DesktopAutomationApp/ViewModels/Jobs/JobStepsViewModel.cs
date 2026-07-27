@@ -1116,7 +1116,10 @@ namespace DesktopAutomationApp.ViewModels
 
                 case CameraCaptureStep camera:
                     vm.SelectedType = "CameraCapture";
-                    vm.LoadCameraSelection(camera.Settings.CameraId, camera.Settings.CameraName);
+                    vm.LoadCameraSelection(
+                        camera.Settings.CameraId,
+                        camera.Settings.CameraName,
+                        camera.Settings);
                     break;
 
                 case FileSystemOperationStep fileSystem:
@@ -1146,12 +1149,12 @@ namespace DesktopAutomationApp.ViewModels
                     vm.SelectedType = "ShowImage";
                     vm.ShowImageStep_WindowName = si.Settings.WindowName;
                     vm.ShowImageStep_ImageSource.Load(si.Settings.ImageSource);
-                    vm.ShowImageStep_DetectionsSource.Load(si.Settings.DetectionsSource);
+                    vm.LoadOverlay(si.Settings.Overlay, si.Settings.DetectionsSource);
                     break;
 
                 case ShowOnDesktopStep sod:
                     vm.SelectedType = "ShowOnDesktop";
-                    vm.ShowOnDesktopStep_DetectionsSource.Load(sod.Settings.DetectionsSource);
+                    vm.LoadOverlay(sod.Settings.Overlay, sod.Settings.DetectionsSource);
                     break;
 
                 case VideoCreationStep v:
@@ -1159,7 +1162,15 @@ namespace DesktopAutomationApp.ViewModels
                     vm.VideoCreationStep_SavePath = v.Settings.SavePath;
                     vm.VideoCreationStep_FileName = v.Settings.FileName;
                     vm.VideoCreationStep_ImageSource.Load(v.Settings.ImageSource);
-                    vm.VideoCreationStep_DetectionsSource.Load(v.Settings.DetectionsSource);
+                    vm.LoadOverlay(v.Settings.Overlay, v.Settings.DetectionsSource);
+                    break;
+
+                case SaveImageStep saveImage:
+                    vm.SelectedType = "SaveImage";
+                    vm.SaveImageStep_SavePath = saveImage.Settings.SavePath;
+                    vm.SaveImageStep_FileName = saveImage.Settings.FileName;
+                    vm.SaveImageStep_ImageSource.Load(saveImage.Settings.ImageSource);
+                    vm.LoadOverlay(saveImage.Settings.Overlay);
                     break;
 
                 case MakroExecutionStep me:

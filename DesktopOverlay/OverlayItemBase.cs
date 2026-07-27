@@ -32,6 +32,8 @@ namespace DesktopOverlay
             // Konkrete Items überschreiben diesen Hook.
         }
 
+        protected void InvalidateSetup() => IsSetup = false;
+
         protected (float x, float y) Map(float gx, float gy) => Transform.Apply(gx, gy);
 
         public abstract void Draw(Graphics gfx);

@@ -10,12 +10,15 @@ namespace TaskAutomation.Events
     {
         public void ShowResult(IReadOnlyList<Steps.DetectionItem> allDetections) { }
         public void Clear() { }
+        public void ShowOverlay(string stepKey, Steps.ResolvedVisualOverlay overlay) { }
+        public void ClearOverlay(string stepKey) { }
         public void ShowText(string stepKey, string text, float fontSize,
                              byte r, byte g, byte b, byte a,
                              int desktopIndex, int offsetX, int offsetY,
                              int durationMs, bool clearOnJobEnd) { }
         public void ClearText() { }
         public void OnJobEnded() { }
+        public void OnJobEnded(IReadOnlyCollection<string> stepKeys) { }
         public void Dispose() { }
     }
 }

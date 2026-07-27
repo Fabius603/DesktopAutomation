@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows;
@@ -10,11 +11,34 @@ namespace DesktopAutomationApp.Views
     public partial class ImagePreviewWindow : Window
     {
         private WriteableBitmap? _wbm;
+        private bool _allowClose;
 
         public ImagePreviewWindow(string title)
         {
             InitializeComponent();
             Title = title;
+        }
+
+        /// <summary>
+        /// Schließt das Vorschaufenster endgültig, wenn der zugehörige Job endet.
+        /// Das Schließen über das X wird dagegen als Minimieren behandelt.
+        /// </summary>
+        public void CloseFromJob()
+        {
+            _allowClose = true;
+            Close();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (!_allowClose)
+            {
+                e.Cancel = true;
+                WindowState = WindowState.Minimized;
+                return;
+            }
+
+            base.OnClosing(e);
         }
 
         /// <summary>

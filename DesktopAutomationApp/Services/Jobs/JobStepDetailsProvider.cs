@@ -17,6 +17,9 @@ public sealed class JobStepDetailsProvider
         {
             ["BoundsSource"] = "Ui.Step.DynamicRoi.Source",
             ["CameraName"] = "Ui.Step.Camera.Camera",
+            ["QualityMode"] = "Ui.Step.Camera.Quality",
+            ["FramesPerSecond"] = "Ui.Step.Camera.FramesPerSecond",
+            ["PixelFormat"] = "Ui.Step.Camera.PixelFormat",
             ["CaptureCursor"] = "Ui.Step.Settings.CaptureMousePointer",
             ["ClearOnJobEnd"] = "Ui.Step.Settings.RemoveWhenJobEnds",
             ["ColorHex"] = "Ui.Step.Settings.Color",
@@ -34,6 +37,7 @@ public sealed class JobStepDetailsProvider
             ["Expressions"] = "Ui.Step.Settings.AxisExpressions",
             ["FontSize"] = "Ui.Step.Settings.FontSizePt",
             ["Filter"] = "Ui.Step.FileSystem.Filter",
+            ["FileName"] = "Ui.Step.Settings.FileName",
             ["FullSearchInterval"] = "Ui.Step.DynamicRoi.FullSearchInterval",
             ["NewName"] = "Ui.Step.FileSystem.NewName",
             ["Operation"] = "Ui.Step.FileSystem.Operation",
@@ -74,6 +78,7 @@ public sealed class JobStepDetailsProvider
             ["RetryLockedFiles"] = "Ui.Step.FileSystem.RetryLocked",
             ["ROI"] = "Ui.Step.Settings.ROI",
             ["ScriptPath"] = "Ui.Step.Settings.ScriptPath",
+            ["SavePath"] = "Ui.Step.Settings.SavePath",
             ["SourcePath"] = "Ui.Step.FileSystem.Source",
             ["SourceResult"] = "Ui.Step.FileSystem.Source",
             ["Settings"] = "Ui.Job.Steps.DetailProperty.Settings",
@@ -181,6 +186,12 @@ public sealed class JobStepDetailsProvider
         if (value is ResultBinding binding) return binding.IsConfigured;
         if (value is null) return false;
         if (owner is CameraCaptureSettings && name == nameof(CameraCaptureSettings.CameraId)) return false;
+        if (owner is CameraCaptureSettings camera
+            && name is nameof(CameraCaptureSettings.Width)
+                or nameof(CameraCaptureSettings.Height)
+                or nameof(CameraCaptureSettings.FramesPerSecond)
+                or nameof(CameraCaptureSettings.PixelFormat))
+            return camera.QualityMode == CameraQualityMode.Specific;
         if (owner is FileSystemOperationSettings fileSystem)
         {
             if (name is nameof(FileSystemOperationSettings.SourceMode)
@@ -389,6 +400,9 @@ public sealed class JobStepDetailsProvider
         OpenCvSharp.Rect rectangle => $"X {rectangle.X}  ·  Y {rectangle.Y}  ·  {rectangle.Width} × {rectangle.Height} px",
         double number => number.ToString("0.###", CultureInfo.CurrentCulture),
         float number => number.ToString("0.###", CultureInfo.CurrentCulture),
+        CameraQualityMode.Automatic => Loc.Get("Ui.Step.Camera.QualityAutomatic"),
+        CameraQualityMode.HighestAvailable => Loc.Get("Ui.Step.Camera.QualityHighest"),
+        CameraQualityMode.Specific => Loc.Get("Ui.Step.Camera.QualitySpecific"),
         IEnumerable sequence when value is not string => string.Join(", ", sequence.Cast<object>()),
         _ => value.ToString() ?? "–"
     };

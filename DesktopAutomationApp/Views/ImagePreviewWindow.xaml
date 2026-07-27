@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Width="640" Height="360"
         ResizeMode="CanResize"
-        ShowInTaskbar="False"
+        ShowInTaskbar="True"
         WindowStyle="SingleBorderWindow"
         Background="#FF1E1E1E"
         MinWidth="100" MinHeight="80">

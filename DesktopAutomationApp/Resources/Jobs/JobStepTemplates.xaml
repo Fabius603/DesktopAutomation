@@ -23,6 +23,7 @@
         <ResourceDictionary Source="/Resources/Jobs/Templates/Output/ShowOnDesktopStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Output/ShowTextStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Output/VideoCreationStep.xaml"/>
+        <ResourceDictionary Source="/Resources/Jobs/Templates/Output/SaveImageStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/JobExecutionStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/MakroExecutionStep.xaml"/>
         <ResourceDictionary Source="/Resources/Jobs/Templates/Execution/ScriptExecutionStep.xaml"/>

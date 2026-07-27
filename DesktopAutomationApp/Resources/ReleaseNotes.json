@@ -1,5 +1,54 @@
 [
   {
+    "version": "1.5.8",
+    "date": "2026-07-27",
+    "sections": [
+      {
+        "title": {
+          "de": "Bildausgabe",
+          "en": "Image output"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Beim Kamera-Aufnahme-Step kann jetzt zwischen dem Kamerastandard, der besten verfügbaren Qualität und den vom ausgewählten Gerät unterstützten Kombinationen aus Auflösung, Bildrate und Pixelformat gewählt werden.",
+            "en": "The camera capture step now lets users choose between the camera default, the highest available quality, and the selected device's supported combinations of resolution, frame rate, and pixel format."
+          },
+          {
+            "category": "Changed",
+            "de": "Fenster des Steps „Bild anzeigen“ werden jetzt in der Taskleiste angezeigt. Das Schließen über das X minimiert das Fenster, damit laufende Jobs kein neues Fenster erzeugen und die Bildausgabe jederzeit wiedergefunden werden kann.",
+            "en": "Windows created by the “Show image” step now appear in the taskbar. Closing them with the X minimizes the window so running jobs do not create another window and the image output remains easy to find."
+          },
+          {
+            "category": "Fixed",
+            "de": "Das Stoppen eines Jobs während einer laufenden Kameraaufnahme löst im Kamera-Worker keine sichtbare Abbruchausnahme mehr aus und wird weiterhin regulär als gestoppter Job behandelt.",
+            "en": "Stopping a job during an active camera capture no longer raises a visible cancellation exception in the camera worker and is still handled normally as a stopped job."
+          },
+          {
+            "category": "Added",
+            "de": "Jobs können Bilder aus vorherigen Aufnahme-Steps jetzt als PNG-, JPEG-, BMP-, GIF- oder TIFF-Datei in einem wählbaren Ordner speichern.",
+            "en": "Jobs can now save images from previous capture steps as PNG, JPEG, BMP, GIF, or TIFF files in a selectable folder."
+          },
+          {
+            "category": "Changed",
+            "de": "Video, Bild anzeigen und Bild speichern können beliebig viele Erkennungs- und andere Step-Ergebnisse auf dem Bild darstellen. Ergebniswerte lassen sich mit Schriftgröße, Farbe, Deckkraft und Position als Text einblenden; Ergebnislisten und erweiterte Einstellungen sind klarer und kompakter gestaltet.",
+            "en": "Video, show image, and save image can now render any number of detection and other step results on the image. Result values can be overlaid as text with configurable font size, color, opacity, and position; result lists and advanced settings now use a clearer, more compact layout."
+          },
+          {
+            "category": "Changed",
+            "de": "Der Desktop-Anzeige-Step unterstützt jetzt mehrere Erkennungs- und Textergebnisse gleichzeitig. Der Zielmonitor eines Textresultats kann direkt über „Aufnehmen“ ausgewählt werden. Anzeigen paralleler Jobs werden getrennt verwaltet; der bisherige reine Text-Step wird für neue Jobs nicht mehr angeboten.",
+            "en": "The desktop display step now supports multiple detection and text results at the same time. The target monitor for a text result can be selected directly using “Capture”. Displays from parallel jobs are managed independently, and the previous text-only step is no longer offered for new jobs."
+          },
+          {
+            "category": "Fixed",
+            "de": "Wiederholte YOLO-Auswertungen verwenden nach Bildänderungen zuverlässig den neuesten Frame. Erkennungen und eingeblendete Ergebniswerte werden dadurch aktualisiert; Textresultate sind auch in der Desktop-Anzeige zuverlässig sichtbar.",
+            "en": "Repeated YOLO evaluations now reliably use the newest frame after image changes. Detections and overlaid result values therefore update, and text results are now reliably visible in the desktop display."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.7",
     "date": "2026-07-27",
     "sections": [

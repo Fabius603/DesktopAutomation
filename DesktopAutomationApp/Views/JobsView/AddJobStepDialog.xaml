@@ -28,6 +28,7 @@
         <DataTemplate x:Key="ShowImageEditor"><output:ShowImageStepEditor/></DataTemplate>
         <DataTemplate x:Key="ShowOnDesktopEditor"><output:ShowOnDesktopStepEditor/></DataTemplate>
         <DataTemplate x:Key="VideoCreationEditor"><output:VideoCreationStepEditor/></DataTemplate>
+        <DataTemplate x:Key="SaveImageEditor"><output:SaveImageStepEditor/></DataTemplate>
         <DataTemplate x:Key="MakroExecutionEditor"><execution:MakroExecutionStepEditor/></DataTemplate>
         <DataTemplate x:Key="JobExecutionEditor"><execution:JobExecutionStepEditor/></DataTemplate>
         <DataTemplate x:Key="ScriptExecutionEditor"><execution:ScriptExecutionStepEditor/></DataTemplate>
@@ -113,6 +114,7 @@
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ShowImage"><Setter Property="ContentTemplate" Value="{StaticResource ShowImageEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ShowOnDesktop"><Setter Property="ContentTemplate" Value="{StaticResource ShowOnDesktopEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="VideoCreation"><Setter Property="ContentTemplate" Value="{StaticResource VideoCreationEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="SaveImage"><Setter Property="ContentTemplate" Value="{StaticResource SaveImageEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="MakroExecution"><Setter Property="ContentTemplate" Value="{StaticResource MakroExecutionEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="JobExecution"><Setter Property="ContentTemplate" Value="{StaticResource JobExecutionEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ScriptExecution"><Setter Property="ContentTemplate" Value="{StaticResource ScriptExecutionEditor}"/></DataTrigger>

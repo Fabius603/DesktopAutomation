@@ -63,18 +63,9 @@ namespace DesktopOverlay
 
         public void AddItem(IOverlayItem item)
         {
-            // Item registrieren; Setup erfolgt beim nächsten OnSetup- oder OnDraw-Aufruf
+            // Nur registrieren. Direct2D-/DirectWrite-Ressourcen müssen auf dem
+            // Overlay-Zeichen-Thread im nächsten OnSetup-/OnDraw-Aufruf entstehen.
             _items[item.Id] = item;
-
-            // Falls das Device schon steht, sofort Ressourcen anlegen
-            // Lock sicherstellt, dass wir nicht mitten in einem Draw-Call sind
-            lock (_drawLock)
-            {
-                if (_gfxContext != null)
-                {
-                    item.Setup(_gfxContext, recreate: false);
-                }
-            }
         }
 
         public bool RemoveItem(string id)

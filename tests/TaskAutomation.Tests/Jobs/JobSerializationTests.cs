@@ -79,7 +79,12 @@ public sealed class JobSerializationTests
             Settings = new()
             {
                 CameraId = "@device:pnp:camera-id",
-                CameraName = "USB Camera"
+                CameraName = "USB Camera",
+                QualityMode = CameraQualityMode.Specific,
+                Width = 1280,
+                Height = 720,
+                FramesPerSecond = 29.97,
+                PixelFormat = "MJPG"
             }
         };
 
@@ -90,6 +95,24 @@ public sealed class JobSerializationTests
         Assert.Contains("\"type\":\"camera_capture\"", json);
         Assert.Equal("@device:pnp:camera-id", restored.Settings.CameraId);
         Assert.Equal("USB Camera", restored.Settings.CameraName);
+        Assert.Equal(CameraQualityMode.Specific, restored.Settings.QualityMode);
+        Assert.Equal(1280, restored.Settings.Width);
+        Assert.Equal(720, restored.Settings.Height);
+        Assert.Equal(29.97, restored.Settings.FramesPerSecond);
+        Assert.Equal("MJPG", restored.Settings.PixelFormat);
+    }
+
+    [Fact]
+    public void Deserialize_LegacyCameraCaptureDefaultsToAutomaticQuality()
+    {
+        const string json =
+            """{"type":"camera_capture","settings":{"camera_id":"legacy-camera","camera_name":"Camera"}}""";
+
+        var restored = Assert.IsType<CameraCaptureStep>(JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Equal(CameraQualityMode.Automatic, restored.Settings.QualityMode);
+        Assert.Equal(0, restored.Settings.Width);
+        Assert.Equal(0, restored.Settings.Height);
     }
 
     [Fact]
@@ -119,6 +142,82 @@ public sealed class JobSerializationTests
         Assert.True(restored.Settings.RetryLockedFiles);
         Assert.Equal(3, restored.Settings.RetryCount);
         Assert.Equal(100, restored.Settings.RetryDelayMs);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesSaveImageSettingsAndBinding()
+    {
+        JobStep step = new SaveImageStep
+        {
+            Settings = new()
+            {
+                SavePath = "C:\\captures",
+                FileName = "snapshot.png",
+                ImageSource = new()
+                {
+                    SourceStepId = "capture",
+                    PropertyId = "image",
+                    PropertyPath = "Image"
+                }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(step);
+        var restored = Assert.IsType<SaveImageStep>(
+            JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Contains("\"type\":\"save_image\"", json);
+        Assert.Equal("C:\\captures", restored.Settings.SavePath);
+        Assert.Equal("snapshot.png", restored.Settings.FileName);
+        Assert.Equal("capture", restored.Settings.ImageSource.SourceStepId);
+        Assert.Equal("image", restored.Settings.ImageSource.PropertyId);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesMultipleVisualOverlayResults()
+    {
+        var textId = Guid.NewGuid();
+        JobStep step = new SaveImageStep
+        {
+            Settings = new()
+            {
+                Overlay = new()
+                {
+                    DetectionResults =
+                    [
+                        new() { SourceStepId = "first", PropertyId = "all_detections", PropertyPath = "AllDetections" },
+                        new() { SourceStepId = "second", PropertyId = "all_detections", PropertyPath = "AllDetections" }
+                    ],
+                    TextResults =
+                    [
+                        new()
+                        {
+                            Id = textId,
+                            Result = new() { SourceStepId = "value", PropertyId = "is_active", PropertyPath = "IsActive" },
+                            FontSize = 31,
+                            FontColor = "#123456",
+                            Opacity = .6f,
+                            OffsetX = 12,
+                            OffsetY = 34
+                        }
+                    ]
+                }
+            }
+        };
+
+        var restored = Assert.IsType<SaveImageStep>(
+            JsonSerializer.Deserialize<JobStep>(JsonSerializer.Serialize(step)));
+
+        Assert.Equal(["first", "second"],
+            restored.Settings.Overlay.DetectionResults.Select(binding => binding.SourceStepId));
+        var text = Assert.Single(restored.Settings.Overlay.TextResults);
+        Assert.Equal(textId, text.Id);
+        Assert.Equal("value", text.Result.SourceStepId);
+        Assert.Equal(31, text.FontSize);
+        Assert.Equal("#123456", text.FontColor);
+        Assert.Equal(.6f, text.Opacity);
+        Assert.Equal(12, text.OffsetX);
+        Assert.Equal(34, text.OffsetY);
     }
 
     [Fact]

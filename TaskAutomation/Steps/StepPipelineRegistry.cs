@@ -192,6 +192,12 @@ namespace TaskAutomation.Steps
                 ResultType:    typeof(VideoCreationResult),
                 DisplayName:   "Video erstellen"),
 
+            [typeof(SaveImageStep)] = new(
+                Prerequisites:     ["Image"],
+                ResultType:        typeof(SaveImageResult),
+                IsConditionSource: true,
+                DisplayName:       "Bild speichern"),
+
             // ── Ablaufsteuerung ────────────────────────────────────────────────
             [typeof(IfStep)]     = new(Prerequisites: [], ResultType: null, DisplayName: "If"),
             [typeof(ElseIfStep)] = new(Prerequisites: [], ResultType: null, DisplayName: "Else If"),
@@ -239,6 +245,7 @@ namespace TaskAutomation.Steps
             ["ShowImage"]          = typeof(ShowImageStep),
             ["ShowOnDesktop"]      = typeof(ShowOnDesktopStep),
             ["VideoCreation"]      = typeof(VideoCreationStep),
+            ["SaveImage"]          = typeof(SaveImageStep),
             ["MakroExecution"]     = typeof(MakroExecutionStep),
             ["JobExecution"]       = typeof(JobExecutionStep),
             ["ScriptExecution"]    = typeof(ScriptExecutionStep),

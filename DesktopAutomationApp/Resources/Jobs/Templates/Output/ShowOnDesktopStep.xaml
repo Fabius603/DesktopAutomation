@@ -20,6 +20,12 @@
                 <Border Grid.Column="1"/>
                 <StackPanel Grid.Column="2">
                     <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionOverlayCount}"/><Run Text="{Binding Settings.Overlay.DetectionResults.Count}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TextOverlayCount}"/><Run Text="{Binding Settings.Overlay.TextResults.Count}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionSource}"/>
                         <Run>
                             <Run.Text>

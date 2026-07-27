@@ -124,7 +124,7 @@ namespace DesktopAutomationApp.Services
             {
                 state.IsClosed = true;
                 Interlocked.Exchange(ref state.PendingBitmap, null)?.Dispose();
-                try { state.Window?.Close(); } catch { /* best-effort */ }
+                try { state.Window?.CloseFromJob(); } catch { /* best-effort */ }
                 _states.TryRemove(windowName, out _);
             }
 
@@ -145,7 +145,7 @@ namespace DesktopAutomationApp.Services
                 {
                     kvp.Value.IsClosed = true;
                     Interlocked.Exchange(ref kvp.Value.PendingBitmap, null)?.Dispose();
-                    try { kvp.Value.Window?.Close(); } catch { /* best-effort */ }
+                    try { kvp.Value.Window?.CloseFromJob(); } catch { /* best-effort */ }
                 }
                 _states.Clear();
             }

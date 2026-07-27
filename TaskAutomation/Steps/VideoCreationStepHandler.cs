@@ -20,7 +20,6 @@ namespace TaskAutomation.Steps
 
             var imageInput = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = imageInput.Capture;
-            var detections = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
             if (imageInput.Image == null || imageInput.Image.Width == 0)
             {
                 logger.LogInformation("VideoCreationStepHandler: Kein Bild verfügbar, Frame wird übersprungen");
@@ -30,9 +29,10 @@ namespace TaskAutomation.Steps
             Bitmap? frameToAdd = null;
             try
             {
-                var drawDetectionResult = detections.IsSuccess;
-                frameToAdd = drawDetectionResult
-                    ? DetectionResultDrawing.Draw(imageInput.Image, detections.Values, capture.Offset)
+                var overlay = VisualOverlayResolver.Resolve(
+                    ctx.Results, step.Settings.Overlay, step.Settings.DetectionsSource, logger);
+                frameToAdd = overlay.HasContent
+                    ? VisualOverlayRenderer.Draw(imageInput.Image, capture.Offset, overlay)
                     : (Bitmap)imageInput.Image.Clone();
 
                 ct.ThrowIfCancellationRequested();
@@ -43,11 +43,7 @@ namespace TaskAutomation.Steps
                 frameToAdd?.Dispose();
             }
             logger.LogInformation(
-                "VideoCreationStepHandler: Frame zum Video hinzugefügt (Detection-Quelle={DetectionSource}, Ergebnis eingezeichnet={DetectionDrawn}).",
-                !step.Settings.DetectionsSource.IsConfigured
-                    ? "keine"
-                    : step.Settings.DetectionsSource.SourceStepId,
-                step.Settings.DetectionsSource.IsConfigured && detections.Values.Count > 0);
+                "VideoCreationStepHandler: Frame mit konfigurierten Overlays zum Video hinzugefügt.");
 
             return new VideoCreationResult { WasExecuted = true, Success = true };
         }

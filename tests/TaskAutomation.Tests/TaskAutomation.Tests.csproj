@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\TaskAutomation\TaskAutomation.csproj" />
+    <ProjectReference Include="..\..\DesktopOverlay\DesktopOverlay.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\DesktopAutomationApp\ViewModels\ObservableRangeCollection.cs"

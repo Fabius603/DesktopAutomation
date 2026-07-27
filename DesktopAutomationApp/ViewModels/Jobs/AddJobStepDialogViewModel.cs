@@ -27,6 +27,11 @@ using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.ViewModels
 {
+    public sealed record CameraQualityChoice(
+        CameraQualityMode QualityMode,
+        CameraCaptureMode? Mode,
+        string DisplayName);
+
     public sealed class AddJobStepDialogViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -92,6 +97,9 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<Job> AvailableJobs { get; }
         public ObservableCollection<Makro> AvailableMakros { get; }
         public ObservableCollection<CameraDeviceInfo> AvailableCameras { get; } = new();
+        public ObservableCollection<CameraQualityChoice> AvailableCameraQualities { get; } = new();
+        public ObservableCollection<DetectionOverlayRowViewModel> OverlayDetectionRows { get; } = new();
+        public ObservableCollection<TextOverlayRowViewModel> OverlayTextRows { get; } = new();
 
         public sealed record PreparedSources(
             IReadOnlyDictionary<ResultValueKind, IReadOnlyList<SourceStepItem>> ByKind,
@@ -173,6 +181,7 @@ namespace DesktopAutomationApp.ViewModels
             FileSystemOperationStep_TargetResult = Picker<FileSystemOperationStep>("target", allResultSources, false);
             VideoCreationStep_ImageSource = Picker<VideoCreationStep>("image", allResultSources);
             VideoCreationStep_DetectionsSource = Picker<VideoCreationStep>("detections", allResultSources, false);
+            SaveImageStep_ImageSource = Picker<SaveImageStep>("image", allResultSources);
             ActiveProcessStep_ProcessSource = Picker<ActiveProcessStep>("process", allResultSources, false);
             StartProcessStep_ProcessSource = Picker<TerminateProcessStep>("process", allResultSources, false);
             FocusProcessStep_ProcessSource = Picker<FocusProcessStep>("process", allResultSources, false);
@@ -186,7 +195,8 @@ namespace DesktopAutomationApp.ViewModels
                          ShowImageStep_DetectionsSource, ShowOnDesktopStep_DetectionsSource, VideoCreationStep_ImageSource,
                          ShowTextStep_TextResult,
                          FileSystemOperationStep_SourceResult, FileSystemOperationStep_TargetResult,
-                         VideoCreationStep_DetectionsSource, ActiveProcessStep_ProcessSource, StartProcessStep_ProcessSource,
+                         VideoCreationStep_DetectionsSource, SaveImageStep_ImageSource,
+                         ActiveProcessStep_ProcessSource, StartProcessStep_ProcessSource,
                          FocusProcessStep_ProcessSource, ActiveWindowStep_ProcessSource
                          , PointComparisonStep_ReferencePointsSource
                      })
@@ -204,6 +214,7 @@ namespace DesktopAutomationApp.ViewModels
             BrowseTemplatePathCommand = new RelayCommand(BrowseTemplatePath);
             BrowseScriptPathCommand = new RelayCommand(BrowseScriptPath);
             BrowseVideoSavePathCommand = new RelayCommand(BrowseVideoSavePath);
+            BrowseImageSavePathCommand = new RelayCommand(BrowseImageSavePath);
             BrowseExecutablePathCommand = new RelayCommand(BrowseExecutablePath);
             BrowseFocusProcessPathCommand = new RelayCommand(BrowseFocusProcessPath);
             BrowseKeyPointMatchingTemplatePathCommand = new RelayCommand(BrowseKeyPointMatchingTemplatePath);
@@ -214,6 +225,12 @@ namespace DesktopAutomationApp.ViewModels
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             RefreshCamerasCommand = new RelayCommand(() => _ = LoadAvailableCamerasAsync());
             ChooseMonitorForShowTextCommand = new RelayCommand(ChooseMonitorForShowText);
+            AddOverlayDetectionCommand = new RelayCommand(() =>
+                OverlayDetectionRows.Add(new DetectionOverlayRowViewModel(
+                    OverlayDetectionRows, _conditionSourceSteps)));
+            AddOverlayTextCommand = new RelayCommand(() =>
+                OverlayTextRows.Add(new TextOverlayRowViewModel(
+                    OverlayTextRows, _conditionSourceSteps, ChooseMonitorForOverlayText)));
             ChooseMonitorForStartProcessCommand = new RelayCommand(ChooseMonitorForStartProcess);
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
@@ -233,6 +250,8 @@ namespace DesktopAutomationApp.ViewModels
             TrackValidationCollection(PointComparisonStep_Expressions);
             TrackValidationCollection(IfStep_Conditions);
             TrackValidationCollection(ElseIfStep_Conditions);
+            TrackValidationCollection(OverlayDetectionRows);
+            TrackValidationCollection(OverlayTextRows);
 
             InitDefaults();
             _ = LoadInstalledProgramsAsync();
@@ -290,6 +309,9 @@ namespace DesktopAutomationApp.ViewModels
             // Video Creation: Standard-Videoordner + DesktopAutomation
             _videoCreationStep_SavePath = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+                "DesktopAutomation");
+            _saveImageStepSavePath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 "DesktopAutomation");
 
             // Makro: erstes verfügbares Makro vorauswählen
@@ -380,6 +402,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand BrowseTemplatePathCommand { get; }
         public ICommand BrowseScriptPathCommand { get; }
         public ICommand BrowseVideoSavePathCommand { get; }
+        public ICommand BrowseImageSavePathCommand { get; }
         public ICommand BrowseExecutablePathCommand { get; }
         public ICommand BrowseFocusProcessPathCommand { get; }
         public ICommand BrowseKeyPointMatchingTemplatePathCommand { get; }
@@ -390,6 +413,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ChooseMonitorCommand { get; }
         public ICommand RefreshCamerasCommand { get; }
         public ICommand ChooseMonitorForShowTextCommand { get; }
+        public ICommand AddOverlayDetectionCommand { get; }
+        public ICommand AddOverlayTextCommand { get; }
         public ICommand ChooseMonitorForStartProcessCommand { get; }
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
@@ -443,13 +468,21 @@ namespace DesktopAutomationApp.ViewModels
                     && PredictMovementStep_MinimumConfidence is >= 0 and <= 1,
                 "ShowImage" =>
                     !string.IsNullOrWhiteSpace(ShowImageStep_WindowName)
-                    && HasCaptureSource(ShowImageStep_SourceCaptureStep),
+                    && HasCaptureSource(ShowImageStep_SourceCaptureStep)
+                    && OverlayRowsAreValid(),
                 "ShowOnDesktop" =>
-                    HasDetectionSource(ShowOnDesktopStep_SourceDetectionStep),
+                    OverlayRowsAreValid()
+                    && (OverlayDetectionRows.Count > 0 || OverlayTextRows.Count > 0),
                 "VideoCreation" =>
                     IsValidDirectoryPath(VideoCreationStep_SavePath)
                     && IsValidFileName(VideoCreationStep_FileName)
-                    && HasCaptureSource(VideoCreationStep_SourceCaptureStep),
+                    && HasCaptureSource(VideoCreationStep_SourceCaptureStep)
+                    && OverlayRowsAreValid(),
+                "SaveImage" =>
+                    IsValidDirectoryPath(SaveImageStep_SavePath)
+                    && IsValidFileName(SaveImageStep_FileName)
+                    && SaveImageStep_ImageSource.IsConfigured
+                    && OverlayRowsAreValid(),
                 "MakroExecution" => MakroExecutionStep_SelectedMakro != null,
                 "JobExecution"   => JobExecutionStep_SelectedJob != null,
                 "DesktopDuplication" => DesktopDuplicationStep_DesktopIdx >= 0,
@@ -633,6 +666,8 @@ namespace DesktopAutomationApp.ViewModels
                     "Zeichnet das Erkennungsergebnis (BoundingBox + Mittelpunkt + Konfidenz) direkt als transparentes Overlay auf den Desktop."),
                 new("VideoCreation",      "AnzeigenSpeichern",
                     "Speichert den aktuellen Bildstrom kontinuierlich als Video-Datei auf der Festplatte."),
+                new("SaveImage",          "AnzeigenSpeichern",
+                    "Speichert ein Bild aus einem vorherigen Aufnahme-Step als Bilddatei auf der Festplatte."),
                 new("MakroExecution",     "MausTastatur",
                     "Führt ein zuvor aufgezeichnetes Makro (Maus- und Tastatureingaben) aus."),
                 new("JobExecution",       "AblaufSteuern",
@@ -651,8 +686,10 @@ namespace DesktopAutomationApp.ViewModels
                     "Ermittelt einen laufenden Prozess anhand von Prozessname, Programmpfad und optionalem Fenstertitel und stellt ihn nachfolgenden Steps bereit."),
                 new("FocusProcess",       "ProgrammeFenster",
                     "Bringt ein Prozessfenster in den Vordergrund oder minimiert es. Optional kann nach einem Fenstertitel gefiltert werden."),
+                /* Legacy-Editor bleibt für bestehende Jobs verfügbar, der Typ wird nicht mehr neu angeboten.
                 new("ShowText",            "AnzeigenSpeichern",
                     "Zeigt einen beliebigen Text auf dem Desktop an. Position, Schriftgröße, Farbe und Deckkraft sind frei konfigurierbar. Leerer Text entfernt die Anzeige."),
+                */
                 new("ContinueJob",        "AblaufSteuern",
                     "Bricht den aktuellen Durchlauf ab und startet den Job wieder beim ersten Haupt-Step."),
                 new("EndJob",             "AblaufSteuern",
@@ -719,7 +756,9 @@ namespace DesktopAutomationApp.ViewModels
         //public bool ShowProcessDuplication => SelectedType == "ProcessDuplication";
         public bool ShowShowImage => SelectedType == "ShowImage";
         public bool ShowShowOnDesktop => SelectedType == "ShowOnDesktop";
+        public bool ShowOverlayDesktopOptions => SelectedType == "ShowOnDesktop";
         public bool ShowVideoCreation => SelectedType == "VideoCreation";
+        public bool ShowSaveImage => SelectedType == "SaveImage";
         public bool ShowMakroExecution => SelectedType == "MakroExecution";
         public bool ShowJobExecution => SelectedType == "JobExecution";
         public bool ShowScriptExecution => SelectedType == "ScriptExecution";
@@ -819,6 +858,15 @@ namespace DesktopAutomationApp.ViewModels
                 pair => (IReadOnlyList<SourceStepItem>)pair.Value);
         }
 
+        private bool OverlayRowsAreValid() =>
+            OverlayDetectionRows.All(row => row.Source.IsConfigured)
+            && OverlayTextRows.All(row =>
+                row.Source.IsConfigured
+                && row.FontSize > 0
+                && row.Opacity is >= 0 and <= 1
+                && row.DesktopIndex >= 0
+                && row.DurationMs >= 0);
+
         private IReadOnlyList<SourceStepItem> GetStepItems(ResultValueKind valueKind)
             => _sourceItemsByKind.TryGetValue(valueKind, out var items) ? items : [];
 
@@ -858,6 +906,7 @@ namespace DesktopAutomationApp.ViewModels
         public ResultBindingPickerViewModel FileSystemOperationStep_TargetResult { get; }
         public ResultBindingPickerViewModel VideoCreationStep_ImageSource { get; }
         public ResultBindingPickerViewModel VideoCreationStep_DetectionsSource { get; }
+        public ResultBindingPickerViewModel SaveImageStep_ImageSource { get; }
         public ResultBindingPickerViewModel ActiveProcessStep_ProcessSource { get; }
         public ResultBindingPickerViewModel StartProcessStep_ProcessSource { get; }
         public ResultBindingPickerViewModel FocusProcessStep_ProcessSource { get; }
@@ -1682,9 +1731,18 @@ namespace DesktopAutomationApp.ViewModels
         // ===== CameraCapture Felder =====
         private string _cameraCaptureStepCameraId = string.Empty;
         private string _cameraCaptureStepCameraName = string.Empty;
+        private CameraQualityMode _cameraCaptureStepQualityMode = CameraQualityMode.Automatic;
+        private int _cameraCaptureStepWidth;
+        private int _cameraCaptureStepHeight;
+        private double _cameraCaptureStepFramesPerSecond;
+        private string _cameraCaptureStepPixelFormat = string.Empty;
         private CameraDeviceInfo? _cameraCaptureStepSelectedCamera;
+        private CameraQualityChoice? _cameraCaptureStepSelectedQuality;
         private bool _isLoadingCameras;
+        private bool _isLoadingCameraQualities;
         private string _cameraLoadStatus = string.Empty;
+        private string _cameraQualityStatus = string.Empty;
+        private int _cameraQualityLoadVersion;
 
         public CameraDeviceInfo? CameraCaptureStep_SelectedCamera
         {
@@ -1699,7 +1757,54 @@ namespace DesktopAutomationApp.ViewModels
                         _cameraCaptureStepCameraName = value.Name;
                 }
                 OnChange();
+                _ = LoadCameraQualitiesAsync(value);
             }
+        }
+
+        public CameraQualityChoice? CameraCaptureStep_SelectedQuality
+        {
+            get => _cameraCaptureStepSelectedQuality;
+            set
+            {
+                _cameraCaptureStepSelectedQuality = value;
+                if (value is not null)
+                {
+                    _cameraCaptureStepQualityMode = value.QualityMode;
+                    _cameraCaptureStepWidth = value.Mode?.Width ?? 0;
+                    _cameraCaptureStepHeight = value.Mode?.Height ?? 0;
+                    _cameraCaptureStepFramesPerSecond = value.Mode?.FramesPerSecond ?? 0;
+                    _cameraCaptureStepPixelFormat = value.Mode?.PixelFormat ?? string.Empty;
+                }
+                OnChange();
+            }
+        }
+
+        private void ChooseMonitorForOverlayText(TextOverlayRowViewModel row)
+        {
+            try
+            {
+                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
+                if (selectedMonitorIndex >= 0)
+                    row.DesktopIndex = selectedMonitorIndex;
+            }
+            catch (Exception ex)
+            {
+                AppDialog.Show(Loc.Format("Error.MonitorSelection", ex.Message), Loc.Get("Error.Title"),
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private void BrowseImageSavePath()
+        {
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = Loc.Get("FolderPicker.Image"),
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+
+            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                SaveImageStep_SavePath = folderDialog.SelectedPath;
         }
 
         public bool IsLoadingCameras
@@ -1714,10 +1819,83 @@ namespace DesktopAutomationApp.ViewModels
             private set { _cameraLoadStatus = value; OnChange(); }
         }
 
-        public void LoadCameraSelection(string cameraId, string cameraName)
+        public bool IsLoadingCameraQualities
+        {
+            get => _isLoadingCameraQualities;
+            private set { _isLoadingCameraQualities = value; OnChange(); }
+        }
+
+        public string CameraQualityStatus
+        {
+            get => _cameraQualityStatus;
+            private set { _cameraQualityStatus = value; OnChange(); }
+        }
+
+        public void LoadCameraSelection(string cameraId, string cameraName, CameraCaptureSettings? settings = null)
         {
             _cameraCaptureStepCameraId = cameraId ?? string.Empty;
             _cameraCaptureStepCameraName = cameraName ?? string.Empty;
+            if (settings is null) return;
+            _cameraCaptureStepQualityMode = settings.QualityMode;
+            _cameraCaptureStepWidth = settings.Width;
+            _cameraCaptureStepHeight = settings.Height;
+            _cameraCaptureStepFramesPerSecond = settings.FramesPerSecond;
+            _cameraCaptureStepPixelFormat = settings.PixelFormat;
+        }
+
+        private async Task LoadCameraQualitiesAsync(CameraDeviceInfo? camera)
+        {
+            var loadVersion = ++_cameraQualityLoadVersion;
+            AvailableCameraQualities.Clear();
+            CameraCaptureStep_SelectedQuality = null;
+            if (camera is null || camera.Index < 0)
+            {
+                CameraQualityStatus = string.Empty;
+                return;
+            }
+
+            IsLoadingCameraQualities = true;
+            CameraQualityStatus = Loc.Get("Ui.Step.Camera.QualityLoading");
+            try
+            {
+                var modes = await Task.Run(() => _cameraCaptureService.GetSupportedModes(camera.Id));
+                if (loadVersion != _cameraQualityLoadVersion) return;
+
+                AvailableCameraQualities.Add(new(
+                    CameraQualityMode.Automatic, null, Loc.Get("Ui.Step.Camera.QualityAutomatic")));
+                AvailableCameraQualities.Add(new(
+                    CameraQualityMode.HighestAvailable, null, Loc.Get("Ui.Step.Camera.QualityHighest")));
+                foreach (var mode in modes)
+                    AvailableCameraQualities.Add(new(
+                        CameraQualityMode.Specific,
+                        mode,
+                        $"{mode.Width} × {mode.Height} · {mode.FramesPerSecond:0.##} FPS · {mode.PixelFormat}"));
+
+                CameraCaptureStep_SelectedQuality = AvailableCameraQualities.FirstOrDefault(choice =>
+                    choice.QualityMode == _cameraCaptureStepQualityMode
+                    && (choice.QualityMode != CameraQualityMode.Specific
+                        || choice.Mode is not null
+                        && choice.Mode.Width == _cameraCaptureStepWidth
+                        && choice.Mode.Height == _cameraCaptureStepHeight
+                        && Math.Abs(choice.Mode.FramesPerSecond - _cameraCaptureStepFramesPerSecond) < 0.02
+                        && string.Equals(choice.Mode.PixelFormat, _cameraCaptureStepPixelFormat,
+                            StringComparison.OrdinalIgnoreCase)))
+                    ?? AvailableCameraQualities[0];
+                CameraQualityStatus = Loc.Format("Ui.Step.Camera.QualityFoundCount", modes.Count);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                if (loadVersion != _cameraQualityLoadVersion) return;
+                AvailableCameraQualities.Add(new(
+                    CameraQualityMode.Automatic, null, Loc.Get("Ui.Step.Camera.QualityAutomatic")));
+                CameraCaptureStep_SelectedQuality = AvailableCameraQualities[0];
+                CameraQualityStatus = Loc.Format("Ui.Step.Camera.QualityLoadFailed", ex.Message);
+            }
+            finally
+            {
+                if (loadVersion == _cameraQualityLoadVersion)
+                    IsLoadingCameraQualities = false;
+            }
         }
 
         private async Task LoadAvailableCamerasAsync()
@@ -1917,6 +2095,21 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _videoCreationStep_SourceDetectionStep;
             set { _videoCreationStep_SourceDetectionStep = value; OnChange(); }
+        }
+
+        // ===== SaveImage Felder =====
+        private string _saveImageStepSavePath = string.Empty;
+        public string SaveImageStep_SavePath
+        {
+            get => _saveImageStepSavePath;
+            set { _saveImageStepSavePath = value; OnChange(); }
+        }
+
+        private string _saveImageStepFileName = "image.png";
+        public string SaveImageStep_FileName
+        {
+            get => _saveImageStepFileName;
+            set { _saveImageStepFileName = value; OnChange(); }
         }
 
         // ===== JobExecution Felder =====
@@ -2628,6 +2821,30 @@ namespace DesktopAutomationApp.ViewModels
             LoadConditionRows(ElseIfStep_Conditions, settings);
         }
 
+        public void LoadOverlay(
+            VisualOverlaySettings? settings,
+            ResultBinding? legacyDetections = null)
+        {
+            OverlayDetectionRows.Clear();
+            OverlayTextRows.Clear();
+            settings ??= new VisualOverlaySettings();
+            var detections = settings.DetectionResults.Count > 0
+                ? settings.DetectionResults
+                : legacyDetections?.IsConfigured == true ? [legacyDetections] : [];
+            foreach (var binding in detections)
+                OverlayDetectionRows.Add(new DetectionOverlayRowViewModel(
+                    OverlayDetectionRows, _conditionSourceSteps, binding));
+            foreach (var text in settings.TextResults)
+                OverlayTextRows.Add(new TextOverlayRowViewModel(
+                    OverlayTextRows, _conditionSourceSteps, ChooseMonitorForOverlayText, text));
+        }
+
+        private VisualOverlaySettings BuildOverlaySettings() => new()
+        {
+            DetectionResults = OverlayDetectionRows.Select(row => row.Source.ToBinding()).ToList(),
+            TextResults = OverlayTextRows.Select(row => row.ToSettings()).ToList()
+        };
+
         // ===== Fabrik =====
         public void CreateStep()
         {
@@ -2692,7 +2909,12 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new CameraCaptureSettings
                     {
                         CameraId = _cameraCaptureStepCameraId,
-                        CameraName = _cameraCaptureStepCameraName
+                        CameraName = _cameraCaptureStepCameraName,
+                        QualityMode = _cameraCaptureStepQualityMode,
+                        Width = _cameraCaptureStepWidth,
+                        Height = _cameraCaptureStepHeight,
+                        FramesPerSecond = _cameraCaptureStepFramesPerSecond,
+                        PixelFormat = _cameraCaptureStepPixelFormat
                     }
                 },
                 "FileSystemOperation" => new FileSystemOperationStep
@@ -2727,14 +2949,14 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         WindowName = ShowImageStep_WindowName,
                         ImageSource = ShowImageStep_ImageSource.ToBinding(),
-                        DetectionsSource = ShowImageStep_DetectionsSource.ToBinding()
+                        Overlay = BuildOverlaySettings()
                     }
                 },
                 "ShowOnDesktop" => new ShowOnDesktopStep
                 {
                     Settings = new ShowOnDesktopSettings
                     {
-                        DetectionsSource = ShowOnDesktopStep_DetectionsSource.ToBinding()
+                        Overlay = BuildOverlaySettings()
                     }
                 },
                 "VideoCreation" => new VideoCreationStep
@@ -2744,7 +2966,17 @@ namespace DesktopAutomationApp.ViewModels
                         SavePath = VideoCreationStep_SavePath,
                         FileName = VideoCreationStep_FileName,
                         ImageSource = VideoCreationStep_ImageSource.ToBinding(),
-                        DetectionsSource = VideoCreationStep_DetectionsSource.ToBinding()
+                        Overlay = BuildOverlaySettings()
+                    }
+                },
+                "SaveImage" => new SaveImageStep
+                {
+                    Settings = new SaveImageSettings
+                    {
+                        SavePath = SaveImageStep_SavePath,
+                        FileName = SaveImageStep_FileName,
+                        ImageSource = SaveImageStep_ImageSource.ToBinding(),
+                        Overlay = BuildOverlaySettings()
                     }
                 },
                 "MakroExecution" => new MakroExecutionStep

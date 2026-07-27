@@ -10,26 +10,29 @@ For every user-facing feature, behavior change, performance improvement, or bug 
 1. Determine the current released version from Git `HEAD`, not from modified files in
    the working tree. Read `<Version>` from
    `git show HEAD:DesktopAutomationApp/DesktopAutomationApp.csproj`, increment its patch
-   component by exactly one, and use that version for all new changes. For example, if
-   Git `HEAD` contains `1.5.6`, new release notes and the working-tree project version
-   must use `1.5.7`. Never append new changes to the version currently stored in Git
-   `HEAD`, even if it is also the newest entry in `ReleaseNotes.json`. Create or update
-   the next-version entry and set `<Version>` in the working-tree
-   `DesktopAutomationApp/DesktopAutomationApp.csproj` to that same version.
-2. Write both German (`de`) and English (`en`) text. Describe the observable result for
+   component by exactly one, and use that version only for new release-note entries.
+   For example, if Git `HEAD` contains `1.5.6`, new release notes must use `1.5.7`.
+   Never append new changes to the version currently stored in Git `HEAD`, even if it
+   is also the newest entry in `ReleaseNotes.json`.
+2. Do not change `<Version>` in `DesktopAutomationApp/DesktopAutomationApp.csproj` as
+   part of normal feature or bug-fix work. The project version remains at the version
+   stored in Git `HEAD`. Increase it only when the user explicitly asks to prepare or
+   perform a release.
+3. Write both German (`de`) and English (`en`) text. Describe the observable result for
    users rather than internal implementation details.
-3. Use only the existing categories `Added`, `Changed`, and `Fixed`.
-4. Keep the newest version first. Preserve every older release entry, including its
+4. Use only the existing categories `Added`, `Changed`, and `Fixed`.
+5. Keep the newest version first. Preserve every older release entry, including its
    date and sections, unchanged.
-5. The newest release-note version must match `<Version>` in
-   `DesktopAutomationApp/DesktopAutomationApp.csproj`.
-6. Before preparing a release, compare the repository against the previous release
+6. During normal development, the newest release-note version must be exactly one patch
+   version higher than `<Version>` in Git `HEAD`. A mismatch is expected until an
+   explicit release task updates the project version.
+7. Before preparing a release, compare the repository against the previous release
    commit or tag and ensure every user-facing change is represented. Include committed
    changes and relevant uncommitted changes.
-7. Do not add release-note entries for tests, refactoring, or documentation alone unless
+8. Do not add release-note entries for tests, refactoring, or documentation alone unless
    they change user-visible behavior. They may be summarized under a quality section
    when they are part of a larger release.
-8. Validate the JSON and run the normal DesktopAutomationApp Release build. The build's
+9. Validate the JSON and run the normal DesktopAutomationApp Release build. The build's
    localization and embedded-resource checks must pass.
 
 When a task truly has no user-facing effect, explicitly state in the final handoff that

@@ -156,8 +156,12 @@ internal sealed class NoOpDesktopCaptureService : IDesktopCaptureService
 internal sealed class NoOpCameraCaptureService : ICameraCaptureService
 {
     public IReadOnlyList<CameraDeviceInfo> GetAvailableCameras() => [];
+    public IReadOnlyList<CameraCaptureMode> GetSupportedModes(string cameraId) => [];
 
-    public Task<CameraCaptureFrame> CaptureAsync(string cameraId, CancellationToken cancellationToken) =>
+    public Task<CameraCaptureFrame> CaptureAsync(
+        string cameraId,
+        CameraCaptureOptions options,
+        CancellationToken cancellationToken) =>
         Task.FromException<CameraCaptureFrame>(new InvalidOperationException("No camera configured."));
 
     public void Dispose() { }

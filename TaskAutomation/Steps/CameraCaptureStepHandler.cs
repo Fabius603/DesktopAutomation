@@ -16,7 +16,15 @@ public sealed class CameraCaptureStepHandler
             step.Settings.CameraName);
 
         var capture = await context.CameraCaptureService
-            .CaptureAsync(step.Settings.CameraId, cancellationToken)
+            .CaptureAsync(
+                step.Settings.CameraId,
+                new CameraCaptureOptions(
+                    step.Settings.QualityMode,
+                    step.Settings.Width,
+                    step.Settings.Height,
+                    step.Settings.FramesPerSecond,
+                    step.Settings.PixelFormat),
+                cancellationToken)
             .ConfigureAwait(false);
         var bounds = new System.Drawing.Rectangle(0, 0, capture.Image.Width, capture.Image.Height);
 

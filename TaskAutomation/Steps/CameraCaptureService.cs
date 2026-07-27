@@ -1,80 +1,138 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
+using DirectShowLib;
 using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
+using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps;
 
 public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) : ICameraCaptureService
 {
-    private static readonly Guid VideoInputDeviceCategory = new("860BB310-5D01-11D0-BD3B-00A0C911CE86");
-    private static readonly Guid PropertyBagId = new("55272A00-42CB-11CE-8135-00AA004BB851");
     private readonly CameraCaptureSessionPool _sessions = new();
     private bool _disposed;
 
     public IReadOnlyList<CameraDeviceInfo> GetAvailableCameras()
     {
         ThrowIfDisposed();
-        var devices = new List<CameraDeviceInfo>();
-        object? deviceEnumeratorObject = null;
-        IEnumMoniker? monikerEnumerator = null;
-
+        var devices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
         try
         {
-            var type = Type.GetTypeFromCLSID(new Guid("62BE5D10-60EB-11D0-BD3B-00A0C911CE86"), throwOnError: true)!;
-            deviceEnumeratorObject = Activator.CreateInstance(type);
-            var deviceEnumerator = (ICreateDevEnum)deviceEnumeratorObject!;
-            var category = VideoInputDeviceCategory;
-            if (deviceEnumerator.CreateClassEnumerator(ref category, out monikerEnumerator, 0) != 0
-                || monikerEnumerator is null)
-                return devices;
+            return devices.Select((device, index) => new CameraDeviceInfo(
+                device.DevicePath,
+                string.IsNullOrWhiteSpace(device.Name) ? $"Camera {index + 1}" : device.Name,
+                index)).ToArray();
+        }
+        finally
+        {
+            foreach (var device in devices) device.Dispose();
+        }
+    }
 
-            var monikers = new IMoniker[1];
-            while (monikerEnumerator.Next(1, monikers, IntPtr.Zero) == 0)
+    public IReadOnlyList<CameraCaptureMode> GetSupportedModes(string cameraId)
+    {
+        ThrowIfDisposed();
+        var devices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
+        var device = devices.FirstOrDefault(candidate =>
+            string.Equals(candidate.DevicePath, cameraId, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException("Die ausgewählte Kamera ist nicht mehr verfügbar.");
+
+        IFilterGraph2? graph = null;
+        ICaptureGraphBuilder2? builder = null;
+        IBaseFilter? source = null;
+        object? streamConfigObject = null;
+        try
+        {
+            graph = (IFilterGraph2)new FilterGraph();
+            builder = (ICaptureGraphBuilder2)new CaptureGraphBuilder2();
+            DsError.ThrowExceptionForHR(builder.SetFiltergraph(graph));
+
+            var filterId = typeof(IBaseFilter).GUID;
+            device.Mon.BindToObject(null, null, ref filterId, out var sourceObject);
+            source = (IBaseFilter)sourceObject;
+            DsError.ThrowExceptionForHR(graph.AddFilter(source, device.Name));
+
+            var category = PinCategory.Capture;
+            var mediaType = MediaType.Video;
+            var streamConfigId = typeof(IAMStreamConfig).GUID;
+            DsError.ThrowExceptionForHR(builder.FindInterface(
+                category, mediaType, source, streamConfigId, out streamConfigObject));
+            var streamConfig = (IAMStreamConfig)streamConfigObject;
+            DsError.ThrowExceptionForHR(streamConfig.GetNumberOfCapabilities(out var count, out var size));
+
+            var capabilities = Marshal.AllocCoTaskMem(size);
+            try
             {
-                var moniker = monikers[0];
-                object? propertyBagObject = null;
-                try
+                var modes = new List<CameraCaptureMode>();
+                for (var index = 0; index < count; index++)
                 {
-                    moniker.GetDisplayName(null, null, out var id);
-                    var propertyBagId = PropertyBagId;
-                    moniker.BindToStorage(null, null, ref propertyBagId, out propertyBagObject);
-                    var propertyBag = (IPropertyBag)propertyBagObject;
-                    propertyBag.Read("FriendlyName", out var friendlyName, IntPtr.Zero);
-                    var name = friendlyName as string;
-                    devices.Add(new CameraDeviceInfo(
-                        id,
-                        string.IsNullOrWhiteSpace(name) ? $"Camera {devices.Count + 1}" : name,
-                        devices.Count));
+                    AMMediaType? media = null;
+                    try
+                    {
+                        if (streamConfig.GetStreamCaps(index, out media, capabilities) < 0
+                            || media?.formatPtr == IntPtr.Zero)
+                            continue;
+
+                        var isVideoInfo2 = media.formatType == DirectShowLib.FormatType.VideoInfo2;
+                        var header = isVideoInfo2
+                            ? null
+                            : Marshal.PtrToStructure<VideoInfoHeader>(media.formatPtr);
+                        var header2 = isVideoInfo2
+                            ? Marshal.PtrToStructure<VideoInfoHeader2>(media.formatPtr)
+                            : null;
+                        var averageFrameTime = header?.AvgTimePerFrame ?? header2?.AvgTimePerFrame ?? 0;
+                        var bitmapHeader = header?.BmiHeader ?? header2?.BmiHeader
+                            ?? throw new InvalidOperationException("Unbekanntes Kameraformat.");
+                        var fps = averageFrameTime > 0
+                            ? 10_000_000d / averageFrameTime
+                            : 0d;
+                        modes.Add(new CameraCaptureMode(
+                            Math.Abs(bitmapHeader.Width),
+                            Math.Abs(bitmapHeader.Height),
+                            Math.Round(fps, 2),
+                            GetPixelFormat(media.subType)));
+                    }
+                    finally
+                    {
+                        if (media is not null)
+                            DsUtils.FreeAMMediaType(media);
+                    }
                 }
-                catch (COMException ex)
-                {
-                    logger.LogDebug(ex, "Kameragerät konnte nicht ausgelesen werden.");
-                }
-                finally
-                {
-                    if (propertyBagObject is not null && Marshal.IsComObject(propertyBagObject))
-                        Marshal.ReleaseComObject(propertyBagObject);
-                    if (Marshal.IsComObject(moniker))
-                        Marshal.ReleaseComObject(moniker);
-                }
+
+                var orderedModes = OrderModes(modes);
+                logger.LogDebug(
+                    "Kamera {CameraName} meldet {ModeCount} unterstützte Aufnahmemodi.",
+                    device.Name,
+                    orderedModes.Count);
+                return orderedModes;
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(capabilities);
             }
         }
         finally
         {
-            if (monikerEnumerator is not null && Marshal.IsComObject(monikerEnumerator))
-                Marshal.ReleaseComObject(monikerEnumerator);
-            if (deviceEnumeratorObject is not null && Marshal.IsComObject(deviceEnumeratorObject))
-                Marshal.ReleaseComObject(deviceEnumeratorObject);
+            ReleaseCom(streamConfigObject);
+            ReleaseCom(source);
+            ReleaseCom(builder);
+            ReleaseCom(graph);
+            foreach (var candidate in devices) candidate.Dispose();
         }
-
-        return devices;
     }
+
+    internal static IReadOnlyList<CameraCaptureMode> OrderModes(IEnumerable<CameraCaptureMode> modes) =>
+        modes.Where(mode => mode.Width > 0 && mode.Height > 0)
+            .Distinct()
+            .OrderByDescending(mode => (long)mode.Width * mode.Height)
+            .ThenByDescending(mode => mode.FramesPerSecond)
+            .ThenBy(mode => mode.PixelFormat, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
     public async Task<CameraCaptureFrame> CaptureAsync(
         string cameraId,
+        CameraCaptureOptions options,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(cameraId))
@@ -86,9 +144,13 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
         try
         {
             ThrowIfDisposed();
-            return await Task.Run(
-                () => CaptureCore(session, cameraId, cancellationToken),
-                cancellationToken).ConfigureAwait(false);
+            var capture = await Task.Run(
+                () => CaptureCore(session, cameraId, options, cancellationToken),
+                CancellationToken.None).ConfigureAwait(false);
+            if (capture is null)
+                cancellationToken.ThrowIfCancellationRequested();
+            return capture
+                ?? throw new InvalidOperationException("Die Kameraaufnahme wurde ohne Ergebnis beendet.");
         }
         finally
         {
@@ -96,21 +158,26 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
         }
     }
 
-    private CameraCaptureFrame CaptureCore(
+    private CameraCaptureFrame? CaptureCore(
         CameraCaptureSession session,
         string cameraId,
+        CameraCaptureOptions options,
         CancellationToken cancellationToken)
     {
         var device = GetAvailableCameras()
             .FirstOrDefault(candidate => string.Equals(candidate.Id, cameraId, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidOperationException("Die ausgewählte Kamera ist nicht mehr verfügbar.");
 
-        var openedNow = EnsureOpen(session, device);
+        var requestedMode = ResolveMode(cameraId, options);
+        var openedNow = EnsureOpen(session, device, requestedMode);
         using var frame = new Mat();
         var attempts = openedNow ? 12 : 3;
         for (var attempt = 0; attempt < attempts; attempt++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            // Nicht aus dem ThreadPool-Worker werfen: Der erwartete Jobabbruch wird
+            // nach dem Worker-Await im normalen asynchronen Aufrufpfad signalisiert.
+            if (cancellationToken.IsCancellationRequested)
+                return null;
             if (session.Capture!.Read(frame) && !frame.Empty())
             {
                 if (!openedNow || attempt >= 1)
@@ -123,11 +190,35 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
         throw new InvalidOperationException("Die Kamera hat kein Bild geliefert.");
     }
 
-    private static bool EnsureOpen(CameraCaptureSession session, CameraDeviceInfo device)
+    private CameraCaptureMode? ResolveMode(string cameraId, CameraCaptureOptions options)
+    {
+        if (options.QualityMode == CameraQualityMode.Automatic)
+            return null;
+
+        var modes = GetSupportedModes(cameraId);
+        if (modes.Count == 0)
+            throw new InvalidOperationException("Die Kamera meldet keine unterstützten Qualitätsstufen.");
+        if (options.QualityMode == CameraQualityMode.HighestAvailable)
+            return modes[0];
+
+        return modes.FirstOrDefault(mode =>
+                   mode.Width == options.Width
+                   && mode.Height == options.Height
+                   && Math.Abs(mode.FramesPerSecond - options.FramesPerSecond) < 0.02
+                   && string.Equals(mode.PixelFormat, options.PixelFormat, StringComparison.OrdinalIgnoreCase))
+               ?? throw new InvalidOperationException(
+                   "Die ausgewählte Kameraqualität wird von der Kamera nicht mehr unterstützt.");
+    }
+
+    private static bool EnsureOpen(
+        CameraCaptureSession session,
+        CameraDeviceInfo device,
+        CameraCaptureMode? mode)
     {
         if (session.Capture is not null
             && session.Capture.IsOpened()
-            && session.OpenCameraIndex == device.Index)
+            && session.OpenCameraIndex == device.Index
+            && Equals(session.OpenMode, mode))
             return false;
 
         session.CloseCapture();
@@ -138,49 +229,55 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
             throw new InvalidOperationException($"Die Kamera \"{device.Name}\" konnte nicht geöffnet werden.");
         }
 
+        if (mode is not null)
+        {
+            if (TryGetFourCc(mode.PixelFormat, out var fourCc))
+                session.Capture.Set(VideoCaptureProperties.FourCC, fourCc);
+            session.Capture.Set(VideoCaptureProperties.FrameWidth, mode.Width);
+            session.Capture.Set(VideoCaptureProperties.FrameHeight, mode.Height);
+            if (mode.FramesPerSecond > 0)
+                session.Capture.Set(VideoCaptureProperties.Fps, mode.FramesPerSecond);
+        }
+
         session.OpenCameraIndex = device.Index;
+        session.OpenMode = mode;
         return true;
     }
 
-    private void ThrowIfDisposed()
+    private static string GetPixelFormat(Guid subtype)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        var value = subtype.ToByteArray();
+        var chars = new[]
+        {
+            (char)value[0], (char)value[1], (char)value[2], (char)value[3]
+        };
+        return chars.All(character => character is >= ' ' and <= '~')
+            ? new string(chars)
+            : subtype.ToString("D");
     }
+
+    private static bool TryGetFourCc(string format, out int fourCc)
+    {
+        fourCc = 0;
+        if (format.Length != 4 || format.Any(character => character is < ' ' or > '~'))
+            return false;
+        fourCc = VideoWriter.FourCC(format[0], format[1], format[2], format[3]);
+        return true;
+    }
+
+    private static void ReleaseCom(object? value)
+    {
+        if (value is not null && Marshal.IsComObject(value))
+            Marshal.ReleaseComObject(value);
+    }
+
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         _sessions.Dispose();
-    }
-
-    [ComImport]
-    [Guid("29840822-5B84-11D0-BD3B-00A0C911CE86")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface ICreateDevEnum
-    {
-        [PreserveSig]
-        int CreateClassEnumerator(
-            [In] ref Guid classEnumerator,
-            [Out] out IEnumMoniker? enumMoniker,
-            int flags);
-    }
-
-    [ComImport]
-    [Guid("55272A00-42CB-11CE-8135-00AA004BB851")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IPropertyBag
-    {
-        [PreserveSig]
-        int Read(
-            [MarshalAs(UnmanagedType.LPWStr)] string propertyName,
-            [MarshalAs(UnmanagedType.Struct)] out object? value,
-            IntPtr errorLog);
-
-        [PreserveSig]
-        int Write(
-            [MarshalAs(UnmanagedType.LPWStr)] string propertyName,
-            [MarshalAs(UnmanagedType.Struct)] ref object value);
     }
 }
 
@@ -211,6 +308,7 @@ internal sealed class CameraCaptureSession : IDisposable
     public SemaphoreSlim Gate { get; } = new(1, 1);
     public VideoCapture? Capture { get; set; }
     public int OpenCameraIndex { get; set; } = -1;
+    public CameraCaptureMode? OpenMode { get; set; }
 
     public void CloseCapture()
     {
@@ -218,6 +316,7 @@ internal sealed class CameraCaptureSession : IDisposable
         Capture?.Dispose();
         Capture = null;
         OpenCameraIndex = -1;
+        OpenMode = null;
     }
 
     public void Dispose()

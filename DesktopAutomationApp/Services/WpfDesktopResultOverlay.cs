@@ -23,6 +23,7 @@ namespace DesktopAutomationApp.Services
         private Overlay? _overlay;
         private readonly object _lock = new();
         private readonly List<string> _currentItemIds = new();
+        private readonly Dictionary<string, List<string>> _stepDetectionItemIds = new();
         private long _renderVersion;
         private const int MaxDisplayedDetections = 200;
 
@@ -116,6 +117,69 @@ namespace DesktopAutomationApp.Services
             }
         }
 
+        public void ShowOverlay(string stepKey, ResolvedVisualOverlay content)
+        {
+            lock (_lock)
+            {
+                ClearOverlayLocked(stepKey);
+                var overlay = EnsureOverlay();
+                var vd = ScreenHelper.GetVirtualDesktopBounds();
+                var transform = OverlayTransform.FromVirtualToOverlayLocal(
+                    vd, new Rectangle(0, 0, vd.Width, vd.Height));
+                var ids = new List<string>();
+                var remaining = MaxDisplayedDetections;
+                for (var groupIndex = 0; groupIndex < content.DetectionGroups.Count && remaining > 0; groupIndex++)
+                {
+                    var group = content.DetectionGroups[groupIndex].Take(remaining).ToList();
+                    for (var itemIndex = 0; itemIndex < group.Count; itemIndex++)
+                    {
+                        var detection = group[itemIndex];
+                        var color = itemIndex == 0 ? ColorBestStroke : ColorOtherStroke;
+                        var suffix = Guid.NewGuid().ToString("N");
+                        if (detection.BoundingBox is { } box)
+                        {
+                            var boxId = $"overlay_bbox_{suffix}";
+                            overlay.AddItem(new RectangleItem(
+                                boxId, box.Left, box.Top, box.Right, box.Bottom,
+                                ColorTransparent, color, 2f) { Transform = transform });
+                            ids.Add(boxId);
+                        }
+
+                        var centerId = $"overlay_center_{suffix}";
+                        overlay.AddItem(new NodeItem(
+                            centerId, detection.Center.X, detection.Center.Y, 6f, "",
+                            color, ColorWhiteAlpha, 1.5f, ColorTransparent) { Transform = transform });
+                        ids.Add(centerId);
+                        remaining--;
+                    }
+                }
+                _stepDetectionItemIds[stepKey] = ids;
+
+                foreach (var text in content.Texts)
+                    ShowText(
+                        $"{stepKey}:{text.Id:N}", text.Text, text.FontSize,
+                        text.Color.R, text.Color.G, text.Color.B, text.Color.A,
+                        text.DesktopIndex, text.OffsetX, text.OffsetY,
+                        text.DurationMs, text.ClearOnJobEnd);
+            }
+        }
+
+        public void ClearOverlay(string stepKey)
+        {
+            lock (_lock)
+                ClearOverlayLocked(stepKey);
+        }
+
+        private void ClearOverlayLocked(string stepKey)
+        {
+            if (_stepDetectionItemIds.Remove(stepKey, out var ids))
+                foreach (var id in ids)
+                    _overlay?.RemoveItem(id);
+            foreach (var textKey in _textEntries.Keys
+                         .Where(key => key.StartsWith(stepKey + ":", StringComparison.Ordinal)).ToList())
+                ClearTextLocked(textKey);
+        }
+
         public void ShowText(string stepKey, string text, float fontSize,
                              byte r, byte g, byte b, byte a,
                              int desktopIndex, int offsetX, int offsetY,
@@ -198,6 +262,27 @@ namespace DesktopAutomationApp.Services
             }
         }
 
+        public void OnJobEnded(IReadOnlyCollection<string> stepKeys)
+        {
+            lock (_lock)
+            {
+                foreach (var stepKey in stepKeys)
+                {
+                    if (_stepDetectionItemIds.Remove(stepKey, out var ids))
+                        foreach (var id in ids)
+                            _overlay?.RemoveItem(id);
+
+                    foreach (var textKey in _textEntries
+                                 .Where(pair =>
+                                     (pair.Key.Equals(stepKey, StringComparison.Ordinal)
+                                      || pair.Key.StartsWith(stepKey + ":", StringComparison.Ordinal))
+                                     && pair.Value.ClearOnJobEnd)
+                                 .Select(pair => pair.Key).ToList())
+                        ClearTextLocked(textKey);
+                }
+            }
+        }
+
         public void Dispose()
         {
             lock (_lock)
@@ -205,6 +290,7 @@ namespace DesktopAutomationApp.Services
                 foreach (var entry in _textEntries.Values)
                     entry.Timer?.Dispose();
                 _textEntries.Clear();
+                _stepDetectionItemIds.Clear();
                 _overlay?.Dispose();
                 _overlay = null;
             }

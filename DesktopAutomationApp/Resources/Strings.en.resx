@@ -2575,6 +2575,15 @@ Error:
   <data name="Ui.Step.Camera.FoundCount" xml:space="preserve"><value>Available cameras: {0}</value></data>
   <data name="Ui.Step.Camera.LoadFailed" xml:space="preserve"><value>Cameras could not be loaded: {0}</value></data>
   <data name="Ui.Step.Camera.Unavailable" xml:space="preserve"><value>{0} (unavailable)</value></data>
+  <data name="Ui.Step.Camera.Quality" xml:space="preserve"><value>Quality</value></data>
+  <data name="Ui.Step.Camera.QualityAutomatic" xml:space="preserve"><value>Automatic (camera default)</value></data>
+  <data name="Ui.Step.Camera.QualityHighest" xml:space="preserve"><value>Highest available quality</value></data>
+  <data name="Ui.Step.Camera.QualitySpecific" xml:space="preserve"><value>Selected quality mode</value></data>
+  <data name="Ui.Step.Camera.FramesPerSecond" xml:space="preserve"><value>Frame rate (FPS)</value></data>
+  <data name="Ui.Step.Camera.PixelFormat" xml:space="preserve"><value>Pixel format</value></data>
+  <data name="Ui.Step.Camera.QualityLoading" xml:space="preserve"><value>Loading supported quality modes…</value></data>
+  <data name="Ui.Step.Camera.QualityFoundCount" xml:space="preserve"><value>Supported quality modes: {0}</value></data>
+  <data name="Ui.Step.Camera.QualityLoadFailed" xml:space="preserve"><value>Quality modes could not be loaded: {0}</value></data>
   <data name="Step.Category.DateienOrdner" xml:space="preserve"><value>Files and folders</value></data>
   <data name="Step.Type.FileSystemOperation" xml:space="preserve"><value>Edit file or folder</value></data>
   <data name="Step.Description.FileSystemOperation" xml:space="preserve"><value>Copies, moves, renames, or deletes files and folders, optionally using a filter.</value></data>
@@ -2614,4 +2623,26 @@ Error:
   <data name="Step.ResultProperty.FileSystemOperationResult.AffectedBytes" xml:space="preserve"><value>Affected bytes</value></data>
   <data name="Step.ResultProperty.FileSystemOperationResult.AffectedPaths" xml:space="preserve"><value>Affected paths</value></data>
   <data name="Step.ResultProperty.FileSystemOperationResult.CompletedAtUtc" xml:space="preserve"><value>Completed at (UTC)</value></data>
+  <data name="Step.Type.SaveImage" xml:space="preserve"><value>Save image</value></data>
+  <data name="Step.Description.SaveImage" xml:space="preserve"><value>Saves an image from a previous capture step as an image file.</value></data>
+  <data name="FolderPicker.Image" xml:space="preserve"><value>Select image output folder</value></data>
+  <data name="Ui.Step.SaveImage.FormatsHint" xml:space="preserve"><value>The file extension selects the format: PNG, JPG, JPEG, BMP, GIF, TIF, or TIFF. An existing file with the same name is replaced.</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FilePath" xml:space="preserve"><value>Full file path</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FileName" xml:space="preserve"><value>File name</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Format" xml:space="preserve"><value>Image format</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Width" xml:space="preserve"><value>Image width</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Height" xml:space="preserve"><value>Image height</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FileSizeBytes" xml:space="preserve"><value>File size (bytes)</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.SavedAtUtc" xml:space="preserve"><value>Saved at (UTC)</value></data>
+  <data name="Ui.Step.Overlay.Detections" xml:space="preserve"><value>Show detections</value></data>
+  <data name="Ui.Step.Overlay.AddDetection" xml:space="preserve"><value>Add result</value></data>
+  <data name="Ui.Step.Overlay.DetectionsHint" xml:space="preserve"><value>Multiple detection results are drawn in their configured order using different colors.</value></data>
+  <data name="Ui.Step.Overlay.TextResults" xml:space="preserve"><value>Show text</value></data>
+  <data name="Ui.Step.Overlay.AddText" xml:space="preserve"><value>Add result</value></data>
+  <data name="Ui.Step.Overlay.TextHint" xml:space="preserve"><value>The value of each selected result is rendered as text. Collection values appear one per line.</value></data>
+  <data name="Ui.Common.MoveUpSymbol" xml:space="preserve"><value>↑</value></data>
+  <data name="Ui.Common.MoveDownSymbol" xml:space="preserve"><value>↓</value></data>
+  <data name="Ui.Common.SeparatorSlash" xml:space="preserve"><value>/</value></data>
+  <data name="Ui.Job.Steps.DetectionOverlayCount" xml:space="preserve"><value>Detection results: </value></data>
+  <data name="Ui.Job.Steps.TextOverlayCount" xml:space="preserve"><value>Text results: </value></data>
 </root>

@@ -27,6 +27,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(ShowImageStep), "show_image")]
     [JsonDerivedType(typeof(ShowOnDesktopStep), "show_on_desktop")]
     [JsonDerivedType(typeof(VideoCreationStep), "video_creation")]
+    [JsonDerivedType(typeof(SaveImageStep), "save_image")]
     [JsonDerivedType(typeof(MakroExecutionStep), "makro_execution")]
     [JsonDerivedType(typeof(ScriptExecutionStep), "script_execution")]
     [JsonDerivedType(typeof(KlickOnPointStep), "klick_on_point")]
@@ -298,7 +299,25 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("camera_name")]
         public string CameraName { get; set; } = string.Empty;
+
+        [JsonPropertyName("quality_mode")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public CameraQualityMode QualityMode { get; set; } = CameraQualityMode.Automatic;
+
+        [JsonPropertyName("width")]
+        public int Width { get; set; }
+
+        [JsonPropertyName("height")]
+        public int Height { get; set; }
+
+        [JsonPropertyName("frames_per_second")]
+        public double FramesPerSecond { get; set; }
+
+        [JsonPropertyName("pixel_format")]
+        public string PixelFormat { get; set; } = string.Empty;
     }
+
+    public enum CameraQualityMode { Automatic, HighestAvailable, Specific }
 
     // ---- FileSystemOperation ----
     public enum FileSystemOperation { Copy, Move, Rename, Delete }
@@ -385,6 +404,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("detections_source")]
         public ResultBinding DetectionsSource { get; set; } = new();
+
+        [JsonPropertyName("overlay")]
+        public VisualOverlaySettings Overlay { get; set; } = new();
     }
 
     // ---- ShowOnDesktop ----
@@ -398,6 +420,9 @@ namespace TaskAutomation.Jobs
     {
         [JsonPropertyName("detections_source")]
         public ResultBinding DetectionsSource { get; set; } = new();
+
+        [JsonPropertyName("overlay")]
+        public VisualOverlaySettings Overlay { get; set; } = new();
     }
 
     // ---- VideoCreation ----
@@ -420,6 +445,73 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("detections_source")]
         public ResultBinding DetectionsSource { get; set; } = new();
+
+        [JsonPropertyName("overlay")]
+        public VisualOverlaySettings Overlay { get; set; } = new();
+    }
+
+    // ---- SaveImage ----
+    public sealed class SaveImageStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public SaveImageSettings Settings { get; set; } = new();
+    }
+
+    public sealed class SaveImageSettings
+    {
+        [JsonPropertyName("save_path")]
+        public string SavePath { get; set; } = string.Empty;
+
+        [JsonPropertyName("file_name")]
+        public string FileName { get; set; } = "image.png";
+
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
+
+        [JsonPropertyName("overlay")]
+        public VisualOverlaySettings Overlay { get; set; } = new();
+    }
+
+    public sealed class VisualOverlaySettings
+    {
+        [JsonPropertyName("detection_results")]
+        public List<ResultBinding> DetectionResults { get; set; } = [];
+
+        [JsonPropertyName("text_results")]
+        public List<TextResultOverlaySettings> TextResults { get; set; } = [];
+    }
+
+    public sealed class TextResultOverlaySettings
+    {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        [JsonPropertyName("result")]
+        public ResultBinding Result { get; set; } = new();
+
+        [JsonPropertyName("font_size")]
+        public float FontSize { get; set; } = 24f;
+
+        [JsonPropertyName("font_color")]
+        public string FontColor { get; set; } = "#FFFFFF";
+
+        [JsonPropertyName("opacity")]
+        public float Opacity { get; set; } = 1f;
+
+        [JsonPropertyName("desktop_index")]
+        public int DesktopIndex { get; set; }
+
+        [JsonPropertyName("offset_x")]
+        public int OffsetX { get; set; }
+
+        [JsonPropertyName("offset_y")]
+        public int OffsetY { get; set; }
+
+        [JsonPropertyName("duration_ms")]
+        public int DurationMs { get; set; } = 5000;
+
+        [JsonPropertyName("clear_on_job_end")]
+        public bool ClearOnJobEnd { get; set; } = true;
     }
 
     // ---- MakroExecution ----

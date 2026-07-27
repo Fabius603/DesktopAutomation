@@ -26,6 +26,37 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateStep_CameraCaptureRequiresCompleteSpecificQuality()
+    {
+        var invalid = new CameraCaptureStep
+        {
+            Settings = new()
+            {
+                CameraId = "camera",
+                QualityMode = CameraQualityMode.Specific,
+                Width = 1920,
+                Height = 1080,
+                FramesPerSecond = 30
+            }
+        };
+        var valid = new CameraCaptureStep
+        {
+            Settings = new()
+            {
+                CameraId = "camera",
+                QualityMode = CameraQualityMode.Specific,
+                Width = 1920,
+                Height = 1080,
+                FramesPerSecond = 30,
+                PixelFormat = "MJPG"
+            }
+        };
+
+        Assert.False(JobValidation.ValidateStep([invalid], invalid).IsValid);
+        Assert.True(JobValidation.ValidateStep([valid], valid).IsValid);
+    }
+
+    [Fact]
     public void ValidateStep_FileSystemOperationRequiresConfiguredActivePathSources()
     {
         var source = new WindowsStateQueryStep
@@ -47,6 +78,64 @@ public sealed class JobValidationTests
         Assert.True(JobValidation.ValidateStep([source, target, operation], operation).IsValid);
         operation.Settings.TargetResult = new();
         Assert.False(JobValidation.ValidateStep([source, target, operation], operation).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_SaveImageRequiresImageSourceAndSupportedExtension()
+    {
+        var capture = new DesktopDuplicationStep { Id = "capture" };
+        var step = new SaveImageStep
+        {
+            Settings = new()
+            {
+                SavePath = "C:\\captures",
+                FileName = "image.png",
+                ImageSource = new()
+                {
+                    SourceStepId = "capture",
+                    PropertyId = "image",
+                    PropertyPath = "Image"
+                }
+            }
+        };
+
+        Assert.True(JobValidation.ValidateStep([capture, step], step).IsValid);
+        step.Settings.FileName = "image.webp";
+        Assert.False(JobValidation.ValidateStep([capture, step], step).IsValid);
+        step.Settings.FileName = "image.png";
+        step.Settings.ImageSource = new();
+        Assert.False(JobValidation.ValidateStep([capture, step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_ShowOnDesktopAcceptsTextOnlyAndRejectsEmptyOverlay()
+    {
+        var source = new ActiveWindowStep { Id = "source" };
+        var step = new ShowOnDesktopStep
+        {
+            Settings = new()
+            {
+                Overlay = new()
+                {
+                    TextResults =
+                    [
+                        new()
+                        {
+                            Result = new()
+                            {
+                                SourceStepId = "source",
+                                PropertyId = "is_active",
+                                PropertyPath = "IsActive"
+                            }
+                        }
+                    ]
+                }
+            }
+        };
+
+        Assert.True(JobValidation.ValidateStep([source, step], step).IsValid);
+        step.Settings.Overlay.TextResults.Clear();
+        Assert.False(JobValidation.ValidateStep([source, step], step).IsValid);
     }
 
     [Theory]

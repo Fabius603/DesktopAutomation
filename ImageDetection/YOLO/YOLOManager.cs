@@ -310,24 +310,46 @@ namespace ImageDetection.YOLO
                 _opt.InputSize);
             var buf = GetOrCreateBuffers(modelKey, inputSize);
 
+            await buf.InferenceGate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
 
             // Preprocessing: direkt ROI -> Letterbox -> Tensor
             var (scale, padX, padY) = PreprocessIntoBuffers(bitmap, useRoi, buf);
 
-            EnsureBinding(buf, session);
+            EnsureInputBuffers(buf, session);
 
             // Float16-Modelle: float32-Buffer -> float16 konvertieren
             if (buf.IsFloat16Input)
                 CopyFloat32ToFloat16(buf.Input, buf.InputFp16!);
 
-            using var ro = new RunOptions();
-            session.RunWithBinding(ro, buf.Binding!);
-
-            // Float16-Output -> float32 konvertieren
+            var currentInput = buf.IsFloat16Input
+                ? NamedOnnxValue.CreateFromTensor(
+                    buf.InputName!,
+                    new DenseTensor<Float16>(
+                        buf.InputFp16!, new[] { 1, 3, buf.Size, buf.Size }))
+                : NamedOnnxValue.CreateFromTensor(
+                    buf.InputName!,
+                    new DenseTensor<float>(
+                        buf.Input, new[] { 1, 3, buf.Size, buf.Size }));
+            using var results = session.Run([currentInput]);
+            using var currentOutput = results.First();
             if (buf.IsFloat16Output)
             {
-                for (int i = 0; i < buf.OutputFp16!.Length; i++)
-                    buf.Output![i] = (float)buf.OutputFp16[i];
+                var tensor = currentOutput.AsTensor<Float16>();
+                buf.OutputDims = tensor.Dimensions.ToArray();
+                if (buf.Output?.Length != tensor.Length)
+                    buf.Output = new float[tensor.Length];
+                for (var i = 0; i < tensor.Length; i++)
+                    buf.Output[i] = (float)tensor.GetValue(i);
+            }
+            else
+            {
+                var tensor = currentOutput.AsTensor<float>();
+                buf.OutputDims = tensor.Dimensions.ToArray();
+                if (buf.Output?.Length != tensor.Length)
+                    buf.Output = new float[tensor.Length];
+                tensor.ToArray().CopyTo(buf.Output, 0);
             }
 
             // Kein DenseTensor-Wrapper – direkt auf buf.Output arbeiten
@@ -347,11 +369,16 @@ namespace ImageDetection.YOLO
             var best = (DetectionResult)allList[0];
             best.AllResults = allList;
             return best;
+            }
+            finally
+            {
+                buf.InferenceGate.Release();
+            }
         }
 
-        private static void EnsureBinding(YoloBuffers buf, InferenceSession session)
+        private static void EnsureInputBuffers(YoloBuffers buf, InferenceSession session)
         {
-            if (buf.Binding != null) return;
+            if (buf.InputName != null) return;
 
             buf.InputName  = session.InputMetadata.Keys.First();
             buf.OutputName = session.OutputMetadata.Keys.First();
@@ -362,70 +389,12 @@ namespace ImageDetection.YOLO
             if (buf.IsFloat16Input)
                 buf.InputFp16 = new Float16[buf.Input.Length];
 
-            // Einmal-Run um Output-Größe zu ermitteln
-            NamedOnnxValue probeInput = buf.IsFloat16Input
-                ? NamedOnnxValue.CreateFromTensor(buf.InputName,
-                    new DenseTensor<Float16>(ConvertToFloat16(buf.Input), new[] { 1, 3, buf.Size, buf.Size }))
-                : NamedOnnxValue.CreateFromTensor(buf.InputName,
-                    new DenseTensor<float>(buf.Input, new[] { 1, 3, buf.Size, buf.Size }));
-
-            using (var results = session.Run(new[] { probeInput }))
-            using (var first   = results.First())
-            {
-                if (buf.IsFloat16Output)
-                {
-                    var t = first.AsTensor<Float16>();
-                    buf.OutputDims  = t.Dimensions.ToArray();
-                    buf.OutputFp16  = new Float16[t.Length];
-                    buf.Output      = new float[t.Length];
-                }
-                else
-                {
-                    var t = first.AsTensor<float>();
-                    buf.OutputDims = t.Dimensions.ToArray();
-                    buf.Output     = new float[t.Length];
-                }
-            }
-
-            var mi       = OrtMemoryInfo.DefaultInstance;
-            var outShape = buf.OutputDims!.Select(d => (long)d).ToArray();
-
-            buf.Binding = session.CreateIoBinding();
-
-            if (buf.IsFloat16Input)
-            {
-                buf.Binding.BindInput(buf.InputName!,
-                    OrtValue.CreateTensorValueFromMemory<Float16>(mi, new Memory<Float16>(buf.InputFp16!), buf.InputShape));
-            }
-            else
-            {
-                buf.Binding.BindInput(buf.InputName!,
-                    OrtValue.CreateTensorValueFromMemory<float>(mi, new Memory<float>(buf.Input), buf.InputShape));
-            }
-
-            if (buf.IsFloat16Output)
-            {
-                buf.Binding.BindOutput(buf.OutputName!,
-                    OrtValue.CreateTensorValueFromMemory<Float16>(mi, new Memory<Float16>(buf.OutputFp16!), outShape));
-            }
-            else
-            {
-                buf.Binding.BindOutput(buf.OutputName!,
-                    OrtValue.CreateTensorValueFromMemory<float>(mi, new Memory<float>(buf.Output!), outShape));
-            }
         }
 
         private static void CopyFloat32ToFloat16(float[] src, Float16[] dst)
         {
             for (int i = 0; i < src.Length; i++)
                 dst[i] = (Float16)src[i];
-        }
-
-        private static Float16[] ConvertToFloat16(float[] src)
-        {
-            var dst = new Float16[src.Length];
-            CopyFloat32ToFloat16(src, dst);
-            return dst;
         }
 
         // ------------ Cache & Initialisierung ------------

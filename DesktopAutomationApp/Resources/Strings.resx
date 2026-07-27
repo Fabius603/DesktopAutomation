@@ -2679,6 +2679,15 @@ Fehlermeldung:
   <data name="Ui.Step.Camera.FoundCount" xml:space="preserve"><value>Verfügbare Kameras: {0}</value></data>
   <data name="Ui.Step.Camera.LoadFailed" xml:space="preserve"><value>Kameras konnten nicht geladen werden: {0}</value></data>
   <data name="Ui.Step.Camera.Unavailable" xml:space="preserve"><value>{0} (nicht verfügbar)</value></data>
+  <data name="Ui.Step.Camera.Quality" xml:space="preserve"><value>Qualität</value></data>
+  <data name="Ui.Step.Camera.QualityAutomatic" xml:space="preserve"><value>Automatisch (Kamerastandard)</value></data>
+  <data name="Ui.Step.Camera.QualityHighest" xml:space="preserve"><value>Beste verfügbare Qualität</value></data>
+  <data name="Ui.Step.Camera.QualitySpecific" xml:space="preserve"><value>Ausgewählte Qualitätsstufe</value></data>
+  <data name="Ui.Step.Camera.FramesPerSecond" xml:space="preserve"><value>Bildrate (FPS)</value></data>
+  <data name="Ui.Step.Camera.PixelFormat" xml:space="preserve"><value>Pixelformat</value></data>
+  <data name="Ui.Step.Camera.QualityLoading" xml:space="preserve"><value>Unterstützte Qualitätsstufen werden geladen …</value></data>
+  <data name="Ui.Step.Camera.QualityFoundCount" xml:space="preserve"><value>Unterstützte Qualitätsstufen: {0}</value></data>
+  <data name="Ui.Step.Camera.QualityLoadFailed" xml:space="preserve"><value>Qualitätsstufen konnten nicht geladen werden: {0}</value></data>
   <data name="Step.Category.DateienOrdner" xml:space="preserve"><value>Dateien und Ordner</value></data>
   <data name="Step.Type.FileSystemOperation" xml:space="preserve"><value>Datei oder Ordner bearbeiten</value></data>
   <data name="Step.Description.FileSystemOperation" xml:space="preserve"><value>Kopiert, verschiebt, benennt Dateien und Ordner um oder löscht sie optional anhand eines Filters.</value></data>
@@ -2718,4 +2727,26 @@ Fehlermeldung:
   <data name="Step.ResultProperty.FileSystemOperationResult.AffectedBytes" xml:space="preserve"><value>Bearbeitete Bytes</value></data>
   <data name="Step.ResultProperty.FileSystemOperationResult.AffectedPaths" xml:space="preserve"><value>Bearbeitete Pfade</value></data>
   <data name="Step.ResultProperty.FileSystemOperationResult.CompletedAtUtc" xml:space="preserve"><value>Abgeschlossen am (UTC)</value></data>
+  <data name="Step.Type.SaveImage" xml:space="preserve"><value>Bild speichern</value></data>
+  <data name="Step.Description.SaveImage" xml:space="preserve"><value>Speichert ein Bild aus einem vorherigen Aufnahme-Step als Bilddatei.</value></data>
+  <data name="FolderPicker.Image" xml:space="preserve"><value>Speicherordner für Bilder auswählen</value></data>
+  <data name="Ui.Step.SaveImage.FormatsHint" xml:space="preserve"><value>Das Dateiformat wird über die Endung gewählt: PNG, JPG, JPEG, BMP, GIF, TIF oder TIFF. Eine vorhandene gleichnamige Datei wird ersetzt.</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FilePath" xml:space="preserve"><value>Vollständiger Dateipfad</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FileName" xml:space="preserve"><value>Dateiname</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Format" xml:space="preserve"><value>Bildformat</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Width" xml:space="preserve"><value>Bildbreite</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.Height" xml:space="preserve"><value>Bildhöhe</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.FileSizeBytes" xml:space="preserve"><value>Dateigröße (Bytes)</value></data>
+  <data name="Step.ResultProperty.SaveImageResult.SavedAtUtc" xml:space="preserve"><value>Gespeichert am (UTC)</value></data>
+  <data name="Ui.Step.Overlay.Detections" xml:space="preserve"><value>Erkennungen anzeigen</value></data>
+  <data name="Ui.Step.Overlay.AddDetection" xml:space="preserve"><value>Ergebnis hinzufügen</value></data>
+  <data name="Ui.Step.Overlay.DetectionsHint" xml:space="preserve"><value>Mehrere Erkennungsergebnisse werden in ihrer Reihenfolge mit unterschiedlichen Farben eingezeichnet.</value></data>
+  <data name="Ui.Step.Overlay.TextResults" xml:space="preserve"><value>Text anzeigen</value></data>
+  <data name="Ui.Step.Overlay.AddText" xml:space="preserve"><value>Ergebnis hinzufügen</value></data>
+  <data name="Ui.Step.Overlay.TextHint" xml:space="preserve"><value>Der Wert jedes ausgewählten Ergebnisses wird als Text ausgegeben. Listenwerte erscheinen zeilenweise.</value></data>
+  <data name="Ui.Common.MoveUpSymbol" xml:space="preserve"><value>↑</value></data>
+  <data name="Ui.Common.MoveDownSymbol" xml:space="preserve"><value>↓</value></data>
+  <data name="Ui.Common.SeparatorSlash" xml:space="preserve"><value>/</value></data>
+  <data name="Ui.Job.Steps.DetectionOverlayCount" xml:space="preserve"><value>Erkennungsergebnisse: </value></data>
+  <data name="Ui.Job.Steps.TextOverlayCount" xml:space="preserve"><value>Textergebnisse: </value></data>
 </root>

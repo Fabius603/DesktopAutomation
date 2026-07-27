@@ -156,10 +156,22 @@ public static class JobValidation
                 && s.Settings.MaxPredictionDistance >= 0 && s.Settings.MaxFitError >= 0 && Unit(s.Settings.MinimumConfidence)
                 && new[] { "Linear", "Acceleration", "Kalman", "Automatic" }.Contains(s.Settings.PredictionModel),
             DesktopDuplicationStep s => s.Settings.DesktopIdx >= 0,
-            CameraCaptureStep s => Text(s.Settings.CameraId),
+            CameraCaptureStep s => Text(s.Settings.CameraId)
+                && (s.Settings.QualityMode != CameraQualityMode.Specific
+                    || s.Settings.Width > 0
+                    && s.Settings.Height > 0
+                    && s.Settings.FramesPerSecond >= 0
+                    && Text(s.Settings.PixelFormat)),
             FileSystemOperationStep s => FileSystemOperationConfigured(s.Settings),
-            ShowImageStep s => Text(s.Settings.WindowName),
-            VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName),
+            ShowImageStep s => Text(s.Settings.WindowName) && OverlayValid(s.Settings.Overlay),
+            ShowOnDesktopStep s => OverlayValid(s.Settings.Overlay)
+                && (s.Settings.DetectionsSource.IsConfigured
+                    || s.Settings.Overlay.DetectionResults.Count > 0
+                    || s.Settings.Overlay.TextResults.Count > 0),
+            VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName)
+                && OverlayValid(s.Settings.Overlay),
+            SaveImageStep s => DirectoryPath(s.Settings.SavePath) && ImageFileName(s.Settings.FileName)
+                && OverlayValid(s.Settings.Overlay),
             MakroExecutionStep s => s.Settings.MakroId != null,
             JobExecutionStep s => s.Settings.JobId != null,
             ScriptExecutionStep s => ExistingFile(s.Settings.ScriptPath),
@@ -253,6 +265,16 @@ public static class JobValidation
                  && s.ExpressionSettings.Expressions.All(e => e.Axis is "X" or "Y"));
 
     private static bool Text(string? value) => !string.IsNullOrWhiteSpace(value);
+    private static bool OverlayValid(VisualOverlaySettings? overlay) =>
+        overlay is not null
+        && overlay.DetectionResults.All(binding => binding.IsConfigured)
+        && overlay.TextResults.All(entry =>
+            entry.Id != Guid.Empty
+            && entry.Result.IsConfigured
+            && entry.FontSize > 0
+            && Unit(entry.Opacity)
+            && entry.DesktopIndex >= 0
+            && entry.DurationMs >= 0);
     private static bool ProcessTargetConfigured(ProcessTargetSettings? target) =>
         target?.ProcessSource.IsConfigured == true
         || Text(target?.ProcessName)
@@ -264,6 +286,10 @@ public static class JobValidation
     private static bool ExistingFile(string? path) => Text(path) && File.Exists(path);
     private static bool Roi(bool enabled, OpenCvSharp.Rect roi) => !enabled || (roi.X >= 0 && roi.Y >= 0 && roi.Width > 0 && roi.Height > 0);
     private static bool FileName(string? value) => Text(value) && value!.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 && Path.GetFileName(value) == value;
+    private static bool ImageFileName(string? value) =>
+        FileName(value)
+        && new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff" }
+            .Contains(Path.GetExtension(value), StringComparer.OrdinalIgnoreCase);
     private static bool DirectoryPath(string? value)
     {
         if (!Text(value)) return false;
@@ -350,17 +376,15 @@ public static class JobValidation
             KlickOnPointStep s => [("points", s.Settings.PointsSource)],
             KlickOnPoint3DStep s => [("points", s.Settings.PointsSource)],
             DynamicRoiStep s => [("bounds", s.Settings.BoundsSource)],
-            ShowOnDesktopStep s => [("detections", s.Settings.DetectionsSource)],
+            ShowOnDesktopStep s => OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource),
             ShowImageStep s =>
-            [
-                ("image", s.Settings.ImageSource),
-                ("detections", s.Settings.DetectionsSource)
-            ],
+                new[] { ("image", s.Settings.ImageSource) }
+                    .Concat(OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource)),
             VideoCreationStep s =>
-            [
-                ("image", s.Settings.ImageSource),
-                ("detections", s.Settings.DetectionsSource)
-            ],
+                new[] { ("image", s.Settings.ImageSource) }
+                    .Concat(OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource)),
+            SaveImageStep s => new[] { ("image", s.Settings.ImageSource) }
+                .Concat(OverlayBindings(s.Settings.Overlay)),
             ActiveProcessStep s => [("process", s.Settings.Target.ProcessSource)],
             StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate =>
                 [("process", s.Settings.Target.ProcessSource)],
@@ -378,6 +402,18 @@ public static class JobValidation
                     : Array.Empty<(string, ResultBinding)>()),
             _ => []
         };
+    }
+
+    private static IEnumerable<(string Key, ResultBinding Binding)> OverlayBindings(
+        VisualOverlaySettings? overlay,
+        ResultBinding? legacyDetections = null)
+    {
+        overlay ??= new VisualOverlaySettings();
+        var detections = overlay.DetectionResults.Count > 0
+            ? overlay.DetectionResults
+            : legacyDetections?.IsConfigured == true ? [legacyDetections] : [];
+        return detections.Select(binding => ("detections", binding))
+            .Concat(overlay.TextResults.Select(entry => ("text", entry.Result)));
     }
 
     private static bool FileSystemOperationConfigured(FileSystemOperationSettings settings)

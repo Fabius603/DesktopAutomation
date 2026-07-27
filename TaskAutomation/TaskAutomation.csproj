@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DirectShowLib.Net" Version="3.0.0" />
     <PackageReference Include="HotkeyListener" Version="1.9.0" />
     <PackageReference Include="InputSimulator" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />

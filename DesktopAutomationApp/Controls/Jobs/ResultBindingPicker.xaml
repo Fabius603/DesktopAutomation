@@ -17,9 +17,21 @@
                 Width="30" Height="30"
                 Margin="5,0,0,0"
                 VerticalAlignment="Center"
-                Style="{StaticResource ButtonIconDanger}"
-                Command="{Binding ClearCommand}"
-                Visibility="{Binding CanClear, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Command="{Binding ClearCommand}">
+            <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource ButtonIconDanger}">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding CanClear}" Value="True"/>
+                                <Condition Binding="{Binding ShowClearButton, ElementName=Root}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
             <iconPacks:PackIconMaterial Kind="Close" Width="13" Height="13"/>
         </Button>
     </Grid>

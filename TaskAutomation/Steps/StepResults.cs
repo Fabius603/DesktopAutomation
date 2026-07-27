@@ -227,6 +227,25 @@ public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { 
 public sealed record ShowOnDesktopResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowOnDesktopResult Default = new(); }
 public sealed record VideoCreationResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly VideoCreationResult Default = new(); }
 
+public sealed record SaveImageResult : StepResultBase
+{
+    [ResultProperty("file_path")]
+    public string FilePath { get; init; } = string.Empty;
+    [ResultProperty("file_name")]
+    public string FileName { get; init; } = string.Empty;
+    [ResultProperty("format")]
+    public string Format { get; init; } = string.Empty;
+    [ResultProperty("width")]
+    public int Width { get; init; }
+    [ResultProperty("height")]
+    public int Height { get; init; }
+    [ResultProperty("file_size_bytes")]
+    public long FileSizeBytes { get; init; }
+    [ResultProperty("saved_at_utc")]
+    public DateTime SavedAtUtc { get; init; }
+    public static readonly SaveImageResult Default = new();
+}
+
 public sealed record StartProcessResult : StepResultBase, IActionExecutionResult, IProcessReferenceResult
 {
     public bool Success { get; init; }

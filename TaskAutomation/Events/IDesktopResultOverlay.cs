@@ -22,6 +22,15 @@ namespace TaskAutomation.Events
         void Clear();
 
         /// <summary>
+        /// Zeigt mehrere Erkennungsgruppen und Ergebnis-Texte für genau einen Step an.
+        /// Andere gleichzeitig aktive Steps bleiben unverändert sichtbar.
+        /// </summary>
+        void ShowOverlay(string stepKey, Steps.ResolvedVisualOverlay overlay);
+
+        /// <summary>Entfernt nur die Elemente des angegebenen Steps.</summary>
+        void ClearOverlay(string stepKey);
+
+        /// <summary>
         /// Zeigt einen Text an der angegebenen Position auf dem Desktop an.
         /// Läuft der gleiche Step (gleicher <paramref name="stepKey"/>) erneut, wird der sichtbare Text
         /// einschließlich Darstellung und Lebensdauer durch die aktuellen Werte ersetzt.
@@ -42,5 +51,8 @@ namespace TaskAutomation.Events
         /// Entfernt Text-Items die mit <c>clearOnJobEnd = true</c> erstellt wurden.
         /// </summary>
         void OnJobEnded();
+
+        /// <summary>Räumt nur die zum beendeten Job gehörenden Step-Anzeigen auf.</summary>
+        void OnJobEnded(IReadOnlyCollection<string> stepKeys);
     }
 }

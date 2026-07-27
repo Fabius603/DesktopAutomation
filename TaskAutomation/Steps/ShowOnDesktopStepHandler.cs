@@ -18,23 +18,20 @@ namespace TaskAutomation.Steps
         protected override Task<ShowOnDesktopResult> ExecuteCoreAsync(
             ShowOnDesktopStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var resolved = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
-
-            if (!resolved.IsSuccess)
+            var overlay = VisualOverlayResolver.Resolve(
+                ctx.Results, step.Settings.Overlay, step.Settings.DetectionsSource, ctx.Logger);
+            if (!overlay.HasContent)
             {
-                ctx.DesktopResultOverlay.Clear();
+                ctx.DesktopResultOverlay.ClearOverlay(step.Id);
                 ctx.Logger.LogInformation(
-                    "ShowOnDesktopStepHandler: Kein Treffer im Quell-Step {SourceStepId}; Overlay wurde geleert.",
-                    step.Settings.DetectionsSource.SourceStepId);
+                    "ShowOnDesktopStepHandler: Keine anzeigbaren Ergebnisse; Overlay dieses Steps wurde geleert.");
                 return Task.FromResult(new ShowOnDesktopResult { WasExecuted = true, Success = true });
             }
 
-            IReadOnlyList<DetectionItem> items = resolved.Values;
-
-            ctx.DesktopResultOverlay.ShowResult(items);
+            ctx.DesktopResultOverlay.ShowOverlay(step.Id, overlay);
             ctx.Logger.LogInformation(
-                "ShowOnDesktopStepHandler: {Count} Treffer aus Quell-Step {SourceStepId} auf dem Desktop angezeigt.",
-                items.Count, step.Settings.DetectionsSource.SourceStepId);
+                "ShowOnDesktopStepHandler: {DetectionGroups} Erkennungsgruppen und {Texts} Texte auf dem Desktop angezeigt.",
+                overlay.DetectionGroups.Count, overlay.Texts.Count);
 
             return Task.FromResult(new ShowOnDesktopResult { WasExecuted = true, Success = true });
         }

@@ -25,5 +25,23 @@
                    Foreground="{DynamicResource App.Brush.TextMuted}"
                    TextWrapping="Wrap"
                    Margin="140,2,0,0"/>
+        <Grid Margin="0,10,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}"
+                       Style="{StaticResource StepFieldLabel}"/>
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding AvailableCameraQualities}"
+                      SelectedItem="{Binding CameraCaptureStep_SelectedQuality}"
+                      DisplayMemberPath="DisplayName"
+                      IsEnabled="{Binding IsLoadingCameraQualities, Converter={StaticResource InverseBooleanConverter}}"
+                      MinWidth="220"/>
+        </Grid>
+        <TextBlock Text="{Binding CameraQualityStatus}"
+                   Foreground="{DynamicResource App.Brush.TextMuted}"
+                   TextWrapping="Wrap"
+                   Margin="140,2,0,0"/>
     </StackPanel>
 </UserControl>

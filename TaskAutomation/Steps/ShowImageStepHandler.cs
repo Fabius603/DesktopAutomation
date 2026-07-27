@@ -18,8 +18,6 @@ namespace TaskAutomation.Steps
 
             var imageInput = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = imageInput.Capture;
-            var detections = ResultBindingResolver.ResolveDetections(ctx.Results, step.Settings.DetectionsSource);
-            var hasDetectionSource = step.Settings.DetectionsSource.IsConfigured;
             var rawImage = imageInput.Image;
 
             if (rawImage == null)
@@ -28,20 +26,22 @@ namespace TaskAutomation.Steps
                 return new ShowImageResult { WasExecuted = true, Success = false };
             }
 
-            using var drawnImage = detections.IsSuccess
-                ? DetectionResultDrawing.Draw(rawImage, detections.Values, capture.Offset)
+            var overlay = VisualOverlayResolver.Resolve(
+                ctx.Results, step.Settings.Overlay, step.Settings.DetectionsSource, logger);
+            using var drawnImage = overlay.HasContent
+                ? VisualOverlayRenderer.Draw(rawImage, capture.Offset, overlay)
                 : null;
             var image = drawnImage ?? rawImage;
-            var displayType = drawnImage != null ? ImageDisplayType.Processed : ImageDisplayType.Raw;
+            var displayType = overlay.HasContent ? ImageDisplayType.Processed : ImageDisplayType.Raw;
 
             ctx.OpenedWindowNames.Add(step.Settings.WindowName);
             ctx.ImageDisplayService.DisplayImage(step.Settings.WindowName, image, displayType);
 
             logger.LogInformation(
-                "ShowImageStepHandler: Bild in '{Window}' angezeigt (Erkennungsquelle={HasDetectionSource}, Ergebnis eingezeichnet={DetectionDrawn})",
+                "ShowImageStepHandler: Bild in '{Window}' angezeigt ({DetectionGroups} Erkennungsgruppen, {Texts} Texte).",
                 step.Settings.WindowName,
-                hasDetectionSource,
-                drawnImage != null);
+                overlay.DetectionGroups.Count,
+                overlay.Texts.Count);
             return new ShowImageResult { WasExecuted = true, Success = true };
         }
 

@@ -47,6 +47,12 @@
                     <TextBlock Style="{StaticResource ParamText}">
                         <Run Text="{loc:Translate Key=Ui.Job.Steps.WindowName}"/><Run Text="{Binding Settings.WindowName}"/>
                     </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.DetectionOverlayCount}"/><Run Text="{Binding Settings.Overlay.DetectionResults.Count}"/>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ParamText}">
+                        <Run Text="{loc:Translate Key=Ui.Job.Steps.TextOverlayCount}"/><Run Text="{Binding Settings.Overlay.TextResults.Count}"/>
+                    </TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>

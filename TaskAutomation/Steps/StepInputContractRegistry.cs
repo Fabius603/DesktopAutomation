@@ -69,9 +69,21 @@ public static class StepInputContractRegistry
         [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(DynamicRoiStep)] = [Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles)],
-        [typeof(ShowOnDesktopStep)] = [Required("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
-        [typeof(ShowImageStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
-        [typeof(VideoCreationStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points)],
+        [typeof(ShowOnDesktopStep)] = [
+            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+        [typeof(ShowImageStep)] = [
+            Required("image", CollectionConsumptionMode.NotApplicable, Image),
+            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+        [typeof(VideoCreationStep)] = [
+            Required("image", CollectionConsumptionMode.NotApplicable, Image),
+            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+        [typeof(SaveImageStep)] = [
+            Required("image", CollectionConsumptionMode.NotApplicable, Image),
+            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
