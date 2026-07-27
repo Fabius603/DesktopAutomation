@@ -170,6 +170,80 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateStep_WindowsSettingRequiredParameterMissing_IsInvalid()
+    {
+        var step = new WindowsSettingChangeStep
+        {
+            Settings = new() { SettingId = "audio.master_volume" }
+        };
+
+        Assert.False(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_WindowsSettingRequiredParametersPresent_IsValid()
+    {
+        var step = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "power.display_timeout",
+                Parameters = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["minutes"] = "10",
+                    ["power_source"] = "both"
+                }
+            }
+        };
+
+        Assert.True(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_UnknownWindowsSetting_IsInvalid()
+    {
+        var step = new WindowsSettingChangeStep
+        {
+            Settings = new() { SettingId = "unknown.setting" }
+        };
+
+        Assert.False(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("101")]
+    [InlineData("loud")]
+    public void ValidateStep_WindowsVolumeOutsideSupportedRange_IsInvalid(string value)
+    {
+        var step = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "audio.master_volume",
+                Parameters = new() { ["value"] = value }
+            }
+        };
+
+        Assert.False(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_WifiConnectWithoutProfile_IsInvalid()
+    {
+        var step = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "network.wifi_connection",
+                Parameters = new() { ["action"] = "connect" }
+            }
+        };
+
+        Assert.False(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Fact]
     public void ValidateJob_CompleteIfElseStructure_IsValid()
     {
         var source = AudioStep("audio");

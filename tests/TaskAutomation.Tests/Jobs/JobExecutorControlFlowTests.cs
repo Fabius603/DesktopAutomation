@@ -40,6 +40,55 @@ public sealed class JobExecutorControlFlowTests
     }
 
     [Fact]
+    public async Task ExecuteJob_WindowsSettingRunsOnlyInsideSelectedBranch()
+    {
+        var audio = new WindowsStateQueryStep
+        {
+            Id = "audio",
+            Settings = new() { QueryType = "audio.volume" }
+        };
+        var skipped = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "audio.master_volume",
+                Parameters = new() { ["value"] = "20" }
+            }
+        };
+        var executed = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "audio.mute",
+                Parameters = new() { ["state"] = "on" }
+            }
+        };
+        var job = new Job
+        {
+            Name = "setting branch",
+            Steps =
+            [
+                audio,
+                new IfStep { Settings = Settings(ConditionOperator.IsFalse) },
+                skipped,
+                new ElseStep(),
+                executed,
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder()
+            .WithJobs(job)
+            .WithWindowsStates(new AudioVolumeQueryResult { IsMuted = true });
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        var change = Assert.Single(builder.WindowsSettings.Changes);
+        Assert.Equal("audio.mute", change.SettingId);
+        Assert.Equal("on", change.Parameters["state"]);
+    }
+
+    [Fact]
     public async Task ExecuteJob_RepeatingConditionUsesFreshResultEachIteration()
     {
         using var cts = new CancellationTokenSource();

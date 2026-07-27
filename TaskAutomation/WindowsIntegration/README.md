@@ -1,11 +1,13 @@
 # Windows integration backend
 
-The integration has two public entry points:
+The integration has three public entry points:
 
 - `IWindowsSystemEventHub` for automation events.
 - `IWindowsSystemStateService` for point-in-time job queries.
+- `IWindowsSystemSettingService` for validated Windows setting changes.
 
 `WindowsCapabilityCatalog` is the authoritative list of supported IDs. Event and query IDs are persisted as stable strings.
+Setting IDs and their parameter values follow the same stable persistence contract.
 
 ## Query parameters
 
@@ -42,5 +44,13 @@ The native WLAN source additionally exposes association, authentication, connect
 5. Add an `IWindowsEventSource` for a global push API or an
    `IWindowsSubscriptionEventSource` when native registration depends on automation filters.
 6. Register the provider/source in dependency injection.
+
+Setting changes are separate capabilities. Add a stable setting ID with
+`SupportsSettingChange`, define all accepted parameters, implement the change in
+`IWindowsSettingProvider`, and return `WindowsSettingChangeResult` with the previous and
+applied value whenever Windows exposes both. Never persist passwords or other secrets in
+the step parameters. Parameters backed by connected displays, installed devices, or saved
+Windows profiles use `DynamicOptionSource`; `IWindowsSettingOptionProvider` resolves their
+current display options while the stable device ID or profile name remains the serialized value.
 
 Do not expose access failures as normal `false` values. Use `Unsupported`, `AccessDenied`, `Timeout`, or `Failed` and a stable `ErrorCode`.

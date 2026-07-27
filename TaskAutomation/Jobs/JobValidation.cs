@@ -197,6 +197,7 @@ public static class JobValidation
             DynamicRoiStep s => s.Settings.Padding >= 0 && Unit(s.Settings.MinimumConfidence)
                 && s.Settings.FullSearchInterval >= 0 && s.Settings.ResetAfterMisses >= 0,
             WindowsStateQueryStep s => WindowsQueryConfigured(s.Settings),
+            WindowsSettingChangeStep s => WindowsSettingConfigured(s.Settings),
             _ => true
         };
         return valid ? null : invalid;
@@ -362,6 +363,37 @@ public static class JobValidation
         return capability?.SupportsStateQuery == true
                && (capability.Parameters ?? []).All(parameter => !parameter.Required
                    || settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
+    }
+
+    private static bool WindowsSettingConfigured(WindowsSettingChangeSettings settings)
+    {
+        var capability = new WindowsCapabilityCatalog().Find(settings.SettingId);
+        if (capability?.SupportsSettingChange != true) return false;
+        foreach (var parameter in capability.Parameters ?? [])
+        {
+            settings.Parameters.TryGetValue(parameter.Name, out var value);
+            if (parameter.Required && string.IsNullOrWhiteSpace(value)) return false;
+            if (string.IsNullOrWhiteSpace(value)) continue;
+            if (parameter.Type == WindowsParameterType.Integer && !int.TryParse(value, out _)) return false;
+            if (parameter.AllowedValues is { Count: > 0 }
+                && !parameter.AllowedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
+                return false;
+        }
+
+        if (settings.SettingId == "audio.master_volume"
+            && (!int.TryParse(settings.Parameters.GetValueOrDefault("value"), out var volume)
+                || volume is < 0 or > 100))
+            return false;
+        if (settings.SettingId is "power.display_timeout" or "power.sleep_timeout"
+            && (!int.TryParse(settings.Parameters.GetValueOrDefault("minutes"), out var minutes)
+                || minutes < 0))
+            return false;
+        if (settings.SettingId == "network.wifi_connection"
+            && string.Equals(settings.Parameters.GetValueOrDefault("action"), "connect",
+                StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(settings.Parameters.GetValueOrDefault("profile")))
+            return false;
+        return true;
     }
 
     private static IEnumerable<(string Key, ResultBinding Binding)> GetResultBindings(JobStep step)

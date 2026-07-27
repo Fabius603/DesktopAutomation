@@ -215,6 +215,47 @@ public sealed record ScriptExecutionResult : StepResultBase, IActionExecutionRes
 public sealed record JobExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly JobExecutionResult Default = new(); }
 public sealed record TimeoutResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly TimeoutResult Default = new(); }
 public sealed record InputControlResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly InputControlResult Default = new(); }
+public sealed record WindowsSettingChangeResult : StepResultBase, IActionExecutionResult
+{
+    [ResultProperty("windows_setting.success", DisplayName = "Erfolgreich")]
+    public bool Success { get; init; }
+
+    [ResultProperty("windows_setting.status", DisplayName = "Status")]
+    public WindowsCapabilityStatus Status { get; init; } = WindowsCapabilityStatus.Success;
+
+    [ResultProperty("windows_setting.setting_id", DisplayName = "Einstellung")]
+    public string SettingId { get; init; } = string.Empty;
+
+    [ResultProperty("windows_setting.previous_value", DisplayName = "Vorheriger Wert")]
+    public string PreviousValue { get; init; } = string.Empty;
+
+    [ResultProperty("windows_setting.applied_value", DisplayName = "Angewendeter Wert")]
+    public string AppliedValue { get; init; } = string.Empty;
+
+    [ResultProperty("windows_setting.restart_required", DisplayName = "Neustart erforderlich")]
+    public bool RestartRequired { get; init; }
+
+    [ResultProperty("windows_setting.error_code", DisplayName = "Fehlercode")]
+    public string ErrorCode { get; init; } = string.Empty;
+
+    [ResultProperty("windows_setting.error_message", DisplayName = "Fehler")]
+    public string? ErrorMessage { get; init; }
+
+    public static readonly WindowsSettingChangeResult Default = new();
+
+    public static WindowsSettingChangeResult Failed(
+        string settingId,
+        WindowsCapabilityStatus status,
+        string errorCode,
+        string errorMessage) =>
+        new()
+        {
+            SettingId = settingId,
+            Status = status,
+            ErrorCode = errorCode,
+            ErrorMessage = errorMessage
+        };
+}
 public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult, IProcessReferenceResult
 {
     public bool Success { get; init; }

@@ -2645,4 +2645,81 @@ Error:
   <data name="Ui.Common.SeparatorSlash" xml:space="preserve"><value>/</value></data>
   <data name="Ui.Job.Steps.DetectionOverlayCount" xml:space="preserve"><value>Detection results: </value></data>
   <data name="Ui.Job.Steps.TextOverlayCount" xml:space="preserve"><value>Text results: </value></data>
+  <data name="Step.Type.WindowsSettingChange" xml:space="preserve"><value>Change Windows setting</value></data>
+  <data name="Step.Description.WindowsSettingChange" xml:space="preserve"><value>Changes a selected Windows setting and returns the previous and applied values.</value></data>
+  <data name="Ui.Windows.Setting" xml:space="preserve"><value>Windows setting</value></data>
+  <data name="Ui.Windows.SettingChange.Title" xml:space="preserve"><value>Change Windows setting</value></data>
+  <data name="Ui.Windows.SettingChange.Description" xml:space="preserve"><value>The change affects the current Windows user or the entire system. Unavailable devices and changes rejected by Windows are returned as error results.</value></data>
+  <data name="Ui.Windows.SettingDescription" xml:space="preserve"><value>Changes the Windows setting “{0}”.</value></data>
+  <data name="Enum.WindowsEventCategory.Personalization" xml:space="preserve"><value>Appearance and personalization</value></data>
+  <data name="Enum.WindowsEventCategory.Notifications" xml:space="preserve"><value>Notifications and focus</value></data>
+  <data name="Windows.Capability.audio.master_volume" xml:space="preserve"><value>System volume</value></data>
+  <data name="Windows.Capability.audio.mute" xml:space="preserve"><value>Mute</value></data>
+  <data name="Windows.Capability.audio.default_output" xml:space="preserve"><value>Default audio output</value></data>
+  <data name="Windows.Capability.audio.default_input" xml:space="preserve"><value>Default microphone</value></data>
+  <data name="Windows.Capability.power.scheme" xml:space="preserve"><value>Active power plan</value></data>
+  <data name="Windows.Capability.power.display_timeout" xml:space="preserve"><value>Display timeout</value></data>
+  <data name="Windows.Capability.power.sleep_timeout" xml:space="preserve"><value>Sleep timeout</value></data>
+  <data name="Windows.Capability.personalization.theme" xml:space="preserve"><value>Light/dark mode</value></data>
+  <data name="Windows.Capability.personalization.wallpaper" xml:space="preserve"><value>Desktop wallpaper</value></data>
+  <data name="Windows.Capability.display.mode" xml:space="preserve"><value>Display configuration</value></data>
+  <data name="Windows.Capability.display.primary" xml:space="preserve"><value>Primary display</value></data>
+  <data name="Windows.Capability.network.wifi_connection" xml:space="preserve"><value>Wi-Fi connection</value></data>
+  <data name="Windows.Capability.network.vpn_connection" xml:space="preserve"><value>VPN connection</value></data>
+  <data name="Windows.Capability.notifications.focus_mode" xml:space="preserve"><value>Do not disturb</value></data>
+  <data name="Windows.Capability.printer.default" xml:space="preserve"><value>Default printer</value></data>
+  <data name="Windows.Parameter.value" xml:space="preserve"><value>Volume (0–100)</value></data>
+  <data name="Windows.Parameter.state" xml:space="preserve"><value>Mute</value></data>
+  <data name="Windows.Parameter.device_name" xml:space="preserve"><value>Device</value></data>
+  <data name="Windows.Parameter.scheme" xml:space="preserve"><value>Power plan</value></data>
+  <data name="Windows.Parameter.minutes" xml:space="preserve"><value>Timeout (minutes)</value></data>
+  <data name="Windows.Parameter.power_source" xml:space="preserve"><value>Power source</value></data>
+  <data name="Windows.Parameter.theme" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Windows.Parameter.mode" xml:space="preserve"><value>Mode</value></data>
+  <data name="Windows.Parameter.display_name" xml:space="preserve"><value>Display</value></data>
+  <data name="Windows.Parameter.action" xml:space="preserve"><value>Action</value></data>
+  <data name="Windows.Parameter.profile" xml:space="preserve"><value>Wi-Fi profile</value></data>
+  <data name="Windows.Parameter.connection_name" xml:space="preserve"><value>VPN connection</value></data>
+  <data name="Windows.Parameter.printer_name" xml:space="preserve"><value>Printer</value></data>
+  <data name="Windows.Parameter.Placeholder.value" xml:space="preserve"><value>0–100</value></data>
+  <data name="Windows.Parameter.Placeholder.minutes" xml:space="preserve"><value>0 = Never</value></data>
+  <data name="Windows.Parameter.Placeholder.device_name" xml:space="preserve"><value>Device name or device ID</value></data>
+  <data name="Windows.Parameter.Placeholder.display_name" xml:space="preserve"><value>For example \\.\DISPLAY2</value></data>
+  <data name="Windows.Parameter.Placeholder.profile" xml:space="preserve"><value>Name of a saved Wi-Fi profile</value></data>
+  <data name="Windows.Parameter.Placeholder.connection_name" xml:space="preserve"><value>Name of an existing VPN connection</value></data>
+  <data name="Windows.Parameter.Placeholder.printer_name" xml:space="preserve"><value>Name of an installed printer</value></data>
+  <data name="Windows.Option.on" xml:space="preserve"><value>On</value></data>
+  <data name="Windows.Option.off" xml:space="preserve"><value>Off</value></data>
+  <data name="Windows.Option.toggle" xml:space="preserve"><value>Toggle</value></data>
+  <data name="Windows.Option.balanced" xml:space="preserve"><value>Balanced</value></data>
+  <data name="Windows.Option.high_performance" xml:space="preserve"><value>High performance</value></data>
+  <data name="Windows.Option.power_saver" xml:space="preserve"><value>Power saver</value></data>
+  <data name="Windows.Option.both" xml:space="preserve"><value>Plugged in and battery</value></data>
+  <data name="Windows.Option.ac" xml:space="preserve"><value>Plugged in</value></data>
+  <data name="Windows.Option.dc" xml:space="preserve"><value>On battery</value></data>
+  <data name="Windows.Option.light" xml:space="preserve"><value>Light</value></data>
+  <data name="Windows.Option.dark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Windows.Option.extend" xml:space="preserve"><value>Extend</value></data>
+  <data name="Windows.Option.duplicate" xml:space="preserve"><value>Duplicate</value></data>
+  <data name="Windows.Option.internal" xml:space="preserve"><value>Internal display only</value></data>
+  <data name="Windows.Option.external" xml:space="preserve"><value>External display only</value></data>
+  <data name="Windows.Option.connect" xml:space="preserve"><value>Connect</value></data>
+  <data name="Windows.Option.disconnect" xml:space="preserve"><value>Disconnect</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.Success" xml:space="preserve"><value>Successful</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.SettingId" xml:space="preserve"><value>Setting</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.PreviousValue" xml:space="preserve"><value>Previous value</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.AppliedValue" xml:space="preserve"><value>Applied value</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.RestartRequired" xml:space="preserve"><value>Restart required</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.ErrorCode" xml:space="preserve"><value>Error code</value></data>
+  <data name="Step.ResultProperty.WindowsSettingChangeResult.ErrorMessage" xml:space="preserve"><value>Error</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsSettingChangeResult.Success" xml:space="preserve"><value>Indicates whether Windows changed the setting successfully.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsSettingChangeResult.Status" xml:space="preserve"><value>Indicates success, unsupported behavior, denied access, or an execution failure.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsSettingChangeResult.PreviousValue" xml:space="preserve"><value>The value detected before execution, if Windows provides it.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsSettingChangeResult.AppliedValue" xml:space="preserve"><value>The value that was actually applied.</value></data>
+  <data name="Step.ResultPropertyDescription.WindowsSettingChangeResult.RestartRequired" xml:space="preserve"><value>Indicates whether Windows requires a restart to finish applying the change.</value></data>
+  <data name="Ui.Windows.Options.Loading" xml:space="preserve"><value>Loading available options…</value></data>
+  <data name="Ui.Windows.Options.None" xml:space="preserve"><value>Windows currently reports no available options.</value></data>
+  <data name="Ui.Windows.Options.Unavailable" xml:space="preserve"><value>{0} (currently unavailable)</value></data>
+  <data name="Ui.Windows.Options.Failed" xml:space="preserve"><value>The available options could not be loaded: {0}</value></data>
 </root>

@@ -49,6 +49,45 @@ public sealed class JobSerializationTests
     }
 
     [Fact]
+    public void RoundTrip_PreservesWindowsSettingChangeAndCaseInsensitiveParameters()
+    {
+        JobStep step = new WindowsSettingChangeStep
+        {
+            Settings = new()
+            {
+                SettingId = "power.display_timeout",
+                Parameters = new(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["minutes"] = "15",
+                    ["power_source"] = "both"
+                }
+            }
+        };
+
+        var json = JsonSerializer.Serialize(step);
+        var restored = Assert.IsType<WindowsSettingChangeStep>(
+            JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Contains("\"type\":\"windows_setting_change\"", json);
+        Assert.Equal("power.display_timeout", restored.Settings.SettingId);
+        Assert.Equal("15", restored.Settings.Parameters["MINUTES"]);
+        Assert.Equal("both", restored.Settings.Parameters["POWER_SOURCE"]);
+    }
+
+    [Fact]
+    public void Deserialize_ExistingWindowsQueryRemainsBackwardCompatible()
+    {
+        const string json =
+            """{"type":"windows_state_query","settings":{"query_type":"audio.volume","parameters":{}}}""";
+
+        var restored = Assert.IsType<WindowsStateQueryStep>(
+            JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Equal("audio.volume", restored.Settings.QueryType);
+        Assert.Empty(restored.Settings.Parameters);
+    }
+
+    [Fact]
     public void RoundTrip_PreservesStableResultPropertyIds()
     {
         var step = new ShowTextStep

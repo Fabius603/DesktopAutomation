@@ -54,6 +54,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
     [JsonDerivedType(typeof(DynamicRoiStep), "dynamic_roi")]
     [JsonDerivedType(typeof(WindowsStateQueryStep), "windows_state_query")]
+    [JsonDerivedType(typeof(WindowsSettingChangeStep), "windows_setting_change")]
     public abstract class JobStep : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -808,6 +809,29 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("query_type")]
         public string QueryType { get; set; } = "network.connectivity";
+
+        [JsonPropertyName("parameters")]
+        public Dictionary<string, string?> Parameters
+        {
+            get => _parameters;
+            set => _parameters = value is null
+                ? new(StringComparer.OrdinalIgnoreCase)
+                : new(value, StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class WindowsSettingChangeStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public WindowsSettingChangeSettings Settings { get; set; } = new();
+    }
+
+    public sealed class WindowsSettingChangeSettings
+    {
+        private Dictionary<string, string?> _parameters = new(StringComparer.OrdinalIgnoreCase);
+
+        [JsonPropertyName("setting_id")]
+        public string SettingId { get; set; } = "audio.master_volume";
 
         [JsonPropertyName("parameters")]
         public Dictionary<string, string?> Parameters

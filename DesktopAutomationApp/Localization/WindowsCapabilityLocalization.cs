@@ -1,4 +1,5 @@
 using TaskAutomation.WindowsIntegration;
+using DesktopAutomationApp.ViewModels.WindowsIntegration;
 
 namespace DesktopAutomationApp.Localization;
 
@@ -30,8 +31,16 @@ public static class WindowsCapabilityLocalization
         return GetOrFallback($"Windows.Parameter.Placeholder.{typeKey}", descriptor.Placeholder);
     }
 
-    public static string Description(WindowsCapabilityDescriptor descriptor, bool isEvent) =>
-        Loc.Format(isEvent ? "Ui.Windows.EventDescription" : "Ui.Windows.QueryDescription", DisplayName(descriptor));
+    public static string Description(WindowsCapabilityDescriptor descriptor, WindowsCapabilityPickerMode mode) =>
+        Loc.Format(mode switch
+        {
+            WindowsCapabilityPickerMode.Event => "Ui.Windows.EventDescription",
+            WindowsCapabilityPickerMode.SettingChange => "Ui.Windows.SettingDescription",
+            _ => "Ui.Windows.QueryDescription"
+        }, DisplayName(descriptor));
+
+    public static string OptionName(string value) =>
+        GetOrFallback($"Windows.Option.{value}", value.Replace('_', ' '));
 
     private static string GetOrFallback(string key, string fallback)
     {

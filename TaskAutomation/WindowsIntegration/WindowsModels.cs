@@ -6,7 +6,7 @@ public enum WindowsEventCategory
 {
     Network, Audio, Session, Power, Display, Device, Bluetooth, FileSystem,
     Process, Window, Input, Clipboard, Printer, Storage, SystemSettings,
-    Security, WindowsUpdate, SystemLifecycle
+    Security, WindowsUpdate, SystemLifecycle, Personalization, Notifications
 }
 
 public enum WindowsCapabilityStatus
@@ -87,6 +87,14 @@ public enum WindowsParameterType
     Text, Integer, Boolean, FilePath, DirectoryPath, ProcessName, Drive, Enum, Duration
 }
 
+public enum WindowsDynamicOptionSource
+{
+    AudioRenderDevices,
+    AudioCaptureDevices,
+    WlanProfiles,
+    Displays
+}
+
 public sealed record WindowsParameterDescriptor(
     string Name,
     string DisplayName,
@@ -94,7 +102,10 @@ public sealed record WindowsParameterDescriptor(
     bool Required = false,
     string? DefaultValue = null,
     IReadOnlyList<string>? AllowedValues = null,
-    string? Placeholder = null);
+    string? Placeholder = null,
+    WindowsDynamicOptionSource? DynamicOptionSource = null);
+
+public sealed record WindowsSettingOption(string Value, string DisplayName);
 
 public sealed record WindowsCapabilityDescriptor(
     string Id,
@@ -105,4 +116,5 @@ public sealed record WindowsCapabilityDescriptor(
     string? RelatedQuery = null,
     WindowsCapabilityRequirements? Requirements = null,
     IReadOnlyList<WindowsParameterDescriptor>? Parameters = null,
-    string? ResultTypeName = null);
+    string? ResultTypeName = null,
+    bool SupportsSettingChange = false);

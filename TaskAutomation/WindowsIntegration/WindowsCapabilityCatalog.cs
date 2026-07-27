@@ -124,6 +124,8 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
             foreach (var id in ids) result.Add(Create(id, category, true, false, query));
         }
         void Q(string id, WindowsEventCategory category, bool admin = false) => result.Add(Create(id, category, false, true, admin: admin));
+        void S(string id, WindowsEventCategory category, params WindowsParameterDescriptor[] parameters) =>
+            result.Add(CreateSetting(id, category, false, parameters));
 
         E(WindowsEventCategory.Network, "network.connectivity", "network.availability.changed", "network.address.changed", "network.connected", "network.disconnected",
             "network.wifi.changed", "network.wifi.connecting", "network.wifi.connected", "network.wifi.connection_failed", "network.wifi.disconnecting", "network.wifi.disconnected",
@@ -162,6 +164,44 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         Q("security.status", WindowsEventCategory.Security, true);
         E(WindowsEventCategory.WindowsUpdate, "windows_update.status", "windows_update.changed", "windows_update.download_started", "windows_update.downloaded", "windows_update.installed", "windows_update.failed", "windows_update.restart_required"); Q("windows_update.status", WindowsEventCategory.WindowsUpdate);
         E(WindowsEventCategory.SystemLifecycle, "system.lifecycle", "system.lifecycle.changed", "system.lifecycle.logoff", "system.lifecycle.shutdown"); Q("system.lifecycle", WindowsEventCategory.SystemLifecycle);
+        S("audio.master_volume", WindowsEventCategory.Audio,
+            new WindowsParameterDescriptor("value", "Lautstärke (0–100)", WindowsParameterType.Integer, true, "50", Placeholder: "0–100"));
+        S("audio.mute", WindowsEventCategory.Audio,
+            new WindowsParameterDescriptor("state", "Stummschaltung", WindowsParameterType.Enum, true, "on", ["on", "off", "toggle"]));
+        S("audio.default_output", WindowsEventCategory.Audio,
+            new WindowsParameterDescriptor("device_name", "Ausgabegerät", WindowsParameterType.Text, true,
+                DynamicOptionSource: WindowsDynamicOptionSource.AudioRenderDevices));
+        S("audio.default_input", WindowsEventCategory.Audio,
+            new WindowsParameterDescriptor("device_name", "Mikrofon", WindowsParameterType.Text, true,
+                DynamicOptionSource: WindowsDynamicOptionSource.AudioCaptureDevices));
+        S("power.scheme", WindowsEventCategory.Power,
+            new WindowsParameterDescriptor("scheme", "Energieschema", WindowsParameterType.Enum, true, "balanced", ["balanced", "high_performance", "power_saver"]));
+        S("power.display_timeout", WindowsEventCategory.Power,
+            new WindowsParameterDescriptor("minutes", "Bildschirm-Timeout (Minuten)", WindowsParameterType.Integer, true, "10", Placeholder: "0 = Nie"),
+            new WindowsParameterDescriptor("power_source", "Stromquelle", WindowsParameterType.Enum, true, "both", ["both", "ac", "dc"]));
+        S("power.sleep_timeout", WindowsEventCategory.Power,
+            new WindowsParameterDescriptor("minutes", "Standby-Timeout (Minuten)", WindowsParameterType.Integer, true, "30", Placeholder: "0 = Nie"),
+            new WindowsParameterDescriptor("power_source", "Stromquelle", WindowsParameterType.Enum, true, "both", ["both", "ac", "dc"]));
+        S("personalization.theme", WindowsEventCategory.Personalization,
+            new WindowsParameterDescriptor("theme", "Darstellung", WindowsParameterType.Enum, true, "dark", ["light", "dark"]));
+        S("personalization.wallpaper", WindowsEventCategory.Personalization,
+            new WindowsParameterDescriptor("path", "Hintergrundbild", WindowsParameterType.FilePath, true, Placeholder: "C:\\Bilder\\Hintergrund.jpg"));
+        S("display.mode", WindowsEventCategory.Display,
+            new WindowsParameterDescriptor("mode", "Bildschirmmodus", WindowsParameterType.Enum, true, "extend", ["extend", "duplicate", "internal", "external"]));
+        S("display.primary", WindowsEventCategory.Display,
+            new WindowsParameterDescriptor("display_name", "Hauptbildschirm", WindowsParameterType.Text, true,
+                Placeholder: "\\\\.\\DISPLAY2", DynamicOptionSource: WindowsDynamicOptionSource.Displays));
+        S("network.wifi_connection", WindowsEventCategory.Network,
+            new WindowsParameterDescriptor("action", "Aktion", WindowsParameterType.Enum, true, "connect", ["connect", "disconnect"]),
+            new WindowsParameterDescriptor("profile", "WLAN-Profil", WindowsParameterType.Text,
+                DynamicOptionSource: WindowsDynamicOptionSource.WlanProfiles));
+        S("network.vpn_connection", WindowsEventCategory.Network,
+            new WindowsParameterDescriptor("action", "Aktion", WindowsParameterType.Enum, true, "connect", ["connect", "disconnect"]),
+            new WindowsParameterDescriptor("connection_name", "VPN-Verbindung", WindowsParameterType.Text, true, Placeholder: "Name der vorhandenen VPN-Verbindung"));
+        S("notifications.focus_mode", WindowsEventCategory.Notifications,
+            new WindowsParameterDescriptor("mode", "Nicht stören", WindowsParameterType.Enum, true, "off", ["off", "on"]));
+        S("printer.default", WindowsEventCategory.Printer,
+            new WindowsParameterDescriptor("printer_name", "Standarddrucker", WindowsParameterType.Text, true, Placeholder: "Name des installierten Druckers"));
         return result;
     }
 
@@ -169,6 +209,14 @@ public sealed class WindowsCapabilityCatalog : IWindowsCapabilityCatalog
         string? relatedQuery = null, bool admin = false) => new(id, category, Names.GetValueOrDefault(id, id), events, query, relatedQuery,
         new WindowsCapabilityRequirements(admin), Parameters(id),
         query ? WindowsQueryResultRegistry.GetResultTypeName(id) : null);
+
+    private static WindowsCapabilityDescriptor CreateSetting(
+        string id,
+        WindowsEventCategory category,
+        bool admin,
+        IReadOnlyList<WindowsParameterDescriptor> parameters) =>
+        new(id, category, id, false, false, null,
+            new WindowsCapabilityRequirements(admin), parameters, nameof(WindowsSettingChangeResult), true);
 
     private static IReadOnlyList<WindowsParameterDescriptor> Parameters(string id)
     {

@@ -142,6 +142,8 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IWindowsCapabilityCatalog, WindowsCapabilityCatalog>();
                     services.AddSingleton<IWindowsStateProvider, DefaultWindowsStateProvider>();
                     services.AddSingleton<IWindowsSystemStateService, WindowsSystemStateService>();
+                    services.AddSingleton<IWindowsSettingProvider, DefaultWindowsSettingProvider>();
+                    services.AddSingleton<IWindowsSystemSettingService, WindowsSystemSettingService>();
                     services.AddSingleton<IWindowsEventSource, NativeWindowsEventSource>();
                     services.AddSingleton<IWindowsEventSource, ProcessTraceWindowsEventSource>();
                     services.AddSingleton<IWindowsEventSource, WlanWindowsEventSource>();

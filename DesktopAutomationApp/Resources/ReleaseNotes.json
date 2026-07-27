@@ -45,6 +45,29 @@
             "en": "Repeated YOLO evaluations now reliably use the newest frame after image changes. Detections and overlaid result values therefore update, and text results are now reliably visible in the desktop display."
           }
         ]
+      },
+      {
+        "title": {
+          "de": "Windows-Einstellungen",
+          "en": "Windows settings"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Jobs können jetzt 15 häufig automatisierte Windows-Einstellungen ändern: Lautstärke, Stummschaltung, Standard-Audioausgabe und -mikrofon, Energieschema, Bildschirm- und Standby-Timeout, Hell-/Dunkelmodus, Desktop-Hintergrund, Bildschirmkonfiguration und Hauptbildschirm, WLAN- und VPN-Verbindung, Nicht-stören-Modus sowie Standarddrucker. Das Step-Ergebnis zeigt den vorherigen und den angewendeten Wert oder einen konkreten Fehlerstatus.",
+            "en": "Jobs can now change 15 commonly automated Windows settings: volume, mute, default audio output and microphone, power plan, display and sleep timeout, light/dark mode, desktop wallpaper, display configuration and primary display, Wi-Fi and VPN connection, do not disturb, and default printer. The step result reports the previous and applied values or a concrete error status."
+          },
+          {
+            "category": "Fixed",
+            "de": "Auswahllisten für Windows-Einstellungen verwenden jetzt auch im geöffneten Zustand durchgängig das aktive helle oder dunkle App-Design.",
+            "en": "Selection lists for Windows settings now consistently use the active light or dark app theme, including while the list is open."
+          },
+          {
+            "category": "Changed",
+            "de": "Hauptbildschirm, Standard-Audioausgabe, Standard-Mikrofon und gespeicherte WLAN-Profile können jetzt direkt aus den aktuell von Windows gemeldeten Optionen ausgewählt und bei Bedarf aktualisiert werden. Audiogeräte verwenden dabei bevorzugt denselben Namen wie die Windows-Audioauswahl; redundante Bluetooth-Telefonieausgänge mit dem Zusatz „Hands-Free“ werden ausgeblendet. Vorhandene, vorübergehend nicht verfügbare Auswahlen bleiben beim Bearbeiten erhalten.",
+            "en": "Primary display, default audio output, default microphone, and saved Wi-Fi profiles can now be selected directly from the options currently reported by Windows and refreshed when needed. Audio devices preferably use the same name shown by the Windows audio selector; redundant Bluetooth telephony outputs with the “Hands-Free” suffix are hidden. Existing selections that are temporarily unavailable remain preserved while editing."
+          }
+        ]
       }
     ]
   },

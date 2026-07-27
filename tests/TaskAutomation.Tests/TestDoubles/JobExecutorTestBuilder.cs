@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Steps;
+using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Tests.TestDoubles;
 
@@ -13,6 +14,7 @@ internal sealed class JobExecutorTestBuilder
     public ControlledDelayService Delay { get; } = new();
     public DelegateScriptExecutor Scripts { get; } = new();
     public SequenceWindowsStateService WindowsStates { get; private set; } = new(new NetworkConnectivityQueryResult());
+    public RecordingWindowsSettingService WindowsSettings { get; } = new();
 
     public JobExecutorTestBuilder WithJobs(params Job[] jobs) { _jobs.AddRange(jobs); return this; }
     public JobExecutorTestBuilder WithWindowsStates(params WindowsStateQueryResult[] states)
@@ -34,9 +36,30 @@ internal sealed class JobExecutorTestBuilder
             new NoOpCameraCaptureService(),
             Logs,
             Delay,
-            WindowsStates);
+            WindowsStates,
+            windowsSettingService: WindowsSettings);
         await executor.ReloadJobsAsync();
         await executor.ReloadMakrosAsync();
         return executor;
+    }
+}
+
+internal sealed class RecordingWindowsSettingService : IWindowsSystemSettingService
+{
+    public List<WindowsSettingChange> Changes { get; } = [];
+
+    public Task<WindowsSettingChangeResult> ChangeAsync(
+        WindowsSettingChange change,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Changes.Add(change);
+        return Task.FromResult(new WindowsSettingChangeResult
+        {
+            Success = true,
+            Status = WindowsCapabilityStatus.Success,
+            SettingId = change.SettingId,
+            AppliedValue = change.Parameters.Values.FirstOrDefault() ?? string.Empty
+        });
     }
 }

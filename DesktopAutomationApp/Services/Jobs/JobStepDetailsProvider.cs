@@ -109,6 +109,20 @@ public sealed class JobStepDetailsProvider
                 if (windowsState.Settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
                     items.Add(("general", new StepDetailItem(WindowsCapabilityLocalization.ParameterName(parameter), value)));
         }
+        else if (step is WindowsSettingChangeStep windowsSetting)
+        {
+            var capability = new TaskAutomation.WindowsIntegration.WindowsCapabilityCatalog()
+                .Find(windowsSetting.Settings.SettingId);
+            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Setting"),
+                capability is null
+                    ? windowsSetting.Settings.SettingId
+                    : WindowsCapabilityLocalization.DisplayName(capability))));
+            foreach (var parameter in capability?.Parameters ?? [])
+                if (windowsSetting.Settings.Parameters.TryGetValue(parameter.Name, out var value)
+                    && !string.IsNullOrWhiteSpace(value))
+                    items.Add(("general", new StepDetailItem(
+                        WindowsCapabilityLocalization.ParameterName(parameter), value)));
+        }
         else if (settings is IfConditionSettings conditions)
             AddConditions(conditions, items, steps);
         else if (settings is PointComparisonSettings comparison)

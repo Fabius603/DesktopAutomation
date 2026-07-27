@@ -94,6 +94,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly SemaphoreSlim _yoloLoadLock = new(1, 1);
         private bool _isInitialized;
         public WindowsCapabilityPickerViewModel WindowsStatePicker { get; }
+        public WindowsCapabilityPickerViewModel WindowsSettingPicker { get; }
         public ObservableCollection<Job> AvailableJobs { get; }
         public ObservableCollection<Makro> AvailableMakros { get; }
         public ObservableCollection<CameraDeviceInfo> AvailableCameras { get; } = new();
@@ -136,6 +137,9 @@ namespace DesktopAutomationApp.ViewModels
             WindowsStatePicker = new WindowsCapabilityPickerViewModel(
                 new WindowsCapabilityCatalog(), WindowsCapabilityPickerMode.StateQuery);
             WindowsStatePicker.Changed += () => OnChange(nameof(WindowsStatePicker));
+            WindowsSettingPicker = new WindowsCapabilityPickerViewModel(
+                new WindowsCapabilityCatalog(), WindowsCapabilityPickerMode.SettingChange);
+            WindowsSettingPicker.Changed += () => OnChange(nameof(WindowsSettingPicker));
             _sourceItemsByKind = preparedSources?.ByKind ?? BuildSourceCatalog(precedingSteps);
             _conditionSourceSteps = preparedSources?.Conditions ?? BuildConditionSourceCatalog(precedingSteps);
             AvailableCaptureSteps = GetStepItems(ResultValueKind.Image);
@@ -706,6 +710,7 @@ namespace DesktopAutomationApp.ViewModels
                     "Übernimmt das beste Match einer Erkennung als ROI für die nächste Job-Runde."),
                 new("WindowsStateQuery", "WindowsSystem",
                     "Fragt einen aktuellen Windows-Zustand ab. Das Ergebnis kann in If-Bedingungen verwendet werden."),
+                new("WindowsSettingChange", "WindowsSystem"),
                 new("If",                 "AblaufSteuern",
                     "Beginnt einen bedingten Block. Die enthaltenen Steps werden nur ausgeführt, wenn die Bedingung erfüllt ist."),
             };
@@ -779,6 +784,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowPointComparison => SelectedType == "PointComparison";
         public bool ShowDynamicRoi => SelectedType == "DynamicRoi";
         public bool ShowWindowsStateQuery => SelectedType == "WindowsStateQuery";
+        public bool ShowWindowsSettingChange => SelectedType == "WindowsSettingChange";
         public bool ShowIf     => SelectedType == "If";
         public bool ShowElseIf => SelectedType == "ElseIf";
         public bool ShowElse   => SelectedType == "Else";
@@ -825,6 +831,9 @@ namespace DesktopAutomationApp.ViewModels
 
         public void LoadWindowsStateQuery(WindowsStateQuerySettings settings) =>
             WindowsStatePicker.Load(settings.QueryType, settings.Parameters);
+
+        public void LoadWindowsSettingChange(WindowsSettingChangeSettings settings) =>
+            WindowsSettingPicker.Load(settings.SettingId, settings.Parameters);
 
         // ----- Quell-Step-Helfer -----
 
@@ -3194,6 +3203,14 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         QueryType = WindowsStatePicker.SelectedCapability?.Id ?? string.Empty,
                         Parameters = WindowsStatePicker.ToDictionary()
+                    }
+                },
+                "WindowsSettingChange" => new WindowsSettingChangeStep
+                {
+                    Settings = new WindowsSettingChangeSettings
+                    {
+                        SettingId = WindowsSettingPicker.SelectedCapability?.Id ?? string.Empty,
+                        Parameters = WindowsSettingPicker.ToDictionary()
                     }
                 },
                 "If" => new TaskAutomation.Jobs.IfStep

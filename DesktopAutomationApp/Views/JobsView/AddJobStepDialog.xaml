@@ -56,6 +56,7 @@
         <DataTemplate x:Key="ContinueJobEditor"><flow:ContinueJobStepEditor/></DataTemplate>
         <DataTemplate x:Key="PointComparisonEditor"><analysis:PointComparisonStepEditor/></DataTemplate>
         <DataTemplate x:Key="WindowsStateQueryEditor"><windowsEditors:WindowsStateQueryStepEditor/></DataTemplate>
+        <DataTemplate x:Key="WindowsSettingChangeEditor"><windowsEditors:WindowsSettingChangeStepEditor/></DataTemplate>
     </mah:MetroWindow.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -142,6 +143,7 @@
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ContinueJob"><Setter Property="ContentTemplate" Value="{StaticResource ContinueJobEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="PointComparison"><Setter Property="ContentTemplate" Value="{StaticResource PointComparisonEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="WindowsStateQuery"><Setter Property="ContentTemplate" Value="{StaticResource WindowsStateQueryEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="WindowsSettingChange"><Setter Property="ContentTemplate" Value="{StaticResource WindowsSettingChangeEditor}"/></DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ContentControl.Style>

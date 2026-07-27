@@ -123,7 +123,8 @@ namespace TaskAutomation.Jobs
             IExecutionLogService executionLogService,
             IPreciseDelayService preciseDelayService,
             IWindowsSystemStateService windowsStateService,
-            Lazy<IJobLauncher>? lazyLauncher = null)
+            Lazy<IJobLauncher>? lazyLauncher = null,
+            IWindowsSystemSettingService? windowsSettingService = null)
         {
             _logger               = logger;
             _jobRepository        = jobRepo;
@@ -140,6 +141,9 @@ namespace TaskAutomation.Jobs
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
             _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
             _stepHandlers[typeof(WindowsStateQueryStep)] = new WindowsStateQueryStepHandler(windowsStateService);
+            windowsSettingService ??= new WindowsSystemSettingService(
+                new WindowsCapabilityCatalog(), new DefaultWindowsSettingProvider());
+            _stepHandlers[typeof(WindowsSettingChangeStep)] = new WindowsSettingChangeStepHandler(windowsSettingService);
 
             _logger.LogInformation(
                 "JobExecutor initialisiert. Jobs: {Jobs}, Makros: {Makros}",
@@ -1194,6 +1198,12 @@ namespace TaskAutomation.Jobs
                     if (query.Settings.Parameters.Count > 0)
                         parts.Add("Parameter=" + string.Join("; ", query.Settings.Parameters.Select(x => $"{x.Key}={x.Value}")));
                     break;
+                case WindowsSettingChangeStep setting:
+                    parts.Add($"Einstellung={setting.Settings.SettingId}");
+                    if (setting.Settings.Parameters.Count > 0)
+                        parts.Add("Parameter=" + string.Join("; ",
+                            setting.Settings.Parameters.Select(x => $"{x.Key}={x.Value}")));
+                    break;
                 case StartProcessStep process:
                     parts.Add($"Programm={process.Settings.ExecutablePath}");
                     parts.Add($"AufBeendigungWarten={process.Settings.WaitForExit}");
@@ -1282,6 +1292,9 @@ namespace TaskAutomation.Jobs
             {
                 case WindowsStateQueryStep windowsState:
                     parts.Add($"Query={windowsState.Settings.QueryType}");
+                    break;
+                case WindowsSettingChangeStep windowsSetting:
+                    parts.Add($"Setting={windowsSetting.Settings.SettingId}");
                     break;
                 case DesktopDuplicationStep capture:
                     parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");

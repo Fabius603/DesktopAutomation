@@ -1371,6 +1371,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.LoadWindowsStateQuery(windowsState.Settings);
                     break;
 
+                case WindowsSettingChangeStep windowsSetting:
+                    vm.SelectedType = "WindowsSettingChange";
+                    vm.LoadWindowsSettingChange(windowsSetting.Settings);
+                    break;
+
                 case TaskAutomation.Jobs.EndJobStep endJob:
                     vm.SelectedType = "EndJob";
                     vm.EndJobStep_SkipEndSteps = endJob.Settings.SkipEndSteps;

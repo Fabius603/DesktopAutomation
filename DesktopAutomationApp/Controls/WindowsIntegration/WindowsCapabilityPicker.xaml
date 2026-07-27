@@ -24,7 +24,8 @@
         <ItemsControl ItemsSource="{Binding Parameters}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Margin="0,0,0,9">
+                    <StackPanel Margin="0,0,0,9"
+                                Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="{Binding DisplayName}" Margin="0,0,0,4" Foreground="{DynamicResource App.Brush.TextMuted}"/>
                         <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
                                  mah:TextBoxHelper.Watermark="{Binding Placeholder}">
@@ -38,9 +39,42 @@
                         <CheckBox IsChecked="{Binding BooleanValue}" Content="{loc:Translate Key=Ui.Windows.Enabled}">
                             <CheckBox.Style><Style TargetType="CheckBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsBoolean}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></CheckBox.Style>
                         </CheckBox>
-                        <ComboBox ItemsSource="{Binding AllowedValues}" SelectedItem="{Binding Value}">
-                            <ComboBox.Style><Style TargetType="ComboBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsEnum}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
-                        </ComboBox>
+                        <DockPanel LastChildFill="True">
+                            <Button DockPanel.Dock="Right"
+                                    Content="{loc:Translate Key=Ui.Common.Refresh}"
+                                    Command="{Binding RefreshOptionsCommand}"
+                                    Margin="8,0,0,0">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasDynamicOptions}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <ComboBox ItemsSource="{Binding Options}"
+                                      DisplayMemberPath="DisplayName"
+                                      SelectedValuePath="Value"
+                                      SelectedValue="{Binding Value}">
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox"
+                                           BasedOn="{StaticResource {x:Type ComboBox}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelection}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Style>
+                            </ComboBox>
+                        </DockPanel>
+                        <TextBlock Text="{Binding OptionStatus}"
+                                   Foreground="{DynamicResource App.Brush.TextMuted}"
+                                   TextWrapping="Wrap" Margin="0,4,0,0"/>
                     </StackPanel>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

@@ -176,6 +176,11 @@ namespace TaskAutomation.Steps
                 IsConditionSource: true,
                 DisplayName:       "Windows-Zustand abfragen"),
 
+            [typeof(WindowsSettingChangeStep)] = new(
+                Prerequisites:     [],
+                ResultType:        typeof(WindowsSettingChangeResult),
+                DisplayName:       "Windows-Einstellung ändern"),
+
             // ── Ausgabe ────────────────────────────────────────────────────────
             [typeof(ShowImageStep)] = new(
                 Prerequisites: ["Image"],
@@ -261,6 +266,7 @@ namespace TaskAutomation.Steps
             ["PointComparison"]    = typeof(PointComparisonStep),
             ["DynamicRoi"]         = typeof(DynamicRoiStep),
             ["WindowsStateQuery"]  = typeof(WindowsStateQueryStep),
+            ["WindowsSettingChange"] = typeof(WindowsSettingChangeStep),
             ["If"]                 = typeof(IfStep),
             ["ElseIf"]             = typeof(ElseIfStep),
             ["Else"]               = typeof(ElseStep),
