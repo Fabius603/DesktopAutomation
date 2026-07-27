@@ -119,7 +119,8 @@
                              ItemContainerStyle="{StaticResource LogSessionItemContainerStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
-                             ScrollViewer.CanContentScroll="True">
+                             ScrollViewer.CanContentScroll="True"
+                             VirtualizingStackPanel.ScrollUnit="Pixel">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
@@ -195,7 +196,8 @@
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
                              VirtualizingPanel.CacheLength="1"
-                             ScrollViewer.CanContentScroll="True">
+                             ScrollViewer.CanContentScroll="True"
+                             VirtualizingStackPanel.ScrollUnit="Pixel">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>

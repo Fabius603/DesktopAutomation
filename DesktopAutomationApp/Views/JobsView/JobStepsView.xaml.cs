@@ -81,18 +81,6 @@ namespace DesktopAutomationApp.Views
                 : new GridLength(0);
         }
 
-        private void DebugTree_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
-        {
-            if (DebugContextScrollViewer == null) return;
-            var lines = Math.Max(1, Math.Abs(e.Delta) / Mouse.MouseWheelDeltaForOneLine) * 3;
-            for (var index = 0; index < lines; index++)
-            {
-                if (e.Delta > 0) DebugContextScrollViewer.LineUp();
-                else DebugContextScrollViewer.LineDown();
-            }
-            e.Handled = true;
-        }
-
         // ── View → VM: sync multi-selection to VM ──
         private void StepsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

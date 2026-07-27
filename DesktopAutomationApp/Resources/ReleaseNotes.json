@@ -68,6 +68,19 @@
             "en": "Primary display, default audio output, default microphone, and saved Wi-Fi profiles can now be selected directly from the options currently reported by Windows and refreshed when needed. Audio devices preferably use the same name shown by the Windows audio selector; redundant Bluetooth telephony outputs with the “Hands-Free” suffix are hidden. Existing selections that are temporarily unavailable remain preserved while editing."
           }
         ]
+      },
+      {
+        "title": {
+          "de": "Bedienung",
+          "en": "Interaction"
+        },
+        "changes": [
+          {
+            "category": "Fixed",
+            "de": "Auch die Ausführungs- und Eintragslisten der Job-Logs sowie verschachtelte Ergebnisbäume im Job-Debugger verwenden jetzt zuverlässig die appweit verlangsamte, pixelgenaue Scrollgeschwindigkeit.",
+            "en": "The execution and entry lists in job logs as well as nested result trees in the job debugger now reliably use the app-wide slower, pixel-based scrolling speed."
+          }
+        ]
       }
     ]
   },

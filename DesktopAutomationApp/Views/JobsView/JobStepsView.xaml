@@ -1176,7 +1176,6 @@
                                                            Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                                 <TreeView Grid.Row="1" ItemsSource="{Binding Values}"
                                                           Background="Transparent" BorderThickness="0"
-                                                          PreviewMouseWheel="DebugTree_PreviewMouseWheel"
                                                           ItemTemplate="{StaticResource DebugContextValueTemplate}"
                                                           ItemContainerStyle="{StaticResource DebugContextTreeItemStyle}"
                                                           ScrollViewer.VerticalScrollBarVisibility="Disabled"
