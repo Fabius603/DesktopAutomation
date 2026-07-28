@@ -15,10 +15,13 @@ internal sealed class JobExecutorTestBuilder
     public DelegateScriptExecutor Scripts { get; } = new();
     public SequenceWindowsStateService WindowsStates { get; private set; } = new(new NetworkConnectivityQueryResult());
     public RecordingWindowsSettingService WindowsSettings { get; } = new();
+    public StubUserChoiceService UserChoices { get; } = new();
 
     public JobExecutorTestBuilder WithJobs(params Job[] jobs) { _jobs.AddRange(jobs); return this; }
     public JobExecutorTestBuilder WithWindowsStates(params WindowsStateQueryResult[] states)
     { WindowsStates = new(states); return this; }
+    public JobExecutorTestBuilder WithUserChoice(string? optionId)
+    { UserChoices.SelectedOptionId = optionId; return this; }
 
     public async Task<JobExecutor> BuildAsync()
     {
@@ -37,10 +40,22 @@ internal sealed class JobExecutorTestBuilder
             Logs,
             Delay,
             WindowsStates,
+            UserChoices,
             windowsSettingService: WindowsSettings);
         await executor.ReloadJobsAsync();
         await executor.ReloadMakrosAsync();
         return executor;
+    }
+}
+
+internal sealed class StubUserChoiceService : IUserChoiceService
+{
+    public string? SelectedOptionId { get; set; }
+
+    public Task<string?> ChooseAsync(UserChoiceDialogRequest request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(SelectedOptionId ?? request.Options.FirstOrDefault()?.Id);
     }
 }
 

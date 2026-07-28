@@ -188,6 +188,11 @@ public static class JobValidation
             TerminateProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             FocusProcessStep s => ProcessTargetConfigured(s.Settings.Target),
             ShowTextStep s => (s.Settings.TextSource == ShowTextSource.TaskResult || Text(s.Settings.Text)) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
+            UserChoiceStep s => s.Settings.Options.Count is >= 2 and <= 18
+                && s.Settings.DesktopIndex >= 0
+                && s.Settings.Options.All(option => Text(option.Id) && Text(option.Label))
+                && s.Settings.Options.Select(option => option.Id).Distinct(StringComparer.Ordinal).Count() == s.Settings.Options.Count
+                && s.Settings.Options.Select(option => option.Label.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == s.Settings.Options.Count,
             ActiveWindowStep s => ProcessTargetConfigured(s.Settings.Target)
                                   && s.Settings.CacheMs >= 0,
             KeyPointMatchingStep s => ExistingFile(s.Settings.TemplatePath) && s.Settings.MinMatchCount > 0 && s.Settings.LowesRatioThreshold is > 0 and <= 1 && Roi(s.Settings.EnableROI, s.Settings.ROI),

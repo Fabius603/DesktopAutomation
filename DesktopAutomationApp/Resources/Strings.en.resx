@@ -2722,4 +2722,25 @@ Error:
   <data name="Ui.Windows.Options.None" xml:space="preserve"><value>Windows currently reports no available options.</value></data>
   <data name="Ui.Windows.Options.Unavailable" xml:space="preserve"><value>{0} (currently unavailable)</value></data>
   <data name="Ui.Windows.Options.Failed" xml:space="preserve"><value>The available options could not be loaded: {0}</value></data>
+  <data name="Step.Type.UserChoice" xml:space="preserve"><value>Ask user to choose</value></data>
+  <data name="Step.Description.UserChoice" xml:space="preserve"><value>Opens a selection window while the job is running and makes the selected answer available to later steps.</value></data>
+  <data name="Ui.UserChoice.Title" xml:space="preserve"><value>Title (optional)</value></data>
+  <data name="Ui.UserChoice.Question" xml:space="preserve"><value>Title (optional)</value></data>
+  <data name="Ui.UserChoice.Description" xml:space="preserve"><value>Description (optional)</value></data>
+  <data name="Ui.UserChoice.Answers" xml:space="preserve"><value>Answer choices (2 to 18, required)</value></data>
+  <data name="Ui.UserChoice.AnswerTextRequired" xml:space="preserve"><value>Answer text (required)</value></data>
+  <data name="Ui.UserChoice.AnswerValueOptional" xml:space="preserve"><value>Return value (optional)</value></data>
+  <data name="Ui.UserChoice.AnswerLabel" xml:space="preserve"><value>Visible answer name</value></data>
+  <data name="Ui.UserChoice.AnswerValue" xml:space="preserve"><value>Optional return value</value></data>
+  <data name="Ui.UserChoice.AddAnswer" xml:space="preserve"><value>Add answer</value></data>
+  <data name="Ui.UserChoice.RemoveAnswer" xml:space="preserve"><value>Remove answer</value></data>
+  <data name="Ui.UserChoice.MoveUp" xml:space="preserve"><value>Move up</value></data>
+  <data name="Ui.UserChoice.MoveDown" xml:space="preserve"><value>Move down</value></data>
+  <data name="Ui.UserChoice.StableReferenceHint" xml:space="preserve"><value>If the return value is empty, the answer text is returned. Answers are referenced internally by a stable ID; renaming or reordering them does not change existing conditions.</value></data>
+  <data name="Ui.UserChoice.Confirm" xml:space="preserve"><value>Select</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedOptionId" xml:space="preserve"><value>Selected answer</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedLabel" xml:space="preserve"><value>Displayed answer name</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedValue" xml:space="preserve"><value>Answer return value</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Answer position</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Selection cancelled</value></data>
 </root>

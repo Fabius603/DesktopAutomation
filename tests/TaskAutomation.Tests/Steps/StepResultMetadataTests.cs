@@ -62,6 +62,36 @@ public sealed class StepResultMetadataTests
     }
 
     [Fact]
+    public void UserChoiceContract_UsesStableIdsWithConfiguredDisplayNames()
+    {
+        var step = new UserChoiceStep
+        {
+            Settings = new()
+            {
+                Options =
+                [
+                    new() { Id = "first-id", Label = "First" },
+                    new() { Id = "second-id", Label = "Second" }
+                ]
+            }
+        };
+
+        var contract = StepResultMetadata.GetResultTypeForStep(step);
+        var selected = Assert.Single(contract!.Properties,
+            property => property.StableId == "selected_option_id");
+
+        Assert.Equal(ResultValueKind.Enum, selected.DataType);
+        Assert.Equal(["first-id", "second-id"], selected.EnumValues);
+        Assert.Equal("Second", selected.EnumDisplayNames!["second-id"]);
+
+        step.Settings.Options.Reverse();
+        var reordered = StepResultMetadata.GetResultTypeForStep(step);
+        var reorderedSelected = Assert.Single(reordered!.Properties,
+            property => property.StableId == "selected_option_id");
+        Assert.Equal("Second", reorderedSelected.EnumDisplayNames!["second-id"]);
+    }
+
+    [Fact]
     public void TryReadValue_ReadsScalarAndCollectionCount()
     {
         var result = new NetworkConnectivityQueryResult { Count = 2, Items = ["a", "b"] };

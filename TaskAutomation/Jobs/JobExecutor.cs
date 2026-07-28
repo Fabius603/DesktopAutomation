@@ -123,6 +123,7 @@ namespace TaskAutomation.Jobs
             IExecutionLogService executionLogService,
             IPreciseDelayService preciseDelayService,
             IWindowsSystemStateService windowsStateService,
+            IUserChoiceService userChoiceService,
             Lazy<IJobLauncher>? lazyLauncher = null,
             IWindowsSystemSettingService? windowsSettingService = null)
         {
@@ -141,6 +142,7 @@ namespace TaskAutomation.Jobs
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
             _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
             _stepHandlers[typeof(WindowsStateQueryStep)] = new WindowsStateQueryStepHandler(windowsStateService);
+            _stepHandlers[typeof(UserChoiceStep)] = new UserChoiceStepHandler(userChoiceService);
             windowsSettingService ??= new WindowsSystemSettingService(
                 new WindowsCapabilityCatalog(), new DefaultWindowsSettingProvider());
             _stepHandlers[typeof(WindowsSettingChangeStep)] = new WindowsSettingChangeStepHandler(windowsSettingService);
@@ -1524,7 +1526,10 @@ namespace TaskAutomation.Jobs
             string? ExpectedValue,
             ConditionDebugState State,
             string? Diagnostic = null);
-        private sealed record ConditionStepSource(string Label, string? ResultTypeName);
+        private sealed record ConditionStepSource(string Label, ResultTypeDescriptor? ResultType)
+        {
+            public string? ResultTypeName => ResultType?.TypeName;
+        }
 
         private static ConditionEvaluation EvaluateCondition(
             IfConditionSettings settings,
@@ -1694,7 +1699,7 @@ namespace TaskAutomation.Jobs
                 if (!string.IsNullOrWhiteSpace(steps[index].Id))
                     sources[steps[index].Id] = new ConditionStepSource(
                         $"Step {index + 1} ({steps[index].GetType().Name})",
-                        StepResultMetadata.GetResultTypeForStep(steps[index])?.TypeName);
+                        StepResultMetadata.GetResultTypeForStep(steps[index]));
             return sources;
         }
 
@@ -1767,8 +1772,17 @@ namespace TaskAutomation.Jobs
                 && !string.IsNullOrWhiteSpace(source.ResultTypeName))
                 result = StepResultMetadata.CreateDefaultResult(source.ResultTypeName);
             wasExecuted = result?.WasExecuted == true;
-            if (result is null
-                || !StepResultMetadata.TryGetProperty(result.GetType(), propertyId, propertyPath, out descriptor))
+            if (result is null)
+                return false;
+            if (conditionSources.TryGetValue(sourceStepId, out var configuredSource)
+                && configuredSource.ResultType is not null)
+            {
+                if (!StepResultMetadata.TryGetProperty(
+                        configuredSource.ResultType, propertyId, propertyPath, out descriptor))
+                    return false;
+            }
+            else if (!StepResultMetadata.TryGetProperty(
+                         result.GetType(), propertyId, propertyPath, out descriptor))
                 return false;
             return StepResultMetadata.TryReadValue(result, descriptor, out value);
         }

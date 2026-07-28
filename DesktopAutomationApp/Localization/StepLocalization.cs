@@ -95,7 +95,7 @@ public static class StepLocalization
             descriptor.Properties
                 .Select(p => new ResultPropertyDescriptor(p.Name, PropertyPath(descriptor.TypeName, p.Name), p.DataType,
                     PropertyDescription(descriptor.TypeName, p), p.IsNullable, p.Example, p.Cardinality, p.EnumTypeName,
-                    p.EnumValues, p.StableId))
+                    p.EnumValues, p.StableId, p.EnumDisplayNames))
                 .ToArray());
 
     public static string NumberedName(Type type, int oneBasedIndex) =>

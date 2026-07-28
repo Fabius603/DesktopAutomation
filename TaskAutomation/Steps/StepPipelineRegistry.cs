@@ -157,6 +157,12 @@ namespace TaskAutomation.Steps
                 ResultType:    typeof(ShowTextResult),
                 DisplayName:   "Text auf Desktop anzeigen"),
 
+            [typeof(UserChoiceStep)] = new(
+                Prerequisites: [],
+                ResultType: typeof(UserChoiceResult),
+                IsConditionSource: true,
+                DisplayName: "Benutzerauswahl abfragen"),
+
             [typeof(ActiveWindowStep)] = new(
                 Prerequisites:     [],
                 ResultType:        typeof(ActiveWindowResult),
@@ -261,6 +267,7 @@ namespace TaskAutomation.Steps
             ["TerminateProcess"]   = typeof(TerminateProcessStep),
             ["FocusProcess"]       = typeof(FocusProcessStep),
             ["ShowText"]           = typeof(ShowTextStep),
+            ["UserChoice"]         = typeof(UserChoiceStep),
             ["ActiveWindow"]       = typeof(ActiveWindowStep),
             ["KeyPointMatching"]   = typeof(KeyPointMatchingStep),
             ["PointComparison"]    = typeof(PointComparisonStep),

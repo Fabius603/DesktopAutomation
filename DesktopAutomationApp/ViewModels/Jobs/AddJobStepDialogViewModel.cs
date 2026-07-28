@@ -229,6 +229,7 @@ namespace DesktopAutomationApp.ViewModels
             ChooseMonitorCommand = new RelayCommand(ChooseMonitor);
             RefreshCamerasCommand = new RelayCommand(() => _ = LoadAvailableCamerasAsync());
             ChooseMonitorForShowTextCommand = new RelayCommand(ChooseMonitorForShowText);
+            ChooseMonitorForUserChoiceCommand = new RelayCommand(ChooseMonitorForUserChoice);
             AddOverlayDetectionCommand = new RelayCommand(() =>
                 OverlayDetectionRows.Add(new DetectionOverlayRowViewModel(
                     OverlayDetectionRows, _conditionSourceSteps)));
@@ -250,12 +251,16 @@ namespace DesktopAutomationApp.ViewModels
             });
             PointComparisonStep_AddExpressionCommand = new RelayCommand(() =>
                 PointComparisonStep_Expressions.Add(new AxisExpressionViewModel(PointComparisonStep_Expressions)));
+            UserChoiceStep_AddOptionCommand = new RelayCommand(
+                () => UserChoiceStep_Options.Add(new UserChoiceOptionEditorViewModel(UserChoiceStep_Options)),
+                () => UserChoiceStep_Options.Count < 18);
             TrackValidationCollection(PointComparisonStep_Points);
             TrackValidationCollection(PointComparisonStep_Expressions);
             TrackValidationCollection(IfStep_Conditions);
             TrackValidationCollection(ElseIfStep_Conditions);
             TrackValidationCollection(OverlayDetectionRows);
             TrackValidationCollection(OverlayTextRows);
+            TrackValidationCollection(UserChoiceStep_Options);
 
             InitDefaults();
             _ = LoadInstalledProgramsAsync();
@@ -303,6 +308,7 @@ namespace DesktopAutomationApp.ViewModels
             }
 
             RaiseConfirmCanExecuteChanged();
+            (UserChoiceStep_AddOptionCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void OnValidationItemChanged(object? sender, PropertyChangedEventArgs e)
@@ -341,6 +347,8 @@ namespace DesktopAutomationApp.ViewModels
             // If / ElseIf: start with one empty condition row
             IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps()));
             ElseIfStep_Conditions.Add(new ConditionRowViewModel(ElseIfStep_Conditions, GetConditionSourceSteps()));
+            UserChoiceStep_Options.Add(new UserChoiceOptionEditorViewModel(UserChoiceStep_Options));
+            UserChoiceStep_Options.Add(new UserChoiceOptionEditorViewModel(UserChoiceStep_Options));
 
             // Source step pre-selection (first available of the right type)
             TemplateMatchingStep_SourceCaptureStep  = AvailableCaptureSteps.FirstOrDefault();
@@ -417,6 +425,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ChooseMonitorCommand { get; }
         public ICommand RefreshCamerasCommand { get; }
         public ICommand ChooseMonitorForShowTextCommand { get; }
+        public ICommand ChooseMonitorForUserChoiceCommand { get; }
         public ICommand AddOverlayDetectionCommand { get; }
         public ICommand AddOverlayTextCommand { get; }
         public ICommand ChooseMonitorForStartProcessCommand { get; }
@@ -427,6 +436,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ElseIfStep_AddConditionCommand { get; }
         public ICommand PointComparisonStep_AddPointCommand { get; }
         public ICommand PointComparisonStep_AddExpressionCommand { get; }
+        public ICommand UserChoiceStep_AddOptionCommand { get; }
 
         private void Confirm()
         {
@@ -682,6 +692,8 @@ namespace DesktopAutomationApp.ViewModels
                 new("UnblockInput",       "AblaufSteuern", "Gibt Maus und Tastatur sofort wieder frei."),
                 new("Timeout",            "AblaufSteuern",
                     "Wartet eine konfigurierbare Zeit in Millisekunden, bevor der nächste Step ausgeführt wird."),
+                new("UserChoice",         "AblaufSteuern",
+                    "Fragt den Benutzer nach einer Auswahl und stellt die gewählte Antwort nachfolgenden Steps bereit."),
                 new("StartProcess",       "ProgrammeFenster",
                     "Startet ein Programm und stellt den gestarteten Prozess nachfolgenden Steps bereit."),
                 new("TerminateProcess",   "ProgrammeFenster",
@@ -779,6 +791,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowTerminateProcess => SelectedType == "TerminateProcess";
         public bool ShowFocusProcess  => SelectedType == "FocusProcess";
         public bool ShowShowText       => SelectedType == "ShowText";
+        public bool ShowUserChoice     => SelectedType == "UserChoice";
         public bool ShowActiveWindow  => SelectedType == "ActiveWindow";
         public bool ShowKeyPointMatching => SelectedType == "KeyPointMatching";
         public bool ShowPointComparison => SelectedType == "PointComparison";
@@ -1770,6 +1783,21 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private void ChooseMonitorForUserChoice()
+        {
+            try
+            {
+                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
+                if (selectedMonitorIndex >= 0)
+                    UserChoiceStep_DesktopIndex = selectedMonitorIndex;
+            }
+            catch (Exception ex)
+            {
+                AppDialog.Show(Loc.Format("Error.MonitorSelection", ex.Message), Loc.Get("Error.Title"),
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
         public CameraQualityChoice? CameraCaptureStep_SelectedQuality
         {
             get => _cameraCaptureStepSelectedQuality;
@@ -2443,6 +2471,49 @@ namespace DesktopAutomationApp.ViewModels
         {
             get => _focusProcessStep_WindowTitleContains;
             set { _focusProcessStep_WindowTitleContains = value; OnChange(); }
+        }
+
+        // ===== UserChoice Felder =====
+        private string _userChoiceStepTitle = string.Empty;
+        public string UserChoiceStep_Title
+        {
+            get => _userChoiceStepTitle;
+            set { _userChoiceStepTitle = value; OnChange(); }
+        }
+
+        private string _userChoiceStepQuestion = string.Empty;
+        public string UserChoiceStep_Question
+        {
+            get => _userChoiceStepQuestion;
+            set { _userChoiceStepQuestion = value; OnChange(); }
+        }
+
+        private string _userChoiceStepDescription = string.Empty;
+        public string UserChoiceStep_Description
+        {
+            get => _userChoiceStepDescription;
+            set { _userChoiceStepDescription = value; OnChange(); }
+        }
+
+        private int _userChoiceStepDesktopIndex;
+        public int UserChoiceStep_DesktopIndex
+        {
+            get => _userChoiceStepDesktopIndex;
+            set { _userChoiceStepDesktopIndex = value; OnChange(); }
+        }
+
+        public ObservableCollection<UserChoiceOptionEditorViewModel> UserChoiceStep_Options { get; } = [];
+
+        public void LoadUserChoice(UserChoiceSettings settings)
+        {
+            UserChoiceStep_Title = settings.Title;
+            UserChoiceStep_Question = settings.Question;
+            UserChoiceStep_Description = settings.Description;
+            UserChoiceStep_DesktopIndex = settings.DesktopIndex;
+            UserChoiceStep_Options.Clear();
+            foreach (var option in settings.Options)
+                UserChoiceStep_Options.Add(new UserChoiceOptionEditorViewModel(
+                    UserChoiceStep_Options, option.Id, option.Label, option.Value));
         }
 
         // ===== ShowText Felder =====
@@ -3154,6 +3225,17 @@ namespace DesktopAutomationApp.ViewModels
                         OffsetY      = ShowTextStep_OffsetY,
                         DurationMs   = ShowTextStep_DurationMs,
                         ClearOnJobEnd = ShowTextStep_ClearOnJobEnd
+                    }
+                },
+                "UserChoice" => new UserChoiceStep
+                {
+                    Settings = new UserChoiceSettings
+                    {
+                        Title = UserChoiceStep_Title,
+                        Question = UserChoiceStep_Question,
+                        Description = UserChoiceStep_Description,
+                        DesktopIndex = UserChoiceStep_DesktopIndex,
+                        Options = UserChoiceStep_Options.Select(option => option.ToOption()).ToList()
                     }
                 },
                 "ActiveWindow" => new ActiveWindowStep

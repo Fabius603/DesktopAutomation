@@ -49,6 +49,7 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(TerminateProcessStep), "terminate_process")]
     [JsonDerivedType(typeof(FocusProcessStep),   "focus_process")]
     [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
+    [JsonDerivedType(typeof(UserChoiceStep),       "user_choice")]
     [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
     [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
@@ -1022,6 +1023,43 @@ namespace TaskAutomation.Jobs
         /// <summary>Text wird am Ende des Jobs automatisch entfernt.</summary>
         [JsonPropertyName("clear_on_job_end")]
         public bool ClearOnJobEnd { get; set; } = false;
+    }
+
+    // ---- UserChoice ----
+    public sealed class UserChoiceStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public UserChoiceSettings Settings { get; set; } = new();
+    }
+
+    public sealed class UserChoiceSettings
+    {
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = string.Empty;
+
+        [JsonPropertyName("question")]
+        public string Question { get; set; } = string.Empty;
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; } = string.Empty;
+
+        [JsonPropertyName("desktopIndex")]
+        public int DesktopIndex { get; set; }
+
+        [JsonPropertyName("options")]
+        public List<UserChoiceOption> Options { get; set; } = [];
+    }
+
+    public sealed class UserChoiceOption
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
+        [JsonPropertyName("label")]
+        public string Label { get; set; } = string.Empty;
+
+        [JsonPropertyName("value")]
+        public string Value { get; set; } = string.Empty;
     }
 
     // ---- TerminateProcess ----

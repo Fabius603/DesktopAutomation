@@ -45,6 +45,7 @@
         <DataTemplate x:Key="TerminateProcessEditor"><process:TerminateProcessStepEditor/></DataTemplate>
         <DataTemplate x:Key="FocusProcessEditor"><process:FocusProcessStepEditor/></DataTemplate>
         <DataTemplate x:Key="ShowTextEditor"><output:ShowTextStepEditor/></DataTemplate>
+        <DataTemplate x:Key="UserChoiceEditor"><flow:UserChoiceStepEditor/></DataTemplate>
         <DataTemplate x:Key="ActiveWindowEditor"><process:ActiveWindowStepEditor/></DataTemplate>
         <DataTemplate x:Key="KeyPointMatchingEditor"><detection:KeyPointMatchingStepEditor/></DataTemplate>
         <DataTemplate x:Key="DynamicRoiEditor"><roi:DynamicRoiStepEditor/></DataTemplate>
@@ -132,6 +133,7 @@
                                 <DataTrigger Binding="{Binding SelectedType}" Value="TerminateProcess"><Setter Property="ContentTemplate" Value="{StaticResource TerminateProcessEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="FocusProcess"><Setter Property="ContentTemplate" Value="{StaticResource FocusProcessEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ShowText"><Setter Property="ContentTemplate" Value="{StaticResource ShowTextEditor}"/></DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedType}" Value="UserChoice"><Setter Property="ContentTemplate" Value="{StaticResource UserChoiceEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="ActiveWindow"><Setter Property="ContentTemplate" Value="{StaticResource ActiveWindowEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="KeyPointMatching"><Setter Property="ContentTemplate" Value="{StaticResource KeyPointMatchingEditor}"/></DataTrigger>
                                 <DataTrigger Binding="{Binding SelectedType}" Value="DynamicRoi"><Setter Property="ContentTemplate" Value="{StaticResource DynamicRoiEditor}"/></DataTrigger>

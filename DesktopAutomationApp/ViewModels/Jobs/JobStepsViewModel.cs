@@ -1315,6 +1315,11 @@ namespace DesktopAutomationApp.ViewModels
                     vm.ShowTextStep_ClearOnJobEnd = st.Settings.ClearOnJobEnd;
                     break;
 
+                case UserChoiceStep userChoice:
+                    vm.SelectedType = "UserChoice";
+                    vm.LoadUserChoice(userChoice.Settings);
+                    break;
+
                 case ActiveWindowStep aw:
                     vm.SelectedType = "ActiveWindow";
                     vm.ActiveWindowStep_ProcessName = aw.Settings.Target.ProcessName;

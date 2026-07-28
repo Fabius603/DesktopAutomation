@@ -25,7 +25,8 @@ public sealed record ResultPropertyDescriptor(
     ResultCardinality Cardinality = ResultCardinality.Single,
     string? EnumTypeName = null,
     IReadOnlyList<string>? EnumValues = null,
-    string? Id = null)
+    string? Id = null,
+    IReadOnlyDictionary<string, string>? EnumDisplayNames = null)
 {
     public string StableId => string.IsNullOrWhiteSpace(Id)
         ? ResultContractIds.FromPropertyPath(Name)

@@ -6,6 +6,48 @@ namespace TaskAutomation.Tests.Jobs;
 public sealed class JobSerializationTests
 {
     [Fact]
+    public void RoundTrip_PreservesUserChoiceStableOptionIds()
+    {
+        JobStep step = new UserChoiceStep
+        {
+            Settings = new()
+            {
+                Title = "Environment",
+                Question = "Choose",
+                Description = "Used for deployment",
+                DesktopIndex = 2,
+                Options =
+                [
+                    new() { Id = "dev-id", Label = "Development", Value = "dev" },
+                    new() { Id = "prod-id", Label = "Production", Value = "prod" }
+                ]
+            }
+        };
+
+        var json = JsonSerializer.Serialize(step);
+        var restored = Assert.IsType<UserChoiceStep>(JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Contains("\"type\":\"user_choice\"", json);
+        Assert.Equal("Environment", restored.Settings.Title);
+        Assert.Equal(2, restored.Settings.DesktopIndex);
+        Assert.Equal(["dev-id", "prod-id"], restored.Settings.Options.Select(option => option.Id));
+        Assert.Equal(["Development", "Production"], restored.Settings.Options.Select(option => option.Label));
+        Assert.Equal(["dev", "prod"], restored.Settings.Options.Select(option => option.Value));
+    }
+
+    [Fact]
+    public void Deserialize_UserChoiceWithMissingSettingsFields_UsesSafeDefaults()
+    {
+        const string json = """{"type":"user_choice","settings":{}}""";
+
+        var restored = Assert.IsType<UserChoiceStep>(JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Equal(string.Empty, restored.Settings.Title);
+        Assert.Equal(0, restored.Settings.DesktopIndex);
+        Assert.Empty(restored.Settings.Options);
+    }
+
+    [Fact]
     public void RoundTrip_PreservesPolymorphicStepsBindingsAndWindowsParameters()
     {
         var job = new Job

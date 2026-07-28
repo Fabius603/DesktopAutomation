@@ -122,6 +122,14 @@ namespace ImageHelperMethods
                              .ToArray();
         }
 
+        public static Screen? GetScreenByDesktopIndex(int desktopIndex)
+        {
+            var screens = GetScreens();
+            return desktopIndex >= 0 && desktopIndex < screens.Length
+                ? screens[desktopIndex]
+                : Screen.PrimaryScreen;
+        }
+
         public static (int adapterIdx, int outputIdx)? GetAdapterAndOutputIndex(Screen screen)
         {
             using (var factory = new Factory1())

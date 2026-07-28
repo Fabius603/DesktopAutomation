@@ -99,6 +99,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public IReadOnlyList<EnumConditionOption> EnumOptions => (SelectedProperty?.EnumValues ?? [])
         .Select(value =>
         {
+            if (SelectedProperty?.EnumDisplayNames?.TryGetValue(value, out var configuredName) == true)
+                return new EnumConditionOption(value, configuredName);
             var typeName = SelectedProperty?.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
             var key = $"Enum.{typeName}.{value}";
             var localized = Loc.Get(key);

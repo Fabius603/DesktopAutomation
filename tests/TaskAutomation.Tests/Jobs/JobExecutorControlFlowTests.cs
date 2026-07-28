@@ -9,6 +9,52 @@ namespace TaskAutomation.Tests.Jobs;
 
 public sealed class JobExecutorControlFlowTests
 {
+    [Fact]
+    public async Task ExecuteJob_UserChoiceConditionComparesStableIdAndSelectsNamedBranch()
+    {
+        var choice = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new()
+            {
+                Title = "Environment",
+                Question = "Choose",
+                Options =
+                [
+                    new() { Id = "dev-id", Label = "Development" },
+                    new() { Id = "prod-id", Label = "Production" }
+                ]
+            }
+        };
+        var condition = new StepCondition
+        {
+            SourceStepId = choice.Id,
+            PropertyId = "selected_option_id",
+            PropertyPath = nameof(UserChoiceResult.SelectedOptionId),
+            Operator = ConditionOperator.Equals,
+            Comparison = new() { Value = "prod-id" }
+        };
+        var job = new Job
+        {
+            Name = "choice branch",
+            Steps =
+            [
+                choice,
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("production"),
+                new ElseStep(),
+                Text("development"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job).WithUserChoice("prod-id");
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["production"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
     [Theory]
     [InlineData(true, "if")]
     [InlineData(false, "else")]

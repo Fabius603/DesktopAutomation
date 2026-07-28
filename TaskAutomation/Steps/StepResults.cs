@@ -264,6 +264,20 @@ public sealed record FocusProcessResult : StepResultBase, IActionExecutionResult
     public static readonly FocusProcessResult Default = new();
 }
 public sealed record ShowTextResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowTextResult Default = new(); }
+public sealed record UserChoiceResult : StepResultBase
+{
+    [ResultProperty("selected_option_id")]
+    public string SelectedOptionId { get; init; } = string.Empty;
+    [ResultProperty("selected_label")]
+    public string SelectedLabel { get; init; } = string.Empty;
+    [ResultProperty("selected_value")]
+    public string SelectedValue { get; init; } = string.Empty;
+    [ResultProperty("selected_index")]
+    public int SelectedIndex { get; init; } = -1;
+    [ResultProperty("was_cancelled")]
+    public bool WasCancelled { get; init; }
+    public static readonly UserChoiceResult Default = new();
+}
 public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowImageResult Default = new(); }
 public sealed record ShowOnDesktopResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowOnDesktopResult Default = new(); }
 public sealed record VideoCreationResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly VideoCreationResult Default = new(); }

@@ -2826,4 +2826,25 @@ Fehlermeldung:
   <data name="Ui.Windows.Options.None" xml:space="preserve"><value>Windows meldet derzeit keine verfügbaren Optionen.</value></data>
   <data name="Ui.Windows.Options.Unavailable" xml:space="preserve"><value>{0} (derzeit nicht verfügbar)</value></data>
   <data name="Ui.Windows.Options.Failed" xml:space="preserve"><value>Die verfügbaren Optionen konnten nicht geladen werden: {0}</value></data>
+  <data name="Step.Type.UserChoice" xml:space="preserve"><value>Benutzerauswahl abfragen</value></data>
+  <data name="Step.Description.UserChoice" xml:space="preserve"><value>Öffnet während der Job-Ausführung ein Auswahlfenster und stellt die gewählte Antwort nachfolgenden Steps bereit.</value></data>
+  <data name="Ui.UserChoice.Title" xml:space="preserve"><value>Überschrift (optional)</value></data>
+  <data name="Ui.UserChoice.Question" xml:space="preserve"><value>Titel (optional)</value></data>
+  <data name="Ui.UserChoice.Description" xml:space="preserve"><value>Beschreibung (optional)</value></data>
+  <data name="Ui.UserChoice.Answers" xml:space="preserve"><value>Antwortmöglichkeiten (2 bis 18, verpflichtend)</value></data>
+  <data name="Ui.UserChoice.AnswerTextRequired" xml:space="preserve"><value>Antworttext (verpflichtend)</value></data>
+  <data name="Ui.UserChoice.AnswerValueOptional" xml:space="preserve"><value>Rückgabewert (optional)</value></data>
+  <data name="Ui.UserChoice.AnswerLabel" xml:space="preserve"><value>Sichtbarer Antwortname</value></data>
+  <data name="Ui.UserChoice.AnswerValue" xml:space="preserve"><value>Optionaler Rückgabewert</value></data>
+  <data name="Ui.UserChoice.AddAnswer" xml:space="preserve"><value>Antwort hinzufügen</value></data>
+  <data name="Ui.UserChoice.RemoveAnswer" xml:space="preserve"><value>Antwort entfernen</value></data>
+  <data name="Ui.UserChoice.MoveUp" xml:space="preserve"><value>Nach oben verschieben</value></data>
+  <data name="Ui.UserChoice.MoveDown" xml:space="preserve"><value>Nach unten verschieben</value></data>
+  <data name="Ui.UserChoice.StableReferenceHint" xml:space="preserve"><value>Bleibt der Rückgabewert leer, wird der Antworttext zurückgegeben. Antworten werden intern über eine stabile ID referenziert; Umbenennen und Umsortieren ändern bestehende Bedingungen nicht.</value></data>
+  <data name="Ui.UserChoice.Confirm" xml:space="preserve"><value>Auswählen</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedOptionId" xml:space="preserve"><value>Ausgewählte Antwort</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedLabel" xml:space="preserve"><value>Angezeigter Antwortname</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedValue" xml:space="preserve"><value>Rückgabewert der Antwort</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Position der Antwort</value></data>
+  <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Auswahl abgebrochen</value></data>
 </root>

@@ -127,6 +127,18 @@ public sealed class JobStepDetailsProvider
             AddConditions(conditions, items, steps);
         else if (settings is PointComparisonSettings comparison)
             AddPointComparison(comparison, items, steps);
+        else if (settings is UserChoiceSettings choice)
+        {
+            items.Add(("general", new StepDetailItem(Loc.Get("Ui.UserChoice.Question"), choice.Question)));
+            if (!string.IsNullOrWhiteSpace(choice.Description))
+                items.Add(("general", new StepDetailItem(Loc.Get("Ui.UserChoice.Description"), choice.Description)));
+            items.Add(("general", new StepDetailItem(
+                Loc.Get("Ui.Step.Settings.DesktopIndex"),
+                choice.DesktopIndex.ToString(CultureInfo.CurrentCulture))));
+            items.Add(("general", new StepDetailItem(
+                Loc.Get("Ui.UserChoice.Answers"),
+                string.Join(", ", choice.Options.Select(option => option.Label)))));
+        }
         else if (settings is not null)
             AddProperties(settings, string.Empty, items, steps, 0);
 

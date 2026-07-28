@@ -132,6 +132,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton(new YoloManagerOptions());
                     services.AddSingleton<IYoloManager, YoloManager>();
                     services.AddSingleton<IImageDisplayService, WpfImageDisplayService>();
+                    services.AddSingleton<IUserChoiceService, WpfUserChoiceService>();
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IReleaseNotesService, ReleaseNotesService>();

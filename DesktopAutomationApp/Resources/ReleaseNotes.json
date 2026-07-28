@@ -1,5 +1,29 @@
 [
   {
+    "version": "1.5.9",
+    "date": "2026-07-28",
+    "sections": [
+      {
+        "title": {
+          "de": "Job-Interaktion",
+          "en": "Job interaction"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Der neue Step „Benutzerauswahl abfragen“ öffnet während eines Jobs ein verpflichtendes, stets im Vordergrund bleibendes Auswahlfenster. Titel und Beschreibung sind optional und werden bei leerem Inhalt ausgeblendet; über den Desktopindex lässt sich der gewünschte Bildschirm auswählen, wobei Auswahl und Fenster dieselbe von links nach rechts sortierte Monitornummerierung verwenden. Auf dessen nutzbarer Fläche erscheint das Fenster immer mittig mit gleichmäßigen gegenüberliegenden Abständen. Das abgerundete Fenster passt seine Breite innerhalb sinnvoller Grenzen an den Inhalt an, verwendet an allen Außenkanten gleichmäßige Innenabstände und zeigt bis zu 18 Antworten ohne Scrollleiste. Ab der siebten Antwort werden zwei, ab der dreizehnten drei Spalten verwendet. Antworttexte werden auf zwei Zeilen begrenzt, bei Bedarf mit Auslassungspunkten gekürzt und vollständig als Tooltip angezeigt; Emojis erscheinen im Step-Editor und im Auswahlfenster in Farbe, einschließlich zusammengesetzter Emojis und Flaggen. Die nummerierten Antworten lassen sich im Editor eindeutig zuordnen, und die Schaltflächen werden beim Darüberfahren nur mit der gewählten Akzentfarbe umrandet. Der Editor kennzeichnet verpflichtende und optionale Angaben eindeutig. Ein leerer eigener Rückgabewert verwendet automatisch den sichtbaren Antworttext. Ein Klick übernimmt die Antwort sofort, und das Fenster kann nicht versehentlich minimiert oder geschlossen werden. Die ausgewählte Antwort kann in nachfolgenden Steps und Bedingungen verwendet werden; Antwortreferenzen bleiben beim Umbenennen und Umsortieren stabil.",
+            "en": "The new “Ask user to choose” step opens a required selection window that stays in the foreground while a job is running. Title and description are optional and hidden when empty; a desktop index selects the desired screen, with both the picker and the window using the same left-to-right monitor numbering. The window is always centered in that screen's usable area with equal opposing distances. The rounded window adapts its width to the content within sensible limits, uses even inner spacing along every outer edge, and displays up to 18 answers without a scroll bar. It switches to two columns from the seventh answer and three columns from the thirteenth. Answer text is limited to two lines, shortened with an ellipsis when needed, and shown in full in a tooltip; emojis appear in color in both the step editor and selection window, including composite emojis and flags. Numbered answers remain easy to identify in the editor, and buttons are outlined with the selected accent color only when hovered. The editor clearly marks required and optional inputs. An empty custom return value automatically uses the visible answer text. Clicking a button immediately selects the answer, and the window cannot be accidentally minimized or closed. The selected answer can be used by later steps and conditions, and answer references remain stable when answers are renamed or reordered."
+          },
+          {
+            "category": "Fixed",
+            "de": "Wird ein Job während einer geöffneten Benutzerauswahl mit F10 beendet, schließt sich das Auswahlfenster nun sauber und der Abbruch wird ohne sichtbare Ausnahme als normaler Job-Stopp behandelt.",
+            "en": "When a job is stopped with F10 while a user choice is open, the selection window now closes cleanly and cancellation is handled as a normal job stop without a visible exception."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.8",
     "date": "2026-07-27",
     "sections": [
