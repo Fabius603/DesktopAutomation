@@ -7,6 +7,9 @@ using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.Models;
 using DesktopAutomationApp.Localization;
 using Microsoft.Extensions.Logging;
+using DesktopAutomation.Application.Organization;
+using DesktopAutomationApp.Settings;
+using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -16,11 +19,13 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IDialogService _dialogService;
         private readonly ILogger<ListAutomationsViewModel> _log;
         private readonly DispatcherTimer _relativeTimeTimer;
+        private readonly ILibraryOrganizationService _libraryOrganization;
 
         private readonly List<EditableAutomation> _selectedItems = new();
         private EditableAutomation? _selected;
 
         public ObservableCollection<EditableAutomation> Items { get; } = new();
+        public LibraryTreeViewModel Library { get; }
         public IReadOnlyList<EditableAutomation> SelectedItems => _selectedItems;
 
         public EditableAutomation? Selected
@@ -41,14 +46,21 @@ namespace DesktopAutomationApp.ViewModels
         public ListAutomationsViewModel(
             IAutomationApplicationService automationAppService,
             IDialogService dialogService,
-            ILogger<ListAutomationsViewModel> log)
+            ILogger<ListAutomationsViewModel> log,
+            ILibraryOrganizationService libraryOrganization,
+            IUserPreferencesService preferences)
         {
             _automationAppService = automationAppService;
             _dialogService = dialogService;
             _log = log;
+            _libraryOrganization = libraryOrganization;
+            Library = new LibraryTreeViewModel(
+                libraryOrganization, dialogService, preferences, LibraryItemKind.Automation,
+                Loc.Get("Ui.Automation.List.NewAutomation"));
+            Library.RequestCreateItem += NewAutomationInFolderAsync;
 
             RefreshCommand = new RelayCommand(async () => await RefreshAllAsync());
-            NewCommand = new RelayCommand(async () => await NewAutomationAsync());
+            NewCommand = new RelayCommand(async () => await NewAutomationInFolderAsync(Library.SelectedFolderId));
             OpenCommand = new RelayCommand<EditableAutomation?>(a =>
             {
                 if (a != null) RequestOpenAutomation?.Invoke(a);
@@ -72,10 +84,11 @@ namespace DesktopAutomationApp.ViewModels
         }
 
 
-        private void OnCultureChanged(object? sender, EventArgs e)
+        private async void OnCultureChanged(object? sender, EventArgs e)
         {
             foreach (var automation in Items)
                 automation.RefreshLocalizedDisplayProperties();
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
         }
 
         private void OnRelativeTimeTick(object? sender, EventArgs e)
@@ -110,12 +123,13 @@ namespace DesktopAutomationApp.ViewModels
                 editable.PropertyChanged += OnAutomationActiveChanged;
                 Items.Add(editable);
             }
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
 
             _log.LogInformation("Automationen geladen: {Count}", Items.Count);
             OnPropertyChanged(nameof(Items));
         }
 
-        private async Task NewAutomationAsync()
+        private async Task NewAutomationInFolderAsync(Guid? folderId)
         {
             var name = await _dialogService.AskForNameAsync(Loc.Get("Automation.New.Title"), Loc.Get("Automation.New.Prompt"));
             if (string.IsNullOrWhiteSpace(name)) return;
@@ -128,6 +142,9 @@ namespace DesktopAutomationApp.ViewModels
             };
 
             Selected = automation;
+            if (folderId.HasValue)
+                await _libraryOrganization.PlaceItemAsync(
+                    LibraryItemKind.Automation, automation.Id, folderId);
             RequestOpenAutomation?.Invoke(automation);
         }
 
@@ -166,6 +183,37 @@ namespace DesktopAutomationApp.ViewModels
             (DeleteCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
             (RunNowCommand as RelayCommand<EditableAutomation?>)?.RaiseCanExecuteChanged();
+        }
+
+        private LibraryItemDescriptor CreateLibraryDescriptor(EditableAutomation automation) => new()
+        {
+            Id = automation.Id,
+            Name = automation.Name,
+            Subtitle = LibrarySubtitleFormatter.Automation(
+                automation.Active,
+                automation.DisplayTrigger,
+                automation.DisplayAction),
+            Model = automation,
+            Open = () => RequestOpenAutomation?.Invoke(automation),
+            Execute = () => _ = RunAutomationFromLibraryAsync(automation),
+            CanExecute = () => automation.Active,
+            DeleteAsync = () => DeleteAutomationFromLibraryAsync(automation)
+        };
+
+        private async Task RunAutomationFromLibraryAsync(EditableAutomation automation)
+        {
+            await _automationAppService.TriggerAsync(automation.Id);
+            await RefreshAllAsync();
+        }
+
+        private async Task<bool> DeleteAutomationFromLibraryAsync(EditableAutomation automation)
+        {
+            if (!await _dialogService.ConfirmAsync(
+                    Loc.Format("Automation.Delete.One", automation.Name),
+                    Loc.Get("Dialog.Delete.Title"))) return false;
+            Items.Remove(automation);
+            await _automationAppService.DeleteAsync(automation.Id);
+            return true;
         }
 
         protected override void Dispose(bool disposing)

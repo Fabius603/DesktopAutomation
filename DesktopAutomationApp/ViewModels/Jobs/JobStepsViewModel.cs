@@ -47,6 +47,7 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> _savedStartSnapshot;
         private List<JobStep> _savedEndSnapshot;
         private int _savedEndPhaseTimeoutSeconds;
+        private bool _savedRepeating;
         private CancellationTokenSource? _validationCts;
         private int _validationGeneration;
         private JobDebugSession? _debugSession;
@@ -189,6 +190,20 @@ namespace DesktopAutomationApp.ViewModels
         public IReadOnlyList<JobStep> AllJobSteps => _allJobStepsSnapshot;
 
         private int _endPhaseTimeoutSeconds;
+        private bool _isRepeating;
+
+        public bool IsRepeating
+        {
+            get => _isRepeating;
+            set
+            {
+                if (_isRepeating == value) return;
+                _isRepeating = value;
+                OnPropertyChanged();
+                HasUnsavedChanges = true;
+            }
+        }
+
         public int EndPhaseTimeoutSeconds
         {
             get => _endPhaseTimeoutSeconds;
@@ -385,6 +400,8 @@ namespace DesktopAutomationApp.ViewModels
                 Job.MinEndPhaseTimeoutSeconds,
                 Job.MaxEndPhaseTimeoutSeconds);
             _savedEndPhaseTimeoutSeconds = _endPhaseTimeoutSeconds;
+            _isRepeating = Job.Repeating;
+            _savedRepeating = _isRepeating;
 
             // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
             // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
@@ -480,15 +497,23 @@ namespace DesktopAutomationApp.ViewModels
             ScheduleValidation();
         }
 
-        // ---------- Step property changes ----------
+// ---------- Step property changes ----------
         private void OpenFileInExplorer()
-            => ShowFileInExplorer(_jobAppService.GetStoragePath(), $"{Job.Id}.json");
+            => ShowFileInExplorer(_jobAppService.GetStoragePath(), Job.Id.ToString());
 
-        private static void ShowFileInExplorer(string directory, string fileName)
+        private static void ShowFileInExplorer(string directory, string key)
         {
-            var path = Path.Combine(directory, fileName);
+            var path = Common.JsonRepository.JsonRepositoryPath.ForKey(directory, key);
             Directory.CreateDirectory(directory);
-            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+            if (!File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
+                return;
+            }
+
+            var startInfo = new ProcessStartInfo("notepad.exe") { UseShellExecute = true };
+            startInfo.ArgumentList.Add(path);
+            Process.Start(startInfo);
         }
 
         private void OnStepPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -912,7 +937,10 @@ namespace DesktopAutomationApp.ViewModels
             Job.EndSteps = DeepCloneSteps(_savedEndSnapshot);
             _endPhaseTimeoutSeconds = _savedEndPhaseTimeoutSeconds;
             Job.EndPhaseTimeoutSeconds = _savedEndPhaseTimeoutSeconds;
+            _isRepeating = _savedRepeating;
+            Job.Repeating = _savedRepeating;
             OnPropertyChanged(nameof(EndPhaseTimeoutSeconds));
+            OnPropertyChanged(nameof(IsRepeating));
             HasUnsavedChanges = false;
             ScheduleValidation();
         }
@@ -931,6 +959,7 @@ namespace DesktopAutomationApp.ViewModels
                 StartSteps = materialized.StartSteps.ToList(),
                 Steps = materialized.RunSteps.ToList(),
                 EndSteps = materialized.EndSteps.ToList(),
+                Repeating = IsRepeating,
                 EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds
             }));
             ApplyValidation(validation, generation);
@@ -943,6 +972,7 @@ namespace DesktopAutomationApp.ViewModels
             Job.StartSteps = _startSteps.ToList();
             Job.Steps = _runSteps.ToList();
             Job.EndSteps = _endSteps.ToList();
+            Job.Repeating = IsRepeating;
             Job.EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
             await _jobAppService.SaveJobAsync(Job);
             var savedSerialized = await JobStepsSnapshotService.SerializeAsync(
@@ -952,6 +982,7 @@ namespace DesktopAutomationApp.ViewModels
             _savedSnapshot = savedMaterialized.RunSteps.ToList();
             _savedEndSnapshot = savedMaterialized.EndSteps.ToList();
             _savedEndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
+            _savedRepeating = IsRepeating;
             HasUnsavedChanges = false;
         }
 

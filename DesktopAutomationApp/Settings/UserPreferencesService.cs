@@ -24,6 +24,7 @@ public sealed class UserPreferencesService : IUserPreferencesService
             await using var stream = File.OpenRead(_settingsPath);
             Current = await JsonSerializer.DeserializeAsync<UserPreferences>(stream, JsonOptions)
                       ?? new UserPreferences();
+            Current.ExpandedLibraryFolders ??= new Dictionary<string, List<Guid>>();
         }
         catch (JsonException)
         {

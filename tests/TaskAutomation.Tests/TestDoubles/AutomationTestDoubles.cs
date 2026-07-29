@@ -10,6 +10,7 @@ internal sealed class AutomationRepository(params AutomationDefinition[] definit
 {
     private readonly List<AutomationDefinition> _definitions = [.. definitions];
     public string DirectoryPath => string.Empty;
+    public IReadOnlyList<JsonRepositoryLoadError> LoadErrors => [];
     public int SaveCalls { get; private set; }
     public Task<IReadOnlyList<AutomationDefinition>> LoadAllAsync() =>
         Task.FromResult<IReadOnlyList<AutomationDefinition>>(_definitions.ToArray());

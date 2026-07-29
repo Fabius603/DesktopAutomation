@@ -19,4 +19,5 @@ public sealed class UserPreferences
     public bool StartInBackgroundAtWindowsStartup { get; set; } = true;
     public uint ForceStopVirtualKey { get; set; } = DefaultForceStopVirtualKey;
     public string LastSeenReleaseNotesVersion { get; set; } = string.Empty;
+    public Dictionary<string, List<Guid>> ExpandedLibraryFolders { get; set; } = new();
 }

@@ -205,9 +205,17 @@ namespace DesktopAutomationApp.ViewModels
         private void OpenFileInExplorer()
         {
             var directory = _automationAppService.GetStoragePath();
-            var path = Path.Combine(directory, $"{EditedAutomation.Id}.json");
+            var path = Common.JsonRepository.JsonRepositoryPath.ForKey(directory, EditedAutomation.Id.ToString());
             Directory.CreateDirectory(directory);
-            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+            if (!File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
+                return;
+            }
+
+            var startInfo = new ProcessStartInfo("notepad.exe") { UseShellExecute = true };
+            startInfo.ArgumentList.Add(path);
+            Process.Start(startInfo);
         }
 
         private async Task LoadInstalledProgramsAsync()

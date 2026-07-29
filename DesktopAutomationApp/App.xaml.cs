@@ -169,6 +169,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IJobApplicationService, JobApplicationService>();
                     services.AddSingleton<IMakroApplicationService, MakroApplicationService>();
                     services.AddSingleton<IAutomationApplicationService, AutomationApplicationService>();
+                    services.AddSingleton<ILibraryOrganizationService, LibraryOrganizationService>();
                     services.AddSingleton<IDialogService, WpfDialogService>();
                     services.AddSingleton<IUserPreferencesService, UserPreferencesService>();
                     services.AddSingleton<IWindowsStartupRegistrationService, WindowsStartupRegistrationService>();

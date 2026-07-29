@@ -28,6 +28,28 @@ public sealed class JobEndSettingsTests
         Assert.Equal("3600", input.Attribute("Maximum")?.Value);
     }
 
+    [Fact]
+    public void RepeatingSetting_UsesImmediateTwoWayBinding()
+    {
+        var document = XDocument.Load(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var input = Assert.Single(
+            document.Descendants(presentation + "CheckBox"),
+            element => element.Attributes().Any(attribute =>
+                attribute.Value.Contains("IsRepeating", StringComparison.Ordinal)));
+
+        Assert.Contains("Mode=TwoWay", input.Attribute("IsChecked")?.Value, StringComparison.Ordinal);
+        Assert.Contains(
+            "UpdateSourceTrigger=PropertyChanged",
+            input.Attribute("IsChecked")?.Value,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            input.Descendants().SelectMany(element => element.Attributes()),
+            attribute => attribute.Value.Contains("Ui.Job.Settings.Repeating", StringComparison.Ordinal));
+    }
+
     private static string RepositoryRoot([CallerFilePath] string sourceFile = "") =>
         Path.GetFullPath(Path.Combine(
             Path.GetDirectoryName(sourceFile)!, "..", "..", ".."));

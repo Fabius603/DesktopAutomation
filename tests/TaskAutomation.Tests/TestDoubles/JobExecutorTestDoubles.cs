@@ -18,6 +18,7 @@ internal sealed class InMemoryRepository<T>(IEnumerable<T>? items = null) : IJso
 {
     private List<T> _items = items?.ToList() ?? [];
     public string DirectoryPath => string.Empty;
+    public IReadOnlyList<JsonRepositoryLoadError> LoadErrors => [];
     public Task<IReadOnlyList<T>> LoadAllAsync() => Task.FromResult<IReadOnlyList<T>>(_items.ToArray());
     public Task SaveAllAsync(IEnumerable<T> items) { _items = items.ToList(); return Task.CompletedTask; }
     public Task<T?> LoadAsync(string name) => Task.FromResult(default(T));

@@ -405,76 +405,126 @@
         </Grid.RowDefinitions>
 
         <!-- Header: Zurück + Titel + Add + Save + Cancel -->
-        <DockPanel Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding DebugJobCommand}"
-                        Visibility="{Binding IsJobRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.Job.Debug.StartTooltip}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Bug" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Debug.Start}" VerticalAlignment="Center"/>
+        <Border Margin="0,0,0,12" Padding="14,12" CornerRadius="8"
+                Background="{DynamicResource App.Brush.CardBackground}"
+                BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14"
+                                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Common.Back}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}"
+                                   Margin="0,0,12,0" TextTrimming="CharacterEllipsis"/>
+                        <Border Padding="9,3" CornerRadius="10"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource App.Brush.AccentSubtle}"
+                                BorderBrush="{DynamicResource App.Brush.Accent}" BorderThickness="1"
+                                Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Unsaved}" FontSize="11"
+                                       FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.Accent}"/>
+                        </Border>
                     </StackPanel>
-                </Button>
-                <Button Style="{StaticResource ButtonDanger}" Command="{Binding StopJobCommand}"
-                        Visibility="{Binding IsJobRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="{loc:Translate Key=Ui.Job.Steps.StopJob}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Command="{Binding CancelCommand}"
+                                Margin="0,0,8,0"
+                                Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Undo" Width="14" Height="14"
+                                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Tag="{Binding}" Click="HeaderMoreButton_Click"
+                                ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}">
+                            <iconPacks:PackIconMaterial Kind="DotsVertical" Width="16" Height="16"/>
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Common.Rename}"
+                                              Command="{Binding PlacementTarget.Tag.RenameCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Logs.OpenFile}"
+                                              Command="{Binding PlacementTarget.Tag.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
                     </StackPanel>
-                </Button>
-                <Border Style="{StaticResource ToolbarSeparator}"/>
-                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Save}" VerticalAlignment="Center"/>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Padding="10,8" CornerRadius="6" HorizontalAlignment="Left"
+                            Background="{DynamicResource App.Brush.SurfaceHover}">
+                        <CheckBox VerticalAlignment="Center"
+                                  ToolTip="{loc:Translate Key=Ui.Job.Settings.Repeating.Description}"
+                                  IsChecked="{Binding IsRepeating, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding IsJobRunning, Converter={StaticResource InverseBooleanConverter}}">
+                            <StackPanel Margin="9,0,0,0" MaxWidth="440">
+                                <TextBlock Text="{loc:Translate Key=Ui.Job.Settings.Repeating}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Job.Settings.Repeating.Description}"
+                                           Margin="0,2,0,0" FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding IsJobRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <Button Style="{StaticResource ButtonPrimary}" Command="{Binding AddStepCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14"
+                                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Common.NewStep}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}" Margin="8,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14"
+                                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Common.Save}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Border Style="{StaticResource ToolbarSeparator}"/>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding DebugJobCommand}"
+                                ToolTip="{loc:Translate Key=Ui.Job.Debug.StartTooltip}">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="Bug" Width="14" Height="14"
+                                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Job.Debug.Start}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Button>
-                <Border Style="{StaticResource ToolbarSeparator}"/>
-                <Button Style="{StaticResource ButtonPrimary}"
-                        Command="{Binding AddStepCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Plus" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.NewStep}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding BackCommand}"
-                        Margin="0,0,12,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Back}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Border Padding="9,3" CornerRadius="10" Margin="0,0,0,0"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource App.Brush.AccentSubtle}"
-                        BorderBrush="{DynamicResource App.Brush.Accent}" BorderThickness="1"
-                        Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Unsaved}" FontSize="11"
-                               FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.Accent}"/>
-                </Border>
-                <Button Style="{StaticResource ButtonSecondary}" Margin="8,0,0,0"
-                        Tag="{Binding}" Click="HeaderMoreButton_Click"
-                        ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}">
-                    <iconPacks:PackIconMaterial Kind="DotsVertical" Width="16" Height="16"/>
-                    <Button.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="{loc:Translate Key=Ui.Common.Rename}"
-                                      Command="{Binding PlacementTarget.Tag.RenameCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                            <MenuItem Header="{loc:Translate Key=Ui.Logs.OpenFile}"
-                                      Command="{Binding PlacementTarget.Tag.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                            <Separator/>
-                            <MenuItem Header="{loc:Translate Key=Ui.Common.Discard}"
-                                      Command="{Binding PlacementTarget.Tag.CancelCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
-            </StackPanel>
-        </DockPanel>
+                    <Button Grid.Column="1" Style="{StaticResource ButtonDanger}" Command="{Binding StopJobCommand}"
+                            Visibility="{Binding IsJobRunning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            ToolTip="{loc:Translate Key=Ui.Job.Steps.StopJob}">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14"
+                                                        VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
 
         <Border Grid.Row="1" Margin="0,0,0,12" Padding="12,10" CornerRadius="7"
                 Background="{DynamicResource App.Brush.AccentSubtle}"

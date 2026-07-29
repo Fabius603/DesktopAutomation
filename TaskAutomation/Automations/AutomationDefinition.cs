@@ -7,6 +7,11 @@ namespace TaskAutomation.Automations
 {
     public sealed class AutomationDefinition
     {
+        public const int CurrentFormatVersion = 1;
+
+        [JsonPropertyName("formatVersion")]
+        public int FormatVersion { get; set; } = CurrentFormatVersion;
+
         [JsonPropertyName("id")]
         public Guid Id { get; set; } = Guid.NewGuid();
 

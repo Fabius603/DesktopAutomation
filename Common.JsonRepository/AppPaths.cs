@@ -20,6 +20,7 @@ public static class AppPaths
     public static string JobConfigDirectory => Path.Combine(ConfigRoot, "Job");
     public static string MakroConfigDirectory => Path.Combine(ConfigRoot, "Makro");
     public static string AutomationConfigDirectory => Path.Combine(ConfigRoot, "Automation");
+    public static string LibraryLayoutFile => Path.Combine(ConfigRoot, "LibraryLayout.json");
     public static string YoloModelsDirectory => Path.Combine(RoamingRoot, "YoloModels");
 
     public static string SettingsFile => Path.Combine(LocalRoot, "settings.json");

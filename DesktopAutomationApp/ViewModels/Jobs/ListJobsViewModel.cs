@@ -12,6 +12,9 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Services;
 using DesktopAutomationApp.Localization;
+using DesktopAutomation.Application.Organization;
+using DesktopAutomationApp.Settings;
+using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -22,11 +25,13 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobApplicationService _jobAppService;
         private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
+        private readonly ILibraryOrganizationService _libraryOrganization;
 
         public string Title => "Jobs";
         public string Description => "Verfügbare Jobs";
 
         public ObservableCollection<Job> Items { get; } = new();
+        public LibraryTreeViewModel Library { get; }
         private IReadOnlyCollection<Guid> _runningJobIds = Array.Empty<Guid>();
         public IReadOnlyCollection<Guid> RunningJobIds
         {
@@ -81,13 +86,20 @@ namespace DesktopAutomationApp.ViewModels
             ILogger<ListJobsViewModel> log,
             IJobApplicationService jobAppService,
             IDialogService dialogService,
-            IJobDispatcher dispatcher)
+            IJobDispatcher dispatcher,
+            ILibraryOrganizationService libraryOrganization,
+            IUserPreferencesService preferences)
         {
             _executor = executor;
             _log = log;
             _jobAppService = jobAppService;
             _dialogService = dialogService;
             _dispatcher = dispatcher;
+            _libraryOrganization = libraryOrganization;
+            Library = new LibraryTreeViewModel(
+                libraryOrganization, dialogService, preferences, LibraryItemKind.Job,
+                Loc.Get("Ui.Job.List.NewJob"));
+            Library.RequestCreateItem += CreateNewJobInFolderAsync;
 
             RefreshCommand = new RelayCommand(async () => await RefreshAsync());
             OpenJobCommand = new RelayCommand<Job?>(job =>
@@ -114,10 +126,15 @@ namespace DesktopAutomationApp.ViewModels
                 Process.Start(new ProcessStartInfo(_jobAppService.GetStoragePath()) { UseShellExecute = true }));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
+            LocalizationService.Instance.CultureChanged += OnCultureChanged;
 
             _ = RefreshAsync();
         }
 
+        private async void OnCultureChanged(object? sender, EventArgs e)
+        {
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
 
         public async Task RefreshAsync()
         {
@@ -126,8 +143,7 @@ namespace DesktopAutomationApp.ViewModels
             Items.Clear();
             foreach (var j in _jobAppService.Jobs.Values.OrderBy(j => j.Name))
                 Items.Add(j);
-
-
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
         }
 
 
@@ -164,7 +180,9 @@ namespace DesktopAutomationApp.ViewModels
             SelectedJob = null;
         }
 
-        public async void CreateNewJob()
+        public void CreateNewJob() => _ = CreateNewJobInFolderAsync(Library.SelectedFolderId);
+
+        private async Task CreateNewJobInFolderAsync(Guid? folderId)
         {
             var name = await _dialogService.AskForNameAsync(Loc.Get("Job.New.Title"), Loc.Get("Job.New.Prompt"));
             if (name == null) return;
@@ -173,7 +191,11 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var newJob = await _jobAppService.CreateJobAsync(name);
                 Items.Add(newJob);
+                if (folderId.HasValue)
+                    await _libraryOrganization.PlaceItemAsync(LibraryItemKind.Job, newJob.Id, folderId);
+                await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
                 SelectedJob = newJob;
+                RequestOpenJob?.Invoke(newJob);
             }
             catch (Exception ex)
             {
@@ -189,13 +211,17 @@ namespace DesktopAutomationApp.ViewModels
             {
                 RunningJobIds = ids;
                 (StopJobCommand as RelayCommand<object?>)?.RaiseCanExecuteChanged();
+                Library.RefreshItemStates();
             });
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
+            {
                 _dispatcher.RunningJobsChanged -= OnRunningJobsChanged;
+                LocalizationService.Instance.CultureChanged -= OnCultureChanged;
+            }
             base.Dispose(disposing);
         }
 
@@ -205,6 +231,33 @@ namespace DesktopAutomationApp.ViewModels
             (DeleteJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenJobCommand   as RelayCommand<Job?>)?.RaiseCanExecuteChanged();
             (StopJobCommand   as RelayCommand<object?>)?.RaiseCanExecuteChanged();
+        }
+
+        private LibraryItemDescriptor CreateLibraryDescriptor(Job job) => new()
+        {
+            Id = job.Id,
+            Name = job.Name,
+            Subtitle = LibrarySubtitleFormatter.Job(job.ActiveStepCount, job.Repeating),
+            Model = job,
+            Open = () => RequestOpenJob?.Invoke(job),
+            Execute = () =>
+            {
+                try { _dispatcher.StartJob(job.Id); }
+                catch (JobLimitExceededException) { }
+            },
+            Stop = () => _dispatcher.CancelJobsByDefinition(job.Id),
+            IsRunning = () => RunningJobIds.Contains(job.Id),
+            DeleteAsync = () => DeleteJobFromLibraryAsync(job)
+        };
+
+        private async Task<bool> DeleteJobFromLibraryAsync(Job job)
+        {
+            if (!await _dialogService.ConfirmAsync(
+                    Loc.Format("Job.Delete.One", job.Name),
+                    Loc.Get("Dialog.Delete.Title"))) return false;
+            Items.Remove(job);
+            await _jobAppService.DeleteJobAsync(job.Id);
+            return true;
         }
 
     }

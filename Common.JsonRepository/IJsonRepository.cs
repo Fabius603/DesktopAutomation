@@ -6,6 +6,7 @@ namespace Common.JsonRepository
     public interface IJsonRepository<T>
     {
         string DirectoryPath { get; }
+        IReadOnlyList<JsonRepositoryLoadError> LoadErrors { get; }
 
         /// <summary>
         /// Lädt alle Objekte vom Dateisystem.

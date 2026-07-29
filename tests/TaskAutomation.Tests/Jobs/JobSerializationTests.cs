@@ -6,6 +6,14 @@ namespace TaskAutomation.Tests.Jobs;
 public sealed class JobSerializationTests
 {
     [Fact]
+    public void DeserializeLegacyJobWithoutFormatVersion_UsesCurrentVersion()
+    {
+        var job = Assert.IsType<Job>(JsonSerializer.Deserialize<Job>("""{"name":"Legacy"}"""));
+
+        Assert.Equal(Job.CurrentFormatVersion, job.FormatVersion);
+    }
+
+    [Fact]
     public void RoundTrip_PreservesUserChoiceStableOptionIds()
     {
         JobStep step = new UserChoiceStep

@@ -17,6 +17,7 @@ namespace Common.JsonRepository
         private readonly Func<T, string> _keySelector;
         private readonly SemaphoreSlim _gate = new(1, 1);
         private readonly FileSystemWatcher? _watcher;
+        private readonly List<JsonRepositoryLoadError> _loadErrors = [];
 
         public JsonRepository(JsonRepositoryOptions options, Func<T, string> keySelector, bool enableWatcher = false)
         {
@@ -43,21 +44,25 @@ namespace Common.JsonRepository
         }
 
         public string DirectoryPath => _opt.DirectoryPath;
+        public IReadOnlyList<JsonRepositoryLoadError> LoadErrors => _loadErrors.ToArray();
 
         private string FilePathForKey(string key) =>
-            Path.Combine(_opt.DirectoryPath, NamePolicy.Sanitize(key) + ".json");
+            JsonRepositoryPath.ForKey(_opt.DirectoryPath, key);
 
         public async Task<IReadOnlyList<T>> LoadAllAsync()
         {
             await _gate.WaitAsync().ConfigureAwait(false);
             try
             {
+                _loadErrors.Clear();
                 var files = Directory.GetFiles(_opt.DirectoryPath, "*.json");
                 var result = new List<T>(files.Length);
                 foreach (var file in files)
                 {
                     var item = await ReadSingleFileAsync(file).ConfigureAwait(false);
-                    if (item != null) result.Add(item);
+                    if (item == null) continue;
+                    result.Add(item);
+                    TryMigrateLegacyFile(file, item);
                 }
                 return result;
             }
@@ -72,17 +77,8 @@ namespace Common.JsonRepository
             try
             {
                 var itemList = items.ToList();
-                var newKeys = new HashSet<string>(itemList.Select(x => NamePolicy.Sanitize(_keySelector(x))), StringComparer.OrdinalIgnoreCase);
 
                 // Dateien löschen, die nicht mehr vorhanden sind
-                foreach (var existing in Directory.GetFiles(_opt.DirectoryPath, "*.json"))
-                {
-                    var baseName = Path.GetFileNameWithoutExtension(existing);
-                    if (!newKeys.Contains(baseName))
-                        try { File.Delete(existing); } catch { }
-                }
-
-                // Jedes Item in eigene Datei schreiben
                 foreach (var item in itemList)
                     await WriteItemAsync(item).ConfigureAwait(false);
             }
@@ -96,7 +92,7 @@ namespace Common.JsonRepository
             await _gate.WaitAsync().ConfigureAwait(false);
             try
             {
-                var file = FilePathForKey(key);
+                var file = ResolveExistingFilePath(key);
                 return await ReadSingleFileAsync(file).ConfigureAwait(false);
             }
             finally { _gate.Release(); }
@@ -125,7 +121,10 @@ namespace Common.JsonRepository
             try
             {
                 var file = FilePathForKey(key);
+                var legacyFile = JsonRepositoryPath.LegacyForKey(_opt.DirectoryPath, key);
                 if (File.Exists(file)) File.Delete(file);
+                if (!string.Equals(file, legacyFile, StringComparison.OrdinalIgnoreCase) && File.Exists(legacyFile))
+                    File.Delete(legacyFile);
             }
             finally { _gate.Release(); }
         }
@@ -135,6 +134,7 @@ namespace Common.JsonRepository
             var key = _keySelector(item);
             var file = FilePathForKey(key);
             var temp = file + ".tmp";
+            var backup = file + ".bak";
 
             await using (var fs = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
             {
@@ -142,7 +142,42 @@ namespace Common.JsonRepository
                 await fs.FlushAsync().ConfigureAwait(false);
             }
 
-            File.Move(temp, file, overwrite: true);
+            if (File.Exists(file))
+                File.Replace(temp, file, backup, ignoreMetadataErrors: true);
+            else
+                File.Move(temp, file);
+
+            var legacyFile = JsonRepositoryPath.LegacyForKey(_opt.DirectoryPath, key);
+            if (!string.Equals(file, legacyFile, StringComparison.OrdinalIgnoreCase) && File.Exists(legacyFile))
+                File.Delete(legacyFile);
+        }
+
+        private string ResolveExistingFilePath(string key)
+        {
+            var canonical = FilePathForKey(key);
+            if (File.Exists(canonical)) return canonical;
+            var legacy = JsonRepositoryPath.LegacyForKey(_opt.DirectoryPath, key);
+            return File.Exists(legacy) ? legacy : canonical;
+        }
+
+        private void TryMigrateLegacyFile(string sourceFile, T item)
+        {
+            var targetFile = FilePathForKey(_keySelector(item));
+            if (string.Equals(sourceFile, targetFile, StringComparison.OrdinalIgnoreCase) || File.Exists(targetFile))
+                return;
+
+            try
+            {
+                File.Move(sourceFile, targetFile);
+            }
+            catch (IOException)
+            {
+                // Best effort: Die Quelldatei bleibt vollständig erhalten.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Best effort: Die Quelldatei bleibt vollständig erhalten.
+            }
         }
 
         private async Task<T?> ReadSingleFileAsync(string file)
@@ -153,8 +188,9 @@ namespace Common.JsonRepository
                 await using var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 return await JsonSerializer.DeserializeAsync<T>(fs, _opt.JsonOptions).ConfigureAwait(false);
             }
-            catch
+            catch (Exception exception)
             {
+                _loadErrors.Add(new JsonRepositoryLoadError(file, exception.Message));
                 return default;
             }
         }

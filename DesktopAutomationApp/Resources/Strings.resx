@@ -958,6 +958,8 @@
   <data name="Ui.Job.List.Recurring" xml:space="preserve">
     <value>Wiederholend</value>
   </data>
+  <data name="Ui.Job.Settings.Repeating" xml:space="preserve"><value>Job wiederholen</value></data>
+  <data name="Ui.Job.Settings.Repeating.Description" xml:space="preserve"><value>Führt den Job nach dem letzten regulären Step erneut aus, bis er gestoppt wird.</value></data>
   <data name="Ui.Job.List.CountSteps" xml:space="preserve">
     <value>#Steps</value>
   </data>
@@ -2851,4 +2853,27 @@ Fehlermeldung:
   <data name="Step.ResultProperty.UserChoiceResult.SelectedValue" xml:space="preserve"><value>Rückgabewert der Antwort</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Position der Antwort</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Auswahl abgebrochen</value></data>
+  <data name="Ui.Library.Search" xml:space="preserve"><value>Bibliothek durchsuchen</value></data>
+  <data name="Ui.Library.NewFolder" xml:space="preserve"><value>Neuer Ordner</value></data>
+  <data name="Ui.Library.ExpandAll" xml:space="preserve"><value>Alle Ordner ausklappen</value></data>
+  <data name="Ui.Library.CollapseAll" xml:space="preserve"><value>Alle Ordner einklappen</value></data>
+  <data name="Ui.Library.Empty" xml:space="preserve"><value>Hier sind noch keine Dateien oder Ordner vorhanden.</value></data>
+  <data name="Ui.Library.NoSearchResults" xml:space="preserve"><value>Keine passenden Einträge gefunden.</value></data>
+  <data name="Ui.Library.ExecuteOrStop" xml:space="preserve"><value>Ausführen oder stoppen</value></data>
+  <data name="Ui.Library.RenameFolder" xml:space="preserve"><value>Ordner umbenennen</value></data>
+  <data name="Ui.Library.Delete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Ui.Library.MoveUpOneLevel" xml:space="preserve"><value>Eine Ebene nach oben verschieben</value></data>
+  <data name="Ui.Library.OperationFailed" xml:space="preserve"><value>Ordneraktion nicht möglich</value></data>
+  <data name="Ui.Library.NewFolderTitle" xml:space="preserve"><value>Neuer Ordner</value></data>
+  <data name="Ui.Library.NewFolderPrompt" xml:space="preserve"><value>Name des neuen Ordners:</value></data>
+  <data name="Ui.Library.RenameFolderTitle" xml:space="preserve"><value>Ordner umbenennen</value></data>
+  <data name="Ui.Library.RenameFolderPrompt" xml:space="preserve"><value>Neuer Ordnername:</value></data>
+  <data name="Ui.Library.DeleteFolderPrompt" xml:space="preserve"><value>Ordner „{0}“ löschen? Enthaltene Dateien und Unterordner werden eine Ebene nach oben verschoben.</value></data>
+  <data name="Ui.Library.DeleteFolderTitle" xml:space="preserve"><value>Ordner löschen</value></data>
+  <data name="Ui.Library.JobSubtitle" xml:space="preserve"><value>{0} aktive Steps · {1}</value></data>
+  <data name="Ui.Library.JobRepeating" xml:space="preserve"><value>Wiederholend</value></data>
+  <data name="Ui.Library.JobSingleRun" xml:space="preserve"><value>Einmalige Ausführung</value></data>
+  <data name="Ui.Library.MacroSubtitle" xml:space="preserve"><value>{0} Befehle</value></data>
+  <data name="Ui.Library.AutomationSubtitle" xml:space="preserve"><value>{0} · Aktion: {2} · {1}</value></data>
+  <data name="Ui.Library.Inactive" xml:space="preserve"><value>Inaktiv</value></data>
 </root>

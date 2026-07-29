@@ -5,6 +5,64 @@
     "sections": [
       {
         "title": {
+          "de": "Dateiverwaltung",
+          "en": "File management"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "Im Job-Editor kann jetzt direkt eingestellt werden, ob ein Job nach seinem letzten regulären Step wiederholt wird, bis er gestoppt wird. Die Auswahl wird gemeinsam mit den übrigen Job-Änderungen gespeichert oder verworfen.",
+            "en": "The job editor now lets users choose whether a job repeats after its last regular step until it is stopped. The selection is saved or discarded together with the other job changes."
+          },
+          {
+            "category": "Changed",
+            "de": "Der Kopf des Job-Editors ist jetzt klar in Navigation und Jobstatus sowie Einstellungen und Aktionen gegliedert. Bei ungespeicherten Änderungen erscheint „Verwerfen“ direkt neben dem Drei-Punkte-Menü. Während ein Job läuft, werden die Bearbeitungsaktionen durch eine eindeutige Stoppen-Aktion ersetzt.",
+            "en": "The job editor header is now clearly divided into navigation and job status, followed by settings and actions. When changes are unsaved, “Discard” appears directly beside the three-dot menu. While a job is running, editing actions are replaced by a clear stop action."
+          },
+          {
+            "category": "Added",
+            "de": "Jobs, Makros und Automationen werden jetzt in übersichtlichen, durchsuchbaren Ordnerbäumen statt in Tabellen angezeigt. Ordner können beliebig verschachtelt, ein- und ausgeklappt, umbenannt, sicher gelöscht und per Drag-and-drop organisiert werden; ein Doppelklick auf eine Datei öffnet deren Detailseite.",
+            "en": "Jobs, macros, and automations are now shown in clear, searchable folder trees instead of tables. Folders can be nested, expanded and collapsed, renamed, safely deleted, and organized using drag and drop; double-clicking a file opens its details."
+          },
+          {
+            "category": "Changed",
+            "de": "Die Bibliotheksordnung wird getrennt von den eigentlichen Definitionen gespeichert. Verschieben und Löschen von Ordnern verändert daher keine Jobs, Makros oder Automationen; vorhandene Definitionen erscheinen nach dem Update automatisch auf der obersten Ebene.",
+            "en": "Library organization is stored separately from the definitions themselves. Moving or deleting folders therefore does not modify jobs, macros, or automations, and existing definitions automatically appear at the top level after the update."
+          },
+          {
+            "category": "Changed",
+            "de": "Die Dateiübersicht zeigt bei Jobs jetzt an, ob sie einmalig oder wiederholend ausgeführt werden. Bei Automationen wird zusätzlich die konfigurierte Aktion mit Ziel-Job oder Ziel-Makro angezeigt.",
+            "en": "The file overview now shows whether jobs run once or repeatedly. Automations additionally show their configured action, including the target job or macro."
+          },
+          {
+            "category": "Changed",
+            "de": "Große Bibliotheken mit vielen Jobs, Makros, Automationen und Ordnern werden deutlich effizienter aufgebaut und aktualisiert. Auch Suche, Ein- und Ausklappen sowie Drag-and-drop bleiben dadurch bei umfangreichen Ordnerstrukturen flüssiger.",
+            "en": "Large libraries containing many jobs, macros, automations, and folders are now built and updated much more efficiently. Search, expanding and collapsing, and drag and drop therefore remain smoother with extensive folder structures."
+          },
+          {
+            "category": "Changed",
+            "de": "Definitionsdateien verwenden jetzt die vollständige stabile ID als Dateinamen und behalten beim Überschreiben eine Sicherung. Bestehende gekürzte Dateinamen werden beim Laden automatisch und ohne Überschreiben vorhandener Dateien migriert.",
+            "en": "Definition files now use the complete stable ID as their file name and retain a backup when overwritten. Existing shortened file names are migrated automatically when loaded without overwriting existing files."
+          },
+          {
+            "category": "Fixed",
+            "de": "Nicht lesbare Definitionsdateien bleiben erhalten, werden im Anwendungsprotokoll mit ihrem Dateipfad gemeldet und können durch das Speichern eines unvollständigen Listenstands nicht mehr versehentlich gelöscht werden.",
+            "en": "Unreadable definition files are preserved, reported in the application log with their file path, and can no longer be deleted accidentally by saving an incomplete list state."
+          },
+          {
+            "category": "Fixed",
+            "de": "Beim Verschieben im Ordnerbaum werden der gezogene Eintrag und der vollständige Zielordner samt Inhalt deutlich hervorgehoben. Dateien lassen sich jetzt zuverlässig direkt auf die Bibliotheksfläche zurück auf die oberste Ebene ziehen. Ordner und Dateien besitzen getrennte Kontextmenüs und können über „Eine Ebene nach oben verschieben“ gezielt aus ihrem aktuellen Ordner herausbewegt werden. Ausgeklappte Ordner zeigen einen Pfeil nach unten, und Dateien öffnen zuverlässig per Doppelklick.",
+            "en": "When moving entries in the folder tree, the dragged entry and the complete target folder including its contents are clearly highlighted. Files can now reliably be dragged directly onto the library surface to return them to the top level. Folders and files have separate context menus and can be moved out of their current folder using “Move up one level”. Expanded folders show a downward arrow, and files open reliably on double-click."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die Schaltfläche zum Öffnen der JSON-Datei öffnet bei Jobs, Makros und Automationen jetzt zuverlässig die zugehörige Datei statt nur deren Ordner.",
+            "en": "The button for opening the JSON file now reliably opens the associated file for jobs, macros, and automations instead of opening only its folder."
+          }
+        ]
+      },
+      {
+        "title": {
           "de": "Job-Einstellungen",
           "en": "Job settings"
         },

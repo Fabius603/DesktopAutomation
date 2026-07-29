@@ -155,6 +155,9 @@ namespace TaskAutomation.Jobs
         public async Task ReloadJobsAsync()
         {
             var snapshot = await _jobRepository.LoadAllAsync().ConfigureAwait(false);
+            foreach (var error in _jobRepository.LoadErrors)
+                _logger.LogError("Job-Datei konnte nicht geladen werden: {FilePath}. {Message}",
+                    error.FilePath, error.Message);
 
             _allJobs.Clear();
             int added = 0;
@@ -184,6 +187,9 @@ namespace TaskAutomation.Jobs
         public async Task ReloadMakrosAsync()
         {
             var snapshot = await _makroRepository.LoadAllAsync().ConfigureAwait(false);
+            foreach (var error in _makroRepository.LoadErrors)
+                _logger.LogError("Makro-Datei konnte nicht geladen werden: {FilePath}. {Message}",
+                    error.FilePath, error.Message);
 
             _allMakros.Clear();
             int added = 0;

@@ -973,6 +973,8 @@
   <data name="Ui.Job.List.Recurring" xml:space="preserve">
     <value>Recurring</value>
   </data>
+  <data name="Ui.Job.Settings.Repeating" xml:space="preserve"><value>Repeat job</value></data>
+  <data name="Ui.Job.Settings.Repeating.Description" xml:space="preserve"><value>Runs the job again after its last regular step until it is stopped.</value></data>
   <data name="Ui.Job.List.CountSteps" xml:space="preserve">
     <value>#Steps</value>
   </data>
@@ -2747,4 +2749,27 @@ Error:
   <data name="Step.ResultProperty.UserChoiceResult.SelectedValue" xml:space="preserve"><value>Answer return value</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Answer position</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Selection cancelled</value></data>
+  <data name="Ui.Library.Search" xml:space="preserve"><value>Search library</value></data>
+  <data name="Ui.Library.NewFolder" xml:space="preserve"><value>New folder</value></data>
+  <data name="Ui.Library.ExpandAll" xml:space="preserve"><value>Expand all folders</value></data>
+  <data name="Ui.Library.CollapseAll" xml:space="preserve"><value>Collapse all folders</value></data>
+  <data name="Ui.Library.Empty" xml:space="preserve"><value>There are no files or folders here yet.</value></data>
+  <data name="Ui.Library.NoSearchResults" xml:space="preserve"><value>No matching entries found.</value></data>
+  <data name="Ui.Library.ExecuteOrStop" xml:space="preserve"><value>Run or stop</value></data>
+  <data name="Ui.Library.RenameFolder" xml:space="preserve"><value>Rename folder</value></data>
+  <data name="Ui.Library.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Ui.Library.MoveUpOneLevel" xml:space="preserve"><value>Move up one level</value></data>
+  <data name="Ui.Library.OperationFailed" xml:space="preserve"><value>Folder action unavailable</value></data>
+  <data name="Ui.Library.NewFolderTitle" xml:space="preserve"><value>New folder</value></data>
+  <data name="Ui.Library.NewFolderPrompt" xml:space="preserve"><value>Name of the new folder:</value></data>
+  <data name="Ui.Library.RenameFolderTitle" xml:space="preserve"><value>Rename folder</value></data>
+  <data name="Ui.Library.RenameFolderPrompt" xml:space="preserve"><value>New folder name:</value></data>
+  <data name="Ui.Library.DeleteFolderPrompt" xml:space="preserve"><value>Delete folder “{0}”? Files and subfolders inside it will be moved up one level.</value></data>
+  <data name="Ui.Library.DeleteFolderTitle" xml:space="preserve"><value>Delete folder</value></data>
+  <data name="Ui.Library.JobSubtitle" xml:space="preserve"><value>{0} active steps · {1}</value></data>
+  <data name="Ui.Library.JobRepeating" xml:space="preserve"><value>Repeating</value></data>
+  <data name="Ui.Library.JobSingleRun" xml:space="preserve"><value>Single run</value></data>
+  <data name="Ui.Library.MacroSubtitle" xml:space="preserve"><value>{0} commands</value></data>
+  <data name="Ui.Library.AutomationSubtitle" xml:space="preserve"><value>{0} · Action: {2} · {1}</value></data>
+  <data name="Ui.Library.Inactive" xml:space="preserve"><value>Inactive</value></data>
 </root>

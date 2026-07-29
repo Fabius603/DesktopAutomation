@@ -87,6 +87,9 @@ namespace TaskAutomation.Automations
 
                 _automations.Clear();
                 var definitions = await _repository.LoadAllAsync().ConfigureAwait(false);
+                foreach (var error in _repository.LoadErrors)
+                    _log.LogError("Automationsdatei konnte nicht geladen werden: {FilePath}. {Message}",
+                        error.FilePath, error.Message);
                 _automationLogs.Synchronize(definitions);
                 foreach (var automation in definitions)
                 {

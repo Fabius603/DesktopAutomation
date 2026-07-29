@@ -10,10 +10,12 @@ namespace TaskAutomation.Jobs
 {
     public sealed class Job
     {
+        public const int CurrentFormatVersion = 1;
         public const int DefaultEndPhaseTimeoutSeconds = 10;
         public const int MinEndPhaseTimeoutSeconds = 1;
         public const int MaxEndPhaseTimeoutSeconds = 3600;
 
+        [JsonPropertyName("formatVersion")] public int FormatVersion { get; set; } = CurrentFormatVersion;
         [JsonPropertyName("id")] public Guid Id { get; set; } = Guid.NewGuid();
         [JsonPropertyName("name")] public string Name { get; set; } = "";
         [JsonPropertyName("repeating")] public bool Repeating { get; set; }

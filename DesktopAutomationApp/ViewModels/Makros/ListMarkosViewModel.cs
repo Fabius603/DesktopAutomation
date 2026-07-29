@@ -12,6 +12,9 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Localization;
+using DesktopAutomation.Application.Organization;
+using DesktopAutomationApp.Settings;
+using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -22,10 +25,12 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IMakroApplicationService _makroAppService;
         private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
+        private readonly ILibraryOrganizationService _libraryOrganization;
 
         public string Title => "Makros";
 
         public ObservableCollection<Makro> Items { get; } = new();
+        public LibraryTreeViewModel Library { get; }
 
         private IReadOnlyCollection<Guid> _runningMakroIds = Array.Empty<Guid>();
         public IReadOnlyCollection<Guid> RunningMakroIds
@@ -73,13 +78,20 @@ namespace DesktopAutomationApp.ViewModels
             ILogger<ListMakrosViewModel> log,
             IMakroApplicationService makroAppService,
             IDialogService dialogService,
-            IJobDispatcher dispatcher)
+            IJobDispatcher dispatcher,
+            ILibraryOrganizationService libraryOrganization,
+            IUserPreferencesService preferences)
         {
             _executor = executor;
             _log = log;
             _makroAppService = makroAppService;
             _dialogService = dialogService;
             _dispatcher = dispatcher;
+            _libraryOrganization = libraryOrganization;
+            Library = new LibraryTreeViewModel(
+                libraryOrganization, dialogService, preferences, LibraryItemKind.Makro,
+                Loc.Get("Ui.Macro.List.NewMacro"));
+            Library.RequestCreateItem += CreateNewMakroInFolderAsync;
 
             RefreshCommand   = new RelayCommand(async () => await RefreshAsync());
             SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
@@ -113,6 +125,7 @@ namespace DesktopAutomationApp.ViewModels
             Items.Clear();
             foreach (var m in _makroAppService.Makros.Values.OrderBy(m => m.Name))
                 Items.Add(m);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
 
             _log.LogInformation("Makros geladen: {Count}", Items.Count);
         }
@@ -123,7 +136,9 @@ namespace DesktopAutomationApp.ViewModels
             _log.LogInformation("Makros gespeichert: {Count}", Items.Count);
         }
 
-        private async void CreateNewMakro()
+        private void CreateNewMakro() => _ = CreateNewMakroInFolderAsync(Library.SelectedFolderId);
+
+        private async Task CreateNewMakroInFolderAsync(Guid? folderId)
         {
             var name = await _dialogService.AskForNameAsync(Loc.Get("Macro.New.Title"), Loc.Get("Macro.New.Prompt"));
             if (name == null) return;
@@ -132,7 +147,11 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var newMakro = await _makroAppService.CreateMakroAsync(name);
                 Items.Add(newMakro);
+                if (folderId.HasValue)
+                    await _libraryOrganization.PlaceItemAsync(LibraryItemKind.Makro, newMakro.Id, folderId);
+                await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
                 Selected = newMakro;
+                RequestOpenMakro?.Invoke(newMakro);
             }
             catch (Exception ex)
             {
@@ -165,7 +184,11 @@ namespace DesktopAutomationApp.ViewModels
         {
             // Snapshot auf TP-Thread – nur das Ergebnis per InvokeAsync an UI übergeben.
             var ids = new HashSet<Guid>(_dispatcher.RunningMakroIds);
-            Application.Current?.Dispatcher?.InvokeAsync(() => RunningMakroIds = ids);
+            Application.Current?.Dispatcher?.InvokeAsync(() =>
+            {
+                RunningMakroIds = ids;
+                Library.RefreshItemStates();
+            });
         }
 
         protected override void Dispose(bool disposing)
@@ -181,6 +204,29 @@ namespace DesktopAutomationApp.ViewModels
             (SaveAllCommand     as RelayCommand)?.RaiseCanExecuteChanged();
             (DeleteMakroCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (OpenMakroCommand   as RelayCommand<Makro?>)?.RaiseCanExecuteChanged();
+        }
+
+        private LibraryItemDescriptor CreateLibraryDescriptor(Makro makro) => new()
+        {
+            Id = makro.Id,
+            Name = makro.Name,
+            Subtitle = Loc.Format("Ui.Library.MacroSubtitle", makro.Befehle.Count),
+            Model = makro,
+            Open = () => RequestOpenMakro?.Invoke(makro),
+            Execute = () => _dispatcher.StartMakro(makro.Id),
+            Stop = () => _dispatcher.CancelMakro(makro.Id),
+            IsRunning = () => RunningMakroIds.Contains(makro.Id),
+            DeleteAsync = () => DeleteMakroFromLibraryAsync(makro)
+        };
+
+        private async Task<bool> DeleteMakroFromLibraryAsync(Makro makro)
+        {
+            if (!await _dialogService.ConfirmAsync(
+                    Loc.Format("Macro.Delete.One", makro.Name),
+                    Loc.Get("Dialog.Delete.Title"))) return false;
+            Items.Remove(makro);
+            await _makroAppService.DeleteMakroAsync(makro.Id);
+            return true;
         }
     }
 }

@@ -256,13 +256,21 @@ namespace DesktopAutomationApp.ViewModels
 
         // ---------- Selection sync (called from code-behind) ----------
         private void OpenFileInExplorer()
-            => ShowFileInExplorer(_makroAppService.GetStoragePath(), $"{Makro.Id}.json");
+            => ShowFileInExplorer(_makroAppService.GetStoragePath(), Makro.Id.ToString());
 
-        private static void ShowFileInExplorer(string directory, string fileName)
+        private static void ShowFileInExplorer(string directory, string key)
         {
-            var path = Path.Combine(directory, fileName);
+            var path = Common.JsonRepository.JsonRepositoryPath.ForKey(directory, key);
             Directory.CreateDirectory(directory);
-            Process.Start(new ProcessStartInfo(File.Exists(path) ? path : directory) { UseShellExecute = true });
+            if (!File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
+                return;
+            }
+
+            var startInfo = new ProcessStartInfo("notepad.exe") { UseShellExecute = true };
+            startInfo.ArgumentList.Add(path);
+            Process.Start(startInfo);
         }
 
         public void SetSelectedSteps(IEnumerable<object> items)

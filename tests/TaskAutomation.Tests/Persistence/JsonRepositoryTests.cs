@@ -28,13 +28,13 @@ public sealed class JsonRepositoryTests
     }
 
     [Fact]
-    public async Task SaveAll_RemovesFilesNoLongerPresent()
+    public async Task SaveAll_PreservesFilesNotPresentInSnapshot()
     {
         using var directory = new TemporaryDirectory();
         using var repository = Repository(directory.Path);
         await repository.SaveAllAsync([new("one", "1", 1), new("two", "2", 2)]);
         await repository.SaveAllAsync([new("two", "updated", 3)]);
-        Assert.Null(await repository.LoadAsync("one"));
+        Assert.NotNull(await repository.LoadAsync("one"));
         Assert.Equal("updated", (await repository.LoadAsync("two"))!.Text);
     }
 
@@ -47,6 +47,7 @@ public sealed class JsonRepositoryTests
         await File.WriteAllTextAsync(Path.Combine(directory.Path, "broken.json"), "{broken");
         var item = Assert.Single(await repository.LoadAllAsync());
         Assert.Equal("valid", item.Key);
+        Assert.Equal("broken.json", Path.GetFileName(Assert.Single(repository.LoadErrors).FilePath));
     }
 
     [Fact]
@@ -84,6 +85,36 @@ public sealed class JsonRepositoryTests
     {
         Assert.Equal(30, NamePolicy.Sanitize(new string('x', 100)).Length);
         Assert.Equal("Name (3)", NamePolicy.MakeUnique("Name", new HashSet<string> { "Name", "Name (2)" }));
+    }
+
+    [Fact]
+    public async Task RepositoryPath_ForLongKeyMatchesSavedFile()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = Repository(directory.Path);
+        const string key = "49b7a186-745b-4bf1-8116-cb175f93b8ab";
+
+        await repository.SaveAsync(new(key, "content", 1));
+
+        var path = JsonRepositoryPath.ForKey(directory.Path, key);
+        Assert.True(File.Exists(path));
+        Assert.Equal("49b7a186-745b-4bf1-8116-cb175f93b8ab.json", Path.GetFileName(path));
+    }
+
+    [Fact]
+    public async Task LoadAll_MigratesLegacyTruncatedGuidFileWithoutOverwriting()
+    {
+        using var directory = new TemporaryDirectory();
+        const string key = "49b7a186-745b-4bf1-8116-cb175f93b8ab";
+        var legacyPath = JsonRepositoryPath.LegacyForKey(directory.Path, key);
+        await File.WriteAllTextAsync(legacyPath, JsonSerializer.Serialize(new Item(key, "legacy", 1)));
+        using var repository = Repository(directory.Path);
+
+        var item = Assert.Single(await repository.LoadAllAsync());
+
+        Assert.Equal(key, item.Key);
+        Assert.False(File.Exists(legacyPath));
+        Assert.True(File.Exists(JsonRepositoryPath.ForKey(directory.Path, key)));
     }
 
     private static JsonRepository<Item> Repository(string path) => new(new JsonRepositoryOptions
