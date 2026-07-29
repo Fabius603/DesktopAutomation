@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using DesktopAutomationApp.Services;
+using TaskAutomation.Hotkeys;
 
 namespace DesktopAutomationApp.ViewModels;
 
@@ -18,6 +19,7 @@ public sealed class SettingsViewModel : ViewModelBase
     private readonly ILogger<SettingsViewModel> _log;
     private readonly IReleaseNotesService _releaseNotes;
     private readonly IUpdateService _updateService;
+    private readonly IGlobalHotkeyService _hotkeys;
     private bool _isLoading = true;
     private LanguageOption? _selectedLanguage;
     private ThemeOption? _selectedTheme;
@@ -26,6 +28,8 @@ public sealed class SettingsViewModel : ViewModelBase
     private bool _startInBackgroundAtWindowsStartup;
     private bool _isCheckingForUpdates;
     private string _updateCheckStatus = string.Empty;
+    private uint _forceStopVirtualKey;
+    private bool _isCapturingForceStopKey;
 
     public ObservableCollection<LanguageOption> Languages { get; } =
     [
@@ -89,8 +93,38 @@ public sealed class SettingsViewModel : ViewModelBase
         set { if (SetAndChanged(ref _startInBackgroundAtWindowsStartup, value)) _ = ApplyAsync(); }
     }
 
+    public uint ForceStopVirtualKey
+    {
+        get => _forceStopVirtualKey;
+        private set
+        {
+            if (!SetAndChanged(ref _forceStopVirtualKey, value)) return;
+            _hotkeys.SetForceStopKey(value);
+            OnPropertyChanged(nameof(ForceStopKeyDisplay));
+            _ = ApplyAsync();
+        }
+    }
+
+    public string ForceStopKeyDisplay =>
+        _hotkeys.FormatKey(KeyModifiers.None, ForceStopVirtualKey);
+
+    public bool IsCapturingForceStopKey
+    {
+        get => _isCapturingForceStopKey;
+        private set
+        {
+            if (!SetAndChanged(ref _isCapturingForceStopKey, value)) return;
+            OnPropertyChanged(nameof(ForceStopKeyButtonText));
+        }
+    }
+
+    public string ForceStopKeyButtonText => Loc.Get(IsCapturingForceStopKey
+        ? "Settings.ForceStopKey.Capturing"
+        : "Settings.ForceStopKey.Change");
+
     public RelayCommand ShowReleaseNotesCommand { get; }
     public RelayCommand CheckForUpdatesCommand { get; }
+    public AsyncRelayCommand CaptureForceStopKeyCommand { get; }
 
     public bool IsCheckingForUpdates
     {
@@ -115,6 +149,7 @@ public sealed class SettingsViewModel : ViewModelBase
         IWindowsStartupRegistrationService startupRegistration,
         IReleaseNotesService releaseNotes,
         IUpdateService updateService,
+        IGlobalHotkeyService hotkeys,
         ILogger<SettingsViewModel> log)
     {
         _preferences = preferences;
@@ -123,22 +158,47 @@ public sealed class SettingsViewModel : ViewModelBase
         _startupRegistration = startupRegistration;
         _releaseNotes = releaseNotes;
         _updateService = updateService;
+        _hotkeys = hotkeys;
         _log = log;
         ShowReleaseNotesCommand = new RelayCommand(async () => await _releaseNotes.ShowAllAsync());
         CheckForUpdatesCommand = new RelayCommand(
             async () => await CheckForUpdatesAsync(),
             () => !IsCheckingForUpdates);
+        CaptureForceStopKeyCommand = new AsyncRelayCommand(CaptureForceStopKeyAsync);
         var current = preferences.Current;
+        current.ForceStopVirtualKey =
+            ForceStopKeyConfiguration.Normalize(current.ForceStopVirtualKey);
+        _hotkeys.SetForceStopKey(current.ForceStopVirtualKey);
         _selectedLanguage = Languages.FirstOrDefault(x => x.CultureName == current.Culture) ?? Languages[0];
         _selectedTheme = Themes.FirstOrDefault(x => x.Mode == current.ThemeMode) ?? Themes[0];
         _selectedAccent = Accents.FirstOrDefault(x => x.Name == current.Accent) ?? Accents[0];
         _startWithWindows = current.StartWithWindows;
         _startInBackgroundAtWindowsStartup = current.StartInBackgroundAtWindowsStartup;
+        _forceStopVirtualKey = current.ForceStopVirtualKey;
         _localization.CultureChanged += (_, _) =>
         {
             foreach (var option in Themes) option.Refresh();
+            OnPropertyChanged(nameof(ForceStopKeyButtonText));
         };
         _isLoading = false;
+    }
+
+    private async Task CaptureForceStopKeyAsync()
+    {
+        try
+        {
+            IsCapturingForceStopKey = true;
+            var captured = await _hotkeys.CaptureNextAsync();
+            ForceStopVirtualKey = captured.VirtualKeyCode;
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Die Force-Stop-Taste konnte nicht erfasst werden.");
+        }
+        finally
+        {
+            IsCapturingForceStopKey = false;
+        }
     }
 
     private async Task CheckForUpdatesAsync()
@@ -180,13 +240,15 @@ public sealed class SettingsViewModel : ViewModelBase
         current.Accent = SelectedAccent.Name;
         current.StartWithWindows = StartWithWindows;
         current.StartInBackgroundAtWindowsStartup = StartInBackgroundAtWindowsStartup;
+        current.ForceStopVirtualKey = ForceStopVirtualKey;
+        _hotkeys.SetForceStopKey(current.ForceStopVirtualKey);
         _localization.SetCulture(current.Culture);
         _theme.Apply(current.ThemeMode, current.Accent);
         try
         {
             await _preferences.SaveAsync();
-            _log.LogInformation("Einstellungen gespeichert: Sprache {Culture}, Theme {Theme}, Akzent {Accent}, Windows-Autostart {StartWithWindows}, Hintergrundstart {StartInBackground}.",
-                current.Culture, current.ThemeMode, current.Accent, current.StartWithWindows, current.StartInBackgroundAtWindowsStartup);
+            _log.LogInformation("Einstellungen gespeichert: Sprache {Culture}, Theme {Theme}, Akzent {Accent}, Windows-Autostart {StartWithWindows}, Hintergrundstart {StartInBackground}, Force-Stop-Taste {ForceStopVirtualKey}.",
+                current.Culture, current.ThemeMode, current.Accent, current.StartWithWindows, current.StartInBackgroundAtWindowsStartup, current.ForceStopVirtualKey);
         }
         catch (Exception ex)
         {

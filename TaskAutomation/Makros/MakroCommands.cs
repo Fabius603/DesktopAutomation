@@ -159,7 +159,7 @@ namespace TaskAutomation.Makros
         public Hotkeys.KeyModifiers RecordingHotkeyModifiers { get; set; } = Hotkeys.KeyModifiers.None;
 
         [JsonPropertyName("recordingHotkeyVirtualKey")]
-        public uint RecordingHotkeyVirtualKey { get; set; } = 0x78; // F9; F10 bleibt Notfall-Stopp.
+        public uint RecordingHotkeyVirtualKey { get; set; } = 0x78; // F9
 
         public MakroRecordingSettings Clone() => (MakroRecordingSettings)MemberwiseClone();
     }

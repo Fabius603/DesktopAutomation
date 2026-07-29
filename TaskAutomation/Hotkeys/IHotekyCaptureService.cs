@@ -7,6 +7,8 @@ namespace TaskAutomation.Hotkeys
         event Action? EmergencyStopPressed;
         event Action? RecordingHotkeyPressed;
 
+        uint ForceStopVirtualKey { get; }
+        void SetForceStopKey(uint virtualKeyCode);
         Task<(KeyModifiers Modifiers, uint VirtualKeyCode)> CaptureNextAsync(CancellationToken ct = default);
         void RegisterAutomationHotkey(Guid automationId, KeyModifiers modifiers, uint virtualKeyCode);
         void UnregisterAutomationHotkey(Guid automationId);

@@ -137,6 +137,44 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border Style="{StaticResource SettingsSectionIcon}">
+                        <iconPacks:PackIconMaterial Kind="KeyboardOutline"
+                                                    Width="19"
+                                                    Height="19"
+                                                    Foreground="{DynamicResource App.Brush.Accent}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                        <TextBlock Text="{loc:Translate Key=Settings.ForceStopKey.Title}"
+                                   Style="{StaticResource Heading2}"/>
+                        <TextBlock Text="{loc:Translate Key=Settings.ForceStopKey.Description}"
+                                   Style="{StaticResource SettingsDescription}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border MinWidth="64"
+                                Padding="12,7"
+                                Margin="0,0,10,0"
+                                CornerRadius="6"
+                                Background="{DynamicResource App.Brush.WindowBackground}">
+                            <TextBlock Text="{Binding ForceStopKeyDisplay}"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <Button Command="{Binding CaptureForceStopKeyCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                Content="{Binding ForceStopKeyButtonText}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource SettingsSectionIcon}">
                         <iconPacks:PackIconMaterial Kind="Update"
                                                     Width="19"
                                                     Height="19"

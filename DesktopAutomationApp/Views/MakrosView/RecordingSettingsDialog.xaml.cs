@@ -18,7 +18,10 @@ public partial class RecordingSettingsDialog : MetroWindow
         InitializeComponent();
         _hotkeys = hotkeys;
         Settings = settings;
-        DataContext = new RecordingSettingsDialogModel(settings, hotkeys.FormatKey);
+        DataContext = new RecordingSettingsDialogModel(
+            settings,
+            hotkeys.FormatKey,
+            hotkeys.ForceStopVirtualKey);
     }
 
     public MakroRecordingSettings Settings { get; private set; }
@@ -46,7 +49,7 @@ public partial class RecordingSettingsDialog : MetroWindow
         try
         {
             var (modifiers, virtualKey) = await _hotkeys.CaptureNextAsync(_captureCancellation.Token);
-            if (virtualKey == 0x79)
+            if (virtualKey == _hotkeys.ForceStopVirtualKey)
             {
                 MessageBox.Show(this, Loc.Get("Ui.Macro.Recording.Hotkey.Invalid"),
                     Loc.Get("Ui.Macro.Recording.Settings"), MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -70,11 +73,16 @@ internal sealed class RecordingSettingsDialogModel : INotifyPropertyChanged
 {
     private readonly MakroRecordingSettings settings;
     private readonly Func<KeyModifiers, uint, string> _formatHotkey;
+    private readonly uint _forceStopVirtualKey;
 
-    public RecordingSettingsDialogModel(MakroRecordingSettings settings, Func<KeyModifiers, uint, string> formatHotkey)
+    public RecordingSettingsDialogModel(
+        MakroRecordingSettings settings,
+        Func<KeyModifiers, uint, string> formatHotkey,
+        uint forceStopVirtualKey)
     {
         this.settings = settings;
         _formatHotkey = formatHotkey;
+        _forceStopVirtualKey = forceStopVirtualKey;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -113,7 +121,8 @@ internal sealed class RecordingSettingsDialogModel : INotifyPropertyChanged
             error = "Die Mindestbewegung muss zwischen 0 und 10.000 Pixeln liegen.";
             return false;
         }
-        if (settings.RecordingHotkeyVirtualKey is 0 or 0x79)
+        if (settings.RecordingHotkeyVirtualKey == 0
+            || settings.RecordingHotkeyVirtualKey == _forceStopVirtualKey)
         {
             error = Loc.Get("Ui.Macro.Recording.Hotkey.Invalid");
             return false;

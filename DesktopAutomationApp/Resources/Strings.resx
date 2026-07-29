@@ -253,7 +253,7 @@
     <value>Keine aktive Automation</value>
   </data>
   <data name="Ui.Dashboard.StopAllRunningJobsMacrosF10" xml:space="preserve">
-    <value>Alle laufenden Jobs &amp; Makros beenden (F10)</value>
+    <value>Alle laufenden Jobs &amp; Makros sofort beenden</value>
   </data>
   <data name="Ui.Dashboard.StopAll" xml:space="preserve">
     <value>Stop All</value>
@@ -2087,7 +2087,7 @@ Fehlermeldung:
   <data name="Ui.Job.EndSettings.Timeout.Unit" xml:space="preserve"><value>Sekunden</value></data>
   <data name="Ui.Job.EndSettings.Timeout.Description" xml:space="preserve"><value>Nach dieser Zeit werden noch laufende Steps der Beendigungsphase abgebrochen.</value></data>
   <data name="Ui.Dashboard.ForceStopAll" xml:space="preserve"><value>Sofort stoppen</value></data>
-  <data name="Ui.Dashboard.ForceStopAllTooltip" xml:space="preserve"><value>Alle Jobs einschließlich ihrer Beendigungsphase und alle Makros sofort stoppen (F10)</value></data>
+  <data name="Ui.Dashboard.ForceStopAllTooltip" xml:space="preserve"><value>Alle Jobs einschließlich ihrer Beendigungsphase und alle Makros sofort stoppen</value></data>
   <data name="Enum.JobExecutionState.Starting" xml:space="preserve"><value>Vorbereitung</value></data>
   <data name="Enum.JobExecutionState.RunningStartSteps" xml:space="preserve"><value>Beim Start</value></data>
   <data name="Enum.JobExecutionState.RunningSteps" xml:space="preserve"><value>Bei jedem Durchlauf</value></data>
@@ -2249,7 +2249,11 @@ Fehlermeldung:
   <data name="Ui.Macro.Recording.Hotkey" xml:space="preserve"><value>Aufnahme starten / stoppen</value></data>
   <data name="Ui.Macro.Recording.Hotkey.Help" xml:space="preserve"><value>Der Hotkey wird während der Aufnahme nicht als Eingabe gespeichert.</value></data>
   <data name="Ui.Macro.Recording.Hotkey.Capture" xml:space="preserve"><value>Hotkey aufnehmen</value></data>
-  <data name="Ui.Macro.Recording.Hotkey.Invalid" xml:space="preserve"><value>Dieser Hotkey kann nicht verwendet werden. F10 ist für den Notfall-Stopp reserviert.</value></data>
+  <data name="Ui.Macro.Recording.Hotkey.Invalid" xml:space="preserve"><value>Dieser Hotkey kann nicht verwendet werden. Die in den Einstellungen gewählte Taste ist für den Force-Stop reserviert.</value></data>
+  <data name="Settings.ForceStopKey.Title" xml:space="preserve"><value>Force-Stop-Taste</value></data>
+  <data name="Settings.ForceStopKey.Description" xml:space="preserve"><value>Stoppt sofort alle Jobs und Makros. Diese Taste bleibt auch während „Eingaben blockieren“ verfügbar.</value></data>
+  <data name="Settings.ForceStopKey.Change" xml:space="preserve"><value>Ändern</value></data>
+  <data name="Settings.ForceStopKey.Capturing" xml:space="preserve"><value>Taste drücken …</value></data>
   <data name="Ui.Macro.StepEditor.Duration" xml:space="preserve"><value>Dauer</value></data>
   <data name="Ui.Macro.StepEditor.TimeInvalid" xml:space="preserve"><value>Der Zeitwert ist zu groß oder ungültig.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Verzögerung davor</value></data>

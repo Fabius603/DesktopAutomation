@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using TaskAutomation.Hotkeys;
 
 namespace TaskAutomation.WindowsIntegration;
 
@@ -11,7 +12,6 @@ public static class WindowsInputBlockController
     private const uint WmQuit = 0x0012;
     private const uint LlkhfInjected = 0x10;
     private const uint LlmhfInjected = 0x01;
-    private const uint VkF10 = 0x79;
     private static readonly object Sync = new();
     private static Thread? _ownerThread;
     private static uint _ownerThreadId;
@@ -108,11 +108,15 @@ public static class WindowsInputBlockController
         if (code >= 0)
         {
             var input = Marshal.PtrToStructure<KbdLlHookStruct>(lParam);
-            if ((input.Flags & LlkhfInjected) == 0 && input.VkCode != VkF10)
+            if (ShouldBlockPhysicalKeyboardInput(input.VkCode, input.Flags))
                 return new IntPtr(1);
         }
         return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
     }
+
+    internal static bool ShouldBlockPhysicalKeyboardInput(uint virtualKey, uint flags) =>
+        (flags & LlkhfInjected) == 0
+        && !ForceStopKeyConfiguration.Matches(virtualKey);
 
     private static IntPtr MouseHook(int code, UIntPtr wParam, IntPtr lParam)
     {

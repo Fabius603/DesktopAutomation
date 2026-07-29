@@ -130,8 +130,7 @@ namespace TaskAutomation.Hotkeys
         public event Action? EmergencyStopPressed;
         public event Action? RecordingHotkeyPressed;
 
-        // VK_F10 – globaler Notfall-Stop (bypasses Pause-Zustand)
-        private const uint VK_F10 = 0x79;
+        // Globaler Force-Stop-Hotkey (bypasses Pause-Zustand)
         private volatile uint _recordingHotkeyVirtualKey;
         private KeyModifiers _recordingHotkeyModifiers;
         private volatile bool _recordingHotkeyActivationInProgress;
@@ -170,6 +169,18 @@ namespace TaskAutomation.Hotkeys
             StartWithMessageLoop();
 
             _logger.LogInformation("GlobalHotkeyService initialisiert mit {WorkerCount} Worker-Threads.", _maxWorkerThreads);
+        }
+
+        public uint ForceStopVirtualKey => ForceStopKeyConfiguration.VirtualKey;
+
+        public void SetForceStopKey(uint virtualKeyCode)
+        {
+            ForceStopKeyConfiguration.Set(virtualKeyCode);
+            if (_recordingHotkeyVirtualKey == virtualKeyCode)
+                ClearRecordingHotkey();
+            _logger.LogInformation(
+                "Force-Stop-Hotkey aktualisiert: {VirtualKeyCode}",
+                virtualKeyCode);
         }
 
         /// <summary>
@@ -276,8 +287,8 @@ namespace TaskAutomation.Hotkeys
                     case WM_SYSKEYDOWN:
                         if (_downKeys.Add(vk)) // erste Down-Flanke (kein Auto-Repeat)
                         {
-                            // ----- GLOBALER NOTFALL-STOP: F10 immer feuern (bypass Pause) -----
-                            if (vk == VK_F10 && !_isCapturing && !_isHotkeyRecording)
+                            // ----- GLOBALER FORCE-STOP: konfigurierte Taste immer feuern (bypass Pause) -----
+                            if (ForceStopKeyConfiguration.Matches(vk) && !_isCapturing && !_isHotkeyRecording)
                             {
                                 _workQueue.Add(() => EmergencyStopPressed?.Invoke());
                                 break;
@@ -431,8 +442,8 @@ namespace TaskAutomation.Hotkeys
         {
             if (virtualKeyCode == 0 || IsModifierVk(virtualKeyCode))
                 throw new ArgumentException("Der Aufnahme-Hotkey benoetigt eine Nicht-Modifier-Taste.", nameof(virtualKeyCode));
-            if (virtualKeyCode == VK_F10)
-                throw new ArgumentException("F10 ist fuer den Notfall-Stopp reserviert.", nameof(virtualKeyCode));
+            if (ForceStopKeyConfiguration.Matches(virtualKeyCode))
+                throw new ArgumentException("Die Taste ist fuer den Force-Stop reserviert.", nameof(virtualKeyCode));
             _recordingHotkeyModifiers = modifiers;
             _recordingHotkeyVirtualKey = virtualKeyCode;
         }

@@ -39,7 +39,7 @@ public static class MakroValidation
         var commands = makro.Befehle.Select(ValidateCommand).ToList();
         var settingsValid = makro.RecordingSettings.MinimumIntervalMicroseconds is >= 0 and <= 1_000_000
                             && makro.RecordingSettings.MinimumDistancePixels is >= 0 and <= 10_000
-                            && makro.RecordingSettings.RecordingHotkeyVirtualKey is > 0 and not 0x79;
+                            && makro.RecordingSettings.RecordingHotkeyVirtualKey > 0;
         var error = string.IsNullOrWhiteSpace(makro.Name)
             ? MakroValidationError.NameRequired
             : makro.Befehle.Count == 0

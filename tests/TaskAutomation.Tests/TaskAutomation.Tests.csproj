@@ -31,5 +31,7 @@
              Link="DesktopAutomationApp\UpdateCheckScheduler.cs" />
     <Compile Include="..\..\DesktopAutomationApp\Localization\DebugValueTypeLocalization.cs"
              Link="DesktopAutomationApp\DebugValueTypeLocalization.cs" />
+    <Compile Include="..\..\DesktopAutomationApp\Settings\UserPreferences.cs"
+             Link="DesktopAutomationApp\UserPreferences.cs" />
   </ItemGroup>
 </Project>

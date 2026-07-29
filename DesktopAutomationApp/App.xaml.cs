@@ -240,14 +240,21 @@ namespace DesktopAutomationApp
             }
 
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
-            _ = _host.Services.GetRequiredService<IGlobalHotkeyService>();
-
-            // F10 global: alle Jobs & Makros stoppen (bypass Pause-Zustand)
-            var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
             var hotkeyServiceGlobal = _host.Services.GetRequiredService<IGlobalHotkeyService>();
+            var forceStopVirtualKey =
+                ForceStopKeyConfiguration.Normalize(preferences.Current.ForceStopVirtualKey);
+            preferences.Current.ForceStopVirtualKey = forceStopVirtualKey;
+            hotkeyServiceGlobal.SetForceStopKey(forceStopVirtualKey);
+
+            // Globaler Force-Stop: alle Jobs & Makros stoppen (bypass Pause-Zustand)
+            var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
             hotkeyServiceGlobal.EmergencyStopPressed += () =>
             {
-                Log.Warning("Notstopp über F10 ausgelöst.");
+                Log.Warning(
+                    "Force-Stop über Taste {ForceStopKey} ausgelöst.",
+                    hotkeyServiceGlobal.FormatKey(
+                        KeyModifiers.None,
+                        hotkeyServiceGlobal.ForceStopVirtualKey));
                 dispatcher.ForceStopAllJobs();
                 foreach (var id in dispatcher.RunningMakroIds.ToList())
                     dispatcher.CancelMakro(id);

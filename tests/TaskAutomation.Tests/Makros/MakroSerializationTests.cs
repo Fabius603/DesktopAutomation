@@ -81,8 +81,27 @@ public sealed class MakroSerializationTests
         macro.RecordingSettings.MinimumIntervalMicroseconds = -1;
         Assert.Equal(MakroValidationError.RecordingSettingsInvalid, MakroValidation.Validate(macro).Error);
         macro.RecordingSettings.MinimumIntervalMicroseconds = 1_000;
-        macro.RecordingSettings.RecordingHotkeyVirtualKey = 0x79;
+        macro.RecordingSettings.RecordingHotkeyVirtualKey = 0;
         Assert.Equal(MakroValidationError.RecordingSettingsInvalid, MakroValidation.Validate(macro).Error);
+    }
+
+    [Fact]
+    public void ValidationDoesNotReserveF10WhenForceStopKeyIsConfiguredElsewhere()
+    {
+        var macro = new Makro
+        {
+            Name = "valid",
+            Befehle = new ObservableCollection<MakroBefehl>
+            {
+                new MouseMoveRelativeBefehl()
+            },
+            RecordingSettings = new MakroRecordingSettings
+            {
+                RecordingHotkeyVirtualKey = 0x79
+            }
+        };
+
+        Assert.True(MakroValidation.Validate(macro).IsValid);
     }
 
     [Theory]

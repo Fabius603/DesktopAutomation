@@ -1,5 +1,29 @@
 [
   {
+    "version": "1.5.10",
+    "date": "2026-07-29",
+    "sections": [
+      {
+        "title": {
+          "de": "Job-Einstellungen",
+          "en": "Job settings"
+        },
+        "changes": [
+          {
+            "category": "Added",
+            "de": "In den Einstellungen kann jetzt die Taste für den globalen Force-Stop festgelegt werden; standardmäßig bleibt sie F10. Die gewählte Taste stoppt sofort alle Jobs und Makros und bleibt auch dann verfügbar, wenn ein Job physische Maus- und Tastatureingaben blockiert.",
+            "en": "Settings now let users choose the key for global force stop, with F10 remaining the default. The selected key immediately stops all jobs and macros and remains available even while a job blocks physical mouse and keyboard input."
+          },
+          {
+            "category": "Fixed",
+            "de": "Änderungen am Zeitlimit für die Schritte beim Beenden eines Jobs aktivieren jetzt sofort den Speichern-Button. Das Feld akzeptiert nur noch ganze Zahlen im gültigen Bereich.",
+            "en": "Changing the timeout for a job's ending steps now immediately enables the Save button. The field now accepts only whole numbers within the valid range."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.9",
     "date": "2026-07-28",
     "sections": [
