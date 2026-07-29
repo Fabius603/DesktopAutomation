@@ -34,7 +34,6 @@ namespace DesktopAutomationApp.ViewModels
             set { _selected = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
-        public ICommand RefreshCommand { get; }
         public ICommand NewCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand DeleteCommand { get; }
@@ -59,7 +58,6 @@ namespace DesktopAutomationApp.ViewModels
                 Loc.Get("Ui.Automation.List.NewAutomation"));
             Library.RequestCreateItem += NewAutomationInFolderAsync;
 
-            RefreshCommand = new RelayCommand(async () => await RefreshAllAsync());
             NewCommand = new RelayCommand(async () => await NewAutomationInFolderAsync(Library.SelectedFolderId));
             OpenCommand = new RelayCommand<EditableAutomation?>(a =>
             {

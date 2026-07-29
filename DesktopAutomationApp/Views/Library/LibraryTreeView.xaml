@@ -5,7 +5,8 @@
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              AllowDrop="True"
              PreviewDragOver="LibraryTree_PreviewDragOver"
-             PreviewDrop="LibraryTree_PreviewDrop">
+             PreviewDrop="LibraryTree_PreviewDrop"
+             GiveFeedback="LibraryTree_GiveFeedback">
     <UserControl.Resources>
         <ContextMenu x:Key="LibraryFolderContextMenu">
             <MenuItem Header="{Binding PlacementTarget.Tag.NewItemLabel, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -47,19 +48,7 @@
         <DockPanel Margin="0,0,0,10">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding ExpandAllCommand}"
-                        ToolTip="{loc:Translate Key=Ui.Library.ExpandAll}">
-                    <iconPacks:PackIconMaterial Kind="UnfoldMoreHorizontal" Width="14" Height="14"/>
-                </Button>
-                <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding CollapseAllCommand}"
-                        Margin="8,0,0,0"
-                        ToolTip="{loc:Translate Key=Ui.Library.CollapseAll}">
-                    <iconPacks:PackIconMaterial Kind="UnfoldLessHorizontal" Width="14" Height="14"/>
-                </Button>
-                <Button Style="{StaticResource ButtonSecondary}"
-                        Command="{Binding NewFolderCommand}"
-                        Margin="8,0,0,0">
+                        Command="{Binding NewFolderCommand}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconMaterial Kind="FolderPlus" Width="14" Height="14" Margin="0,0,6,0"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Library.NewFolder}"/>
@@ -83,7 +72,6 @@
                         <DataTrigger Binding="{Binding IsRootDropTarget}" Value="True">
                             <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
                             <Setter Property="BorderThickness" Value="2"/>
-                            <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -103,6 +91,17 @@
                             <Setter Property="Margin" Value="0"/>
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="AllowDrop" Value="True"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                             <EventSetter Event="PreviewMouseMove" Handler="Node_PreviewMouseMove"/>
                             <EventSetter Event="MouseDoubleClick" Handler="Node_MouseDoubleClick"/>
                         </Style>
@@ -110,7 +109,6 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="8,7"
-                                    Background="Transparent"
                                     BorderThickness="{Binding DropBorderThickness}"
                                     CornerRadius="{Binding DropCornerRadius}"
                                     Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -118,19 +116,25 @@
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderBrush" Value="Transparent"/>
                                         <Setter Property="ContextMenu" Value="{StaticResource LibraryItemContextMenu}"/>
                                         <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}"
+                                                               Value="True"/>
+                                                    <Condition Binding="{Binding DataContext.IsDragActive, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               Value="False"/>
+                                                </MultiDataTrigger.Conditions>
                                                 <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                            </Trigger>
+                                            </MultiDataTrigger>
                                             <DataTrigger Binding="{Binding IsDragging}" Value="True">
                                                 <Setter Property="Opacity" Value="0.45"/>
                                                 <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
                                                 <Setter Property="BorderThickness" Value="1"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsDropGroupMember}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
                                                 <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsFolder}" Value="True">
@@ -199,25 +203,36 @@
                                                    Visibility="{Binding HasSubtitle, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </StackPanel>
 
-                                    <Button Grid.Column="4"
-                                            Style="{StaticResource ButtonTablePrimary}"
-                                            Command="{Binding DataContext.ExecuteNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"
-                                            Visibility="{Binding IsItem, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            ToolTip="{loc:Translate Key=Ui.Library.ExecuteOrStop}">
-                                        <iconPacks:PackIconMaterial Width="13" Height="13">
-                                            <iconPacks:PackIconMaterial.Style>
-                                                <Style TargetType="iconPacks:PackIconMaterial">
-                                                    <Setter Property="Kind" Value="Play"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                            <Setter Property="Kind" Value="Stop"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </iconPacks:PackIconMaterial.Style>
-                                        </iconPacks:PackIconMaterial>
-                                    </Button>
+                                    <StackPanel Grid.Column="4"
+                                                Orientation="Horizontal"
+                                                Visibility="{Binding IsItem, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Button Style="{StaticResource ButtonIcon}"
+                                                Command="{Binding DataContext.OpenNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{loc:Translate Key=Ui.Common.Open}">
+                                            <iconPacks:PackIconMaterial Kind="OpenInNew"
+                                                                        Width="14"
+                                                                        Height="14"/>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonTablePrimary}"
+                                                Margin="6,0,0,0"
+                                                Command="{Binding DataContext.ExecuteNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{loc:Translate Key=Ui.Library.ExecuteOrStop}">
+                                            <iconPacks:PackIconMaterial Width="13" Height="13">
+                                                <iconPacks:PackIconMaterial.Style>
+                                                    <Style TargetType="iconPacks:PackIconMaterial">
+                                                        <Setter Property="Kind" Value="Play"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                                                <Setter Property="Kind" Value="Stop"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </iconPacks:PackIconMaterial.Style>
+                                            </iconPacks:PackIconMaterial>
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -231,5 +246,49 @@
                            Visibility="{Binding HasItems, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
             </Grid>
         </Border>
+
+        <Canvas Grid.RowSpan="2"
+                Panel.ZIndex="100"
+                ClipToBounds="True"
+                IsHitTestVisible="False"
+                Visibility="{Binding IsDragActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border x:Name="DragPreview"
+                    Padding="10,7"
+                    MaxWidth="360"
+                    Background="{DynamicResource App.Brush.Surface}"
+                    BorderBrush="{DynamicResource App.Brush.Accent}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12"
+                                      ShadowDepth="3"
+                                      Opacity="0.3"
+                                      Color="Black"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Width="17"
+                                                Height="17"
+                                                Margin="0,0,7,0"
+                                                VerticalAlignment="Center"
+                                                Foreground="{DynamicResource App.Brush.Accent}">
+                        <iconPacks:PackIconMaterial.Style>
+                            <Style TargetType="iconPacks:PackIconMaterial">
+                                <Setter Property="Kind" Value="FileDocumentOutline"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DraggedItemIsFolder}" Value="True">
+                                        <Setter Property="Kind" Value="Folder"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </iconPacks:PackIconMaterial.Style>
+                    </iconPacks:PackIconMaterial>
+                    <TextBlock Text="{Binding DraggedItemName}"
+                               MaxWidth="310"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Border>
+        </Canvas>
     </Grid>
 </UserControl>

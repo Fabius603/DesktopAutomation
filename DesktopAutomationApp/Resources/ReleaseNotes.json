@@ -26,6 +26,21 @@
           },
           {
             "category": "Changed",
+            "de": "Beim Verschieben in den Ordnerbäumen folgt jetzt eine kompakte, stabil innerhalb der Ansicht positionierte Vorschau mit dem passenden Ordner- oder Datei-Icon und dem Namen des gezogenen Elements dem Mauszeiger. Gültige Ablagebereiche werden ohne zusätzliche Füllung mit der Akzentfarbe umrandet. Beim normalen Darüberfahren ohne Drag werden Einträge je nach Theme dezent heller oder dunkler hervorgehoben.",
+            "en": "When moving entries in the folder trees, a compact preview with the matching folder or file icon and the dragged item's name now follows the pointer while remaining stably positioned within the view. Valid drop areas are outlined with the accent color without an additional fill. During normal mouse-over without dragging, entries are highlighted subtly using a lighter or darker tone appropriate to the theme."
+          },
+          {
+            "category": "Added",
+            "de": "Jobs, Makros und Automationen können jetzt über eine zusätzliche Öffnen-Schaltfläche direkt neben Starten beziehungsweise Stoppen geöffnet werden.",
+            "en": "Jobs, macros, and automations can now be opened using an additional Open button directly beside Start or Stop."
+          },
+          {
+            "category": "Changed",
+            "de": "Die Schaltflächen zum gleichzeitigen Ein- und Ausklappen aller Ordner sowie die wirkungslosen manuellen Aktualisieren-Schaltflächen wurden aus den Übersichten entfernt. Einzelne Ordner lassen sich weiterhin direkt über ihren Pfeil öffnen und schließen; die Inhalte werden weiterhin automatisch aktualisiert.",
+            "en": "The buttons for expanding and collapsing all folders at once, along with the ineffective manual Refresh buttons, have been removed from the overviews. Individual folders can still be opened and closed directly using their arrow, and content continues to update automatically."
+          },
+          {
+            "category": "Changed",
             "de": "Die Bibliotheksordnung wird getrennt von den eigentlichen Definitionen gespeichert. Verschieben und Löschen von Ordnern verändert daher keine Jobs, Makros oder Automationen; vorhandene Definitionen erscheinen nach dem Update automatisch auf der obersten Ebene.",
             "en": "Library organization is stored separately from the definitions themselves. Moving or deleting folders therefore does not modify jobs, macros, or automations, and existing definitions automatically appear at the top level after the update."
           },

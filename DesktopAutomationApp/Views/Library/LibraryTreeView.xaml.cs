@@ -50,6 +50,7 @@ public partial class LibraryTreeView : UserControl
         if (FindAncestor<Button>(e.OriginalSource as DependencyObject) != null) return;
         if (DataContext is not LibraryTreeViewModel viewModel) return;
         viewModel.BeginDrag(node);
+        UpdateDragPreviewPosition(position);
         try
         {
             DragDrop.DoDragDrop(this, node, DragDropEffects.Move);
@@ -65,6 +66,7 @@ public partial class LibraryTreeView : UserControl
         if (!e.Data.GetDataPresent(typeof(LibraryTreeNodeViewModel)) ||
             DataContext is not LibraryTreeViewModel viewModel)
             return;
+        UpdateDragPreviewPosition(e.GetPosition(this));
         var target = FindNode(e.OriginalSource as DependencyObject);
         if (target != null)
             viewModel.SetDropTarget(target);
@@ -72,6 +74,25 @@ public partial class LibraryTreeView : UserControl
             viewModel.SetRootDropTarget();
         e.Effects = DragDropEffects.Move;
         e.Handled = true;
+    }
+
+    private void LibraryTree_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+    {
+        if (DataContext is LibraryTreeViewModel { IsDragActive: true })
+        {
+            var cursor = System.Windows.Forms.Cursor.Position;
+            UpdateDragPreviewPosition(PointFromScreen(new Point(cursor.X, cursor.Y)));
+        }
+    }
+
+    private void UpdateDragPreviewPosition(Point position)
+    {
+        if (!DragPreview.IsMeasureValid)
+            DragPreview.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var previewSize = DragPreview.DesiredSize;
+        var previewPosition = LibraryDragPreviewPosition.Calculate(position, previewSize, RenderSize);
+        Canvas.SetLeft(DragPreview, previewPosition.X);
+        Canvas.SetTop(DragPreview, previewPosition.Y);
     }
 
     private async void LibraryTree_PreviewDrop(object sender, DragEventArgs e)

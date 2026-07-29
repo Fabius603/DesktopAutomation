@@ -62,7 +62,6 @@ namespace DesktopAutomationApp.ViewModels
             set { _selected = value; OnPropertyChanged(); InvalidateAllCommands(); }
         }
 
-        public ICommand RefreshCommand { get; }
         public ICommand SaveAllCommand { get; }
         public ICommand NewMakroCommand { get; }
         public ICommand DeleteMakroCommand { get; }
@@ -93,7 +92,6 @@ namespace DesktopAutomationApp.ViewModels
                 Loc.Get("Ui.Macro.List.NewMacro"));
             Library.RequestCreateItem += CreateNewMakroInFolderAsync;
 
-            RefreshCommand   = new RelayCommand(async () => await RefreshAsync());
             SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
             NewMakroCommand  = new RelayCommand(CreateNewMakro);
             DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);

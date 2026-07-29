@@ -55,7 +55,6 @@ namespace DesktopAutomationApp.ViewModels
             SetSelectedItems(Array.Empty<Job>());
         }
 
-        public ICommand RefreshCommand { get; }
         public ICommand OpenJobCommand { get; } // Parameter: Job
         public ICommand DeleteJobCommand { get; }
         public ICommand CreateNewJobCommand { get; }
@@ -101,7 +100,6 @@ namespace DesktopAutomationApp.ViewModels
                 Loc.Get("Ui.Job.List.NewJob"));
             Library.RequestCreateItem += CreateNewJobInFolderAsync;
 
-            RefreshCommand = new RelayCommand(async () => await RefreshAsync());
             OpenJobCommand = new RelayCommand<Job?>(job =>
             {
                 if (job != null) RequestOpenJob?.Invoke(job);

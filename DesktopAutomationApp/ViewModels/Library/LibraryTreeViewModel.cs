@@ -181,10 +181,10 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     private IReadOnlyList<LibraryItemDescriptor> _items = [];
     private LibraryLayout _layout = new();
     private string _searchText = string.Empty;
-    private bool _suppressExpansionSave;
     private bool _isDragActive;
     private bool _isRootDropTarget;
     private string _draggedItemName = string.Empty;
+    private bool _draggedItemIsFolder;
     private readonly ResettableObservableCollection<LibraryTreeNodeViewModel> _visibleNodes = [];
     private readonly List<LibraryTreeNodeViewModel> _dropGroupNodes = [];
     private readonly Dictionary<Guid, int> _visibleFolderIndexes = [];
@@ -222,8 +222,6 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         MoveUpOneLevelCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(
             MoveUpOneLevelAsync,
             node => node?.CanMoveUpOneLevel == true);
-        ExpandAllCommand = new RelayCommand(() => SetAllExpanded(true));
-        CollapseAllCommand = new RelayCommand(() => SetAllExpanded(false));
     }
 
     public ObservableCollection<LibraryTreeNodeViewModel> VisibleNodes => _visibleNodes;
@@ -238,8 +236,6 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     public ICommand RenameFolderCommand { get; }
     public ICommand DeleteNodeCommand { get; }
     public ICommand MoveUpOneLevelCommand { get; }
-    public ICommand ExpandAllCommand { get; }
-    public ICommand CollapseAllCommand { get; }
     public bool HasItems => VisibleNodes.Count > 0;
     public bool IsDragActive
     {
@@ -260,6 +256,11 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     {
         get => _draggedItemName;
         private set { _draggedItemName = value; OnPropertyChanged(); }
+    }
+    public bool DraggedItemIsFolder
+    {
+        get => _draggedItemIsFolder;
+        private set { _draggedItemIsFolder = value; OnPropertyChanged(); }
     }
     public string EmptyText => string.IsNullOrWhiteSpace(SearchText)
         ? Loc.Get("Ui.Library.Empty")
@@ -299,6 +300,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         _draggedNode = node;
         node.IsDragging = true;
         DraggedItemName = node.Name;
+        DraggedItemIsFolder = node.IsFolder;
         IsDragActive = true;
     }
 
@@ -354,6 +356,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         ClearDropTargets();
         IsDragActive = false;
         DraggedItemName = string.Empty;
+        DraggedItemIsFolder = false;
     }
 
     private void ClearDropTargets()
@@ -408,7 +411,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
 
     internal void OnExpansionChanged(LibraryTreeNodeViewModel node)
     {
-        if (_suppressExpansionSave || node.Folder == null || !string.IsNullOrWhiteSpace(SearchText)) return;
+        if (node.Folder == null || !string.IsNullOrWhiteSpace(SearchText)) return;
         var expanded = GetExpandedFolderIds();
         if (node.IsExpanded) expanded.Add(node.Folder.Id);
         else expanded.Remove(node.Folder.Id);
@@ -484,26 +487,6 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             _items = _items.Where(item => item.Id != node.Item.Id).ToArray();
         }
         _layout = await _organization.LoadAsync();
-        Rebuild();
-    }
-
-    private void SetAllExpanded(bool expanded)
-    {
-        _suppressExpansionSave = true;
-        try
-        {
-            var ids = GetExpandedFolderIds();
-            ids.Clear();
-            if (expanded)
-                foreach (var folder in _layout.Folders.Where(folder => folder.Kind == _kind))
-                    ids.Add(folder.Id);
-            _preferences.Current.ExpandedLibraryFolders[_kind.ToString()] = ids.ToList();
-            _ = _preferences.SaveAsync();
-        }
-        finally
-        {
-            _suppressExpansionSave = false;
-        }
         Rebuild();
     }
 

@@ -131,6 +131,69 @@ public sealed class LibraryTreeViewModelTests
         Assert.Equal(0, propertyChanges);
     }
 
+    [Fact]
+    public async Task DragPreviewExposesDraggedFolderOrFileWithItsName()
+    {
+        var folder = new LibraryFolder
+        {
+            Id = Guid.NewGuid(),
+            Kind = LibraryItemKind.Job,
+            Name = "Reports"
+        };
+        var item = new LibraryItemDescriptor
+        {
+            Id = Guid.NewGuid(),
+            Name = "Daily report",
+            Model = new object(),
+            Open = () => { }
+        };
+        var viewModel = CreateViewModel(
+            new InMemoryOrganizationService(new LibraryLayout { Folders = [folder] }),
+            new TestPreferencesService());
+        await viewModel.SetItemsAsync([item]);
+        var folderNode = Assert.Single(viewModel.VisibleNodes, node => node.IsFolder);
+        var itemNode = Assert.Single(viewModel.VisibleNodes, node => node.IsItem);
+
+        viewModel.BeginDrag(folderNode);
+
+        Assert.True(viewModel.IsDragActive);
+        Assert.True(viewModel.DraggedItemIsFolder);
+        Assert.Equal("Reports", viewModel.DraggedItemName);
+
+        viewModel.EndDrag();
+        viewModel.BeginDrag(itemNode);
+
+        Assert.True(viewModel.IsDragActive);
+        Assert.False(viewModel.DraggedItemIsFolder);
+        Assert.Equal("Daily report", viewModel.DraggedItemName);
+
+        viewModel.EndDrag();
+        Assert.False(viewModel.IsDragActive);
+        Assert.Empty(viewModel.DraggedItemName);
+    }
+
+    [Fact]
+    public async Task OpenCommandInvokesItemOpenAction()
+    {
+        var opened = false;
+        var item = new LibraryItemDescriptor
+        {
+            Id = Guid.NewGuid(),
+            Name = "Daily report",
+            Model = new object(),
+            Open = () => opened = true
+        };
+        var viewModel = CreateViewModel(
+            new InMemoryOrganizationService(new LibraryLayout()),
+            new TestPreferencesService());
+        await viewModel.SetItemsAsync([item]);
+        var itemNode = Assert.Single(viewModel.VisibleNodes, node => node.IsItem);
+
+        viewModel.OpenNodeCommand.Execute(itemNode);
+
+        Assert.True(opened);
+    }
+
     private static LibraryTreeViewModel CreateViewModel(
         ILibraryOrganizationService organization,
         IUserPreferencesService preferences) =>
