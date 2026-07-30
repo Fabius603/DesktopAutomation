@@ -13,7 +13,7 @@
                        VerticalAlignment="Top" Margin="0,6,0,0"/>
             <emoji:RichTextBox Grid.Column="1"
                                Style="{DynamicResource MahApps.Styles.RichTextBox}"
-                               Text="{Binding UserChoiceStep_Question, UpdateSourceTrigger=PropertyChanged}"
+                               Text="{Binding UserChoiceStep_Question, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                AcceptsReturn="True"
                                VerticalScrollBarVisibility="Hidden"
                                MinHeight="58"/>
@@ -25,7 +25,7 @@
                        VerticalAlignment="Top" Margin="0,6,0,0"/>
             <emoji:RichTextBox Grid.Column="1"
                                Style="{DynamicResource MahApps.Styles.RichTextBox}"
-                               Text="{Binding UserChoiceStep_Description, UpdateSourceTrigger=PropertyChanged}"
+                               Text="{Binding UserChoiceStep_Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                AcceptsReturn="True"
                                VerticalScrollBarVisibility="Hidden"
                                MinHeight="58"/>
@@ -74,7 +74,7 @@
                                    FontWeight="SemiBold"/>
                         <emoji:RichTextBox Grid.Column="1"
                                            Style="{DynamicResource MahApps.Styles.RichTextBox}"
-                                           Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}"
+                                           Text="{Binding Label, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                            AcceptsReturn="False"
                                            VerticalScrollBarVisibility="Hidden"
                                            VerticalContentAlignment="Center"
@@ -82,7 +82,7 @@
                         <emoji:RichTextBox Grid.Column="2"
                                            Margin="6,0,6,0"
                                            Style="{DynamicResource MahApps.Styles.RichTextBox}"
-                                           Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                           Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                            AcceptsReturn="False"
                                            VerticalScrollBarVisibility="Hidden"
                                            VerticalContentAlignment="Center"

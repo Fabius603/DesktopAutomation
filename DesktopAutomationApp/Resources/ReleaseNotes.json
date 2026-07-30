@@ -1,5 +1,24 @@
 [
   {
+    "version": "1.5.11",
+    "date": "2026-07-30",
+    "sections": [
+      {
+        "title": {
+          "de": "Job Step",
+          "en": "Job-step"
+        },
+        "changes": [
+          {
+            "category": "Fixed",
+            "de": "Beim Step „Benutzerauswahl abfragen“ werden eingegebene Fragen, Beschreibungen, Antworttexte und Rückgabewerte jetzt sofort übernommen. Gültige unterschiedliche Antworten können dadurch ohne irreführende Validierungsfehlermeldung gespeichert werden.",
+            "en": "The “Ask user to choose” step now applies entered questions, descriptions, answer texts, and return values immediately. Valid distinct answers can therefore be saved without a misleading validation error."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.10",
     "date": "2026-07-29",
     "sections": [
