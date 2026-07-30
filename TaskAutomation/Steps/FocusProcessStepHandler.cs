@@ -118,6 +118,7 @@ namespace TaskAutomation.Steps
         private const uint SWP_SHOWWINDOW = 0x0040;
         private const byte VK_MENU = 0x12;
         private const uint KEYEVENTF_KEYUP = 0x0002;
+        private const int WindowSearchAttempts = 50;
         private static readonly IntPtr HWND_TOP = IntPtr.Zero;
 
         protected override async Task<FocusProcessResult> ExecuteCoreAsync(
@@ -136,7 +137,7 @@ namespace TaskAutomation.Steps
 
             WindowCandidate? target = null;
             var processFound = false;
-            for (var attempt = 0; attempt < 3 && target == null; attempt++)
+            for (var attempt = 0; attempt < WindowSearchAttempts && target == null; attempt++)
             {
                 ct.ThrowIfCancellationRequested();
                 if (usesRuntimeReference)
@@ -175,7 +176,7 @@ namespace TaskAutomation.Steps
                         configuredPath, processTarget.WindowTitleContains, ctx.Logger, out processFound);
                 }
                 if (target == null)
-                    await Task.Delay(75, ct).ConfigureAwait(false);
+                    await Task.Delay(100, ct).ConfigureAwait(false);
             }
 
             if (target == null)

@@ -1,5 +1,29 @@
 [
   {
+    "version": "1.5.12",
+    "date": "2026-07-30",
+    "sections": [
+      {
+        "title": {
+          "de": "Job Step",
+          "en": "Job-step"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Das Auswahlfenster des Steps „Benutzerauswahl abfragen“ wird bei der Ausführung jetzt bevorzugt vor normaler Oberflächenarbeit geöffnet und erscheint dadurch schneller, ohne Funktionen bei Darstellung, Bedienung oder Abbruch zu verlieren.",
+            "en": "The selection window of the “Ask user to choose” step is now opened ahead of normal interface work during execution, making it appear sooner without removing display, interaction, or cancellation functionality."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die Fensteroptionen der Prozess-Steps funktionieren jetzt auch bei langsam startenden Programmen sowie Anwendungen wie Visual Studio, die ihr sichtbares Fenster an eine andere oder bereits laufende Prozessinstanz übergeben. Zentrierung und eigene Positionen verwenden außerdem dieselbe von links nach rechts sortierte Monitornummerierung wie die Monitorauswahl.",
+            "en": "Window options in process steps now also work for slowly starting programs and applications such as Visual Studio that hand their visible window off to another or already running process instance. Centered and custom positions also use the same left-to-right monitor order as the monitor picker."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.11",
     "date": "2026-07-30",
     "sections": [

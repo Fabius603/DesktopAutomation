@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +28,9 @@ namespace TaskAutomation.Steps
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
         [StructLayout(LayoutKind.Sequential)]
         private struct RECT
         {
@@ -41,6 +45,15 @@ namespace TaskAutomation.Steps
         private const uint SWP_SHOWWINDOW = 0x0040;
         private const int SW_RESTORE = 9;
         private const int SW_MAXIMIZE = 3;
+        private const int WindowSearchAttempts = 100;
+        private const int ExistingWindowFallbackAttempt = 20;
+
+        internal sealed record WindowSearchCandidate(
+            IntPtr Handle,
+            uint OwnerProcessId,
+            long Area,
+            bool WasPresentBefore,
+            bool IsForeground);
 
         protected override async Task<StartProcessResult> ExecuteCoreAsync(
             StartProcessStep step, IStepPipelineContext ctx, CancellationToken ct)
@@ -66,6 +79,11 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogInformation(
                 "StartProcessStepHandler: Starte '{Path}' mit Argumenten '{Args}' aus Arbeitsverzeichnis '{WorkingDirectory}' (WaitForExit={Wait}).",
                 executablePath, startInfo.Arguments, startInfo.WorkingDirectory, step.Settings.WaitForExit);
+
+            var processName = Path.GetFileNameWithoutExtension(executablePath);
+            var windowsBeforeStart = ProcessWindowMatcher.FindMatchingWindows(processName)
+                .Select(window => window.Handle)
+                .ToHashSet();
 
             Process? process;
             try
@@ -100,7 +118,8 @@ namespace TaskAutomation.Steps
 
             try
             {
-                await PositionMainWindowAsync(process, step.Settings, ctx.Logger, ct)
+                await PositionMainWindowAsync(
+                        process, processName, windowsBeforeStart, step.Settings, ctx.Logger, ct)
                     .ConfigureAwait(false);
 
                 if (step.Settings.WaitForExit)
@@ -215,17 +234,63 @@ namespace TaskAutomation.Steps
         }
 
         private static async Task PositionMainWindowAsync(
-            Process process, StartProcessSettings settings, ILogger logger, CancellationToken ct)
+            Process process,
+            string processName,
+            IReadOnlySet<IntPtr> windowsBeforeStart,
+            StartProcessSettings settings,
+            ILogger logger,
+            CancellationToken ct)
         {
             IntPtr hwnd = IntPtr.Zero;
             try
             {
-                // Console programs and launcher processes often never own a main window.
-                // Keep this best-effort positioning bounded so the job can continue quickly.
-                for (var attempt = 0; attempt < 20 && hwnd == IntPtr.Zero && !process.HasExited; attempt++)
+                for (var attempt = 0; attempt < WindowSearchAttempts && hwnd == IntPtr.Zero; attempt++)
                 {
-                    process.Refresh();
-                    hwnd = process.MainWindowHandle;
+                    var directHandle = IntPtr.Zero;
+                    var processHasExited = true;
+                    try
+                    {
+                        process.Refresh();
+                        processHasExited = process.HasExited;
+                        if (!processHasExited)
+                            directHandle = process.MainWindowHandle;
+                    }
+                    catch (InvalidOperationException) { }
+
+                    var matches = ProcessWindowMatcher.FindMatchingWindows(processName)
+                        .Select(window =>
+                        {
+                            var area = GetWindowRect(window.Handle, out var rect)
+                                ? (long)Math.Max(0, rect.Right - rect.Left)
+                                  * Math.Max(0, rect.Bottom - rect.Top)
+                                : 0;
+                            return new WindowSearchCandidate(
+                                window.Handle,
+                                window.OwnerProcessId,
+                                area,
+                                windowsBeforeStart.Contains(window.Handle),
+                                window.Handle == GetForegroundWindow());
+                        })
+                        .Where(candidate => candidate.Area > 0)
+                        .ToList();
+
+                    if (directHandle != IntPtr.Zero
+                        && matches.All(candidate => candidate.Handle != directHandle)
+                        && GetWindowRect(directHandle, out var directRect))
+                    {
+                        matches.Add(new WindowSearchCandidate(
+                            directHandle,
+                            checked((uint)process.Id),
+                            (long)Math.Max(0, directRect.Right - directRect.Left)
+                            * Math.Max(0, directRect.Bottom - directRect.Top),
+                            windowsBeforeStart.Contains(directHandle),
+                            directHandle == GetForegroundWindow()));
+                    }
+
+                    hwnd = SelectWindowCandidate(
+                        matches,
+                        process.Id,
+                        allowExistingWindow: attempt >= ExistingWindowFallbackAttempt);
                     if (hwnd == IntPtr.Zero)
                         await Task.Delay(50, ct).ConfigureAwait(false);
                 }
@@ -236,7 +301,10 @@ namespace TaskAutomation.Steps
                     return;
                 }
 
-                var screens = System.Windows.Forms.Screen.AllScreens;
+                var screens = System.Windows.Forms.Screen.AllScreens
+                    .OrderBy(candidate => candidate.Bounds.Left)
+                    .ThenBy(candidate => candidate.Bounds.Top)
+                    .ToArray();
                 var screen = settings.MonitorIndex >= 0 && settings.MonitorIndex < screens.Length
                     ? screens[settings.MonitorIndex]
                     : System.Windows.Forms.Screen.PrimaryScreen;
@@ -293,6 +361,22 @@ namespace TaskAutomation.Steps
             {
                 logger.LogWarning(ex, "StartProcessStepHandler: Fensterpositionierung fehlgeschlagen.");
             }
+        }
+
+        internal static IntPtr SelectWindowCandidate(
+            IEnumerable<WindowSearchCandidate> candidates,
+            int launchedProcessId,
+            bool allowExistingWindow)
+        {
+            return candidates
+                .Where(candidate => allowExistingWindow || !candidate.WasPresentBefore
+                    || candidate.OwnerProcessId == checked((uint)launchedProcessId))
+                .OrderByDescending(candidate => candidate.IsForeground)
+                .ThenBy(candidate => candidate.WasPresentBefore)
+                .ThenByDescending(candidate => candidate.OwnerProcessId == checked((uint)launchedProcessId))
+                .ThenByDescending(candidate => candidate.Area)
+                .Select(candidate => candidate.Handle)
+                .FirstOrDefault();
         }
     }
 }
