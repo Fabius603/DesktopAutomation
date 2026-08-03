@@ -176,7 +176,13 @@ public static class JobValidation
             JobExecutionStep s => s.Settings.JobId != null,
             ScriptExecutionStep s => ExistingFile(s.Settings.ScriptPath),
             KlickOnPointStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0,
-            KlickOnPoint3DStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0,
+            KlickOnPoint3DStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0
+                && double.IsFinite(s.Settings.EffectiveMovementFactorX)
+                && s.Settings.EffectiveMovementFactorX is >= 0.01 and <= 100
+                && double.IsFinite(s.Settings.EffectiveMovementFactorY)
+                && s.Settings.EffectiveMovementFactorY is >= 0.01 and <= 100
+                && (s.Settings.OriginCoordinateSpace != KlickOnPoint3DSettings.MonitorLocalCoordinates
+                    || s.Settings.OriginMonitorIndex >= 0),
             YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
             TimeoutStep s => s.Settings.DelayMs >= 0,
             BlockInputStep s => s.Settings.SafetyTimeoutSeconds is >= 1 and <= 3600,

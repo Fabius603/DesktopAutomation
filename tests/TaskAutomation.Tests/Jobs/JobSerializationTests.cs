@@ -14,6 +14,49 @@ public sealed class JobSerializationTests
     }
 
     [Fact]
+    public void Deserialize_LegacyClickOnPoint3DOriginRemainsGlobal()
+    {
+        const string json =
+            """{"type":"klick_on_point_3d","settings":{"origin_x":-960,"origin_y":540,"movement_factor":1.25}}""";
+
+        var restored = Assert.IsType<KlickOnPoint3DStep>(JsonSerializer.Deserialize<JobStep>(json));
+
+        Assert.Equal(-960, restored.Settings.OriginX);
+        Assert.Equal(540, restored.Settings.OriginY);
+        Assert.Equal(KlickOnPoint3DSettings.LegacyGlobalCoordinates,
+            restored.Settings.OriginCoordinateSpace);
+        Assert.Equal(1.25, restored.Settings.EffectiveMovementFactorX);
+        Assert.Equal(1.25, restored.Settings.EffectiveMovementFactorY);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesMonitorLocalClickOnPoint3DOrigin()
+    {
+        JobStep step = new KlickOnPoint3DStep
+        {
+            Settings = new()
+            {
+                OriginX = 960,
+                OriginY = 540,
+                OriginMonitorIndex = 2,
+                OriginCoordinateSpace = KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                MovementFactorX = 1.5,
+                MovementFactorY = 0.75
+            }
+        };
+
+        var restored = Assert.IsType<KlickOnPoint3DStep>(
+            JsonSerializer.Deserialize<JobStep>(JsonSerializer.Serialize(step)));
+
+        Assert.Equal(2, restored.Settings.OriginMonitorIndex);
+        Assert.Equal(KlickOnPoint3DSettings.MonitorLocalCoordinates,
+            restored.Settings.OriginCoordinateSpace);
+        Assert.Equal((960, 540), (restored.Settings.OriginX, restored.Settings.OriginY));
+        Assert.Equal(1.5, restored.Settings.EffectiveMovementFactorX);
+        Assert.Equal(0.75, restored.Settings.EffectiveMovementFactorY);
+    }
+
+    [Fact]
     public void RoundTrip_PreservesUserChoiceStableOptionIds()
     {
         JobStep step = new UserChoiceStep

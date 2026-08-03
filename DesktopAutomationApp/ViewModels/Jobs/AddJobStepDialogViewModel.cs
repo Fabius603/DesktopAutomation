@@ -22,6 +22,7 @@ using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Converters;
 using DesktopAutomationApp.ViewModels.WindowsIntegration;
 using TaskAutomation.WindowsIntegration;
 
@@ -240,6 +241,7 @@ namespace DesktopAutomationApp.ViewModels
             CaptureTemplateMatchingRoiCommand = new RelayCommand(CaptureTemplateMatchingRoi);
             CaptureYoloDetectionRoiCommand = new RelayCommand(CaptureYoloDetectionRoi);
             CaptureKlickOnPoint3DOriginCommand = new RelayCommand(CaptureKlickOnPoint3DOrigin);
+            ChooseMonitorForKlickOnPoint3DOriginCommand = new RelayCommand(ChooseMonitorForKlickOnPoint3DOrigin);
             IfStep_AddConditionCommand    = new RelayCommand(() =>
                 IfStep_Conditions.Add(new ConditionRowViewModel(IfStep_Conditions, GetConditionSourceSteps())));
             ElseIfStep_AddConditionCommand = new RelayCommand(() =>
@@ -432,6 +434,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CaptureTemplateMatchingRoiCommand { get; }
         public ICommand CaptureYoloDetectionRoiCommand { get; }
         public ICommand CaptureKlickOnPoint3DOriginCommand { get; }
+        public ICommand ChooseMonitorForKlickOnPoint3DOriginCommand { get; }
         public ICommand IfStep_AddConditionCommand { get; }
         public ICommand ElseIfStep_AddConditionCommand { get; }
         public ICommand PointComparisonStep_AddPointCommand { get; }
@@ -1245,17 +1248,65 @@ namespace DesktopAutomationApp.ViewModels
         private int _klickOnPoint3DStep_Timeout = 0;
         public int KlickOnPoint3DStep_Timeout { get => _klickOnPoint3DStep_Timeout; set { _klickOnPoint3DStep_Timeout = value; OnChange(); } }
 
+        private int _klickOnPoint3DStep_OriginMonitorIndex = GetPrimaryMonitorIndex();
+        public int KlickOnPoint3DStep_OriginMonitorIndex { get => _klickOnPoint3DStep_OriginMonitorIndex; set { _klickOnPoint3DStep_OriginMonitorIndex = value; OnChange(); } }
+
         private int _klickOnPoint3DStep_OriginX = (Screen.PrimaryScreen?.Bounds.Width  ?? 1920) / 2;
         public int KlickOnPoint3DStep_OriginX { get => _klickOnPoint3DStep_OriginX; set { _klickOnPoint3DStep_OriginX = value; OnChange(); } }
 
         private int _klickOnPoint3DStep_OriginY = (Screen.PrimaryScreen?.Bounds.Height ?? 1080) / 2;
         public int KlickOnPoint3DStep_OriginY { get => _klickOnPoint3DStep_OriginY; set { _klickOnPoint3DStep_OriginY = value; OnChange(); } }
 
+        public void LoadKlickOnPoint3DOrigin(KlickOnPoint3DSettings settings)
+        {
+            if (string.Equals(settings.OriginCoordinateSpace,
+                    KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                KlickOnPoint3DStep_OriginMonitorIndex = settings.OriginMonitorIndex;
+                KlickOnPoint3DStep_OriginX = settings.OriginX;
+                KlickOnPoint3DStep_OriginY = settings.OriginY;
+                return;
+            }
+
+            SetKlickOnPoint3DOriginFromGlobalPoint(
+                new System.Drawing.Point(settings.OriginX, settings.OriginY));
+        }
+
+        private void SetKlickOnPoint3DOriginFromGlobalPoint(System.Drawing.Point globalPoint)
+        {
+            var screens = ImageHelperMethods.ScreenHelper.GetScreens();
+            var monitorIndex = Array.FindIndex(screens, screen => screen.Bounds.Contains(globalPoint));
+            if (monitorIndex < 0)
+                monitorIndex = GetPrimaryMonitorIndex();
+
+            var bounds = screens.Length > monitorIndex && monitorIndex >= 0
+                ? screens[monitorIndex].Bounds
+                : System.Drawing.Rectangle.Empty;
+            KlickOnPoint3DStep_OriginMonitorIndex = Math.Max(0, monitorIndex);
+            KlickOnPoint3DStep_OriginX = globalPoint.X - bounds.Left;
+            KlickOnPoint3DStep_OriginY = globalPoint.Y - bounds.Top;
+        }
+
+        private static int GetPrimaryMonitorIndex()
+        {
+            var screens = ImageHelperMethods.ScreenHelper.GetScreens();
+            var primaryDeviceName = Screen.PrimaryScreen?.DeviceName;
+            var index = Array.FindIndex(screens, screen => screen.DeviceName == primaryDeviceName);
+            return Math.Max(0, index);
+        }
+
         private int _klickOnPoint3DStep_OffsetX = 0;
         public int KlickOnPoint3DStep_OffsetX { get => _klickOnPoint3DStep_OffsetX; set { _klickOnPoint3DStep_OffsetX = value; OnChange(); } }
 
         private int _klickOnPoint3DStep_OffsetY = 0;
         public int KlickOnPoint3DStep_OffsetY { get => _klickOnPoint3DStep_OffsetY; set { _klickOnPoint3DStep_OffsetY = value; OnChange(); } }
+
+        private string _klickOnPoint3DStep_MovementFactorX = "1";
+        public string KlickOnPoint3DStep_MovementFactorX { get => _klickOnPoint3DStep_MovementFactorX; set { _klickOnPoint3DStep_MovementFactorX = value; OnChange(); } }
+
+        private string _klickOnPoint3DStep_MovementFactorY = "1";
+        public string KlickOnPoint3DStep_MovementFactorY { get => _klickOnPoint3DStep_MovementFactorY; set { _klickOnPoint3DStep_MovementFactorY = value; OnChange(); } }
 
         private SourceStepItem? _klickOnPoint3DStep_SourceDetectionStep;
         public SourceStepItem? KlickOnPoint3DStep_SourceDetectionStep
@@ -1553,6 +1604,21 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        private void ChooseMonitorForKlickOnPoint3DOrigin()
+        {
+            try
+            {
+                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
+                if (selectedMonitorIndex >= 0)
+                    KlickOnPoint3DStep_OriginMonitorIndex = selectedMonitorIndex;
+            }
+            catch (Exception ex)
+            {
+                AppDialog.Show(Loc.Format("Error.MonitorSelection", ex.Message), Loc.Get("Error.Title"),
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
         private int ShowMonitorSelectionOverlay()
         {
             var screens = ImageHelperMethods.ScreenHelper.GetScreens();
@@ -1729,8 +1795,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 var overlay = new DesktopOverlay.RoiCaptureOverlay();
                 var point = await overlay.CapturePointAsync();
-                KlickOnPoint3DStep_OriginX = point.X;
-                KlickOnPoint3DStep_OriginY = point.Y;
+                SetKlickOnPoint3DOriginFromGlobalPoint(point);
             }
             catch (OperationCanceledException)
             {
@@ -2925,6 +2990,11 @@ namespace DesktopAutomationApp.ViewModels
             TextResults = OverlayTextRows.Select(row => row.ToSettings()).ToList()
         };
 
+        private static double ParseMovementFactor(string? value) =>
+            FlexibleDoubleConverter.TryParse(value, out var number)
+                ? number
+                : double.NaN;
+
         // ===== Fabrik =====
         public void CreateStep()
         {
@@ -3106,6 +3176,10 @@ namespace DesktopAutomationApp.ViewModels
                         TimeoutMs = KlickOnPoint3DStep_Timeout,
                         OriginX = KlickOnPoint3DStep_OriginX,
                         OriginY = KlickOnPoint3DStep_OriginY,
+                        OriginMonitorIndex = KlickOnPoint3DStep_OriginMonitorIndex,
+                        OriginCoordinateSpace = KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                        MovementFactorX = ParseMovementFactor(KlickOnPoint3DStep_MovementFactorX),
+                        MovementFactorY = ParseMovementFactor(KlickOnPoint3DStep_MovementFactorY),
                         OffsetX = KlickOnPoint3DStep_OffsetX,
                         OffsetY = KlickOnPoint3DStep_OffsetY,
                         PointsSource = KlickOnPoint3DStep_PointsSource.ToBinding()

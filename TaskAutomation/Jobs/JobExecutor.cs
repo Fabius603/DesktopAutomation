@@ -1274,6 +1274,7 @@ namespace TaskAutomation.Jobs
             foreach (var name in new[]
             {
                 "WasExecuted", "Success", "Found", "Confidence", "Point", "BoundingBox",
+                "DeltaX", "DeltaY", "MovementFactorX", "MovementFactorY", "AppliedDeltaX", "AppliedDeltaY",
                 "Status", "ErrorCode", "Exists", "IsConnected", "IsEnabled",
                 "IsMuted", "IsCharging", "PendingRestart", "Count", "Value", "Percentage",
                 "FreeSpaceGb", "Name", "Id", "Text", "Path", "Connectivity", "ConnectionType",

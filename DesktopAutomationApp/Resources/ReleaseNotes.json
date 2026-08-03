@@ -1,5 +1,44 @@
 [
   {
+    "version": "1.5.11",
+    "date": "2026-07-31",
+    "sections": [
+      {
+        "title": {
+          "de": "Job-Ausführung",
+          "en": "Job execution"
+        },
+        "changes": [
+          {
+            "category": "Changed",
+            "de": "Das Ausführungsprotokoll zeigt beim Schritt „Click on Point 3D“ jetzt die tatsächlich verwendeten X- und Y-Bewegungsdeltas an.",
+            "en": "The execution log for the “Click on Point 3D” step now shows the X and Y movement deltas that were actually used."
+          },
+          {
+            "category": "Fixed",
+            "de": "Der Ursprung des Schritts „Click on Point 3D“ wird jetzt verständlich als lokale Position auf einem auswählbaren Monitor eingegeben und bei der Ausführung korrekt in globale Desktop-Koordinaten umgerechnet. Die Punkterfassung wählt den Monitor automatisch; bestehende Jobs behalten ihr bisheriges Koordinatenverhalten.",
+            "en": "The origin of the “Click on Point 3D” step is now entered as an easy-to-understand local position on a selectable monitor and correctly converted to global desktop coordinates during execution. Point capture selects the monitor automatically, while existing jobs retain their previous coordinate behavior."
+          },
+          {
+            "category": "Fixed",
+            "de": "Der Schritt „Bild speichern“ überschreibt vorhandene Dateien nicht mehr. Wie bei Videoaufnahmen wird stattdessen automatisch ein fortlaufender Dateiname wie „Bild_1.png“ gewählt.",
+            "en": "The Save Image step no longer overwrites existing files. As with video recordings, it now automatically chooses a sequential file name such as “Image_1.png”."
+          },
+          {
+            "category": "Changed",
+            "de": "Beim Schritt „Click on Point 3D“ können jetzt getrennte X- und Y-Bewegungsfaktoren zwischen 0,01 und 100 eingestellt werden. Sie skalieren die berechneten Pixel-Deltas für unterschiedliche Maus- und Spiel-Empfindlichkeiten; im Ausführungsprotokoll bleiben Pixel-Deltas, Faktoren und angewendete Bewegung getrennt nachvollziehbar.",
+            "en": "The “Click on Point 3D” step now provides separate X and Y movement factors from 0.01 to 100. They scale the calculated pixel deltas for different mouse and game sensitivities, while the execution log separately shows the pixel deltas, factors, and applied movement."
+          },
+          {
+            "category": "Fixed",
+            "de": "Die X- und Y-Bewegungsfaktoren akzeptieren jetzt Dezimalwerte sowohl mit Komma als auch mit Punkt. Eigenschaftsnamen sind in Step-Editoren einheitlich am oberen Rand ihres Eingabebereichs ausgerichtet.",
+            "en": "The X and Y movement factors now accept decimal values using either a comma or a period. Property names in step editors are consistently aligned with the top of their input area."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.10",
     "date": "2026-07-29",
     "sections": [

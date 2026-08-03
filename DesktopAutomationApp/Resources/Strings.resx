@@ -528,6 +528,15 @@
   <data name="Ui.Step.Settings.Origin" xml:space="preserve">
     <value>Ursprung</value>
   </data>
+  <data name="Ui.Step.Settings.OriginLocalHelp" xml:space="preserve">
+    <value>X und Y beziehen sich auf die linke obere Ecke des ausgewählten Monitors.</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementFactor" xml:space="preserve">
+    <value>Bewegungsfaktoren</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementFactorHelp" xml:space="preserve">
+    <value>Multiplizieren das jeweilige X- und Y-Pixel-Delta vor der relativen Mausbewegung (0,01 bis 100).</value>
+  </data>
   <data name="Ui.Step.Settings.Model" xml:space="preserve">
     <value>Model</value>
   </data>

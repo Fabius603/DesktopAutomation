@@ -209,7 +209,24 @@ public sealed record PredictMovementResult : StepResultBase, IDetectionStepResul
 }
 
 public sealed record KlickOnPointResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly KlickOnPointResult Default = new(); }
-public sealed record KlickOnPoint3DResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly KlickOnPoint3DResult Default = new(); }
+public sealed record KlickOnPoint3DResult : StepResultBase, IActionExecutionResult
+{
+    public bool Success { get; init; }
+    public string? ErrorMessage { get; init; }
+    [ResultProperty("click_on_point_3d.delta_x")]
+    public int? DeltaX { get; init; }
+    [ResultProperty("click_on_point_3d.delta_y")]
+    public int? DeltaY { get; init; }
+    [ResultProperty("click_on_point_3d.movement_factor_x")]
+    public double? MovementFactorX { get; init; }
+    [ResultProperty("click_on_point_3d.movement_factor_y")]
+    public double? MovementFactorY { get; init; }
+    [ResultProperty("click_on_point_3d.applied_delta_x")]
+    public int? AppliedDeltaX { get; init; }
+    [ResultProperty("click_on_point_3d.applied_delta_y")]
+    public int? AppliedDeltaY { get; init; }
+    public static readonly KlickOnPoint3DResult Default = new();
+}
 public sealed record MakroExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly MakroExecutionResult Default = new(); }
 public sealed record ScriptExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ScriptExecutionResult Default = new(); }
 public sealed record JobExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly JobExecutionResult Default = new(); }

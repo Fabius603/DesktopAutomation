@@ -543,6 +543,15 @@
   <data name="Ui.Step.Settings.Origin" xml:space="preserve">
     <value>Origin</value>
   </data>
+  <data name="Ui.Step.Settings.OriginLocalHelp" xml:space="preserve">
+    <value>X and Y are relative to the top-left corner of the selected monitor.</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementFactor" xml:space="preserve">
+    <value>Movement factors</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementFactorHelp" xml:space="preserve">
+    <value>Multiply the respective X and Y pixel deltas before the relative mouse movement (0.01 to 100).</value>
+  </data>
   <data name="Ui.Step.Settings.Model" xml:space="preserve">
     <value>Model</value>
   </data>

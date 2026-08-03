@@ -1,5 +1,6 @@
 using System.Drawing.Imaging;
 using System.IO;
+using ImageCapture.Video;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
 
@@ -35,7 +36,8 @@ public sealed class SaveImageStepHandler : JobStepHandler<SaveImageStep, SaveIma
         var (format, formatName) = ResolveFormat(fileName);
         Directory.CreateDirectory(directory);
 
-        var targetPath = Path.Combine(directory, fileName);
+        var basePath = Path.Combine(directory, fileName);
+        var targetPath = VideoHelper.GetUniqueFilePath(basePath);
         var temporaryPath = Path.Combine(directory, $".{fileName}.{Guid.NewGuid():N}.tmp");
         var overlay = VisualOverlayResolver.Resolve(
             context.Results, step.Settings.Overlay, null, context.Logger);
@@ -54,7 +56,18 @@ public sealed class SaveImageStepHandler : JobStepHandler<SaveImageStep, SaveIma
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            File.Move(temporaryPath, targetPath, true);
+            while (true)
+            {
+                try
+                {
+                    File.Move(temporaryPath, targetPath, false);
+                    break;
+                }
+                catch (IOException) when (File.Exists(targetPath))
+                {
+                    targetPath = VideoHelper.GetUniqueFilePath(basePath);
+                }
+            }
         }
         finally
         {
@@ -71,7 +84,7 @@ public sealed class SaveImageStepHandler : JobStepHandler<SaveImageStep, SaveIma
         {
             WasExecuted = true,
             FilePath = targetPath,
-            FileName = fileName,
+            FileName = Path.GetFileName(targetPath),
             Format = formatName,
             Width = imageToSave.Width,
             Height = imageToSave.Height,

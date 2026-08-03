@@ -579,6 +579,9 @@ namespace TaskAutomation.Jobs
 
     public sealed class KlickOnPoint3DSettings
     {
+        public const string LegacyGlobalCoordinates = "legacy_global";
+        public const string MonitorLocalCoordinates = "monitor_local";
+
         [JsonPropertyName("double_click")]
         public bool DoubleClick { get; set; } = false;
         [JsonPropertyName("click_type")]
@@ -589,6 +592,21 @@ namespace TaskAutomation.Jobs
         public int OriginX { get; set; } = 0;
         [JsonPropertyName("origin_y")]
         public int OriginY { get; set; } = 0;
+        [JsonPropertyName("origin_monitor_index")]
+        public int OriginMonitorIndex { get; set; } = 0;
+        [JsonPropertyName("origin_coordinate_space")]
+        public string OriginCoordinateSpace { get; set; } = LegacyGlobalCoordinates;
+        [JsonPropertyName("movement_factor")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? LegacyMovementFactor { get; set; }
+        [JsonPropertyName("movement_factor_x")]
+        public double? MovementFactorX { get; set; }
+        [JsonPropertyName("movement_factor_y")]
+        public double? MovementFactorY { get; set; }
+        [JsonIgnore]
+        public double EffectiveMovementFactorX => MovementFactorX ?? LegacyMovementFactor ?? 1.0;
+        [JsonIgnore]
+        public double EffectiveMovementFactorY => MovementFactorY ?? LegacyMovementFactor ?? 1.0;
         [JsonPropertyName("offset_x")]
         public int OffsetX { get; set; } = 0;
         [JsonPropertyName("offset_y")]

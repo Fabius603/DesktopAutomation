@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using Microsoft.Extensions.Logging;
+using ImageHelperMethods;
 using Point = System.Drawing.Point;
 
 namespace TaskAutomation.Steps
@@ -60,21 +61,83 @@ namespace TaskAutomation.Steps
                 selectedPoint.X + step.Settings.OffsetX,
                 selectedPoint.Y + step.Settings.OffsetY);
 
-            // Calculate the delta from the screen center position (or user set position) to the target point
-            var delta = new Point(target.X - step.Settings.OriginX, target.Y - step.Settings.OriginY);
+            var globalOrigin = ResolveGlobalOrigin(step.Settings);
+            var delta = new Point(target.X - globalOrigin.X, target.Y - globalOrigin.Y);
+            var appliedDelta = ApplyMovementFactors(
+                delta,
+                step.Settings.EffectiveMovementFactorX,
+                step.Settings.EffectiveMovementFactorY);
 
             logger.LogInformation(
-                "KlickOnPoint3DStepHandler: Moving mouse by (dx:{DX}, dy:{DY}) to detected target ({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
-                delta.X, delta.Y, target.X, target.Y, detection.Confidence, step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
+                "KlickOnPoint3DStepHandler: Pixel delta (dx:{DX}, dy:{DY}), movement factors=(x:{FactorX:F3}, y:{FactorY:F3}), applied mouse delta (dx:{AppliedDX}, dy:{AppliedDY}), global origin=({OriginX},{OriginY}), target=({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
+                delta.X, delta.Y, step.Settings.EffectiveMovementFactorX,
+                step.Settings.EffectiveMovementFactorY, appliedDelta.X, appliedDelta.Y,
+                globalOrigin.X, globalOrigin.Y, target.X, target.Y, detection.Confidence,
+                step.Settings.OffsetX, step.Settings.OffsetY, step.Settings.ClickType);
 
-            var macro = CreateClickMacro(step.Settings, delta);
+            var macro = CreateClickMacro(step.Settings, appliedDelta);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
             ctx.StepTimeouts[stepKey] = DateTime.Now;
 
-            return new KlickOnPoint3DResult { WasExecuted = true, Success = true };
+            return new KlickOnPoint3DResult
+            {
+                WasExecuted = true,
+                Success = true,
+                DeltaX = delta.X,
+                DeltaY = delta.Y,
+                MovementFactorX = step.Settings.EffectiveMovementFactorX,
+                MovementFactorY = step.Settings.EffectiveMovementFactorY,
+                AppliedDeltaX = appliedDelta.X,
+                AppliedDeltaY = appliedDelta.Y
+            };
         }
 
         protected override KlickOnPoint3DResult CreateDefault() => KlickOnPoint3DResult.Default;
+
+        internal static Point ResolveGlobalOrigin(KlickOnPoint3DSettings settings)
+        {
+            if (!string.Equals(
+                    settings.OriginCoordinateSpace,
+                    KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                    StringComparison.OrdinalIgnoreCase))
+                return new Point(settings.OriginX, settings.OriginY);
+
+            var monitorBounds = ScreenHelper.GetDesktopBounds(settings.OriginMonitorIndex);
+            return ResolveGlobalOrigin(settings, monitorBounds);
+        }
+
+        internal static Point ResolveGlobalOrigin(
+            KlickOnPoint3DSettings settings,
+            System.Drawing.Rectangle monitorBounds)
+        {
+            if (!string.Equals(
+                    settings.OriginCoordinateSpace,
+                    KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                    StringComparison.OrdinalIgnoreCase))
+                return new Point(settings.OriginX, settings.OriginY);
+
+            if (monitorBounds.IsEmpty)
+                throw new InvalidOperationException(
+                    $"Origin monitor {settings.OriginMonitorIndex} is not available.");
+
+            return new Point(
+                monitorBounds.Left + settings.OriginX,
+                monitorBounds.Top + settings.OriginY);
+        }
+
+        internal static Point ApplyMovementFactors(
+            Point delta,
+            double movementFactorX,
+            double movementFactorY)
+        {
+            if (!double.IsFinite(movementFactorX) || movementFactorX is < 0.01 or > 100
+                || !double.IsFinite(movementFactorY) || movementFactorY is < 0.01 or > 100)
+                throw new InvalidOperationException("Movement factors must be between 0.01 and 100.");
+
+            return new Point(
+                checked((int)Math.Round(delta.X * movementFactorX, MidpointRounding.AwayFromZero)),
+                checked((int)Math.Round(delta.Y * movementFactorY, MidpointRounding.AwayFromZero)));
+        }
 
         private static Makro CreateClickMacro(KlickOnPoint3DSettings settings, Point delta)
         {

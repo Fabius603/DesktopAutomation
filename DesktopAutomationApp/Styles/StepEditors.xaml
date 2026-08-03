@@ -5,7 +5,8 @@
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
     <Style x:Key="StepFieldLabel" TargetType="TextBlock">
-        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+        <Setter Property="Margin" Value="0,6,0,0"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
     </Style>
     <Style x:Key="StepAdvancedExpander" TargetType="Expander">

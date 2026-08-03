@@ -35,12 +35,15 @@ public sealed class SaveImageStepHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_CreatesDirectoryAndReplacesExistingFile()
+    public async Task ExecuteAsync_CreatesDirectoryAndKeepsExistingFileWithUniqueName()
     {
         using var temp = new TempDirectory();
         var directory = Path.Combine(temp.Path, "nested");
         Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, "image.jpg"), "old");
+        var existingPath = Path.Combine(directory, "image.jpg");
+        var firstUniquePath = Path.Combine(directory, "image_1.jpg");
+        File.WriteAllText(existingPath, "old");
+        File.WriteAllText(firstUniquePath, "also old");
         using var bitmap = new Bitmap(3, 2);
         var context = Context(bitmap);
 
@@ -49,6 +52,10 @@ public sealed class SaveImageStepHandlerTests
                 Step(directory, "image.jpg"), context, default));
 
         Assert.Equal("JPEG", result.Format);
+        Assert.Equal("old", File.ReadAllText(existingPath));
+        Assert.Equal("also old", File.ReadAllText(firstUniquePath));
+        Assert.Equal(Path.Combine(directory, "image_2.jpg"), result.FilePath);
+        Assert.Equal("image_2.jpg", result.FileName);
         using var saved = new Bitmap(result.FilePath);
         Assert.Equal(3, saved.Width);
         Assert.Equal(2, saved.Height);

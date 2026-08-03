@@ -1234,8 +1234,9 @@ namespace DesktopAutomationApp.ViewModels
                     vm.KlickOnPoint3DStep_DoubleClick = kp3d.Settings.DoubleClick;
                     vm.KlickOnPoint3DStep_ClickType = kp3d.Settings.ClickType;
                     vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
-                    vm.KlickOnPoint3DStep_OriginX = kp3d.Settings.OriginX;
-                    vm.KlickOnPoint3DStep_OriginY = kp3d.Settings.OriginY;
+                    vm.LoadKlickOnPoint3DOrigin(kp3d.Settings);
+                    vm.KlickOnPoint3DStep_MovementFactorX = FlexibleDoubleConverter.Format(kp3d.Settings.EffectiveMovementFactorX);
+                    vm.KlickOnPoint3DStep_MovementFactorY = FlexibleDoubleConverter.Format(kp3d.Settings.EffectiveMovementFactorY);
                     vm.KlickOnPoint3DStep_OffsetX = kp3d.Settings.OffsetX;
                     vm.KlickOnPoint3DStep_OffsetY = kp3d.Settings.OffsetY;
                     vm.KlickOnPoint3DStep_PointsSource.Load(kp3d.Settings.PointsSource);
