@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using TaskAutomation.Steps;
 using DesktopAutomationApp.Views;
 
@@ -13,20 +14,22 @@ public sealed class WpfUserChoiceService : IUserChoiceService
         var dispatcher = Application.Current?.Dispatcher
             ?? throw new InvalidOperationException("The application dispatcher is not available.");
 
-        var selectedOptionId = await dispatcher.InvokeAsync(() =>
-        {
-            if (cancellationToken.IsCancellationRequested)
-                return null;
-
-            var dialog = new UserChoiceDialog(request)
+        var selectedOptionId = await dispatcher.InvokeAsync(
+            () =>
             {
-                Owner = Application.Current?.MainWindow
-            };
-            using var registration = cancellationToken.Register(() =>
-                dispatcher.BeginInvoke(dialog.CancelFromJob));
-            var accepted = dialog.ShowDialog() == true;
-            return accepted ? dialog.SelectedOptionId : null;
-        });
+                if (cancellationToken.IsCancellationRequested)
+                    return null;
+
+                var dialog = new UserChoiceDialog(request)
+                {
+                    Owner = Application.Current?.MainWindow
+                };
+                using var registration = cancellationToken.Register(() =>
+                    dispatcher.BeginInvoke(dialog.CancelFromJob));
+                var accepted = dialog.ShowDialog() == true;
+                return accepted ? dialog.SelectedOptionId : null;
+            },
+            DispatcherPriority.Send);
 
         // Do not throw from the WPF dispatcher callback. The JobExecutor already
         // handles cancellation on the normal async execution path as a clean stop.

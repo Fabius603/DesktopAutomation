@@ -32,6 +32,15 @@ public sealed class UserChoiceCancellationTests
             CountOccurrences(source, "cancellationToken.ThrowIfCancellationRequested();"));
     }
 
+    [Fact]
+    public void ChoiceDialogIsQueuedAheadOfNormalUiWork()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Services", "WpfUserChoiceService.cs"));
+
+        Assert.Contains("DispatcherPriority.Send", source);
+    }
+
     private static int CountOccurrences(string value, string search)
     {
         var count = 0;
