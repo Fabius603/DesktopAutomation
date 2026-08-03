@@ -18,8 +18,9 @@ For every user-facing feature, behavior change, performance improvement, or bug 
    part of normal feature or bug-fix work. The project version remains at the version
    stored in Git `HEAD`. Increase it only when the user explicitly asks to prepare or
    perform a release.
-3. Write both German (`de`) and English (`en`) text. Describe the observable result for
-   users rather than internal implementation details.
+3. Write both German (`de`) and English (`en`) text. Every change must be a short,
+   bullet-style statement that describes only the observable result for users.
+   Prefer one concise sentence and merge closely related changes.
 4. Use only the existing categories `Added`, `Changed`, and `Fixed`.
 5. Keep the newest version first. Preserve every older release entry, including its
    date and sections, unchanged.
@@ -29,9 +30,10 @@ For every user-facing feature, behavior change, performance improvement, or bug 
 7. Before preparing a release, compare the repository against the previous release
    commit or tag and ensure every user-facing change is represented. Include committed
    changes and relevant uncommitted changes.
-8. Do not add release-note entries for tests, refactoring, or documentation alone unless
-   they change user-visible behavior. They may be summarized under a quality section
-   when they are part of a larger release.
+8. Include only changes that users notice and are likely to care about. Do not mention
+   implementation details, architecture, internal contracts, migrations, logging
+   internals, tests, refactoring, or documentation. Omit minor technical corrections
+   that have no meaningful effect on normal use; do not add internal quality sections.
 9. Validate the JSON and run the normal DesktopAutomationApp Release build. The build's
    localization and embedded-resource checks must pass.
 

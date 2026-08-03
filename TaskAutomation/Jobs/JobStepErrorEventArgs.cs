@@ -8,6 +8,8 @@ namespace TaskAutomation.Jobs
         public string StepType { get; }
         public Exception Exception { get; }
         public string ErrorMessage { get; }
+        public StepErrorKind ErrorKind { get; }
+        public string ErrorCode { get; }
 
         public JobStepErrorEventArgs(string jobName, string stepType, Exception exception)
         {
@@ -15,6 +17,8 @@ namespace TaskAutomation.Jobs
             StepType = stepType;
             Exception = exception;
             ErrorMessage = exception.Message;
+            ErrorKind = StepErrorClassification.Classify(exception);
+            ErrorCode = StepErrorClassification.GetErrorCode(ErrorKind);
         }
     }
 }

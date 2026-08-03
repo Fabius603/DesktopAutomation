@@ -1371,13 +1371,38 @@
     <value>Job step execution error</value>
   </data>
   <data name="Error.JobStepExecution.Message" xml:space="preserve">
-    <value>Error while running the job step:
+    <value>The job step could not be executed:
 
 Job: {0}
 Step: {1}
 
-Error:
-{2}</value>
+{2}
+
+Error code: {3}</value>
+  </data>
+  <data name="Error.JobStepExecution.FileNotFound" xml:space="preserve">
+    <value>A required file could not be found. Check the file paths configured in this step.</value>
+  </data>
+  <data name="Error.JobStepExecution.DirectoryNotFound" xml:space="preserve">
+    <value>A required folder could not be found. Check the folder paths configured in this step.</value>
+  </data>
+  <data name="Error.JobStepExecution.AccessDenied" xml:space="preserve">
+    <value>Access was denied. Check the permissions for the file, folder, or program being used.</value>
+  </data>
+  <data name="Error.JobStepExecution.TimedOut" xml:space="preserve">
+    <value>The operation did not respond in time. Check the target and try again.</value>
+  </data>
+  <data name="Error.JobStepExecution.InvalidConfiguration" xml:space="preserve">
+    <value>This step's settings are invalid or incomplete. Check the step configuration.</value>
+  </data>
+  <data name="Error.JobStepExecution.InputOutput" xml:space="preserve">
+    <value>The file or device could not be read or written. Check whether the target is available.</value>
+  </data>
+  <data name="Error.JobStepExecution.ExternalProgram" xml:space="preserve">
+    <value>Windows or the target program could not perform the operation. Check whether the program is available and responsive.</value>
+  </data>
+  <data name="Error.JobStepExecution.Unexpected" xml:space="preserve">
+    <value>An unexpected error occurred while running the step. More technical information is available in the execution log.</value>
   </data>
   <data name="Condition.Match.All" xml:space="preserve">
     <value>All conditions must be met</value>

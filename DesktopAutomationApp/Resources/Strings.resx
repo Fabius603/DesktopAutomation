@@ -1356,13 +1356,38 @@
     <value>Job-Step-Ausführungsfehler</value>
   </data>
   <data name="Error.JobStepExecution.Message" xml:space="preserve">
-    <value>Fehler beim Ausführen des Job-Steps:
+    <value>Der Job-Step konnte nicht ausgeführt werden:
 
 Job: {0}
 Step: {1}
 
-Fehlermeldung:
-{2}</value>
+{2}
+
+Fehlercode: {3}</value>
+  </data>
+  <data name="Error.JobStepExecution.FileNotFound" xml:space="preserve">
+    <value>Eine benötigte Datei wurde nicht gefunden. Prüfen Sie die im Step hinterlegten Dateipfade.</value>
+  </data>
+  <data name="Error.JobStepExecution.DirectoryNotFound" xml:space="preserve">
+    <value>Ein benötigter Ordner wurde nicht gefunden. Prüfen Sie die im Step hinterlegten Ordnerpfade.</value>
+  </data>
+  <data name="Error.JobStepExecution.AccessDenied" xml:space="preserve">
+    <value>Der Zugriff wurde verweigert. Prüfen Sie die Berechtigungen für die verwendete Datei, den Ordner oder das Programm.</value>
+  </data>
+  <data name="Error.JobStepExecution.TimedOut" xml:space="preserve">
+    <value>Der Vorgang hat nicht rechtzeitig geantwortet. Prüfen Sie das Ziel und versuchen Sie es erneut.</value>
+  </data>
+  <data name="Error.JobStepExecution.InvalidConfiguration" xml:space="preserve">
+    <value>Die Einstellungen dieses Steps sind ungültig oder unvollständig. Prüfen Sie die Step-Konfiguration.</value>
+  </data>
+  <data name="Error.JobStepExecution.InputOutput" xml:space="preserve">
+    <value>Die verwendete Datei oder das Gerät konnte nicht gelesen oder beschrieben werden. Prüfen Sie, ob das Ziel verfügbar ist.</value>
+  </data>
+  <data name="Error.JobStepExecution.ExternalProgram" xml:space="preserve">
+    <value>Windows oder das angesprochene Programm konnte den Vorgang nicht ausführen. Prüfen Sie, ob das Programm verfügbar und bedienbar ist.</value>
+  </data>
+  <data name="Error.JobStepExecution.Unexpected" xml:space="preserve">
+    <value>Beim Ausführen ist ein unerwarteter Fehler aufgetreten. Weitere technische Informationen finden Sie im Ausführungsprotokoll.</value>
   </data>
   <data name="Condition.Match.All" xml:space="preserve">
     <value>Alle Bedingungen müssen erfüllt sein</value>

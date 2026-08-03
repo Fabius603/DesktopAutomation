@@ -561,7 +561,13 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
-            var message = Loc.Format("Error.JobStepExecution.Message", e.JobName, e.StepType, e.ErrorMessage);
+            var presentation = StepErrorPresentation.Create(e);
+            var message = Loc.Format(
+                "Error.JobStepExecution.Message",
+                e.JobName,
+                presentation.StepName,
+                presentation.Message,
+                presentation.ErrorCode);
             var title = Loc.Get("Error.JobStepExecution.Title");
             _dialogService.ShowError(message, title);
         }
