@@ -45,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TaskAutomation.Contracts\TaskAutomation.Contracts.csproj" />
     <ProjectReference Include="..\Common.JsonRepository\Common.JsonRepository.csproj" />
     <ProjectReference Include="..\DesktopAutomation.Application\DesktopAutomation.Application.csproj" />
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />

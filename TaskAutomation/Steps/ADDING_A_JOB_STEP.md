@@ -8,6 +8,68 @@ Lokalisierung und Tests umgesetzt sind.
 Die Result-Verträge werden ergänzend in
 [`RESULT_CONTRACTS.md`](RESULT_CONTRACTS.md) beschrieben.
 
+## Schrittweise Umstellung auf frontendneutrale Step-Definitionen
+
+Neue einfache Steps sollen ihre bearbeitbaren Felder und ihre Darstellung über
+eine `IStepDefinition` unter `TaskAutomation/Steps/Definitions/` beschreiben.
+Transportierbare Metadaten wie Feldtypen, Constraints, Editorabschnitte,
+Zusammenfassung und Detailfelder liegen im plattformneutralen Projekt
+`TaskAutomation.Contracts`.
+
+`TimeoutStep`, die Eingabesperren, `EndJobStep`, `ContinueJobStep`,
+`DesktopDuplicationStep`, `ScriptExecutionStep` und `GetProcessStep` sind
+zusammen mit `MakroExecutionStep`, `JobExecutionStep`, `ActiveProcessStep` und
+`ActiveWindowStep` Referenzimplementierungen.
+Ihre WPF-Editoren werden aus den Definitionen
+erzeugt; Laden, Bearbeiten, Validieren und Erstellen laufen über einen
+frontendneutralen `StepDraft`. Felder, Abschnitte, Checkboxen, Hinweise und
+eingeklappte erweiterte Einstellungen werden aus dem Darstellungsvertrag
+erzeugt. Das persistierte Job-JSON und die Runtime-Handler bleiben davon
+unabhängig.
+
+Frontend-spezifische Komfortfunktionen werden über stabile `EditorHint`-Werte
+angefordert. `monitor-picker`, `file-picker`, `directory-picker`, `file-or-folder-picker`, `camera-picker`, `visual-overlay`, `roi-picker`, `yolo-picker`, `condition-editor`, `windows-capability-picker`, `process-name-suggestions`,
+`executable-path-suggestions`, `start-program-picker`, `macro-picker`,
+`job-picker`, `process-target-picker`, `executable-process-target-picker`,
+`result-binding-picker`, `screen-point-picker`, `user-choice-options`,
+`point-entry-list`, `axis-expression-list`, `emoji-text` und `percentage`
+beschreiben nur die gewünschte
+Auswahlhilfe; WPF kann
+dafür beispielsweise das Monitor-Overlay, einen Dateidialog, lokale
+Vorschlagslisten, eine Auswahl vorhandener Bibliothekseinträge oder den Wechsel
+zwischen Prozesssuche und vorherigem Prozessergebnis anbieten. Referenzen
+tragen eine stabile ID und einen lesbaren Namen. Ein anderes Frontend darf eine
+passende eigene Darstellung verwenden. Der persistierte fachliche Wert bleibt
+davon unabhängig.
+
+Bis die Migration abgeschlossen ist, gelten für noch nicht migrierte Steps die
+nachfolgenden bisherigen Integrationsschritte. Ein migrierter einfacher Step
+soll dagegen keine eigenen Properties im `AddJobStepDialogViewModel`, keinen
+eigenen Create-/Load-Switchzweig und kein eigenes WPF-Control mehr benötigen.
+Komplexe Steps dürfen einen spezialisierten Frontend-Editor behalten, müssen
+aber denselben `StepDraft` und dieselbe Backendvalidierung verwenden.
+
+Zusammengesetzte Editor-Hints dürfen keine konkreten Step-Typen im Frontend
+voraussetzen. `visual-overlay` deklariert deshalb seine Detection- und
+Text-Input-Contracts sowie optionale Desktop-Platzierungsfunktionen über
+`StepVisualOverlayEditorOptions`. Das Frontend erhält damit alle benötigten
+Fähigkeiten aus dem Descriptor.
+
+`roi-picker` beschreibt ueber `StepRoiPickerOptions` den Eingabevertrag einer
+optionalen dynamischen ROI. Frontends koennen dazu eine statische Bereichsauswahl
+und eine Capture-Hilfe anbieten. Dateifelder koennen ueber
+`StepFilePickerOptions` den Dateityp und eine optionale Vorschau anfordern.
+`yolo-picker` fordert eine zusammenhaengende Modell- und Klassenauswahl an und
+kann ein Feld fuer die vom Modell empfohlene Konfidenz benennen.
+`condition-editor` fordert einen Editor fuer eine beliebig kombinierbare Liste
+von Bedingungen an. Das Frontend darf dafuer eine komfortable Ergebnis- und
+Eigenschaftsauswahl anbieten; persistiert werden weiterhin nur stabile Step-,
+Property- und Operatorwerte.
+`windows-capability-picker` deklariert ueber
+`StepWindowsCapabilityPickerOptions`, ob Windows-Zustaende abgefragt oder
+Einstellungen geaendert werden. Die Capability-ID und ihre Parameter bleiben
+frontendneutral; dynamische Geraete- und Profillisten sind reine Eingabehilfen.
+
 ## 1. Step und Settings modellieren
 
 Der persistierte Step gehört nach `TaskAutomation/Jobs/StepData.cs`.
@@ -130,7 +192,8 @@ ein Fehler darf nicht als normaler `false`-Wert getarnt werden.
 
 ## 4. Backend registrieren
 
-Ein fester Step benötigt derzeit zwei Registrierungen.
+Ein fester Step benötigt Laufzeit-Metadaten und einen Handler. Die UI- und
+Konfigurations-Metadaten werden separat durch seine Step-Definition registriert.
 
 ### Pipeline-Metadaten
 
@@ -138,7 +201,6 @@ In `TaskAutomation/Steps/StepPipelineRegistry.cs`:
 
 ```csharp
 [typeof(FileHashStep)] = new(
-    Prerequisites: [],
     ResultType: typeof(FileHashResult),
     IsConditionSource: true,
     DisplayName: "Datei-Hash berechnen"),
@@ -146,13 +208,6 @@ In `TaskAutomation/Steps/StepPipelineRegistry.cs`:
 
 `IsConditionSource` wird aktiviert, wenn mindestens eine Result-Property in
 If-/ElseIf-Bedingungen verwendet werden darf.
-
-Falls das String-Mapping `GetByName` verwendet wird, muss zusätzlich ein
-Eintrag in `_nameMap` ergänzt werden:
-
-```csharp
-["FileHash"] = typeof(FileHashStep),
-```
 
 ### Laufzeit-Handler
 
@@ -248,32 +303,53 @@ Die Basisklasse eines dynamischen Result-Typs darf nur wirklich gemeinsame
 Properties enthalten. Variantenabhängige Felder gehören in die konkreten
 Records, nicht in ein allgemeines Union- oder Snapshot-Objekt.
 
-## 7. WPF-Editor integrieren
+## 7. Step-Definition und Frontend integrieren
 
-Der aktuelle Step-Dialog wird in
-`DesktopAutomationApp/ViewModels/Jobs/AddJobStepDialogViewModel.cs` und
-`DesktopAutomationApp/Views/JobsView/AddJobStepDialog.xaml` zusammengesetzt.
+Für einen neuen einfachen Step sind normalerweise folgende Ergänzungen nötig:
 
-Für einen neuen Step sind normalerweise folgende Ergänzungen nötig:
+1. Eine `StepDefinition<TStep>` unter `TaskAutomation/Steps/Definitions/`
+   anlegen. Sie definiert stabile Feld-IDs, Feldtypen, Defaults, Constraints,
+   Editorabschnitte, Zusammenfassung und Detailfelder.
+2. `Read`, `Apply` und `ValidateDraft` implementieren. Allgemeine Regeln wie
+   Pflichtfelder, Datentypen, Wertebereiche und erlaubte Auswahlwerte werden
+   automatisch aus dem Descriptor validiert; `ValidateDraft` enthält nur
+   zusätzliche fachliche Regeln.
+3. Die Definition im `BuiltInStepDefinitions`-Katalog registrieren. Der Step
+   erscheint dadurch in Auswahl, generischem Editor und Detaildarstellung.
+4. Nur wenn eine Auswahlhilfe nötig ist, einen neutralen `EditorHint` im
+   Contracts-Projekt ergänzen und im jeweiligen Frontend adaptieren.
 
-1. Einen Eintrag in `CreateStepTypeItems` mit stabilem UI-Namen, Kategorie und
-   Beschreibung ergänzen.
-2. Eine `Show...`-Property für die Sichtbarkeit des Editors anlegen.
-3. Editierbare ViewModel-Properties mit Defaults ergänzen.
-4. Beim Bearbeiten eines vorhandenen Steps dessen Settings in das ViewModel
-   laden.
-5. Die lokale Eingabeprüfung in `IsInputValid` ergänzen.
-6. In `CreateStep` den neuen Step samt Settings erzeugen.
-7. Bei Result-Eingaben einen Picker mit dem Backend-Contract-Key erzeugen.
-8. Ein fokussiertes Editor-Control unter
-   `DesktopAutomationApp/Controls/Jobs/Editors/<Kategorie>/` anlegen.
-9. Das Editor-Control in `AddJobStepDialog.xaml` einfügen.
-10. Falls nötig die kompakte Detaildarstellung in
-    `DesktopAutomationApp/Services/Jobs/JobStepDetailsProvider.cs` ergänzen.
+Alle eingebauten Steps verwenden diesen Definitionspfad. Einen parallelen
+statischen Editor-, Template- oder Typ-Switch-Pfad gibt es nicht mehr. Komplexe
+Eingaben werden über wiederverwendbare Editor-Hints und frontend-spezifische
+Adapter dargestellt.
 
-Die endgültige fachliche Prüfung gehört immer zusätzlich in
-`TaskAutomation/Jobs/JobValidation.cs`. Eine reine WPF-Validierung reicht
-nicht, weil Jobs auch aus JSON oder anderen Aufrufern stammen können.
+Auswahlfelder werden als `StepValueKind.Enum` mit stabilen `Options` aus Wert
+und Lokalisierungsschlüssel beschrieben. Mehrzeilige Texte und Farben verwenden
+`MultilineText` beziehungsweise `Color`; das Frontend stellt dafür passende
+Eingaben bereit. Abhängige Felder verwenden `VisibleWhen` für eine Regel oder
+`VisibleWhenAll` für mehrere gemeinsam zu erfüllende Regeln. Eine
+`StepVisibilityRule` kann mit `AnyOfValues` mehrere zulässige Werte desselben
+Quellfelds beschreiben. Das Frontend wertet diese Regeln aus und blendet
+beispielsweise Zieloptionen nur für Kopieren und Verschieben ein. Prozessziele verwenden
+je nach manueller Eingabe `ProcessTargetPicker` oder
+`ExecutableProcessTargetPicker`, ohne Windows-spezifische Picker in die
+TaskAutomation-Definition zu ziehen.
+
+Allgemeine Result-Bindings verwenden `ResultBindingPicker` zusammen mit einer
+stabilen `InputContractId`. Das Frontend ermittelt daraus den bereits im Backend
+registrierten Eingabevertrag und bietet ausschließlich kompatible Ergebnisse an.
+
+Ein einfacher migrierter Step erhält keine eigene `Show...`-Property, keine
+duplizierten ViewModel-Felder, keine Create-/Load-Switchzweige und kein eigenes
+WPF-Control. Ein spezialisierter Editor ist nur für zusammengesetzte Eingaben
+wie Result-Bindings, interaktive ROI-Erfassung oder dynamische Collections
+vorgesehen. Auch er soll fachliche Werte und Validierung aus derselben
+Step-Definition beziehen.
+
+`SummaryItems` werden direkt auf der kompakten Step-Karte dargestellt;
+`DetailFieldIds` steuern die aufgeklappte Detailansicht. Beide Listen müssen
+ausschließlich stabile Feld-IDs derselben Definition referenzieren.
 
 ## 8. Lokalisierung
 

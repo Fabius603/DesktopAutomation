@@ -1,8 +1,8 @@
 using System.Collections;
-using System.IO;
 using System.Reflection;
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Steps;
-using TaskAutomation.WindowsIntegration;
+using TaskAutomation.Steps.Definitions;
 
 namespace TaskAutomation.Jobs;
 
@@ -122,19 +122,6 @@ public static class JobValidation
         var index = IndexOf(steps, step);
         if (ValidateResultBindings(steps, index, step) is { } bindingError)
             return new(step, false, bindingError);
-        foreach (var sourceId in EnumerateSourceIds(step))
-        {
-            if (string.IsNullOrWhiteSpace(sourceId)) continue;
-            var source = steps.FirstOrDefault(s => s.Id == sourceId);
-            if (source == null || !source.IsEnabled || IndexOf(steps, source) >= index)
-                return new(step, false, "Der ausgewaehlte Quell-Step ist deaktiviert, nicht vorhanden oder steht nicht davor.");
-        }
-
-        var processSourceId = GetProcessTarget(step)?.ProcessSource.SourceStepId;
-        if (!string.IsNullOrWhiteSpace(processSourceId)
-            && !ProducesProcessReference(steps.FirstOrDefault(candidate => candidate.Id == processSourceId)))
-            return new(step, false, "Die Prozessquelle muss ein vorheriger Prozess- oder Fenster-Step mit Prozessreferenz sein.");
-
         if (step is IfStep ifStep && ValidateConditions(steps, index, ifStep.Settings.Conditions) is { } ifError)
             return new(step, false, ifError);
         if (step is ElseIfStep elseIfStep && ValidateConditions(steps, index, elseIfStep.Settings.Conditions) is { } elseIfError)
@@ -148,77 +135,11 @@ public static class JobValidation
     private static string? ValidateValues(JobStep step)
     {
         const string invalid = "Der Step enthaelt ungueltige oder unvollstaendige Werte.";
-        var valid = step switch
-        {
-            TemplateMatchingStep s => ExistingFile(s.Settings.TemplatePath) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
-            ColorDetectionStep s => Unit(s.Settings.ConfidenceThreshold) && s.Settings.MinSize > 0 && s.Settings.MaxSize >= s.Settings.MinSize && s.Settings.MinWidth > 0 && s.Settings.MinHeight > 0 && s.Settings.DownscaleFactor > 0 && Roi(s.Settings.EnableROI, s.Settings.ROI),
-            PredictMovementStep s => s.Settings.MinSamples >= 2 && s.Settings.ResetDistanceThreshold >= 0 && s.Settings.MaxSampleAgeMs >= 0
-                && s.Settings.MaxPredictionDistance >= 0 && s.Settings.MaxFitError >= 0 && Unit(s.Settings.MinimumConfidence)
-                && new[] { "Linear", "Acceleration", "Kalman", "Automatic" }.Contains(s.Settings.PredictionModel),
-            DesktopDuplicationStep s => s.Settings.DesktopIdx >= 0,
-            CameraCaptureStep s => Text(s.Settings.CameraId)
-                && (s.Settings.QualityMode != CameraQualityMode.Specific
-                    || s.Settings.Width > 0
-                    && s.Settings.Height > 0
-                    && s.Settings.FramesPerSecond >= 0
-                    && Text(s.Settings.PixelFormat)),
-            FileSystemOperationStep s => FileSystemOperationConfigured(s.Settings),
-            ShowImageStep s => Text(s.Settings.WindowName) && OverlayValid(s.Settings.Overlay),
-            ShowOnDesktopStep s => OverlayValid(s.Settings.Overlay)
-                && (s.Settings.DetectionsSource.IsConfigured
-                    || s.Settings.Overlay.DetectionResults.Count > 0
-                    || s.Settings.Overlay.TextResults.Count > 0),
-            VideoCreationStep s => DirectoryPath(s.Settings.SavePath) && FileName(s.Settings.FileName)
-                && OverlayValid(s.Settings.Overlay),
-            SaveImageStep s => DirectoryPath(s.Settings.SavePath) && ImageFileName(s.Settings.FileName)
-                && OverlayValid(s.Settings.Overlay),
-            MakroExecutionStep s => s.Settings.MakroId != null,
-            JobExecutionStep s => s.Settings.JobId != null,
-            ScriptExecutionStep s => ExistingFile(s.Settings.ScriptPath),
-            KlickOnPointStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0,
-            KlickOnPoint3DStep s => Text(s.Settings.ClickType) && s.Settings.TimeoutMs >= 0
-                && double.IsFinite(s.Settings.EffectiveMovementFactorX)
-                && s.Settings.EffectiveMovementFactorX is >= 0.01 and <= 100
-                && double.IsFinite(s.Settings.EffectiveMovementFactorY)
-                && s.Settings.EffectiveMovementFactorY is >= 0.01 and <= 100
-                && (s.Settings.OriginCoordinateSpace != KlickOnPoint3DSettings.MonitorLocalCoordinates
-                    || s.Settings.OriginMonitorIndex >= 0),
-            YOLODetectionStep s => Text(s.Settings.Model) && Text(s.Settings.ClassName) && Unit(s.Settings.ConfidenceThreshold) && Roi(s.Settings.EnableROI, s.Settings.ROI),
-            TimeoutStep s => s.Settings.DelayMs >= 0,
-            BlockInputStep s => s.Settings.SafetyTimeoutSeconds is >= 1 and <= 3600,
-            ActiveProcessStep s => ProcessTargetConfigured(s.Settings.Target),
-            GetProcessStep s => ProcessQueryConfigured(s.Settings.Query),
-            StartProcessStep s => s.Settings.Action == StartProcessAction.Terminate
-                ? ProcessTargetConfigured(s.Settings.Target)
-                : ExecutablePathResolver.CanResolve(s.Settings.ExecutablePath) && s.Settings.MonitorIndex >= 0,
-            TerminateProcessStep s => ProcessTargetConfigured(s.Settings.Target),
-            FocusProcessStep s => ProcessTargetConfigured(s.Settings.Target),
-            ShowTextStep s => (s.Settings.TextSource == ShowTextSource.TaskResult || Text(s.Settings.Text)) && s.Settings.FontSize > 0 && Unit(s.Settings.Opacity) && s.Settings.DesktopIndex >= 0 && s.Settings.DurationMs >= 0,
-            UserChoiceStep s => s.Settings.Options.Count is >= 2 and <= 18
-                && s.Settings.DesktopIndex >= 0
-                && s.Settings.Options.All(option => Text(option.Id) && Text(option.Label))
-                && s.Settings.Options.Select(option => option.Id).Distinct(StringComparer.Ordinal).Count() == s.Settings.Options.Count
-                && s.Settings.Options.Select(option => option.Label.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() == s.Settings.Options.Count,
-            ActiveWindowStep s => ProcessTargetConfigured(s.Settings.Target)
-                                  && s.Settings.CacheMs >= 0,
-            KeyPointMatchingStep s => ExistingFile(s.Settings.TemplatePath) && s.Settings.MinMatchCount > 0 && s.Settings.LowesRatioThreshold is > 0 and <= 1 && Roi(s.Settings.EnableROI, s.Settings.ROI),
-            IfStep s => Conditions(s.Settings.Conditions),
-            ElseIfStep s => Conditions(s.Settings.Conditions),
-            PointComparisonStep s => PointComparison(s.Settings),
-            DynamicRoiStep s => s.Settings.Padding >= 0 && Unit(s.Settings.MinimumConfidence)
-                && s.Settings.FullSearchInterval >= 0 && s.Settings.ResetAfterMisses >= 0,
-            WindowsStateQueryStep s => WindowsQueryConfigured(s.Settings),
-            WindowsSettingChangeStep s => WindowsSettingConfigured(s.Settings),
-            _ => true
-        };
-        return valid ? null : invalid;
-    }
-
-    private static bool Conditions(IEnumerable<StepCondition> conditions)
-    {
-        var rows = conditions.ToList();
-        return rows.Count > 0 && rows.All(c =>
-            Text(c.SourceStepId) && (Text(c.PropertyId) || Text(c.PropertyPath)));
+        if (!BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
+            return invalid;
+        var hasError = definition.ValidateDraft(definition.CreateDraft(step))
+            .Any(issue => issue.Severity == StepValidationSeverity.Error);
+        return hasError ? invalid : null;
     }
 
     private static string? ValidateConditions(IReadOnlyList<JobStep> steps, int conditionStepIndex, IEnumerable<StepCondition> conditions)
@@ -266,74 +187,14 @@ public static class JobValidation
         return null;
     }
 
-    private static bool PointComparison(PointComparisonSettings s)
-        => s.Points.Count > 0
-           && s.Points.All(p => p.Source == PointEntrySource.Manual || p.PointsSource.IsConfigured)
-           && (s.Mode == PointComparisonMode.Offset
-               ? (s.OffsetSettings.ReferenceSource == PointEntrySource.Manual
-                  || s.OffsetSettings.ReferencePointsSource.IsConfigured)
-                 && s.OffsetSettings.OffsetX >= 0 && s.OffsetSettings.OffsetY >= 0
-               : s.ExpressionSettings.Expressions.Count > 0
-                 && s.ExpressionSettings.Expressions.All(e => e.Axis is "X" or "Y"));
-
-    private static bool Text(string? value) => !string.IsNullOrWhiteSpace(value);
-    private static bool OverlayValid(VisualOverlaySettings? overlay) =>
-        overlay is not null
-        && overlay.DetectionResults.All(binding => binding.IsConfigured)
-        && overlay.TextResults.All(entry =>
-            entry.Id != Guid.Empty
-            && entry.Result.IsConfigured
-            && entry.FontSize > 0
-            && Unit(entry.Opacity)
-            && entry.DesktopIndex >= 0
-            && entry.DurationMs >= 0);
-    private static bool ProcessTargetConfigured(ProcessTargetSettings? target) =>
-        target?.ProcessSource.IsConfigured == true
-        || Text(target?.ProcessName)
-        || Text(target?.ExecutablePath);
-    private static bool ProcessQueryConfigured(ProcessTargetSettings? query) =>
-        query?.ProcessSource.IsConfigured != true
-        && (Text(query?.ProcessName) || Text(query?.ExecutablePath));
-    private static bool Unit(double value) => value is >= 0 and <= 1;
-    private static bool ExistingFile(string? path) => Text(path) && File.Exists(path);
-    private static bool Roi(bool enabled, OpenCvSharp.Rect roi) => !enabled || (roi.X >= 0 && roi.Y >= 0 && roi.Width > 0 && roi.Height > 0);
-    private static bool FileName(string? value) => Text(value) && value!.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 && Path.GetFileName(value) == value;
-    private static bool ImageFileName(string? value) =>
-        FileName(value)
-        && new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff" }
-            .Contains(Path.GetExtension(value), StringComparer.OrdinalIgnoreCase);
-    private static bool DirectoryPath(string? value)
-    {
-        if (!Text(value)) return false;
-        try { _ = Path.GetFullPath(value!); return value!.IndexOfAny(Path.GetInvalidPathChars()) < 0; }
-        catch { return false; }
-    }
-
-    private static ProcessTargetSettings? GetProcessTarget(JobStep step) => step switch
-    {
-        ActiveProcessStep s => s.Settings.Target,
-        GetProcessStep s => s.Settings.Query,
-        StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate => s.Settings.Target,
-        TerminateProcessStep s => s.Settings.Target,
-        FocusProcessStep s => s.Settings.Target,
-        ActiveWindowStep s => s.Settings.Target,
-        _ => null
-    };
-
     private static string? ValidateResultBindings(IReadOnlyList<JobStep> steps, int consumerIndex, JobStep step)
     {
-        var bindings = GetResultBindings(step).ToList();
-        if (step is PointComparisonStep comparison)
+        if (!BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
+            return "FÃ¼r den Step fehlt die Backend-Definition.";
+        foreach (var configuredInput in definition.GetInputBindings(step))
         {
-            bindings.AddRange(comparison.Settings.Points
-                .Where(point => point.Source == PointEntrySource.JobResult)
-                .Select(point => ("points", point.PointsSource)));
-            if (comparison.Settings.Mode == PointComparisonMode.Offset
-                && comparison.Settings.OffsetSettings.ReferenceSource == PointEntrySource.JobResult)
-                bindings.Add(("points", comparison.Settings.OffsetSettings.ReferencePointsSource));
-        }
-        foreach (var (key, binding) in bindings)
-        {
+            var key = configuredInput.ContractId;
+            var binding = configuredInput.Binding;
             var contract = StepInputContractRegistry.Get(step.GetType(), key);
             if (contract is null) return $"Für die Eingabe '{key}' fehlt der Backend-Vertrag.";
             if (!binding.IsConfigured)
@@ -368,128 +229,6 @@ public static class JobValidation
                    property.Name.Equals(propertyPath, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool WindowsQueryConfigured(WindowsStateQuerySettings settings)
-    {
-        var capability = new WindowsCapabilityCatalog().Find(settings.QueryType);
-        return capability?.SupportsStateQuery == true
-               && (capability.Parameters ?? []).All(parameter => !parameter.Required
-                   || settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
-    }
-
-    private static bool WindowsSettingConfigured(WindowsSettingChangeSettings settings)
-    {
-        var capability = new WindowsCapabilityCatalog().Find(settings.SettingId);
-        if (capability?.SupportsSettingChange != true) return false;
-        foreach (var parameter in capability.Parameters ?? [])
-        {
-            settings.Parameters.TryGetValue(parameter.Name, out var value);
-            if (parameter.Required && string.IsNullOrWhiteSpace(value)) return false;
-            if (string.IsNullOrWhiteSpace(value)) continue;
-            if (parameter.Type == WindowsParameterType.Integer && !int.TryParse(value, out _)) return false;
-            if (parameter.AllowedValues is { Count: > 0 }
-                && !parameter.AllowedValues.Contains(value, StringComparer.OrdinalIgnoreCase))
-                return false;
-        }
-
-        if (settings.SettingId == "audio.master_volume"
-            && (!int.TryParse(settings.Parameters.GetValueOrDefault("value"), out var volume)
-                || volume is < 0 or > 100))
-            return false;
-        if (settings.SettingId is "power.display_timeout" or "power.sleep_timeout"
-            && (!int.TryParse(settings.Parameters.GetValueOrDefault("minutes"), out var minutes)
-                || minutes < 0))
-            return false;
-        if (settings.SettingId == "network.wifi_connection"
-            && string.Equals(settings.Parameters.GetValueOrDefault("action"), "connect",
-                StringComparison.OrdinalIgnoreCase)
-            && string.IsNullOrWhiteSpace(settings.Parameters.GetValueOrDefault("profile")))
-            return false;
-        return true;
-    }
-
-    private static IEnumerable<(string Key, ResultBinding Binding)> GetResultBindings(JobStep step)
-    {
-        return step switch
-        {
-            TemplateMatchingStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
-            ColorDetectionStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
-            YOLODetectionStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
-            KeyPointMatchingStep s => [("image", s.Settings.ImageSource), ("dynamicRoi", s.Settings.DynamicRoiSource)],
-            PredictMovementStep s => [("points", s.Settings.PointsSource)],
-            KlickOnPointStep s => [("points", s.Settings.PointsSource)],
-            KlickOnPoint3DStep s => [("points", s.Settings.PointsSource)],
-            DynamicRoiStep s => [("bounds", s.Settings.BoundsSource)],
-            ShowOnDesktopStep s => OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource),
-            ShowImageStep s =>
-                new[] { ("image", s.Settings.ImageSource) }
-                    .Concat(OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource)),
-            VideoCreationStep s =>
-                new[] { ("image", s.Settings.ImageSource) }
-                    .Concat(OverlayBindings(s.Settings.Overlay, s.Settings.DetectionsSource)),
-            SaveImageStep s => new[] { ("image", s.Settings.ImageSource) }
-                .Concat(OverlayBindings(s.Settings.Overlay)),
-            ActiveProcessStep s => [("process", s.Settings.Target.ProcessSource)],
-            StartProcessStep s when s.Settings.Action == StartProcessAction.Terminate =>
-                [("process", s.Settings.Target.ProcessSource)],
-            TerminateProcessStep s => [("process", s.Settings.Target.ProcessSource)],
-            FocusProcessStep s => [("process", s.Settings.Target.ProcessSource)],
-            ActiveWindowStep s => [("process", s.Settings.Target.ProcessSource)],
-            ShowTextStep s when s.Settings.TextSource == ShowTextSource.TaskResult => [("text", s.Settings.TextResult)],
-            FileSystemOperationStep s =>
-                (s.Settings.SourceMode == FileSystemPathSource.TaskResult
-                    ? new[] { ("source", s.Settings.SourceResult) }
-                    : Array.Empty<(string, ResultBinding)>())
-                .Concat(s.Settings.Operation is FileSystemOperation.Copy or FileSystemOperation.Move
-                        && s.Settings.TargetMode == FileSystemPathSource.TaskResult
-                    ? new[] { ("target", s.Settings.TargetResult) }
-                    : Array.Empty<(string, ResultBinding)>()),
-            _ => []
-        };
-    }
-
-    private static IEnumerable<(string Key, ResultBinding Binding)> OverlayBindings(
-        VisualOverlaySettings? overlay,
-        ResultBinding? legacyDetections = null)
-    {
-        overlay ??= new VisualOverlaySettings();
-        var detections = overlay.DetectionResults.Count > 0
-            ? overlay.DetectionResults
-            : legacyDetections?.IsConfigured == true ? [legacyDetections] : [];
-        return detections.Select(binding => ("detections", binding))
-            .Concat(overlay.TextResults.Select(entry => ("text", entry.Result)));
-    }
-
-    private static bool FileSystemOperationConfigured(FileSystemOperationSettings settings)
-    {
-        var source = settings.SourceMode == FileSystemPathSource.TaskResult
-            ? settings.SourceResult.IsConfigured
-            : Text(settings.SourcePath);
-        var target = settings.Operation is not (FileSystemOperation.Copy or FileSystemOperation.Move)
-            || (settings.TargetMode == FileSystemPathSource.TaskResult
-                ? settings.TargetResult.IsConfigured
-                : Text(settings.TargetPath));
-        var action = settings.Operation != FileSystemOperation.Rename
-            || Text(settings.NewName)
-               && settings.NewName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0
-               && string.Equals(Path.GetFileName(settings.NewName), settings.NewName, StringComparison.Ordinal);
-        var filter = settings.Operation != FileSystemOperation.Delete
-            || string.IsNullOrWhiteSpace(settings.Filter)
-            || settings.Filter.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .All(value => value.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) < 0);
-        return source && target && action && filter
-            && settings.RetryCount >= 0 && settings.RetryDelayMs >= 0;
-    }
-
-    private static bool ProducesProcessReference(JobStep? step) => step switch
-    {
-        StartProcessStep { Settings.Action: StartProcessAction.Start } => true,
-        GetProcessStep => true,
-        ActiveProcessStep => true,
-        FocusProcessStep => true,
-        ActiveWindowStep => true,
-        _ => false
-    };
-
     /// <summary>
     /// Entfernt nur Referenzen auf Steps, die nicht mehr existieren.
     /// Voruebergehend ungueltige Referenzen (deaktivierter Step oder falsche Reihenfolge)
@@ -506,13 +245,6 @@ public static class JobValidation
                     property.SetValue(owner, string.Empty);
             });
         }
-    }
-
-    private static IEnumerable<string> EnumerateSourceIds(JobStep step)
-    {
-        var ids = new List<string>();
-        VisitSourceProperties(step, (owner, property) => ids.Add((string?)property.GetValue(owner) ?? ""));
-        return ids;
     }
 
     private static void VisitSourceProperties(object? value, Action<object, PropertyInfo> visitor, HashSet<object>? seen = null)

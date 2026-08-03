@@ -1,4 +1,3 @@
-using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
 using ImageDetection.Algorithms.ColorDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
@@ -53,7 +52,6 @@ namespace TaskAutomation.Steps
         public ICameraCaptureService CameraCaptureService { get; }
         public ISet<string>  OpenedWindowNames    { get; } = new HashSet<string>(StringComparer.Ordinal);
         public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
-        public ProcessDuplicator?   ProcessDuplicator  { get; set; }
         public TemplateMatching?    TemplateMatcher    { get; set; }
         public ColorDetector?       ColorDetector      { get; set; }
         public KeyPointMatcher?     KeyPointMatcher    { get; set; }
@@ -136,7 +134,6 @@ namespace TaskAutomation.Steps
         public void Dispose()
         {
             _results.DisposeAndClear();
-            ProcessDuplicator?.Dispose();
             TemplateMatcher?.Dispose();
             // DesktopCaptureService ist ein Singleton und wird NICHT hier disposed.
             ColorDetector?.Dispose();

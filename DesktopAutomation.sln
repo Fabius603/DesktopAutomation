@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DesktopAutomation.Applicati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskAutomation.Tests", "tests\TaskAutomation.Tests\TaskAutomation.Tests.csproj", "{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskAutomation.Contracts", "TaskAutomation.Contracts\TaskAutomation.Contracts.csproj", "{9FC1A56F-77E4-49AF-A191-51C9B162706D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,18 @@ Global
 		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x64.Build.0 = Release|Any CPU
 		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x86.ActiveCfg = Release|Any CPU
 		{CBDA1B9C-1FC4-4B1F-9A5A-61A3A6956067}.Release|x86.Build.0 = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|x64.Build.0 = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Debug|x86.Build.0 = Debug|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|x64.ActiveCfg = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|x64.Build.0 = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|x86.ActiveCfg = Release|Any CPU
+		{9FC1A56F-77E4-49AF-A191-51C9B162706D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

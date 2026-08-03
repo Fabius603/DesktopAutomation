@@ -6,9 +6,23 @@
       {
         "title": { "de": "Job-Steps", "en": "Job steps" },
         "changes": [
+          { "category": "Changed", "de": "Windows-Zustände und -Einstellungen lassen sich einheitlicher auswählen und konfigurieren.", "en": "Windows states and settings can be selected and configured more consistently." },
+          { "category": "Changed", "de": "Bedingungen in Wenn- und Sonst-wenn-Steps lassen sich einheitlicher bearbeiten.", "en": "Conditions in if and else-if steps can be edited more consistently." },
+          { "category": "Changed", "de": "YOLO- und Keypoint-Erkennung lassen sich einheitlicher konfigurieren.", "en": "YOLO and keypoint detection can be configured more consistently." },
+          { "category": "Changed", "de": "Bildvorlagen, Farberkennung und ROI-Bereiche lassen sich einheitlicher konfigurieren.", "en": "Image templates, color detection, and ROI regions can be configured more consistently." },
+          { "category": "Changed", "de": "Video- und Bilddateien lassen sich einheitlicher konfigurieren und um Overlays ergänzen.", "en": "Video and image files can be configured more consistently and enhanced with overlays." },
+          { "category": "Changed", "de": "Job-Steps zeigen ihre wichtigsten Einstellungen direkt in der Übersicht.", "en": "Job steps show their most important settings directly in the overview." },
+          { "category": "Fixed", "de": "Step-Typen erscheinen beim Hinzufügen nicht mehr doppelt.", "en": "Step types no longer appear twice when adding a step." },
+          { "category": "Fixed", "de": "Die Einstellungen des vorausgewählten Steps werden beim Öffnen des Hinzufügen-Dialogs sofort angezeigt.", "en": "The settings for the preselected step are shown immediately when opening the add-step dialog." },
           { "category": "Changed", "de": "Step-Fehler zeigen verständliche Hinweise und einen Fehlercode.", "en": "Step errors show clear guidance and an error code." },
           { "category": "Changed", "de": "Benutzerauswahlen öffnen sich schneller.", "en": "User choice dialogs open faster." },
-          { "category": "Fixed", "de": "Fensteroptionen funktionieren zuverlässiger bei langsam startenden oder weitergereichten Prozessen.", "en": "Window options work more reliably with slow-starting or handed-off processes." }
+          { "category": "Changed", "de": "Job-Step-Einstellungen werden in mehr Editoren einheitlich dargestellt.", "en": "Job step settings are presented consistently across more editors." },
+          { "category": "Changed", "de": "3D-Klicks, Benutzerauswahlen und Punktvergleiche lassen sich einheitlicher konfigurieren.", "en": "3D clicks, user choices, and point comparisons can be configured more consistently." },
+          { "category": "Changed", "de": "Der veraltete Prozessduplizierungs-Step wurde entfernt.", "en": "The obsolete process duplication step has been removed." },
+          { "category": "Fixed", "de": "Beim Bearbeiten von Warte- und Eingabesperren bleiben Aktivierung und Breakpoints erhalten.", "en": "Editing wait and input-block steps preserves activation and breakpoints." },
+          { "category": "Fixed", "de": "Fensteroptionen funktionieren zuverlässiger bei langsam startenden oder weitergereichten Prozessen.", "en": "Window options work more reliably with slow-starting or handed-off processes." },
+          { "category": "Fixed", "de": "Ungültige oder unvollständige Step-Eingaben werden in allen Editoren einheitlich erkannt.", "en": "Invalid or incomplete step inputs are detected consistently across all editors." },
+          { "category": "Fixed", "de": "Die Job-Step-Ansicht öffnet wieder zuverlässig.", "en": "The job step view opens reliably again." }
         ]
       }
     ]

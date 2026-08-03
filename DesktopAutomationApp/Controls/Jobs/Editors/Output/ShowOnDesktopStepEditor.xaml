@@ -1,3 +1,0 @@
-<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Output.ShowOnDesktopStepEditor" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Output">
- <local:VisualOverlayEditor Visibility="{Binding ShowShowOnDesktop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-</UserControl>

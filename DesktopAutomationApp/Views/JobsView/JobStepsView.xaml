@@ -13,17 +13,15 @@
              Style="{StaticResource ContentViewBase}">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/Jobs/JobStepTemplates.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
             <conv:JobStepDetailsConverter x:Key="JobStepDetailsConverter"/>
             <conv:StepHasDetailsConverter x:Key="StepHasDetailsConverter"/>
             <conv:StepBlockShapeConverter x:Key="StepBlockShapeConverter"/>
             <conv:StepCanAddBranchesConverter x:Key="StepCanAddBranchesConverter"/>
             <conv:StepDetailsEnabledConverter x:Key="StepDetailsEnabledConverter"/>
             <conv:StepBlockVisualConverter x:Key="StepBlockVisualConverter"/>
-            <conv:StepRegularSummaryVisibilityConverter x:Key="StepRegularSummaryVisibilityConverter"/>
-            <conv:StepBranchSummaryConverter x:Key="StepBranchSummaryConverter"/>
+            <conv:StepSummaryConverter x:Key="StepSummaryConverter"/>
+            <conv:StepNumberConverter x:Key="StepNumberConverter"/>
+            <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
             <HierarchicalDataTemplate x:Key="DebugContextValueTemplate" ItemsSource="{Binding Children}">
                 <Border Margin="0,2" Padding="7,5" CornerRadius="4"
                         Background="Transparent" ToolTip="{Binding Description}">
@@ -797,7 +795,7 @@
                                     <TextBlock Margin="0,3,0,0" FontSize="11" Opacity="0.72"
                                                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
                                         <TextBlock.Text>
-                                            <MultiBinding Converter="{StaticResource StepBranchSummaryConverter}">
+                                            <MultiBinding Converter="{StaticResource StepSummaryConverter}">
                                                 <Binding/>
                                                 <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                                                 <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
@@ -807,7 +805,7 @@
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Converter={StaticResource StepRegularSummaryVisibilityConverter}}" Value="Visible">
+                                                    <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>

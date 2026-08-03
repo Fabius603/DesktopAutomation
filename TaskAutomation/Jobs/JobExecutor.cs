@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Reflection;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using ImageCapture.ProcessDuplication;
 using ImageCapture.DesktopDuplication;
 using ImageCapture.Video;
 using System.Drawing;
@@ -65,7 +64,6 @@ namespace TaskAutomation.Jobs
         // ── Handler-Registry ───────────────────────────────────────────────────
         private readonly Dictionary<Type, IJobStepHandler> _stepHandlers = new()
         {
-            { typeof(ProcessDuplicationStep),  new ProcessDuplicationStepHandler()  },
             { typeof(DesktopDuplicationStep),  new DesktopDuplicationStepHandler()  },
             { typeof(CameraCaptureStep),       new CameraCaptureStepHandler()       },
             { typeof(FileSystemOperationStep), new FileSystemOperationStepHandler() },
@@ -1314,9 +1312,6 @@ namespace TaskAutomation.Jobs
                     break;
                 case FileSystemOperationStep fileSystem:
                     parts.Add($"Operation={fileSystem.Settings.Operation}");
-                    break;
-                case ProcessDuplicationStep processCapture:
-                    parts.Add($"Process={processCapture.Settings.ProcessName}");
                     break;
                 case TimeoutStep timeout:
                     parts.Add($"ConfiguredDelayMs={timeout.Settings.DelayMs}");

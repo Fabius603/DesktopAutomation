@@ -10,6 +10,7 @@ using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;
+using TaskAutomation.Steps.Definitions;
 using DesktopAutomationApp.Views;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
@@ -34,6 +35,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IJobDispatcher _dispatcher;
         private readonly ICameraCaptureService _cameraCaptureService;
+        private readonly IStepDefinitionCatalog _stepDefinitionCatalog;
 
         private sealed record JobStepsSnapshot(
             List<JobStep> StartSteps,
@@ -373,7 +375,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher, ICameraCaptureService cameraCaptureService)
+        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher, ICameraCaptureService cameraCaptureService, IStepDefinitionCatalog? stepDefinitionCatalog = null)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
             _jobExecutionContext = jobExecutionContext;
@@ -381,6 +383,7 @@ namespace DesktopAutomationApp.ViewModels
             _dialogService = dialogService;
             _dispatcher = dispatcher;
             _cameraCaptureService = cameraCaptureService;
+            _stepDefinitionCatalog = stepDefinitionCatalog ?? BuiltInStepDefinitions.Instance;
 
             _startSteps = new ObservableRangeCollection<JobStep>();
             _startSteps.ReplaceRange(Job.StartSteps ?? Enumerable.Empty<JobStep>());
@@ -403,9 +406,6 @@ namespace DesktopAutomationApp.ViewModels
             _isRepeating = Job.Repeating;
             _savedRepeating = _isRepeating;
 
-            // Wenn sich die Step-Liste ändert (hinzufügen, löschen, verschieben),
-            // muss die Steps-Property neu notifiziert werden, damit alle MultiBinding-
-            // Konverter in der View (StepPrerequisiteStateConverter) neu ausgewertet werden.
             _runSteps.CollectionChanged += OnSectionCollectionChanged;
             _startSteps.CollectionChanged += OnSectionCollectionChanged;
             _endSteps.CollectionChanged += OnSectionCollectionChanged;
@@ -1009,7 +1009,7 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIndex);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog)
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -1064,7 +1064,7 @@ namespace DesktopAutomationApp.ViewModels
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
             var vm = new AddJobStepDialogViewModel(
-                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService);
+                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog);
             using (vm.DeferNotifications())
             {
                 vm.Mode = StepDialogMode.Edit;
@@ -1089,365 +1089,8 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Prefill ----------
         private static void Prefill(AddJobStepDialogViewModel vm, JobStep s)
         {
-            switch (s)
-            {
-                case TemplateMatchingStep t:
-                    vm.SelectedType = "TemplateMatching";
-                    vm.TemplateMatchingStep_TemplatePath = t.Settings.TemplatePath;
-                    vm.TemplateMatchingStep_TemplateMatchMode = t.Settings.TemplateMatchMode;
-                    vm.TemplateMatchingStep_ConfidenceThreshold = t.Settings.ConfidenceThreshold;
-                    vm.TemplateMatchingStep_EnableROI = t.Settings.EnableROI;
-                    vm.TemplateMatchingStep_RoiX = t.Settings.ROI.X;
-                    vm.TemplateMatchingStep_RoiY = t.Settings.ROI.Y;
-                    vm.TemplateMatchingStep_RoiW = t.Settings.ROI.Width;
-                    vm.TemplateMatchingStep_RoiH = t.Settings.ROI.Height;
-                    vm.TemplateMatchingStep_ImageSource.Load(t.Settings.ImageSource);
-                    vm.DetectionDynamicRoiSource.Load(t.Settings.DynamicRoiSource);
-                    vm.UseDynamicRoi = t.Settings.DynamicRoiSource.IsConfigured;
-                    break;
-
-                case ColorDetectionStep cd:
-                    vm.SelectedType = "ColorDetection";
-                    vm.ColorDetectionStep_Color = HexToWpfColor(cd.Settings.ColorHex);
-                    vm.ColorDetectionStep_ConfidenceThreshold = cd.Settings.ConfidenceThreshold;
-                    vm.ColorDetectionStep_MinSize = cd.Settings.MinSize;
-                    vm.ColorDetectionStep_MaxSize = cd.Settings.MaxSize;
-                    vm.ColorDetectionStep_MinWidth = cd.Settings.MinWidth;
-                    vm.ColorDetectionStep_MinHeight = cd.Settings.MinHeight;
-                    vm.ColorDetectionStep_DownscaleFactor = cd.Settings.DownscaleFactor;
-                    vm.ColorDetectionStep_EnableROI = cd.Settings.EnableROI;
-                    vm.ColorDetectionStep_RoiX = cd.Settings.ROI.X;
-                    vm.ColorDetectionStep_RoiY = cd.Settings.ROI.Y;
-                    vm.ColorDetectionStep_RoiW = cd.Settings.ROI.Width;
-                    vm.ColorDetectionStep_RoiH = cd.Settings.ROI.Height;
-                    vm.ColorDetectionStep_ImageSource.Load(cd.Settings.ImageSource);
-                    vm.DetectionDynamicRoiSource.Load(cd.Settings.DynamicRoiSource);
-                    vm.UseDynamicRoi = cd.Settings.DynamicRoiSource.IsConfigured;
-                    break;
-
-                case PredictMovementStep pm:
-                    vm.SelectedType = "PredictMovement";
-                    vm.PredictMovementStep_PointsSource.Load(pm.Settings.PointsSource);
-                    vm.PredictMovementStep_MinSamples = pm.Settings.MinSamples;
-                    vm.PredictMovementStep_PredictionMs = pm.Settings.PredictionMs;
-                    vm.PredictMovementStep_ResetDistanceThreshold = pm.Settings.ResetDistanceThreshold;
-                    vm.PredictMovementStep_MaxSampleAgeMs = pm.Settings.MaxSampleAgeMs;
-                    vm.PredictMovementStep_PredictionModel = pm.Settings.PredictionModel;
-                    vm.PredictMovementStep_TimeBasis = pm.Settings.TimeBasis;
-                    vm.PredictMovementStep_MaxPredictionDistance = pm.Settings.MaxPredictionDistance;
-                    vm.PredictMovementStep_MaxFitError = pm.Settings.MaxFitError;
-                    vm.PredictMovementStep_MinimumConfidence = pm.Settings.MinimumConfidence;
-                    break;
-
-                case DesktopDuplicationStep d:
-                    vm.SelectedType = "DesktopDuplication";
-                    vm.DesktopDuplicationStep_DesktopIdx    = d.Settings.DesktopIdx;
-                    vm.DesktopDuplicationStep_CaptureCursor = d.Settings.CaptureCursor;
-                    break;
-
-                case CameraCaptureStep camera:
-                    vm.SelectedType = "CameraCapture";
-                    vm.LoadCameraSelection(
-                        camera.Settings.CameraId,
-                        camera.Settings.CameraName,
-                        camera.Settings);
-                    break;
-
-                case FileSystemOperationStep fileSystem:
-                    vm.SelectedType = "FileSystemOperation";
-                    vm.FileSystemOperationStep_Operation = fileSystem.Settings.Operation;
-                    vm.FileSystemOperationStep_IsExplicitSource =
-                        fileSystem.Settings.SourceMode == FileSystemPathSource.ExplicitPath;
-                    vm.FileSystemOperationStep_IsResultSource =
-                        fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult;
-                    vm.FileSystemOperationStep_SourcePath = fileSystem.Settings.SourcePath;
-                    vm.FileSystemOperationStep_SourceResult.Load(fileSystem.Settings.SourceResult);
-                    vm.FileSystemOperationStep_IsExplicitTarget =
-                        fileSystem.Settings.TargetMode == FileSystemPathSource.ExplicitPath;
-                    vm.FileSystemOperationStep_IsResultTarget =
-                        fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult;
-                    vm.FileSystemOperationStep_TargetPath = fileSystem.Settings.TargetPath;
-                    vm.FileSystemOperationStep_TargetResult.Load(fileSystem.Settings.TargetResult);
-                    vm.FileSystemOperationStep_NewName = fileSystem.Settings.NewName;
-                    vm.FileSystemOperationStep_Filter = fileSystem.Settings.Filter;
-                    vm.FileSystemOperationStep_CreateParentDirectories = fileSystem.Settings.CreateParentDirectories;
-                    vm.FileSystemOperationStep_RetryLockedFiles = fileSystem.Settings.RetryLockedFiles;
-                    vm.FileSystemOperationStep_RetryCount = fileSystem.Settings.RetryCount;
-                    vm.FileSystemOperationStep_RetryDelayMs = fileSystem.Settings.RetryDelayMs;
-                    break;
-
-                case ShowImageStep si:
-                    vm.SelectedType = "ShowImage";
-                    vm.ShowImageStep_WindowName = si.Settings.WindowName;
-                    vm.ShowImageStep_ImageSource.Load(si.Settings.ImageSource);
-                    vm.LoadOverlay(si.Settings.Overlay, si.Settings.DetectionsSource);
-                    break;
-
-                case ShowOnDesktopStep sod:
-                    vm.SelectedType = "ShowOnDesktop";
-                    vm.LoadOverlay(sod.Settings.Overlay, sod.Settings.DetectionsSource);
-                    break;
-
-                case VideoCreationStep v:
-                    vm.SelectedType = "VideoCreation";
-                    vm.VideoCreationStep_SavePath = v.Settings.SavePath;
-                    vm.VideoCreationStep_FileName = v.Settings.FileName;
-                    vm.VideoCreationStep_ImageSource.Load(v.Settings.ImageSource);
-                    vm.LoadOverlay(v.Settings.Overlay, v.Settings.DetectionsSource);
-                    break;
-
-                case SaveImageStep saveImage:
-                    vm.SelectedType = "SaveImage";
-                    vm.SaveImageStep_SavePath = saveImage.Settings.SavePath;
-                    vm.SaveImageStep_FileName = saveImage.Settings.FileName;
-                    vm.SaveImageStep_ImageSource.Load(saveImage.Settings.ImageSource);
-                    vm.LoadOverlay(saveImage.Settings.Overlay);
-                    break;
-
-                case MakroExecutionStep me:
-                    vm.SelectedType = "MakroExecution";
-                    if (me.Settings.MakroId.HasValue)
-                        vm.MakroExecutionStep_SelectedMakro = vm.AvailableMakros.FirstOrDefault(m => m.Id == me.Settings.MakroId.Value);
-                    if (vm.MakroExecutionStep_SelectedMakro == null && !string.IsNullOrWhiteSpace(me.Settings.MakroName))
-                        vm.MakroExecutionStep_SelectedMakro = vm.AvailableMakros.FirstOrDefault(m => string.Equals(m.Name, me.Settings.MakroName, StringComparison.OrdinalIgnoreCase));
-                    break;
-
-                case ScriptExecutionStep se:
-                    vm.SelectedType = "ScriptExecution";
-                    vm.ScriptExecutionStep_ScriptPath = se.Settings.ScriptPath;
-                    vm.ScriptExecutionStep_Arguments = se.Settings.Arguments;
-                    vm.ScriptExecutionStep_WaitForExit = se.Settings.WaitForExit;
-                    break;
-
-                case KlickOnPointStep kp:
-                    vm.SelectedType = "KlickOnPoint";
-                    vm.KlickOnPointStep_ClickType = kp.Settings.ClickType;
-                    vm.KlickOnPointStep_DoubleClick = kp.Settings.DoubleClick;
-                    vm.KlickOnPointStep_TimeoutMs = kp.Settings.TimeoutMs;
-                    vm.KlickOnPointStep_OffsetX = kp.Settings.OffsetX;
-                    vm.KlickOnPointStep_OffsetY = kp.Settings.OffsetY;
-                    vm.KlickOnPointStep_PointsSource.Load(kp.Settings.PointsSource);
-                    break;
-
-                case KlickOnPoint3DStep kp3d:
-                    vm.SelectedType = "KlickOnPoint3D";
-                    vm.KlickOnPoint3DStep_DoubleClick = kp3d.Settings.DoubleClick;
-                    vm.KlickOnPoint3DStep_ClickType = kp3d.Settings.ClickType;
-                    vm.KlickOnPoint3DStep_Timeout = kp3d.Settings.TimeoutMs;
-                    vm.LoadKlickOnPoint3DOrigin(kp3d.Settings);
-                    vm.KlickOnPoint3DStep_MovementFactorX = FlexibleDoubleConverter.Format(kp3d.Settings.EffectiveMovementFactorX);
-                    vm.KlickOnPoint3DStep_MovementFactorY = FlexibleDoubleConverter.Format(kp3d.Settings.EffectiveMovementFactorY);
-                    vm.KlickOnPoint3DStep_OffsetX = kp3d.Settings.OffsetX;
-                    vm.KlickOnPoint3DStep_OffsetY = kp3d.Settings.OffsetY;
-                    vm.KlickOnPoint3DStep_PointsSource.Load(kp3d.Settings.PointsSource);
-                    break;
-
-                case JobExecutionStep je:
-                    vm.SelectedType = "JobExecution";
-                    if (je.Settings.JobId.HasValue)
-                        vm.JobExecutionStep_SelectedJob = vm.AvailableJobs.FirstOrDefault(j => j.Id == je.Settings.JobId.Value);
-                    if (vm.JobExecutionStep_SelectedJob == null && !string.IsNullOrWhiteSpace(je.Settings.JobName))
-                        vm.JobExecutionStep_SelectedJob = vm.AvailableJobs.FirstOrDefault(j => string.Equals(j.Name, je.Settings.JobName, StringComparison.OrdinalIgnoreCase));
-                    vm.JobExecutionStep_WaitForCompletion = je.Settings.WaitForCompletion;
-                    break;
-
-                case YOLODetectionStep yd:
-                    vm.SelectedType = "YoloDetection";
-                    vm.YoloDetectionStep_Model = yd.Settings.Model;
-                    vm.YoloDetectionStep_ConfidenceThreshold = yd.Settings.ConfidenceThreshold;
-                    vm.YoloDetectionStep_ClassName = yd.Settings.ClassName;
-                    vm.YoloDetectionStep_EnableROI = yd.Settings.EnableROI;
-                    vm.YoloDetectionStep_RoiX = yd.Settings.ROI.X;
-                    vm.YoloDetectionStep_RoiY = yd.Settings.ROI.Y;
-                    vm.YoloDetectionStep_RoiW = yd.Settings.ROI.Width;
-                    vm.YoloDetectionStep_RoiH = yd.Settings.ROI.Height;
-                    vm.YoloDetectionStep_ImageSource.Load(yd.Settings.ImageSource);
-                    vm.DetectionDynamicRoiSource.Load(yd.Settings.DynamicRoiSource);
-                    vm.UseDynamicRoi = yd.Settings.DynamicRoiSource.IsConfigured;
-                    break;
-
-                case TimeoutStep to:
-                    vm.SelectedType = "Timeout";
-                    vm.TimeoutStep_DelayMs = to.Settings.DelayMs;
-                    break;
-                case BlockInputStep blockInput:
-                    vm.SelectedType = "BlockInput";
-                    vm.BlockInputStep_SafetyTimeoutSeconds = blockInput.Settings.SafetyTimeoutSeconds;
-                    break;
-                case UnblockInputStep:
-                    vm.SelectedType = "UnblockInput";
-                    break;
-
-                case ActiveProcessStep ap:
-                    vm.SelectedType = "ActiveProcess";
-                    vm.ActiveProcessStep_ProcessName = ap.Settings.Target.ProcessName;
-                    vm.ActiveProcessStep_ProcessSource.Load(ap.Settings.Target.ProcessSource);
-                    vm.ActiveProcessStep_UsesProcessSource = ap.Settings.Target.ProcessSource.IsConfigured;
-                    break;
-
-                case GetProcessStep gp:
-                    vm.SelectedType = "GetProcess";
-                    vm.GetProcessStep_ProcessName = gp.Settings.Query.ProcessName;
-                    vm.GetProcessStep_ExecutablePath = gp.Settings.Query.ExecutablePath;
-                    vm.GetProcessStep_WindowTitleContains = gp.Settings.Query.WindowTitleContains;
-                    break;
-
-                case StartProcessStep sp:
-                    vm.SelectedType = sp.Settings.Action == StartProcessAction.Terminate
-                        ? "TerminateProcess"
-                        : "StartProcess";
-                    vm.StartProcessStep_Action = sp.Settings.Action;
-                    vm.StartProcessStep_ExecutablePath = sp.Settings.ExecutablePath;
-                    vm.StartProcessStep_ProcessName = sp.Settings.Target.ProcessName;
-                    vm.StartProcessStep_WindowTitleContains = sp.Settings.Target.WindowTitleContains;
-                    vm.StartProcessStep_Arguments      = sp.Settings.Arguments;
-                    vm.StartProcessStep_WorkingDirectory = sp.Settings.WorkingDirectory;
-                    vm.StartProcessStep_WaitForExit    = sp.Settings.WaitForExit;
-                    vm.StartProcessStep_MonitorIndex = sp.Settings.MonitorIndex;
-                    vm.StartProcessStep_PlacementMode = sp.Settings.PlacementMode;
-                    vm.StartProcessStep_OffsetX = sp.Settings.OffsetX;
-                    vm.StartProcessStep_OffsetY = sp.Settings.OffsetY;
-                    vm.StartProcessStep_WindowMode = sp.Settings.WindowMode;
-                    vm.StartProcessStep_ProcessSource.Load(sp.Settings.Target.ProcessSource);
-                    vm.StartProcessStep_UsesProcessSource = sp.Settings.Target.ProcessSource.IsConfigured;
-                    break;
-
-                case TerminateProcessStep tp:
-                    vm.SelectedType = "TerminateProcess";
-                    vm.StartProcessStep_ProcessName = tp.Settings.Target.ProcessName;
-                    vm.StartProcessStep_WindowTitleContains = tp.Settings.Target.WindowTitleContains;
-                    vm.StartProcessStep_ProcessSource.Load(tp.Settings.Target.ProcessSource);
-                    vm.StartProcessStep_UsesProcessSource = tp.Settings.Target.ProcessSource.IsConfigured;
-                    break;
-
-                case FocusProcessStep fp:
-                    vm.SelectedType = "FocusProcess";
-                    vm.FocusProcessStep_Action = fp.Settings.Action;
-                    vm.FocusProcessStep_ExecutablePath = fp.Settings.Target.ExecutablePath;
-                    vm.FocusProcessStep_WindowTitleContains = fp.Settings.Target.WindowTitleContains;
-                    vm.FocusProcessStep_WindowMode = fp.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
-                        ? FocusProcessWindowMode.Maximized
-                        : fp.Settings.WindowMode;
-                    vm.FocusProcessStep_ProcessSource.Load(fp.Settings.Target.ProcessSource);
-                    vm.FocusProcessStep_UsesProcessSource = fp.Settings.Target.ProcessSource.IsConfigured;
-                    break;
-
-                case ShowTextStep st:
-                    vm.SelectedType               = "ShowText";
-                    vm.ShowTextStep_IsTaskResult  = st.Settings.TextSource == ShowTextSource.TaskResult;
-                    vm.ShowTextStep_Text          = st.Settings.Text;
-                    vm.ShowTextStep_TextResult.Load(st.Settings.TextResult);
-                    vm.ShowTextStep_FontSize      = st.Settings.FontSize;
-                    vm.ShowTextStep_FontColorWpf  = HexToWpfColor(st.Settings.FontColor);
-                    vm.ShowTextStep_Opacity       = st.Settings.Opacity;
-                    vm.ShowTextStep_DesktopIndex  = st.Settings.DesktopIndex;
-                    vm.ShowTextStep_OffsetX       = st.Settings.OffsetX;
-                    vm.ShowTextStep_OffsetY       = st.Settings.OffsetY;
-                    vm.ShowTextStep_DurationMs    = st.Settings.DurationMs;
-                    vm.ShowTextStep_ClearOnJobEnd = st.Settings.ClearOnJobEnd;
-                    break;
-
-                case UserChoiceStep userChoice:
-                    vm.SelectedType = "UserChoice";
-                    vm.LoadUserChoice(userChoice.Settings);
-                    break;
-
-                case ActiveWindowStep aw:
-                    vm.SelectedType = "ActiveWindow";
-                    vm.ActiveWindowStep_ProcessName = aw.Settings.Target.ProcessName;
-                    vm.ActiveWindowStep_WindowTitleContains = aw.Settings.Target.WindowTitleContains;
-                    vm.ActiveWindowStep_CacheMs = aw.Settings.CacheMs;
-                    vm.ActiveWindowStep_ProcessSource.Load(aw.Settings.Target.ProcessSource);
-                    vm.ActiveWindowStep_UsesProcessSource = aw.Settings.Target.ProcessSource.IsConfigured;
-                    break;
-
-                case KeyPointMatchingStep km:
-                    vm.SelectedType = "KeyPointMatching";
-                    vm.KeyPointMatchingStep_TemplatePath        = km.Settings.TemplatePath;
-                    vm.KeyPointMatchingStep_MinMatchCount       = km.Settings.MinMatchCount;
-                    vm.KeyPointMatchingStep_LowesRatioThreshold = km.Settings.LowesRatioThreshold;
-                    vm.KeyPointMatchingStep_EnableROI           = km.Settings.EnableROI;
-                    vm.KeyPointMatchingStep_RoiX = km.Settings.ROI.X;
-                    vm.KeyPointMatchingStep_RoiY = km.Settings.ROI.Y;
-                    vm.KeyPointMatchingStep_RoiW = km.Settings.ROI.Width;
-                    vm.KeyPointMatchingStep_RoiH = km.Settings.ROI.Height;
-                    vm.KeyPointMatchingStep_ImageSource.Load(km.Settings.ImageSource);
-                    vm.DetectionDynamicRoiSource.Load(km.Settings.DynamicRoiSource);
-                    vm.UseDynamicRoi = km.Settings.DynamicRoiSource.IsConfigured;
-                    break;
-
-                case DynamicRoiStep dr:
-                    vm.SelectedType = "DynamicRoi";
-                    vm.DynamicRoiStep_BoundsSource.Load(dr.Settings.BoundsSource);
-                    vm.DynamicRoiStep_Padding = dr.Settings.Padding;
-                    vm.DynamicRoiStep_MinimumConfidence = dr.Settings.MinimumConfidence;
-                    vm.DynamicRoiStep_FullSearchInterval = dr.Settings.FullSearchInterval;
-                    vm.DynamicRoiStep_ResetAfterMisses = dr.Settings.ResetAfterMisses;
-                    break;
-
-                case TaskAutomation.Jobs.IfStep ifs:
-                    vm.SelectedType = "If";
-                    vm.LoadIfStepConditions(ifs.Settings);
-                    break;
-
-                case TaskAutomation.Jobs.ElseIfStep eifs:
-                    vm.SelectedType = "ElseIf";
-                    vm.LoadElseIfStepConditions(eifs.Settings);
-                    break;
-
-                case TaskAutomation.Jobs.ElseStep:
-                    vm.SelectedType = "Else";
-                    break;
-
-                case TaskAutomation.Jobs.EndIfStep:
-                    vm.SelectedType = "EndIf";
-                    break;
-
-                case WindowsStateQueryStep windowsState:
-                    vm.SelectedType = "WindowsStateQuery";
-                    vm.LoadWindowsStateQuery(windowsState.Settings);
-                    break;
-
-                case WindowsSettingChangeStep windowsSetting:
-                    vm.SelectedType = "WindowsSettingChange";
-                    vm.LoadWindowsSettingChange(windowsSetting.Settings);
-                    break;
-
-                case TaskAutomation.Jobs.EndJobStep endJob:
-                    vm.SelectedType = "EndJob";
-                    vm.EndJobStep_SkipEndSteps = endJob.Settings.SkipEndSteps;
-                    break;
-                case TaskAutomation.Jobs.ContinueJobStep:
-                    vm.SelectedType = "ContinueJob";
-                    break;
-
-                case TaskAutomation.Jobs.PointComparisonStep pcs:
-                    vm.SelectedType = "PointComparison";
-                    vm.PointComparisonStep_Mode             = pcs.Settings.Mode;
-                    vm.PointComparisonStep_MatchRequirement = pcs.Settings.MatchRequirement;
-                    vm.PointComparisonStep_RefSource        = pcs.Settings.OffsetSettings.ReferenceSource;
-                    vm.PointComparisonStep_RefX             = pcs.Settings.OffsetSettings.ReferenceX;
-                    vm.PointComparisonStep_RefY             = pcs.Settings.OffsetSettings.ReferenceY;
-                    vm.PointComparisonStep_ReferencePointsSource.Load(pcs.Settings.OffsetSettings.ReferencePointsSource);
-                    vm.PointComparisonStep_OffsetX          = pcs.Settings.OffsetSettings.OffsetX;
-                    vm.PointComparisonStep_OffsetY          = pcs.Settings.OffsetSettings.OffsetY;
-                    vm.PointComparisonStep_ExprCombineMode  = pcs.Settings.ExpressionSettings.CombineMode;
-                    vm.PointComparisonStep_Expressions.Clear();
-                    foreach (var expr in pcs.Settings.ExpressionSettings.Expressions)
-                    {
-                        var exprVm = new AxisExpressionViewModel(vm.PointComparisonStep_Expressions);
-                        exprVm.LoadFrom(expr);
-                        vm.PointComparisonStep_Expressions.Add(exprVm);
-                    }
-                    vm.PointComparisonStep_Points.Clear();
-                    foreach (var pt in pcs.Settings.Points)
-                    {
-                        var ptVm = new PointEntryViewModel(vm.PointComparisonStep_Points, vm.AvailableDetectionSteps);
-                        ptVm.LoadFrom(pt);
-                        vm.PointComparisonStep_Points.Add(ptVm);
-                    }
-                    break;
-            }
+            if (!vm.TryLoadGeneratedStep(s))
+                throw new InvalidOperationException($"No step definition registered for {s.GetType().Name}.");
         }
 
         // ---------- Move / Delete ----------
@@ -1484,26 +1127,6 @@ namespace DesktopAutomationApp.ViewModels
                 SelectedStep = step;
                 HasUnsavedChanges = true;
             });
-        }
-
-        private static System.Windows.Media.Color HexToWpfColor(string? hex)
-        {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(hex))
-                {
-                    var h = hex.TrimStart('#');
-                    if (h.Length == 6)
-                    {
-                        var r = Convert.ToByte(h.Substring(0, 2), 16);
-                        var g = Convert.ToByte(h.Substring(2, 2), 16);
-                        var b = Convert.ToByte(h.Substring(4, 2), 16);
-                        return System.Windows.Media.Color.FromRgb(r, g, b);
-                    }
-                }
-            }
-            catch { }
-            return System.Windows.Media.Colors.White;
         }
 
         private async Task MoveStepAsync(StepDragDrop.MoveRequest? request)
@@ -2147,7 +1770,7 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIdx);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog)
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 

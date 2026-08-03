@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TaskAutomation.Contracts\TaskAutomation.Contracts.csproj" />
     <ProjectReference Include="..\Common.JsonRepository\Common.JsonRepository.csproj" />
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />

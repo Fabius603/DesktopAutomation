@@ -1,3 +1,0 @@
-using System.Windows.Controls;
-namespace DesktopAutomationApp.Controls.Jobs.Editors.Analysis;
-public partial class PredictMovementStepEditor : UserControl { public PredictMovementStepEditor() => InitializeComponent(); }

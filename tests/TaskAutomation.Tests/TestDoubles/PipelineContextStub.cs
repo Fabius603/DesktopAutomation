@@ -1,4 +1,3 @@
-using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
 using ImageDetection.Algorithms.ColorDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
@@ -40,7 +39,6 @@ internal sealed class PipelineContextStub : IStepPipelineContext
     public ICameraCaptureService CameraCaptureService { get; init; } = new NoOpCameraCaptureService();
     public ISet<string> OpenedWindowNames { get; } = new HashSet<string>();
     public IList<Guid> ChildJobInstanceIds { get; } = new List<Guid>();
-    public ProcessDuplicator? ProcessDuplicator { get; set; }
     public TemplateMatching? TemplateMatcher { get; set; }
     public ColorDetector? ColorDetector { get; set; }
     public KeyPointMatcher? KeyPointMatcher { get; set; }

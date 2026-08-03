@@ -85,6 +85,7 @@ public static class StepInputContractRegistry
             Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
             Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(StartProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(ActiveWindowStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],

@@ -15,11 +15,11 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
     public DetectionOverlayRowViewModel(
         ObservableCollection<DetectionOverlayRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
+        StepInputDescriptor inputContract,
         ResultBinding? binding = null)
     {
         _owner = owner;
-        Source = new ResultBindingPickerViewModel(
-            sources, StepInputContractRegistry.Get(typeof(ShowImageStep), "detections")!, false);
+        Source = new ResultBindingPickerViewModel(sources, inputContract, false);
         Source.PropertyChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
         if (binding is not null) Source.Load(binding);
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
@@ -58,12 +58,12 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     public TextOverlayRowViewModel(
         ObservableCollection<TextOverlayRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
+        StepInputDescriptor inputContract,
         Action<TextOverlayRowViewModel>? chooseMonitor,
         TextResultOverlaySettings? settings = null)
     {
         _owner = owner;
-        Source = new ResultBindingPickerViewModel(
-            sources, StepInputContractRegistry.Get(typeof(ShowImageStep), "text")!, false);
+        Source = new ResultBindingPickerViewModel(sources, inputContract, false);
         Source.PropertyChanged += (_, _) => OnChange(nameof(Source));
         if (settings is not null)
         {

@@ -9,13 +9,13 @@ public sealed class UserChoiceEditorBindingTests
     public void TextInputs_WriteChangesBackImmediately()
     {
         var document = XDocument.Load(Path.Combine(
-            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Flow",
-            "UserChoiceStepEditor.xaml"));
+            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedStepEditor.xaml"));
         XNamespace emoji = "clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf";
 
         var textInputs = document.Descendants(emoji + "RichTextBox").ToList();
 
-        Assert.Equal(4, textInputs.Count);
+        Assert.Equal(3, textInputs.Count);
         Assert.All(textInputs, input =>
         {
             var binding = input.Attribute("Text")?.Value;

@@ -20,7 +20,6 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
     [JsonDerivedType(typeof(ColorDetectionStep), "color_detection")]
     [JsonDerivedType(typeof(PredictMovementStep), "predict_movement")]
-    [JsonDerivedType(typeof(ProcessDuplicationStep), "process_duplication")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
     [JsonDerivedType(typeof(CameraCaptureStep), "camera_capture")]
     [JsonDerivedType(typeof(FileSystemOperationStep), "file_system_operation")]
@@ -374,19 +373,6 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("retry_delay_ms")]
         public int RetryDelayMs { get; set; } = 100;
-    }
-
-    // ---- ProcessDuplication ----
-    public sealed class ProcessDuplicationStep : JobStep
-    {
-        [JsonPropertyName("settings")]
-        public ProcessDuplicationSettings Settings { get; set; } = new();
-    }
-
-    public sealed class ProcessDuplicationSettings
-    {
-        [JsonPropertyName("process_name")]
-        public string ProcessName { get; set; } = string.Empty;
     }
 
     // ---- ShowImage ----

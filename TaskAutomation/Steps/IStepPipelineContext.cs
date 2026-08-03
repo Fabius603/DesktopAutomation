@@ -1,4 +1,3 @@
-using ImageCapture.ProcessDuplication;
 using ImageCapture.Video;
 using ImageDetection.Algorithms.ColorDetection;
 using ImageDetection.Algorithms.KeyPointMatching;
@@ -96,7 +95,6 @@ namespace TaskAutomation.Steps
         /// </summary>
         IList<Guid> ChildJobInstanceIds { get; }
 
-        ProcessDuplicator?   ProcessDuplicator  { get; set; }
         TemplateMatching?    TemplateMatcher    { get; set; }
         ColorDetector?       ColorDetector      { get; set; }
         KeyPointMatcher?     KeyPointMatcher    { get; set; }

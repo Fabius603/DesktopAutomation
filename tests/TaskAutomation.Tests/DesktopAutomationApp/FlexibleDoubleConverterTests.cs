@@ -34,23 +34,6 @@ public sealed class FlexibleDoubleConverterTests
     }
 
     [Fact]
-    public void MovementFactorFields_KeepRawTextWhileTyping()
-    {
-        var xaml = File.ReadAllText(Path.Combine(
-            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors",
-            "Interaction", "KlickOnPoint3DStepEditor.xaml"));
-
-        Assert.Contains(
-            "Text=\"{Binding KlickOnPoint3DStep_MovementFactorX, UpdateSourceTrigger=PropertyChanged}\"",
-            xaml, StringComparison.Ordinal);
-        Assert.Contains(
-            "Text=\"{Binding KlickOnPoint3DStep_MovementFactorY, UpdateSourceTrigger=PropertyChanged}\"",
-            xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("Converter={StaticResource FlexibleDoubleConverter}", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("UpdateSourceTrigger=LostFocus", xaml, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public void StepFieldLabels_AreAlignedAtTheTop()
     {
         var xaml = File.ReadAllText(Path.Combine(

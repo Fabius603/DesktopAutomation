@@ -28,6 +28,7 @@
         <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Common.Ellipsis}"
                 Width="32" Height="28" Margin="6,0,0,0"
                 VerticalAlignment="Top"
-                Command="{Binding BrowseCommand, ElementName=Root}"/>
+                Command="{Binding BrowseCommand, ElementName=Root}"
+                CommandParameter="{Binding BrowseCommandParameter, ElementName=Root}"/>
     </Grid>
 </UserControl>

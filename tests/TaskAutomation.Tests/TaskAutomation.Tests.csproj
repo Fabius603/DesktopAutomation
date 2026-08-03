@@ -19,6 +19,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\TaskAutomation.Contracts\TaskAutomation.Contracts.csproj" />
     <ProjectReference Include="..\..\TaskAutomation\TaskAutomation.csproj" />
     <ProjectReference Include="..\..\DesktopOverlay\DesktopOverlay.csproj" />
     <ProjectReference Include="..\..\DesktopAutomation.Application\DesktopAutomation.Application.csproj" />

@@ -13,6 +13,7 @@ using TaskAutomation.Hotkeys;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Makros;
 using TaskAutomation.Steps;
+using TaskAutomation.Steps.Definitions;
 using TaskAutomation.Automations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -117,6 +118,7 @@ namespace DesktopAutomationApp
                     services.AddJsonRepository<AutomationDefinition>(AppPaths.AutomationConfigDirectory, options, a => a.Id.ToString());
 
                     services.AddSingleton<IJobExecutor, JobExecutor>();
+                    services.AddSingleton<IStepDefinitionCatalog>(_ => BuiltInStepDefinitions.Instance);
                     services.AddSingleton<IPreciseDelayService, WindowsPreciseDelayService>();
                     services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
                     services.AddSingleton<ICameraCaptureService, CameraCaptureService>();

@@ -507,6 +507,12 @@
   <data name="Ui.Step.Settings.WindowName" xml:space="preserve">
     <value>Window name</value>
   </data>
+  <data name="Ui.Step.Settings.Overlays" xml:space="preserve">
+    <value>Overlays</value>
+  </data>
+  <data name="Ui.Step.Generated.OverlaySummary" xml:space="preserve">
+    <value>{0} detection(s), {1} text item(s)</value>
+  </data>
   <data name="Ui.Step.Settings.ImageSource" xml:space="preserve">
     <value>Image source</value>
   </data>
@@ -549,6 +555,18 @@
   <data name="Ui.Step.Settings.MovementFactor" xml:space="preserve">
     <value>Movement factors</value>
   </data>
+  <data name="Ui.Step.Settings.MovementFactorX" xml:space="preserve">
+    <value>Movement factor X</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementFactorY" xml:space="preserve">
+    <value>Movement factor Y</value>
+  </data>
+  <data name="Ui.Step.Generated.ScreenPoint" xml:space="preserve">
+    <value>Monitor {0}: X {1}, Y {2}</value>
+  </data>
+  <data name="Ui.Step.Generated.PointCount" xml:space="preserve">
+    <value>{0} points</value>
+  </data>
   <data name="Ui.Step.Settings.MovementFactorHelp" xml:space="preserve">
     <value>Multiply the respective X and Y pixel deltas before the relative mouse movement (0.01 to 100).</value>
   </data>
@@ -560,6 +578,30 @@
   </data>
   <data name="Ui.Step.Settings.WaitTimeMs" xml:space="preserve">
     <value>Wait time (ms)</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Required" xml:space="preserve">
+    <value>“{0}” is required.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Integer" xml:space="preserve">
+    <value>“{0}” must be a whole number.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Boolean" xml:space="preserve">
+    <value>“{0}” must be enabled or disabled.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Number" xml:space="preserve">
+    <value>“{0}” must be a valid number.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Minimum" xml:space="preserve">
+    <value>“{0}” must be at least {1}.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Maximum" xml:space="preserve">
+    <value>“{0}” must be at most {1}.</value>
+  </data>
+  <data name="Ui.Step.Generated.Validation.Invalid" xml:space="preserve">
+    <value>The step settings are invalid.</value>
+  </data>
+  <data name="Ui.Step.Generated.DurationMilliseconds" xml:space="preserve">
+    <value>{0} ms</value>
   </data>
   <data name="Ui.Step.Settings.ProcessNamePlaceholder" xml:space="preserve">
     <value>e.g. notepad or notepad.exe</value>
@@ -1635,6 +1677,9 @@ Error code: {3}</value>
   <data name="Step.Description.StartProcess" xml:space="preserve">
     <value>Starts a program or terminates running processes by name and optional window title.</value>
   </data>
+  <data name="Step.Description.TerminateProcess" xml:space="preserve">
+    <value>Terminates running processes by process reference or name and optional window title.</value>
+  </data>
   <data name="Step.Description.FocusProcess" xml:space="preserve">
     <value>Brings a process window to the foreground or minimizes it. Optionally filters by window title.</value>
   </data>
@@ -1664,6 +1709,12 @@ Error code: {3}</value>
   </data>
   <data name="Step.Description.If" xml:space="preserve">
     <value>Starts a conditional block.</value>
+  </data>
+  <data name="Step.Description.ElseIf" xml:space="preserve">
+    <value>Adds another condition to a conditional block.</value>
+  </data>
+  <data name="Ui.Step.Generated.ConditionSummary" xml:space="preserve">
+    <value>{0} condition(s) · {1}</value>
   </data>
   <data name="Error.Title" xml:space="preserve">
     <value>Error</value>
@@ -2002,8 +2053,23 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.WindowTitle" xml:space="preserve"><value>Window title: </value></data>
   <data name="Enum.StartProcessAction.Start" xml:space="preserve"><value>Start</value></data>
   <data name="Enum.StartProcessAction.Terminate" xml:space="preserve"><value>Terminate</value></data>
+  <data name="Enum.StartProcessWindowMode.ApplicationDefault" xml:space="preserve"><value>Application default</value></data>
+  <data name="Enum.StartProcessWindowMode.Normal" xml:space="preserve"><value>Windowed</value></data>
+  <data name="Enum.StartProcessWindowMode.Maximized" xml:space="preserve"><value>Maximized</value></data>
+  <data name="Enum.StartProcessPlacementMode.Centered" xml:space="preserve"><value>Centered</value></data>
+  <data name="Enum.StartProcessPlacementMode.Custom" xml:space="preserve"><value>Custom</value></data>
+  <data name="Enum.PredictionModel.Automatic" xml:space="preserve"><value>Automatic</value></data>
+  <data name="Enum.PredictionModel.Linear" xml:space="preserve"><value>Linear</value></data>
+  <data name="Enum.PredictionModel.Acceleration" xml:space="preserve"><value>Acceleration</value></data>
+  <data name="Enum.PredictionModel.Kalman" xml:space="preserve"><value>Kalman</value></data>
+  <data name="Enum.MouseClickType.Left" xml:space="preserve"><value>Left</value></data>
+  <data name="Enum.MouseClickType.Right" xml:space="preserve"><value>Right</value></data>
+  <data name="Enum.MouseClickType.Middle" xml:space="preserve"><value>Middle</value></data>
+  <data name="Enum.MouseClickType.None" xml:space="preserve"><value>Move only</value></data>
   <data name="Enum.FocusProcessAction.BringToFront" xml:space="preserve"><value>Bring to foreground</value></data>
   <data name="Enum.FocusProcessAction.Minimize" xml:space="preserve"><value>Minimize</value></data>
+  <data name="Enum.FocusProcessWindowMode.Normal" xml:space="preserve"><value>Normal</value></data>
+  <data name="Enum.FocusProcessWindowMode.Maximized" xml:space="preserve"><value>Maximized</value></data>
   <data name="Ui.Job.Steps.Section.Start" xml:space="preserve"><value>On start</value></data>
   <data name="Ui.Job.Steps.Section.Run" xml:space="preserve"><value>On every iteration</value></data>
   <data name="Ui.Job.Steps.Section.End" xml:space="preserve"><value>On shutdown</value></data>
@@ -2687,6 +2753,7 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.TextOverlayCount" xml:space="preserve"><value>Text results: </value></data>
   <data name="Step.Type.WindowsSettingChange" xml:space="preserve"><value>Change Windows setting</value></data>
   <data name="Step.Description.WindowsSettingChange" xml:space="preserve"><value>Changes a selected Windows setting and returns the previous and applied values.</value></data>
+  <data name="Step.Description.WindowsStateQuery" xml:space="preserve"><value>Queries a current Windows state and makes the result available to subsequent steps.</value></data>
   <data name="Ui.Windows.Setting" xml:space="preserve"><value>Windows setting</value></data>
   <data name="Ui.Windows.SettingChange.Title" xml:space="preserve"><value>Change Windows setting</value></data>
   <data name="Ui.Windows.SettingChange.Description" xml:space="preserve"><value>The change affects the current Windows user or the entire system. Unavailable devices and changes rejected by Windows are returned as error results.</value></data>
@@ -2806,4 +2873,13 @@ Error code: {3}</value>
   <data name="Ui.Library.MacroSubtitle" xml:space="preserve"><value>{0} commands</value></data>
   <data name="Ui.Library.AutomationSubtitle" xml:space="preserve"><value>{0} · Action: {2} · {1}</value></data>
   <data name="Ui.Library.Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="Ui.Step.Settings.MultiplePoints" xml:space="preserve"><value>Multiple matches</value></data>
+  <data name="Enum.TemplateMatchMode.SqDiff" xml:space="preserve"><value>Squared difference</value></data>
+  <data name="Enum.TemplateMatchMode.CCorr" xml:space="preserve"><value>Correlation</value></data>
+  <data name="Enum.TemplateMatchMode.CCoeff" xml:space="preserve"><value>Correlation coefficient</value></data>
+  <data name="Enum.TemplateMatchMode.SqDiffNormed" xml:space="preserve"><value>Squared difference (normalized)</value></data>
+  <data name="Enum.TemplateMatchMode.CCorrNormed" xml:space="preserve"><value>Correlation (normalized)</value></data>
+  <data name="Enum.TemplateMatchMode.CCoeffNormed" xml:space="preserve"><value>Correlation coefficient (normalized)</value></data>
+  <data name="Ui.Step.Generated.RoiStatic" xml:space="preserve"><value>Static: X {0} · Y {1} · {2} × {3} px</value></data>
+  <data name="Ui.Step.Generated.RoiDynamic" xml:space="preserve"><value>Dynamic: {0}</value></data>
 </root>

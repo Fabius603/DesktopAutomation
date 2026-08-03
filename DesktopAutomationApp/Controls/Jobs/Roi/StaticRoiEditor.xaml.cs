@@ -16,6 +16,8 @@ public partial class StaticRoiEditor : UserControl
     public static readonly DependencyProperty RoiHeightProperty = RegisterInt(nameof(RoiHeight));
     public static readonly DependencyProperty CaptureCommandProperty = DependencyProperty.Register(
         nameof(CaptureCommand), typeof(ICommand), typeof(StaticRoiEditor));
+    public static readonly DependencyProperty CaptureCommandParameterProperty = DependencyProperty.Register(
+        nameof(CaptureCommandParameter), typeof(object), typeof(StaticRoiEditor));
 
     public bool IsRoiEnabled { get => (bool)GetValue(IsRoiEnabledProperty); set => SetValue(IsRoiEnabledProperty, value); }
     public int X { get => (int)GetValue(XProperty); set => SetValue(XProperty, value); }
@@ -23,6 +25,7 @@ public partial class StaticRoiEditor : UserControl
     public int RoiWidth { get => (int)GetValue(RoiWidthProperty); set => SetValue(RoiWidthProperty, value); }
     public int RoiHeight { get => (int)GetValue(RoiHeightProperty); set => SetValue(RoiHeightProperty, value); }
     public ICommand? CaptureCommand { get => (ICommand?)GetValue(CaptureCommandProperty); set => SetValue(CaptureCommandProperty, value); }
+    public object? CaptureCommandParameter { get => GetValue(CaptureCommandParameterProperty); set => SetValue(CaptureCommandParameterProperty, value); }
 
     private static DependencyProperty RegisterInt(string name) => DependencyProperty.Register(
         name, typeof(int), typeof(StaticRoiEditor), new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));

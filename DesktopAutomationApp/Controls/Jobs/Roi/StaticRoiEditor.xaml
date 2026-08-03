@@ -19,7 +19,8 @@
             <DockPanel Margin="0,0,0,10">
                 <Button DockPanel.Dock="Right" Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
                         Style="{StaticResource ButtonSecondary}" Padding="10,4"
-                        Command="{Binding CaptureCommand, ElementName=Root}"/>
+                        Command="{Binding CaptureCommand, ElementName=Root}"
+                        CommandParameter="{Binding CaptureCommandParameter, ElementName=Root}"/>
                 <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.EnableROI}" FontWeight="SemiBold"
                           VerticalAlignment="Center" IsChecked="{Binding IsRoiEnabled, ElementName=Root}"/>
             </DockPanel>

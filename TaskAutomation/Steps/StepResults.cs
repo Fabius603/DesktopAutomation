@@ -139,18 +139,6 @@ public sealed record FileSystemOperationResult : StepResultBase
     public static readonly FileSystemOperationResult Default = new();
 }
 
-public sealed record ProcessDuplicationResult : StepResultBase, ICaptureStepResult
-{
-    public Bitmap? Image { get; init; }
-    public Rectangle Bounds { get; init; }
-    public Point Offset { get; init; }
-    public bool IsFresh { get; init; } = true;
-    public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-    [ResultProperty("has_image")]
-    public bool HasImage => Image is not null;
-    public static readonly ProcessDuplicationResult Default = new();
-}
-
 public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResult
 {
     public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }

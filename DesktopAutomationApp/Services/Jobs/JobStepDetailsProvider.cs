@@ -1,11 +1,17 @@
 using System.Collections;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DesktopAutomationApp.Converters;
 using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
+using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Steps.Definitions;
+using TaskAutomation.WindowsIntegration;
 
 namespace DesktopAutomationApp.Services.Jobs;
 
@@ -96,49 +102,44 @@ public sealed class JobStepDetailsProvider
             ["WindowTitleContains"] = "Ui.Step.Settings.WindowTitleContains"
         };
 
+    public string GetSummary(JobStep step, IEnumerable? steps)
+    {
+        if (!BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
+            return string.Empty;
+
+        var draft = definition.CreateDraft(step);
+        var fields = definition.Descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
+        var values = new List<string>();
+        foreach (var item in definition.Descriptor.Presentation.SummaryItems
+                     .OrderByDescending(item => item.Priority))
+        {
+            if (!fields.TryGetValue(item.FieldId, out var field)
+                || !draft.Values.TryGetValue(item.FieldId, out var value)
+                || value is null
+                || !IsDefinitionFieldVisible(field, draft)
+                || item.HideWhenEmpty && IsSummaryValueEmpty(field, value))
+                continue;
+
+            var formatted = FormatSummaryValue(item, field, value, steps);
+            if (item.HideWhenEmpty && string.IsNullOrWhiteSpace(formatted))
+                continue;
+            values.Add(string.IsNullOrWhiteSpace(item.LabelKey)
+                ? formatted
+                : $"{Loc.Get(item.LabelKey)}: {formatted}");
+        }
+        return string.Join(" · ", values);
+    }
+
     public JobStepDetails GetDetails(JobStep step, IEnumerable? steps)
     {
         var items = new List<(string Group, StepDetailItem Item)>();
         var settings = step.GetType().GetProperty("Settings")?.GetValue(step);
-        if (step is WindowsStateQueryStep windowsState)
+        if (BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
         {
-            var capability = new TaskAutomation.WindowsIntegration.WindowsCapabilityCatalog().Find(windowsState.Settings.QueryType);
-            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Capability"),
-                capability is null ? windowsState.Settings.QueryType : WindowsCapabilityLocalization.DisplayName(capability))));
-            foreach (var parameter in capability?.Parameters ?? [])
-                if (windowsState.Settings.Parameters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value))
-                    items.Add(("general", new StepDetailItem(WindowsCapabilityLocalization.ParameterName(parameter), value)));
-        }
-        else if (step is WindowsSettingChangeStep windowsSetting)
-        {
-            var capability = new TaskAutomation.WindowsIntegration.WindowsCapabilityCatalog()
-                .Find(windowsSetting.Settings.SettingId);
-            items.Add(("general", new StepDetailItem(Loc.Get("Ui.Windows.Setting"),
-                capability is null
-                    ? windowsSetting.Settings.SettingId
-                    : WindowsCapabilityLocalization.DisplayName(capability))));
-            foreach (var parameter in capability?.Parameters ?? [])
-                if (windowsSetting.Settings.Parameters.TryGetValue(parameter.Name, out var value)
-                    && !string.IsNullOrWhiteSpace(value))
-                    items.Add(("general", new StepDetailItem(
-                        WindowsCapabilityLocalization.ParameterName(parameter), value)));
+            AddDefinitionDetails(definition, step, items, steps);
         }
         else if (settings is IfConditionSettings conditions)
             AddConditions(conditions, items, steps);
-        else if (settings is PointComparisonSettings comparison)
-            AddPointComparison(comparison, items, steps);
-        else if (settings is UserChoiceSettings choice)
-        {
-            items.Add(("general", new StepDetailItem(Loc.Get("Ui.UserChoice.Question"), choice.Question)));
-            if (!string.IsNullOrWhiteSpace(choice.Description))
-                items.Add(("general", new StepDetailItem(Loc.Get("Ui.UserChoice.Description"), choice.Description)));
-            items.Add(("general", new StepDetailItem(
-                Loc.Get("Ui.Step.Settings.DesktopIndex"),
-                choice.DesktopIndex.ToString(CultureInfo.CurrentCulture))));
-            items.Add(("general", new StepDetailItem(
-                Loc.Get("Ui.UserChoice.Answers"),
-                string.Join(", ", choice.Options.Select(option => option.Label)))));
-        }
         else if (settings is not null)
             AddProperties(settings, string.Empty, items, steps, 0);
 
@@ -148,6 +149,378 @@ public sealed class JobStepDetailsProvider
             .Select(group => new StepDetailGroup(GroupTitle(group.Key), group.Select(item => item.Item).ToArray()))
             .ToArray();
         return new JobStepDetails(groups, CreateResultDetails(step));
+    }
+
+    private static void AddDefinitionDetails(
+        IStepDefinition definition,
+        JobStep step,
+        List<(string Group, StepDetailItem Item)> target,
+        IEnumerable? steps)
+    {
+        var draft = definition.CreateDraft(step);
+        var fields = definition.Descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
+        foreach (var fieldId in definition.Descriptor.Presentation.DetailFieldIds)
+        {
+            if (!fields.TryGetValue(fieldId, out var field)
+                || !draft.Values.TryGetValue(fieldId, out var value)
+                || value is null
+                || !IsDefinitionFieldVisible(field, draft))
+                continue;
+            if (string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal))
+            {
+                try
+                {
+                    var settings = value.Deserialize<IfConditionSettings>();
+                    if (settings is not null) AddConditions(settings, target, steps);
+                }
+                catch (JsonException) { }
+                continue;
+            }
+            if (string.Equals(field.EditorHint, StepEditorHints.WindowsCapabilityPicker, StringComparison.Ordinal))
+            {
+                AddWindowsCapabilityDetails(value, target);
+                continue;
+            }
+            target.Add(("general", new StepDetailItem(
+                Loc.Get(field.LabelKey),
+                FormatDefinitionValue(field, value, steps))));
+        }
+    }
+
+    private static bool IsDefinitionFieldVisible(StepFieldDescriptor field, StepDraft draft)
+    {
+        if (field.VisibleWhen is { } rule && !VisibilityRuleMatches(rule, draft))
+            return false;
+        return field.VisibleWhenAll is not { Count: > 0 } rules
+            || rules.All(candidate => VisibilityRuleMatches(candidate, draft));
+    }
+
+    private static bool VisibilityRuleMatches(StepVisibilityRule rule, StepDraft draft)
+    {
+        if (!draft.Values.TryGetValue(rule.FieldId, out var actual)) return false;
+        return rule.AnyOfValues is { Count: > 0 }
+            ? rule.AnyOfValues.Any(expected => DefinitionValuesEqual(actual, expected))
+            : DefinitionValuesEqual(actual, rule.EqualsValue);
+    }
+
+    private static bool DefinitionValuesEqual(
+        System.Text.Json.Nodes.JsonNode? actual,
+        System.Text.Json.Nodes.JsonNode? expected) =>
+        string.Equals(actual?.ToJsonString(), expected?.ToJsonString(), StringComparison.OrdinalIgnoreCase);
+
+    private static string FormatDefinitionValue(
+        StepFieldDescriptor field,
+        System.Text.Json.Nodes.JsonNode value,
+        IEnumerable? steps)
+    {
+        if (string.Equals(field.EditorHint, StepEditorHints.CameraPicker, StringComparison.Ordinal))
+            return FormatCameraSelection(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.VisualOverlay, StringComparison.Ordinal))
+            return FormatVisualOverlay(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.RoiPicker, StringComparison.Ordinal))
+            return FormatRoi(value, steps);
+        if (string.Equals(field.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
+            return FormatYoloSelection(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal))
+            return FormatConditionSelection(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.WindowsCapabilityPicker, StringComparison.Ordinal))
+            return FormatWindowsCapabilitySelection(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.ScreenPointPicker, StringComparison.Ordinal))
+            return FormatScreenPoint(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.UserChoiceOptions, StringComparison.Ordinal))
+            return FormatUserChoiceOptions(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.PointEntryList, StringComparison.Ordinal))
+            return FormatPointEntries(value);
+        if (string.Equals(field.EditorHint, StepEditorHints.AxisExpressionList, StringComparison.Ordinal))
+            return FormatAxisExpressions(value);
+        try
+        {
+            return field.ValueKind switch
+            {
+                StepValueKind.Duration => Loc.Format(
+                    "Ui.Step.Generated.DurationMilliseconds",
+                    value.GetValue<int>()),
+                StepValueKind.Integer => value.GetValue<int>().ToString(CultureInfo.CurrentCulture),
+                StepValueKind.Number => value.GetValue<decimal>().ToString(CultureInfo.CurrentCulture),
+                StepValueKind.Boolean => value.GetValue<bool>()
+                    ? Loc.Get("Ui.Common.Yes")
+                    : Loc.Get("Ui.Common.No"),
+                StepValueKind.Enum => FormatDefinitionOption(field, value.GetValue<string>()),
+                StepValueKind.ResultBinding => FormatDefinitionBinding(value, steps),
+                StepValueKind.Object => FormatDefinitionObject(value, steps),
+                _ => value.GetValue<string>()
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            return value.ToJsonString();
+        }
+    }
+
+    private static string FormatScreenPoint(JsonNode value)
+    {
+        try
+        {
+            var point = value.Deserialize<StepScreenPointSelectionValue>();
+            return point is null ? value.ToJsonString() : Loc.Format(
+                "Ui.Step.Generated.ScreenPoint", point.MonitorIndex + 1, point.X, point.Y);
+        }
+        catch (JsonException) { return value.ToJsonString(); }
+    }
+
+    private static string FormatUserChoiceOptions(JsonNode value)
+    {
+        try
+        {
+            return string.Join(", ", value.Deserialize<List<StepUserChoiceOptionValue>>()?
+                .Select(option => option.Label).Where(label => !string.IsNullOrWhiteSpace(label)) ?? []);
+        }
+        catch (JsonException) { return value.ToJsonString(); }
+    }
+
+    private static string FormatPointEntries(JsonNode value)
+    {
+        try
+        {
+            var points = value.Deserialize<List<StepPointEntryValue>>() ?? [];
+            return Loc.Format("Ui.Step.Generated.PointCount", points.Count);
+        }
+        catch (JsonException) { return value.ToJsonString(); }
+    }
+
+    private static string FormatAxisExpressions(JsonNode value)
+    {
+        try
+        {
+            return string.Join(", ", value.Deserialize<List<StepAxisExpressionValue>>()?
+                .Select(expression => $"{expression.Axis} {expression.Operator} {expression.Value.ToString(CultureInfo.CurrentCulture)}") ?? []);
+        }
+        catch (JsonException) { return value.ToJsonString(); }
+    }
+
+    private static string FormatSummaryValue(
+        StepSummaryItemDescriptor item,
+        StepFieldDescriptor field,
+        System.Text.Json.Nodes.JsonNode value,
+        IEnumerable? steps)
+    {
+        var formatted = FormatDefinitionValue(field, value, steps);
+        return item.Format switch
+        {
+            StepSummaryValueFormat.ShortText when formatted.Length > 80 => formatted[..77] + "...",
+            StepSummaryValueFormat.FileName => Path.GetFileName(formatted.TrimEnd(Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar)),
+            StepSummaryValueFormat.DurationMilliseconds when value is System.Text.Json.Nodes.JsonValue =>
+                Loc.Format("Ui.Step.Generated.DurationMilliseconds", value.GetValue<int>()),
+            StepSummaryValueFormat.BooleanBadge when value is System.Text.Json.Nodes.JsonValue =>
+                value.GetValue<bool>() ? Loc.Get("Ui.Common.Yes") : Loc.Get("Ui.Common.No"),
+            _ => formatted
+        };
+    }
+
+    private static bool IsSummaryValueEmpty(
+        StepFieldDescriptor field,
+        System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            if (field.ValueKind is StepValueKind.Text or StepValueKind.MultilineText
+                or StepValueKind.FilePath or StepValueKind.DirectoryPath)
+                return string.IsNullOrWhiteSpace(value.GetValue<string>());
+            if (field.ValueKind == StepValueKind.ResultBinding)
+                return value.Deserialize<ResultBinding>()?.IsConfigured != true;
+            if (string.Equals(field.EditorHint, StepEditorHints.CameraPicker, StringComparison.Ordinal))
+            {
+                var camera = value.Deserialize<StepCameraSelectionValue>();
+                return string.IsNullOrWhiteSpace(camera?.CameraId);
+            }
+            if (field.ValueKind == StepValueKind.Object)
+            {
+                var reference = value.Deserialize<StepReferenceValue>();
+                if (reference is not null)
+                    return string.IsNullOrWhiteSpace(reference.Id) && string.IsNullOrWhiteSpace(reference.Name);
+            }
+        }
+        catch (JsonException) { }
+        catch (InvalidOperationException) { }
+        return false;
+    }
+
+    private static string FormatCameraSelection(System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            var camera = value.Deserialize<StepCameraSelectionValue>();
+            if (camera is null) return "–";
+            var name = string.IsNullOrWhiteSpace(camera.CameraName) ? camera.CameraId : camera.CameraName;
+            var quality = camera.QualityMode switch
+            {
+                nameof(CameraQualityMode.Automatic) => Loc.Get("Ui.Step.Camera.QualityAutomatic"),
+                nameof(CameraQualityMode.HighestAvailable) => Loc.Get("Ui.Step.Camera.QualityHighest"),
+                nameof(CameraQualityMode.Specific) =>
+                    $"{camera.Width} × {camera.Height} · {camera.FramesPerSecond:0.##} FPS · {camera.PixelFormat}",
+                _ => camera.QualityMode
+            };
+            return $"{name} · {quality}";
+        }
+        catch (JsonException)
+        {
+            return "–";
+        }
+        catch (InvalidOperationException)
+        {
+            return "–";
+        }
+    }
+
+    private static string FormatVisualOverlay(System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            var overlay = value.Deserialize<VisualOverlaySettings>();
+            return overlay is null
+                ? "–"
+                : Loc.Format(
+                    "Ui.Step.Generated.OverlaySummary",
+                    overlay.DetectionResults.Count,
+                    overlay.TextResults.Count);
+        }
+        catch (JsonException) { return "–"; }
+        catch (InvalidOperationException) { return "–"; }
+    }
+
+    private static string FormatDefinitionOption(StepFieldDescriptor field, string value)
+    {
+        var option = field.Options?.FirstOrDefault(candidate =>
+            string.Equals(candidate.Value, value, StringComparison.OrdinalIgnoreCase));
+        return option is null ? value : Loc.Get(option.LabelKey);
+    }
+
+    private static string FormatDefinitionBinding(
+        System.Text.Json.Nodes.JsonNode value,
+        IEnumerable? steps)
+    {
+        try { return FormatBinding(value.Deserialize<ResultBinding>() ?? new ResultBinding(), steps); }
+        catch (System.Text.Json.JsonException) { return value.ToJsonString(); }
+    }
+
+    private static string FormatDefinitionObject(
+        System.Text.Json.Nodes.JsonNode value,
+        IEnumerable? steps)
+    {
+        try
+        {
+            var reference = value.Deserialize<StepReferenceValue>();
+            if (reference is not null && !string.IsNullOrWhiteSpace(reference.Name))
+                return reference.Name;
+        }
+        catch (System.Text.Json.JsonException) { }
+        try
+        {
+            var selector = value.Deserialize<StepProcessSelectorValue>();
+            var binding = selector?.ProcessSource?.Deserialize<ResultBinding>();
+            if (binding?.IsConfigured == true)
+                return FormatBinding(binding, steps);
+            if (!string.IsNullOrWhiteSpace(selector?.ProcessName))
+                return selector.ProcessName;
+            if (!string.IsNullOrWhiteSpace(selector?.ExecutablePath))
+                return selector.ExecutablePath;
+        }
+        catch (System.Text.Json.JsonException) { }
+        return value.ToJsonString();
+    }
+
+    private static string FormatRoi(System.Text.Json.Nodes.JsonNode value, IEnumerable? steps)
+    {
+        try
+        {
+            var roi = value.Deserialize<StepRoiSelectionValue>();
+            if (roi is null) return "–";
+            var staticValue = roi.Enabled
+                ? Loc.Format("Ui.Step.Generated.RoiStatic", roi.X, roi.Y, roi.Width, roi.Height)
+                : string.Empty;
+            var dynamicBinding = roi.DynamicSource?.Deserialize<ResultBinding>();
+            var dynamicValue = dynamicBinding?.IsConfigured == true
+                ? Loc.Format("Ui.Step.Generated.RoiDynamic", FormatBinding(dynamicBinding, steps))
+                : string.Empty;
+            if (staticValue.Length > 0 && dynamicValue.Length > 0)
+                return $"{staticValue} · {dynamicValue}";
+            return staticValue.Length > 0 ? staticValue : dynamicValue.Length > 0 ? dynamicValue : "–";
+        }
+        catch (System.Text.Json.JsonException) { return "–"; }
+        catch (InvalidOperationException) { return "–"; }
+    }
+
+    private static string FormatYoloSelection(System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            var selection = value.Deserialize<StepYoloSelectionValue>();
+            if (selection is null) return "–";
+            if (string.IsNullOrWhiteSpace(selection.Model)) return selection.ClassName;
+            return string.IsNullOrWhiteSpace(selection.ClassName)
+                ? selection.Model
+                : $"{selection.Model} · {selection.ClassName}";
+        }
+        catch (System.Text.Json.JsonException) { return "–"; }
+        catch (InvalidOperationException) { return "–"; }
+    }
+
+    private static string FormatConditionSelection(System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            var settings = value.Deserialize<IfConditionSettings>();
+            if (settings is null) return string.Empty;
+            var matchMode = settings.MatchMode == ConditionMatchMode.Any
+                ? Loc.Get("Ui.Step.Settings.OneOR")
+                : Loc.Get("Ui.Step.Settings.AllAND");
+            return Loc.Format("Ui.Step.Generated.ConditionSummary", settings.Conditions.Count, matchMode);
+        }
+        catch (JsonException) { return string.Empty; }
+        catch (InvalidOperationException) { return string.Empty; }
+    }
+
+    private static string FormatWindowsCapabilitySelection(System.Text.Json.Nodes.JsonNode value)
+    {
+        try
+        {
+            var selection = value.Deserialize<StepWindowsCapabilitySelectionValue>();
+            if (selection is null) return string.Empty;
+            var capability = new WindowsCapabilityCatalog().Find(selection.CapabilityId);
+            return capability is null
+                ? selection.CapabilityId
+                : WindowsCapabilityLocalization.DisplayName(capability);
+        }
+        catch (JsonException) { return string.Empty; }
+        catch (InvalidOperationException) { return string.Empty; }
+    }
+
+    private static void AddWindowsCapabilityDetails(
+        System.Text.Json.Nodes.JsonNode value,
+        List<(string Group, StepDetailItem Item)> target)
+    {
+        try
+        {
+            var selection = value.Deserialize<StepWindowsCapabilitySelectionValue>();
+            if (selection is null) return;
+            var capability = new WindowsCapabilityCatalog().Find(selection.CapabilityId);
+            target.Add(("general", new StepDetailItem(
+                Loc.Get("Ui.Windows.Capability"),
+                capability is null
+                    ? selection.CapabilityId
+                    : WindowsCapabilityLocalization.DisplayName(capability))));
+            foreach (var parameter in capability?.Parameters ?? [])
+            {
+                var parameterValue = selection.Parameters.FirstOrDefault(candidate =>
+                    candidate.Key.Equals(parameter.Name, StringComparison.OrdinalIgnoreCase)).Value;
+                if (!string.IsNullOrWhiteSpace(parameterValue))
+                    target.Add(("general", new StepDetailItem(
+                        WindowsCapabilityLocalization.ParameterName(parameter), parameterValue)));
+            }
+        }
+        catch (JsonException) { }
+        catch (InvalidOperationException) { }
     }
 
     private static void AddConditions(IfConditionSettings settings,
@@ -162,20 +535,6 @@ public sealed class JobStepDetailsProvider
             target.Add(("conditions", new StepDetailItem(
                 $"{index++}. {Loc.Get("Ui.Step.IfEditor.Condition")}",
                 ConditionDisplayFormatter.Format(condition, steps as IList))));
-    }
-
-    private static void AddPointComparison(PointComparisonSettings settings,
-        List<(string Group, StepDetailItem Item)> target, IEnumerable? steps)
-    {
-        AddLeaf(nameof(settings.Mode), settings.Mode, target, "general");
-        AddLeaf(nameof(settings.MatchRequirement), settings.MatchRequirement, target, "general");
-        for (var index = 0; index < settings.Points.Count; index++)
-            AddProperties(settings.Points[index], $"{index + 1}. ", target, steps, 1);
-
-        if (settings.Mode == PointComparisonMode.Offset)
-            AddProperties(settings.OffsetSettings, string.Empty, target, steps, 1);
-        else
-            AddProperties(settings.ExpressionSettings, string.Empty, target, steps, 1);
     }
 
     private static void AddProperties(object owner, string prefix,

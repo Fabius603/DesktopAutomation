@@ -11,7 +11,8 @@
             Y="{Binding Y, ElementName=Root}"
             RoiWidth="{Binding RoiWidth, ElementName=Root}"
             RoiHeight="{Binding RoiHeight, ElementName=Root}"
-            CaptureCommand="{Binding CaptureCommand, ElementName=Root}"/>
+            CaptureCommand="{Binding CaptureCommand, ElementName=Root}"
+            CaptureCommandParameter="{Binding CaptureCommandParameter, ElementName=Root}"/>
         <roi:DynamicRoiSelector/>
         <TextBlock Margin="4,0,4,8"
                    FontSize="11"

@@ -8,6 +8,7 @@
                  Text="{Binding MonitorIndex, ElementName=Root}"/>
         <Button Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}"
                 Margin="8,0,0,0" Padding="10,5"
-                Command="{Binding SelectCommand, ElementName=Root}"/>
+                Command="{Binding SelectCommand, ElementName=Root}"
+                CommandParameter="{Binding SelectCommandParameter, ElementName=Root}"/>
     </StackPanel>
 </UserControl>

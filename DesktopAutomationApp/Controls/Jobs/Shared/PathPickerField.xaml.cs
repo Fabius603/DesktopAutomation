@@ -12,6 +12,8 @@ public partial class PathPickerField : UserControl
         new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
     public static readonly DependencyProperty BrowseCommandProperty = DependencyProperty.Register(
         nameof(BrowseCommand), typeof(ICommand), typeof(PathPickerField));
+    public static readonly DependencyProperty BrowseCommandParameterProperty = DependencyProperty.Register(
+        nameof(BrowseCommandParameter), typeof(object), typeof(PathPickerField));
     public static readonly DependencyProperty PreviewSourceProperty = DependencyProperty.Register(
         nameof(PreviewSource), typeof(ImageSource), typeof(PathPickerField));
     public static readonly DependencyProperty HasPreviewProperty = DependencyProperty.Register(
@@ -23,6 +25,7 @@ public partial class PathPickerField : UserControl
 
     public string PathValue { get => (string)GetValue(PathValueProperty); set => SetValue(PathValueProperty, value); }
     public ICommand? BrowseCommand { get => (ICommand?)GetValue(BrowseCommandProperty); set => SetValue(BrowseCommandProperty, value); }
+    public object? BrowseCommandParameter { get => GetValue(BrowseCommandParameterProperty); set => SetValue(BrowseCommandParameterProperty, value); }
     public ImageSource? PreviewSource { get => (ImageSource?)GetValue(PreviewSourceProperty); set => SetValue(PreviewSourceProperty, value); }
     public bool HasPreview { get => (bool)GetValue(HasPreviewProperty); set => SetValue(HasPreviewProperty, value); }
     public bool IsReadOnly { get => (bool)GetValue(IsReadOnlyProperty); set => SetValue(IsReadOnlyProperty, value); }
