@@ -56,7 +56,14 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
                  new StepFieldNodeDescriptor(DesktopFieldId)]),
              new("advanced", "Ui.Step.Settings.Advanced",
                  [FontSizeFieldId, FontColorFieldId, OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId],
-                 1, true, false)],
+                 1, true, false, EditorNodes:
+                 [new StepFieldNodeDescriptor(FontSizeFieldId),
+                  new StepFieldNodeDescriptor(FontColorFieldId),
+                  new StepFieldNodeDescriptor(OpacityFieldId),
+                  new StepFieldNodeDescriptor(DurationFieldId),
+                  new StepFieldNodeDescriptor(ClearOnEndFieldId),
+                  new StepPointFieldPairDescriptor(
+                      OffsetXFieldId, OffsetYFieldId, "Ui.Step.Settings.Position")])],
             [new(TextFieldId, StepSummaryValueFormat.ShortText), new(DesktopFieldId)],
             [TextSourceFieldId, TextFieldId, TextResultFieldId, DesktopFieldId, FontSizeFieldId, FontColorFieldId,
                 OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId]));

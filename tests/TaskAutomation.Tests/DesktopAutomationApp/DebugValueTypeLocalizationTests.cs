@@ -9,6 +9,8 @@ public sealed class DebugValueTypeLocalizationTests
     [InlineData("Double", "Number")]
     [InlineData("Point", "Point")]
     [InlineData("Rectangle?", "Rectangle")]
+    [InlineData("PixelPoint", "Point")]
+    [InlineData("PixelRegion?", "Rectangle")]
     [InlineData("DetectionItem", "Detection")]
     [InlineData("RuntimeProcessReference", "Process reference")]
     [InlineData("TimeSpan", "Duration")]

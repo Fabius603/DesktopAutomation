@@ -1,5 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using TaskAutomation.Contracts.Geometry;
+using TaskAutomation.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -10,7 +12,7 @@ namespace TaskAutomation.Steps
         private const int Thickness = 2;
         private const int Radius = 5;
 
-        public static Bitmap Draw(Bitmap source, IReadOnlyList<DetectionItem> detections, Point captureOffset)
+        public static Bitmap Draw(Bitmap source, IReadOnlyList<DetectionItem> detections, PixelPoint captureOffset)
         {
             var bitmap = (Bitmap)source.Clone();
             if (detections.Count == 0)
@@ -26,12 +28,11 @@ namespace TaskAutomation.Steps
             return bitmap;
         }
 
-        private static void DrawSingle(Graphics graphics, Point globalCenter, Rectangle? globalBoundingBox, Point captureOffset, Color color)
+        private static void DrawSingle(Graphics graphics, PixelPoint globalCenter, PixelRegion? globalBoundingBox, PixelPoint captureOffset, Color color)
         {
             if (globalBoundingBox.HasValue)
             {
-                var box = globalBoundingBox.Value;
-                box.Offset(-captureOffset.X, -captureOffset.Y);
+                var box = globalBoundingBox.Value.Offset(-captureOffset.X, -captureOffset.Y).ToDrawingRectangle();
                 using var pen = new Pen(color, Thickness);
                 graphics.DrawRectangle(pen, box);
             }

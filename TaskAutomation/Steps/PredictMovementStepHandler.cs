@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -228,8 +228,8 @@ namespace TaskAutomation.Steps
             PredictMovementTrack track,
             DateTime targetUtc,
             string predictionModel,
-            out Point point,
-            out Rectangle? boundingBox,
+            out PixelPoint point,
+            out PixelRegion? boundingBox,
             out double error,
             out string selectedModel)
         {
@@ -262,12 +262,12 @@ namespace TaskAutomation.Steps
                 predictedY < int.MinValue || predictedY > int.MaxValue)
                 return false;
 
-            point = new Point((int)Math.Round(predictedX), (int)Math.Round(predictedY));
+            point = new PixelPoint((int)Math.Round(predictedX), (int)Math.Round(predictedY));
 
             var lastBox = samples[^1].BoundingBox;
             if (lastBox.HasValue)
             {
-                boundingBox = new Rectangle(
+                boundingBox = new PixelRegion(
                     point.X - lastBox.Value.Width / 2,
                     point.Y - lastBox.Value.Height / 2,
                     lastBox.Value.Width,
@@ -279,7 +279,7 @@ namespace TaskAutomation.Steps
 
         private static bool IsPredictionWithinLimits(
             PredictMovementTrack track,
-            Point prediction,
+            PixelPoint prediction,
             double fitError,
             PredictMovementSettings settings)
         {
@@ -390,7 +390,7 @@ namespace TaskAutomation.Steps
         private static bool TryFitQuadratic(
             IReadOnlyList<PredictMovementSample> samples,
             DateTime origin,
-            Func<Point, double> selector,
+            Func<PixelPoint, double> selector,
             IReadOnlyList<double> weights,
             out double a,
             out double b,
@@ -466,7 +466,7 @@ namespace TaskAutomation.Steps
                 var dt = seconds - previousSeconds;
                 if (dt <= 0) continue;
                 residualSum += Distance(
-                    new Point((int)Math.Round(xFilter.Predict(dt)), (int)Math.Round(yFilter.Predict(dt))),
+                    new PixelPoint((int)Math.Round(xFilter.Predict(dt)), (int)Math.Round(yFilter.Predict(dt))),
                     samples[i].Center);
                 xFilter.Update(samples[i].Center.X, dt);
                 yFilter.Update(samples[i].Center.Y, dt);
@@ -525,7 +525,7 @@ namespace TaskAutomation.Steps
         private static bool TryFitLine(
             IReadOnlyList<PredictMovementSample> samples,
             DateTime origin,
-            Func<Point, double> selector,
+            Func<PixelPoint, double> selector,
             IReadOnlyList<double> weights,
             out double a,
             out double b)
@@ -628,7 +628,7 @@ namespace TaskAutomation.Steps
             return Math.Clamp(sourceConfidence * stability * sampleFactor, 0.0, 1.0);
         }
 
-        private static double Distance(Point a, Point b)
+        private static double Distance(PixelPoint a, PixelPoint b)
         {
             var dx = a.X - b.X;
             var dy = a.Y - b.Y;
@@ -637,8 +637,8 @@ namespace TaskAutomation.Steps
 
         private readonly record struct TrackPrediction(
             int TrackId,
-            Point Center,
-            Rectangle? BoundingBox,
+            PixelPoint Center,
+            PixelRegion? BoundingBox,
             int SampleCount,
             double Error,
             string Model);

@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using TaskAutomation.Geometry;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
@@ -180,8 +181,8 @@ namespace TaskAutomation.Steps
                     return new CaptureFrame
                     {
                         Image       = bitmap,
-                        Bounds      = screenBounds,
-                        Offset      = offset,
+                        Bounds      = screenBounds.ToPixelRegion(),
+                        Offset      = offset.ToPixelPoint(),
                         IsFresh     = frame.IsFresh,
                         CaptureTimestampUtc = frame.CaptureTimestampUtc == DateTime.MinValue
                             ? DateTime.UtcNow

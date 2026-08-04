@@ -1,7 +1,7 @@
-using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps;
@@ -10,7 +10,7 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
 {
     protected override Task<DynamicRoiResult> ExecuteCoreAsync(DynamicRoiStep step, IStepPipelineContext ctx, CancellationToken ct)
     {
-        var resolved = ResultBindingResolver.Resolve<Rectangle>(ctx.Results, step.Settings.BoundsSource);
+        var resolved = ResultBindingResolver.Resolve<PixelRegion>(ctx.Results, step.Settings.BoundsSource);
         var detection = resolved.SourceResult as IDetectionStepResult;
         if (!ctx.DynamicRoiStates.TryGetValue(step.Id, out var state))
             ctx.DynamicRoiStates[step.Id] = state = new DynamicRoiState();
@@ -23,7 +23,7 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
         {
             var box = resolved.FirstOrDefault;
             var padding = System.Math.Max(0, step.Settings.Padding);
-            box.Inflate(padding, padding);
+            box = box.Inflate(padding, padding);
             state.GlobalBounds = box;
             state.ConsecutiveMisses = 0;
             updated = true;

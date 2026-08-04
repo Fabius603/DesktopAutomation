@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps;
 
@@ -69,8 +70,8 @@ public static class ResultBindingResolver
             resolution.FirstOrDefault, resolution);
     }
 
-    public static ResolvedResultValue<System.Drawing.Point> ResolvePoints(
-        IJobResultStore results, ResultBinding? binding) => Resolve<System.Drawing.Point>(results, binding);
+    public static ResolvedResultValue<PixelPoint> ResolvePoints(
+        IJobResultStore results, ResultBinding? binding) => Resolve<PixelPoint>(results, binding);
 
     public static ResolvedResultValue<DetectionItem> ResolveDetections(
         IJobResultStore results, ResultBinding? binding)
@@ -78,7 +79,7 @@ public static class ResultBindingResolver
         var items = Resolve<DetectionItem>(results, binding);
         if (items.IsSuccess) return items;
 
-        var points = Resolve<System.Drawing.Point>(results, binding);
+        var points = Resolve<PixelPoint>(results, binding);
         if (points.IsSuccess)
         {
             var pointSource = points.SourceResult as IDetectionStepResult;
@@ -93,7 +94,7 @@ public static class ResultBindingResolver
                 }).ToArray(), points.SourceResult);
         }
 
-        var rectangles = Resolve<System.Drawing.Rectangle>(results, binding);
+        var rectangles = Resolve<PixelRegion>(results, binding);
         if (!rectangles.IsSuccess)
             return new(rectangles.Status, Array.Empty<DetectionItem>(),
                 rectangles.SourceResult, rectangles.Error);
@@ -102,7 +103,7 @@ public static class ResultBindingResolver
         return new(ResultResolutionStatus.Success,
             rectangles.Values.Select((rectangle, index) => new DetectionItem
             {
-                Center = new System.Drawing.Point(
+                Center = new PixelPoint(
                     rectangle.Left + rectangle.Width / 2,
                     rectangle.Top + rectangle.Height / 2),
                 BoundingBox = rectangle,

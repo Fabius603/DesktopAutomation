@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Jobs;
 using TaskAutomation.WindowsIntegration;
 
@@ -18,9 +19,9 @@ public abstract record StepResultBase
 public sealed record DetectionItem
 {
     [ResultProperty("center")]
-    public Point Center { get; init; }
+    public PixelPoint Center { get; init; }
     [ResultProperty("bounding_box")]
-    public Rectangle? BoundingBox { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
     [ResultProperty("confidence")]
     public double Confidence { get; init; }
 }
@@ -46,9 +47,9 @@ public interface ICaptureStepResult
     [ResultProperty("image")]
     Bitmap? Image { get; }
     [ResultProperty("bounds")]
-    Rectangle Bounds { get; }
+    PixelRegion Bounds { get; }
     [ResultProperty("offset")]
-    Point Offset { get; }
+    PixelPoint Offset { get; }
     [ResultProperty("is_fresh")]
     bool IsFresh { get; }
     [ResultProperty("capture_timestamp_utc")]
@@ -61,9 +62,9 @@ public interface IDetectionStepResult
     [ResultProperty("found")]
     bool Found { get; }
     [ResultProperty("point")]
-    Point? Point { get; }
+    PixelPoint? Point { get; }
     [ResultProperty("bounding_box")]
-    Rectangle? BoundingBox { get; }
+    PixelRegion? BoundingBox { get; }
     [ResultProperty("confidence")]
     double Confidence { get; }
     [ResultProperty("source_capture_is_fresh")]
@@ -91,8 +92,8 @@ public interface IProcessReferenceResult
 public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResult
 {
     public Bitmap? Image { get; init; }
-    public Rectangle Bounds { get; init; }
-    public Point Offset { get; init; }
+    public PixelRegion Bounds { get; init; }
+    public PixelPoint Offset { get; init; }
     public bool IsFresh { get; init; } = true;
     public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
     [ResultProperty("has_image")]
@@ -103,8 +104,8 @@ public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResu
 public sealed record CameraCaptureResult : StepResultBase, ICaptureStepResult
 {
     public Bitmap? Image { get; init; }
-    public Rectangle Bounds { get; init; }
-    public Point Offset { get; init; }
+    public PixelRegion Bounds { get; init; }
+    public PixelPoint Offset { get; init; }
     public bool IsFresh { get; init; } = true;
     public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
     [ResultProperty("has_image")]
@@ -141,10 +142,10 @@ public sealed record FileSystemOperationResult : StepResultBase
 
 public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
     public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-    [ResultProperty("applied_roi")] public string? AppliedRoi { get; init; }
+    [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
     public static readonly TemplateMatchingResult Default = new();
@@ -152,10 +153,10 @@ public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResu
 
 public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
     public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-    [ResultProperty("applied_roi")] public string? AppliedRoi { get; init; }
+    [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
     public static readonly ColorDetectionResult Default = new();
@@ -163,10 +164,10 @@ public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
 
 public sealed record YOLODetectionResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
     public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-    [ResultProperty("applied_roi")] public string? AppliedRoi { get; init; }
+    [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
     public static readonly YOLODetectionResult Default = new();
@@ -174,10 +175,10 @@ public sealed record YOLODetectionResult : StepResultBase, IDetectionStepResult
 
 public sealed record KeyPointMatchingResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
     public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
-    [ResultProperty("applied_roi")] public string? AppliedRoi { get; init; }
+    [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
     public static readonly KeyPointMatchingResult Default = new();
@@ -185,7 +186,7 @@ public sealed record KeyPointMatchingResult : StepResultBase, IDetectionStepResu
 
 public sealed record PredictMovementResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public Point? Point { get; init; } public Rectangle? BoundingBox { get; init; }
+    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
     public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
     [ResultProperty("is_predicted")]
@@ -328,7 +329,7 @@ public sealed record DynamicRoiResult : StepResultBase
     [ResultProperty("roi_reset")]
     public bool RoiReset { get; init; }
     [ResultProperty("global_bounds")]
-    public Rectangle? GlobalBounds { get; init; }
+    public PixelRegion? GlobalBounds { get; init; }
     [ResultProperty("consecutive_misses")]
     public int ConsecutiveMisses { get; init; }
     [ResultProperty("full_search_interval")]

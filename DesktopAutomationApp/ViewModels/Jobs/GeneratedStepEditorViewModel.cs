@@ -240,6 +240,9 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         IReadOnlyDictionary<string, GeneratedStepFieldViewModel> fieldsById) => descriptor switch
     {
         StepFieldNodeDescriptor field => new GeneratedStepFieldNodeViewModel(fieldsById[field.FieldId]),
+        StepPointFieldPairDescriptor pair => new GeneratedStepPointFieldPairViewModel(
+            fieldsById[pair.XFieldId], fieldsById[pair.YFieldId],
+            string.IsNullOrWhiteSpace(pair.LabelKey) ? string.Empty : Loc.Get(pair.LabelKey)),
         StepChoiceGroupDescriptor group => new GeneratedStepChoiceGroupViewModel(
             fieldsById[group.SelectionFieldId],
             group.Branches.Select(branch => new GeneratedStepChoiceBranchViewModel(
@@ -281,6 +284,17 @@ public sealed class GeneratedStepFieldNodeViewModel(GeneratedStepFieldViewModel 
     : GeneratedStepEditorNodeViewModel
 {
     public GeneratedStepFieldViewModel Field { get; } = field;
+}
+
+public sealed class GeneratedStepPointFieldPairViewModel(
+    GeneratedStepFieldViewModel xField,
+    GeneratedStepFieldViewModel yField,
+    string label) : GeneratedStepEditorNodeViewModel
+{
+    public GeneratedStepFieldViewModel XField { get; } = xField;
+    public GeneratedStepFieldViewModel YField { get; } = yField;
+    public string Label { get; } = label;
+    public bool HasLabel => !string.IsNullOrWhiteSpace(Label);
 }
 
 public sealed class GeneratedStepChoiceBranchViewModel(

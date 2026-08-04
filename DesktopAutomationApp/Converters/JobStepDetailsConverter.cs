@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Globalization;
 using System.Windows.Data;
-using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services.Jobs;
 using TaskAutomation.Jobs;
 
@@ -63,27 +62,6 @@ public sealed class StepDetailsEnabledConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
         value is not EndIfStep;
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-        throw new NotSupportedException();
-}
-
-public sealed class StepSummaryConverter : IMultiValueConverter
-{
-    private static readonly JobStepDetailsProvider Provider = new();
-
-    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-    {
-        var step = values.FirstOrDefault();
-        if (step is ElseStep) return Loc.Get("Ui.Step.Settings.ElseDescription");
-        var steps = values.Skip(1).FirstOrDefault() as IList;
-        if (step is IfStep or ElseIfStep)
-        {
-            var settings = step is IfStep current ? current.Settings : ((ElseIfStep)step).Settings;
-            return ConditionDisplayFormatter.FormatSummary(settings, steps);
-        }
-        return step is JobStep jobStep ? Provider.GetSummary(jobStep, steps) : string.Empty;
-    }
-
-    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
 

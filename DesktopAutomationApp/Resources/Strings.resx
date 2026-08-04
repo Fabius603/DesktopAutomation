@@ -409,16 +409,16 @@
     <value>Steps durchsuchen</value>
   </data>
   <data name="Ui.Step.Settings.CaptureStep" xml:space="preserve">
-    <value>Capture-Ergebnis</value>
+    <value>Bildquelle</value>
   </data>
   <data name="Ui.Step.Settings.Template" xml:space="preserve">
-    <value>Template</value>
+    <value>Bildvorlage</value>
   </data>
   <data name="Ui.Common.Ellipsis" xml:space="preserve">
     <value>…</value>
   </data>
   <data name="Ui.Step.Settings.ROI" xml:space="preserve">
-    <value>ROI</value>
+    <value>Bildbereich (ROI)</value>
   </data>
   <data name="Ui.Step.Settings.X" xml:space="preserve">
     <value>X</value>
@@ -436,52 +436,52 @@
     <value>Aufnehmen</value>
   </data>
   <data name="Ui.Step.Settings.EnableROI" xml:space="preserve">
-    <value>Feste ROI verwenden</value>
+    <value>Festen Bildbereich verwenden</value>
   </data>
   <data name="Ui.Step.Settings.Confidence01" xml:space="preserve">
-    <value>Confidence (0…1)</value>
+    <value>Konfidenz (0–1)</value>
   </data>
   <data name="Ui.Step.Settings.ConfidencePercent" xml:space="preserve">
-    <value>Confidence (%)</value>
+    <value>Konfidenz (%)</value>
   </data>
   <data name="Ui.Step.Settings.MatchMode" xml:space="preserve">
-    <value>Match Mode</value>
+    <value>Vergleichsmethode</value>
   </data>
   <data name="Ui.Step.Settings.Color" xml:space="preserve">
     <value>Farbe</value>
   </data>
   <data name="Ui.Step.Settings.MinSize" xml:space="preserve">
-    <value>Min. Größe</value>
+    <value>Mindestfläche (px²)</value>
   </data>
   <data name="Ui.Step.Settings.MaxSize" xml:space="preserve">
-    <value>Max. Größe</value>
+    <value>Maximale Fläche (px²)</value>
   </data>
   <data name="Ui.Step.Settings.MinWidth" xml:space="preserve">
-    <value>Min. Breite</value>
+    <value>Mindestbreite (px)</value>
   </data>
   <data name="Ui.Step.Settings.MinHeight" xml:space="preserve">
-    <value>Min. Höhe</value>
+    <value>Mindesthöhe (px)</value>
   </data>
   <data name="Ui.Step.Settings.Downscale" xml:space="preserve">
-    <value>Downscale</value>
+    <value>Verkleinerungsfaktor</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Erkennungs-Ergebnis</value>
+    <value>Erkennungsergebnis</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
-    <value>Min. Werte</value>
+    <value>Mindestanzahl Messwerte</value>
   </data>
   <data name="Ui.Step.Settings.PredictionMs" xml:space="preserve">
     <value>Vorhersage (ms)</value>
   </data>
   <data name="Ui.Step.Settings.ResetAtDistance" xml:space="preserve">
-    <value>Reset ab Distanz</value>
+    <value>Spur zurücksetzen ab (px)</value>
   </data>
   <data name="Ui.Step.Settings.MaxAgeMs" xml:space="preserve">
-    <value>Max. Alter (ms)</value>
+    <value>Maximales Alter der Messwerte (ms)</value>
   </data>
   <data name="Ui.Step.Settings.DesktopIndex" xml:space="preserve">
-    <value>Desktop Index</value>
+    <value>Monitor</value>
   </data>
   <data name="Ui.Step.Settings.SelectMonitor" xml:space="preserve">
     <value>Monitor wählen</value>
@@ -490,10 +490,10 @@
     <value>Mauszeiger aufnehmen</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStepOpt" xml:space="preserve">
-    <value>Erkennungs-Ergebnis (opt.)</value>
+    <value>Erkennungsergebnis (optional)</value>
   </data>
   <data name="Ui.Step.Settings.WindowName" xml:space="preserve">
-    <value>Fenstername</value>
+    <value>Fenstertitel</value>
   </data>
   <data name="Ui.Step.Settings.Overlays" xml:space="preserve">
     <value>Einblendungen</value>
@@ -520,16 +520,16 @@
     <value>Auf Beendigung warten</value>
   </data>
   <data name="Ui.Step.Settings.ScriptPath" xml:space="preserve">
-    <value>Script-Pfad</value>
+    <value>Skriptpfad</value>
   </data>
   <data name="Ui.Step.Settings.Offset" xml:space="preserve">
     <value>Offset</value>
   </data>
   <data name="Ui.Step.Settings.ClickType" xml:space="preserve">
-    <value>Klick-Typ</value>
+    <value>Maustaste</value>
   </data>
   <data name="Ui.Step.Settings.TimeoutMs" xml:space="preserve">
-    <value>Timeout (ms)</value>
+    <value>Zeitlimit (ms)</value>
   </data>
   <data name="Ui.Step.Settings.DoubleClick" xml:space="preserve">
     <value>Doppelklick</value>
@@ -550,19 +550,19 @@
     <value>Bewegungsfaktor Y</value>
   </data>
   <data name="Ui.Step.Generated.ScreenPoint" xml:space="preserve">
-    <value>Monitor {0}: X {1}, Y {2}</value>
+    <value>Monitor {0}  ·  X {1} px  ·  Y {2} px</value>
   </data>
   <data name="Ui.Step.Generated.PointCount" xml:space="preserve">
     <value>{0} Punkte</value>
   </data>
   <data name="Ui.Step.Settings.MovementFactorHelp" xml:space="preserve">
-    <value>Multiplizieren das jeweilige X- und Y-Pixel-Delta vor der relativen Mausbewegung (0,01 bis 100).</value>
+    <value>Multipliziert das jeweilige X- bzw. Y-Pixeldelta vor der relativen Mausbewegung (0,01 bis 100).</value>
   </data>
   <data name="Ui.Step.Settings.Model" xml:space="preserve">
-    <value>Model</value>
+    <value>YOLO-Modell</value>
   </data>
   <data name="Ui.Step.Settings.ClassName" xml:space="preserve">
-    <value>Klassenname</value>
+    <value>Objektklasse</value>
   </data>
   <data name="Ui.Step.Settings.WaitTimeMs" xml:space="preserve">
     <value>Wartezeit (ms)</value>
@@ -595,10 +595,10 @@
     <value>z. B. notepad oder notepad.exe</value>
   </data>
   <data name="Ui.Step.Settings.ProcessResultHint" xml:space="preserve">
-    <value>Ergebnis (Erfolgreich = Prozess läuft) kann in If-Bedingungen ausgewertet werden.</value>
+    <value>Das Ergebnis ist erfolgreich, wenn der Prozess läuft, und kann in Wenn-Bedingungen ausgewertet werden.</value>
   </data>
   <data name="Ui.Step.Settings.PathProgram" xml:space="preserve">
-    <value>Pfad / Programm</value>
+    <value>Programmpfad</value>
   </data>
   <data name="Ui.Step.Settings.PathToExeOrProgramName" xml:space="preserve">
     <value>Pfad zur .exe oder Programmname</value>
@@ -655,31 +655,31 @@
     <value>Position</value>
   </data>
   <data name="Ui.Step.Settings.XOffsetPixels" xml:space="preserve">
-    <value>X-Offset (Pixel)</value>
+    <value>Versatz X (px)</value>
   </data>
   <data name="Ui.Step.Settings.YOffsetPixels" xml:space="preserve">
-    <value>Y-Offset (Pixel)</value>
+    <value>Versatz Y (px)</value>
   </data>
   <data name="Ui.Step.Settings.CacheMs" xml:space="preserve">
-    <value>Cache (ms)</value>
+    <value>Ergebnis zwischenspeichern (ms)</value>
   </data>
   <data name="Ui.Step.Settings.ActiveWindowResultHint" xml:space="preserve">
-    <value>Ergebnis (Fenster aktiv) kann in If-Bedingungen ausgewertet werden.</value>
+    <value>Das Ergebnis ist erfolgreich, wenn das Fenster aktiv ist, und kann in Wenn-Bedingungen ausgewertet werden.</value>
   </data>
   <data name="Ui.Step.Settings.MinMatches" xml:space="preserve">
-    <value>Min. Matches</value>
+    <value>Mindestanzahl Treffer</value>
   </data>
   <data name="Ui.Step.Settings.LoweSRatio01" xml:space="preserve">
-    <value>Lowe's Ratio (0…1)</value>
+    <value>Lowe-Verhältnis (0–1)</value>
   </data>
   <data name="Ui.Step.Settings.ConditionMatchMode" xml:space="preserve">
-    <value>Verknüpfung:</value>
+    <value>Verknüpfung</value>
   </data>
   <data name="Ui.Step.Settings.AllAND" xml:space="preserve">
-    <value>Alle (AND)</value>
+    <value>Alle Bedingungen (UND)</value>
   </data>
   <data name="Ui.Step.Settings.OneOR" xml:space="preserve">
-    <value>Eine (OR)</value>
+    <value>Mindestens eine Bedingung (ODER)</value>
   </data>
   <data name="Ui.Step.Settings.SourceStep" xml:space="preserve">
     <value>Quell-Ergebnis</value>
@@ -700,7 +700,7 @@
     <value>Keine Konfiguration erforderlich. Dieser Block wird ausgeführt, wenn keine vorherige Bedingung zutraf.</value>
   </data>
   <data name="Ui.Step.Settings.EndIfDescription" xml:space="preserve">
-    <value>Keine Konfiguration erforderlich. Beendet den vorherigen If/ElseIf/Else-Block.</value>
+    <value>Keine Konfiguration erforderlich. Beendet den vorherigen Wenn-/Sonst-wenn-/Sonst-Block.</value>
   </data>
   <data name="Ui.Step.Settings.EndJobDescription" xml:space="preserve">
     <value>Beendet den Job sofort – nachfolgende Steps und weitere Wiederholungen werden nicht mehr ausgeführt.</value>
@@ -712,31 +712,34 @@
     <value>Überspringt nur die dort konfigurierten Steps. Das interne Aufräumen wird immer ausgeführt.</value>
   </data>
   <data name="Ui.Step.Settings.BasicSettings" xml:space="preserve">
-    <value>GRUNDEINSTELLUNGEN</value>
+    <value>Grundeinstellungen</value>
   </data>
   <data name="Ui.Step.Settings.Mode" xml:space="preserve">
     <value>Modus</value>
   </data>
   <data name="Ui.Step.Settings.OffsetTolerance" xml:space="preserve">
-    <value>Offset / Toleranz</value>
+    <value>Referenzpunkt mit Toleranz</value>
   </data>
   <data name="Ui.Step.Settings.NearReferencePoint" xml:space="preserve">
     <value>Nah an Referenzpunkt</value>
   </data>
   <data name="Ui.Step.Settings.Expression" xml:space="preserve">
-    <value>Ausdruck</value>
+    <value>Achsenbedingungen</value>
   </data>
   <data name="Ui.Step.Settings.XYComparisonX100" xml:space="preserve">
     <value>X/Y-Vergleich (X &gt; 100)</value>
   </data>
   <data name="Ui.Step.Settings.Evaluation" xml:space="preserve">
-    <value>Auswertung</value>
+    <value>Bedingungen</value>
+  </data>
+  <data name="Ui.Step.Settings.RequiredMatches" xml:space="preserve">
+    <value>Erforderliche Treffer</value>
   </data>
   <data name="Ui.Step.Settings.AtLeastOneOR" xml:space="preserve">
-    <value>Mindestens einer (OR)</value>
+    <value>Mindestens ein Punkt (ODER)</value>
   </data>
   <data name="Ui.Step.Settings.ReferencePointTolerance" xml:space="preserve">
-    <value>REFERENZPUNKT &amp; TOLERANZ</value>
+    <value>Referenzpunkt und Toleranz</value>
   </data>
   <data name="Ui.Step.Settings.ReferenceSource" xml:space="preserve">
     <value>Referenzquelle</value>
@@ -745,7 +748,7 @@
     <value>Manuell eingeben</value>
   </data>
   <data name="Ui.Step.Settings.FromDetectionResult" xml:space="preserve">
-    <value>Aus Detection-Ergebnis</value>
+    <value>Aus Erkennungsergebnis</value>
   </data>
   <data name="Ui.Step.Settings.CoordinatesXY" xml:space="preserve">
     <value>Koordinaten (X / Y)</value>
@@ -757,16 +760,16 @@
     <value>Maximale Abweichung</value>
   </data>
   <data name="Ui.Step.Settings.AxisExpressions" xml:space="preserve">
-    <value>ACHSEN-AUSDRÜCKE</value>
+    <value>Achsenbedingungen</value>
   </data>
   <data name="Ui.Step.Settings.CombineWith" xml:space="preserve">
-    <value>Verknüpfen mit:</value>
+    <value>Verknüpfung</value>
   </data>
   <data name="Ui.Step.Settings.ANDAll" xml:space="preserve">
-    <value>AND (alle)</value>
+    <value>Alle Ausdrücke (UND)</value>
   </data>
   <data name="Ui.Step.Settings.ORAny" xml:space="preserve">
-    <value>OR (einer)</value>
+    <value>Mindestens ein Ausdruck (ODER)</value>
   </data>
   <data name="Ui.Step.Settings.Axis" xml:space="preserve">
     <value>Achse</value>
@@ -778,7 +781,7 @@
     <value>Ausdruck entfernen</value>
   </data>
   <data name="Ui.Step.Settings.AddExpression" xml:space="preserve">
-    <value>+ Ausdruck hinzufügen</value>
+    <value>Ausdruck hinzufügen</value>
   </data>
   <data name="Ui.Step.Settings.PointsToCheck" xml:space="preserve">
     <value>ZU PRÜFENDE PUNKTE</value>
@@ -787,7 +790,7 @@
     <value>Diese Punkte werden gegen die Bedingung geprüft</value>
   </data>
   <data name="Ui.Step.Settings.AddPoint" xml:space="preserve">
-    <value>+ Punkt hinzufügen</value>
+    <value>Punkt hinzufügen</value>
   </data>
   <data name="Ui.Step.Settings.PointSource" xml:space="preserve">
     <value>Punktquelle</value>
@@ -796,7 +799,7 @@
     <value>Manuell</value>
   </data>
   <data name="Ui.Step.Settings.RemovePoint" xml:space="preserve">
-    <value>× Entfernen</value>
+    <value>Punkt entfernen</value>
   </data>
   <data name="Ui.Step.Settings.Coordinates" xml:space="preserve">
     <value>Koordinaten</value>
@@ -808,88 +811,88 @@
     <value>Bildquelle: </value>
   </data>
   <data name="Ui.Job.Steps.TemplatePath" xml:space="preserve">
-    <value>TemplatePath: </value>
+    <value>Bildvorlage: </value>
   </data>
   <data name="Ui.Job.Steps.MatchMode" xml:space="preserve">
-    <value>MatchMode: </value>
+    <value>Vergleichsmethode: </value>
   </data>
   <data name="Ui.Job.Steps.MultipleMatches" xml:space="preserve">
     <value>Mehrere Treffer: </value>
   </data>
   <data name="Ui.Job.Steps.ConfidenceThreshold" xml:space="preserve">
-    <value>ConfidenceThreshold: </value>
+    <value>Konfidenz: </value>
   </data>
   <data name="Ui.Job.Steps.EnableROI" xml:space="preserve">
-    <value>EnableROI: </value>
+    <value>Fester Bildbereich: </value>
   </data>
   <data name="Ui.Job.Steps.ROIXYWidthHeight" xml:space="preserve">
-    <value>ROI (X,Y,Breite,Höhe): </value>
+    <value>Bildbereich (X, Y, Breite, Höhe): </value>
   </data>
   <data name="Ui.Job.Steps.Color" xml:space="preserve">
     <value>Farbe: </value>
   </data>
   <data name="Ui.Job.Steps.MinSize" xml:space="preserve">
-    <value>Min. Größe: </value>
+    <value>Mindestfläche (px²): </value>
   </data>
   <data name="Ui.Job.Steps.MaxSize" xml:space="preserve">
-    <value>Max. Größe: </value>
+    <value>Maximale Fläche (px²): </value>
   </data>
   <data name="Ui.Job.Steps.MinWidth" xml:space="preserve">
-    <value>Min. Breite: </value>
+    <value>Mindestbreite (px): </value>
   </data>
   <data name="Ui.Job.Steps.MinHeight" xml:space="preserve">
-    <value>Min. Höhe: </value>
+    <value>Mindesthöhe (px): </value>
   </data>
   <data name="Ui.Job.Steps.Downscale" xml:space="preserve">
-    <value>Downscale: </value>
+    <value>Verkleinerungsfaktor: </value>
   </data>
   <data name="Ui.Job.Steps.DetectionSource" xml:space="preserve">
     <value>Erkennungsquelle: </value>
   </data>
   <data name="Ui.Job.Steps.MinValues" xml:space="preserve">
-    <value>Min. Werte: </value>
+    <value>Mindestanzahl Messwerte: </value>
   </data>
   <data name="Ui.Job.Steps.PredictionMs" xml:space="preserve">
     <value>Vorhersage (ms): </value>
   </data>
   <data name="Ui.Job.Steps.ResetAtDistance" xml:space="preserve">
-    <value>Reset ab Distanz: </value>
+    <value>Spur zurücksetzen ab (px): </value>
   </data>
   <data name="Ui.Job.Steps.MaxAgeMs" xml:space="preserve">
-    <value>Max. Alter (ms): </value>
+    <value>Maximales Alter der Messwerte (ms): </value>
   </data>
   <data name="Ui.Job.Steps.DesktopIndex" xml:space="preserve">
-    <value>Desktop Index: </value>
+    <value>Monitor: </value>
   </data>
   <data name="Ui.Job.Steps.CaptureMousePointer" xml:space="preserve">
     <value>Mauszeiger aufnehmen: </value>
   </data>
   <data name="Ui.Job.Steps.ProcessName" xml:space="preserve">
-    <value>ProcessName: </value>
+    <value>Prozessname: </value>
   </data>
   <data name="Ui.Job.Steps.WindowName" xml:space="preserve">
-    <value>WindowName: </value>
+    <value>Fenstertitel: </value>
   </data>
   <data name="Ui.Job.Steps.SavePath" xml:space="preserve">
-    <value>SavePath: </value>
+    <value>Speicherpfad: </value>
   </data>
   <data name="Ui.Job.Steps.FileName" xml:space="preserve">
-    <value>FileName: </value>
+    <value>Dateiname: </value>
   </data>
   <data name="Ui.Job.Steps.MacroName" xml:space="preserve">
-    <value>MakroName: </value>
+    <value>Makro: </value>
   </data>
   <data name="Ui.Job.Steps.DoubleClick" xml:space="preserve">
     <value>Doppelklick: </value>
   </data>
   <data name="Ui.Job.Steps.ClickType" xml:space="preserve">
-    <value>Klick-Typ: </value>
+    <value>Maustaste: </value>
   </data>
   <data name="Ui.Job.Steps.TimeoutMs" xml:space="preserve">
-    <value>Timeout (ms): </value>
+    <value>Zeitlimit (ms): </value>
   </data>
   <data name="Ui.Job.Steps.Offset" xml:space="preserve">
-    <value>Offset: </value>
+    <value>Versatz: </value>
   </data>
   <data name="Ui.Job.Steps.CommaSeparator" xml:space="preserve">
     <value>, </value>
@@ -898,7 +901,7 @@
     <value>Ursprung: </value>
   </data>
   <data name="Ui.Job.Steps.ScriptPath" xml:space="preserve">
-    <value>Script-Pfad: </value>
+    <value>Skriptpfad: </value>
   </data>
   <data name="Ui.Job.Steps.WaitForCompletion" xml:space="preserve">
     <value>Auf Beendigung warten: </value>
@@ -907,10 +910,10 @@
     <value>Job-Name: </value>
   </data>
   <data name="Ui.Job.Steps.Model" xml:space="preserve">
-    <value>Model: </value>
+    <value>YOLO-Modell: </value>
   </data>
   <data name="Ui.Job.Steps.ClassName" xml:space="preserve">
-    <value>Klassenname: </value>
+    <value>Objektklasse: </value>
   </data>
   <data name="Ui.Job.Steps.WaitTimeMs" xml:space="preserve">
     <value>Wartezeit (ms): </value>
@@ -920,7 +923,7 @@
   </data>
   <data name="Ui.Job.Steps.ProcessSource" xml:space="preserve"><value>Prozessreferenz: </value></data>
   <data name="Ui.Job.Steps.CacheMs" xml:space="preserve">
-    <value>Cache (ms): </value>
+    <value>Ergebnis zwischenspeichern (ms): </value>
   </data>
   <data name="Ui.Job.Steps.Program" xml:space="preserve">
     <value>Programm: </value>
@@ -950,13 +953,13 @@
     <value>Monitor: </value>
   </data>
   <data name="Ui.Job.Steps.PositionOffset" xml:space="preserve">
-    <value>  Offset: </value>
+    <value>  Versatz: </value>
   </data>
   <data name="Ui.Job.Steps.MinMatches" xml:space="preserve">
-    <value>Min. Matches: </value>
+    <value>Mindestanzahl Treffer: </value>
   </data>
   <data name="Ui.Job.Steps.LoweSRatio" xml:space="preserve">
-    <value>Lowe's Ratio: </value>
+    <value>Lowe-Verhältnis: </value>
   </data>
   <data name="Ui.Job.Steps.Mode" xml:space="preserve">
     <value>Modus: </value>
@@ -1582,7 +1585,7 @@ Fehlercode: {3}</value>
     <value>Prozess beenden</value>
   </data>
   <data name="Step.Type.FocusProcess" xml:space="preserve">
-    <value>Fenster fokussieren/minimieren</value>
+    <value>Fenster anzeigen oder minimieren</value>
   </data>
   <data name="Step.Type.ShowText" xml:space="preserve">
     <value>Text auf Desktop anzeigen</value>
@@ -1597,7 +1600,7 @@ Fehlercode: {3}</value>
     <value>Bild anzeigen</value>
   </data>
   <data name="Step.Type.ShowOnDesktop" xml:space="preserve">
-    <value>Erkennungsergebnis auf Desktop anzeigen</value>
+    <value>Ergebnisse auf Desktop anzeigen</value>
   </data>
   <data name="Step.Type.VideoCreation" xml:space="preserve">
     <value>Video erstellen</value>
@@ -1617,14 +1620,14 @@ Fehlercode: {3}</value>
   <data name="Step.Type.EndJob" xml:space="preserve">
     <value>Job beenden</value>
   </data>
-  <data name="Step.Type.ContinueJob" xml:space="preserve"><value>Job neu starten</value></data>
+  <data name="Step.Type.ContinueJob" xml:space="preserve"><value>Nächsten Durchlauf starten</value></data>
   <data name="Step.Type.BlockInput" xml:space="preserve"><value>Eingaben blockieren</value></data>
   <data name="Step.Type.UnblockInput" xml:space="preserve"><value>Eingaben freigeben</value></data>
   <data name="Step.Description.DesktopDuplication" xml:space="preserve">
     <value>Nimmt einen Screenshot des gewählten Monitors auf und stellt ihn als Bildquelle bereit.</value>
   </data>
   <data name="Step.Description.TemplateMatching" xml:space="preserve">
-    <value>Vergleicht ein Bild-Template mit der Bildquelle eines Erfassungs-Steps.</value>
+    <value>Vergleicht eine Bildvorlage mit der ausgewählten Bildquelle.</value>
   </data>
   <data name="Step.Description.ColorDetection" xml:space="preserve">
     <value>Erkennt eine bestimmte Farbe in einer Bildquelle.</value>
@@ -1645,7 +1648,7 @@ Fehlercode: {3}</value>
     <value>Zeigt das aktuelle Bild in einem Vorschaufenster an.</value>
   </data>
   <data name="Step.Description.ShowOnDesktop" xml:space="preserve">
-    <value>Zeichnet Treffer, Mittelpunkte und Begrenzungsrahmen eines Erkennungsergebnisses als Overlay auf den Desktop.</value>
+    <value>Zeigt Erkennungen und Textwerte als Einblendung auf dem Desktop an.</value>
   </data>
   <data name="Step.Description.VideoCreation" xml:space="preserve">
     <value>Speichert den aktuellen Bildstrom als Videodatei.</value>
@@ -1663,7 +1666,7 @@ Fehlercode: {3}</value>
     <value>Wartet eine konfigurierbare Zeit, bevor der nächste Step ausgeführt wird.</value>
   </data>
   <data name="Step.Description.StartProcess" xml:space="preserve">
-    <value>Startet ein Programm oder beendet laufende Prozesse anhand ihres Namens und optional ihres Fenstertitels.</value>
+    <value>Startet ein Programm und konfiguriert optional dessen Fenster.</value>
   </data>
   <data name="Step.Description.TerminateProcess" xml:space="preserve">
     <value>Beendet laufende Prozesse anhand einer Prozessreferenz oder ihres Namens und optional ihres Fenstertitels.</value>
@@ -1677,12 +1680,12 @@ Fehlercode: {3}</value>
   <data name="Step.Description.EndJob" xml:space="preserve">
     <value>Beendet den aktuellen Job sofort.</value>
   </data>
-  <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Bricht den aktuellen Durchlauf ab und startet wieder beim ersten Haupt-Step.</value></data>
+  <data name="Step.Description.ContinueJob" xml:space="preserve"><value>Beendet den aktuellen Durchlauf und fährt beim ersten Haupt-Step fort.</value></data>
   <data name="Step.Description.BlockInput" xml:space="preserve"><value>Blockiert physische Maus- und Tastatureingaben vorübergehend.</value></data>
   <data name="Step.Description.UnblockInput" xml:space="preserve"><value>Gibt blockierte Maus- und Tastatureingaben wieder frei.</value></data>
-  <data name="Ui.Step.Settings.SafetyTimeoutSeconds" xml:space="preserve"><value>Sicherheits-Timeout (s)</value></data>
+  <data name="Ui.Step.Settings.SafetyTimeoutSeconds" xml:space="preserve"><value>Automatisch freigeben nach (s)</value></data>
   <data name="Ui.Step.Settings.UnblockInputDescription" xml:space="preserve"><value>Hebt eine zuvor gesetzte Eingabesperre sofort auf.</value></data>
-  <data name="Ui.Step.Settings.ContinueJobDescription" xml:space="preserve"><value>Wie „continue“ in einer Schleife: Nachfolgende Steps werden übersprungen und der Job beginnt wieder beim ersten Haupt-Step.</value></data>
+  <data name="Ui.Step.Settings.ContinueJobDescription" xml:space="preserve"><value>Beendet den aktuellen Durchlauf, überspringt die nachfolgenden Steps und fährt beim ersten Haupt-Step fort.</value></data>
   <data name="Step.Description.ActiveProcess" xml:space="preserve">
     <value>Prüft nur, ob eine passende Programminstanz läuft; ein sichtbares Fenster ist nicht erforderlich.</value>
   </data>
@@ -1690,10 +1693,10 @@ Fehlercode: {3}</value>
     <value>Prüft, ob ein konkretes Fenster eines Prozesses im Vordergrund ist. Optional kann nach einem Fenstertitel gefiltert werden.</value>
   </data>
   <data name="Step.Description.PointComparison" xml:space="preserve">
-    <value>Vergleicht Punkte mit einem Referenzpunkt oder Achsen-Ausdrücken.</value>
+    <value>Vergleicht Punkte mit einem Referenzpunkt oder Achsenbedingungen.</value>
   </data>
   <data name="Step.Description.KeyPointMatching" xml:space="preserve">
-    <value>Vergleicht SIFT-Keypoints eines Templates mit einer Bildquelle.</value>
+    <value>Vergleicht Bildmerkmale einer Bildvorlage mithilfe von SIFT.</value>
   </data>
   <data name="Step.Description.If" xml:space="preserve">
     <value>Beginnt einen bedingten Block.</value>
@@ -1701,6 +1704,8 @@ Fehlercode: {3}</value>
   <data name="Step.Description.ElseIf" xml:space="preserve">
     <value>Fügt einem bedingten Block eine weitere Bedingung hinzu.</value>
   </data>
+  <data name="Step.Description.Else" xml:space="preserve"><value>Führt den Zweig aus, wenn keine vorherige Bedingung zutrifft.</value></data>
+  <data name="Step.Description.EndIf" xml:space="preserve"><value>Beendet den zugehörigen Wenn-Block.</value></data>
   <data name="Ui.Step.Generated.ConditionSummary" xml:space="preserve">
     <value>{0} Bedingung(en) · {1}</value>
   </data>
@@ -2063,41 +2068,41 @@ Fehlercode: {3}</value>
   </data>
   <data name="Ui.Step.Settings.PredictionModel" xml:space="preserve"><value>Vorhersagemodell</value></data>
   <data name="Ui.Step.Settings.TimeBasis" xml:space="preserve"><value>Zeitbasis</value></data>
-  <data name="Ui.Step.Settings.MaxPredictionDistance" xml:space="preserve"><value>Max. Vorhersagedistanz</value></data>
-  <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Max. Modellfehler</value></data>
-  <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Min. Confidence</value></data>
-  <data name="Ui.Step.Settings.MinimumConfidencePercent" xml:space="preserve"><value>Min. Confidence (%)</value></data>
+  <data name="Ui.Step.Settings.MaxPredictionDistance" xml:space="preserve"><value>Maximale Vorhersagedistanz (px)</value></data>
+  <data name="Ui.Step.Settings.MaxFitError" xml:space="preserve"><value>Maximaler Modellfehler (px)</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidence" xml:space="preserve"><value>Mindestkonfidenz</value></data>
+  <data name="Ui.Step.Settings.MinimumConfidencePercent" xml:space="preserve"><value>Mindestkonfidenz (%)</value></data>
   <data name="Ui.Job.Steps.PredictionModel" xml:space="preserve"><value>Modell: </value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Erkennungs-Ergebnis, dessen gefundene Positionen als Messwerte für die Bewegungsvorhersage verwendet werden.</value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatic wählt das passendste Modell. Linear eignet sich für gleichmäßige Bewegung, Acceleration für Beschleunigung und Kalman für verrauschte Messwerte.</value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Capture sagt relativ zum Aufnahmezeitpunkt voraus. Execution berücksichtigt zusätzlich das Alter der Aufnahme und zielt auf den tatsächlichen Ausführungszeitpunkt.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.DetectionStep" xml:space="preserve"><value>Erkennungsergebnis, dessen gefundene Positionen als Messwerte für die Bewegungsvorhersage verwendet werden.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.Model" xml:space="preserve"><value>Automatisch wählt das passendste Modell. Linear eignet sich für gleichmäßige Bewegung, Beschleunigung für wechselndes Tempo und Kalman für verrauschte Messwerte.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.TimeBasis" xml:space="preserve"><value>Aufnahme sagt relativ zum Aufnahmezeitpunkt voraus. Ausführung berücksichtigt zusätzlich das Alter der Aufnahme und zielt auf den tatsächlichen Ausführungszeitpunkt.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MinSamples" xml:space="preserve"><value>Mindestanzahl gültiger Positionsmessungen, bevor eine Vorhersage ausgegeben wird. Höhere Werte sind stabiler, reagieren aber langsamer.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.PredictionMs" xml:space="preserve"><value>Zeitspanne in Millisekunden, die in die Zukunft vorhergesagt wird. Größere Werte erhöhen meist auch die Unsicherheit.</value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.ResetDistance" xml:space="preserve"><value>Maximale Distanz in Pixeln für die Zuordnung einer neuen Erkennung zu einem bestehenden Track. Bei Überschreitung beginnt ein neuer Track. 0 deaktiviert die Grenze.</value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.MaxSampleAge" xml:space="preserve"><value>Messwerte, die älter als dieser Wert sind, werden verworfen. Ein kleiner Wert reagiert schneller auf Richtungswechsel. 0 behält Werte bis zum internen Sample-Limit.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.ResetDistance" xml:space="preserve"><value>Maximale Distanz in Pixeln für die Zuordnung einer neuen Erkennung zu einer bestehenden Bewegungsspur. Bei Überschreitung beginnt eine neue Spur. 0 deaktiviert die Grenze.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MaxSampleAge" xml:space="preserve"><value>Messwerte, die älter als dieser Wert sind, werden verworfen. Ein kleiner Wert reagiert schneller auf Richtungswechsel. 0 behält Werte bis zur internen Messwertgrenze.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MaxDistance" xml:space="preserve"><value>Maximal erlaubte Distanz in Pixeln zwischen der letzten Messung und der vorhergesagten Position. Weiter entfernte Vorhersagen werden abgelehnt. 0 deaktiviert die Grenze.</value></data>
   <data name="Ui.Step.Settings.Help.Prediction.MaxFitError" xml:space="preserve"><value>Maximal erlaubte mittlere Abweichung des Modells von den Messwerten in Pixeln. Größere Fehler führen zu keiner Vorhersage. 0 deaktiviert die Grenze.</value></data>
-  <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Confidence der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
+  <data name="Ui.Step.Settings.Help.Prediction.MinimumConfidence" xml:space="preserve"><value>Minimale Ergebnisqualität von 0 bis 1. Sie kombiniert die Konfidenz der Erkennung, Modellstabilität und Anzahl der Messwerte.</value></data>
   <data name="Ui.Step.Settings.Advanced" xml:space="preserve"><value>Erweitert</value></data>
   <data name="Step.Type.DynamicRoi" xml:space="preserve"><value>Dynamischen Bildbereich erstellen</value></data>
-  <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamische ROI</value></data>
-  <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erzeugt aus dem besten Match eine ROI für die nächste Job-Runde.</value></data>
-  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Erkennungs-Ergebnis</value></data>
-  <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Rand in Pixeln</value></data>
-  <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Minimale Konfidenz (%)</value></data>
-  <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Vollbildsuche nach X ROI-Durchläufen (0 = nie)</value></data>
-  <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Dynamische ROI nach X erfolglosen Versuchen entfernen (0 = nie)</value></data>
-  <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Dynamische ROI verwenden</value></data>
+  <data name="Ui.Step.DynamicRoi.Selector" xml:space="preserve"><value>Dynamischer Bildbereich</value></data>
+  <data name="Ui.Step.DynamicRoi.Description" xml:space="preserve"><value>Erstellt aus dem besten Erkennungstreffer einen Bildbereich für den nächsten Durchlauf.</value></data>
+  <data name="Ui.Step.DynamicRoi.Source" xml:space="preserve"><value>Erkennungsergebnis</value></data>
+  <data name="Ui.Step.DynamicRoi.Padding" xml:space="preserve"><value>Rand (px)</value></data>
+  <data name="Ui.Step.DynamicRoi.MinimumConfidence" xml:space="preserve"><value>Mindestkonfidenz (%)</value></data>
+  <data name="Ui.Step.DynamicRoi.FullSearchInterval" xml:space="preserve"><value>Durchläufe bis zur Vollbildsuche (0 = nie)</value></data>
+  <data name="Ui.Step.DynamicRoi.ResetAfterMisses" xml:space="preserve"><value>Fehlversuche bis zum Zurücksetzen (0 = nie)</value></data>
+  <data name="Ui.Step.DynamicRoi.Use" xml:space="preserve"><value>Dynamischen Bildbereich verwenden</value></data>
   <data name="Ui.Step.Roi.Hint.None" xml:space="preserve"><value>Das gesamte Bild wird durchsucht.</value></data>
-  <data name="Ui.Step.Roi.Hint.Static" xml:space="preserve"><value>Die Suche wird auf die feste ROI begrenzt.</value></data>
-  <data name="Ui.Step.Roi.Hint.Dynamic" xml:space="preserve"><value>Die dynamische ROI grenzt das gesamte Bild automatisch ein.</value></data>
-  <data name="Ui.Step.Roi.Hint.Combined" xml:space="preserve"><value>Die dynamische ROI grenzt die feste ROI weiter ein.</value></data>
-  <data name="Ui.Step.Roi.Hint.NoDynamicFull" xml:space="preserve"><value>Keine dynamische ROI ausgewählt. Das gesamte Bild wird durchsucht.</value></data>
-  <data name="Ui.Step.Roi.Hint.NoDynamicStatic" xml:space="preserve"><value>Keine dynamische ROI ausgewählt. Die feste ROI wird verwendet.</value></data>
-  <data name="Ui.Job.Steps.RoiPadding" xml:space="preserve"><value>Rand: </value></data>
-  <data name="Ui.Job.Steps.RoiMinConfidence" xml:space="preserve"><value>Minimale Konfidenz: </value></data>
-  <data name="Ui.Job.Steps.RoiFullSearchInterval" xml:space="preserve"><value>Basis-Suche nach ROI-Durchläufen: </value></data>
-  <data name="Ui.Job.Steps.RoiResetAfterMisses" xml:space="preserve"><value>Reset nach Fehlversuchen: </value></data>
+  <data name="Ui.Step.Roi.Hint.Static" xml:space="preserve"><value>Die Suche wird auf den festen Bildbereich begrenzt.</value></data>
+  <data name="Ui.Step.Roi.Hint.Dynamic" xml:space="preserve"><value>Der dynamische Bildbereich grenzt das gesamte Bild automatisch ein.</value></data>
+  <data name="Ui.Step.Roi.Hint.Combined" xml:space="preserve"><value>Der dynamische Bildbereich grenzt den festen Bildbereich weiter ein.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicFull" xml:space="preserve"><value>Kein dynamischer Bildbereich ausgewählt. Das gesamte Bild wird durchsucht.</value></data>
+  <data name="Ui.Step.Roi.Hint.NoDynamicStatic" xml:space="preserve"><value>Kein dynamischer Bildbereich ausgewählt. Der feste Bildbereich wird verwendet.</value></data>
+  <data name="Ui.Job.Steps.RoiPadding" xml:space="preserve"><value>Rand (px): </value></data>
+  <data name="Ui.Job.Steps.RoiMinConfidence" xml:space="preserve"><value>Mindestkonfidenz: </value></data>
+  <data name="Ui.Job.Steps.RoiFullSearchInterval" xml:space="preserve"><value>Durchläufe bis zur Vollbildsuche: </value></data>
+  <data name="Ui.Job.Steps.RoiResetAfterMisses" xml:space="preserve"><value>Fehlversuche bis zum Zurücksetzen: </value></data>
   <data name="Ui.Job.Steps.CompactInput" xml:space="preserve">
     <value>Eingabe:</value>
   </data>
@@ -2109,7 +2114,7 @@ Fehlercode: {3}</value>
   </data>
   <data name="Ui.Job.Steps.DetailsSources" xml:space="preserve"><value>Quellen und Abhängigkeiten</value></data>
   <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Erkennung</value></data>
-  <data name="Ui.Job.Steps.DetailsRoi" xml:space="preserve"><value>ROI</value></data>
+  <data name="Ui.Job.Steps.DetailsRoi" xml:space="preserve"><value>Bildbereich (ROI)</value></data>
   <data name="Ui.Job.Steps.DetailsGeneral" xml:space="preserve"><value>Allgemein</value></data>
   <data name="Ui.Job.Steps.DetailsAdvanced" xml:space="preserve"><value>Erweitert</value></data>
   <data name="Ui.Job.Steps.DetailsReturnValue" xml:space="preserve"><value>Rückgabewert und Eigenschaften</value></data>
@@ -2140,14 +2145,14 @@ Fehlercode: {3}</value>
   <data name="Ui.Step.IfEditor.ExampleDate" xml:space="preserve"><value>z. B. 15.07.2026 14:30:00</value></data>
   <data name="Ui.Step.IfEditor.InvalidValue" xml:space="preserve"><value>Bitte einen gültigen Vergleichswert eingeben.</value></data>
   <data name="Ui.Step.Settings.Monitor" xml:space="preserve"><value>Monitor</value></data>
-  <data name="Ui.Step.Settings.Pixels" xml:space="preserve"><value>Pixel</value></data>
+  <data name="Ui.Step.Settings.Pixels" xml:space="preserve"><value>px</value></data>
   <data name="Ui.Step.Settings.ApplicationDefault" xml:space="preserve"><value>Anwendung entscheiden</value></data>
   <data name="Ui.Step.Settings.Windowed" xml:space="preserve"><value>Fenster</value></data>
   <data name="Ui.Step.Settings.Maximized" xml:space="preserve"><value>Maximiert</value></data>
   <data name="Ui.Step.Settings.Centered" xml:space="preserve"><value>Zentriert</value></data>
   <data name="Ui.Step.Settings.Custom" xml:space="preserve"><value>Benutzerdefiniert</value></data>
   <data name="Ui.Step.IfEditor.LiteralValue" xml:space="preserve"><value>Festwert</value></data>
-  <data name="Ui.Step.IfEditor.JobResultValue" xml:space="preserve"><value>JobResult</value></data>
+  <data name="Ui.Step.IfEditor.JobResultValue" xml:space="preserve"><value>Step-Ergebnis</value></data>
   <data name="Ui.Step.Settings.Action" xml:space="preserve"><value>Aktion</value></data>
   <data name="Ui.Step.Settings.StartProcess" xml:space="preserve"><value>Starten</value></data>
   <data name="Ui.Step.Settings.TerminateProcess" xml:space="preserve"><value>Beenden</value></data>
@@ -2229,10 +2234,10 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Steps.ResultProperty.IsPredicted" xml:space="preserve"><value>Vorhergesagt</value></data>
   <data name="Ui.Job.Steps.ResultProperty.IsRunning" xml:space="preserve"><value>Prozess läuft</value></data>
   <data name="Ui.Job.Steps.ResultProperty.Matches" xml:space="preserve"><value>Stimmt überein</value></data>
-  <data name="Ui.Job.Steps.ResultProperty.RoiReset" xml:space="preserve"><value>ROI zurückgesetzt</value></data>
-  <data name="Ui.Job.Steps.ResultProperty.RoiUpdated" xml:space="preserve"><value>ROI aktualisiert</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.RoiReset" xml:space="preserve"><value>Bildbereich zurückgesetzt</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.RoiUpdated" xml:space="preserve"><value>Bildbereich aktualisiert</value></data>
   <data name="Ui.Job.Steps.ResultProperty.SourceCaptureIsFresh" xml:space="preserve"><value>Quellaufnahme aktuell</value></data>
-  <data name="Ui.Job.Steps.ResultProperty.UsedDynamicRoi" xml:space="preserve"><value>Dynamische ROI verwendet</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.UsedDynamicRoi" xml:space="preserve"><value>Dynamischen Bildbereich verwendet</value></data>
   <data name="Ui.Job.Steps.ResultProperty.CaptureTimestampUtc" xml:space="preserve"><value>Aufnahmezeitpunkt (UTC)</value></data>
   <data name="Ui.Job.Steps.ResultProperty.SourceCaptureTimestampUtc" xml:space="preserve"><value>Zeitpunkt der Quellaufnahme (UTC)</value></data>
   <data name="Ui.Job.Steps.ResultProperty.StartTimeUtc" xml:space="preserve"><value>Prozessstart (UTC)</value></data>
@@ -2254,7 +2259,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Steps.ResultProperty.Process" xml:space="preserve"><value>Prozess</value></data>
   <data name="Ui.Job.Steps.ResultProperty.ExecutablePath" xml:space="preserve"><value>Programmpfad</value></data>
   <data name="Ui.Job.Steps.ResultProperty.ProcessName" xml:space="preserve"><value>Prozessname</value></data>
-  <data name="Ui.Job.Steps.ResultProperty.AppliedRoi" xml:space="preserve"><value>Angewendete ROI</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.AppliedRoi" xml:space="preserve"><value>Angewendeter Bildbereich</value></data>
   <data name="Ui.Job.Steps.ResultProperty.AllDetections" xml:space="preserve"><value>Alle Erkennungen</value></data>
   <data name="Ui.Job.Steps.DetailProperty.Query" xml:space="preserve"><value>Suchkriterien</value></data>
   <data name="Ui.Job.Steps.DetailProperty.Settings" xml:space="preserve"><value>Einstellungen</value></data>
@@ -2306,7 +2311,7 @@ Fehlercode: {3}</value>
   <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows-Updates</value></data>
   <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Systemstart und Herunterfahren</value></data>
   <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Textquelle</value></data>
-  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Task-Ergebnis</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Step-Ergebnis</value></data>
   <data name="Enum.AutomationTriggerKind.Webhook" xml:space="preserve"><value>Webhook</value></data>
   <data name="Enum.WebhookNetworkMode.Offline" xml:space="preserve"><value>Offline (nur dieser PC)</value></data>
   <data name="Enum.WebhookNetworkMode.Lan" xml:space="preserve"><value>LAN</value></data>
@@ -2809,7 +2814,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Step.FileSystem.Source" xml:space="preserve"><value>Quelle</value></data>
   <data name="Ui.Step.FileSystem.Target" xml:space="preserve"><value>Ziel</value></data>
   <data name="Ui.Step.FileSystem.ExplicitPath" xml:space="preserve"><value>Pfad eingeben</value></data>
-  <data name="Ui.Step.FileSystem.StepResult" xml:space="preserve"><value>Ergebnis eines vorherigen Steps</value></data>
+  <data name="Ui.Step.FileSystem.StepResult" xml:space="preserve"><value>Aus Step-Ergebnis</value></data>
   <data name="Ui.Step.FileSystem.NewName" xml:space="preserve"><value>Neuer Name</value></data>
   <data name="Ui.Step.FileSystem.Filter" xml:space="preserve"><value>Optionaler Filter</value></data>
   <data name="Ui.Step.FileSystem.FilterHint" xml:space="preserve"><value>Mehrere Filter mit Semikolon trennen, zum Beispiel *.tmp;*.log. Der Filter gilt nur für direkte Einträge im gewählten Ordner.</value></data>
@@ -2837,7 +2842,7 @@ Fehlercode: {3}</value>
   <data name="Step.ResultProperty.FileSystemOperationResult.AffectedPaths" xml:space="preserve"><value>Bearbeitete Pfade</value></data>
   <data name="Step.ResultProperty.FileSystemOperationResult.CompletedAtUtc" xml:space="preserve"><value>Abgeschlossen am (UTC)</value></data>
   <data name="Step.Type.SaveImage" xml:space="preserve"><value>Bild speichern</value></data>
-  <data name="Step.Description.SaveImage" xml:space="preserve"><value>Speichert ein Bild aus einem vorherigen Aufnahme-Step als Bilddatei.</value></data>
+  <data name="Step.Description.SaveImage" xml:space="preserve"><value>Speichert die ausgewählte Bildquelle als Bilddatei.</value></data>
   <data name="FolderPicker.Image" xml:space="preserve"><value>Speicherordner für Bilder auswählen</value></data>
   <data name="Ui.Step.SaveImage.FormatsHint" xml:space="preserve"><value>Das Dateiformat wird über die Endung gewählt: PNG, JPG, JPEG, BMP, GIF, TIF oder TIFF. Eine vorhandene gleichnamige Datei wird ersetzt.</value></data>
   <data name="Step.ResultProperty.SaveImageResult.FilePath" xml:space="preserve"><value>Vollständiger Dateipfad</value></data>
@@ -2980,7 +2985,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Library.MacroSubtitle" xml:space="preserve"><value>{0} Befehle</value></data>
   <data name="Ui.Library.AutomationSubtitle" xml:space="preserve"><value>{0} · Aktion: {2} · {1}</value></data>
   <data name="Ui.Library.Inactive" xml:space="preserve"><value>Inaktiv</value></data>
-  <data name="Ui.Step.Settings.MultiplePoints" xml:space="preserve"><value>Mehrere Treffer</value></data>
+  <data name="Ui.Step.Settings.MultiplePoints" xml:space="preserve"><value>Mehrere Treffer zurückgeben</value></data>
   <data name="Enum.TemplateMatchMode.SqDiff" xml:space="preserve"><value>Quadratische Differenz</value></data>
   <data name="Enum.TemplateMatchMode.CCorr" xml:space="preserve"><value>Korrelation</value></data>
   <data name="Enum.TemplateMatchMode.CCoeff" xml:space="preserve"><value>Korrelationskoeffizient</value></data>

@@ -8,6 +8,7 @@
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:output="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Output"
              xmlns:roi="clr-namespace:DesktopAutomationApp.Controls.Jobs.Roi"
+             xmlns:geometry="clr-namespace:DesktopAutomationApp.Controls.Jobs.Geometry"
              xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared"
              xmlns:windows="clr-namespace:DesktopAutomationApp.Controls.WindowsIntegration"
              xmlns:analysis="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Analysis"
@@ -176,17 +177,24 @@
             <windows:WindowsCapabilityPicker DataContext="{Binding WindowsCapabilityEditor.Picker}"/>
         </DataTemplate>
         <DataTemplate x:Key="ScreenPointFieldTemplate">
-            <StackPanel>
-                <shared:MonitorPicker MonitorIndex="{Binding ScreenPointEditor.MonitorIndex, Mode=TwoWay}"
-                                      SelectCommand="{Binding ScreenPointEditor.SelectMonitorCommand}" HorizontalAlignment="Left"/>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
-                    <TextBox Width="90" Text="{Binding ScreenPointEditor.X, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
-                    <TextBox Width="90" Text="{Binding ScreenPointEditor.Y, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
-                    <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Command="{Binding ScreenPointEditor.CaptureCommand}"/>
+            <Border Style="{StaticResource GeometryCard}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <Button DockPanel.Dock="Right"
+                                Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
+                                Style="{StaticResource GeometryInlineAction}"
+                                Command="{Binding ScreenPointEditor.CaptureCommand}"/>
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Coordinates}"
+                                   Style="{StaticResource GeometrySectionHeader}"/>
+                    </DockPanel>
+                    <shared:MonitorPicker MonitorIndex="{Binding ScreenPointEditor.MonitorIndex, Mode=TwoWay}"
+                                          SelectCommand="{Binding ScreenPointEditor.SelectMonitorCommand}"
+                                          HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                    <geometry:GeometryValueEditor
+                        X="{Binding ScreenPointEditor.X, Mode=TwoWay}"
+                        Y="{Binding ScreenPointEditor.Y, Mode=TwoWay}"/>
                 </StackPanel>
-            </StackPanel>
+            </Border>
         </DataTemplate>
         <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
             <StackPanel>
@@ -212,7 +220,10 @@
                 <ItemsControl ItemsSource="{Binding PointEntryListEditor.Points}">
                     <ItemsControl.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}" Command="{Binding PointEntryListEditor.AddCommand}" HorizontalAlignment="Left"/>
+                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}"
+                        Command="{Binding PointEntryListEditor.AddCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        HorizontalAlignment="Left"/>
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="AxisExpressionListFieldTemplate">
@@ -220,7 +231,10 @@
                 <ItemsControl ItemsSource="{Binding AxisExpressionListEditor.Expressions}">
                     <ItemsControl.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}" Command="{Binding AxisExpressionListEditor.AddCommand}" HorizontalAlignment="Left"/>
+                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}"
+                        Command="{Binding AxisExpressionListEditor.AddCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        HorizontalAlignment="Left"/>
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="GeneratedFieldTemplate">
@@ -255,6 +269,21 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepFieldNodeViewModel}">
             <ContentControl Content="{Binding Field}" ContentTemplate="{StaticResource GeneratedFieldTemplate}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedStepPointFieldPairViewModel}">
+            <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Width="153" Margin="0,6,12,0"
+                           Text="{Binding Label}"
+                           Style="{StaticResource StepFieldLabel}"
+                           Visibility="{Binding HasLabel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <geometry:GeometryValueEditor Grid.Column="1"
+                                              X="{Binding XField.IntegerValue, Mode=TwoWay}"
+                                              Y="{Binding YField.IntegerValue, Mode=TwoWay}"/>
+            </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepChoiceGroupViewModel}">
             <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch"

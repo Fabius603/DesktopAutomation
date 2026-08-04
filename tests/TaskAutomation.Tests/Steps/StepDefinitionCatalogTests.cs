@@ -133,9 +133,11 @@ public sealed class StepDefinitionCatalogTests
         var group = editor.Sections.Single(section => section.Descriptor.Id == "offset")
             .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
 
-        Assert.Equal(
-            [PointComparisonStepDefinition.ReferenceXFieldId, PointComparisonStepDefinition.ReferenceYFieldId],
-            group.Branches[0].Children.Cast<GeneratedStepFieldNodeViewModel>().Select(node => node.Field.Descriptor.Id));
+        var manualPoint = Assert.IsType<GeneratedStepPointFieldPairViewModel>(
+            Assert.Single(group.Branches[0].Children));
+        Assert.Equal(PointComparisonStepDefinition.ReferenceXFieldId, manualPoint.XField.Descriptor.Id);
+        Assert.Equal(PointComparisonStepDefinition.ReferenceYFieldId, manualPoint.YField.Descriptor.Id);
+        Assert.False(manualPoint.HasLabel);
         Assert.Equal(
             [PointComparisonStepDefinition.ReferencePointsFieldId],
             group.Branches[1].Children.Cast<GeneratedStepFieldNodeViewModel>().Select(node => node.Field.Descriptor.Id));
@@ -193,7 +195,25 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void AddStepDialog_ListsEveryStepTypeOnlyOnce()
+    public void AddStepDialog_KeepsSelectionWhenSearchHasNoMatches()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        var originalEditor = viewModel.GeneratedEditor;
+
+        viewModel.StepTypeSearchText = "step-type-that-does-not-exist";
+        Assert.Empty(viewModel.StepTypeItems.Cast<AddJobStepDialogViewModel.StepTypeItem>());
+
+        viewModel.SelectedType = null!;
+
+        Assert.Equal("DesktopDuplication", viewModel.SelectedType);
+        Assert.Same(originalEditor, viewModel.GeneratedEditor);
+    }
+
+    [Fact]
+    public void AddStepDialog_ListsEverySelectableStepTypeOnlyOnce()
     {
         var items = AddJobStepDialogViewModel.CreateStepTypeItems(BuiltInStepDefinitions.Instance)
             .Cast<AddJobStepDialogViewModel.StepTypeItem>()
@@ -207,6 +227,9 @@ public sealed class StepDefinitionCatalogTests
         Assert.Single(items, item => item.Name == "UserChoice");
         Assert.Single(items, item => item.Name == "PointComparison");
         Assert.DoesNotContain(items, item => item.Name == "ProcessDuplication");
+        Assert.DoesNotContain(items, item => item.Name == "ElseIf");
+        Assert.DoesNotContain(items, item => item.Name == "Else");
+        Assert.DoesNotContain(items, item => item.Name == "EndIf");
         Assert.Single(items, item => item.Name == "ShowOnDesktop");
     }
 
@@ -1437,7 +1460,7 @@ public sealed class StepDefinitionCatalogTests
                 MultiplePoints = true,
                 ConfidenceThreshold = 0.72,
                 EnableROI = true,
-                ROI = new Rect(10, 20, 300, 200),
+                ROI = new TaskAutomation.Contracts.Geometry.PixelRegion(10, 20, 300, 200),
                 ImageSource = new ResultBinding { SourceStepId = "capture", PropertyId = "image" },
                 DynamicRoiSource = new ResultBinding { SourceStepId = "dynamic", PropertyId = "bounds" }
             }
@@ -1450,7 +1473,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal("template-step", updated.Id);
         Assert.True(updated.Settings.MultiplePoints);
         Assert.Equal(TemplateMatchModes.SqDiffNormed, updated.Settings.TemplateMatchMode);
-        Assert.Equal(new Rect(10, 20, 300, 200), updated.Settings.ROI);
+        Assert.Equal(new TaskAutomation.Contracts.Geometry.PixelRegion(10, 20, 300, 200), updated.Settings.ROI);
         Assert.Equal("dynamic", updated.Settings.DynamicRoiSource.SourceStepId);
     }
 
@@ -1485,7 +1508,7 @@ public sealed class StepDefinitionCatalogTests
                 ClassName = "button",
                 ConfidenceThreshold = 0.63f,
                 EnableROI = true,
-                ROI = new Rect(4, 5, 600, 400),
+                ROI = new TaskAutomation.Contracts.Geometry.PixelRegion(4, 5, 600, 400),
                 ImageSource = new ResultBinding { SourceStepId = "capture", PropertyId = "image" },
                 DynamicRoiSource = new ResultBinding { SourceStepId = "dynamic", PropertyId = "bounds" }
             }
@@ -1498,7 +1521,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal("screen-parser", updated.Settings.Model);
         Assert.Equal("button", updated.Settings.ClassName);
         Assert.Equal(0.63f, updated.Settings.ConfidenceThreshold);
-        Assert.Equal(new Rect(4, 5, 600, 400), updated.Settings.ROI);
+        Assert.Equal(new TaskAutomation.Contracts.Geometry.PixelRegion(4, 5, 600, 400), updated.Settings.ROI);
         Assert.Equal("dynamic", updated.Settings.DynamicRoiSource.SourceStepId);
     }
 

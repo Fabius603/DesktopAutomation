@@ -3,6 +3,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Tests.Steps;
 
@@ -85,7 +86,7 @@ public sealed class KlickOnPoint3DStepHandlerTests
         {
             WasExecuted = true,
             Found = true,
-            Point = new Point(130, 75),
+            Point = new PixelPoint(130, 75),
             Confidence = 0.9,
             SourceCaptureIsFresh = true
         }, "detection");

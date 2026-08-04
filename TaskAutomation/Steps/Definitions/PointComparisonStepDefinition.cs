@@ -27,7 +27,7 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         [
             EnumField(ModeFieldId, "Ui.Step.Settings.Mode", "Offset", ["Offset", "Expression"],
                 [new("Offset", "Ui.Step.Settings.OffsetTolerance"), new("Expression", "Ui.Step.Settings.Expression")], 0),
-            EnumField(MatchRequirementFieldId, "Ui.Step.Settings.Evaluation", "All", ["All", "Any"],
+            EnumField(MatchRequirementFieldId, "Ui.Step.Settings.RequiredMatches", "All", ["All", "Any"],
                 [new("All", "Ui.Step.Settings.AllAND"), new("Any", "Ui.Step.Settings.AtLeastOneOR")], 1),
             new(PointsFieldId, "Ui.Step.Settings.PointsToCheck", StepValueKind.Collection, true,
                 JsonSerializer.SerializeToNode(new[] { new StepPointEntryValue("Manual", 0, 0, null) }),
@@ -58,7 +58,8 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
                     ReferenceYFieldId, ReferencePointsFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
                     [new StepChoiceGroupDescriptor(ReferenceSourceFieldId,
                         [new("Manual", "Ui.Step.Settings.EnterManually",
-                            [new StepFieldNodeDescriptor(ReferenceXFieldId), new StepFieldNodeDescriptor(ReferenceYFieldId)]),
+                            [new StepPointFieldPairDescriptor(
+                                ReferenceXFieldId, ReferenceYFieldId)]),
                          new("JobResult", "Ui.Step.Settings.FromDetectionResult",
                             [new StepFieldNodeDescriptor(ReferencePointsFieldId)])]),
                      new StepFieldNodeDescriptor(OffsetXFieldId),
@@ -145,12 +146,12 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         StepFieldOptionDescriptor[] options, int order, StepVisibilityRule? visible = null, string? editorHint = null) =>
         new(id, label, StepValueKind.Enum, true, JsonValue.Create(defaultValue), Constraints: new(AllowedValues: values),
             EditorHint: editorHint, Order: order, VisibleWhen: visible, Options: options);
-    private static StepPointEntryValue ToValue(PointEntry entry) => new(entry.Source.ToString(), entry.ManualX, entry.ManualY,
+    private static StepPointEntryValue ToValue(PointEntry entry) => new(entry.Source.ToString(), entry.ManualPoint.X, entry.ManualPoint.Y,
         JsonSerializer.SerializeToNode(entry.PointsSource));
     private static PointEntry FromValue(StepPointEntryValue value) => new()
     {
         Source = Enum.TryParse(value.Source, out PointEntrySource source) ? source : PointEntrySource.Manual,
-        ManualX = value.ManualX, ManualY = value.ManualY, PointsSource = ReadBinding(value.PointsSource)
+        ManualPoint = value.ManualPoint, PointsSource = ReadBinding(value.PointsSource)
     };
     private static ResultBinding ReadBinding(JsonNode? value)
     {

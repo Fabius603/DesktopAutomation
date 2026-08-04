@@ -2,14 +2,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps
 {
     public sealed record CaptureFrame : ICaptureStepResult
     {
         public System.Drawing.Bitmap? Image { get; init; }
-        public System.Drawing.Rectangle Bounds { get; init; }
-        public System.Drawing.Point Offset { get; init; }
+        public PixelRegion Bounds { get; init; }
+        public PixelPoint Offset { get; init; }
         public bool IsFresh { get; init; } = true;
         public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
         public bool HasImage => Image is not null;

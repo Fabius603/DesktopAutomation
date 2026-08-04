@@ -456,7 +456,6 @@ namespace DesktopAutomationApp
                 AllowTrailingCommas = true
             };
             jsonOpts.Converters.Add(new JsonStringEnumConverter());
-            jsonOpts.Converters.Add(new OpenCvRectJsonConverter());
             return jsonOpts;
         }
     }

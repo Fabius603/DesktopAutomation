@@ -1,10 +1,26 @@
 using System.Text.Json;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Tests.Jobs;
 
 public sealed class JobSerializationTests
 {
+    [Theory]
+    [InlineData("x", "y", "width", "height")]
+    [InlineData("X", "Y", "Width", "Height")]
+    public void Deserialize_ExistingRoiShapeUsesCanonicalPixelRegion(
+        string x, string y, string width, string height)
+    {
+        var json = $"{{\"type\":\"template_matching\",\"settings\":{{\"roi\":{{\"{x}\":10,\"{y}\":20,\"{width}\":300,\"{height}\":200}},\"enable_roi\":true}}}}";
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        var restored = Assert.IsType<TemplateMatchingStep>(JsonSerializer.Deserialize<JobStep>(json, options));
+
+        Assert.Equal(new PixelRegion(10, 20, 300, 200), restored.Settings.ROI);
+        Assert.True(restored.Settings.EnableROI);
+    }
+
     [Fact]
     public void DeserializeLegacyJobWithoutFormatVersion_UsesCurrentVersion()
     {

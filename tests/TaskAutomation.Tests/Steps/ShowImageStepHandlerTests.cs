@@ -3,6 +3,8 @@ using TaskAutomation.Events;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
+using Point = TaskAutomation.Contracts.Geometry.PixelPoint;
+using Rectangle = TaskAutomation.Contracts.Geometry.PixelRegion;
 
 namespace TaskAutomation.Tests.Steps;
 

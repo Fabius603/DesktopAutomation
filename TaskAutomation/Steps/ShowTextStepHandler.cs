@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps
@@ -60,9 +61,12 @@ namespace TaskAutomation.Steps
 
         private static string FormatDisplayValue(object? value) => value switch
         {
-            Point point => $"X: {point.X}, Y: {point.Y}",
-            Rectangle rectangle =>
-                $"X: {rectangle.X}, Y: {rectangle.Y}, Breite: {rectangle.Width}, Höhe: {rectangle.Height}",
+            PixelPoint point => PixelGeometryFormatter.Format(point),
+            PixelSize size => PixelGeometryFormatter.Format(size),
+            PixelRegion region => PixelGeometryFormatter.Format(region),
+            Point point => PixelGeometryFormatter.Format(new PixelPoint(point.X, point.Y)),
+            Rectangle rectangle => PixelGeometryFormatter.Format(
+                new PixelRegion(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)),
             DetectionItem detection => FormatDetection(detection),
             RuntimeProcessReference process => string.IsNullOrWhiteSpace(process.ProcessName)
                 ? $"Prozess {process.ProcessId}"
@@ -72,9 +76,10 @@ namespace TaskAutomation.Steps
 
         private static string FormatDetection(DetectionItem detection)
         {
-            var text = $"Punkt X: {detection.Center.X}, Y: {detection.Center.Y}; Konfidenz: {detection.Confidence:P1}";
-            if (detection.BoundingBox is not { } bounds) return text;
-            return $"{text}; Bereich X: {bounds.X}, Y: {bounds.Y}, Breite: {bounds.Width}, Höhe: {bounds.Height}";
+            var geometry = detection.BoundingBox is { } bounds
+                ? PixelGeometryFormatter.Format(bounds)
+                : PixelGeometryFormatter.Format(detection.Center);
+            return $"{detection.Confidence:P1}  ·  {geometry}";
         }
 
         // ── Hilfsmethoden ──────────────────────────────────────────────────────

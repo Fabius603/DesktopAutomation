@@ -100,7 +100,7 @@ namespace TaskAutomation.Steps
                     settings.OriginCoordinateSpace,
                     KlickOnPoint3DSettings.MonitorLocalCoordinates,
                     StringComparison.OrdinalIgnoreCase))
-                return new Point(settings.OriginX, settings.OriginY);
+                return new Point(settings.OriginPoint.X, settings.OriginPoint.Y);
 
             var monitorBounds = ScreenHelper.GetDesktopBounds(settings.OriginMonitorIndex);
             return ResolveGlobalOrigin(settings, monitorBounds);
@@ -114,7 +114,7 @@ namespace TaskAutomation.Steps
                     settings.OriginCoordinateSpace,
                     KlickOnPoint3DSettings.MonitorLocalCoordinates,
                     StringComparison.OrdinalIgnoreCase))
-                return new Point(settings.OriginX, settings.OriginY);
+                return new Point(settings.OriginPoint.X, settings.OriginPoint.Y);
 
             if (monitorBounds.IsEmpty)
                 throw new InvalidOperationException(

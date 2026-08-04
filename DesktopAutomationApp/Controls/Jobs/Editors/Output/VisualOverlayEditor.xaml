@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+             xmlns:geometry="clr-namespace:DesktopAutomationApp.Controls.Jobs.Geometry"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared">
     <StackPanel Margin="0,12,0,0">
@@ -12,13 +13,12 @@
             <Button DockPanel.Dock="Right"
                     Content="{loc:Translate Key=Ui.Step.Overlay.AddDetection}"
                     Command="{Binding AddOverlayDetectionCommand}"
-                    Padding="8,3"/>
+                    Style="{StaticResource ButtonSecondary}"/>
         </DockPanel>
         <ItemsControl ItemsSource="{Binding OverlayDetectionRows}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border BorderBrush="{DynamicResource App.Brush.Border}"
-                            BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                    <Border Style="{StaticResource GeometryCard}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -27,9 +27,9 @@
                             <jobs:ResultBindingPicker DataContext="{Binding Source}"
                                                       ShowClearButton="False"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
-                                <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Padding="8,3"/>
-                                <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Padding="8,3" Margin="4,0,0,0"/>
-                                <Button Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Padding="8,3" Margin="4,0,0,0"/>
+                                <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>
+                                <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Style="{StaticResource ButtonIcon}" Margin="4,0,0,0"/>
+                                <Button Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Style="{StaticResource ButtonIconDanger}" Margin="4,0,0,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -43,13 +43,12 @@
             <Button DockPanel.Dock="Right"
                     Content="{loc:Translate Key=Ui.Step.Overlay.AddText}"
                     Command="{Binding AddOverlayTextCommand}"
-                    Padding="8,3"/>
+                    Style="{StaticResource ButtonSecondary}"/>
         </DockPanel>
         <ItemsControl ItemsSource="{Binding OverlayTextRows}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border BorderBrush="{DynamicResource App.Brush.Border}"
-                            BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                    <Border Style="{StaticResource GeometryCard}">
                         <StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -59,9 +58,9 @@
                                 <jobs:ResultBindingPicker DataContext="{Binding Source}"
                                                           ShowClearButton="False"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
-                                    <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Padding="8,3"/>
-                                    <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Padding="8,3" Margin="4,0,0,0"/>
-                                    <Button Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Padding="8,3" Margin="4,0,0,0"/>
+                                    <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>
+                                    <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Style="{StaticResource ButtonIcon}" Margin="4,0,0,0"/>
+                                    <Button Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Style="{StaticResource ButtonIconDanger}" Margin="4,0,0,0"/>
                                 </StackPanel>
                             </Grid>
                             <Expander Style="{StaticResource StepAdvancedExpander}" Margin="0,8,0,0">
@@ -82,11 +81,11 @@
                                         <shared:PercentageInput Grid.Column="1" Value="{Binding Opacity, Mode=TwoWay}"/>
                                     </Grid>
                                     <Grid Style="{StaticResource StepFieldGrid}">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="90"/><ColumnDefinition Width="24"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Position}" Style="{StaticResource StepFieldLabel}"/>
-                                        <TextBox Grid.Column="1" Text="{Binding OffsetX, UpdateSourceTrigger=PropertyChanged}"/>
-                                        <TextBlock Grid.Column="2" Text="{loc:Translate Key=Ui.Common.SeparatorSlash}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBox Grid.Column="3" Text="{Binding OffsetY, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <geometry:GeometryValueEditor Grid.Column="1"
+                                                                      X="{Binding OffsetX, Mode=TwoWay}"
+                                                                      Y="{Binding OffsetY, Mode=TwoWay}"/>
                                     </Grid>
                                     <StackPanel Visibility="{Binding DataContext.ShowOverlayDesktopOptions, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Grid Style="{StaticResource StepFieldGrid}">
@@ -96,8 +95,9 @@
                                             <Button Grid.Column="2"
                                                     Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
                                                     Command="{Binding ChooseMonitorCommand}"
+                                                    Style="{StaticResource GeometryInlineAction}"
                                                     Margin="8,0,0,0"
-                                                    Padding="10,5"/>
+                                                    />
                                         </Grid>
                                         <Grid Style="{StaticResource StepFieldGrid}">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>

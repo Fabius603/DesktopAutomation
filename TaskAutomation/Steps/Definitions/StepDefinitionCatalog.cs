@@ -182,6 +182,14 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 case TaskAutomation.Contracts.Steps.StepFieldNodeDescriptor fieldNode:
                     Own(fieldNode.FieldId);
                     break;
+                case TaskAutomation.Contracts.Steps.StepPointFieldPairDescriptor pointPair:
+                    Own(pointPair.XFieldId);
+                    Own(pointPair.YFieldId);
+                    if (pointPair.XFieldId == pointPair.YFieldId
+                        || fieldsById[pointPair.XFieldId].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Integer
+                        || fieldsById[pointPair.YFieldId].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Integer)
+                        throw Invalid("uses an invalid point field pair");
+                    break;
                 case TaskAutomation.Contracts.Steps.StepChoiceGroupDescriptor group:
                     Own(group.SelectionFieldId);
                     if (!fieldsById.TryGetValue(group.SelectionFieldId, out var selectionField)

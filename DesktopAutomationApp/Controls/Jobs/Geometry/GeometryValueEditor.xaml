@@ -1,0 +1,46 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Geometry.GeometryValueEditor"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
+    <WrapPanel Margin="0,0,-8,-8">
+        <StackPanel Style="{StaticResource GeometryFieldContainer}">
+            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource GeometryFieldLabel}"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{loc:Translate Key=Ui.Step.Settings.Pixels}"
+                           Style="{StaticResource GeometryUnitLabel}"/>
+                <TextBox Style="{StaticResource GeometryNumberInput}"
+                         Text="{Binding X, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+        </StackPanel>
+        <StackPanel Style="{StaticResource GeometryFieldContainer}">
+            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource GeometryFieldLabel}"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{loc:Translate Key=Ui.Step.Settings.Pixels}"
+                           Style="{StaticResource GeometryUnitLabel}"/>
+                <TextBox Style="{StaticResource GeometryNumberInput}"
+                         Text="{Binding Y, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+        </StackPanel>
+        <StackPanel Style="{StaticResource GeometryFieldContainer}"
+                    Visibility="{Binding ShowSize, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Width}" Style="{StaticResource GeometryFieldLabel}"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{loc:Translate Key=Ui.Step.Settings.Pixels}"
+                           Style="{StaticResource GeometryUnitLabel}"/>
+                <TextBox Style="{StaticResource GeometryNumberInput}"
+                         Text="{Binding RegionWidth, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+        </StackPanel>
+        <StackPanel Style="{StaticResource GeometryFieldContainer}"
+                    Visibility="{Binding ShowSize, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Height}" Style="{StaticResource GeometryFieldLabel}"/>
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{loc:Translate Key=Ui.Step.Settings.Pixels}"
+                           Style="{StaticResource GeometryUnitLabel}"/>
+                <TextBox Style="{StaticResource GeometryNumberInput}"
+                         Text="{Binding RegionHeight, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+        </StackPanel>
+    </WrapPanel>
+</UserControl>

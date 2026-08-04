@@ -37,8 +37,8 @@ internal static class DebugValueTypeLocalization
             "DateTime" or "DateTimeOffset" => ("DateTime", "Date/time"),
             "TimeSpan" => ("Duration", "Duration"),
             "Bitmap" => ("Image", "Image"),
-            "Point" => ("Point", "Point"),
-            "Rectangle" => ("Rectangle", "Rectangle"),
+            "Point" or "PixelPoint" => ("Point", "Point"),
+            "Rectangle" or "PixelRegion" => ("Rectangle", "Rectangle"),
             "DetectionItem" => ("Detection", "Detection"),
             "RuntimeProcessReference" => ("Process", "Process reference"),
             _ => ("ResultObject", "Result object")

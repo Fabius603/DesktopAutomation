@@ -4,6 +4,8 @@ using System.Drawing.Text;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
+using TaskAutomation.Geometry;
 
 namespace TaskAutomation.Steps;
 
@@ -100,6 +102,9 @@ public static class ResultDisplayFormatter
         Point point => $"X={point.X}, Y={point.Y}",
         Rectangle rectangle =>
             $"X={rectangle.X}, Y={rectangle.Y}, Breite={rectangle.Width}, Höhe={rectangle.Height}",
+        PixelPoint point => PixelGeometryFormatter.Format(point),
+        PixelSize size => PixelGeometryFormatter.Format(size),
+        PixelRegion region => PixelGeometryFormatter.Format(region),
         DetectionItem detection => detection.BoundingBox is { } bounds
             ? $"{detection.Confidence:P1} ({bounds.X}, {bounds.Y}, {bounds.Width}, {bounds.Height})"
             : $"{detection.Confidence:P1} (X={detection.Center.X}, Y={detection.Center.Y})",
@@ -110,7 +115,7 @@ public static class ResultDisplayFormatter
 
 public static class VisualOverlayRenderer
 {
-    public static Bitmap Draw(Bitmap source, Point captureOffset, ResolvedVisualOverlay overlay)
+    public static Bitmap Draw(Bitmap source, PixelPoint captureOffset, ResolvedVisualOverlay overlay)
     {
         var result = (Bitmap)source.Clone();
         using var graphics = Graphics.FromImage(result);
@@ -127,8 +132,8 @@ public static class VisualOverlayRenderer
                 using var brush = new SolidBrush(color);
                 if (detection.BoundingBox is { } bounds)
                 {
-                    bounds.Offset(-captureOffset.X, -captureOffset.Y);
-                    graphics.DrawRectangle(pen, bounds);
+                    var localBounds = bounds.Offset(-captureOffset.X, -captureOffset.Y).ToDrawingRectangle();
+                    graphics.DrawRectangle(pen, localBounds);
                 }
                 var center = new Point(
                     detection.Center.X - captureOffset.X,

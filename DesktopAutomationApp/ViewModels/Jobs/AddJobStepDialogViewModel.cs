@@ -263,8 +263,11 @@ namespace DesktopAutomationApp.ViewModels
 
         internal static ListCollectionView CreateStepTypeItems(IStepDefinitionCatalog stepDefinitionCatalog)
         {
-            var items = stepDefinitionCatalog.Definitions.Select(definition =>
-                new StepTypeItem(
+            var items = stepDefinitionCatalog.Definitions
+                .Where(definition => definition.StepType != typeof(ElseIfStep)
+                                     && definition.StepType != typeof(ElseStep)
+                                     && definition.StepType != typeof(EndIfStep))
+                .Select(definition => new StepTypeItem(
                     TrimStepSuffix(definition.StepType.Name),
                     definition.Descriptor.CategoryId,
                     displayNameKey: definition.Descriptor.DisplayNameKey,
@@ -337,7 +340,9 @@ namespace DesktopAutomationApp.ViewModels
             get => _selectedType;
             set
             {
-                if (_selectedType == value) return;
+                // A filtered ListBox temporarily clears SelectedValue when no item matches.
+                // Keep the last valid step type so clearing or changing the search can restore it.
+                if (string.IsNullOrWhiteSpace(value) || _selectedType == value) return;
                 _selectedType = value;
                 SetGeneratedEditor(value);
                 OnChange(string.Empty);

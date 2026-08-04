@@ -2,6 +2,7 @@ using System.Drawing;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
+using Rectangle = TaskAutomation.Contracts.Geometry.PixelRegion;
 
 namespace TaskAutomation.Tests.Steps;
 

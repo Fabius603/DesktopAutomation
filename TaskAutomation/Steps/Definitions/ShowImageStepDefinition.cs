@@ -14,7 +14,7 @@ public sealed class ShowImageStepDefinition : StepDefinition<ShowImageStep>
     public override StepDescriptor Descriptor { get; } = new(
         "show_image", "AnzeigenSpeichern", "Step.Type.ShowImage", "Step.Description.ShowImage", "image",
         [
-            new(ImageSourceFieldId, "Ui.Step.Settings.CaptureStep", StepValueKind.ResultBinding, true,
+            new(ImageSourceFieldId, "Ui.Step.Settings.ImageSource", StepValueKind.ResultBinding, true,
                 EditorHint: StepEditorHints.ResultBindingPicker, InputContractId: "image", Order: 0),
             new(WindowNameFieldId, "Ui.Step.Settings.WindowName", StepValueKind.Text, true,
                 DefaultValue: JsonValue.Create("MyWindow"), Order: 1),

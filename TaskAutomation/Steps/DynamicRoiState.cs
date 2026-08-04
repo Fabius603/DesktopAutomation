@@ -1,13 +1,12 @@
-using System.Drawing;
-using OpenCvSharp;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps;
 
 public sealed class DynamicRoiState
 {
-    public Rectangle? GlobalBounds { get; set; }
+    public PixelRegion? GlobalBounds { get; set; }
     public int FullSearchInterval { get; set; }
     public int RoiUsesSinceFullSearch { get; set; }
     public int ConsecutiveMisses { get; set; }
@@ -15,13 +14,13 @@ public sealed class DynamicRoiState
 
 internal static class DynamicRoiResolver
 {
-    public static Rect? Resolve(
+    public static PixelRegion? Resolve(
         ResultBinding? dynamicRoiSource,
         ICaptureStepResult capture,
         IStepPipelineContext context,
-        Rect? staticRoi = null)
+        PixelRegion? staticRoi = null)
     {
-        var resolvedBounds = ResultBindingResolver.Resolve<Rectangle>(context.Results, dynamicRoiSource);
+        var resolvedBounds = ResultBindingResolver.Resolve<PixelRegion>(context.Results, dynamicRoiSource);
         var dynamicRoiStepId = dynamicRoiSource?.SourceStepId;
         if (!resolvedBounds.IsSuccess
             || string.IsNullOrWhiteSpace(dynamicRoiStepId))
@@ -45,17 +44,17 @@ internal static class DynamicRoiResolver
         }
 
         var captureBounds = capture.Bounds;
-        var intersection = Rectangle.Intersect(global, captureBounds);
-        if (intersection.Width <= 0 || intersection.Height <= 0) return null;
+        var intersection = global.Intersect(captureBounds);
+        if (intersection.IsEmpty) return null;
         if (state is not null)
             state.RoiUsesSinceFullSearch++;
-        var resolved = new Rect(
+        var resolved = new PixelRegion(
             intersection.X - capture.Offset.X,
             intersection.Y - capture.Offset.Y,
             intersection.Width,
             intersection.Height);
 
-        if (staticRoi is Rect baseRoi && baseRoi.Width > 0 && baseRoi.Height > 0)
+        if (staticRoi is PixelRegion baseRoi && !baseRoi.IsEmpty)
         {
             var left = System.Math.Max(resolved.X, baseRoi.X);
             var top = System.Math.Max(resolved.Y, baseRoi.Y);
@@ -69,7 +68,7 @@ internal static class DynamicRoiResolver
                 return null;
             }
 
-            resolved = new Rect(left, top, right - left, bottom - top);
+            resolved = new PixelRegion(left, top, right - left, bottom - top);
         }
 
         context.Logger.LogDebug("Dynamic ROI {StepId}: lokale ROI angewendet X={X}, Y={Y}, B={Width}, H={Height}; Nutzung={Use}/{Interval}.",

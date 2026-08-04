@@ -135,41 +135,50 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style x:Key="StepCompactTextBox" TargetType="TextBox">
-        <Setter Property="Width" Value="42"/>
-        <Setter Property="MinHeight" Value="28"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Style x:Key="GeometryCard" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="7"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
-    <Style x:Key="StepAxisLabel" TargetType="TextBlock">
+    <Style x:Key="GeometrySectionHeader" TargetType="TextBlock">
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0,0,4,0"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
     </Style>
-    <Style x:Key="StepGroupedFieldLabel" TargetType="TextBlock">
+    <Style x:Key="GeometryFieldContainer" TargetType="StackPanel">
+        <Setter Property="Width" Value="92"/>
+        <Setter Property="Margin" Value="0,0,8,8"/>
+    </Style>
+    <Style x:Key="GeometryFieldLabel" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+    </Style>
+    <Style x:Key="GeometryNumberInput" TargetType="TextBox"
+           BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="MinWidth" Value="60"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="GeometryUnitLabel" TargetType="TextBlock">
+        <Setter Property="Margin" Value="4,0,0,0"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0,0,6,0"/>
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
     </Style>
-    <Style x:Key="StepGroupedTextBox" TargetType="TextBox" BasedOn="{StaticResource StepCompactTextBox}">
-        <Setter Property="Width" Value="72"/>
-    </Style>
-    <Style x:Key="RoiFieldWrapPanel" TargetType="WrapPanel">
-        <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="ItemHeight" Value="34"/>
-    </Style>
-    <Style x:Key="RoiFieldGroup" TargetType="StackPanel">
-        <Setter Property="Orientation" Value="Horizontal"/>
-        <Setter Property="Margin" Value="0,0,14,6"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-    <Style x:Key="StepInlineButton" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+    <Style x:Key="GeometryInlineAction" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
         <Setter Property="MinHeight" Value="28"/>
         <Setter Property="Padding" Value="10,4"/>
-        <Setter Property="Margin" Value="8,0,0,0"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="GeometrySummary" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
     </Style>
     <Style x:Key="TemplatePreviewBorder" TargetType="Border">
         <Setter Property="Width" Value="96"/>

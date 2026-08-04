@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using System.Reflection;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.WindowsIntegration;
 
 namespace TaskAutomation.Steps;
@@ -328,12 +329,12 @@ public static class StepResultMetadata
             yield return Property(path, attribute?.DataType ?? mapped, nullable,
                 cardinality, actual.IsEnum ? actual : null, attribute, stableId);
 
-        if (actual == typeof(System.Drawing.Point) || actual == typeof(System.Drawing.Rectangle))
+        if (actual == typeof(PixelPoint) || actual == typeof(PixelRegion))
             yield return Property(path, attribute?.DataType ?? SemanticKind(actual), nullable,
                 cardinality, attribute: attribute, stableId: stableId);
 
-        if (actual is not null && (actual == typeof(System.Drawing.Point)
-                                   || actual == typeof(System.Drawing.Rectangle)
+        if (actual is not null && (actual == typeof(PixelPoint)
+                                   || actual == typeof(PixelRegion)
                                    || actual == typeof(RuntimeProcessReference)))
                 foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                          .Where(property => property.CanRead && !IsHidden(actual, property)))
@@ -383,8 +384,8 @@ public static class StepResultMetadata
         : type == typeof(DateTime) ? ResultValueKind.DateTime
         : type == typeof(string) ? ResultValueKind.Text
         : type == typeof(System.Drawing.Bitmap) ? ResultValueKind.Image
-        : type == typeof(System.Drawing.Point) ? ResultValueKind.Point
-        : type == typeof(System.Drawing.Rectangle) ? ResultValueKind.Rectangle
+        : type == typeof(PixelPoint) ? ResultValueKind.Point
+        : type == typeof(PixelRegion) ? ResultValueKind.Rectangle
         : type == typeof(RuntimeProcessReference) ? ResultValueKind.ProcessReference
         : type == typeof(DetectionItem) ? ResultValueKind.Detection
         : type == typeof(byte) || type == typeof(short) || type == typeof(int) || type == typeof(long)

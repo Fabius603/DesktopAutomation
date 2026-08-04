@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -17,8 +17,8 @@ namespace TaskAutomation.Steps
     }
 
     public readonly record struct PredictMovementSample(
-        Point Center,
-        Rectangle? BoundingBox,
+        PixelPoint Center,
+        PixelRegion? BoundingBox,
         DateTime TimestampUtc);
 
     public readonly record struct ActiveWindowCacheEntry(

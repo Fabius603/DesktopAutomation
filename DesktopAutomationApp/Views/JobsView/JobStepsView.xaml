@@ -19,7 +19,6 @@
             <conv:StepCanAddBranchesConverter x:Key="StepCanAddBranchesConverter"/>
             <conv:StepDetailsEnabledConverter x:Key="StepDetailsEnabledConverter"/>
             <conv:StepBlockVisualConverter x:Key="StepBlockVisualConverter"/>
-            <conv:StepSummaryConverter x:Key="StepSummaryConverter"/>
             <conv:StepNumberConverter x:Key="StepNumberConverter"/>
             <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
             <HierarchicalDataTemplate x:Key="DebugContextValueTemplate" ItemsSource="{Binding Children}">
@@ -792,26 +791,6 @@
                                                                     ToolTip="{Binding ValidationError}"
                                                                     Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                     </Grid>
-                                    <TextBlock Margin="0,3,0,0" FontSize="11" Opacity="0.72"
-                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
-                                        <TextBlock.Text>
-                                            <MultiBinding Converter="{StaticResource StepSummaryConverter}">
-                                                <Binding/>
-                                                <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                                <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
                                     <StackPanel Orientation="Horizontal" Margin="0,7,0,0"
                                                 Visibility="{Binding Converter={StaticResource StepCanAddBranchesConverter}}">
                                         <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"

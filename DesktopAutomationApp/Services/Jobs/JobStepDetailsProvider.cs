@@ -10,6 +10,7 @@ using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Steps.Definitions;
 using TaskAutomation.WindowsIntegration;
 
@@ -835,7 +836,9 @@ public sealed class JobStepDetailsProvider
     {
         null => "–",
         bool => Loc.Get("Ui.Common.Yes"),
-        OpenCvSharp.Rect rectangle => $"X {rectangle.X}  ·  Y {rectangle.Y}  ·  {rectangle.Width} × {rectangle.Height} px",
+        PixelPoint point => PixelGeometryFormatter.Format(point),
+        PixelSize size => PixelGeometryFormatter.Format(size),
+        PixelRegion rectangle => PixelGeometryFormatter.Format(rectangle),
         double number => number.ToString("0.###", CultureInfo.CurrentCulture),
         float number => number.ToString("0.###", CultureInfo.CurrentCulture),
         CameraQualityMode.Automatic => Loc.Get("Ui.Step.Camera.QualityAutomatic"),

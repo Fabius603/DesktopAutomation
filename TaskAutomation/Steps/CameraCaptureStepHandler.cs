@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps;
 
@@ -26,7 +27,7 @@ public sealed class CameraCaptureStepHandler
                     step.Settings.PixelFormat),
                 cancellationToken)
             .ConfigureAwait(false);
-        var bounds = new System.Drawing.Rectangle(0, 0, capture.Image.Width, capture.Image.Height);
+        var bounds = new PixelRegion(0, 0, capture.Image.Width, capture.Image.Height);
 
         context.Logger.LogInformation(
             "CameraCaptureStepHandler: Kamera {CameraName} mit {Width}x{Height} aufgenommen.",
@@ -37,7 +38,7 @@ public sealed class CameraCaptureStepHandler
             WasExecuted = true,
             Image = capture.Image,
             Bounds = bounds,
-            Offset = System.Drawing.Point.Empty,
+            Offset = PixelPoint.Origin,
             IsFresh = true,
             CaptureTimestampUtc = capture.CaptureTimestampUtc
         };

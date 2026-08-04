@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Globalization;
 using System.Reflection;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -346,6 +347,12 @@ internal static class JobDebugValueFormatter
 
     public static IReadOnlyList<JobDebugValueNode> CreateOutputValues(object? result, string? fallback)
     {
+        if (result is PixelPoint point)
+            return [new JobDebugValueNode("Value", PixelGeometryFormatter.Format(point), nameof(PixelPoint), [])];
+        if (result is PixelSize size)
+            return [new JobDebugValueNode("Value", PixelGeometryFormatter.Format(size), nameof(PixelSize), [])];
+        if (result is PixelRegion region)
+            return [new JobDebugValueNode("Value", PixelGeometryFormatter.Format(region), nameof(PixelRegion), [])];
         if (result != null)
             return BuildObjectChildren(result, 0, new HashSet<object>(ReferenceEqualityComparer.Instance), null);
         return string.IsNullOrWhiteSpace(fallback)
@@ -419,6 +426,12 @@ internal static class JobDebugValueFormatter
     {
         if (value == null) return new JobDebugValueNode(name, "null", "null", [], propertyPath);
         var type = value.GetType();
+        if (value is PixelPoint point)
+            return new JobDebugValueNode(name, PixelGeometryFormatter.Format(point), nameof(PixelPoint), [], propertyPath);
+        if (value is PixelSize size)
+            return new JobDebugValueNode(name, PixelGeometryFormatter.Format(size), nameof(PixelSize), [], propertyPath);
+        if (value is PixelRegion region)
+            return new JobDebugValueNode(name, PixelGeometryFormatter.Format(region), nameof(PixelRegion), [], propertyPath);
         if (IsSimple(type))
             return new JobDebugValueNode(
                 name, FormatSimple(value), FriendlyTypeName(type), [], propertyPath);

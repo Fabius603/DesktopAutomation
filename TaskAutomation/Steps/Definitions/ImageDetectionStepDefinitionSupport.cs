@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using OpenCvSharp;
+using TaskAutomation.Contracts.Geometry;
 using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 
@@ -13,7 +13,7 @@ internal static class ImageDetectionStepDefinitionSupport
 
     public static StepFieldDescriptor ImageSource(int order = 0) => new(
         ImageSourceFieldId,
-        "Ui.Step.Settings.CaptureStep",
+        "Ui.Step.Settings.ImageSource",
         StepValueKind.ResultBinding,
         Required: true,
         EditorHint: StepEditorHints.ResultBindingPicker,
@@ -30,23 +30,23 @@ internal static class ImageDetectionStepDefinitionSupport
         Order: order,
         RoiPickerOptions: new StepRoiPickerOptions("dynamicRoi"));
 
-    public static JsonNode? WriteRoi(bool enabled, Rect roi, ResultBinding dynamicSource) =>
+    public static JsonNode? WriteRoi(bool enabled, PixelRegion roi, ResultBinding dynamicSource) =>
         JsonSerializer.SerializeToNode(new StepRoiSelectionValue(
             enabled, roi.X, roi.Y, roi.Width, roi.Height, JsonSerializer.SerializeToNode(dynamicSource)));
 
-    public static (bool Enabled, Rect Roi, ResultBinding DynamicSource) ReadRoi(StepDraft draft)
+    public static (bool Enabled, PixelRegion Roi, ResultBinding DynamicSource) ReadRoi(StepDraft draft)
     {
         try
         {
             var value = draft.Values.GetValueOrDefault(RoiFieldId)?.Deserialize<StepRoiSelectionValue>();
-            if (value is null) return (false, new Rect(), new ResultBinding());
+            if (value is null) return (false, PixelRegion.Empty, new ResultBinding());
             ResultBinding dynamicSource;
             try { dynamicSource = value.DynamicSource?.Deserialize<ResultBinding>() ?? new ResultBinding(); }
             catch (JsonException) { dynamicSource = new ResultBinding(); }
-            return (value.Enabled, new Rect(value.X, value.Y, value.Width, value.Height), dynamicSource);
+            return (value.Enabled, value.Region, dynamicSource);
         }
-        catch (JsonException) { return (false, new Rect(), new ResultBinding()); }
-        catch (InvalidOperationException) { return (false, new Rect(), new ResultBinding()); }
+        catch (JsonException) { return (false, PixelRegion.Empty, new ResultBinding()); }
+        catch (InvalidOperationException) { return (false, PixelRegion.Empty, new ResultBinding()); }
     }
 
     public static StepValidationIssue? ValidateCommon(StepDraft draft)

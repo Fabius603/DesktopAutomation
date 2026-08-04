@@ -79,8 +79,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         var origin = ReadOrigin(draft);
         s.PointsSource = DefinitionValueReader.Binding(draft, PointsSourceFieldId);
         s.OriginMonitorIndex = origin.MonitorIndex;
-        s.OriginX = origin.X;
-        s.OriginY = origin.Y;
+        s.OriginPoint = origin.Position;
         s.OriginCoordinateSpace = origin.CoordinateSpace;
         s.LegacyMovementFactor = null;
         s.MovementFactorX = DefinitionValueReader.Number(draft, MovementFactorXFieldId);

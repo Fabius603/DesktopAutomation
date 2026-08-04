@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -55,18 +56,18 @@ namespace TaskAutomation.Steps
                 new PointComparisonResult { WasExecuted = true, Matches = result, MatchCount = matchCount, TotalCount = points.Count });
         }
 
-        private static List<System.Drawing.Point> CollectPoints(List<PointEntry> entries, IStepPipelineContext ctx)
+        private static List<PixelPoint> CollectPoints(List<PointEntry> entries, IStepPipelineContext ctx)
         {
-            var result = new List<System.Drawing.Point>();
+            var result = new List<PixelPoint>();
             foreach (var entry in entries)
             {
                 if (entry.Source == PointEntrySource.Manual)
                 {
-                    result.Add(new System.Drawing.Point(entry.ManualX, entry.ManualY));
+                    result.Add(entry.ManualPoint);
                 }
                 else
                 {
-                    var resolved = ResultBindingResolver.Resolve<System.Drawing.Point>(ctx.Results, entry.PointsSource);
+                    var resolved = ResultBindingResolver.Resolve<PixelPoint>(ctx.Results, entry.PointsSource);
                     if (resolved.IsSuccess) result.AddRange(resolved.Values);
                 }
             }
@@ -74,19 +75,19 @@ namespace TaskAutomation.Steps
         }
 
         private static bool EvaluateOffset(
-            System.Drawing.Point point,
+            PixelPoint point,
             OffsetComparisonSettings settings,
             IStepPipelineContext ctx)
         {
-            System.Drawing.Point refPoint;
+            PixelPoint refPoint;
 
             if (settings.ReferenceSource == PointEntrySource.Manual)
             {
-                refPoint = new System.Drawing.Point(settings.ReferenceX, settings.ReferenceY);
+                refPoint = settings.ReferencePoint;
             }
             else
             {
-                var resolved = ResultBindingResolver.Resolve<System.Drawing.Point>(ctx.Results, settings.ReferencePointsSource);
+                var resolved = ResultBindingResolver.Resolve<PixelPoint>(ctx.Results, settings.ReferencePointsSource);
                 if (!resolved.IsSuccess) return false;
                 refPoint = resolved.FirstOrDefault;
             }
@@ -96,7 +97,7 @@ namespace TaskAutomation.Steps
         }
 
         private static bool EvaluateExpression(
-            System.Drawing.Point point,
+            PixelPoint point,
             ExpressionComparisonSettings settings)
         {
             if (settings.Expressions.Count == 0) return true;

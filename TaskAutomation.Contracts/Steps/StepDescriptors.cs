@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Contracts.Steps;
 
@@ -120,7 +121,11 @@ public sealed record StepRoiSelectionValue(
     [property: JsonPropertyName("y")] int Y,
     [property: JsonPropertyName("width")] int Width,
     [property: JsonPropertyName("height")] int Height,
-    [property: JsonPropertyName("dynamic_source")] JsonNode? DynamicSource);
+    [property: JsonPropertyName("dynamic_source")] JsonNode? DynamicSource)
+{
+    [JsonIgnore]
+    public PixelRegion Region => new(X, Y, Width, Height);
+}
 
 public sealed record StepRoiPickerOptions(string DynamicInputContractId);
 
@@ -140,13 +145,22 @@ public sealed record StepScreenPointSelectionValue(
     [property: JsonPropertyName("monitor_index")] int MonitorIndex,
     [property: JsonPropertyName("x")] int X,
     [property: JsonPropertyName("y")] int Y,
-    [property: JsonPropertyName("coordinate_space")] string CoordinateSpace);
+    [property: JsonPropertyName("coordinate_space")] string CoordinateSpace)
+{
+    [JsonIgnore]
+    public PixelPoint Position => new(X, Y);
+}
 
 public sealed record StepScreenPointPickerOptions(bool DefaultToPrimaryMonitorCenter = false);
 
 public abstract record StepEditorNodeDescriptor;
 
 public sealed record StepFieldNodeDescriptor(string FieldId) : StepEditorNodeDescriptor;
+
+public sealed record StepPointFieldPairDescriptor(
+    string XFieldId,
+    string YFieldId,
+    string? LabelKey = null) : StepEditorNodeDescriptor;
 
 public sealed record StepChoiceBranchDescriptor(
     string Value,
@@ -168,7 +182,11 @@ public sealed record StepPointEntryValue(
     [property: JsonPropertyName("source")] string Source,
     [property: JsonPropertyName("manual_x")] int ManualX,
     [property: JsonPropertyName("manual_y")] int ManualY,
-    [property: JsonPropertyName("points_source")] JsonNode? PointsSource);
+    [property: JsonPropertyName("points_source")] JsonNode? PointsSource)
+{
+    [JsonIgnore]
+    public PixelPoint ManualPoint => new(ManualX, ManualY);
+}
 
 public sealed record StepAxisExpressionValue(
     [property: JsonPropertyName("axis")] string Axis,

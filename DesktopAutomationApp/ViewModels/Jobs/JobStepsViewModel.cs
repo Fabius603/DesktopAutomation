@@ -6,7 +6,6 @@ using System.Windows.Input;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Text.Json;
-using OpenCvSharp;
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;

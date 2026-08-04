@@ -5,6 +5,7 @@ using ImageDetection.Algorithms.ColorDetection;
 using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -40,18 +41,18 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "ColorDetectionStepHandler: Kein Treffer ueber Threshold {Threshold:F2} gefunden.",
                     step.Settings.ConfidenceThreshold);
-                return new ColorDetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
+                return new ColorDetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
-            var globalPoint = new System.Drawing.Point(
+            var globalPoint = new PixelPoint(
                 rawResult.CenterPoint.X + capture.Offset.X,
                 rawResult.CenterPoint.Y + capture.Offset.Y);
 
-            System.Drawing.Rectangle? globalBoundingBox = null;
+            PixelRegion? globalBoundingBox = null;
             if (rawResult.BoundingBox.HasValue)
             {
                 var b = rawResult.BoundingBox.Value;
-                globalBoundingBox = new System.Drawing.Rectangle(
+                globalBoundingBox = new PixelRegion(
                     b.X + capture.Offset.X,
                     b.Y + capture.Offset.Y,
                     b.Width,
@@ -61,11 +62,11 @@ namespace TaskAutomation.Steps
             var allDetections = rawResult.AllResults
                 .Select(r =>
                 {
-                    var center = new System.Drawing.Point(
+                    var center = new PixelPoint(
                         r.CenterPoint.X + capture.Offset.X,
                         r.CenterPoint.Y + capture.Offset.Y);
-                    System.Drawing.Rectangle? box = r.BoundingBox.HasValue
-                        ? new System.Drawing.Rectangle(
+                    PixelRegion? box = r.BoundingBox.HasValue
+                        ? new PixelRegion(
                             r.BoundingBox.Value.X + capture.Offset.X,
                             r.BoundingBox.Value.Y + capture.Offset.Y,
                             r.BoundingBox.Value.Width,
@@ -92,13 +93,13 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
-                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
+                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 
         protected override ColorDetectionResult CreateDefault() => ColorDetectionResult.Default;
 
-        private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings, Rect? dynamicRoi)
+        private static ColorDetectionOptions CreateOptions(ColorDetectionSettings settings, PixelRegion? dynamicRoi)
             => new()
             {
                 ColorHex = settings.ColorHex,

@@ -4,6 +4,10 @@ using Rect = OpenCvSharp.Rect;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
+using DrawingPoint = System.Drawing.Point;
+using DrawingRectangle = System.Drawing.Rectangle;
+using Point = TaskAutomation.Contracts.Geometry.PixelPoint;
+using Rectangle = TaskAutomation.Contracts.Geometry.PixelRegion;
 
 namespace TaskAutomation.Tests.Steps;
 
@@ -42,7 +46,7 @@ public sealed class YOLOStepHandlerTests
         var step = Step();
         step.Settings.ConfidenceThreshold = .73f;
         step.Settings.EnableROI = true;
-        step.Settings.ROI = new Rect(4, 5, 30, 20);
+        step.Settings.ROI = new Rectangle(4, 5, 30, 20);
         var result = Assert.IsType<YOLODetectionResult>(await new YOLOStepHandler().ExecuteAsync(step, context, default));
         Assert.False(result.Found);
         Assert.Equal("model", Assert.Single(manager.EnsureCalls).Model);
@@ -50,7 +54,7 @@ public sealed class YOLOStepHandlerTests
         Assert.Equal("person", call.ClassName);
         Assert.Same(bitmap, call.Image);
         Assert.Equal(.73f, call.Threshold);
-        Assert.Equal(new Rectangle(4, 5, 30, 20), call.Roi);
+        Assert.Equal(new DrawingRectangle(4, 5, 30, 20), call.Roi);
     }
 
     [Fact]
@@ -58,10 +62,10 @@ public sealed class YOLOStepHandlerTests
     {
         using var bitmap = new Bitmap(100, 80);
         var capturedAt = new DateTime(2026, 7, 22, 10, 11, 12, DateTimeKind.Utc);
-        var secondary = new DetectionResult { Success = true, CenterPoint = new Point(7, 8),
-            BoundingBox = new Rectangle(2, 3, 10, 11), Confidence = .66f };
-        var raw = new DetectionResult { Success = true, CenterPoint = new Point(20, 30),
-            BoundingBox = new Rectangle(10, 15, 20, 25), Confidence = .91f, AllResults = [secondary] };
+        var secondary = new DetectionResult { Success = true, CenterPoint = new DrawingPoint(7, 8),
+            BoundingBox = new DrawingRectangle(2, 3, 10, 11), Confidence = .66f };
+        var raw = new DetectionResult { Success = true, CenterPoint = new DrawingPoint(20, 30),
+            BoundingBox = new DrawingRectangle(10, 15, 20, 25), Confidence = .91f, AllResults = [secondary] };
         var manager = new RecordingYoloManager { DetectionResult = raw };
         var context = Context(manager, bitmap, new Point(100, 200), capturedAt, false);
         var result = Assert.IsType<YOLODetectionResult>(await new YOLOStepHandler().ExecuteAsync(Step(), context, default));

@@ -1,14 +1,14 @@
 using ImageDetection.Algorithms.KeyPointMatching;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
-using ImageHelperMethods;
 using Microsoft.Extensions.Logging;
+using TaskAutomation.Contracts.Geometry;
+using TaskAutomation.Geometry;
 
 namespace TaskAutomation.Steps
 {
@@ -49,7 +49,7 @@ namespace TaskAutomation.Steps
                 capture,
                 ctx,
                 step.Settings.EnableROI ? step.Settings.ROI : null);
-            ctx.KeyPointMatcher.SetROI(dynamicRoi ?? step.Settings.ROI);
+            ctx.KeyPointMatcher.SetROI((dynamicRoi ?? step.Settings.ROI).ToOpenCvRect());
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();
             else                         ctx.KeyPointMatcher.DisableROI();
 
@@ -60,31 +60,31 @@ namespace TaskAutomation.Steps
             if (!rawResult.Success)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Keine ausreichend guten Matches gefunden.");
-                return new KeyPointMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue };
+                return new KeyPointMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
-            var globalPoint = ScreenHelper.ConvertResultToGlobalDesktopCoordinates(
-                rawResult.CenterPoint,
-                capture.Offset);
+            var globalPoint = new PixelPoint(
+                rawResult.CenterPoint.X + capture.Offset.X,
+                rawResult.CenterPoint.Y + capture.Offset.Y);
 
             logger.LogInformation(
                 "KeyPointMatchingStepHandler: Match bei ({X},{Y}), Confidence {C:F3}",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
 
-            System.Drawing.Rectangle? globalBoundingBox = null;
+            PixelRegion? globalBoundingBox = null;
             if (rawResult.BoundingBox.HasValue)
             {
                 var b = rawResult.BoundingBox.Value;
-                globalBoundingBox = new System.Drawing.Rectangle(
+                globalBoundingBox = new PixelRegion(
                     b.X + capture.Offset.X, b.Y + capture.Offset.Y, b.Width, b.Height);
             }
 
             var allDetections = rawResult.AllResults
                 .Select(r =>
                 {
-                    var c = new System.Drawing.Point(r.CenterPoint.X + capture.Offset.X, r.CenterPoint.Y + capture.Offset.Y);
-                    System.Drawing.Rectangle? bb = r.BoundingBox.HasValue
-                        ? new System.Drawing.Rectangle(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
+                    var c = new PixelPoint(r.CenterPoint.X + capture.Offset.X, r.CenterPoint.Y + capture.Offset.Y);
+                    PixelRegion? bb = r.BoundingBox.HasValue
+                        ? new PixelRegion(r.BoundingBox.Value.X + capture.Offset.X, r.BoundingBox.Value.Y + capture.Offset.Y, r.BoundingBox.Value.Width, r.BoundingBox.Value.Height)
                         : null;
                     return new DetectionItem { Center = c, BoundingBox = bb, Confidence = rawResult.Confidence };
                 })
@@ -103,7 +103,7 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections  = allDetections
-                ,AppliedRoi = dynamicRoi?.ToString(), UsedDynamicRoi = dynamicRoi.HasValue
+                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

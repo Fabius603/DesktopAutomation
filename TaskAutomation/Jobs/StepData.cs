@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using OpenCvSharp;
+using TaskAutomation.Contracts.Geometry;
 
 namespace TaskAutomation.Jobs
 {
@@ -149,8 +150,7 @@ namespace TaskAutomation.Jobs
         public double ConfidenceThreshold { get; set; } = 0.90;
 
         [JsonPropertyName("roi")]
-        [JsonConverter(typeof(OpenCvRectJsonConverter))]
-        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+        public PixelRegion ROI { get; set; } = PixelRegion.Empty;
 
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
@@ -193,8 +193,7 @@ namespace TaskAutomation.Jobs
         public int DownscaleFactor { get; set; } = 1;
 
         [JsonPropertyName("roi")]
-        [JsonConverter(typeof(OpenCvRectJsonConverter))]
-        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+        public PixelRegion ROI { get; set; } = PixelRegion.Empty;
 
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
@@ -578,6 +577,12 @@ namespace TaskAutomation.Jobs
         public int OriginX { get; set; } = 0;
         [JsonPropertyName("origin_y")]
         public int OriginY { get; set; } = 0;
+        [JsonIgnore]
+        public PixelPoint OriginPoint
+        {
+            get => new(OriginX, OriginY);
+            set { OriginX = value.X; OriginY = value.Y; }
+        }
         [JsonPropertyName("origin_monitor_index")]
         public int OriginMonitorIndex { get; set; } = 0;
         [JsonPropertyName("origin_coordinate_space")]
@@ -647,8 +652,7 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("class_name")]
         public string ClassName { get; set; } = string.Empty;
         [JsonPropertyName("roi")]
-        [JsonConverter(typeof(OpenCvRectJsonConverter))]
-        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+        public PixelRegion ROI { get; set; } = PixelRegion.Empty;
 
         [JsonPropertyName("enable_roi")]
         public bool EnableROI { get; set; } = false;
@@ -1150,8 +1154,7 @@ namespace TaskAutomation.Jobs
         public bool EnableROI { get; set; } = false;
 
         [JsonPropertyName("roi")]
-        [JsonConverter(typeof(OpenCvRectJsonConverter))]
-        public Rect ROI { get; set; } = new Rect(0, 0, 0, 0);
+        public PixelRegion ROI { get; set; } = PixelRegion.Empty;
 
         [JsonPropertyName("image_source")]
         public ResultBinding ImageSource { get; set; } = new();
@@ -1180,6 +1183,13 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("manual_y")]
         public int ManualY { get; set; } = 0;
 
+        [JsonIgnore]
+        public PixelPoint ManualPoint
+        {
+            get => new(ManualX, ManualY);
+            set { ManualX = value.X; ManualY = value.Y; }
+        }
+
         [JsonPropertyName("points_source")]
         public ResultBinding PointsSource { get; set; } = new();
 
@@ -1196,6 +1206,13 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("reference_y")]
         public int ReferenceY { get; set; } = 0;
+
+        [JsonIgnore]
+        public PixelPoint ReferencePoint
+        {
+            get => new(ReferenceX, ReferenceY);
+            set { ReferenceX = value.X; ReferenceY = value.Y; }
+        }
 
         [JsonPropertyName("reference_points_source")]
         public ResultBinding ReferencePointsSource { get; set; } = new();
