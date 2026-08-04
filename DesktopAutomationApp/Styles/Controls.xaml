@@ -42,6 +42,46 @@
         </Style.Triggers>
     </Style>
 
+    <!-- ColorPicker: use the same surfaces, borders and focus colors as the other inputs. -->
+    <Style TargetType="mah:ColorPicker" BasedOn="{StaticResource MahApps.Styles.ColorPicker}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="MahApps.Brushes.Background"
+                             Color="{DynamicResource App.Color.Surface}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.Foreground"
+                             Color="{DynamicResource App.Color.TextPrimary}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.Control.Background"
+                             Color="{DynamicResource App.Color.SurfaceRaised}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.Control.Border"
+                             Color="{DynamicResource App.Color.BorderSubtle}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.Border.Normal"
+                             Color="{DynamicResource App.Color.BorderSubtle}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.Border.Highlighted"
+                             Color="{DynamicResource App.Color.Accent}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.BackgroundHighlighted"
+                             Color="{DynamicResource App.Color.SurfaceHover}"/>
+            <SolidColorBrush x:Key="MahApps.Brushes.BackgroundSelected"
+                             Color="{DynamicResource App.Color.AccentSubtle}"/>
+        </Style.Resources>
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
+        <Setter Property="MinWidth" Value="180"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextDisabled}"/>
+                <Setter Property="Opacity" Value="0.72"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Größere, modernere Checkboxen mit abgerundetem Indikator -->
     <Style TargetType="CheckBox" BasedOn="{StaticResource MahApps.Styles.CheckBox}">
         <Setter Property="FontSize" Value="13"/>

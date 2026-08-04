@@ -32,6 +32,7 @@
         "title": { "de": "Darstellung", "en": "Appearance" },
         "changes": [
           { "category": "Changed", "de": "Neutrale Flächen, dezentere Rahmen und ruhigere Bedienelemente sorgen in allen Themes für eine klarere Darstellung.", "en": "Neutral surfaces, subtler borders, and calmer controls provide a clearer appearance across all themes." },
+          { "category": "Changed", "de": "Die Farbauswahl folgt in allen Step-Einstellungen dem aktiven Anwendungstheme.", "en": "Color selection follows the active application theme across all step settings." },
           { "category": "Fixed", "de": "Auswahloptionen nutzen die verfügbare Breite; Prozess-Steps trennen Prozessmerkmale und Referenzen und beschriften Prozessname sowie Fenstertitel eindeutig.", "en": "Choice options use the available width; process steps separate process characteristics and references and clearly label process name and window title." }
         ]
       }
