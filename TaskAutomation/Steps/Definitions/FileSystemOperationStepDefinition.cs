@@ -35,18 +35,18 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
             EnumField(SourceModeFieldId, "Ui.Step.FileSystem.Source", "ExplicitPath", PathSources,
                 [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 1),
             new(SourcePathFieldId, "Ui.Step.FileSystem.Source", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
-                Order: 2, VisibleWhen: Is(SourceModeFieldId, "ExplicitPath")),
+                Order: 2),
             new(SourceResultFieldId, "Ui.Step.FileSystem.Source", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 3, VisibleWhen: Is(SourceModeFieldId, "TaskResult"),
+                EditorHint: StepEditorHints.ResultBindingPicker, Order: 3,
                 InputContractId: "source"),
             EnumField(TargetModeFieldId, "Ui.Step.FileSystem.Target", "ExplicitPath", PathSources,
                 [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 4,
                 [AnyOf(OperationFieldId, "Copy", "Move")]),
             new(TargetPathFieldId, "Ui.Step.FileSystem.Target", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
-                Order: 5, VisibleWhenAll: [AnyOf(OperationFieldId, "Copy", "Move"), Is(TargetModeFieldId, "ExplicitPath")]),
+                Order: 5, VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
             new(TargetResultFieldId, "Ui.Step.FileSystem.Target", StepValueKind.ResultBinding, Required: true,
                 EditorHint: StepEditorHints.ResultBindingPicker, Order: 6, InputContractId: "target",
-                VisibleWhenAll: [AnyOf(OperationFieldId, "Copy", "Move"), Is(TargetModeFieldId, "TaskResult")]),
+                VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
             new(NewNameFieldId, "Ui.Step.FileSystem.NewName", StepValueKind.Text, Order: 7,
                 VisibleWhen: Is(OperationFieldId, "Rename")),
             new(FilterFieldId, "Ui.Step.FileSystem.Filter", StepValueKind.Text, DescriptionKey: "Ui.Step.FileSystem.FilterHint",
@@ -65,7 +65,18 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
         ],
         new(
             [new("general", null, [OperationFieldId, SourceModeFieldId, SourcePathFieldId, SourceResultFieldId,
-                TargetModeFieldId, TargetPathFieldId, TargetResultFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId]),
+                TargetModeFieldId, TargetPathFieldId, TargetResultFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId],
+                EditorNodes:
+                [new StepFieldNodeDescriptor(OperationFieldId),
+                 new StepChoiceGroupDescriptor(SourceModeFieldId,
+                    [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath", [new StepFieldNodeDescriptor(SourcePathFieldId)]),
+                     new("TaskResult", "Ui.Step.FileSystem.StepResult", [new StepFieldNodeDescriptor(SourceResultFieldId)])]),
+                 new StepChoiceGroupDescriptor(TargetModeFieldId,
+                    [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath", [new StepFieldNodeDescriptor(TargetPathFieldId)]),
+                     new("TaskResult", "Ui.Step.FileSystem.StepResult", [new StepFieldNodeDescriptor(TargetResultFieldId)])]),
+                 new StepFieldNodeDescriptor(NewNameFieldId),
+                 new StepFieldNodeDescriptor(FilterFieldId),
+                 new StepFieldNodeDescriptor(CreateParentsFieldId)]),
              new("advanced", "Ui.Step.Settings.Advanced", [RetryLockedFieldId, RetryCountFieldId, RetryDelayFieldId],
                  1, true, false)],
             [new(OperationFieldId), new(SourcePathFieldId, StepSummaryValueFormat.FileName)],
@@ -138,9 +149,11 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
         new(field, AnyOfValues: values.Select(value => (JsonNode?)JsonValue.Create(value)).ToArray());
     private static StepFieldDescriptor EnumField(string id, string label, string defaultValue, string[] values,
         IReadOnlyList<StepFieldOptionDescriptor> options, int order,
-        IReadOnlyList<StepVisibilityRule>? visibleWhenAll = null) =>
+        IReadOnlyList<StepVisibilityRule>? visibleWhenAll = null,
+        string? editorHint = null) =>
         new(id, label, StepValueKind.Enum, true, JsonValue.Create(defaultValue),
-            Constraints: new(AllowedValues: values), Order: order, Options: options, VisibleWhenAll: visibleWhenAll);
+            EditorHint: editorHint, Constraints: new(AllowedValues: values), Order: order, Options: options,
+            VisibleWhenAll: visibleWhenAll);
     private static T EnumValue<T>(StepDraft draft, string id) where T : struct, Enum =>
         Enum.TryParse<T>(DefinitionValueReader.String(draft, id), out var value) ? value : default;
 }

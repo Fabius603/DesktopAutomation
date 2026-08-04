@@ -2,24 +2,34 @@
     <sys:String xmlns:sys="clr-namespace:System;assembly=System.Runtime" x:Key="App.Palette.Kind">AppThemePalette</sys:String>
     <Color x:Key="App.Color.WindowBackground">#FF0B0B0B</Color>
     <Color x:Key="App.Color.Surface">#FF151515</Color>
+    <Color x:Key="App.Color.SurfaceRaised">#FF1A1A1A</Color>
     <Color x:Key="App.Color.SurfaceHover">#FF202020</Color>
+    <Color x:Key="App.Color.SurfacePressed">#FF282828</Color>
     <Color x:Key="App.Color.SidebarBackground">#FF050505</Color>
     <Color x:Key="App.Color.CardBorder">#FF2B2B2B</Color>
+    <Color x:Key="App.Color.BorderSubtle">#FF2B2B2B</Color>
+    <Color x:Key="App.Color.BorderStrong">#FF464646</Color>
     <Color x:Key="App.Color.RowEven">#FF101010</Color>
     <Color x:Key="App.Color.RowOdd">#FF171717</Color>
     <Color x:Key="App.Color.TextPrimary">#FFEEEEEE</Color>
     <Color x:Key="App.Color.TextSecondary">#FFBDBDBD</Color>
     <Color x:Key="App.Color.TextMuted">#FF858585</Color>
+    <Color x:Key="App.Color.TextDisabled">#FF5F5F5F</Color>
     <SolidColorBrush x:Key="App.Brush.WindowBackground" Color="{StaticResource App.Color.WindowBackground}"/>
     <SolidColorBrush x:Key="App.Brush.Surface" Color="{StaticResource App.Color.Surface}"/>
+    <SolidColorBrush x:Key="App.Brush.SurfaceRaised" Color="{StaticResource App.Color.SurfaceRaised}"/>
     <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{StaticResource App.Color.SurfaceHover}"/>
+    <SolidColorBrush x:Key="App.Brush.SurfacePressed" Color="{StaticResource App.Color.SurfacePressed}"/>
     <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{StaticResource App.Color.SidebarBackground}"/>
     <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{StaticResource App.Color.CardBorder}"/>
+    <SolidColorBrush x:Key="App.Brush.BorderSubtle" Color="{StaticResource App.Color.BorderSubtle}"/>
+    <SolidColorBrush x:Key="App.Brush.BorderStrong" Color="{StaticResource App.Color.BorderStrong}"/>
     <SolidColorBrush x:Key="App.Brush.RowEven" Color="{StaticResource App.Color.RowEven}"/>
     <SolidColorBrush x:Key="App.Brush.RowOdd" Color="{StaticResource App.Color.RowOdd}"/>
     <SolidColorBrush x:Key="App.Brush.TextPrimary" Color="{StaticResource App.Color.TextPrimary}"/>
     <SolidColorBrush x:Key="App.Brush.TextSecondary" Color="{StaticResource App.Color.TextSecondary}"/>
     <SolidColorBrush x:Key="App.Brush.TextMuted" Color="{StaticResource App.Color.TextMuted}"/>
+    <SolidColorBrush x:Key="App.Brush.TextDisabled" Color="{StaticResource App.Color.TextDisabled}"/>
     <SolidColorBrush x:Key="MahApps.Brushes.ThemeBackground" Color="{StaticResource App.Color.WindowBackground}"/>
     <SolidColorBrush x:Key="MahApps.Brushes.ThemeForeground" Color="{StaticResource App.Color.TextPrimary}"/>
 </ResourceDictionary>

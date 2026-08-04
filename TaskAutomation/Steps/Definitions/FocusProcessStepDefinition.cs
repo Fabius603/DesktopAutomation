@@ -7,7 +7,6 @@ namespace TaskAutomation.Steps.Definitions;
 public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep>
 {
     public const string ProcessTargetFieldId = "process_target";
-    public const string WindowTitleFieldId = "window_title_contains";
     public const string ActionFieldId = "action";
     public const string WindowModeFieldId = "window_mode";
 
@@ -27,15 +26,9 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
                 "Ui.Step.Settings.ProcessSource",
                 StepValueKind.Object,
                 Required: true,
-                EditorHint: StepEditorHints.ExecutableProcessTargetPicker,
+                EditorHint: StepEditorHints.ProcessTargetPicker,
                 InputContractId: "process",
                 Order: 0),
-            new StepFieldDescriptor(
-                WindowTitleFieldId,
-                "Ui.Step.Settings.WindowTitleContains",
-                StepValueKind.Text,
-                DefaultValue: JsonValue.Create(string.Empty),
-                Order: 1),
             new StepFieldDescriptor(
                 ActionFieldId,
                 "Ui.Step.Settings.Action",
@@ -71,7 +64,7 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
         Presentation: new StepPresentationDescriptor(
             EditorSections:
             [
-                new StepEditorSectionDescriptor("general", null, [ProcessTargetFieldId, WindowTitleFieldId]),
+                new StepEditorSectionDescriptor("general", null, [ProcessTargetFieldId]),
                 new StepEditorSectionDescriptor(
                     "advanced",
                     "Ui.Step.Settings.Advanced",
@@ -83,10 +76,9 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
             SummaryItems:
             [
                 new StepSummaryItemDescriptor(ProcessTargetFieldId),
-                new StepSummaryItemDescriptor(ActionFieldId),
-                new StepSummaryItemDescriptor(WindowTitleFieldId)
+                new StepSummaryItemDescriptor(ActionFieldId)
             ],
-            DetailFieldIds: [ProcessTargetFieldId, WindowTitleFieldId, ActionFieldId, WindowModeFieldId]));
+            DetailFieldIds: [ProcessTargetFieldId, ActionFieldId, WindowModeFieldId]));
 
     public override FocusProcessStep CreateDefaultStep() => new();
 
@@ -94,7 +86,6 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
     {
         var draft = new StepDraft(Descriptor.TypeId);
         draft.Values[ProcessTargetFieldId] = ProcessSelectorDraft.Create(step.Settings.Target);
-        draft.Values[WindowTitleFieldId] = JsonValue.Create(step.Settings.Target.WindowTitleContains);
         draft.Values[ActionFieldId] = JsonValue.Create(step.Settings.Action.ToString());
         draft.Values[WindowModeFieldId] = JsonValue.Create(
             step.Settings.WindowMode == FocusProcessWindowMode.Fullscreen
@@ -106,7 +97,6 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
     protected override void Apply(StepDraft draft, FocusProcessStep step)
     {
         ProcessSelectorDraft.Apply(draft, ProcessTargetFieldId, step.Settings.Target);
-        step.Settings.Target.WindowTitleContains = DefinitionValueReader.String(draft, WindowTitleFieldId);
         step.Settings.Action = Enum.Parse<FocusProcessAction>(DefinitionValueReader.String(draft, ActionFieldId));
         step.Settings.WindowMode = Enum.Parse<FocusProcessWindowMode>(DefinitionValueReader.String(draft, WindowModeFieldId));
     }

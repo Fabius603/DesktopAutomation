@@ -8,7 +8,13 @@ internal static class StepDescriptorDraftValidator
 {
     public static IReadOnlyList<StepValidationIssue> Validate(StepDescriptor descriptor, StepDraft draft)
     {
-        foreach (var field in descriptor.Fields.Where(field => IsVisible(field, draft)))
+        var fieldsById = descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
+        var activeFields = StepEditorActivity.GetActiveFieldIds(
+            descriptor,
+            fieldId => TryGetStringValue(draft, fieldId, out var value) ? value : null,
+            fieldId => IsVisible(fieldsById[fieldId], draft));
+        foreach (var field in descriptor.Fields.Where(field =>
+                     activeFields.Contains(field.Id) && IsVisible(field, draft)))
         {
             draft.Values.TryGetValue(field.Id, out var value);
             if (field.Required && IsEmpty(field, value))
@@ -41,6 +47,22 @@ internal static class StepDescriptorDraftValidator
     internal static bool IsVisible(StepFieldDescriptor field, StepDraft draft) =>
         (field.VisibleWhen is null || RuleMatches(field.VisibleWhen, draft))
         && (field.VisibleWhenAll is not { Count: > 0 } rules || rules.All(rule => RuleMatches(rule, draft)));
+
+    private static bool TryGetStringValue(StepDraft draft, string fieldId, out string value)
+    {
+        value = string.Empty;
+        if (!draft.Values.TryGetValue(fieldId, out var node) || node is null)
+            return false;
+        try
+        {
+            value = node.GetValue<string>();
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
 
     private static bool RuleMatches(StepVisibilityRule rule, StepDraft draft)
     {

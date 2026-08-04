@@ -123,7 +123,7 @@ namespace DesktopAutomationApp.ViewModels
             BrowseGeneratedFileCommand = new RelayCommand<GeneratedStepFieldViewModel?>(BrowseGeneratedFile);
             BrowseGeneratedDirectoryCommand = new RelayCommand<GeneratedStepFieldViewModel?>(BrowseGeneratedDirectory);
             BrowseGeneratedFileOrFolderCommand = new RelayCommand<GeneratedStepFieldViewModel?>(BrowseGeneratedFileOrFolder);
-            BrowseGeneratedProcessTargetFileCommand = new RelayCommand<GeneratedStepFieldViewModel?>(BrowseGeneratedProcessTargetFile);
+            BrowseGeneratedProcessTargetFileCommand = new RelayCommand<GeneratedProcessTargetEditorViewModel?>(BrowseGeneratedProcessTargetFile);
             CaptureGeneratedRoiCommand = new RelayCommand<GeneratedRoiEditorViewModel?>(CaptureGeneratedRoi);
             ChooseMonitorCommand = new RelayCommand<GeneratedStepFieldViewModel?>(ChooseMonitor);
             SetGeneratedEditor(_selectedType);
@@ -210,16 +210,19 @@ namespace DesktopAutomationApp.ViewModels
             {
                 _validationError = generatedError;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
                 return false;
             }
             var result = JobValidation.ValidateCandidate(_precedingSteps, CreatedStep, _allJobSteps);
             _validationError = result.Error;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
             return result.IsValid;
         }
 
         private string? _validationError;
         public string? ValidationError => _validationError;
+        public bool HasValidationError => !string.IsNullOrWhiteSpace(_validationError);
 
         // ----- Step-Auswahl -----
         /// <param name="Description">Text, der im Dialog unterhalb des Typ-Selektors angezeigt wird.</param>
@@ -285,6 +288,30 @@ namespace DesktopAutomationApp.ViewModels
             var view = new ListCollectionView(items);
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
             return view;
+        }
+
+        private string _stepTypeSearchText = string.Empty;
+        public string StepTypeSearchText
+        {
+            get => _stepTypeSearchText;
+            set
+            {
+                if (_stepTypeSearchText == value) return;
+                _stepTypeSearchText = value;
+                StepTypeItems.Filter = FilterStepType;
+                StepTypeItems.Refresh();
+                OnChange();
+            }
+        }
+
+        private bool FilterStepType(object item)
+        {
+            if (item is not StepTypeItem stepType || string.IsNullOrWhiteSpace(StepTypeSearchText))
+                return true;
+            var search = StepTypeSearchText.Trim();
+            return stepType.DisplayLabel.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                   || stepType.Category.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                   || stepType.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase);
         }
 
         private string _selectedType = "DesktopDuplication";
@@ -409,7 +436,8 @@ namespace DesktopAutomationApp.ViewModels
             return new GeneratedProcessTargetEditorViewModel(
                 value,
                 new ResultBindingPickerViewModel(_conditionSourceSteps, contract, false),
-                _availableProcessNames);
+                _availableProcessNames,
+                string.Equals(field.EditorHint, StepEditorHints.ExecutableProcessTargetPicker, StringComparison.Ordinal));
         }
 
         private GeneratedResultBindingEditorViewModel? ResolveGeneratedResultBinding(
@@ -600,6 +628,10 @@ namespace DesktopAutomationApp.ViewModels
         // Beschreibung kommt direkt aus dem StepTypeItem – kein separates switch mehr nötig.
         public string StepTypeDescription =>
             StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.Description ?? string.Empty;
+        public string SelectedStepDisplayName =>
+            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.DisplayLabel ?? SelectedType;
+        public string SelectedStepCategory =>
+            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.Category ?? string.Empty;
 
         /// <summary>Voraussetzung eines Steps mit Information ob sie durch vorherige Steps erfüllt ist.</summary>
         // ----- Quell-Step-Helfer -----
@@ -668,9 +700,9 @@ namespace DesktopAutomationApp.ViewModels
                 field.InputText = dialog.SelectedPath;
         }
 
-        private void BrowseGeneratedProcessTargetFile(GeneratedStepFieldViewModel? field)
+        private void BrowseGeneratedProcessTargetFile(GeneratedProcessTargetEditorViewModel? editor)
         {
-            if (field?.ProcessTargetEditor is null) return;
+            if (editor is null) return;
             var ofd = new Microsoft.Win32.OpenFileDialog
             {
                 Title = Loc.Get("FilePicker.Executable"),
@@ -680,7 +712,7 @@ namespace DesktopAutomationApp.ViewModels
             };
 
             if (ofd.ShowDialog() == true)
-                field.ProcessTargetEditor.ExecutablePath = ofd.FileName;
+                editor.ExecutablePath = ofd.FileName;
         }
 
 

@@ -62,13 +62,25 @@ The working tree may contain unrelated user changes.
 
 ## Tests
 
-Every runtime behavior change and bug fix requires a regression test.
+Use risk-based regression coverage.
 
 - `TaskAutomation` tests belong in `tests/TaskAutomation.Tests`.
-- Prefer scenario coverage over smoke tests.
-- Cover success, failure, missing input, skipped execution, and backward compatibility
-  where applicable.
-- A successful build alone is not sufficient for runtime changes.
+- Runtime behavior changes and bug fixes require a regression test for the
+  observable behavior or the concrete failure mode.
+- Do not add a separate test for every modified method, property, XAML element,
+  or implementation detail.
+- Prefer extending an existing scenario or parameterized contract test over
+  creating a new test. Do not duplicate behavior already covered by an
+  equivalent higher-level or generic contract test.
+- Pure refactoring, styling, spacing, resource-key-preserving text changes, and
+  other changes without meaningful behavioral risk normally do not require a
+  new test.
+- Avoid tests that assert exact source-code or XAML fragments. Use them only
+  when no practical behavioral or structural test is available and the asserted
+  detail represents a deliberate, stable regression contract.
+- Cover success, failure, missing input, cancellation, skipped execution, and
+  backward compatibility only where they are relevant to the changed behavior.
+- A successful build alone is not sufficient for material runtime changes.
 
 ## Persistence and backward compatibility
 
@@ -98,7 +110,8 @@ New or changed job steps must follow the repository contracts:
 
 A change is complete only when:
 
-- implementation and regression tests are present;
+- applicable risk-based regression coverage is present; when no test was added,
+  the final handoff explains why existing coverage or build validation is sufficient;
 - German and English localization are synchronized;
 - release notes are updated when behavior is user-visible;
 - backward compatibility was considered;

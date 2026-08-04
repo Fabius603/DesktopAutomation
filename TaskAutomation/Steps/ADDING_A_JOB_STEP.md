@@ -336,6 +336,16 @@ je nach manueller Eingabe `ProcessTargetPicker` oder
 `ExecutableProcessTargetPicker`, ohne Windows-spezifische Picker in die
 TaskAutomation-Definition zu ziehen.
 
+Auswahlen mit eigenen untergeordneten Eingaben werden in `EditorNodes` als
+`StepChoiceGroupDescriptor` beschrieben. Die Gruppe referenziert ein stabiles
+Enum-Auswahlfeld und besitzt zwei oder mehr `StepChoiceBranchDescriptor`-Zweige.
+Jeder Zweig enthält seinen stabilen Wert, einen lokalisierten Titel und beliebig
+viele weitere Feld- oder Auswahlknoten. Dadurch können mehrere unabhängige
+Gruppen und beliebig viele Auswahlwerte innerhalb eines Steps dargestellt
+werden. `VisibleWhen` beziehungsweise `VisibleWhenAll` beschreibt nur zusätzliche
+fachliche Bedingungen. Beim Umschalten dürfen inaktive Eingabewerte nicht
+verworfen werden.
+
 Allgemeine Result-Bindings verwenden `ResultBindingPicker` zusammen mit einer
 stabilen `InputContractId`. Das Frontend ermittelt daraus den bereits im Backend
 registrierten Eingabevertrag und bietet ausschließlich kompatible Ergebnisse an.
@@ -376,6 +386,12 @@ Die stabile Result-ID und der Lokalisierungsschlüssel sind unterschiedliche
 Konzepte: Die ID wird persistiert, die Übersetzung darf geändert werden.
 
 ## 9. Tests
+
+Die folgenden Szenarien beschreiben die erforderliche Abdeckung des vollständigen
+Steps. Sie verlangen weder einen eigenen Test pro Aufzählungspunkt oder Feld noch
+eine Wiederholung bereits vorhandener Abdeckung. Generische Katalog-,
+Serialisierungs-, Metadaten- und Binding-Tests sollen erweitert oder
+parametrisiert werden, wenn sie den jeweiligen Vertrag bereits prüfen.
 
 Für einen neuen Step sollen mindestens folgende Szenarien abgedeckt werden:
 

@@ -75,7 +75,8 @@ public sealed record StepReferenceValue(
 public sealed record StepProcessSelectorValue(
     [property: JsonPropertyName("process_source")] JsonNode? ProcessSource,
     [property: JsonPropertyName("process_name")] string ProcessName,
-    [property: JsonPropertyName("executable_path")] string ExecutablePath);
+    [property: JsonPropertyName("executable_path")] string ExecutablePath,
+    [property: JsonPropertyName("window_title_contains")] string WindowTitleContains = "");
 
 public sealed record StepCameraSelectionValue(
     [property: JsonPropertyName("camera_id")] string CameraId,
@@ -143,6 +144,21 @@ public sealed record StepScreenPointSelectionValue(
 
 public sealed record StepScreenPointPickerOptions(bool DefaultToPrimaryMonitorCenter = false);
 
+public abstract record StepEditorNodeDescriptor;
+
+public sealed record StepFieldNodeDescriptor(string FieldId) : StepEditorNodeDescriptor;
+
+public sealed record StepChoiceBranchDescriptor(
+    string Value,
+    string LabelKey,
+    IReadOnlyList<StepEditorNodeDescriptor> Children,
+    string? DescriptionKey = null,
+    string? IconKey = null);
+
+public sealed record StepChoiceGroupDescriptor(
+    string SelectionFieldId,
+    IReadOnlyList<StepChoiceBranchDescriptor> Branches) : StepEditorNodeDescriptor;
+
 public sealed record StepUserChoiceOptionValue(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("label")] string Label,
@@ -189,7 +205,8 @@ public sealed record StepEditorSectionDescriptor(
     IReadOnlyList<string> FieldIds,
     int Order = 0,
     bool Collapsible = false,
-    bool InitiallyExpanded = true);
+    bool InitiallyExpanded = true,
+    IReadOnlyList<StepEditorNodeDescriptor>? EditorNodes = null);
 
 public sealed record StepSummaryItemDescriptor(
     string FieldId,

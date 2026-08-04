@@ -6,83 +6,231 @@
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
                  WindowStartupLocation="CenterOwner"
-                 Width="540" Height="560"
+                 Width="1040" Height="760"
+                 MinWidth="760" MinHeight="560"
                  Title="{Binding DialogTitle}"
                  ResizeMode="CanResize" ShowInTaskbar="False"
                  Style="{StaticResource DialogWindowStyle}">
     <mah:MetroWindow.Resources>
         <DataTemplate x:Key="GeneratedEditor"><generated:GeneratedStepEditor/></DataTemplate>
     </mah:MetroWindow.Resources>
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Visibility="{Binding ShowTypeSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Background="{DynamicResource App.Brush.Surface}"
-                CornerRadius="6" Padding="12,10" Margin="0,0,0,10">
+                BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                BorderThickness="1" CornerRadius="10"
+                Padding="18,14" Margin="0,0,0,14">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.StepType}"
-                           Foreground="{DynamicResource App.Brush.TextMuted}"
-                           FontSize="11" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                <ComboBox Grid.Row="1"
-                          ItemsSource="{Binding StepTypeItems}"
-                          DisplayMemberPath="DisplayLabel"
-                          SelectedValuePath="Name"
-                          SelectedValue="{Binding SelectedType}"
-                          FontSize="14" FontWeight="Medium"
-                          MinHeight="38"
-                          mah:ControlsHelper.CornerRadius="5">
-                    <ComboBox.GroupStyle>
-                        <GroupStyle>
-                            <GroupStyle.HeaderTemplate>
-                                <DataTemplate>
-                                    <Border BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                                            BorderThickness="0,1,0,0" Margin="0,4,0,0" Padding="4,6,4,2">
-                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource App.Brush.Accent}"
-                                                   FontSize="10" FontWeight="SemiBold"/>
-                                    </Border>
-                                </DataTemplate>
-                            </GroupStyle.HeaderTemplate>
-                        </GroupStyle>
-                    </ComboBox.GroupStyle>
-                </ComboBox>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Width="42" Height="42" CornerRadius="8"
+                        Background="{DynamicResource App.Brush.AccentSubtle}"
+                        Margin="0,0,14,0">
+                    <iconPacks:PackIconMaterial Kind="TuneVariant"
+                                               Width="21" Height="21"
+                                               Foreground="{DynamicResource App.Brush.Accent}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SelectedStepDisplayName}"
+                               Foreground="{DynamicResource App.Brush.TextPrimary}"
+                               FontSize="19" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding StepTypeDescription}"
+                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
-            <Border Background="{DynamicResource App.Brush.Surface}" CornerRadius="6" Padding="14,12">
-                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource GeneratedEditor}"/>
-            </Border>
-        </ScrollViewer>
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="2" Margin="0,0,0,12">
-            <TextBlock Text="{Binding ValidationError}" Foreground="#FFD13438" TextWrapping="Wrap" Margin="0,0,0,8"/>
-            <Border Background="{DynamicResource App.Brush.AccentSubtle}"
-                    BorderBrush="{DynamicResource App.Brush.Accent}"
-                    BorderThickness="1" CornerRadius="6" Padding="12,9">
+            <Border Width="300"
+                    Visibility="{Binding ShowTypeSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Background="{DynamicResource App.Brush.Surface}"
+                    BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                    BorderThickness="1" CornerRadius="10"
+                    Padding="12" Margin="0,0,14,0">
                 <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <iconPacks:PackIconMaterial Kind="InformationOutline"
-                                               Foreground="{DynamicResource App.Brush.Accent}"
-                                               VerticalAlignment="Top" Margin="0,1,9,0" Width="14" Height="14"/>
-                    <TextBlock Grid.Column="1" Text="{Binding StepTypeDescription}"
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.StepType}"
                                Foreground="{DynamicResource App.Brush.TextSecondary}"
-                               TextWrapping="Wrap" FontSize="12"/>
+                               FontSize="11" FontWeight="SemiBold"
+                               Margin="2,0,0,8"/>
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <TextBox Text="{Binding StepTypeSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 MinHeight="36" Padding="34,6,8,6"
+                                 mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Step.Editor.Search}"/>
+                        <iconPacks:PackIconMaterial Kind="Magnify"
+                                                   Width="16" Height="16"
+                                                   Foreground="{DynamicResource App.Brush.TextMuted}"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Center"
+                                                   Margin="10,0,0,0"
+                                                   IsHitTestVisible="False"/>
+                    </Grid>
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding StepTypeItems}"
+                             DisplayMemberPath="DisplayLabel"
+                             SelectedValuePath="Name"
+                             SelectedValue="{Binding SelectedType}"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="{DynamicResource App.Brush.Accent}"
+                                                   FontSize="10" FontWeight="SemiBold"
+                                                   Margin="8,12,8,5"/>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,2"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Grid x:Name="ItemContainer">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3"/>
+                                                    <ColumnDefinition Width="5"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border x:Name="SelectionIndicator"
+                                                        Background="Transparent"
+                                                        CornerRadius="2"
+                                                        Margin="0,5,0,5"/>
+                                                <Border x:Name="ItemCard" Grid.Column="2"
+                                                        Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="7"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter Margin="11,8,10,8"
+                                                                      VerticalAlignment="Center"
+                                                                      RecognizesAccessKey="True"/>
+                                                </Border>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ItemCard" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                                    <Setter TargetName="ItemCard" Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="ItemCard" Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                                    <Setter TargetName="ItemCard" Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                                                    <Setter TargetName="SelectionIndicator" Property="Background" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.55"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
                 </Grid>
             </Border>
-        </StackPanel>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="{loc:Translate Key=Ui.Common.Cancel}" IsCancel="True" Margin="0,0,8,0"
-                    Click="Cancel_Click" Style="{StaticResource ButtonSecondary}"/>
-            <Button Content="{Binding ConfirmButtonText}" IsDefault="True"
-                    Command="{Binding ConfirmCommand}" Style="{StaticResource ButtonPrimary}"/>
-        </StackPanel>
+            <Border Grid.Column="1"
+                    Background="{DynamicResource App.Brush.Surface}"
+                    BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                    BorderThickness="1" CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Margin="18,14">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedStepDisplayName}"
+                                       Foreground="{DynamicResource App.Brush.TextPrimary}"
+                                       FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SelectedStepCategory}"
+                                       Foreground="{DynamicResource App.Brush.TextMuted}"
+                                       FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border Grid.Row="1"
+                            BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                            BorderThickness="0,1,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="18,16">
+                            <ContentControl Content="{Binding}"
+                                            ContentTemplate="{StaticResource GeneratedEditor}"
+                                            HorizontalContentAlignment="Stretch"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Background="{DynamicResource App.Brush.Surface}"
+                BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                BorderThickness="1" CornerRadius="10"
+                Padding="14,11">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <iconPacks:PackIconMaterial Kind="AlertCircleOutline"
+                                               Foreground="#FFD13438"
+                                               Width="16" Height="16"
+                                               Margin="0,0,8,0"
+                                               Visibility="{Binding HasValidationError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <TextBlock Text="{Binding ValidationError}"
+                               Foreground="#FFD13438"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="{loc:Translate Key=Ui.Common.Cancel}"
+                            IsCancel="True" Margin="0,0,8,0"
+                            Click="Cancel_Click"
+                            Style="{StaticResource ButtonSecondary}"/>
+                    <Button Content="{Binding ConfirmButtonText}"
+                            IsDefault="True"
+                            Command="{Binding ConfirmCommand}"
+                            MinWidth="110"
+                            Style="{StaticResource ButtonPrimary}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </mah:MetroWindow>

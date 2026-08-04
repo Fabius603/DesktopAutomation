@@ -11,225 +11,284 @@
              xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared"
              xmlns:windows="clr-namespace:DesktopAutomationApp.Controls.WindowsIntegration"
              xmlns:analysis="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Analysis"
+             xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
+             xmlns:viewModels="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
     <UserControl.Resources>
+        <generated:GeneratedStepFieldTemplateSelector x:Key="GeneratedStepFieldTemplateSelector"/>
+        <DataTemplate x:Key="TextFieldTemplate">
+            <TextBox MinWidth="220" HorizontalAlignment="Stretch"
+                     Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="MultilineTextFieldTemplate">
+            <TextBox MinHeight="60" AcceptsReturn="True" TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="EmojiTextFieldTemplate">
+            <emoji:RichTextBox MinHeight="58" AcceptsReturn="True"
+                               Style="{DynamicResource MahApps.Styles.RichTextBox}"
+                               VerticalScrollBarVisibility="Hidden"
+                               Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="BooleanFieldTemplate">
+            <CheckBox HorizontalAlignment="Left" VerticalAlignment="Center"
+                      IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="SuggestionsFieldTemplate">
+            <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                      ItemsSource="{Binding Suggestions}"
+                      Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="SuggestionFileFieldTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                          ItemsSource="{Binding Suggestions}"
+                          Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
+                        Command="{Binding DataContext.BrowseGeneratedFileCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                        CommandParameter="{Binding}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="ChoiceFieldTemplate">
+            <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label"
+                      SelectedItem="{Binding SelectedChoice, Mode=TwoWay}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="EnumFieldTemplate">
+            <ComboBox MinWidth="220" HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding EnumOptions}" DisplayMemberPath="Label"
+                      SelectedItem="{Binding SelectedEnumOption, Mode=TwoWay}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ProcessSourceOptionTemplate">
+            <TextBlock Text="{Binding Label}" TextWrapping="Wrap"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedProcessNameTargetContentViewModel}">
+            <StackPanel>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ProcessName}"
+                           Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
+                <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
+                          ItemsSource="{Binding Editor.ProcessNames}"
+                          Text="{Binding Editor.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.WindowTitleContains}"
+                           Style="{StaticResource StepFieldLabel}" Margin="0,10,0,4"/>
+                <TextBox Text="{Binding Editor.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedExecutableProcessTargetContentViewModel}">
+            <StackPanel>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.PathProgram}"
+                           Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
+                <shared:PathPickerField
+                    PathValue="{Binding Editor.ExecutablePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    BrowseCommand="{Binding DataContext.BrowseGeneratedProcessTargetFileCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                    BrowseCommandParameter="{Binding Editor}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.WindowTitleContains}"
+                           Style="{StaticResource StepFieldLabel}" Margin="0,10,0,4"/>
+                <TextBox Text="{Binding Editor.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedProcessReferenceTargetContentViewModel}">
+            <jobs:ResultBindingPicker DataContext="{Binding Editor.Picker}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ProcessTargetFieldTemplate">
+            <shared:ChoiceGroupEditor ItemsSource="{Binding ProcessTargetEditor.SourceOptions}"
+                                      SelectedItem="{Binding ProcessTargetEditor.SelectedSourceOption, Mode=TwoWay}"
+                                      SelectedContent="{Binding ProcessTargetEditor.SelectedSourceContent}"
+                                      ItemTemplate="{StaticResource ProcessSourceOptionTemplate}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="FileFieldTemplate">
+            <shared:PathPickerField PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseCommand="{Binding DataContext.BrowseGeneratedFileCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                                    BrowseCommandParameter="{Binding}" PreviewSource="{Binding FilePreview}"
+                                    HasPreview="{Binding HasFilePreview}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="DirectoryFieldTemplate">
+            <shared:PathPickerField PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseCommand="{Binding DataContext.BrowseGeneratedDirectoryCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                                    BrowseCommandParameter="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="FileOrFolderFieldTemplate">
+            <shared:PathPickerField PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    BrowseCommand="{Binding DataContext.BrowseGeneratedFileOrFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                                    BrowseCommandParameter="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="MonitorFieldTemplate">
+            <shared:MonitorPicker HorizontalAlignment="Left" MonitorIndex="{Binding IntegerValue, Mode=TwoWay}"
+                                  SelectCommand="{Binding DataContext.ChooseMonitorCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                                  SelectCommandParameter="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ResultBindingFieldTemplate">
+            <jobs:ResultBindingPicker DataContext="{Binding ResultBindingEditor.Picker}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="PercentageFieldTemplate">
+            <shared:PercentageInput Value="{Binding NumberValue, Mode=TwoWay}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ColorFieldTemplate">
+            <mah:ColorPicker HorizontalAlignment="Left" SelectedColor="{Binding ColorValue, Mode=TwoWay}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="CameraFieldTemplate">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <ComboBox ItemsSource="{Binding CameraEditor.Cameras}" SelectedItem="{Binding CameraEditor.SelectedCamera, Mode=TwoWay}"
+                              DisplayMemberPath="Name" MinWidth="220"/>
+                    <Button Grid.Column="1" Command="{Binding CameraEditor.RefreshCommand}"
+                            Content="{loc:Translate Key=Ui.Step.Camera.Refresh}" Margin="8,0,0,0"/>
+                </Grid>
+                <TextBlock Text="{Binding CameraEditor.CameraStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
+                           TextWrapping="Wrap" Margin="0,4,0,8"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}" Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding CameraEditor.Qualities}" SelectedItem="{Binding CameraEditor.SelectedQuality, Mode=TwoWay}"
+                          DisplayMemberPath="DisplayName" IsEnabled="{Binding CameraEditor.IsLoadingQualities, Converter={StaticResource InverseBooleanConverter}}"
+                          MinWidth="220" HorizontalAlignment="Left"/>
+                <TextBlock Text="{Binding CameraEditor.QualityStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
+                           TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="VisualOverlayFieldTemplate">
+            <output:VisualOverlayEditor Margin="0,-12,0,0" DataContext="{Binding VisualOverlayEditor}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="RoiFieldTemplate">
+            <roi:RoiEditor DataContext="{Binding RoiEditor}" IsRoiEnabled="{Binding IsRoiEnabled, Mode=TwoWay}"
+                           X="{Binding X, Mode=TwoWay}" Y="{Binding Y, Mode=TwoWay}"
+                           RoiWidth="{Binding RoiWidth, Mode=TwoWay}" RoiHeight="{Binding RoiHeight, Mode=TwoWay}"
+                           CaptureCommand="{Binding DataContext.CaptureGeneratedRoiCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
+                           CaptureCommandParameter="{Binding}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="YoloFieldTemplate">
+            <StackPanel>
+                <ComboBox ItemsSource="{Binding YoloEditor.Models}" IsEditable="True"
+                          Text="{Binding YoloEditor.Model, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ClassName}" Style="{StaticResource StepFieldLabel}" Margin="0,10,0,4"/>
+                <ComboBox ItemsSource="{Binding YoloEditor.Classes}" IsEditable="True"
+                          Text="{Binding YoloEditor.ClassName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="ConditionFieldTemplate">
+            <conditions:ConditionEditor Conditions="{Binding ConditionEditor.Conditions}"
+                                        IsAll="{Binding ConditionEditor.IsAll, Mode=TwoWay}"
+                                        IsAny="{Binding ConditionEditor.IsAny, Mode=TwoWay}"
+                                        AddCommand="{Binding ConditionEditor.AddCommand}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="WindowsCapabilityFieldTemplate">
+            <windows:WindowsCapabilityPicker DataContext="{Binding WindowsCapabilityEditor.Picker}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ScreenPointFieldTemplate">
+            <StackPanel>
+                <shared:MonitorPicker MonitorIndex="{Binding ScreenPointEditor.MonitorIndex, Mode=TwoWay}"
+                                      SelectCommand="{Binding ScreenPointEditor.SelectMonitorCommand}" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
+                    <TextBox Width="90" Text="{Binding ScreenPointEditor.X, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
+                    <TextBox Width="90" Text="{Binding ScreenPointEditor.Y, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+                    <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Command="{Binding ScreenPointEditor.CaptureCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding UserChoiceOptionsEditor.Options}">
+                    <ItemsControl.ItemTemplate><DataTemplate>
+                        <Grid Margin="0,0,0,7">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Number}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <emoji:RichTextBox Grid.Column="1" Text="{Binding Label, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False" MinHeight="30"/>
+                            <emoji:RichTextBox Grid.Column="2" Margin="6,0" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False" MinHeight="30"/>
+                            <Button Grid.Column="3" Command="{Binding MoveUpCommand}" Padding="6,2" ToolTip="{loc:Translate Key=Ui.UserChoice.MoveUp}"><iconPacks:PackIconMaterial Kind="ArrowUp" Width="14" Height="14"/></Button>
+                            <Button Grid.Column="4" Command="{Binding MoveDownCommand}" Padding="6,2" Margin="4,0,0,0" ToolTip="{loc:Translate Key=Ui.UserChoice.MoveDown}"><iconPacks:PackIconMaterial Kind="ArrowDown" Width="14" Height="14"/></Button>
+                            <Button Grid.Column="5" Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Padding="6,2" Margin="4,0,0,0"/>
+                        </Grid>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="{loc:Translate Key=Ui.UserChoice.AddAnswer}" Command="{Binding UserChoiceOptionsEditor.AddCommand}" HorizontalAlignment="Left"/>
+                <TextBlock Text="{loc:Translate Key=Ui.UserChoice.StableReferenceHint}" Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="PointEntryListFieldTemplate">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding PointEntryListEditor.Points}">
+                    <ItemsControl.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}" Command="{Binding PointEntryListEditor.AddCommand}" HorizontalAlignment="Left"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="AxisExpressionListFieldTemplate">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding AxisExpressionListEditor.Expressions}">
+                    <ItemsControl.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}" Command="{Binding AxisExpressionListEditor.AddCommand}" HorizontalAlignment="Left"/>
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate x:Key="GeneratedFieldTemplate">
-            <Grid Margin="0,0,0,12"
+            <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch"
                   Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="165"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Top">
+                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0">
                     <TextBlock Text="{Binding Label}" Style="{StaticResource StepFieldLabel}"/>
                     <TextBlock Text="{Binding Description}"
                                Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
                                Foreground="{DynamicResource App.Brush.TextMuted}"
-                               FontSize="11" TextWrapping="Wrap" Margin="0,3,10,0"/>
+                               FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
                 </StackPanel>
-                <TextBox Grid.Column="1" Width="160" HorizontalAlignment="Left"
-                         Visibility="{Binding UsesTextInput, Converter={StaticResource BooleanToVisibilityConverter}}"
-                         Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBox Grid.Column="1" MinHeight="60" AcceptsReturn="True" TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"
-                         Visibility="{Binding UsesMultilineTextInput, Converter={StaticResource BooleanToVisibilityConverter}}"
-                         Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
-                <emoji:RichTextBox Grid.Column="1" MinHeight="58" AcceptsReturn="True"
-                                   Style="{DynamicResource MahApps.Styles.RichTextBox}"
-                                   VerticalScrollBarVisibility="Hidden"
-                                   Visibility="{Binding UsesEmojiText, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                   Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <CheckBox Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"
-                          Visibility="{Binding IsBoolean, Converter={StaticResource BooleanToVisibilityConverter}}"
-                          IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <ComboBox Grid.Column="1" IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
-                          Visibility="{Binding UsesSuggestions, Converter={StaticResource BooleanToVisibilityConverter}}"
-                          ItemsSource="{Binding Suggestions}"
-                          Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <Grid Grid.Column="1"
-                      Visibility="{Binding UsesSuggestionFilePicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
-                              ItemsSource="{Binding Suggestions}"
-                              Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
-                            Command="{Binding DataContext.BrowseGeneratedFileCommand, ElementName=Root}"
-                            CommandParameter="{Binding}"/>
-                </Grid>
-                <ComboBox Grid.Column="1"
-                          Visibility="{Binding UsesChoicePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                          ItemsSource="{Binding Choices}"
-                          DisplayMemberPath="Label"
-                          SelectedItem="{Binding SelectedChoice, Mode=TwoWay}"/>
-                <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Left"
-                          Visibility="{Binding UsesEnumPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                          ItemsSource="{Binding EnumOptions}"
-                          DisplayMemberPath="Label"
-                          SelectedItem="{Binding SelectedEnumOption, Mode=TwoWay}"/>
-                <StackPanel Grid.Column="1"
-                            Visibility="{Binding UsesProcessTargetPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <jobs:ProcessTargetModeSelector Picker="{Binding ProcessTargetEditor.Picker}"
-                                                    UseProcessReference="{Binding ProcessTargetEditor.UseProcessReference, Mode=TwoWay}"/>
-                    <StackPanel Visibility="{Binding UsesNamedProcessTargetPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
-                                  Visibility="{Binding ProcessTargetEditor.UseProcessReference, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                                  ItemsSource="{Binding ProcessTargetEditor.ProcessNames}"
-                                  Text="{Binding ProcessTargetEditor.ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    <StackPanel Visibility="{Binding UsesExecutableProcessTargetPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <shared:PathPickerField
-                            Visibility="{Binding ProcessTargetEditor.UseProcessReference, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                            PathValue="{Binding ProcessTargetEditor.ExecutablePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            BrowseCommand="{Binding DataContext.BrowseGeneratedProcessTargetFileCommand, ElementName=Root}"
-                            BrowseCommandParameter="{Binding}"/>
-                    </StackPanel>
-                </StackPanel>
-                <shared:PathPickerField Grid.Column="1"
-                                        Visibility="{Binding UsesFilePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        BrowseCommand="{Binding DataContext.BrowseGeneratedFileCommand, ElementName=Root}"
-                                        BrowseCommandParameter="{Binding}"
-                                        PreviewSource="{Binding FilePreview}"
-                                        HasPreview="{Binding HasFilePreview}"/>
-                <shared:PathPickerField Grid.Column="1"
-                                        Visibility="{Binding UsesDirectoryPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        BrowseCommand="{Binding DataContext.BrowseGeneratedDirectoryCommand, ElementName=Root}"
-                                        BrowseCommandParameter="{Binding}"/>
-                <shared:PathPickerField Grid.Column="1"
-                                        Visibility="{Binding UsesFileOrFolderPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        BrowseCommand="{Binding DataContext.BrowseGeneratedFileOrFolderCommand, ElementName=Root}"
-                                        BrowseCommandParameter="{Binding}"/>
-                <shared:MonitorPicker Grid.Column="1" HorizontalAlignment="Left"
-                                      Visibility="{Binding UsesMonitorPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                      MonitorIndex="{Binding IntegerValue, Mode=TwoWay}"
-                                      SelectCommand="{Binding DataContext.ChooseMonitorCommand, ElementName=Root}"
-                                      SelectCommandParameter="{Binding}"/>
-                <jobs:ResultBindingPicker Grid.Column="1"
-                                          Visibility="{Binding UsesResultBindingPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                          DataContext="{Binding ResultBindingEditor.Picker}"/>
-                <shared:PercentageInput Grid.Column="1"
-                                        Visibility="{Binding UsesPercentagePicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        Value="{Binding NumberValue, Mode=TwoWay}"/>
-                <mah:ColorPicker Grid.Column="1" HorizontalAlignment="Left"
-                                 Visibility="{Binding UsesColorPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                 SelectedColor="{Binding ColorValue, Mode=TwoWay}"/>
-                <StackPanel Grid.Column="1"
-                            Visibility="{Binding UsesCameraPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox ItemsSource="{Binding CameraEditor.Cameras}"
-                                  SelectedItem="{Binding CameraEditor.SelectedCamera, Mode=TwoWay}"
-                                  DisplayMemberPath="Name" MinWidth="220"/>
-                        <Button Grid.Column="1" Command="{Binding CameraEditor.RefreshCommand}"
-                                Content="{loc:Translate Key=Ui.Step.Camera.Refresh}" Margin="8,0,0,0"/>
-                    </Grid>
-                    <TextBlock Text="{Binding CameraEditor.CameraStatus}"
+                <ContentControl Grid.Column="1" Content="{Binding}"
+                                HorizontalContentAlignment="Stretch"
+                                ContentTemplateSelector="{StaticResource GeneratedStepFieldTemplateSelector}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="ChoiceBranchHeaderTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding Label}" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Description}"
+                           Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
+                           Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="10" TextWrapping="Wrap"/>
+            </StackPanel>
+        </DataTemplate>
+        <DataTemplate x:Key="ChoiceBranchContentTemplate">
+            <ItemsControl ItemsSource="{Binding Children}" HorizontalContentAlignment="Stretch"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedStepFieldNodeViewModel}">
+            <ContentControl Content="{Binding Field}" ContentTemplate="{StaticResource GeneratedFieldTemplate}"/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:GeneratedStepChoiceGroupViewModel}">
+            <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch"
+                  Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="165"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0">
+                    <TextBlock Text="{Binding Label}" Style="{StaticResource StepFieldLabel}"/>
+                    <TextBlock Text="{Binding Description}"
+                               Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
                                Foreground="{DynamicResource App.Brush.TextMuted}"
-                               TextWrapping="Wrap" Margin="0,4,0,8"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}"
-                               Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding CameraEditor.Qualities}"
-                              SelectedItem="{Binding CameraEditor.SelectedQuality, Mode=TwoWay}"
-                              DisplayMemberPath="DisplayName"
-                              IsEnabled="{Binding CameraEditor.IsLoadingQualities, Converter={StaticResource InverseBooleanConverter}}"
-                              MinWidth="220" HorizontalAlignment="Left"/>
-                    <TextBlock Text="{Binding CameraEditor.QualityStatus}"
-                               Foreground="{DynamicResource App.Brush.TextMuted}"
-                               TextWrapping="Wrap" Margin="0,4,0,0"/>
+                               FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
                 </StackPanel>
-                <output:VisualOverlayEditor Grid.Column="1"
-                                            Margin="0,-12,0,0"
-                                            Visibility="{Binding UsesVisualOverlay, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            DataContext="{Binding VisualOverlayEditor}"/>
-                <roi:RoiEditor Grid.Column="1"
-                               Visibility="{Binding UsesRoiPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                               DataContext="{Binding RoiEditor}"
-                               IsRoiEnabled="{Binding RoiEditor.IsRoiEnabled, Mode=TwoWay}"
-                               X="{Binding RoiEditor.X, Mode=TwoWay}"
-                               Y="{Binding RoiEditor.Y, Mode=TwoWay}"
-                               RoiWidth="{Binding RoiEditor.RoiWidth, Mode=TwoWay}"
-                               RoiHeight="{Binding RoiEditor.RoiHeight, Mode=TwoWay}"
-                               CaptureCommand="{Binding DataContext.CaptureGeneratedRoiCommand, ElementName=Root}"
-                               CaptureCommandParameter="{Binding}"/>
-                <StackPanel Grid.Column="1"
-                            Visibility="{Binding UsesYoloPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ComboBox ItemsSource="{Binding YoloEditor.Models}"
-                              IsEditable="True"
-                              Text="{Binding YoloEditor.Model, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.ClassName}"
-                               Style="{StaticResource StepFieldLabel}" Margin="0,10,0,4"/>
-                    <ComboBox ItemsSource="{Binding YoloEditor.Classes}"
-                              IsEditable="True"
-                              Text="{Binding YoloEditor.ClassName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <conditions:ConditionEditor Grid.Column="1"
-                                            Visibility="{Binding UsesConditionEditor, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                            Conditions="{Binding ConditionEditor.Conditions}"
-                                            IsAll="{Binding ConditionEditor.IsAll, Mode=TwoWay}"
-                                            IsAny="{Binding ConditionEditor.IsAny, Mode=TwoWay}"
-                                            AddCommand="{Binding ConditionEditor.AddCommand}"/>
-                <windows:WindowsCapabilityPicker Grid.Column="1"
-                                                 Visibility="{Binding UsesWindowsCapabilityPicker, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                 DataContext="{Binding WindowsCapabilityEditor.Picker}"/>
-                <StackPanel Grid.Column="1" Visibility="{Binding UsesScreenPointPicker, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <shared:MonitorPicker MonitorIndex="{Binding ScreenPointEditor.MonitorIndex, Mode=TwoWay}"
-                                          SelectCommand="{Binding ScreenPointEditor.SelectMonitorCommand}" HorizontalAlignment="Left"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.X}" Style="{StaticResource StepAxisLabel}"/>
-                        <TextBox Width="90" Text="{Binding ScreenPointEditor.X, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Y}" Style="{StaticResource StepAxisLabel}"/>
-                        <TextBox Width="90" Text="{Binding ScreenPointEditor.Y, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
-                        <Button Content="{loc:Translate Key=Ui.Step.Settings.Capture}" Command="{Binding ScreenPointEditor.CaptureCommand}"/>
-                    </StackPanel>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Visibility="{Binding UsesUserChoiceOptions, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ItemsControl ItemsSource="{Binding UserChoiceOptionsEditor.Options}">
-                        <ItemsControl.ItemTemplate><DataTemplate>
-                            <Grid Margin="0,0,0,7">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding Number}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                <emoji:RichTextBox Grid.Column="1" Text="{Binding Label, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False" MinHeight="30"/>
-                                <emoji:RichTextBox Grid.Column="2" Margin="6,0" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="False" MinHeight="30"/>
-                                <Button Grid.Column="3" Command="{Binding MoveUpCommand}" Padding="6,2" ToolTip="{loc:Translate Key=Ui.UserChoice.MoveUp}"><iconPacks:PackIconMaterial Kind="ArrowUp" Width="14" Height="14"/></Button>
-                                <Button Grid.Column="4" Command="{Binding MoveDownCommand}" Padding="6,2" Margin="4,0,0,0" ToolTip="{loc:Translate Key=Ui.UserChoice.MoveDown}"><iconPacks:PackIconMaterial Kind="ArrowDown" Width="14" Height="14"/></Button>
-                                <Button Grid.Column="5" Content="{loc:Translate Key=Ui.Common.RemoveSymbol}" Command="{Binding RemoveCommand}" Padding="6,2" Margin="4,0,0,0"/>
-                            </Grid>
-                        </DataTemplate></ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Button Content="{loc:Translate Key=Ui.UserChoice.AddAnswer}" Command="{Binding UserChoiceOptionsEditor.AddCommand}" HorizontalAlignment="Left"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.UserChoice.StableReferenceHint}" Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Visibility="{Binding UsesPointEntryList, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ItemsControl ItemsSource="{Binding PointEntryListEditor.Points}">
-                        <ItemsControl.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Button Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}" Command="{Binding PointEntryListEditor.AddCommand}" HorizontalAlignment="Left"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Visibility="{Binding UsesAxisExpressionList, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <ItemsControl ItemsSource="{Binding AxisExpressionListEditor.Expressions}">
-                        <ItemsControl.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}" Command="{Binding AxisExpressionListEditor.AddCommand}" HorizontalAlignment="Left"/>
-                </StackPanel>
+                <shared:ChoiceGroupEditor Grid.Column="1"
+                                          ItemsSource="{Binding Branches}"
+                                          SelectedItem="{Binding SelectedBranch, Mode=TwoWay}"
+                                          SelectedContent="{Binding SelectedBranch}"
+                                          ItemTemplate="{StaticResource ChoiceBranchHeaderTemplate}"
+                                          SelectedContentTemplate="{StaticResource ChoiceBranchContentTemplate}"/>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="RegularSectionTemplate">
-            <ItemsControl ItemsSource="{Binding Fields}"
-                          ItemTemplate="{StaticResource GeneratedFieldTemplate}"/>
+            <ItemsControl ItemsSource="{Binding Nodes}"
+                          HorizontalContentAlignment="Stretch"/>
         </DataTemplate>
         <DataTemplate x:Key="CollapsibleSectionTemplate">
             <Expander Header="{Binding Title}"
-                      IsExpanded="{Binding IsInitiallyExpanded}"
+                      IsExpanded="{Binding IsInitiallyExpanded, Mode=OneWay}"
                       Style="{StaticResource StepAdvancedExpander}">
                 <ItemsControl Margin="0,10,0,0"
-                              ItemsSource="{Binding Fields}"
-                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"/>
+                              ItemsSource="{Binding Nodes}"
+                              HorizontalContentAlignment="Stretch"/>
             </Expander>
         </DataTemplate>
     </UserControl.Resources>
@@ -238,7 +297,8 @@
                    Visibility="{Binding GeneratedEditor.HasEditorDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
                    TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"
                    FontStyle="Italic" FontSize="12" Margin="0,0,0,12"/>
-        <ItemsControl ItemsSource="{Binding GeneratedEditor.Sections}">
+        <ItemsControl ItemsSource="{Binding GeneratedEditor.Sections}"
+                      HorizontalContentAlignment="Stretch">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <ContentControl Content="{Binding}">

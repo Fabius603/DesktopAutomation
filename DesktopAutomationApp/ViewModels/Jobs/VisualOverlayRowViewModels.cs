@@ -125,8 +125,5 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     }
 
     private static Color ParseColor(string value)
-    {
-        try { return (Color)ColorConverter.ConvertFromString(value); }
-        catch { return Colors.White; }
-    }
+        => WpfColorParser.TryParse(value, out var color) ? color : Colors.White;
 }

@@ -35,7 +35,10 @@ Frontend-Änderung erforderlich. Wird eine neue Art von Auswahlhilfe benötigt:
 2. einen wiederverwendbaren Adapter im generierten Desktop-Editor implementieren;
 3. keine Abhängigkeit von WPF oder `DesktopAutomationApp` in `TaskAutomation`
    einführen;
-4. Darstellung, Bearbeitung, Validierung und Roundtrip mit Tests abdecken.
+4. Darstellung, Bearbeitung, Validierung und Roundtrip risikobasiert abdecken.
+   Vorhandene generische oder parametrisierte Tests erweitern und keine Tests
+   für einzelne XAML-Fragmente oder bereits abgedeckte Implementierungsdetails
+   hinzufügen.
 
 Die Step-Auswahl, das Erstellen und das Bearbeiten werden automatisch über
 `BuiltInStepDefinitions` und `IStepDefinitionCatalog` angebunden.

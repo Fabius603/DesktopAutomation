@@ -11,6 +11,7 @@ namespace DesktopAutomationApp.ViewModels;
 
 public sealed record SourceStepItem(string StepId, string DisplayName, ResultTypeDescriptor ResultType);
 public sealed record EnumConditionOption(string Value, string DisplayName);
+public sealed record EditorChoiceOptionViewModel(string Value, string Label);
 
 public sealed class ConditionSelectionNode
 {
@@ -32,6 +33,11 @@ public sealed class ConditionSelectionNode
 
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
 {
+    public IReadOnlyList<EditorChoiceOptionViewModel> ComparisonSourceOptions { get; } =
+    [
+        new("Literal", Loc.Get("Ui.Step.IfEditor.LiteralValue")),
+        new("JobResult", Loc.Get("Ui.Step.IfEditor.JobResultValue"))
+    ];
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnChange([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new(p));
     private void NotifyInput()
@@ -116,6 +122,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             if (_comparisonKind == value) return;
             _comparisonKind = value;
             OnChange(); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
+            OnChange(nameof(SelectedComparisonSourceOption));
             NotifyInput();
         }
     }
@@ -128,6 +135,15 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     {
         get => ComparisonKind == ComparisonOperandKind.JobResult;
         set { if (value) ComparisonKind = ComparisonOperandKind.JobResult; }
+    }
+    public EditorChoiceOptionViewModel SelectedComparisonSourceOption
+    {
+        get => ComparisonSourceOptions.First(option => option.Value == ComparisonKind.ToString());
+        set
+        {
+            if (value is not null && Enum.TryParse<ComparisonOperandKind>(value.Value, out var kind))
+                ComparisonKind = kind;
+        }
     }
 
     private SourceStepItem? _selectedComparisonSourceStep;

@@ -7,7 +7,6 @@ namespace TaskAutomation.Steps.Definitions;
 public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep>
 {
     public const string ProcessTargetFieldId = "process_target";
-    public const string WindowTitleFieldId = "window_title_contains";
     public const string CacheFieldId = "cache_ms";
 
     public override StepDescriptor Descriptor { get; } = new(
@@ -27,12 +26,6 @@ public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep
                 InputContractId: "process",
                 Order: 0),
             new StepFieldDescriptor(
-                WindowTitleFieldId,
-                "Ui.Step.Settings.WindowTitleContains",
-                StepValueKind.Text,
-                DefaultValue: JsonValue.Create(string.Empty),
-                Order: 1),
-            new StepFieldDescriptor(
                 CacheFieldId,
                 "Ui.Step.Settings.CacheMs",
                 StepValueKind.Duration,
@@ -48,7 +41,7 @@ public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep
                 new StepEditorSectionDescriptor(
                     "general",
                     null,
-                    [ProcessTargetFieldId, WindowTitleFieldId]),
+                    [ProcessTargetFieldId]),
                 new StepEditorSectionDescriptor(
                     "advanced",
                     "Ui.Step.Settings.Advanced",
@@ -57,12 +50,8 @@ public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep
                     Collapsible: true,
                     InitiallyExpanded: false)
             ],
-            SummaryItems:
-            [
-                new StepSummaryItemDescriptor(ProcessTargetFieldId),
-                new StepSummaryItemDescriptor(WindowTitleFieldId)
-            ],
-            DetailFieldIds: [ProcessTargetFieldId, WindowTitleFieldId, CacheFieldId]));
+            SummaryItems: [new StepSummaryItemDescriptor(ProcessTargetFieldId)],
+            DetailFieldIds: [ProcessTargetFieldId, CacheFieldId]));
 
     public override ActiveWindowStep CreateDefaultStep() => new();
 
@@ -70,7 +59,6 @@ public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep
     {
         var draft = new StepDraft(Descriptor.TypeId);
         draft.Values[ProcessTargetFieldId] = ProcessSelectorDraft.Create(step.Settings.Target);
-        draft.Values[WindowTitleFieldId] = JsonValue.Create(step.Settings.Target.WindowTitleContains);
         draft.Values[CacheFieldId] = JsonValue.Create(step.Settings.CacheMs);
         return draft;
     }
@@ -78,7 +66,6 @@ public sealed class ActiveWindowStepDefinition : StepDefinition<ActiveWindowStep
     protected override void Apply(StepDraft draft, ActiveWindowStep step)
     {
         ProcessSelectorDraft.Apply(draft, ProcessTargetFieldId, step.Settings.Target);
-        step.Settings.Target.WindowTitleContains = DefinitionValueReader.String(draft, WindowTitleFieldId);
         step.Settings.CacheMs = DefinitionValueReader.Integer(draft, CacheFieldId);
     }
 

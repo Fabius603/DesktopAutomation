@@ -21,8 +21,6 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
 
     private static readonly StepVisibilityRule OffsetMode = new(ModeFieldId, JsonValue.Create("Offset"));
     private static readonly StepVisibilityRule ExpressionMode = new(ModeFieldId, JsonValue.Create("Expression"));
-    private static readonly StepVisibilityRule ManualReference = new(ReferenceSourceFieldId, JsonValue.Create("Manual"));
-    private static readonly StepVisibilityRule ResultReference = new(ReferenceSourceFieldId, JsonValue.Create("JobResult"));
 
     public override StepDescriptor Descriptor { get; } = new(
         "point_comparison", "BildAuswerten", "Step.Type.PointComparison", "Step.Description.PointComparison", "point-comparison",
@@ -35,14 +33,15 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
                 JsonSerializer.SerializeToNode(new[] { new StepPointEntryValue("Manual", 0, 0, null) }),
                 EditorHint: StepEditorHints.PointEntryList, Order: 2, InputContractId: "points"),
             EnumField(ReferenceSourceFieldId, "Ui.Step.Settings.ReferenceSource", "Manual", ["Manual", "JobResult"],
-                [new("Manual", "Ui.Step.Settings.EnterManually"), new("JobResult", "Ui.Step.Settings.FromDetectionResult")], 3, OffsetMode),
+                [new("Manual", "Ui.Step.Settings.EnterManually"), new("JobResult", "Ui.Step.Settings.FromDetectionResult")], 3,
+                OffsetMode),
             new(ReferenceXFieldId, "Ui.Step.Settings.X", StepValueKind.Integer, DefaultValue: JsonValue.Create(0), Order: 4,
-                VisibleWhenAll: [OffsetMode, ManualReference]),
+                VisibleWhen: OffsetMode),
             new(ReferenceYFieldId, "Ui.Step.Settings.Y", StepValueKind.Integer, DefaultValue: JsonValue.Create(0), Order: 5,
-                VisibleWhenAll: [OffsetMode, ManualReference]),
+                VisibleWhen: OffsetMode),
             new(ReferencePointsFieldId, "Ui.Step.Settings.DetectionStep", StepValueKind.ResultBinding, Required: true,
                 EditorHint: StepEditorHints.ResultBindingPicker, Order: 6, InputContractId: "points",
-                VisibleWhenAll: [OffsetMode, ResultReference]),
+                VisibleWhen: OffsetMode),
             new(OffsetXFieldId, "Ui.Step.Settings.XOffsetPixels", StepValueKind.Integer, DefaultValue: JsonValue.Create(10),
                 Constraints: new(Minimum: 0), Order: 7, VisibleWhen: OffsetMode),
             new(OffsetYFieldId, "Ui.Step.Settings.YOffsetPixels", StepValueKind.Integer, DefaultValue: JsonValue.Create(10),
@@ -56,7 +55,14 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         new([
                 new("general", "Ui.Step.Settings.BasicSettings", [ModeFieldId, MatchRequirementFieldId, PointsFieldId]),
                 new("offset", "Ui.Step.Settings.ReferencePointTolerance", [ReferenceSourceFieldId, ReferenceXFieldId,
-                    ReferenceYFieldId, ReferencePointsFieldId, OffsetXFieldId, OffsetYFieldId], 1),
+                    ReferenceYFieldId, ReferencePointsFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
+                    [new StepChoiceGroupDescriptor(ReferenceSourceFieldId,
+                        [new("Manual", "Ui.Step.Settings.EnterManually",
+                            [new StepFieldNodeDescriptor(ReferenceXFieldId), new StepFieldNodeDescriptor(ReferenceYFieldId)]),
+                         new("JobResult", "Ui.Step.Settings.FromDetectionResult",
+                            [new StepFieldNodeDescriptor(ReferencePointsFieldId)])]),
+                     new StepFieldNodeDescriptor(OffsetXFieldId),
+                     new StepFieldNodeDescriptor(OffsetYFieldId)]),
                 new("expression", "Ui.Step.Settings.AxisExpressions", [CombineModeFieldId, ExpressionsFieldId], 2)
             ],
             [new(ModeFieldId), new(MatchRequirementFieldId)],
@@ -136,9 +142,9 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
     }
 
     private static StepFieldDescriptor EnumField(string id, string label, string defaultValue, string[] values,
-        StepFieldOptionDescriptor[] options, int order, StepVisibilityRule? visible = null) =>
+        StepFieldOptionDescriptor[] options, int order, StepVisibilityRule? visible = null, string? editorHint = null) =>
         new(id, label, StepValueKind.Enum, true, JsonValue.Create(defaultValue), Constraints: new(AllowedValues: values),
-            Order: order, VisibleWhen: visible, Options: options);
+            EditorHint: editorHint, Order: order, VisibleWhen: visible, Options: options);
     private static StepPointEntryValue ToValue(PointEntry entry) => new(entry.Source.ToString(), entry.ManualX, entry.ManualY,
         JsonSerializer.SerializeToNode(entry.PointsSource));
     private static PointEntry FromValue(StepPointEntryValue value) => new()

@@ -1307,21 +1307,32 @@ namespace DesktopAutomationApp.ViewModels
             {
                 try
                 {
-                    await Task.Delay(120, cts.Token);
+                    if (!await WaitForValidationDebounceAsync(cts.Token)
+                        || generation != _validationGeneration) return;
                     var serialized = await JobStepsSnapshotService.SerializeAsync(
-                        startSnapshot, runSnapshot, endSnapshot, cts.Token);
-                    var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized, cts.Token);
+                        startSnapshot, runSnapshot, endSnapshot);
+                    if (cts.IsCancellationRequested || generation != _validationGeneration) return;
+                    var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized);
+                    if (cts.IsCancellationRequested || generation != _validationGeneration) return;
                     var result = await Task.Run(() => JobValidation.ValidateJob(new Job
                     {
                         StartSteps = materialized.StartSteps.ToList(),
                         Steps = materialized.RunSteps.ToList(),
                         EndSteps = materialized.EndSteps.ToList()
-                    }), cts.Token);
+                    }));
                     if (cts.IsCancellationRequested || generation != _validationGeneration) return;
                     await Application.Current.Dispatcher.InvokeAsync(() => ApplyValidation(result, generation));
                 }
                 catch (OperationCanceledException) { }
             }
+        }
+
+        internal static async Task<bool> WaitForValidationDebounceAsync(
+            CancellationToken cancellationToken,
+            int delayMilliseconds = 120)
+        {
+            await Task.Delay(delayMilliseconds);
+            return !cancellationToken.IsCancellationRequested;
         }
 
         private void ApplyValidation(JobValidationResult validation, int generation)

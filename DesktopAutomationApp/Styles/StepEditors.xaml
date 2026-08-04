@@ -8,6 +8,7 @@
         <Setter Property="VerticalAlignment" Value="Top"/>
         <Setter Property="Margin" Value="0,6,0,0"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     <Style x:Key="StepAdvancedExpander" TargetType="Expander">
         <Setter Property="Header" Value="{loc:Translate Key=Ui.Step.Settings.Advanced}"/>

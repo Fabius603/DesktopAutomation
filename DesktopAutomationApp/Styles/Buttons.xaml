@@ -14,7 +14,7 @@
         <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentLight}"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentDark}"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
                 <Setter Property="Background" Value="{DynamicResource App.Brush.AccentDark}"/>
@@ -27,9 +27,9 @@
 
     <!-- ═══ Secondary Button ═══ -->
     <Style x:Key="ButtonSecondary" TargetType="Button" BasedOn="{StaticResource MahApps.Styles.Button}">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="16,8"/>
         <Setter Property="FontSize" Value="13"/>
@@ -38,11 +38,11 @@
         <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderStrong}"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentDark}"/>
-                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfacePressed}"/>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.4"/>
@@ -82,8 +82,8 @@
         <Setter Property="mah:ControlsHelper.CornerRadius" Value="6"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
-                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.4"/>
@@ -96,7 +96,7 @@
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
-                <Setter Property="Background" Value="#26E63946"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.DangerSubtle}"/>
             </Trigger>
         </Style.Triggers>
     </Style>

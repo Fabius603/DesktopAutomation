@@ -20,8 +20,8 @@
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border x:Name="Card"
                             CornerRadius="8"
-                            Background="{DynamicResource App.Brush.Surface}"
-                            BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                            Background="{DynamicResource App.Brush.SurfaceRaised}"
+                            BorderBrush="{DynamicResource App.Brush.BorderSubtle}"
                             BorderThickness="1"
                             Padding="12,10"
                             SnapsToDevicePixels="True">
@@ -30,16 +30,15 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Card" Property="BorderBrush"
-                                    Value="{DynamicResource App.Brush.Accent}"/>
+                                    Value="{DynamicResource App.Brush.BorderStrong}"/>
                             <Setter TargetName="Card" Property="Background"
                                     Value="{DynamicResource App.Brush.SurfaceHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Card" Property="Background"
-                                    Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                    Value="{DynamicResource App.Brush.SelectionBackground}"/>
                             <Setter TargetName="Card" Property="BorderBrush"
-                                    Value="{DynamicResource App.Brush.Accent}"/>
-                            <Setter TargetName="Card" Property="BorderThickness" Value="1.5"/>
+                                    Value="{DynamicResource App.Brush.SelectionBorder}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

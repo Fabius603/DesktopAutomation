@@ -5,6 +5,7 @@
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+             xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
     <UserControl.Resources>
@@ -15,6 +16,50 @@
             <Setter Property="Margin" Value="0,0,0,4"/>
             <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
         </Style>
+        <DataTemplate x:Key="ConditionSourceOptionTemplate">
+            <TextBlock Text="{Binding Label}" TextWrapping="Wrap"/>
+        </DataTemplate>
+        <DataTemplate x:Key="ConditionSourceContentTemplate">
+            <Grid>
+                <Border Height="38" BorderThickness="1" CornerRadius="4"
+                        Visibility="{Binding ShowLiteralComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsComparisonValueValid}" Value="False">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <TextBox Text="{Binding ComparisonNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 mah:TextBoxHelper.Watermark="{Binding InputExample}" VerticalContentAlignment="Center"
+                                 Visibility="{Binding ShowNumericValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <TextBox Text="{Binding ComparisonValue, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="{Binding InputHint}" mah:TextBoxHelper.Watermark="{Binding InputExample}"
+                                 VerticalContentAlignment="Center"
+                                 Visibility="{Binding ShowTextValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <mah:DateTimePicker SelectedDateTime="{Binding ComparisonDate, UpdateSourceTrigger=PropertyChanged}"
+                                            Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
+                                            SelectedDateFormat="Short" SelectedTimeFormat="Long"
+                                            mah:TextBoxHelper.Watermark="{Binding InputExample}"
+                                            Visibility="{Binding ShowDateValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ComboBox ItemsSource="{Binding BooleanValues}"
+                                  SelectedItem="{Binding ComparisonBoolean, UpdateSourceTrigger=PropertyChanged}"
+                                  Height="36" VerticalContentAlignment="Center"
+                                  Visibility="{Binding ShowBooleanValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <ComboBox ItemsSource="{Binding EnumOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                  SelectedValue="{Binding ComparisonEnum, Mode=TwoWay}" MinHeight="36"
+                                  Visibility="{Binding ShowEnumValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </Grid>
+                </Border>
+                <jobs:ResultPathPicker ItemsSource="{Binding ComparisonSelectionTree}"
+                                       DisplayText="{Binding ComparisonPath}"
+                                       Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <StackPanel>
@@ -118,55 +163,12 @@
                                                 Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}"
                                                    Style="{StaticResource ConditionFieldLabel}"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <RadioButton Content="{loc:Translate Key=Ui.Step.IfEditor.LiteralValue}"
-                                                         IsChecked="{Binding ComparisonIsLiteral}"
-                                                         Margin="0,0,18,0"/>
-                                            <RadioButton Content="{loc:Translate Key=Ui.Step.IfEditor.JobResultValue}"
-                                                         IsChecked="{Binding ComparisonIsJobResult}"/>
-                                        </StackPanel>
-                                        <Border Height="38" BorderThickness="1" CornerRadius="4">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsComparisonValueValid}" Value="False">
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Danger}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <Grid>
-                                                <TextBox Text="{Binding ComparisonNumber, UpdateSourceTrigger=PropertyChanged}"
-                                                         mah:TextBoxHelper.Watermark="{Binding InputExample}"
-                                                         VerticalContentAlignment="Center"
-                                                         Visibility="{Binding ShowNumericValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <TextBox Text="{Binding ComparisonValue, UpdateSourceTrigger=PropertyChanged}"
-                                                         ToolTip="{Binding InputHint}"
-                                                         mah:TextBoxHelper.Watermark="{Binding InputExample}"
-                                                         VerticalContentAlignment="Center"
-                                                         Visibility="{Binding ShowTextValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <mah:DateTimePicker SelectedDateTime="{Binding ComparisonDate, UpdateSourceTrigger=PropertyChanged}"
-                                                                    Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
-                                                                    SelectedDateFormat="Short"
-                                                                    SelectedTimeFormat="Long"
-                                                                    mah:TextBoxHelper.Watermark="{Binding InputExample}"
-                                                                    Visibility="{Binding ShowDateValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <ComboBox ItemsSource="{Binding BooleanValues}"
-                                                          SelectedItem="{Binding ComparisonBoolean, UpdateSourceTrigger=PropertyChanged}"
-                                                          Height="36"
-                                                          VerticalContentAlignment="Center"
-                                                          Visibility="{Binding ShowBooleanValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <ComboBox ItemsSource="{Binding EnumOptions}"
-                                                          DisplayMemberPath="DisplayName" SelectedValuePath="Value"
-                                                          SelectedValue="{Binding ComparisonEnum, Mode=TwoWay}"
-                                                          MinHeight="36"
-                                                          Visibility="{Binding ShowEnumValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                <jobs:ResultPathPicker ItemsSource="{Binding ComparisonSelectionTree}"
-                                                                       DisplayText="{Binding ComparisonPath}"
-                                                                       Visibility="{Binding ShowJobResultComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                            </Grid>
-                                        </Border>
+                                        <shared:ChoiceGroupEditor
+                                            ItemsSource="{Binding ComparisonSourceOptions}"
+                                            SelectedItem="{Binding SelectedComparisonSourceOption, Mode=TwoWay}"
+                                            SelectedContent="{Binding}"
+                                            ItemTemplate="{StaticResource ConditionSourceOptionTemplate}"
+                                            SelectedContentTemplate="{StaticResource ConditionSourceContentTemplate}"/>
                                         <TextBlock Text="{Binding ComparisonValueValidationError}"
                                                    FontSize="11" Margin="0,4,0,0">
                                             <TextBlock.Style>

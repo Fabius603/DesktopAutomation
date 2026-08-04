@@ -420,6 +420,9 @@
   <data name="Ui.Step.Settings.StepType" xml:space="preserve">
     <value>STEP TYPE</value>
   </data>
+  <data name="Ui.Step.Editor.Search" xml:space="preserve">
+    <value>Search steps</value>
+  </data>
   <data name="Ui.Step.Settings.CaptureStep" xml:space="preserve">
     <value>Capture result</value>
   </data>

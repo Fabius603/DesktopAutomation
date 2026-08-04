@@ -11,7 +11,8 @@ internal static class ProcessSelectorDraft
         JsonSerializer.SerializeToNode(new StepProcessSelectorValue(
             JsonSerializer.SerializeToNode(target.ProcessSource),
             target.ProcessName,
-            target.ExecutablePath));
+            target.ExecutablePath,
+            target.WindowTitleContains));
 
     public static bool TryRead(
         StepDraft draft,
@@ -19,7 +20,7 @@ internal static class ProcessSelectorDraft
         out StepProcessSelectorValue selector,
         out ResultBinding binding)
     {
-        selector = new StepProcessSelectorValue(null, string.Empty, string.Empty);
+        selector = new StepProcessSelectorValue(null, string.Empty, string.Empty, string.Empty);
         binding = new ResultBinding();
         if (!draft.Values.TryGetValue(fieldId, out var value) || value is null)
             return false;
@@ -48,5 +49,6 @@ internal static class ProcessSelectorDraft
         target.ProcessSource = binding;
         target.ProcessName = binding.IsConfigured ? string.Empty : selector.ProcessName;
         target.ExecutablePath = binding.IsConfigured ? string.Empty : selector.ExecutablePath;
+        target.WindowTitleContains = binding.IsConfigured ? string.Empty : selector.WindowTitleContains;
     }
 }

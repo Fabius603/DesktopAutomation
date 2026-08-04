@@ -12,18 +12,12 @@
     <!-- Standard-Karte mit abgerundeten Ecken und dezenter Elevation -->
     <Style x:Key="CardBorderStyle" TargetType="Border">
         <Setter Property="CornerRadius" Value="10"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect Direction="270" BlurRadius="6" ShadowDepth="2"
-                                  Opacity="0.12" Color="Black"/>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <!-- Karten-Box für gleichmäßige Layouts (kein Margin, dehnbar) -->
@@ -45,9 +39,9 @@
     <!-- Item-Karte für ItemsControl-Einträge (z. B. YOLO Model-Cards) -->
     <Style x:Key="ItemCardStyle" TargetType="Border">
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>

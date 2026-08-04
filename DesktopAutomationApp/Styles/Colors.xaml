@@ -19,34 +19,51 @@
     <!-- Danger -->
     <Color x:Key="App.Color.Danger">#FFE63946</Color>
     <Color x:Key="App.Color.DangerLight">#FFEF5A65</Color>
+    <Color x:Key="App.Color.DangerSubtle">#26E63946</Color>
     <SolidColorBrush x:Key="App.Brush.Danger" Color="{DynamicResource App.Color.Danger}" />
     <SolidColorBrush x:Key="App.Brush.DangerLight" Color="{DynamicResource App.Color.DangerLight}" />
+    <SolidColorBrush x:Key="App.Brush.DangerSubtle" Color="{DynamicResource App.Color.DangerSubtle}" />
 
-    <!-- Surfaces (dunkles Theme) -->
-    <Color x:Key="App.Color.WindowBackground">#FF1E1E2E</Color>
-    <Color x:Key="App.Color.Surface">#FF2A2A3D</Color>
-    <Color x:Key="App.Color.SurfaceHover">#FF33334A</Color>
-    <Color x:Key="App.Color.SidebarBackground">#FF181826</Color>
-    <Color x:Key="App.Color.CardBorder">#FF3A3A52</Color>
-    <Color x:Key="App.Color.RowEven">#FF212133</Color>
-    <Color x:Key="App.Color.RowOdd">#FF2A2A3D</Color>
+    <!-- Neutral-modern surface hierarchy (dark default) -->
+    <Color x:Key="App.Color.WindowBackground">#FF181A1F</Color>
+    <Color x:Key="App.Color.Surface">#FF202329</Color>
+    <Color x:Key="App.Color.SurfaceRaised">#FF25282F</Color>
+    <Color x:Key="App.Color.SurfaceHover">#FF292D34</Color>
+    <Color x:Key="App.Color.SurfacePressed">#FF30353D</Color>
+    <Color x:Key="App.Color.SidebarBackground">#FF14161A</Color>
+    <Color x:Key="App.Color.CardBorder">#FF30343B</Color>
+    <Color x:Key="App.Color.BorderSubtle">#FF30343B</Color>
+    <Color x:Key="App.Color.BorderStrong">#FF484E58</Color>
+    <Color x:Key="App.Color.RowEven">#FF1B1E23</Color>
+    <Color x:Key="App.Color.RowOdd">#FF202329</Color>
 
     <SolidColorBrush x:Key="App.Brush.WindowBackground" Color="{DynamicResource App.Color.WindowBackground}" />
     <SolidColorBrush x:Key="App.Brush.Surface" Color="{DynamicResource App.Color.Surface}" />
+    <SolidColorBrush x:Key="App.Brush.SurfaceRaised" Color="{DynamicResource App.Color.SurfaceRaised}" />
     <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{DynamicResource App.Color.SurfaceHover}" />
+    <SolidColorBrush x:Key="App.Brush.SurfacePressed" Color="{DynamicResource App.Color.SurfacePressed}" />
     <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{DynamicResource App.Color.SidebarBackground}" />
     <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{DynamicResource App.Color.CardBorder}" />
+    <SolidColorBrush x:Key="App.Brush.BorderSubtle" Color="{DynamicResource App.Color.BorderSubtle}" />
+    <SolidColorBrush x:Key="App.Brush.BorderStrong" Color="{DynamicResource App.Color.BorderStrong}" />
     <SolidColorBrush x:Key="App.Brush.RowEven" Color="{DynamicResource App.Color.RowEven}" />
     <SolidColorBrush x:Key="App.Brush.RowOdd"  Color="{DynamicResource App.Color.RowOdd}" />
 
     <!-- Text -->
-    <Color x:Key="App.Color.TextPrimary">#FFE4E4EF</Color>
-    <Color x:Key="App.Color.TextSecondary">#FFB0B0C8</Color>
-    <Color x:Key="App.Color.TextMuted">#FF6E6E88</Color>
+    <Color x:Key="App.Color.TextPrimary">#FFECEEF2</Color>
+    <Color x:Key="App.Color.TextSecondary">#FFA8ADB7</Color>
+    <Color x:Key="App.Color.TextMuted">#FF7D838E</Color>
+    <Color x:Key="App.Color.TextDisabled">#FF5F646D</Color>
 
     <SolidColorBrush x:Key="App.Brush.TextPrimary" Color="{DynamicResource App.Color.TextPrimary}" />
     <SolidColorBrush x:Key="App.Brush.TextSecondary" Color="{DynamicResource App.Color.TextSecondary}" />
     <SolidColorBrush x:Key="App.Brush.TextMuted" Color="{DynamicResource App.Color.TextMuted}" />
+    <SolidColorBrush x:Key="App.Brush.TextDisabled" Color="{DynamicResource App.Color.TextDisabled}" />
+
+    <!-- Semantic interaction roles keep accent usage intentional. -->
+    <SolidColorBrush x:Key="App.Brush.SelectionBackground" Color="{DynamicResource App.Color.AccentSubtle}" />
+    <SolidColorBrush x:Key="App.Brush.SelectionBorder" Color="{DynamicResource App.Color.Accent}" />
+    <SolidColorBrush x:Key="App.Brush.FocusBorder" Color="{DynamicResource App.Color.Accent}" />
 
     <!-- ═══════════════════════════════════════════════════════════════
          MahApps-Overrides — Damit alle MahApps-Controls den neuen Akzent nutzen

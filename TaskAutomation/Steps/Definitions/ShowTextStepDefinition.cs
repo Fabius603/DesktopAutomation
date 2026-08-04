@@ -25,10 +25,9 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
             new(TextSourceFieldId, "Ui.Step.Settings.TextSource", StepValueKind.Enum, true,
                 JsonValue.Create("ExplicitText"), Constraints: new(AllowedValues: ["ExplicitText", "TaskResult"]), Order: 0,
                 Options: [new("ExplicitText", "Ui.Step.IfEditor.LiteralValue"), new("TaskResult", "Ui.Step.IfEditor.JobResultValue")]),
-            new(TextFieldId, "Ui.Step.Settings.DisplayText", StepValueKind.MultilineText, Required: true, Order: 1,
-                VisibleWhen: Is(TextSourceFieldId, "ExplicitText")),
+            new(TextFieldId, "Ui.Step.Settings.DisplayText", StepValueKind.MultilineText, Required: true, Order: 1),
             new(TextResultFieldId, "Ui.Step.Settings.TaskResult", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 2, VisibleWhen: Is(TextSourceFieldId, "TaskResult"),
+                EditorHint: StepEditorHints.ResultBindingPicker, Order: 2,
                 InputContractId: "text"),
             new(DesktopFieldId, "Ui.Step.Settings.DesktopIndex", StepValueKind.Integer,
                 DefaultValue: JsonValue.Create(0), EditorHint: StepEditorHints.MonitorPicker,
@@ -50,7 +49,11 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
                 DefaultValue: JsonValue.Create(100), Advanced: true, Order: 10)
         ],
         new(
-            [new("general", null, [TextSourceFieldId, TextFieldId, TextResultFieldId, DesktopFieldId]),
+            [new("general", null, [TextSourceFieldId, TextFieldId, TextResultFieldId, DesktopFieldId], EditorNodes:
+                [new StepChoiceGroupDescriptor(TextSourceFieldId,
+                    [new("ExplicitText", "Ui.Step.IfEditor.LiteralValue", [new StepFieldNodeDescriptor(TextFieldId)]),
+                     new("TaskResult", "Ui.Step.IfEditor.JobResultValue", [new StepFieldNodeDescriptor(TextResultFieldId)])]),
+                 new StepFieldNodeDescriptor(DesktopFieldId)]),
              new("advanced", "Ui.Step.Settings.Advanced",
                  [FontSizeFieldId, FontColorFieldId, OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId],
                  1, true, false)],
@@ -99,5 +102,4 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
     {
         return [];
     }
-    private static StepVisibilityRule Is(string field, string value) => new(field, JsonValue.Create(value));
 }

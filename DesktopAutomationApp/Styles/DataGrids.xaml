@@ -30,7 +30,7 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="12,8"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="SeparatorBrush" Value="Transparent"/>
     </Style>
@@ -38,7 +38,7 @@
     <!-- ═══ DataGrid Row ═══ -->
     <Style TargetType="DataGridRow" BasedOn="{StaticResource MahApps.Styles.DataGridRow}">
         <Setter Property="Background" Value="{DynamicResource App.Brush.RowEven}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="Margin" Value="0"/>
         <Style.Triggers>
@@ -50,7 +50,7 @@
                 <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
             </Trigger>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                <Setter Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
             </Trigger>
         </Style.Triggers>
     </Style>

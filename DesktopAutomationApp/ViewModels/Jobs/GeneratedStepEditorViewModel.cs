@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Input;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.ViewModels.WindowsIntegration;
@@ -87,6 +86,7 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
                     userChoiceOptionsResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
                     pointEntryListResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
                     axisExpressionListResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue))));
+        var fieldsById = Fields.ToDictionary(field => field.Descriptor.Id, StringComparer.Ordinal);
         foreach (var field in Fields.Where(field => field.YoloEditor is not null))
         {
             field.YoloEditor!.RecommendedConfidenceChanged += confidence =>
@@ -100,13 +100,13 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         foreach (var field in Fields.Where(field => _editableFieldIds.Contains(field.Descriptor.Id)))
             field.PropertyChanged += OnFieldChanged;
         RefreshVisibility();
-        var fieldsById = Fields.ToDictionary(field => field.Descriptor.Id, StringComparer.Ordinal);
         Sections = new ObservableCollection<GeneratedStepEditorSectionViewModel>(
             definition.Descriptor.Presentation.EditorSections
                 .OrderBy(section => section.Order)
                 .Select(section => new GeneratedStepEditorSectionViewModel(
                     section,
-                    section.FieldIds.Select(fieldId => fieldsById[fieldId]).ToArray())));
+                    section.FieldIds.Select(fieldId => fieldsById[fieldId]).ToArray(),
+                    BuildEditorNodes(section, fieldsById))));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -173,14 +173,22 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
     private void RefreshVisibility()
     {
         var fieldsById = Fields.ToDictionary(field => field.Descriptor.Id, StringComparer.Ordinal);
+        var conventionallyVisible = new Dictionary<string, bool>(StringComparer.Ordinal);
         foreach (var field in Fields)
         {
             var rule = field.Descriptor.VisibleWhen;
             var visible = rule is null || RuleMatches(rule, fieldsById);
             if (visible && field.Descriptor.VisibleWhenAll is { Count: > 0 } rules)
                 visible = rules.All(candidate => RuleMatches(candidate, fieldsById));
-            field.SetVisibility(visible);
+            conventionallyVisible[field.Descriptor.Id] = visible;
         }
+        var structurallyActive = StepEditorActivity.GetActiveFieldIds(
+            Descriptor,
+            fieldId => fieldsById.GetValueOrDefault(fieldId)?.InputText,
+            fieldId => conventionallyVisible.GetValueOrDefault(fieldId));
+        foreach (var field in Fields)
+            field.SetVisibility(conventionallyVisible[field.Descriptor.Id]
+                                && structurallyActive.Contains(field.Descriptor.Id));
     }
 
     private static bool RuleMatches(
@@ -217,25 +225,118 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         foreach (var field in Fields)
             field.SetSuggestions(suggestionResolver(field.Descriptor));
     }
+
+    private static IReadOnlyList<GeneratedStepEditorNodeViewModel> BuildEditorNodes(
+        StepEditorSectionDescriptor section,
+        IReadOnlyDictionary<string, GeneratedStepFieldViewModel> fieldsById)
+    {
+        var descriptors = section.EditorNodes
+            ?? section.FieldIds.Select(id => (StepEditorNodeDescriptor)new StepFieldNodeDescriptor(id)).ToArray();
+        return descriptors.Select(descriptor => BuildEditorNode(descriptor, fieldsById)).ToArray();
+    }
+
+    private static GeneratedStepEditorNodeViewModel BuildEditorNode(
+        StepEditorNodeDescriptor descriptor,
+        IReadOnlyDictionary<string, GeneratedStepFieldViewModel> fieldsById) => descriptor switch
+    {
+        StepFieldNodeDescriptor field => new GeneratedStepFieldNodeViewModel(fieldsById[field.FieldId]),
+        StepChoiceGroupDescriptor group => new GeneratedStepChoiceGroupViewModel(
+            fieldsById[group.SelectionFieldId],
+            group.Branches.Select(branch => new GeneratedStepChoiceBranchViewModel(
+                branch.Value,
+                Loc.Get(branch.LabelKey),
+                branch.Children.Select(child => BuildEditorNode(child, fieldsById)).ToArray(),
+                string.IsNullOrWhiteSpace(branch.DescriptionKey) ? string.Empty : Loc.Get(branch.DescriptionKey))).ToArray()),
+        _ => throw new InvalidOperationException($"Unknown editor node '{descriptor.GetType().Name}'.")
+    };
 }
 
 public sealed class GeneratedStepEditorSectionViewModel
 {
     public GeneratedStepEditorSectionViewModel(
         StepEditorSectionDescriptor descriptor,
-        IReadOnlyList<GeneratedStepFieldViewModel> fields)
+        IReadOnlyList<GeneratedStepFieldViewModel> fields,
+        IReadOnlyList<GeneratedStepEditorNodeViewModel> nodes)
     {
         Descriptor = descriptor;
         Fields = fields;
+        Nodes = nodes;
     }
 
     public StepEditorSectionDescriptor Descriptor { get; }
     public IReadOnlyList<GeneratedStepFieldViewModel> Fields { get; }
+    public IReadOnlyList<GeneratedStepEditorNodeViewModel> Nodes { get; }
     public string Title => string.IsNullOrWhiteSpace(Descriptor.TitleKey)
         ? string.Empty
         : Loc.Get(Descriptor.TitleKey);
     public bool IsCollapsible => Descriptor.Collapsible;
     public bool IsInitiallyExpanded => Descriptor.InitiallyExpanded;
+}
+
+public abstract class GeneratedStepEditorNodeViewModel
+{
+}
+
+public sealed class GeneratedStepFieldNodeViewModel(GeneratedStepFieldViewModel field)
+    : GeneratedStepEditorNodeViewModel
+{
+    public GeneratedStepFieldViewModel Field { get; } = field;
+}
+
+public sealed class GeneratedStepChoiceBranchViewModel(
+    string value,
+    string label,
+    IReadOnlyList<GeneratedStepEditorNodeViewModel> children,
+    string description)
+{
+    public string Value { get; } = value;
+    public string Label { get; } = label;
+    public string Description { get; } = description;
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+    public IReadOnlyList<GeneratedStepEditorNodeViewModel> Children { get; } = children;
+}
+
+public sealed class GeneratedStepChoiceGroupViewModel : GeneratedStepEditorNodeViewModel, INotifyPropertyChanged
+{
+    private readonly GeneratedStepFieldViewModel _selectionField;
+
+    public GeneratedStepChoiceGroupViewModel(
+        GeneratedStepFieldViewModel selectionField,
+        IReadOnlyList<GeneratedStepChoiceBranchViewModel> branches)
+    {
+        _selectionField = selectionField;
+        Branches = branches;
+        _selectionField.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName is nameof(GeneratedStepFieldViewModel.SelectedEnumOption)
+                or nameof(GeneratedStepFieldViewModel.InputText))
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBranch)));
+            if (args.PropertyName == nameof(GeneratedStepFieldViewModel.IsVisible))
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+        };
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public string Label => _selectionField.Label;
+    public string Description => _selectionField.Description;
+    public bool HasDescription => _selectionField.HasDescription;
+    public bool IsVisible => _selectionField.IsVisible;
+    public IReadOnlyList<GeneratedStepChoiceBranchViewModel> Branches { get; }
+
+    public GeneratedStepChoiceBranchViewModel SelectedBranch
+    {
+        get => Branches.FirstOrDefault(branch =>
+                string.Equals(branch.Value, _selectionField.InputText, StringComparison.OrdinalIgnoreCase))
+            ?? Branches[0];
+        set
+        {
+            if (value is null || ReferenceEquals(SelectedBranch, value)) return;
+            _selectionField.SelectedEnumOption = _selectionField.EnumOptions.FirstOrDefault(option =>
+                string.Equals(option.Value, value.Value, StringComparison.Ordinal));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBranch)));
+        }
+    }
 }
 
 public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
@@ -244,6 +345,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private GeneratedStepChoiceOptionViewModel? _selectedChoice;
     private GeneratedStepEnumOptionViewModel? _selectedEnumOption;
     private bool _isVisible = true;
+    private string? _filePreviewPath;
+    private ImageSource? _filePreview;
 
     public GeneratedStepFieldViewModel(
         StepFieldDescriptor descriptor,
@@ -304,7 +407,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         AxisExpressionListEditor = axisExpressionListEditor;
         foreach (var editor in new IGeneratedValueEditor?[] { ScreenPointEditor, UserChoiceOptionsEditor, PointEntryListEditor, AxisExpressionListEditor })
             if (editor is not null) editor.Changed += OnCustomValueChanged;
-        _selectedChoice = FindChoice(value)
+        _selectedChoice = (UsesChoicePicker ? FindChoice(value) : null)
             ?? (Descriptor.Required && UsesChoicePicker ? Choices.FirstOrDefault() : null);
         if (_selectedChoice is not null)
             _inputText = JsonSerializer.SerializeToNode(_selectedChoice.Value)?.ToJsonString() ?? string.Empty;
@@ -364,7 +467,17 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         StepEditorHints.FilePicker,
         StringComparison.Ordinal);
     public bool ShowsFilePreview => Descriptor.FilePickerOptions?.ShowPreview == true;
-    public ImageSource? FilePreview => ShowsFilePreview ? LoadImagePreview(_inputText) : null;
+    public ImageSource? FilePreview
+    {
+        get
+        {
+            if (!ShowsFilePreview) return null;
+            if (string.Equals(_filePreviewPath, _inputText, StringComparison.Ordinal)) return _filePreview;
+            _filePreviewPath = _inputText;
+            _filePreview = WpfImagePreviewLoader.TryLoad(_inputText);
+            return _filePreview;
+        }
+    }
     public bool HasFilePreview => FilePreview is not null;
     public bool UsesDirectoryPicker => string.Equals(
         Descriptor.EditorHint,
@@ -469,6 +582,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             if (ReferenceEquals(_selectedEnumOption, value)) return;
             _selectedEnumOption = value;
             _inputText = value?.Value ?? string.Empty;
+            InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
             if (ShowsFilePreview)
@@ -525,12 +639,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
 
     public Color ColorValue
     {
-        get
-        {
-            try { return (Color)ColorConverter.ConvertFromString(_inputText); }
-            catch (FormatException) { return Colors.White; }
-            catch (NotSupportedException) { return Colors.White; }
-        }
+        get => WpfColorParser.TryParse(_inputText, out var color) ? color : Colors.White;
         set => InputText = $"#{value.R:X2}{value.G:X2}{value.B:X2}";
     }
 
@@ -541,6 +650,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         {
             if (_inputText == value) return;
             _inputText = value;
+            InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
             if (IsBoolean)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
@@ -663,8 +773,9 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool ValueEquals(JsonNode? expected)
     {
         if (expected is null) return string.IsNullOrWhiteSpace(InputText);
-        try { return string.Equals(InputText, expected.GetValue<string>(), StringComparison.OrdinalIgnoreCase); }
-        catch (InvalidOperationException) { return string.Equals(InputText, expected.ToJsonString(), StringComparison.Ordinal); }
+        return expected is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var text)
+            ? string.Equals(InputText, text, StringComparison.OrdinalIgnoreCase)
+            : string.Equals(InputText, expected.ToJsonString(), StringComparison.OrdinalIgnoreCase);
     }
 
     public void SetVisibility(bool isVisible)
@@ -677,38 +788,41 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private static string FormatValue(JsonNode? value, StepValueKind kind)
     {
         if (value is null) return string.Empty;
-        try
-        {
-            return kind switch
-            {
-                StepValueKind.Integer or StepValueKind.Duration =>
-                    value.GetValue<int>().ToString(CultureInfo.CurrentCulture),
-                StepValueKind.Number => value.GetValue<decimal>().ToString(CultureInfo.CurrentCulture),
-                StepValueKind.Boolean => value.GetValue<bool>().ToString(),
-                _ => value.GetValue<string>()
-            };
-        }
-        catch (InvalidOperationException)
-        {
+        if (value is not JsonValue jsonValue)
             return value.ToJsonString();
-        }
+
+        return kind switch
+        {
+            StepValueKind.Integer or StepValueKind.Duration => FormatInteger(jsonValue),
+            StepValueKind.Number => FormatNumber(jsonValue),
+            StepValueKind.Boolean when jsonValue.TryGetValue<bool>(out var flag) => flag.ToString(),
+            _ when jsonValue.TryGetValue<string>(out var text) => text,
+            _ => value.ToJsonString()
+        };
     }
 
-    private static ImageSource? LoadImagePreview(string path)
+    private static string FormatInteger(JsonValue value)
     {
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return null;
-        try
-        {
-            var image = new BitmapImage();
-            image.BeginInit();
-            image.CacheOption = BitmapCacheOption.OnLoad;
-            image.UriSource = new Uri(Path.GetFullPath(path), UriKind.Absolute);
-            image.DecodePixelWidth = 320;
-            image.EndInit();
-            image.Freeze();
-            return image;
-        }
-        catch { return null; }
+        if (value.TryGetValue<int>(out var integer)) return integer.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<long>(out var longInteger)) return longInteger.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<decimal>(out var decimalNumber)) return decimalNumber.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<double>(out var doubleNumber)) return doubleNumber.ToString(CultureInfo.CurrentCulture);
+        return value.ToJsonString();
+    }
+
+    private static string FormatNumber(JsonValue value)
+    {
+        if (value.TryGetValue<decimal>(out var decimalNumber)) return decimalNumber.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<double>(out var doubleNumber)) return doubleNumber.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<float>(out var floatNumber)) return floatNumber.ToString(CultureInfo.CurrentCulture);
+        if (value.TryGetValue<long>(out var integer)) return integer.ToString(CultureInfo.CurrentCulture);
+        return value.ToJsonString();
+    }
+
+    private void InvalidateFilePreview()
+    {
+        _filePreviewPath = null;
+        _filePreview = null;
     }
 
     private GeneratedStepChoiceOptionViewModel? FindChoice(JsonNode? value)
@@ -1291,23 +1405,39 @@ public sealed class GeneratedResultBindingEditorViewModel
 
 public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChanged
 {
+    private readonly bool _useExecutablePath;
     private bool _useProcessReference;
     private string _processName;
     private string _executablePath;
+    private string _windowTitleContains;
+    public IReadOnlyList<EditorChoiceOptionViewModel> SourceOptions { get; } =
+    [
+        new("Manual", Loc.Get("Ui.Step.ProcessSource.SearchByCharacteristics")),
+        new("JobResult", Loc.Get("Ui.Step.Settings.ProcessSource"))
+    ];
 
     public GeneratedProcessTargetEditorViewModel(
         JsonNode? value,
         ResultBindingPickerViewModel picker,
-        IEnumerable<string> processNames)
+        IEnumerable<string> processNames,
+        bool useExecutablePath = false)
     {
+        _useExecutablePath = useExecutablePath;
         Picker = picker;
         ProcessNames = processNames;
+        ManualSourceContent = useExecutablePath
+            ? new GeneratedExecutableProcessTargetContentViewModel(this)
+            : new GeneratedProcessNameTargetContentViewModel(this);
+        ProcessReferenceContent = new GeneratedProcessReferenceTargetContentViewModel(this);
         var selector = ReadSelector(value);
         var binding = ReadBinding(selector.ProcessSource);
         Picker.Load(binding);
         _useProcessReference = binding.IsConfigured;
-        _processName = selector.ProcessName;
-        _executablePath = selector.ExecutablePath;
+        _processName = useExecutablePath || !string.IsNullOrWhiteSpace(selector.ProcessName)
+            ? selector.ProcessName
+            : Path.GetFileNameWithoutExtension(selector.ExecutablePath);
+        _executablePath = useExecutablePath ? selector.ExecutablePath : string.Empty;
+        _windowTitleContains = selector.WindowTitleContains ?? string.Empty;
         Picker.PropertyChanged += (_, _) => Changed?.Invoke();
     }
 
@@ -1316,6 +1446,10 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
 
     public ResultBindingPickerViewModel Picker { get; }
     public IEnumerable<string> ProcessNames { get; }
+    public GeneratedProcessTargetContentViewModel ManualSourceContent { get; }
+    public GeneratedProcessReferenceTargetContentViewModel ProcessReferenceContent { get; }
+    public GeneratedProcessTargetContentViewModel SelectedSourceContent =>
+        UseProcessReference ? ProcessReferenceContent : ManualSourceContent;
 
     public bool UseProcessReference
     {
@@ -1325,7 +1459,19 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
             if (_useProcessReference == value) return;
             _useProcessReference = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UseProcessReference)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceOption)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceContent)));
             Changed?.Invoke();
+        }
+    }
+
+    public EditorChoiceOptionViewModel SelectedSourceOption
+    {
+        get => SourceOptions[UseProcessReference ? 1 : 0];
+        set
+        {
+            if (value is not null)
+                UseProcessReference = string.Equals(value.Value, "JobResult", StringComparison.Ordinal);
         }
     }
 
@@ -1353,21 +1499,34 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
         }
     }
 
+    public string WindowTitleContains
+    {
+        get => _windowTitleContains;
+        set
+        {
+            if (_windowTitleContains == value) return;
+            _windowTitleContains = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(WindowTitleContains)));
+            Changed?.Invoke();
+        }
+    }
+
     public StepProcessSelectorValue ToValue() => new(
         JsonSerializer.SerializeToNode(UseProcessReference ? Picker.ToBinding() : new ResultBinding()),
-        UseProcessReference ? string.Empty : ProcessName,
-        UseProcessReference ? string.Empty : _executablePath);
+        UseProcessReference || _useExecutablePath ? string.Empty : ProcessName,
+        UseProcessReference || !_useExecutablePath ? string.Empty : _executablePath,
+        UseProcessReference ? string.Empty : WindowTitleContains);
 
     private static StepProcessSelectorValue ReadSelector(JsonNode? value)
     {
         try
         {
             return value?.Deserialize<StepProcessSelectorValue>()
-                ?? new StepProcessSelectorValue(null, string.Empty, string.Empty);
+                ?? new StepProcessSelectorValue(null, string.Empty, string.Empty, string.Empty);
         }
         catch (JsonException)
         {
-            return new StepProcessSelectorValue(null, string.Empty, string.Empty);
+            return new StepProcessSelectorValue(null, string.Empty, string.Empty, string.Empty);
         }
     }
 
@@ -1377,6 +1536,24 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
         catch (JsonException) { return new ResultBinding(); }
     }
 }
+
+public abstract class GeneratedProcessTargetContentViewModel(
+    GeneratedProcessTargetEditorViewModel editor)
+{
+    public GeneratedProcessTargetEditorViewModel Editor { get; } = editor;
+}
+
+public sealed class GeneratedProcessNameTargetContentViewModel(
+    GeneratedProcessTargetEditorViewModel editor)
+    : GeneratedProcessTargetContentViewModel(editor);
+
+public sealed class GeneratedExecutableProcessTargetContentViewModel(
+    GeneratedProcessTargetEditorViewModel editor)
+    : GeneratedProcessTargetContentViewModel(editor);
+
+public sealed class GeneratedProcessReferenceTargetContentViewModel(
+    GeneratedProcessTargetEditorViewModel editor)
+    : GeneratedProcessTargetContentViewModel(editor);
 
 public sealed record GeneratedCameraQualityChoice(
     CameraQualityMode QualityMode,

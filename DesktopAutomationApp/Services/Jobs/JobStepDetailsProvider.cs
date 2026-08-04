@@ -233,28 +233,64 @@ public sealed class JobStepDetailsProvider
             return FormatPointEntries(value);
         if (string.Equals(field.EditorHint, StepEditorHints.AxisExpressionList, StringComparison.Ordinal))
             return FormatAxisExpressions(value);
-        try
-        {
-            return field.ValueKind switch
-            {
-                StepValueKind.Duration => Loc.Format(
-                    "Ui.Step.Generated.DurationMilliseconds",
-                    value.GetValue<int>()),
-                StepValueKind.Integer => value.GetValue<int>().ToString(CultureInfo.CurrentCulture),
-                StepValueKind.Number => value.GetValue<decimal>().ToString(CultureInfo.CurrentCulture),
-                StepValueKind.Boolean => value.GetValue<bool>()
-                    ? Loc.Get("Ui.Common.Yes")
-                    : Loc.Get("Ui.Common.No"),
-                StepValueKind.Enum => FormatDefinitionOption(field, value.GetValue<string>()),
-                StepValueKind.ResultBinding => FormatDefinitionBinding(value, steps),
-                StepValueKind.Object => FormatDefinitionObject(value, steps),
-                _ => value.GetValue<string>()
-            };
-        }
-        catch (InvalidOperationException)
-        {
+        if (value is not JsonValue jsonValue)
             return value.ToJsonString();
+
+        return field.ValueKind switch
+        {
+            StepValueKind.Duration when TryGetInteger(jsonValue, out var duration) =>
+                Loc.Format("Ui.Step.Generated.DurationMilliseconds", duration),
+            StepValueKind.Integer when TryGetInteger(jsonValue, out var integer) =>
+                integer.ToString(CultureInfo.CurrentCulture),
+            StepValueKind.Number when TryGetNumber(jsonValue, out var number) =>
+                number.ToString(CultureInfo.CurrentCulture),
+            StepValueKind.Boolean when jsonValue.TryGetValue<bool>(out var flag) =>
+                flag ? Loc.Get("Ui.Common.Yes") : Loc.Get("Ui.Common.No"),
+            StepValueKind.Enum when jsonValue.TryGetValue<string>(out var option) =>
+                FormatDefinitionOption(field, option),
+            StepValueKind.ResultBinding => FormatDefinitionBinding(value, steps),
+            StepValueKind.Object => FormatDefinitionObject(value, steps),
+            _ when jsonValue.TryGetValue<string>(out var text) => text,
+            _ => value.ToJsonString()
+        };
+    }
+
+    private static bool TryGetInteger(JsonValue value, out long number)
+    {
+        if (value.TryGetValue<long>(out number)) return true;
+        if (value.TryGetValue<int>(out var integer))
+        {
+            number = integer;
+            return true;
         }
+        if (value.TryGetValue<decimal>(out var decimalNumber)
+            && decimal.Truncate(decimalNumber) == decimalNumber
+            && decimalNumber is >= long.MinValue and <= long.MaxValue)
+        {
+            number = (long)decimalNumber;
+            return true;
+        }
+        number = default;
+        return false;
+    }
+
+    private static bool TryGetNumber(JsonValue value, out decimal number)
+    {
+        if (value.TryGetValue<decimal>(out number)) return true;
+        if (value.TryGetValue<long>(out var integer))
+        {
+            number = integer;
+            return true;
+        }
+        if (value.TryGetValue<double>(out var floatingPoint)
+            && double.IsFinite(floatingPoint)
+            && floatingPoint is >= (double)decimal.MinValue and <= (double)decimal.MaxValue)
+        {
+            number = (decimal)floatingPoint;
+            return true;
+        }
+        number = default;
+        return false;
     }
 
     private static string FormatScreenPoint(JsonNode value)
@@ -310,10 +346,12 @@ public sealed class JobStepDetailsProvider
             StepSummaryValueFormat.ShortText when formatted.Length > 80 => formatted[..77] + "...",
             StepSummaryValueFormat.FileName => Path.GetFileName(formatted.TrimEnd(Path.DirectorySeparatorChar,
                 Path.AltDirectorySeparatorChar)),
-            StepSummaryValueFormat.DurationMilliseconds when value is System.Text.Json.Nodes.JsonValue =>
-                Loc.Format("Ui.Step.Generated.DurationMilliseconds", value.GetValue<int>()),
-            StepSummaryValueFormat.BooleanBadge when value is System.Text.Json.Nodes.JsonValue =>
-                value.GetValue<bool>() ? Loc.Get("Ui.Common.Yes") : Loc.Get("Ui.Common.No"),
+            StepSummaryValueFormat.DurationMilliseconds when value is JsonValue durationValue
+                && TryGetInteger(durationValue, out var duration) =>
+                Loc.Format("Ui.Step.Generated.DurationMilliseconds", duration),
+            StepSummaryValueFormat.BooleanBadge when value is JsonValue booleanValue
+                && booleanValue.TryGetValue<bool>(out var flag) =>
+                flag ? Loc.Get("Ui.Common.Yes") : Loc.Get("Ui.Common.No"),
             _ => formatted
         };
     }
@@ -326,13 +364,24 @@ public sealed class JobStepDetailsProvider
         {
             if (field.ValueKind is StepValueKind.Text or StepValueKind.MultilineText
                 or StepValueKind.FilePath or StepValueKind.DirectoryPath)
-                return string.IsNullOrWhiteSpace(value.GetValue<string>());
+                return value is JsonValue textValue
+                    && textValue.TryGetValue<string>(out var text)
+                    && string.IsNullOrWhiteSpace(text);
             if (field.ValueKind == StepValueKind.ResultBinding)
                 return value.Deserialize<ResultBinding>()?.IsConfigured != true;
             if (string.Equals(field.EditorHint, StepEditorHints.CameraPicker, StringComparison.Ordinal))
             {
                 var camera = value.Deserialize<StepCameraSelectionValue>();
                 return string.IsNullOrWhiteSpace(camera?.CameraId);
+            }
+            if (field.EditorHint is StepEditorHints.ProcessTargetPicker
+                or StepEditorHints.ExecutableProcessTargetPicker)
+            {
+                var selector = value.Deserialize<StepProcessSelectorValue>();
+                var binding = selector?.ProcessSource?.Deserialize<ResultBinding>();
+                return binding?.IsConfigured != true
+                       && string.IsNullOrWhiteSpace(selector?.ProcessName)
+                       && string.IsNullOrWhiteSpace(selector?.ExecutablePath);
             }
             if (field.ValueKind == StepValueKind.Object)
             {
@@ -421,10 +470,14 @@ public sealed class JobStepDetailsProvider
             var binding = selector?.ProcessSource?.Deserialize<ResultBinding>();
             if (binding?.IsConfigured == true)
                 return FormatBinding(binding, steps);
-            if (!string.IsNullOrWhiteSpace(selector?.ProcessName))
-                return selector.ProcessName;
-            if (!string.IsNullOrWhiteSpace(selector?.ExecutablePath))
-                return selector.ExecutablePath;
+            var process = !string.IsNullOrWhiteSpace(selector?.ProcessName)
+                ? selector.ProcessName
+                : selector?.ExecutablePath;
+            if (!string.IsNullOrWhiteSpace(process)
+                && !string.IsNullOrWhiteSpace(selector?.WindowTitleContains))
+                return $"{process} · {Loc.Get("Ui.Step.Settings.WindowTitleContains")}: {selector.WindowTitleContains}";
+            if (!string.IsNullOrWhiteSpace(process))
+                return process;
         }
         catch (System.Text.Json.JsonException) { }
         return value.ToJsonString();

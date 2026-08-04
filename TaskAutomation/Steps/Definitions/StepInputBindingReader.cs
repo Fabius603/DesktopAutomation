@@ -11,9 +11,14 @@ internal static class StepInputBindingReader
     public static IReadOnlyList<StepInputBinding> Read(StepDescriptor descriptor, StepDraft draft)
     {
         var result = new List<StepInputBinding>();
+        var fieldsById = descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
+        var activeFields = StepEditorActivity.GetActiveFieldIds(
+            descriptor,
+            fieldId => TryGetString(draft, fieldId),
+            fieldId => StepDescriptorDraftValidator.IsVisible(fieldsById[fieldId], draft));
         foreach (var field in descriptor.Fields)
         {
-            if (!StepDescriptorDraftValidator.IsVisible(field, draft))
+            if (!activeFields.Contains(field.Id) || !StepDescriptorDraftValidator.IsVisible(field, draft))
                 continue;
             if (!draft.Values.TryGetValue(field.Id, out var value) || value is null)
                 continue;
@@ -41,6 +46,14 @@ internal static class StepInputBindingReader
             }
         }
         return result;
+    }
+
+    private static string? TryGetString(StepDraft draft, string fieldId)
+    {
+        if (!draft.Values.TryGetValue(fieldId, out var value) || value is null)
+            return null;
+        try { return value.GetValue<string>(); }
+        catch (InvalidOperationException) { return null; }
     }
 
     private static void Add(List<StepInputBinding> bindings, string contractId, ResultBinding? binding)

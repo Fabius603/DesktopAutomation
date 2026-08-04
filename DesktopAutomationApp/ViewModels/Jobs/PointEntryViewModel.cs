@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -14,6 +15,11 @@ namespace DesktopAutomationApp.ViewModels
     /// </summary>
     public sealed class PointEntryViewModel : INotifyPropertyChanged
     {
+        public IReadOnlyList<EditorChoiceOptionViewModel> SourceOptions { get; } =
+        [
+            new("Manual", Loc.Get("Ui.Step.Settings.Manual")),
+            new("JobResult", Loc.Get("Ui.Step.Settings.FromDetectionResult"))
+        ];
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnChange([CallerMemberName] string? p = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
@@ -31,7 +37,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool IsJobResult
         {
             get => _source == PointEntrySource.JobResult;
-            set { if (value) Source = PointEntrySource.JobResult; }
+            set => Source = value ? PointEntrySource.JobResult : PointEntrySource.Manual;
         }
 
         public PointEntrySource Source
@@ -44,6 +50,17 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(IsJobResult));
                 OnChange(nameof(ShowManual));
                 OnChange(nameof(ShowJobResult));
+                OnChange(nameof(SelectedSourceOption));
+            }
+        }
+
+        public EditorChoiceOptionViewModel SelectedSourceOption
+        {
+            get => SourceOptions.First(option => option.Value == Source.ToString());
+            set
+            {
+                if (value is not null && Enum.TryParse<PointEntrySource>(value.Value, out var source))
+                    Source = source;
             }
         }
 

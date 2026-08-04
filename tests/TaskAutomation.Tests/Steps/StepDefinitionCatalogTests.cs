@@ -14,6 +14,170 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class StepDefinitionCatalogTests
 {
     [Fact]
+    public void FileSystemEditor_DeclaresTwoIndependentChoiceGroups()
+    {
+        var section = new FileSystemOperationStepDefinition().Descriptor.Presentation.EditorSections
+            .Single(candidate => candidate.Id == "general");
+        var groups = section.EditorNodes!.OfType<StepChoiceGroupDescriptor>().ToArray();
+
+        Assert.Equal(2, groups.Length);
+        Assert.Equal(FileSystemOperationStepDefinition.SourceModeFieldId, groups[0].SelectionFieldId);
+        Assert.Equal(FileSystemOperationStepDefinition.TargetModeFieldId, groups[1].SelectionFieldId);
+        Assert.All(groups, group => Assert.Equal(2, group.Branches.Count));
+    }
+
+    [Fact]
+    public void ChoiceGroupContract_SupportsArbitraryBranchCounts()
+    {
+        var group = new StepChoiceGroupDescriptor("mode",
+        [
+            new("first", "First", [new StepFieldNodeDescriptor("a")]),
+            new("second", "Second", [new StepFieldNodeDescriptor("b")]),
+            new("third", "Third", [new StepFieldNodeDescriptor("c")])
+        ]);
+
+        Assert.Equal(3, group.Branches.Count);
+    }
+
+    [Fact]
+    public void GeneratedEditor_KeepsMultipleChoiceGroupsIndependent()
+    {
+        var editor = new GeneratedStepEditorViewModel(new FileSystemOperationStepDefinition());
+        var groups = editor.Sections.Single(section => section.Descriptor.Id == "general")
+            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().ToArray();
+
+        groups[0].SelectedBranch = groups[0].Branches[1];
+
+        Assert.Equal("TaskResult", groups[0].SelectedBranch.Value);
+        Assert.Equal("ExplicitPath", groups[1].SelectedBranch.Value);
+        Assert.Single(groups[0].SelectedBranch.Children);
+        Assert.Single(groups[1].SelectedBranch.Children);
+    }
+
+    [Fact]
+    public void Catalog_RejectsInvalidChoiceGroupStructure()
+    {
+        var showText = new ShowTextStepDefinition();
+        var general = showText.Descriptor.Presentation.EditorSections[0];
+        var invalidGroup = new StepChoiceGroupDescriptor(ShowTextStepDefinition.TextSourceFieldId,
+        [
+            new("ExplicitText", "Ui.Step.IfEditor.LiteralValue", [new StepFieldNodeDescriptor(ShowTextStepDefinition.TextFieldId)]),
+            new("ExplicitText", "Ui.Step.IfEditor.JobResultValue", [new StepFieldNodeDescriptor("missing")])
+        ]);
+        var invalid = new DescriptorOverrideDefinition(showText, showText.Descriptor with
+        {
+            TypeId = "show_text_invalid_choice_group",
+            Presentation = showText.Descriptor.Presentation with
+            {
+                EditorSections = [general with { EditorNodes = [invalidGroup] }]
+            }
+        });
+
+        Assert.Contains("choice group", Assert.Throws<InvalidOperationException>(() =>
+            new StepDefinitionCatalog([invalid])).Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ExistingManualOrResultChoices_DeclareHierarchicalChoiceGroups()
+    {
+        var fields = new[]
+        {
+            new ShowTextStepDefinition().Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextSourceFieldId),
+            new FileSystemOperationStepDefinition().Descriptor.Fields.Single(field => field.Id == FileSystemOperationStepDefinition.SourceModeFieldId),
+            new FileSystemOperationStepDefinition().Descriptor.Fields.Single(field => field.Id == FileSystemOperationStepDefinition.TargetModeFieldId),
+            new PointComparisonStepDefinition().Descriptor.Fields.Single(field => field.Id == PointComparisonStepDefinition.ReferenceSourceFieldId)
+        };
+
+        Assert.All(fields, field => Assert.Null(field.EditorHint));
+        Assert.All(fields, field => Assert.Equal(2, field.Options?.Count));
+    }
+
+    [Fact]
+    public void GeneratedChoiceGroup_PreservesManualValueWhileSwitchingSources()
+    {
+        var editor = new GeneratedStepEditorViewModel(
+            new ShowTextStepDefinition(),
+            new ShowTextStep { Settings = new ShowTextSettings { Text = "Beibehalten" } });
+        var manual = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextFieldId);
+        var result = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
+        var group = editor.Sections[0].Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+
+        Assert.True(manual.IsVisible);
+        Assert.False(result.IsVisible);
+        group.SelectedBranch = group.Branches[1];
+        Assert.False(manual.IsVisible);
+        Assert.True(result.IsVisible);
+        group.SelectedBranch = group.Branches[0];
+
+        Assert.Equal("Beibehalten", manual.InputText);
+        Assert.True(manual.IsVisible);
+    }
+
+    [Fact]
+    public void PointEntry_CanSwitchBackFromResultToManualInput()
+    {
+        var owner = new System.Collections.ObjectModel.ObservableCollection<PointEntryViewModel>();
+        var point = new PointEntryViewModel(owner, []);
+
+        point.IsJobResult = true;
+        point.IsJobResult = false;
+
+        Assert.True(point.IsManual);
+        Assert.False(point.IsJobResult);
+    }
+
+    [Fact]
+    public void GeneratedChoiceGroup_GroupsItsDependentFields()
+    {
+        var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition());
+        var group = editor.Sections.Single(section => section.Descriptor.Id == "offset")
+            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+
+        Assert.Equal(
+            [PointComparisonStepDefinition.ReferenceXFieldId, PointComparisonStepDefinition.ReferenceYFieldId],
+            group.Branches[0].Children.Cast<GeneratedStepFieldNodeViewModel>().Select(node => node.Field.Descriptor.Id));
+        Assert.Equal(
+            [PointComparisonStepDefinition.ReferencePointsFieldId],
+            group.Branches[1].Children.Cast<GeneratedStepFieldNodeViewModel>().Select(node => node.Field.Descriptor.Id));
+    }
+
+    [Fact]
+    public void ChoiceGroupStructure_DeterminesWhichBranchFieldsAreActive()
+    {
+        var definition = new ShowTextStepDefinition();
+        var text = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextFieldId);
+        var result = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextResultFieldId);
+        var draft = definition.CreateDraft();
+        draft.Values[ShowTextStepDefinition.TextFieldId] = JsonValue.Create("Visible text");
+        draft.Values[ShowTextStepDefinition.TextResultFieldId] = null;
+
+        Assert.Null(text.VisibleWhen);
+        Assert.Null(result.VisibleWhen);
+        Assert.Empty(definition.ValidateDraft(draft));
+
+        draft.Values[ShowTextStepDefinition.TextSourceFieldId] = JsonValue.Create("TaskResult");
+
+        Assert.Contains(definition.ValidateDraft(draft), issue =>
+            issue.FieldId == ShowTextStepDefinition.TextResultFieldId
+            && issue.Code == "StepValidation.Required");
+    }
+
+    [Fact]
+    public void GeneratedChoiceGroup_HidesWithItsSelectionField()
+    {
+        var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition());
+        var mode = editor.Fields.Single(field => field.Descriptor.Id == PointComparisonStepDefinition.ModeFieldId);
+        var group = editor.Sections.Single(section => section.Descriptor.Id == "offset")
+            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+
+        Assert.True(group.IsVisible);
+
+        mode.SelectedEnumOption = mode.EnumOptions.Single(option => option.Value == "Expression");
+
+        Assert.False(group.IsVisible);
+    }
+
+    [Fact]
     public void AddStepDialog_InitializesEditorForDefaultStepType()
     {
         var viewModel = new AddJobStepDialogViewModel(
@@ -47,6 +211,33 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void AddStepDialog_FiltersStepTypesByVisibleText()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        var allItems = viewModel.StepTypeItems
+            .Cast<AddJobStepDialogViewModel.StepTypeItem>()
+            .ToArray();
+        var expected = allItems.Single(item => item.Name == "CameraCapture");
+
+        viewModel.StepTypeSearchText = expected.DisplayLabel;
+
+        var filteredItems = viewModel.StepTypeItems
+            .Cast<AddJobStepDialogViewModel.StepTypeItem>()
+            .ToArray();
+        Assert.Contains(filteredItems, item => item.Name == expected.Name);
+        Assert.All(filteredItems, item => Assert.True(
+            item.DisplayLabel.Contains(expected.DisplayLabel, StringComparison.CurrentCultureIgnoreCase)
+            || item.Category.Contains(expected.DisplayLabel, StringComparison.CurrentCultureIgnoreCase)
+            || item.Description.Contains(expected.DisplayLabel, StringComparison.CurrentCultureIgnoreCase)));
+
+        viewModel.StepTypeSearchText = string.Empty;
+        Assert.Equal(allItems.Length, viewModel.StepTypeItems.Cast<object>().Count());
+    }
+
+    [Fact]
     public void SummaryProvider_RendersDefinitionSummaryItems()
     {
         var provider = new JobStepDetailsProvider();
@@ -64,6 +255,28 @@ public sealed class StepDefinitionCatalogTests
         Assert.Contains("worker.exe", summary);
         Assert.DoesNotContain(@"C:\Tools", summary);
         Assert.Contains("·", summary);
+    }
+
+    [Fact]
+    public void SummaryProvider_RendersProcessNameAndWindowTitleFromSharedTarget()
+    {
+        var provider = new JobStepDetailsProvider();
+        var step = new ActiveProcessStep
+        {
+            Settings = new ActiveProcessSettings
+            {
+                Target = new ProcessTargetSettings
+                {
+                    ProcessName = "notepad",
+                    WindowTitleContains = "Editor"
+                }
+            }
+        };
+
+        var summary = provider.GetSummary(step, new JobStep[] { step });
+
+        Assert.Contains("notepad", summary);
+        Assert.Contains("Editor", summary);
     }
 
     [Fact]
@@ -1508,7 +1721,6 @@ public sealed class StepDefinitionCatalogTests
             TypeId = "timeout_unknown_hint",
             Fields = [field with { EditorHint = "unknown-editor" }]
         });
-
         Assert.Contains("unknown visibility field", Assert.Throws<InvalidOperationException>(() =>
             new StepDefinitionCatalog([unknownVisibility])).Message);
         Assert.Contains("unknown editor hint", Assert.Throws<InvalidOperationException>(() =>
@@ -1742,6 +1954,143 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void ProcessTargetEditor_UsesDistinctContentForEachSourceMode()
+    {
+        var contract = StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process");
+        Assert.NotNull(contract);
+        var editor = new GeneratedProcessTargetEditorViewModel(
+            value: null,
+            new ResultBindingPickerViewModel([], contract!, false),
+            ["explorer", "notepad"]);
+
+        var processNameContent = Assert.IsType<GeneratedProcessNameTargetContentViewModel>(
+            editor.SelectedSourceContent);
+        Assert.Same(editor, processNameContent.Editor);
+
+        editor.SelectedSourceOption = editor.SourceOptions.Single(option => option.Value == "JobResult");
+
+        var processReferenceContent = Assert.IsType<GeneratedProcessReferenceTargetContentViewModel>(
+            editor.SelectedSourceContent);
+        Assert.Same(editor, processReferenceContent.Editor);
+        Assert.NotSame(processNameContent, processReferenceContent);
+    }
+
+    [Fact]
+    public void ProcessTargetEditor_RoundTripsWindowTitleInsideSharedSelector()
+    {
+        var definition = new ActiveProcessStepDefinition();
+        var existing = new ActiveProcessStep
+        {
+            Settings = new ActiveProcessSettings
+            {
+                Target = new ProcessTargetSettings
+                {
+                    ProcessName = "notepad",
+                    WindowTitleContains = "Editor"
+                }
+            }
+        };
+        var value = definition.CreateDraft(existing).Values[ActiveProcessStepDefinition.ProcessTargetFieldId];
+        var processEditor = new GeneratedProcessTargetEditorViewModel(
+            value,
+            new ResultBindingPickerViewModel(
+                [],
+                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                false),
+            ["notepad"]);
+        var editor = new GeneratedStepEditorViewModel(
+            definition,
+            existing,
+            processTargetResolver: (_, _) => processEditor);
+
+        Assert.Equal("Editor", processEditor.WindowTitleContains);
+        processEditor.WindowTitleContains = "Document";
+
+        Assert.True(editor.TryCreateStep(out var created));
+        var target = Assert.IsType<ActiveProcessStep>(created).Settings.Target;
+        Assert.Equal("notepad", target.ProcessName);
+        Assert.Equal("Document", target.WindowTitleContains);
+    }
+
+    [Fact]
+    public void ProcessTargetEditor_LoadsLegacySelectorWithoutWindowTitle()
+    {
+        var value = JsonNode.Parse("""
+            {
+              "process_source": {},
+              "process_name": "notepad",
+              "executable_path": ""
+            }
+            """);
+        var editor = new GeneratedProcessTargetEditorViewModel(
+            value,
+            new ResultBindingPickerViewModel(
+                [],
+                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                false),
+            ["notepad"]);
+
+        Assert.Equal("notepad", editor.ProcessName);
+        Assert.Empty(editor.WindowTitleContains);
+    }
+
+    [Fact]
+    public void ProcessTargetEditor_ClearsWindowTitleWhenUsingProcessReference()
+    {
+        var editor = new GeneratedProcessTargetEditorViewModel(
+            value: null,
+            new ResultBindingPickerViewModel(
+                [],
+                StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
+                false),
+            []);
+        editor.ProcessName = "notepad";
+        editor.WindowTitleContains = "Editor";
+        editor.SelectedSourceOption = editor.SourceOptions.Single(option => option.Value == "JobResult");
+
+        var value = editor.ToValue();
+
+        Assert.Empty(value.ProcessName);
+        Assert.Empty(value.WindowTitleContains);
+    }
+
+    [Fact]
+    public void ProcessAndWindowSteps_KeepWindowTitleInsideSharedTargetField()
+    {
+        IStepDefinition[] definitions =
+        [
+            new ActiveProcessStepDefinition(),
+            new ActiveWindowStepDefinition(),
+            new TerminateProcessStepDefinition(),
+            new FocusProcessStepDefinition()
+        ];
+
+        Assert.All(definitions, definition =>
+        {
+            Assert.Single(definition.Descriptor.Fields, field => field.Id == "process_target");
+            Assert.DoesNotContain(definition.Descriptor.Fields, field => field.Id == "window_title_contains");
+        });
+    }
+
+    [Fact]
+    public void ProcessAndWindowSteps_UseEditableProcessNamePickerForManualMode()
+    {
+        IStepDefinition[] definitions =
+        [
+            new ActiveProcessStepDefinition(),
+            new ActiveWindowStepDefinition(),
+            new TerminateProcessStepDefinition(),
+            new FocusProcessStepDefinition()
+        ];
+
+        Assert.All(definitions, definition =>
+        {
+            var target = definition.Descriptor.Fields.Single(field => field.Id == "process_target");
+            Assert.Equal(StepEditorHints.ProcessTargetPicker, target.EditorHint);
+        });
+    }
+
+    [Fact]
     public void GeneratedEditor_UsesEnumOptionsAndConditionalVisibilityForFocusProcess()
     {
         var definition = new FocusProcessStepDefinition();
@@ -1756,19 +2105,48 @@ public sealed class StepDefinitionCatalogTests
         var action = editor.Fields.Single(field => field.Descriptor.Id == FocusProcessStepDefinition.ActionFieldId);
         var windowMode = editor.Fields.Single(field => field.Descriptor.Id == FocusProcessStepDefinition.WindowModeFieldId);
 
-        Assert.True(target.UsesExecutableProcessTargetPicker);
+        Assert.True(target.UsesNamedProcessTargetPicker);
         Assert.True(action.UsesEnumPicker);
         Assert.Equal(2, action.EnumOptions.Count);
         Assert.True(windowMode.IsVisible);
 
         action.SelectedEnumOption = action.EnumOptions.Single(option => option.Value == nameof(FocusProcessAction.Minimize));
         Assert.False(windowMode.IsVisible);
-        processEditor.ExecutablePath = @"C:\Windows\notepad.exe";
+        processEditor.ProcessName = "notepad";
 
         Assert.True(editor.TryCreateStep(out var created));
         var focus = Assert.IsType<FocusProcessStep>(created);
         Assert.Equal(FocusProcessAction.Minimize, focus.Settings.Action);
-        Assert.Equal(@"C:\Windows\notepad.exe", focus.Settings.Target.ExecutablePath);
+        Assert.Equal("notepad", focus.Settings.Target.ProcessName);
+        Assert.Empty(focus.Settings.Target.ExecutablePath);
+    }
+
+    [Fact]
+    public void FocusProcessEditor_ConvertsLegacyExecutablePathToEditableProcessName()
+    {
+        var definition = new FocusProcessStepDefinition();
+        var existing = new FocusProcessStep
+        {
+            Settings = new FocusProcessSettings
+            {
+                Target = new ProcessTargetSettings { ExecutablePath = @"C:\Windows\notepad.exe" }
+            }
+        };
+        var value = definition.CreateDraft(existing).Values[FocusProcessStepDefinition.ProcessTargetFieldId];
+        var processEditor = new GeneratedProcessTargetEditorViewModel(
+            value,
+            new ResultBindingPickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
+            []);
+        var editor = new GeneratedStepEditorViewModel(
+            definition,
+            existing,
+            processTargetResolver: (_, _) => processEditor);
+
+        Assert.Equal("notepad", processEditor.ProcessName);
+        Assert.True(editor.TryCreateStep(out var created));
+        var focus = Assert.IsType<FocusProcessStep>(created);
+        Assert.Equal("notepad", focus.Settings.Target.ProcessName);
+        Assert.Empty(focus.Settings.Target.ExecutablePath);
     }
 
     [Fact]

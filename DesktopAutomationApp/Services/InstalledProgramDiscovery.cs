@@ -17,6 +17,18 @@ public sealed record InstalledProgramSuggestion(
 public static class InstalledProgramDiscovery
 {
     private const string AppPathsKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
+    internal static readonly EnumerationOptions TopDirectoryEnumeration = new()
+    {
+        IgnoreInaccessible = true,
+        RecurseSubdirectories = false,
+        ReturnSpecialDirectories = false
+    };
+    internal static readonly EnumerationOptions RecursiveEnumeration = new()
+    {
+        IgnoreInaccessible = true,
+        RecurseSubdirectories = true,
+        ReturnSpecialDirectories = false
+    };
     private static readonly Lazy<Task<IReadOnlyList<InstalledProgramSuggestion>>> CachedSuggestions =
         new(() => Task.Run(DiscoverCore));
 
@@ -47,7 +59,7 @@ public static class InstalledProgramDiscovery
         {
             try
             {
-                foreach (var path in Directory.EnumerateFiles(directory, "*.*", SearchOption.TopDirectoryOnly)
+                foreach (var path in Directory.EnumerateFiles(directory, "*.*", TopDirectoryEnumeration)
                              .Where(IsExecutableFile))
                 {
                     var command = Path.GetFileName(path);
@@ -109,7 +121,7 @@ public static class InstalledProgramDiscovery
             {
                 try
                 {
-                    foreach (var path in Directory.EnumerateFiles(startMenu, "*.lnk", SearchOption.AllDirectories))
+                    foreach (var path in Directory.EnumerateFiles(startMenu, "*.lnk", RecursiveEnumeration))
                     {
                         var name = Path.GetFileNameWithoutExtension(path);
                         var target = TryGetShortcutTarget(path, shellType, shell);

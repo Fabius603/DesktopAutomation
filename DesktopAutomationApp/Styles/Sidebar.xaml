@@ -47,7 +47,7 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ContentBorder" Property="Background"
-                                    Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                    Value="{DynamicResource App.Brush.SurfacePressed}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -74,7 +74,7 @@
                                         Width="3" CornerRadius="0,2,2,0"
                                         Background="{DynamicResource App.Brush.Accent}"/>
                                 <Border x:Name="ContentBorder"
-                                        Background="{DynamicResource App.Brush.AccentSubtle}"
+                                        Background="{DynamicResource App.Brush.SelectionBackground}"
                                         CornerRadius="8"
                                         Margin="8,0,8,0"
                                         Padding="12,0">

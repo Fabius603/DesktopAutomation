@@ -145,6 +145,9 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
         }
 
         var knownFields = fieldIds;
+        var fieldsById = descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
+        foreach (var section in descriptor.Presentation.EditorSections.Where(section => section.EditorNodes is not null))
+            ValidateEditorNodes(definition, section, fieldsById);
         foreach (var fieldId in descriptor.Presentation.EditorSections.SelectMany(section => section.FieldIds)
                      .Concat(descriptor.Presentation.SummaryItems.Select(item => item.FieldId))
                      .Concat(descriptor.Presentation.DetailFieldIds))
@@ -152,6 +155,78 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
             if (!knownFields.Contains(fieldId))
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} presentation references unknown field '{fieldId}'.");
+        }
+    }
+
+    private static void ValidateEditorNodes(
+        IStepDefinition definition,
+        TaskAutomation.Contracts.Steps.StepEditorSectionDescriptor section,
+        IReadOnlyDictionary<string, TaskAutomation.Contracts.Steps.StepFieldDescriptor> fieldsById)
+    {
+        var sectionFields = section.FieldIds.ToHashSet(StringComparer.Ordinal);
+        var ownedFields = new HashSet<string>(StringComparer.Ordinal);
+        var activeNodes = new HashSet<TaskAutomation.Contracts.Steps.StepEditorNodeDescriptor>(ReferenceEqualityComparer.Instance);
+
+        foreach (var node in section.EditorNodes ?? [])
+            Visit(node);
+        if (!ownedFields.SetEquals(sectionFields))
+            throw Invalid("does not represent every section field exactly once");
+        return;
+
+        void Visit(TaskAutomation.Contracts.Steps.StepEditorNodeDescriptor node)
+        {
+            if (!activeNodes.Add(node))
+                throw Invalid("contains a cycle");
+            switch (node)
+            {
+                case TaskAutomation.Contracts.Steps.StepFieldNodeDescriptor fieldNode:
+                    Own(fieldNode.FieldId);
+                    break;
+                case TaskAutomation.Contracts.Steps.StepChoiceGroupDescriptor group:
+                    Own(group.SelectionFieldId);
+                    if (!fieldsById.TryGetValue(group.SelectionFieldId, out var selectionField)
+                        || selectionField.ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Enum
+                        || group.Branches.Count < 2)
+                        throw Invalid($"uses invalid selection field '{group.SelectionFieldId}'");
+                    var values = group.Branches.Select(branch => branch.Value).ToArray();
+                    if (values.Distinct(StringComparer.Ordinal).Count() != values.Length
+                        || values.Any(value => selectionField.Options?.Any(option => option.Value == value) != true))
+                        throw Invalid($"contains duplicate or unknown values for '{group.SelectionFieldId}'");
+                    if (selectionField.DefaultValue is not null
+                        && (!TryReadString(selectionField.DefaultValue, out var defaultValue)
+                            || !values.Contains(defaultValue, StringComparer.Ordinal)))
+                        throw Invalid($"does not contain the default value for '{group.SelectionFieldId}'");
+                    foreach (var branch in group.Branches)
+                        foreach (var child in branch.Children)
+                            Visit(child);
+                    break;
+                default:
+                    throw Invalid($"contains unsupported node '{node.GetType().Name}'");
+            }
+            activeNodes.Remove(node);
+        }
+
+        void Own(string fieldId)
+        {
+            if (!fieldsById.ContainsKey(fieldId) || !sectionFields.Contains(fieldId) || !ownedFields.Add(fieldId))
+                throw Invalid($"references unknown, cross-section, or repeated field '{fieldId}'");
+        }
+
+        InvalidOperationException Invalid(string reason) => new(
+            $"{definition.StepType.Name} section '{section.Id}' choice group structure {reason}.");
+
+        static bool TryReadString(System.Text.Json.Nodes.JsonNode value, out string text)
+        {
+            try
+            {
+                text = value.GetValue<string>();
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                text = string.Empty;
+                return false;
+            }
         }
     }
 

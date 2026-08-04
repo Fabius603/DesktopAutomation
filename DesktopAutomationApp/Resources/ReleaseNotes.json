@@ -22,7 +22,14 @@
           { "category": "Fixed", "de": "Beim Bearbeiten von Warte- und Eingabesperren bleiben Aktivierung und Breakpoints erhalten.", "en": "Editing wait and input-block steps preserves activation and breakpoints." },
           { "category": "Fixed", "de": "Fensteroptionen funktionieren zuverlässiger bei langsam startenden oder weitergereichten Prozessen.", "en": "Window options work more reliably with slow-starting or handed-off processes." },
           { "category": "Fixed", "de": "Ungültige oder unvollständige Step-Eingaben werden in allen Editoren einheitlich erkannt.", "en": "Invalid or incomplete step inputs are detected consistently across all editors." },
-          { "category": "Fixed", "de": "Die Job-Step-Ansicht öffnet wieder zuverlässig.", "en": "The job step view opens reliably again." }
+          { "category": "Fixed", "de": "Jobs und der übersichtlichere, durchsuchbare Step-Dialog öffnen zuverlässig und schneller; auch längere Step-Beschriftungen werden korrekt dargestellt.", "en": "Jobs and the clearer, searchable step dialog open reliably and faster; longer step labels are displayed correctly as well." }
+        ]
+      },
+      {
+        "title": { "de": "Darstellung", "en": "Appearance" },
+        "changes": [
+          { "category": "Changed", "de": "Neutrale Flächen, dezentere Rahmen und ruhigere Bedienelemente sorgen in allen Themes für eine klarere Darstellung.", "en": "Neutral surfaces, subtler borders, and calmer controls provide a clearer appearance across all themes." },
+          { "category": "Fixed", "de": "Auswahloptionen nutzen die verfügbare Breite; Prozess-Steps trennen Prozessmerkmale und Referenzen und beschriften Prozessname sowie Fenstertitel eindeutig.", "en": "Choice options use the available width; process steps separate process characteristics and references and clearly label process name and window title." }
         ]
       }
     ]
