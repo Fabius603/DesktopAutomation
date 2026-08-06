@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
+                    xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+                    xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf">
     <Style x:Key="StepFieldGrid" TargetType="Grid">
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
@@ -164,6 +165,26 @@
         <Setter Property="MinWidth" Value="60"/>
         <Setter Property="MinHeight" Value="30"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="StepRichTextInput" TargetType="{x:Type emoji:RichTextBox}"
+           BasedOn="{StaticResource MahApps.Styles.RichTextBox}">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextDisabled}"/>
+                <Setter Property="Opacity" Value="0.72"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <Style x:Key="GeometryUnitLabel" TargetType="TextBlock">
         <Setter Property="Margin" Value="4,0,0,0"/>

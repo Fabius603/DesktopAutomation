@@ -89,15 +89,12 @@
                                     </Grid>
                                     <StackPanel Visibility="{Binding DataContext.ShowOverlayDesktopOptions, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Grid Style="{StaticResource StepFieldGrid}">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="90"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" Style="{StaticResource StepFieldLabel}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding DesktopIndex, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <Button Grid.Column="2"
-                                                    Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
-                                                    Command="{Binding ChooseMonitorCommand}"
-                                                    Style="{StaticResource GeometryInlineAction}"
-                                                    Margin="8,0,0,0"
-                                                    />
+                                            <shared:MonitorPicker Grid.Column="1"
+                                                                  HorizontalAlignment="Left"
+                                                                  MonitorIndex="{Binding DesktopIndex, Mode=TwoWay}"
+                                                                  SelectCommand="{Binding ChooseMonitorCommand}"/>
                                         </Grid>
                                         <Grid Style="{StaticResource StepFieldGrid}">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
