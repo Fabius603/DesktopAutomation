@@ -20,7 +20,11 @@ For every user-facing feature, behavior change, performance improvement, or bug 
    perform a release.
 3. Write both German (`de`) and English (`en`) text. Every change must be a short,
    bullet-style statement that describes only the observable result for users.
-   Prefer one concise sentence and merge closely related changes.
+   Prefer one concise sentence. Before adding a bullet, inspect the complete current
+   unreleased version for an existing entry about the same user-facing outcome. Extend
+   or rewrite that entry instead of adding another one. Closely related features, fixes,
+   UI controls, and follow-up adjustments must be represented by one combined bullet,
+   even when they were implemented across different tasks or files.
 4. Use only the existing categories `Added`, `Changed`, and `Fixed`.
 5. Keep the newest version first. Preserve every older release entry, including its
    date and sections, unchanged.
@@ -34,6 +38,9 @@ For every user-facing feature, behavior change, performance improvement, or bug 
    implementation details, architecture, internal contracts, migrations, logging
    internals, tests, refactoring, or documentation. Omit minor technical corrections
    that have no meaningful effect on normal use; do not add internal quality sections.
+   After every edit, review the entire unreleased block and merge or remove redundant,
+   overlapping, overly specific, or low-value entries. Release notes are a curated
+   summary for users, not a chronological record of completed development tasks.
 9. Validate the JSON and run the normal DesktopAutomationApp Release build. The build's
    localization and embedded-resource checks must pass.
 
