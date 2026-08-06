@@ -2,6 +2,53 @@ namespace TaskAutomation.Makros;
 
 public static class MakroGrouping
 {
+    public static MakroGroupNormalizationResult Normalize(
+        IReadOnlyList<MakroBefehl> commands,
+        IReadOnlyList<MakroGruppe> groups)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(groups);
+
+        var uniqueGroups = groups
+            .Where(group => !string.IsNullOrWhiteSpace(group.Id))
+            .GroupBy(group => group.Id, StringComparer.Ordinal)
+            .Select(grouping => grouping.First())
+            .ToList();
+        var validGroupIds = uniqueGroups.Select(group => group.Id).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var command in commands)
+        {
+            if (string.IsNullOrWhiteSpace(command.GroupId) || !validGroupIds.Contains(command.GroupId))
+                command.GroupId = null;
+        }
+
+        var usedGroupIds = commands
+            .Where(command => command.GroupId is not null)
+            .Select(command => command.GroupId!)
+            .ToHashSet(StringComparer.Ordinal);
+        var normalizedGroups = uniqueGroups
+            .Where(group => usedGroupIds.Contains(group.Id))
+            .ToList();
+
+        var normalizedCommands = new List<MakroBefehl>(commands.Count);
+        var emittedGroupIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var command in commands)
+        {
+            if (command.GroupId is not { } groupId)
+            {
+                normalizedCommands.Add(command);
+                continue;
+            }
+
+            if (!emittedGroupIds.Add(groupId))
+                continue;
+
+            normalizedCommands.AddRange(commands.Where(candidate => candidate.GroupId == groupId));
+        }
+
+        return new MakroGroupNormalizationResult(normalizedCommands, normalizedGroups);
+    }
+
     public static IReadOnlyList<MakroBefehl> MoveGroupBefore(
         IReadOnlyList<MakroBefehl> commands,
         string groupId,
@@ -61,3 +108,7 @@ public static class MakroGrouping
         return groups;
     }
 }
+
+public sealed record MakroGroupNormalizationResult(
+    IReadOnlyList<MakroBefehl> Commands,
+    IReadOnlyList<MakroGruppe> Groups);

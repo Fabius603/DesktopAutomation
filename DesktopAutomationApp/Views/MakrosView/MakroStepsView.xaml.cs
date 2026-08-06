@@ -101,5 +101,15 @@ namespace DesktopAutomationApp.Views
                 GroupDissolveMenuItem.CommandParameter = group.GroupId;
             }
         }
+
+        private void MoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { ContextMenu: { } menu } button)
+            {
+                menu.PlacementTarget = button;
+                menu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
     }
 }

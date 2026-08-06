@@ -2262,6 +2262,7 @@ Error code: {3}</value>
   <data name="Settings.ForceStopKey.Capturing" xml:space="preserve"><value>Press a key…</value></data>
   <data name="Ui.Macro.StepEditor.Duration" xml:space="preserve"><value>Duration</value></data>
   <data name="Ui.Macro.StepEditor.TimeInvalid" xml:space="preserve"><value>The time value is too large or invalid.</value></data>
+  <data name="Ui.Macro.Validation.GroupStructureInvalid" xml:space="preserve"><value>The macro groups are inconsistent.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Delay before</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Time since the previous step; value and unit can be selected freely.</value></data>
   <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatic movement groups</value></data>
@@ -2459,6 +2460,7 @@ Error code: {3}</value>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorCode" xml:space="preserve"><value>Technical error code; empty after a successful query.</value></data>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorMessage" xml:space="preserve"><value>Error details; empty after a successful query.</value></data>
   <data name="Ui.Job.Steps.Unsaved" xml:space="preserve"><value>Unsaved</value></data>
+  <data name="Ui.Macro.Steps.Unsaved" xml:space="preserve"><value>Unsaved</value></data>
   <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Edit job</value></data>
   <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job is running</value></data>
   <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} selected</value></data>

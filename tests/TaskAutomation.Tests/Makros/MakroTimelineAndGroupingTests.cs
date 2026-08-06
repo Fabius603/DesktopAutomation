@@ -98,4 +98,50 @@ public sealed class MakroTimelineAndGroupingTests
 
         Assert.Equal([middle, groupedOne, groupedTwo], result);
     }
+
+    [Fact]
+    public void Normalize_RepairsReferencesRemovesEmptyGroupsAndBuildsContiguousBlocks()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        var duplicate = new MakroGruppe { Id = "group", Title = "Duplicate" };
+        var empty = new MakroGruppe { Id = "empty", Title = "Empty" };
+        var groupedOne = new MouseMoveAbsoluteBefehl { GroupId = group.Id };
+        var ungrouped = new KeyDownBefehl { Key = "A" };
+        var groupedTwo = new MouseMoveRelativeBefehl { GroupId = group.Id };
+        var dangling = new KeyUpBefehl { Key = "A", GroupId = "missing" };
+
+        var result = MakroGrouping.Normalize(
+            [groupedOne, ungrouped, groupedTwo, dangling],
+            [group, duplicate, empty]);
+
+        Assert.Equal([groupedOne, groupedTwo, ungrouped, dangling], result.Commands);
+        Assert.Same(group, Assert.Single(result.Groups));
+        Assert.Null(dangling.GroupId);
+    }
+
+    [Fact]
+    public void Validation_RejectsFragmentedAndDanglingGroups()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        var fragmented = new Makro
+        {
+            Name = "Macro",
+            Gruppen = new System.Collections.ObjectModel.ObservableCollection<MakroGruppe>([group]),
+            Befehle = new System.Collections.ObjectModel.ObservableCollection<MakroBefehl>(
+            [
+                new MouseMoveAbsoluteBefehl { GroupId = group.Id },
+                new KeyDownBefehl { Key = "A" },
+                new MouseMoveRelativeBefehl { GroupId = group.Id }
+            ])
+        };
+        var dangling = new Makro
+        {
+            Name = "Macro",
+            Befehle = new System.Collections.ObjectModel.ObservableCollection<MakroBefehl>(
+                [new KeyDownBefehl { Key = "A", GroupId = "missing" }])
+        };
+
+        Assert.Equal(MakroValidationError.GroupStructureInvalid, MakroValidation.Validate(fragmented).Error);
+        Assert.Equal(MakroValidationError.GroupStructureInvalid, MakroValidation.Validate(dangling).Error);
+    }
 }

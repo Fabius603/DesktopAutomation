@@ -10,6 +10,7 @@ public enum MakroValidationError
     DurationInvalid,
     RecordingSettingsInvalid,
     CommandTimingInvalid,
+    GroupStructureInvalid,
     UnknownCommand
 }
 
@@ -27,6 +28,7 @@ public static class MakroValidation
         MakroValidationError.DurationInvalid => "Die Dauer darf nicht negativ sein.",
         MakroValidationError.RecordingSettingsInvalid => "Die Aufnahmeeinstellungen sind ungueltig.",
         MakroValidationError.CommandTimingInvalid => "Die Befehlsverzoegerung darf nicht negativ sein.",
+        MakroValidationError.GroupStructureInvalid => "Die Makrogruppen sind ungueltig.",
         MakroValidationError.UnknownCommand => "Das Makro enthaelt einen unbekannten Befehl.",
         _ => string.Empty
     };
@@ -40,14 +42,48 @@ public static class MakroValidation
         var settingsValid = makro.RecordingSettings.MinimumIntervalMicroseconds is >= 0 and <= 1_000_000
                             && makro.RecordingSettings.MinimumDistancePixels is >= 0 and <= 10_000
                             && makro.RecordingSettings.RecordingHotkeyVirtualKey > 0;
+        var groupsValid = ValidateGroups(makro);
         var error = string.IsNullOrWhiteSpace(makro.Name)
             ? MakroValidationError.NameRequired
             : makro.Befehle.Count == 0
                 ? MakroValidationError.CommandRequired
             : !settingsValid
                 ? MakroValidationError.RecordingSettingsInvalid
+            : !groupsValid
+                ? MakroValidationError.GroupStructureInvalid
             : commands.FirstOrDefault(r => !r.IsValid)?.Error ?? MakroValidationError.None;
         return new(error == MakroValidationError.None, error, commands);
+    }
+
+    private static bool ValidateGroups(Makro makro)
+    {
+        if (makro.Gruppen.Any(group => string.IsNullOrWhiteSpace(group.Id)))
+            return false;
+
+        var groupIds = makro.Gruppen.Select(group => group.Id).ToList();
+        if (groupIds.Distinct(StringComparer.Ordinal).Count() != groupIds.Count)
+            return false;
+
+        var knownGroupIds = groupIds.ToHashSet(StringComparer.Ordinal);
+        if (makro.Befehle.Any(command => command.GroupId is { } id && !knownGroupIds.Contains(id)))
+            return false;
+        if (knownGroupIds.Any(id => makro.Befehle.All(command => command.GroupId != id)))
+            return false;
+
+        var completedGroups = new HashSet<string>(StringComparer.Ordinal);
+        string? currentGroupId = null;
+        foreach (var command in makro.Befehle)
+        {
+            if (command.GroupId == currentGroupId)
+                continue;
+            if (currentGroupId is not null)
+                completedGroups.Add(currentGroupId);
+            currentGroupId = command.GroupId;
+            if (currentGroupId is not null && completedGroups.Contains(currentGroupId))
+                return false;
+        }
+
+        return true;
     }
 
     public static MakroCommandValidationResult ValidateCommand(MakroBefehl command)

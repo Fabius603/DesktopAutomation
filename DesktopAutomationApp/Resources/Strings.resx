@@ -2366,6 +2366,7 @@ Fehlercode: {3}</value>
   <data name="Settings.ForceStopKey.Capturing" xml:space="preserve"><value>Taste drücken …</value></data>
   <data name="Ui.Macro.StepEditor.Duration" xml:space="preserve"><value>Dauer</value></data>
   <data name="Ui.Macro.StepEditor.TimeInvalid" xml:space="preserve"><value>Der Zeitwert ist zu groß oder ungültig.</value></data>
+  <data name="Ui.Macro.Validation.GroupStructureInvalid" xml:space="preserve"><value>Die Gruppen des Makros sind inkonsistent.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Verzögerung davor</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Zeit seit dem vorherigen Step; Wert und Einheit können frei gewählt werden.</value></data>
   <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatische Bewegungsgruppen</value></data>
@@ -2563,6 +2564,7 @@ Fehlercode: {3}</value>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorCode" xml:space="preserve"><value>Technischer Fehlercode; bei erfolgreicher Abfrage leer.</value></data>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorMessage" xml:space="preserve"><value>Fehlerbeschreibung; bei erfolgreicher Abfrage leer.</value></data>
   <data name="Ui.Job.Steps.Unsaved" xml:space="preserve"><value>Ungespeichert</value></data>
+  <data name="Ui.Macro.Steps.Unsaved" xml:space="preserve"><value>Ungespeichert</value></data>
   <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Job bearbeiten</value></data>
   <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job wird ausgeführt</value></data>
   <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} ausgewählt</value></data>
