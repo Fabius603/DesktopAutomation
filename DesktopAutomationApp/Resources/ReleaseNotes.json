@@ -6,42 +6,23 @@
       {
         "title": { "de": "Job-Steps", "en": "Job steps" },
         "changes": [
-          { "category": "Changed", "de": "Punkte, Pixelwerte, Bildschirmpositionen, ROIs und Erkennungsbereiche werden in Job-Steps einheitlich eingegeben, angezeigt und weiterverwendet.", "en": "Points, pixel values, screen positions, ROIs, and detection regions are entered, displayed, and reused consistently across job steps." },
-          { "category": "Changed", "de": "Bezeichnungen, Beschreibungen und Einheiten in Job-Step-Einstellungen sind verständlicher und einheitlicher.", "en": "Labels, descriptions, and units in job step settings are clearer and more consistent." },
-          { "category": "Changed", "de": "Windows-Zustände und -Einstellungen lassen sich einheitlicher auswählen und konfigurieren.", "en": "Windows states and settings can be selected and configured more consistently." },
-          { "category": "Changed", "de": "Bedingungen in Wenn- und Sonst-wenn-Steps lassen sich einheitlicher bearbeiten.", "en": "Conditions in if and else-if steps can be edited more consistently." },
-          { "category": "Changed", "de": "YOLO- und Keypoint-Erkennung lassen sich einheitlicher konfigurieren.", "en": "YOLO and keypoint detection can be configured more consistently." },
-          { "category": "Changed", "de": "Bildvorlagen, Farberkennung und ROI-Bereiche lassen sich einheitlicher konfigurieren.", "en": "Image templates, color detection, and ROI regions can be configured more consistently." },
-          { "category": "Changed", "de": "Video- und Bilddateien lassen sich einheitlicher konfigurieren und um Overlays ergänzen.", "en": "Video and image files can be configured more consistently and enhanced with overlays." },
-          { "category": "Changed", "de": "Step-Karten konzentrieren sich auf den Step-Namen und die verfügbaren Aktionen.", "en": "Step cards focus on the step name and available actions." },
-          { "category": "Fixed", "de": "Beim Hinzufügen erscheinen nur direkt hinzufügbare Step-Typen und keine doppelten Einträge.", "en": "Only directly addable step types appear when adding a step, without duplicate entries." },
-          { "category": "Fixed", "de": "Die Step-Suche bleibt auch ohne Treffer stabil.", "en": "Step search remains stable when there are no matches." },
-          { "category": "Fixed", "de": "Die Einstellungen des vorausgewählten Steps werden beim Öffnen des Hinzufügen-Dialogs sofort angezeigt.", "en": "The settings for the preselected step are shown immediately when opening the add-step dialog." },
-          { "category": "Changed", "de": "Step-Fehler zeigen verständliche Hinweise und einen Fehlercode.", "en": "Step errors show clear guidance and an error code." },
-          { "category": "Changed", "de": "Benutzerauswahlen öffnen sich schneller.", "en": "User choice dialogs open faster." },
-          { "category": "Changed", "de": "Job-Step-Einstellungen werden in mehr Editoren einheitlich dargestellt.", "en": "Job step settings are presented consistently across more editors." },
-          { "category": "Changed", "de": "3D-Klicks, Benutzerauswahlen und Punktvergleiche lassen sich einheitlicher konfigurieren.", "en": "3D clicks, user choices, and point comparisons can be configured more consistently." },
-          { "category": "Changed", "de": "Der veraltete Prozessduplizierungs-Step wurde entfernt.", "en": "The obsolete process duplication step has been removed." },
-          { "category": "Fixed", "de": "Beim Bearbeiten von Warte- und Eingabesperren bleiben Aktivierung und Breakpoints erhalten.", "en": "Editing wait and input-block steps preserves activation and breakpoints." },
-          { "category": "Fixed", "de": "Fensteroptionen funktionieren zuverlässiger bei langsam startenden oder weitergereichten Prozessen.", "en": "Window options work more reliably with slow-starting or handed-off processes." },
-          { "category": "Fixed", "de": "Ungültige oder unvollständige Step-Eingaben werden in allen Editoren einheitlich erkannt.", "en": "Invalid or incomplete step inputs are detected consistently across all editors." },
-          { "category": "Fixed", "de": "Jobs und der übersichtlichere, durchsuchbare Step-Dialog öffnen zuverlässig und schneller; auch längere Step-Beschriftungen werden korrekt dargestellt.", "en": "Jobs and the clearer, searchable step dialog open reliably and faster; longer step labels are displayed correctly as well." }
+          { "category": "Changed", "de": "Job-Step-Einstellungen einschließlich Punkte, Positionen, Pixelwerte und Bildbereiche sind übersichtlicher, einheitlich benannt und einfacher zu bedienen.", "en": "Job step settings, including points, positions, pixel values, and image regions, are clearer, consistently named, and easier to use." },
+          { "category": "Fixed", "de": "Der Dialog zum Hinzufügen und Bearbeiten von Steps öffnet zuverlässig, lässt sich durchsuchen, behält vorhandene Einstellungen bei und zeigt ungültige Eingaben verständlicher an.", "en": "The dialog for adding and editing steps opens reliably, can be searched, preserves existing settings, and presents invalid input more clearly." },
+          { "category": "Fixed", "de": "Prozess- und Fenster-Steps funktionieren zuverlässiger mit langsam startenden oder weitergereichten Prozessen.", "en": "Process and window steps work more reliably with slow-starting or handed-off processes." },
+          { "category": "Changed", "de": "Der veraltete Prozessduplizierungs-Step wurde entfernt.", "en": "The obsolete process duplication step has been removed." }
         ]
       },
       {
         "title": { "de": "Darstellung", "en": "Appearance" },
         "changes": [
           { "category": "Changed", "de": "Die Ordneransichten für Jobs, Makros und Automationen zeigen Hierarchie, Inhalte, Auswahl, Zustände und Aktionen übersichtlicher an.", "en": "Folder views for jobs, macros, and automations present hierarchy, contents, selection, states, and actions more clearly." },
-          { "category": "Changed", "de": "Die Makro-Step-Ansicht stellt Gruppen, Aktionen und Filter klarer auf einer durchgehenden Arbeitsfläche dar.", "en": "The macro step view presents groups, actions, and filters more clearly on a continuous workspace." },
-          { "category": "Changed", "de": "Neutrale Flächen, dezentere Rahmen und ruhigere Bedienelemente sorgen in allen Themes für eine klarere Darstellung.", "en": "Neutral surfaces, subtler borders, and calmer controls provide a clearer appearance across all themes." },
-          { "category": "Changed", "de": "Die Farbauswahl folgt in allen Step-Einstellungen dem aktiven Anwendungstheme.", "en": "Color selection follows the active application theme across all step settings." },
-          { "category": "Fixed", "de": "Auswahloptionen nutzen die verfügbare Breite; Prozess-Steps trennen Prozessmerkmale und Referenzen und beschriften Prozessname sowie Fenstertitel eindeutig.", "en": "Choice options use the available width; process steps separate process characteristics and references and clearly label process name and window title." }
+          { "category": "Changed", "de": "Eingabe-, Auswahl- und Farbfelder folgen durchgängig dem aktiven Anwendungstheme.", "en": "Input, selection, and color fields consistently follow the active application theme." }
         ]
       },
       {
         "title": { "de": "Makros", "en": "Macros" },
         "changes": [
-          { "category": "Changed", "de": "Der Makro-Step-Editor verwendet dieselbe übersichtliche Darstellung und dieselben kompakten Eingabefelder wie der Job-Step-Editor.", "en": "The macro step editor uses the same clear layout and compact input fields as the job step editor." },
+          { "category": "Changed", "de": "Makros lassen sich mit klarer dargestellten Gruppen und einheitlichen Step-Einstellungen leichter bearbeiten.", "en": "Macros are easier to edit with clearer groups and consistent step settings." },
           { "category": "Fixed", "de": "Makrogruppen bleiben beim Bearbeiten, Löschen, Verschieben, Verwerfen sowie bei Rückgängig und Wiederholen vollständig und konsistent erhalten.", "en": "Macro groups remain complete and consistent when editing, deleting, moving, discarding, undoing, and redoing changes." }
         ]
       }
