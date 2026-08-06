@@ -194,6 +194,84 @@ public sealed class LibraryTreeViewModelTests
         Assert.True(opened);
     }
 
+    [Fact]
+    public async Task FolderCountsIncludeItemsFromNestedFolders()
+    {
+        var parent = new LibraryFolder
+        {
+            Id = Guid.NewGuid(),
+            Kind = LibraryItemKind.Job,
+            Name = "Parent"
+        };
+        var child = new LibraryFolder
+        {
+            Id = Guid.NewGuid(),
+            Kind = LibraryItemKind.Job,
+            ParentId = parent.Id,
+            Name = "Child"
+        };
+        var parentItem = CreateItem("Parent job");
+        var childItem = CreateItem("Child job");
+        var layout = new LibraryLayout
+        {
+            Folders = [parent, child],
+            Placements =
+            [
+                new LibraryPlacement
+                {
+                    Kind = LibraryItemKind.Job,
+                    ItemId = parentItem.Id,
+                    FolderId = parent.Id
+                },
+                new LibraryPlacement
+                {
+                    Kind = LibraryItemKind.Job,
+                    ItemId = childItem.Id,
+                    FolderId = child.Id
+                }
+            ]
+        };
+        var preferences = new TestPreferencesService();
+        preferences.Current.ExpandedLibraryFolders[nameof(LibraryItemKind.Job)] = [parent.Id, child.Id];
+        var viewModel = CreateViewModel(new InMemoryOrganizationService(layout), preferences);
+
+        await viewModel.SetItemsAsync([parentItem, childItem]);
+
+        Assert.Equal(2, viewModel.TotalItemCount);
+        Assert.Equal(2, viewModel.TotalFolderCount);
+        Assert.Equal(2, Assert.Single(viewModel.VisibleNodes, node => node.Folder?.Id == parent.Id).ContainedItemCount);
+        Assert.Equal(1, Assert.Single(viewModel.VisibleNodes, node => node.Folder?.Id == child.Id).ContainedItemCount);
+    }
+
+    [Fact]
+    public async Task SearchSummaryAndResetReflectVisibleMatches()
+    {
+        var viewModel = CreateViewModel(
+            new InMemoryOrganizationService(new LibraryLayout()),
+            new TestPreferencesService());
+        await viewModel.SetItemsAsync([CreateItem("Daily report"), CreateItem("Monthly report")]);
+
+        viewModel.SearchText = "Daily";
+
+        Assert.True(viewModel.HasSearchText);
+        Assert.Equal(1, viewModel.SearchResultCount);
+        Assert.Single(viewModel.VisibleNodes);
+
+        viewModel.ClearSearchCommand.Execute(null);
+
+        Assert.False(viewModel.HasSearchText);
+        Assert.Equal(2, viewModel.SearchResultCount);
+        Assert.Equal(2, viewModel.VisibleNodes.Count);
+    }
+
+    private static LibraryItemDescriptor CreateItem(string name) => new()
+    {
+        Id = Guid.NewGuid(),
+        Name = name,
+        Model = new object(),
+        Open = () => { }
+    };
+
     private static LibraryTreeViewModel CreateViewModel(
         ILibraryOrganizationService organization,
         IUserPreferencesService preferences) =>

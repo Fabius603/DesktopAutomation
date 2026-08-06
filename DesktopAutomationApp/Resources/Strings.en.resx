@@ -2876,12 +2876,22 @@ Error code: {3}</value>
   <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Answer position</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Selection cancelled</value></data>
   <data name="Ui.Library.Search" xml:space="preserve"><value>Search library</value></data>
+  <data name="Ui.Library.ClearSearch" xml:space="preserve"><value>Clear search</value></data>
+  <data name="Ui.Library.ResetSearch" xml:space="preserve"><value>Reset search</value></data>
+  <data name="Ui.Library.Summary" xml:space="preserve"><value>{0} items · {1} folders</value></data>
+  <data name="Ui.Library.SearchResults" xml:space="preserve"><value>{0} results</value></data>
   <data name="Ui.Library.NewFolder" xml:space="preserve"><value>New folder</value></data>
   <data name="Ui.Library.ExpandAll" xml:space="preserve"><value>Expand all folders</value></data>
   <data name="Ui.Library.CollapseAll" xml:space="preserve"><value>Collapse all folders</value></data>
   <data name="Ui.Library.Empty" xml:space="preserve"><value>There are no files or folders here yet.</value></data>
   <data name="Ui.Library.NoSearchResults" xml:space="preserve"><value>No matching entries found.</value></data>
+  <data name="Ui.Library.EmptyTitle" xml:space="preserve"><value>No items yet</value></data>
+  <data name="Ui.Library.EmptyDescription" xml:space="preserve"><value>Create the first item or start with a folder.</value></data>
+  <data name="Ui.Library.NoSearchResultsTitle" xml:space="preserve"><value>No results found</value></data>
+  <data name="Ui.Library.NoSearchResultsDescription" xml:space="preserve"><value>Try a different search term or reset the search.</value></data>
   <data name="Ui.Library.ExecuteOrStop" xml:space="preserve"><value>Run or stop</value></data>
+  <data name="Ui.Library.Running" xml:space="preserve"><value>Running</value></data>
+  <data name="Ui.Library.ContainedItems" xml:space="preserve"><value>Contained items</value></data>
   <data name="Ui.Library.RenameFolder" xml:space="preserve"><value>Rename folder</value></data>
   <data name="Ui.Library.Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Ui.Library.MoveUpOneLevel" xml:space="preserve"><value>Move up one level</value></data>

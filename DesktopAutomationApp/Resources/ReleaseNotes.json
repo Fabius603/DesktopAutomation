@@ -31,6 +31,7 @@
       {
         "title": { "de": "Darstellung", "en": "Appearance" },
         "changes": [
+          { "category": "Changed", "de": "Die Ordneransichten für Jobs, Makros und Automationen zeigen Hierarchie, Inhalte, Auswahl, Zustände und Aktionen übersichtlicher an.", "en": "Folder views for jobs, macros, and automations present hierarchy, contents, selection, states, and actions more clearly." },
           { "category": "Changed", "de": "Die Makro-Step-Ansicht stellt Gruppen, Aktionen und Filter klarer auf einer durchgehenden Arbeitsfläche dar.", "en": "The macro step view presents groups, actions, and filters more clearly on a continuous workspace." },
           { "category": "Changed", "de": "Neutrale Flächen, dezentere Rahmen und ruhigere Bedienelemente sorgen in allen Themes für eine klarere Darstellung.", "en": "Neutral surfaces, subtler borders, and calmer controls provide a clearer appearance across all themes." },
           { "category": "Changed", "de": "Die Farbauswahl folgt in allen Step-Einstellungen dem aktiven Anwendungstheme.", "en": "Color selection follows the active application theme across all step settings." },

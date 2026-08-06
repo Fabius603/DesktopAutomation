@@ -38,6 +38,12 @@ public partial class LibraryTreeView : UserControl
         e.Handled = true;
     }
 
+    private void Node_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBoxItem item)
+            item.IsSelected = true;
+    }
+
     private void Node_PreviewMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed ||

@@ -173,6 +173,7 @@ namespace DesktopAutomationApp.ViewModels
             if (sender is not EditableAutomation automation) return;
 
             await _automationAppService.SaveAsync(automation.ToDomain());
+            Library.RefreshItemStates();
             _log.LogInformation("Automation Active-Status gespeichert: {Name}", automation.Name);
         }
 

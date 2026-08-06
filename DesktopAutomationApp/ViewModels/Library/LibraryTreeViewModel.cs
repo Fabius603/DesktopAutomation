@@ -51,12 +51,14 @@ public sealed class LibraryTreeNodeViewModel : ViewModelBase
         LibraryTreeViewModel owner,
         LibraryFolder folder,
         int depth,
-        bool isExpanded)
+        bool isExpanded,
+        int containedItemCount)
     {
         _owner = owner;
         Folder = folder;
         Depth = depth;
         _isExpanded = isExpanded;
+        ContainedItemCount = containedItemCount;
     }
 
     internal LibraryTreeNodeViewModel(
@@ -82,9 +84,12 @@ public sealed class LibraryTreeNodeViewModel : ViewModelBase
     public string Subtitle => Item?.Subtitle ?? string.Empty;
     public int Depth { get; }
     public double Indent => Depth * 22d;
+    public bool HasParent => Depth > 0;
+    public int ContainedItemCount { get; }
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     public bool CanExecute => Item?.Execute != null && (Item.CanExecute?.Invoke() ?? true);
     public bool IsRunning => Item?.IsRunning?.Invoke() ?? false;
+    public bool IsUnavailable => Item?.Execute != null && !CanExecute && !IsRunning;
     public bool IsDragging
     {
         get => _isDragging;
@@ -169,6 +174,7 @@ public sealed class LibraryTreeNodeViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsRunning));
         OnPropertyChanged(nameof(CanExecute));
+        OnPropertyChanged(nameof(IsUnavailable));
     }
 }
 
@@ -213,6 +219,8 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             node.RefreshState();
         }, node => node?.IsItem == true && (node.IsRunning || node.CanExecute));
         NewFolderCommand = new AsyncRelayCommand(CreateFolderAsync);
+        NewItemCommand = new AsyncRelayCommand(CreateItemAsync);
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
         NewSubfolderCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(
             node => CreateFolderAsync(node?.Folder?.Id), node => node?.IsFolder == true);
         NewItemInFolderCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(
@@ -231,12 +239,26 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     public ICommand OpenNodeCommand { get; }
     public ICommand ExecuteNodeCommand { get; }
     public ICommand NewFolderCommand { get; }
+    public ICommand NewItemCommand { get; }
+    public ICommand ClearSearchCommand { get; }
     public ICommand NewSubfolderCommand { get; }
     public ICommand NewItemInFolderCommand { get; }
     public ICommand RenameFolderCommand { get; }
     public ICommand DeleteNodeCommand { get; }
     public ICommand MoveUpOneLevelCommand { get; }
     public bool HasItems => VisibleNodes.Count > 0;
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
+    public int TotalItemCount => _items.Count;
+    public int TotalFolderCount => _layout.Folders.Count(folder => folder.Kind == _kind);
+    public int SearchResultCount { get; private set; }
+    public string SummaryText => Loc.Format("Ui.Library.Summary", TotalItemCount, TotalFolderCount);
+    public string SearchResultText => Loc.Format("Ui.Library.SearchResults", SearchResultCount);
+    public string EmptyTitle => Loc.Get(HasSearchText
+        ? "Ui.Library.NoSearchResultsTitle"
+        : "Ui.Library.EmptyTitle");
+    public string EmptyDescription => Loc.Get(HasSearchText
+        ? "Ui.Library.NoSearchResultsDescription"
+        : "Ui.Library.EmptyDescription");
     public bool IsDragActive
     {
         get => _isDragActive;
@@ -274,6 +296,9 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             if (_searchText == value) return;
             _searchText = value ?? string.Empty;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSearchText));
+            OnPropertyChanged(nameof(EmptyTitle));
+            OnPropertyChanged(nameof(EmptyDescription));
             Rebuild();
         }
     }
@@ -422,6 +447,8 @@ public sealed class LibraryTreeViewModel : ViewModelBase
 
     private Task CreateFolderAsync() => CreateFolderAsync(SelectedFolderId);
 
+    private Task CreateItemAsync() => RequestCreateItem?.Invoke(SelectedFolderId) ?? Task.CompletedTask;
+
     private async Task CreateFolderAsync(Guid? parentId)
     {
         var name = await _dialogs.AskForNameAsync(
@@ -533,6 +560,18 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             items.Sort((left, right) =>
                 StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name));
 
+        var folderItemCountCache = new Dictionary<Guid, int>();
+        int CountContainedItems(Guid folderId)
+        {
+            if (folderItemCountCache.TryGetValue(folderId, out var cached))
+                return cached;
+            var count = itemsByFolder.GetValueOrDefault(folderId)?.Count ?? 0;
+            if (foldersByParent.TryGetValue(folderId, out var childFolders))
+                count += childFolders.Sum(child => CountContainedItems(child.Id));
+            folderItemCountCache[folderId] = count;
+            return count;
+        }
+
         bool Matches(LibraryItemDescriptor item) =>
             query.Length == 0 ||
             item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
@@ -560,7 +599,8 @@ public sealed class LibraryTreeViewModel : ViewModelBase
                 {
                     if (query.Length > 0 && !FolderHasMatch(folder.Id)) continue;
                     var isExpanded = query.Length > 0 || expanded.Contains(folder.Id);
-                    result.Add(new LibraryTreeNodeViewModel(this, folder, depth, isExpanded));
+                    result.Add(new LibraryTreeNodeViewModel(
+                        this, folder, depth, isExpanded, CountContainedItems(folder.Id)));
                     if (isExpanded) AddLevel(folder.Id, depth + 1);
                 }
             }
@@ -578,7 +618,15 @@ public sealed class LibraryTreeViewModel : ViewModelBase
                 _visibleFolderIndexes[folder.Id] = index;
         }
         _visibleNodes.ReplaceAll(result);
+        SearchResultCount = query.Length == 0
+            ? TotalItemCount
+            : result.Count;
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(TotalItemCount));
+        OnPropertyChanged(nameof(TotalFolderCount));
+        OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(SearchResultCount));
+        OnPropertyChanged(nameof(SearchResultText));
     }
 }

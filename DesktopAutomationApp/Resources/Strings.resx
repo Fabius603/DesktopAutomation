@@ -2980,12 +2980,22 @@ Fehlercode: {3}</value>
   <data name="Step.ResultProperty.UserChoiceResult.SelectedIndex" xml:space="preserve"><value>Position der Antwort</value></data>
   <data name="Step.ResultProperty.UserChoiceResult.WasCancelled" xml:space="preserve"><value>Auswahl abgebrochen</value></data>
   <data name="Ui.Library.Search" xml:space="preserve"><value>Bibliothek durchsuchen</value></data>
+  <data name="Ui.Library.ClearSearch" xml:space="preserve"><value>Suche löschen</value></data>
+  <data name="Ui.Library.ResetSearch" xml:space="preserve"><value>Suche zurücksetzen</value></data>
+  <data name="Ui.Library.Summary" xml:space="preserve"><value>{0} Einträge · {1} Ordner</value></data>
+  <data name="Ui.Library.SearchResults" xml:space="preserve"><value>{0} Treffer</value></data>
   <data name="Ui.Library.NewFolder" xml:space="preserve"><value>Neuer Ordner</value></data>
   <data name="Ui.Library.ExpandAll" xml:space="preserve"><value>Alle Ordner ausklappen</value></data>
   <data name="Ui.Library.CollapseAll" xml:space="preserve"><value>Alle Ordner einklappen</value></data>
   <data name="Ui.Library.Empty" xml:space="preserve"><value>Hier sind noch keine Dateien oder Ordner vorhanden.</value></data>
   <data name="Ui.Library.NoSearchResults" xml:space="preserve"><value>Keine passenden Einträge gefunden.</value></data>
+  <data name="Ui.Library.EmptyTitle" xml:space="preserve"><value>Noch keine Einträge</value></data>
+  <data name="Ui.Library.EmptyDescription" xml:space="preserve"><value>Erstelle den ersten Eintrag oder beginne mit einem Ordner.</value></data>
+  <data name="Ui.Library.NoSearchResultsTitle" xml:space="preserve"><value>Keine Treffer gefunden</value></data>
+  <data name="Ui.Library.NoSearchResultsDescription" xml:space="preserve"><value>Versuche einen anderen Suchbegriff oder setze die Suche zurück.</value></data>
   <data name="Ui.Library.ExecuteOrStop" xml:space="preserve"><value>Ausführen oder stoppen</value></data>
+  <data name="Ui.Library.Running" xml:space="preserve"><value>Läuft</value></data>
+  <data name="Ui.Library.ContainedItems" xml:space="preserve"><value>Enthaltene Einträge</value></data>
   <data name="Ui.Library.RenameFolder" xml:space="preserve"><value>Ordner umbenennen</value></data>
   <data name="Ui.Library.Delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="Ui.Library.MoveUpOneLevel" xml:space="preserve"><value>Eine Ebene nach oben verschieben</value></data>
