@@ -43,6 +43,9 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowMouseButton));
                 OnChange(nameof(ShowKey));
                 OnChange(nameof(ShowDuration));
+                OnChange(nameof(SelectedStepDisplayName));
+                OnChange(nameof(SelectedStepCategory));
+                OnChange(nameof(StepTypeDescription));
                 // Command-Enable für CaptureButton neu bewerten
                 (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged();
             }
@@ -57,6 +60,15 @@ namespace DesktopAutomationApp.ViewModels
 
         public string DialogTitle => Loc.Get(Mode == StepDialogMode.Edit ? "Step.Edit" : "Step.Add");
         public string ConfirmButtonText => Loc.Get(Mode == StepDialogMode.Edit ? "Common.Apply" : "Common.Add");
+        public string SelectedStepDisplayName => Loc.Get($"Macro.Step.Type.{SelectedType}");
+        public string SelectedStepCategory => Loc.Get(SelectedType switch
+        {
+            "MouseMoveAbsolute" or "MouseMoveRelative" => "Ui.Macro.StepEditor.Category.Movement",
+            "MouseDown" or "MouseUp" => "Ui.Macro.StepEditor.Category.Mouse",
+            "KeyDown" or "KeyUp" => "Ui.Macro.StepEditor.Category.Keyboard",
+            _ => "Ui.Macro.StepEditor.Category.Timing"
+        });
+        public string StepTypeDescription => Loc.Get($"Ui.Macro.StepEditor.Description.{SelectedType}");
 
         // Sichtbarkeiten
         public bool ShowMouseXY => SelectedType is "MouseMoveAbsolute";
@@ -112,7 +124,20 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         private bool _isCapturing;
-        public bool IsCapturing { get => _isCapturing; private set { _isCapturing = value; OnChange(); (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public bool IsCapturing
+        {
+            get => _isCapturing;
+            private set
+            {
+                _isCapturing = value;
+                OnChange();
+                OnChange(nameof(CaptureButtonText));
+                (CaptureKeyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+        public string CaptureButtonText => Loc.Get(IsCapturing
+            ? "Ui.Macro.StepEditor.Capture.Running"
+            : "Ui.Macro.StepEditor.Capture.Start");
 
         public MakroBefehl? CreatedStep { get; private set; }
 
@@ -177,7 +202,12 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         private string? _validationError;
-        public string? ValidationError { get => _validationError; private set { _validationError = value; OnChange(); } }
+        public string? ValidationError
+        {
+            get => _validationError;
+            private set { _validationError = value; OnChange(); OnChange(nameof(HasValidationError)); }
+        }
+        public bool HasValidationError => !string.IsNullOrWhiteSpace(ValidationError);
 
         private async System.Threading.Tasks.Task CaptureKeyAsync()
         {

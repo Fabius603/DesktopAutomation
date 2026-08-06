@@ -40,6 +40,7 @@
       {
         "title": { "de": "Makros", "en": "Macros" },
         "changes": [
+          { "category": "Changed", "de": "Der Makro-Step-Editor verwendet dieselbe übersichtliche Darstellung und dieselben kompakten Eingabefelder wie der Job-Step-Editor.", "en": "The macro step editor uses the same clear layout and compact input fields as the job step editor." },
           { "category": "Fixed", "de": "Makrogruppen bleiben beim Bearbeiten, Löschen, Verschieben, Verwerfen sowie bei Rückgängig und Wiederholen vollständig und konsistent erhalten.", "en": "Macro groups remain complete and consistent when editing, deleting, moving, discarding, undoing, and redoing changes." }
         ]
       }

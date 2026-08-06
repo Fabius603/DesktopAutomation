@@ -2366,6 +2366,21 @@ Fehlercode: {3}</value>
   <data name="Settings.ForceStopKey.Capturing" xml:space="preserve"><value>Taste drücken …</value></data>
   <data name="Ui.Macro.StepEditor.Duration" xml:space="preserve"><value>Dauer</value></data>
   <data name="Ui.Macro.StepEditor.TimeInvalid" xml:space="preserve"><value>Der Zeitwert ist zu groß oder ungültig.</value></data>
+  <data name="Ui.Macro.StepEditor.Position" xml:space="preserve"><value>Position</value></data>
+  <data name="Ui.Macro.StepEditor.Offset" xml:space="preserve"><value>Versatz</value></data>
+  <data name="Ui.Macro.StepEditor.Category.Movement" xml:space="preserve"><value>Mausbewegung</value></data>
+  <data name="Ui.Macro.StepEditor.Category.Mouse" xml:space="preserve"><value>Maustaste</value></data>
+  <data name="Ui.Macro.StepEditor.Category.Keyboard" xml:space="preserve"><value>Tastatur</value></data>
+  <data name="Ui.Macro.StepEditor.Category.Timing" xml:space="preserve"><value>Zeitsteuerung</value></data>
+  <data name="Ui.Macro.StepEditor.Description.MouseMoveAbsolute" xml:space="preserve"><value>Bewegt den Mauszeiger zu einer festen Bildschirmposition.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.MouseMoveRelative" xml:space="preserve"><value>Bewegt den Mauszeiger relativ zu seiner aktuellen Position.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.MouseDown" xml:space="preserve"><value>Drückt die ausgewählte Maustaste.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.MouseUp" xml:space="preserve"><value>Lässt die ausgewählte Maustaste los.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.KeyDown" xml:space="preserve"><value>Drückt die ausgewählte Taste oder Tastenkombination.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.KeyUp" xml:space="preserve"><value>Lässt die ausgewählte Taste oder Tastenkombination los.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.Timeout" xml:space="preserve"><value>Unterbricht die Ausführung für die angegebene Dauer.</value></data>
+  <data name="Ui.Macro.StepEditor.Capture.Start" xml:space="preserve"><value>Aufnehmen</value></data>
+  <data name="Ui.Macro.StepEditor.Capture.Running" xml:space="preserve"><value>Aufnahme läuft …</value></data>
   <data name="Ui.Macro.Validation.GroupStructureInvalid" xml:space="preserve"><value>Die Gruppen des Makros sind inkonsistent.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Verzögerung davor</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Zeit seit dem vorherigen Step; Wert und Einheit können frei gewählt werden.</value></data>
