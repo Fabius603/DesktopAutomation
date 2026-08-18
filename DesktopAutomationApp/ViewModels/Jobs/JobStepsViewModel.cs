@@ -239,6 +239,7 @@ namespace DesktopAutomationApp.ViewModels
         public int ValidationErrorCount => AllSteps().Count(step => !step.IsValid);
         public int SelectedStepCount => SelectedSteps.Count;
         public bool HasSelectedSteps => SelectedStepCount > 0;
+        public bool HasMultipleSelectedSteps => SelectedStepCount > 1;
         public string SelectedStepsSummary => Loc.Format("Ui.Job.Steps.SelectedCount", SelectedStepCount);
         public string ValidationSummary => Loc.Format("Ui.Job.Steps.ProblemCount", ValidationErrorCount);
 
@@ -435,10 +436,10 @@ namespace DesktopAutomationApp.ViewModels
 
             AddStepCommand    = new AsyncRelayCommand(AddStep, () => !IsDebugActive && !IsMutationBusy);
             EditStepCommand   = new AsyncRelayCommand<JobStep?>(
-                EditStep,
-                s => { var t = s ?? SelectedStep; return !IsDebugActive && !IsMutationBusy && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
-            MoveStepUpCommand = new AsyncRelayCommand<JobStep?>(s => MoveRelativeAsync(s ?? SelectedStep, -1), s => !IsDebugActive && !IsMutationBusy && CanMoveRelative(s ?? SelectedStep, -1));
-            MoveStepDownCommand = new AsyncRelayCommand<JobStep?>(s => MoveRelativeAsync(s ?? SelectedStep, +1), s => !IsDebugActive && !IsMutationBusy && CanMoveRelative(s ?? SelectedStep, +1));
+                s => EditStep(GetSingleSelection(s)),
+                s => { var t = GetSingleSelection(s); return !IsDebugActive && !IsMutationBusy && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
+            MoveStepUpCommand = new AsyncRelayCommand<JobStep?>(s => MoveSelectionRelativeAsync(s, -1), s => !IsDebugActive && !IsMutationBusy && CanMoveSelectionRelative(s, -1));
+            MoveStepDownCommand = new AsyncRelayCommand<JobStep?>(s => MoveSelectionRelativeAsync(s, +1), s => !IsDebugActive && !IsMutationBusy && CanMoveSelectionRelative(s, +1));
             ReorderStepCommand = new AsyncRelayCommand<StepDragDrop.MoveRequest>(MoveStepAsync, _ => !IsDebugActive && !IsMutationBusy);
             DeleteStepCommand = new AsyncRelayCommand<JobStep?>(DeleteStepAsync, s => !IsDebugActive && !IsMutationBusy && (s ?? SelectedStep) != null);
             DeleteSelectedCommand = new AsyncRelayCommand(DeleteSelectedAsync, () => !IsDebugActive && !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
@@ -489,24 +490,24 @@ namespace DesktopAutomationApp.ViewModels
             CollapseDebugContextCommand = new RelayCommand(
                 () => SetDebugContextExpanded(false),
                 () => HasDebugContext);
-            ToggleBreakpointCommand = new RelayCommand<JobStep?>(
-                ToggleBreakpoint,
-                step => step != null);
-            ToggleStepEnabledCommand = new RelayCommand<JobStep?>(
-                step => { if (step != null) step.IsEnabled = !step.IsEnabled; },
-                step => !IsDebugActive && step?.CanBeDisabled == true);
+            ToggleBreakpointCommand = new AsyncRelayCommand<JobStep?>(
+                ToggleBreakpointsAsync,
+                step => !IsMutationBusy && GetOrderedSelection(step).Count > 0);
+            ToggleStepEnabledCommand = new AsyncRelayCommand<JobStep?>(
+                ToggleSelectedStepsEnabledAsync,
+                step => !IsDebugActive && !IsMutationBusy && GetOrderedSelection(step).Any(selected => selected.CanBeDisabled));
 
-            AddElseIfCommand = new AsyncRelayCommand<JobStep?>(AddElseIfAsync, step => !IsDebugActive && !IsMutationBusy && CanAddElseIf(step));
-            AddElseCommand   = new AsyncRelayCommand<JobStep?>(AddElseAsync, step => !IsDebugActive && !IsMutationBusy && CanAddElse(step));
+            AddElseIfCommand = new AsyncRelayCommand<JobStep?>(step => AddElseIfAsync(GetSingleSelection(step)), step => !IsDebugActive && !IsMutationBusy && CanAddElseIf(GetSingleSelection(step)));
+            AddElseCommand   = new AsyncRelayCommand<JobStep?>(step => AddElseAsync(GetSingleSelection(step)), step => !IsDebugActive && !IsMutationBusy && CanAddElse(GetSingleSelection(step)));
             MoveToStartSectionCommand = new AsyncRelayCommand<JobStep?>(
-                step => MoveStepToSectionAsync(step, _startSteps),
-                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _startSteps));
+                step => MoveSelectionToSectionAsync(step, _startSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveSelectionToSection(step, _startSteps));
             MoveToRunSectionCommand = new AsyncRelayCommand<JobStep?>(
-                step => MoveStepToSectionAsync(step, _runSteps),
-                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _runSteps));
+                step => MoveSelectionToSectionAsync(step, _runSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveSelectionToSection(step, _runSteps));
             MoveToEndSectionCommand = new AsyncRelayCommand<JobStep?>(
-                step => MoveStepToSectionAsync(step, _endSteps),
-                step => !IsDebugActive && !IsMutationBusy && CanMoveStepToSection(step, _endSteps));
+                step => MoveSelectionToSectionAsync(step, _endSteps),
+                step => !IsDebugActive && !IsMutationBusy && CanMoveSelectionToSection(step, _endSteps));
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _debugSession = _dispatcher.DebugSessions.FirstOrDefault(session => session.JobId == Job.Id);
@@ -660,11 +661,34 @@ namespace DesktopAutomationApp.ViewModels
             NotifyDebugStateChanged();
         }
 
-        private void ToggleBreakpoint(JobStep? step)
+        private async Task ToggleBreakpointsAsync(JobStep? step)
         {
-            if (step == null) return;
-            step.IsBreakpoint = !step.IsBreakpoint;
-            SynchronizeBreakpointWithRuntimeJob(step);
+            var targets = GetOrderedSelection(step);
+            if (targets.Count == 0) return;
+            var enable = targets.Any(target => !target.IsBreakpoint);
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                foreach (var target in targets)
+                {
+                    target.IsBreakpoint = enable;
+                    SynchronizeBreakpointWithRuntimeJob(target);
+                }
+                ScheduleDirtyCheck();
+            });
+        }
+
+        private async Task ToggleSelectedStepsEnabledAsync(JobStep? step)
+        {
+            var targets = GetOrderedSelection(step).Where(target => target.CanBeDisabled).ToList();
+            if (targets.Count == 0) return;
+            var enable = targets.Any(target => !target.IsEnabled);
+            await RunMutationAsync(async () =>
+            {
+                await PushUndoAsync();
+                foreach (var target in targets) target.IsEnabled = enable;
+                ScheduleDirtyCheck();
+            });
         }
 
         private void SynchronizeBreakpointsWithRuntimeJob()
@@ -974,13 +998,64 @@ namespace DesktopAutomationApp.ViewModels
                 _steps = typedSection;
             SelectedSteps.Clear();
             SelectedSteps.AddRange(items.OfType<JobStep>());
-            OnPropertyChanged(nameof(SelectedStepCount));
-            OnPropertyChanged(nameof(HasSelectedSteps));
-            OnPropertyChanged(nameof(SelectedStepsSummary));
+            NotifySelectionChanged();
             // Keep SelectedStep in sync with the last selected item
             if (SelectedSteps.Count > 0)
                 SelectedStep = SelectedSteps[^1];
+            else
+                SelectedStep = null;
             InvalidateAllCommands();
+        }
+
+        private void NotifySelectionChanged()
+        {
+            OnPropertyChanged(nameof(SelectedStepCount));
+            OnPropertyChanged(nameof(HasSelectedSteps));
+            OnPropertyChanged(nameof(HasMultipleSelectedSteps));
+            OnPropertyChanged(nameof(SelectedStepsSummary));
+        }
+
+        private JobStep? GetSingleSelection(JobStep? context)
+        {
+            if (SelectedSteps.Count > 1 && (context is null || SelectedSteps.Contains(context)))
+                return null;
+            return context ?? SelectedStep;
+        }
+
+        private List<JobStep> GetOrderedSelection(JobStep? context = null, bool expandStructures = false)
+        {
+            var selected = SelectedSteps.Count > 1 && (context is null || SelectedSteps.Contains(context))
+                ? SelectedSteps.ToList()
+                : context is not null
+                    ? [context]
+                    : SelectedSteps.Count > 0
+                        ? SelectedSteps.ToList()
+                        : SelectedStep is not null ? [SelectedStep] : [];
+            if (selected.Count == 0) return [];
+
+            var section = FindSection(selected[0]);
+            if (section is null || selected.Any(step => !section.Contains(step))) return [];
+            var indices = selected.Select(section.IndexOf).Where(index => index >= 0).ToHashSet();
+            if (expandStructures)
+            {
+                foreach (var index in indices.ToArray())
+                {
+                    if (section[index] is not (IfStep or ElseIfStep or ElseStep or EndIfStep)) continue;
+                    var first = FindOwningIfIndex(section, index);
+                    var last = first >= 0 ? FindMatchingEndIfIndex(section, first) : -1;
+                    if (first < 0 || last < first) continue;
+                    for (var blockIndex = first; blockIndex <= last; blockIndex++) indices.Add(blockIndex);
+                }
+            }
+            return indices.OrderBy(index => index).Select(index => section[index]).ToList();
+        }
+
+        private int GetSelectionInsertionIndex()
+        {
+            var selected = GetOrderedSelection();
+            return selected.Count == 0
+                ? _steps.Count
+                : Math.Min(_steps.Count, selected.Max(_steps.IndexOf) + 1);
         }
 
         // ---------- INavigationGuard ----------
@@ -994,7 +1069,13 @@ namespace DesktopAutomationApp.ViewModels
             {
                 _startSteps.ReplaceRange(DeepCloneSteps(_savedStartSnapshot));
                 _runSteps.ReplaceRange(DeepCloneSteps(_savedSnapshot));
+                _steps = _runSteps;
                 _endSteps.ReplaceRange(DeepCloneSteps(_savedEndSnapshot));
+                SelectedStep = null;
+                SelectedSteps.Clear();
+                NotifySelectionChanged();
+                _undoStack.Clear();
+                _redoStack.Clear();
             }
             finally
             {
@@ -1011,6 +1092,10 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(EndPhaseTimeoutSeconds));
             OnPropertyChanged(nameof(IsRepeating));
             _changeTracker.Accept(CaptureSavedEditState());
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+            InvalidateHistoryCommands();
+            InvalidateAllCommands();
             ScheduleValidation();
         }
 
@@ -1079,9 +1164,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             // Determine insert position before opening the dialog so the
             // dialog receives the correct preceding-steps snapshot.
-            int insertIndex = SelectedStep != null
-                ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
-                : _steps.Count;
+            int insertIndex = GetSelectionInsertionIndex();
 
             var precedingSteps = GetPrecedingSteps(_steps, insertIndex);
             var allSteps = AllSteps();
@@ -1171,39 +1254,57 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Move / Delete ----------
-        private bool CanMoveRelative(JobStep? step, int delta)
+        private bool CanMoveSelectionRelative(JobStep? step, int delta)
         {
-            if (step == null) return false;
-            var section = FindSection(step);
-            if (section == null) return false;
-            var idx = section.IndexOf(step);
-            if (idx < 0) return false;
-            var newIdx = idx + delta;
-            if (newIdx < 0 || newIdx >= section.Count) return false;
-            return !WouldViolateIfStructure(section, idx, newIdx);
+            var moving = GetOrderedSelection(step, expandStructures: true);
+            if (moving.Count == 0 || FindSection(moving[0]) is not { } section) return false;
+            var movingSet = moving.ToHashSet();
+            var first = section.IndexOf(moving[0]);
+            var last = section.IndexOf(moving[^1]);
+            if (delta < 0 && first == 0 || delta > 0 && last == section.Count - 1) return false;
+            var anchor = delta < 0 ? first - 1 : last + 1;
+            if (movingSet.Contains(section[anchor])) return false;
+            return TryBuildSelectionMove(section, moving, anchor, delta, out _);
         }
 
-        private async Task MoveRelativeAsync(JobStep? step, int delta)
+        private async Task MoveSelectionRelativeAsync(JobStep? step, int delta)
         {
-            if (!CanMoveRelative(step, delta) || step == null) return;
-
-            var section = FindSection(step);
-            if (section is null) return;
-            var idx = section.IndexOf(step);
-            var newIdx = idx + delta;
+            var moving = GetOrderedSelection(step, expandStructures: true);
+            if (moving.Count == 0 || FindSection(moving[0]) is not { } section) return;
+            var anchor = delta < 0 ? section.IndexOf(moving[0]) - 1 : section.IndexOf(moving[^1]) + 1;
+            if (!TryBuildSelectionMove(section, moving, anchor, delta, out var reordered)) return;
 
             await RunMutationAsync(async () =>
             {
                 await PushUndoAsync();
-                var reordered = section.ToList();
-                reordered.RemoveAt(idx);
-                reordered.Insert(newIdx, step);
                 section.ReplaceRange(reordered);
                 _steps = section;
                 JobValidation.RemoveInvalidSourceSelections(AllSteps());
-                SelectedStep = step;
+                SelectedSteps.Clear();
+                SelectedSteps.AddRange(moving);
+                SelectedStep = moving[^1];
+                NotifySelectionChanged();
                 ScheduleDirtyCheck();
+                InvalidateSelectionCommands();
             });
+        }
+
+        private static bool TryBuildSelectionMove(
+            IReadOnlyList<JobStep> section,
+            IReadOnlyList<JobStep> moving,
+            int anchorIndex,
+            int delta,
+            out List<JobStep> reordered)
+        {
+            reordered = section.ToList();
+            if (anchorIndex < 0 || anchorIndex >= section.Count) return false;
+            var anchor = section[anchorIndex];
+            var movingSet = moving.ToHashSet();
+            if (movingSet.Contains(anchor)) return false;
+            reordered.RemoveAll(movingSet.Contains);
+            var insertAt = reordered.IndexOf(anchor) + (delta > 0 ? 1 : 0);
+            reordered.InsertRange(insertAt, moving);
+            return JobValidation.IsIfStructureAllowed(reordered) && !section.SequenceEqual(reordered);
         }
 
         private async Task MoveStepAsync(StepDragDrop.MoveRequest? request)
@@ -1217,36 +1318,28 @@ namespace DesktopAutomationApp.ViewModels
                 || request.SourceIndex >= source.Count)
                 return;
 
-            int first = request.SourceIndex;
-            int last = first;
-            var dragged = source[first];
-
-            if (dragged is IfStep or ElseIfStep or ElseStep or EndIfStep)
-            {
-                first = FindOwningIfIndex(source, request.SourceIndex);
-                if (first < 0) return;
-                last = FindMatchingEndIfIndex(source, first);
-                if (last < first) return;
-            }
-
-            var moving = source.Skip(first).Take(last - first + 1).ToList();
+            var dragged = source[request.SourceIndex];
+            var moving = GetOrderedSelection(dragged, expandStructures: true);
+            if (moving.Count == 0 || moving.Any(step => !source.Contains(step))) return;
+            var movingIndices = moving.Select(source.IndexOf).OrderBy(index => index).ToList();
+            var first = movingIndices[0];
+            var last = movingIndices[^1];
             int insertIndex = Math.Clamp(request.TargetIndex, 0, target.Count);
 
             // Ein Drop innerhalb des gerade gezogenen Blocks verändert nichts.
             if (ReferenceEquals(source, target)
-                && insertIndex >= first
-                && insertIndex <= last + 1)
+                && movingIndices.Contains(Math.Clamp(insertIndex, 0, Math.Max(0, source.Count - 1))))
                 return;
 
             var sourceSimulation = source.ToList();
-            sourceSimulation.RemoveRange(first, moving.Count);
+            sourceSimulation.RemoveAll(moving.ToHashSet().Contains);
 
             var targetSimulation = ReferenceEquals(source, target)
                 ? sourceSimulation
                 : target.ToList();
 
-            if (ReferenceEquals(source, target) && insertIndex > first)
-                insertIndex -= moving.Count;
+            if (ReferenceEquals(source, target))
+                insertIndex -= movingIndices.Count(index => index < insertIndex);
             insertIndex = Math.Clamp(insertIndex, 0, targetSimulation.Count);
             targetSimulation.InsertRange(insertIndex, moving);
 
@@ -1255,7 +1348,7 @@ namespace DesktopAutomationApp.ViewModels
                 return;
 
             if (ReferenceEquals(source, target)
-                && first == insertIndex)
+                && source.SequenceEqual(targetSimulation))
                 return;
 
             await RunMutationAsync(async () =>
@@ -1279,31 +1372,35 @@ namespace DesktopAutomationApp.ViewModels
                     }
                 }
                 JobValidation.RemoveInvalidSourceSelections(AllSteps());
-                SelectedStep = moving[0];
+                SelectedStep = moving[^1];
                 _steps = target;
                 SelectedSteps.Clear();
                 SelectedSteps.AddRange(moving);
+                NotifySelectionChanged();
                 ScheduleDirtyCheck();
                 ExpandSection(target);
                 InvalidateSelectionCommands();
             });
         }
 
-        private bool CanMoveStepToSection(JobStep? step, ObservableRangeCollection<JobStep> target)
-            => step != null
-               && FindSection(step) is { } source
-               && !ReferenceEquals(source, target);
-
-        private Task MoveStepToSectionAsync(JobStep? step, ObservableRangeCollection<JobStep> target)
+        private bool CanMoveSelectionToSection(JobStep? step, ObservableRangeCollection<JobStep> target)
         {
-            if (step == null || FindSection(step) is not { } source || ReferenceEquals(source, target))
-                return Task.CompletedTask;
+            var moving = GetOrderedSelection(step, expandStructures: true);
+            return moving.Count > 0
+                   && FindSection(moving[0]) is { } source
+                   && moving.All(source.Contains)
+                   && !ReferenceEquals(source, target)
+                   && JobValidation.IsIfStructureAllowed(source.Where(item => !moving.Contains(item)).ToList())
+                   && JobValidation.IsIfStructureAllowed(target.Concat(moving).ToList());
+        }
 
-            return MoveStepAsync(new StepDragDrop.MoveRequest(
-                source,
-                source.IndexOf(step),
-                target,
-                target.Count));
+        private Task MoveSelectionToSectionAsync(JobStep? step, ObservableRangeCollection<JobStep> target)
+        {
+            var moving = GetOrderedSelection(step, expandStructures: true);
+            if (moving.Count == 0 || FindSection(moving[0]) is not { } source || ReferenceEquals(source, target))
+                return Task.CompletedTask;
+            return MoveStepAsync(new StepDragDrop.MoveRequest(source, source.IndexOf(moving[0]), target, target.Count,
+                SourceIndices: moving.Select(source.IndexOf).ToArray()));
         }
 
         private bool IsKnownSection(ObservableRangeCollection<JobStep> section)
@@ -1556,16 +1653,15 @@ namespace DesktopAutomationApp.ViewModels
             }
             SelectedStep = null;
             SelectedSteps.Clear();
+            NotifySelectionChanged();
             ScheduleDirtyCheck();
         }
 
         // ---------- Copy / Paste ----------
         private async Task CopySelectedAsync()
         {
-            var sources = SelectedSteps.Count > 0
-                ? SelectedSteps.OrderBy(s => _steps.IndexOf(s)).ToList()
-                : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
-            if (sources == null) return;
+            var sources = GetOrderedSelection(expandStructures: true);
+            if (sources.Count == 0) return;
             await RunMutationAsync(async () =>
             {
                 _clipboard = (await JobStepsSnapshotService.CloneAsync(sources, newIds: false)).ToList();
@@ -1579,15 +1675,17 @@ namespace DesktopAutomationApp.ViewModels
 
             await RunMutationAsync(async () =>
             {
-                int insertAt = SelectedStep != null
-                    ? Math.Min(_steps.Count, _steps.IndexOf(SelectedStep) + 1)
-                    : _steps.Count;
+                int insertAt = GetSelectionInsertionIndex();
 
                 var toInsert = (await JobStepsSnapshotService.CloneAsync(_clipboard, newIds: true)).ToList();
                 await PushUndoAsync();
                 _steps.InsertRange(insertAt, toInsert);
+                SelectedSteps.Clear();
+                SelectedSteps.AddRange(toInsert);
                 SelectedStep = toInsert[^1];
+                NotifySelectionChanged();
                 ScheduleDirtyCheck();
+                InvalidateSelectionCommands();
             });
         }
 
@@ -1631,10 +1729,8 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Delete selected ----------
         private async Task DeleteSelectedAsync()
         {
-            var targets = SelectedSteps.Count > 0
-                ? SelectedSteps.ToList()
-                : (SelectedStep != null ? new List<JobStep> { SelectedStep } : null);
-            if (targets == null || targets.Count == 0) return;
+            var targets = GetOrderedSelection(expandStructures: SelectedSteps.Count > 1);
+            if (targets.Count == 0) return;
 
             string message = targets.Count == 1
                 ? (targets[0] is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.EndIfStep
@@ -1679,6 +1775,8 @@ namespace DesktopAutomationApp.ViewModels
                 SelectedStep = remaining.ElementAtOrDefault(Math.Max(0, firstRemoved - 1));
                 SelectedSteps.Clear();
                 ScheduleDirtyCheck();
+                NotifySelectionChanged();
+                InvalidateSelectionCommands();
             });
         }
 
@@ -1973,7 +2071,7 @@ namespace DesktopAutomationApp.ViewModels
         private void InvalidateSaveCommands()
         {
             (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
-            (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (StartJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DebugJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
@@ -2032,8 +2130,8 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateDebugCommands();
             (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CollapseDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (ToggleBreakpointCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
-            (ToggleStepEnabledCommand as RelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (ToggleBreakpointCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (ToggleStepEnabledCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
         }
 
     }

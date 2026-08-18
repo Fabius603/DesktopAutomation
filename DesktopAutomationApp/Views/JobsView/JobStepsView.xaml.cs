@@ -64,6 +64,20 @@ namespace DesktopAutomationApp.Views
 
             if (ViewShortcutRouter.IsTextInputFocused || Keyboard.FocusedElement is ButtonBase or ComboBox) return;
 
+            var focusedList = AllStepLists().First(list => list.IsKeyboardFocusWithin);
+            if (AppShortcutGestures.Matches(e, AppShortcutGestures.SelectAll))
+            {
+                focusedList.SelectAll();
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                focusedList.UnselectAll();
+                e.Handled = true;
+                return;
+            }
+
             if (AppShortcutGestures.Matches(e, AppShortcutGestures.AddStep)) Execute(_vm.AddStepCommand, null, e);
             else if (AppShortcutGestures.Matches(e, AppShortcutGestures.EditStep)) Execute(_vm.EditStepCommand, _vm.SelectedStep, e);
             else if (AppShortcutGestures.Matches(e, AppShortcutGestures.DuplicateStep)) Execute(_vm.DuplicateStepCommand, null, e);
@@ -176,16 +190,25 @@ namespace DesktopAutomationApp.Views
                 item.IsSelected = true;
             }
 
+            var multiple = vm.SelectedSteps.Count > 1 && vm.SelectedSteps.Contains(step);
+            var count = multiple ? vm.SelectedSteps.Count : 1;
+
             var menu = new ContextMenu { PlacementTarget = item };
             AddMenuItem(menu, Loc.Get("Ui.Common.Edit"), vm.EditStepCommand, step, Loc.Get("Shortcut.Enter"));
             if (step.CanBeDisabled)
-                AddMenuItem(menu, Loc.Get(step.IsEnabled
-                    ? "Ui.Job.Steps.DisableStep"
-                    : "Ui.Job.Steps.EnableStep"), vm.ToggleStepEnabledCommand, step, Loc.Get("Shortcut.Space"));
-            AddMenuItem(menu, Loc.Get("Ui.Job.Debug.ToggleBreakpoint"), vm.ToggleBreakpointCommand, step, Loc.Get("Shortcut.CtrlB"));
+                AddMenuItem(menu, multiple
+                    ? Loc.Format("Ui.Job.Steps.ToggleSelected", count)
+                    : Loc.Get(step.IsEnabled ? "Ui.Job.Steps.DisableStep" : "Ui.Job.Steps.EnableStep"),
+                    vm.ToggleStepEnabledCommand, step, Loc.Get("Shortcut.Space"));
+            AddMenuItem(menu, multiple
+                    ? Loc.Format("Ui.Job.Debug.ToggleBreakpoints", count)
+                    : Loc.Get("Ui.Job.Debug.ToggleBreakpoint"),
+                vm.ToggleBreakpointCommand, step, Loc.Get("Shortcut.CtrlB"));
             menu.Items.Add(new Separator());
-            AddMenuItem(menu, Loc.Get("Ui.Common.Copy"), vm.CopyCommand, null, Loc.Get("Shortcut.CtrlC"));
-            AddMenuItem(menu, Loc.Get("Ui.Macro.Steps.DuplicateStep"), vm.DuplicateStepCommand, null, Loc.Get("Shortcut.CtrlD"));
+            AddMenuItem(menu, multiple ? Loc.Format("Ui.Common.CopySelected", count) : Loc.Get("Ui.Common.Copy"),
+                vm.CopyCommand, null, Loc.Get("Shortcut.CtrlC"));
+            AddMenuItem(menu, multiple ? Loc.Format("Ui.Common.DuplicateSelected", count) : Loc.Get("Ui.Macro.Steps.DuplicateStep"),
+                vm.DuplicateStepCommand, null, Loc.Get("Shortcut.CtrlD"));
             AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), vm.MoveStepUpCommand, step, Loc.Get("Shortcut.AltUp"));
             AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), vm.MoveStepDownCommand, step, Loc.Get("Shortcut.AltDown"));
             menu.Items.Add(new Separator());
@@ -199,7 +222,12 @@ namespace DesktopAutomationApp.Views
                 AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), vm.AddElseCommand, step);
             }
             menu.Items.Add(new Separator());
-            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.DeleteStep"), vm.DeleteStepCommand, step, Loc.Get("Shortcut.Delete"));
+            AddMenuItem(menu, multiple
+                    ? Loc.Format("Ui.Common.DeleteSelected", count)
+                    : Loc.Get("Ui.Job.Steps.DeleteStep"),
+                multiple ? vm.DeleteSelectedCommand : vm.DeleteStepCommand,
+                multiple ? null : step,
+                Loc.Get("Shortcut.Delete"));
             menu.IsOpen = true;
             e.Handled = true;
         }
@@ -294,7 +322,8 @@ namespace DesktopAutomationApp.Views
                 payload.Source,
                 payload.SourceIndex,
                 target,
-                IsPointerOverHeader(expander, e) ? 0 : target.Count);
+                IsPointerOverHeader(expander, e) ? 0 : target.Count,
+                SourceIndices: payload.SourceIndices);
             if (vm.ReorderStepCommand.CanExecute(request))
                 vm.ReorderStepCommand.Execute(request);
             StepDragDrop.ClearTargetPreview();

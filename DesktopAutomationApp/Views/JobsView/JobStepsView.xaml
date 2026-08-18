@@ -348,8 +348,7 @@
                                               CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <Separator/>
                                     <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
-                                              Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                              Command="{Binding PlacementTarget.Tag.DeleteSelectedCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
@@ -769,7 +768,9 @@
                                             Margin="8,0,0,0">
                                     <!-- Aktivieren / Deaktivieren -->
                                     <CheckBox
-                                        IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                        IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                        Command="{Binding DataContext.ToggleStepEnabledCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
                                         IsEnabled="{Binding DataContext.IsDebugActive, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanConverter}}"
                                         Visibility="{Binding CanBeDisabled, Converter={StaticResource BooleanToVisibilityConverter}}"
                                         ToolTip="{loc:Translate Key=Ui.Job.Steps.EnableDisableStep}"
@@ -809,8 +810,7 @@
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <Separator/>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
-                                                          Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                          Command="{Binding PlacementTarget.Tag.DeleteSelectedCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             </ContextMenu>
                                         </Button.ContextMenu>
                                     </Button>

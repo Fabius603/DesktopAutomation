@@ -110,6 +110,9 @@
                             <TextBlock Text="{loc:Translate Key=Ui.Macro.Group.Create}"/>
                         </StackPanel>
                     </Button>
+                    <TextBlock Text="{Binding SelectedStepsSummary}" Margin="12,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                               Visibility="{Binding HasSelectedSteps, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     </WrapPanel>
 
@@ -306,8 +309,7 @@
                                                           Command="{Binding PlacementTarget.Tag.DuplicateStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                 <MenuItem Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}"
-                                                          Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                          Command="{Binding PlacementTarget.Tag.DeleteSelectedCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                             </ContextMenu>
                                         </Button.ContextMenu>
                                     </Button>
@@ -317,8 +319,19 @@
 
                         <DataTemplate DataType="{x:Type vm:MacroGroupListItem}">
                             <Border Margin="-12,-10" Padding="12,10" CornerRadius="7"
-                                    Background="{DynamicResource App.Brush.Surface}"
-                                    BorderBrush="{DynamicResource App.Brush.Accent}" BorderThickness="3,0,0,0">
+                                    BorderThickness="3,0,0,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                     <Button Style="{StaticResource ButtonIcon}" Margin="0,0,9,0"

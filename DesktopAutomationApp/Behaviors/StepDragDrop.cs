@@ -23,8 +23,9 @@ public static class StepDragDrop
         IList Target,
         int TargetIndex,
         object? TargetItem = null,
-        bool InsertAfterTarget = false);
-    public sealed record DragPayload(IList Source, int SourceIndex);
+        bool InsertAfterTarget = false,
+        IReadOnlyList<int>? SourceIndices = null);
+    public sealed record DragPayload(IList Source, int SourceIndex, IReadOnlyList<int> SourceIndices);
 
     public static readonly DependencyProperty MoveCommandProperty =
         DependencyProperty.RegisterAttached(
@@ -55,6 +56,8 @@ public static class StepDragDrop
             return;
 
         list.PreviewMouseLeftButtonDown -= OnMouseDown;
+        list.PreviewMouseLeftButtonUp -= OnMouseUp;
+        list.PreviewMouseRightButtonDown -= OnCancelPendingDrag;
         list.PreviewMouseMove -= OnMouseMove;
         list.DragOver -= OnDragOver;
         list.DragLeave -= OnDragLeave;
@@ -66,6 +69,8 @@ public static class StepDragDrop
 
         list.AllowDrop = true;
         list.PreviewMouseLeftButtonDown += OnMouseDown;
+        list.PreviewMouseLeftButtonUp += OnMouseUp;
+        list.PreviewMouseRightButtonDown += OnCancelPendingDrag;
         list.PreviewMouseMove += OnMouseMove;
         list.DragOver += OnDragOver;
         list.DragLeave += OnDragLeave;
@@ -88,6 +93,15 @@ public static class StepDragDrop
         _sourceContainer = _sourceList == null ? null : container;
     }
 
+    private static void OnMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_isDragging)
+            ResetPendingDrag();
+    }
+
+    private static void OnCancelPendingDrag(object sender, MouseButtonEventArgs e)
+        => ResetPendingDrag();
+
     private static void OnMouseMove(object sender, MouseEventArgs e)
     {
         if (_isDragging
@@ -108,7 +122,15 @@ public static class StepDragDrop
 
         try
         {
-            var data = new DataObject(DataFormat, new DragPayload(source, _sourceIndex));
+            var sourceIndices = list.SelectedItems.Contains(source[_sourceIndex])
+                ? list.SelectedItems.Cast<object>()
+                    .Select(source.IndexOf)
+                    .Where(index => index >= 0)
+                    .Distinct()
+                    .OrderBy(index => index)
+                    .ToArray()
+                : [_sourceIndex];
+            var data = new DataObject(DataFormat, new DragPayload(source, _sourceIndex, sourceIndices));
             DragDrop.DoDragDrop(list, data, DragDropEffects.Move);
         }
         finally
@@ -160,7 +182,8 @@ public static class StepDragDrop
             target,
             placement.Index,
             dropTarget.Item,
-            dropTarget.InsertAfter);
+            dropTarget.InsertAfter,
+            payload.SourceIndices);
         if (command.CanExecute(request))
             command.Execute(request);
 

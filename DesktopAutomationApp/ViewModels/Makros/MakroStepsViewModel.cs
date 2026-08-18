@@ -89,6 +89,10 @@ namespace DesktopAutomationApp.ViewModels
 
         /// <summary>All currently selected steps (synced from the view's ListBox.SelectedItems).</summary>
         public List<MakroBefehl> SelectedSteps { get; } = new();
+        public int SelectedStepCount => SelectedSteps.Count;
+        public bool HasSelectedSteps => SelectedStepCount > 0;
+        public bool HasMultipleSelectedSteps => SelectedStepCount > 1;
+        public string SelectedStepsSummary => Loc.Format("Ui.Macro.Steps.SelectedCount", SelectedStepCount);
 
         public bool CanUndo => _undoStack.Count > 0;
         public bool CanRedo => _redoStack.Count > 0;
@@ -212,9 +216,9 @@ namespace DesktopAutomationApp.ViewModels
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
             AddStepCommand      = new RelayCommand(async () => await OpenAddStepDialog());
-            EditStepCommand     = new RelayCommand<MakroBefehl?>(EditStep, s => s != null);
-            MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, -1), s => CanMoveRelative(s, -1));
-            MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveRelative(s, +1), s => CanMoveRelative(s, +1));
+            EditStepCommand     = new RelayCommand<MakroBefehl?>(s => EditStep(GetSingleSelection(s)), s => GetSingleSelection(s) != null);
+            MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveSelectionRelative(s, -1), s => CanMoveSelectionRelative(s, -1));
+            MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveSelectionRelative(s, +1), s => CanMoveSelectionRelative(s, +1));
             ReorderStepCommand  = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep);
             DeleteStepCommand     = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
             DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
@@ -223,7 +227,7 @@ namespace DesktopAutomationApp.ViewModels
             CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
             PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
             DuplicateStepCommand  = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
-            CreateGroupCommand     = new RelayCommand(async () => await CreateGroupAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
+            CreateGroupCommand     = new RelayCommand(async () => await CreateGroupAsync(), () => IsSelectionContiguous(GetOrderedSelection()));
             RemoveFromGroupCommand = new RelayCommand(RemoveSelectedFromGroup, () => GetSelection().Any(s => s.HasGroup));
             RenameGroupCommand     = new RelayCommand<string?>(async id => await RenameGroupAsync(id), id => FindGroup(id) != null);
             DissolveGroupCommand   = new RelayCommand<string?>(DissolveGroup, id => FindGroup(id) != null);
@@ -289,13 +293,44 @@ namespace DesktopAutomationApp.ViewModels
             SelectedSteps.AddRange(distinct);
             if (SelectedSteps.Count > 0)
                 SelectedStep = SelectedSteps[^1];
+            else
+                SelectedStep = null;
+            NotifySelectionChanged();
             InvalidateAllCommands();
         }
 
-        private IEnumerable<MakroBefehl> GetSelection()
-            => SelectedSteps.Count > 0
+        private void NotifySelectionChanged()
+        {
+            OnPropertyChanged(nameof(SelectedStepCount));
+            OnPropertyChanged(nameof(HasSelectedSteps));
+            OnPropertyChanged(nameof(HasMultipleSelectedSteps));
+            OnPropertyChanged(nameof(SelectedStepsSummary));
+        }
+
+        private MakroBefehl? GetSingleSelection(MakroBefehl? context)
+        {
+            if (SelectedSteps.Count > 1 && (context is null || SelectedSteps.Contains(context))) return null;
+            return context ?? SelectedStep;
+        }
+
+        private List<MakroBefehl> GetOrderedSelection(MakroBefehl? context = null)
+        {
+            var selected = SelectedSteps.Count > 1 && (context is null || SelectedSteps.Contains(context))
                 ? SelectedSteps
+                : context is not null ? [context]
+                : SelectedSteps.Count > 0 ? SelectedSteps
                 : SelectedStep is not null ? [SelectedStep] : [];
+            return selected.Distinct().Where(Steps.Contains).OrderBy(Steps.IndexOf).ToList();
+        }
+
+        private IEnumerable<MakroBefehl> GetSelection() => GetOrderedSelection();
+
+        private bool IsSelectionContiguous(IReadOnlyList<MakroBefehl> selected)
+        {
+            if (selected.Count == 0) return false;
+            var first = Steps.IndexOf(selected[0]);
+            return selected.Select(Steps.IndexOf).SequenceEqual(Enumerable.Range(first, selected.Count));
+        }
 
         // ---------- INavigationGuard ----------
         public async Task SaveAsync() => await SaveInternal();
@@ -317,6 +352,7 @@ namespace DesktopAutomationApp.ViewModels
                 Makro.RecordedEnvironment = _originalRecordedEnvironment?.Clone();
                 SelectedStep = null;
                 SelectedSteps.Clear();
+                NotifySelectionChanged();
                 _undoStack.Clear();
                 _redoStack.Clear();
                 ApplyRecordingHotkey();
@@ -400,25 +436,34 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         // ---------- Steps ----------
-        private bool CanMoveRelative(MakroBefehl? step, int delta)
+        private bool CanMoveSelectionRelative(MakroBefehl? step, int delta)
         {
-            if (step == null) return false;
-            var idx = Steps.IndexOf(step);
-            if (idx < 0) return false;
-            var newIdx = idx + delta;
-            return newIdx >= 0
-                && newIdx < Steps.Count
-                && CanReorderTogether(step, Steps[newIdx]);
+            var selected = GetOrderedSelection(step);
+            if (selected.Count == 0) return false;
+            var first = Steps.IndexOf(selected[0]);
+            var last = Steps.IndexOf(selected[^1]);
+            if (delta < 0 && first == 0 || delta > 0 && last == Steps.Count - 1) return false;
+            var anchor = Steps[delta < 0 ? first - 1 : last + 1];
+            return !selected.Contains(anchor)
+                   && selected.All(item => CanReorderTogether(item, anchor));
         }
 
-        private void MoveRelative(MakroBefehl? step, int delta)
+        private void MoveSelectionRelative(MakroBefehl? step, int delta)
         {
-            if (!CanMoveRelative(step, delta) || step == null) return;
+            var selected = GetOrderedSelection(step);
+            if (!CanMoveSelectionRelative(step, delta) || selected.Count == 0) return;
             PushUndo();
-            var idx = Steps.IndexOf(step);
-            Steps.RemoveAt(idx);
-            Steps.Insert(idx + delta, step);
-            SelectedStep = step;
+            var first = Steps.IndexOf(selected[0]);
+            var last = Steps.IndexOf(selected[^1]);
+            var anchor = Steps[delta < 0 ? first - 1 : last + 1];
+            var reordered = Steps.Where(item => !selected.Contains(item)).ToList();
+            var insertAt = reordered.IndexOf(anchor) + (delta > 0 ? 1 : 0);
+            reordered.InsertRange(insertAt, selected);
+            _stepItems.ReplaceRange(reordered);
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(selected);
+            SelectedStep = selected[^1];
+            NotifySelectionChanged();
             UpdateDirtyState();
             InvalidateAllCommands();
         }
@@ -444,8 +489,9 @@ namespace DesktopAutomationApp.ViewModels
             if (ReferenceEquals(request.Source, Steps) && ReferenceEquals(request.Target, Steps))
             {
                 var targetIndex = Math.Clamp(request.TargetIndex, 0, Steps.Count);
-                if (targetIndex > request.SourceIndex) targetIndex--;
-                MoveToIndex(request.SourceIndex, targetIndex);
+                var dragged = Steps[request.SourceIndex];
+                var selected = GetOrderedSelection(dragged);
+                MoveStepsToIndex(selected, targetIndex, clearGroup: false);
                 return;
             }
 
@@ -459,7 +505,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (VisibleItems[request.SourceIndex] is MacroGroupListItem draggedGroup)
                     MoveGroupRelativeToGroup(draggedGroup.GroupId, targetGroupItem.GroupId, request.InsertAfterTarget);
                 else if (VisibleItems[request.SourceIndex] is MacroStepListItem sourceStep)
-                    MoveStepRelativeToGroup(sourceStep.Step, targetGroupItem.GroupId, request.InsertAfterTarget);
+                    MoveStepsRelativeToGroup(GetOrderedSelection(sourceStep.Step), targetGroupItem.GroupId, request.InsertAfterTarget);
                 return;
             }
 
@@ -470,17 +516,68 @@ namespace DesktopAutomationApp.ViewModels
             }
             if (VisibleItems[request.SourceIndex] is not MacroStepListItem sourceItem) return;
 
-            var from = Steps.IndexOf(sourceItem.Step);
             var target = request.TargetIndex >= VisibleItems.Count
-                ? Steps.Count - 1
+                ? Steps.Count
                 : VisibleItems[request.TargetIndex] switch
                 {
                     MacroStepListItem targetStep => Steps.IndexOf(targetStep.Step),
                     MacroGroupListItem targetGroup => Steps.ToList().FindIndex(step => step.GroupId == targetGroup.GroupId),
-                    _ => from
+                    _ => Steps.IndexOf(sourceItem.Step)
                 };
-            if (target > from) target--;
-            MoveToIndex(from, Math.Clamp(target, 0, Math.Max(0, Steps.Count - 1)));
+            MoveStepsToIndex(GetOrderedSelection(sourceItem.Step), target, clearGroup: true);
+        }
+
+        private void MoveStepsToIndex(IReadOnlyList<MakroBefehl> selected, int targetIndex, bool clearGroup)
+        {
+            if (selected.Count == 0) return;
+            var selectedSet = selected.ToHashSet();
+            var originalIndices = selected.Select(Steps.IndexOf).Where(index => index >= 0).ToList();
+            if (originalIndices.Count != selected.Count) return;
+            var reordered = Steps.Where(step => !selectedSet.Contains(step)).ToList();
+            targetIndex -= originalIndices.Count(index => index < targetIndex);
+            targetIndex = Math.Clamp(targetIndex, 0, reordered.Count);
+            reordered.InsertRange(targetIndex, selected);
+            if (Steps.SequenceEqual(reordered)) return;
+
+            PushUndo();
+            if (clearGroup)
+                foreach (var item in selected) item.GroupId = null;
+            _stepItems.ReplaceRange(reordered);
+            NormalizeGroups();
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(selected);
+            SelectedStep = selected[^1];
+            NotifySelectionChanged();
+            UpdateDirtyState();
+            InvalidateAllCommands();
+        }
+
+        private void MoveStepsRelativeToGroup(IReadOnlyList<MakroBefehl> selected, string targetGroupId, bool insertAfter)
+        {
+            if (selected.Count == 0) return;
+            var selectedSet = selected.ToHashSet();
+            var originalInsertIndex = selected.Select(Steps.IndexOf).Where(index => index >= 0).DefaultIfEmpty(0).Min();
+            var reordered = Steps.Where(step => !selectedSet.Contains(step)).ToList();
+            var targetSteps = reordered.Where(step => step.GroupId == targetGroupId).ToList();
+            if (targetSteps.Count == 0 && selected.Any(step => step.GroupId != targetGroupId)) return;
+            var insertIndex = targetSteps.Count == 0
+                ? Math.Min(originalInsertIndex, reordered.Count)
+                : insertAfter
+                    ? reordered.IndexOf(targetSteps[^1]) + 1
+                    : reordered.IndexOf(targetSteps[0]);
+            reordered.InsertRange(insertIndex, selected);
+            if (Steps.SequenceEqual(reordered) && selected.All(step => step.GroupId is null)) return;
+
+            PushUndo();
+            foreach (var item in selected) item.GroupId = null;
+            _stepItems.ReplaceRange(reordered);
+            NormalizeGroups();
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(selected);
+            SelectedStep = selected[^1];
+            NotifySelectionChanged();
+            UpdateDirtyState();
+            InvalidateAllCommands();
         }
 
         private void MoveStepRelativeToGroup(MakroBefehl source, string targetGroupId, bool insertAfter)
@@ -593,8 +690,9 @@ namespace DesktopAutomationApp.ViewModels
 
             if (dlg.ShowDialog() != true || dlgVm.CreatedStep == null) return;
 
-            int insertIndex = SelectedStep != null
-                ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
+            var selected = GetOrderedSelection();
+            int insertIndex = selected.Count > 0
+                ? Math.Min(Steps.Count, selected.Max(Steps.IndexOf) + 1)
                 : Steps.Count;
 
             PushUndo();
@@ -626,16 +724,40 @@ namespace DesktopAutomationApp.ViewModels
 
         private void DuplicateStep(MakroBefehl? step)
         {
-            if (step == null) return;
-            var sources = SelectedSteps.Count > 1 && SelectedSteps.Contains(step)
-                ? SelectedSteps.OrderBy(Steps.IndexOf).ToList()
-                : [step];
+            var sources = GetOrderedSelection(step);
+            if (sources.Count == 0) return;
             PushUndo();
-            var clones = sources.Select(CloneStep).ToList();
+            var completeGroups = sources
+                .Where(source => source.GroupId is not null)
+                .Select(source => source.GroupId!)
+                .Distinct(StringComparer.Ordinal)
+                .Where(groupId => Steps.Where(item => item.GroupId == groupId).All(sources.Contains))
+                .ToDictionary(
+                    groupId => groupId,
+                    groupId => new MakroGruppe
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Title = Loc.Format("Ui.Macro.Group.CopyTitle", FindGroup(groupId)?.Title ?? string.Empty),
+                        IsAutomatic = FindGroup(groupId)?.IsAutomatic == true
+                    },
+                    StringComparer.Ordinal);
+            foreach (var group in completeGroups.Values) Groups.Add(group);
+
+            var clones = sources.Select(source =>
+            {
+                var clone = CloneStep(source);
+                clone.Id = Guid.NewGuid().ToString();
+                if (source.GroupId is { } groupId && completeGroups.TryGetValue(groupId, out var copiedGroup))
+                    clone.GroupId = copiedGroup.Id;
+                return clone;
+            }).ToList();
             var insertIndex = Math.Min(Steps.Count, sources.Max(Steps.IndexOf) + 1);
             _stepItems.InsertRange(insertIndex, clones);
             NormalizeGroups();
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(clones);
             SelectedStep = clones[^1];
+            NotifySelectionChanged();
             UpdateDirtyState();
         }
 
@@ -692,6 +814,7 @@ namespace DesktopAutomationApp.ViewModels
             Groups.CollectionChanged += Groups_CollectionChanged;
             SelectedStep = null;
             SelectedSteps.Clear();
+            NotifySelectionChanged();
             UpdateDirtyState();
             RecalculatePresentation();
         }
@@ -745,10 +868,8 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Copy / Paste ----------
         private void CopySelected()
         {
-            var sources = SelectedSteps.Count > 0
-                ? SelectedSteps.OrderBy(s => Steps.IndexOf(s)).ToList()
-                : (SelectedStep != null ? new List<MakroBefehl> { SelectedStep } : null);
-            if (sources == null) return;
+            var sources = GetOrderedSelection();
+            if (sources.Count == 0) return;
             _clipboard = sources.Select(s => CloneStep(s)).ToList();
             InvalidateAllCommands();
         }
@@ -757,27 +878,34 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (_clipboard.Count == 0) return;
 
-            int insertAt = SelectedStep != null
-                ? Math.Min(Steps.Count, Steps.IndexOf(SelectedStep) + 1)
+            var selected = GetOrderedSelection();
+            int insertAt = selected.Count > 0
+                ? Math.Min(Steps.Count, selected.Max(Steps.IndexOf) + 1)
                 : Steps.Count;
 
-            var toInsert = _clipboard.Select(s => CloneStep(s)).ToList();
+            var toInsert = _clipboard.Select(s =>
+            {
+                var clone = CloneStep(s);
+                clone.Id = Guid.NewGuid().ToString();
+                return clone;
+            }).ToList();
             PushUndo();
             for (int i = 0; i < toInsert.Count; i++)
                 Steps.Insert(insertAt + i, toInsert[i]);
 
             NormalizeGroups();
+            SelectedSteps.Clear();
+            SelectedSteps.AddRange(toInsert);
             SelectedStep = toInsert[^1];
+            NotifySelectionChanged();
             UpdateDirtyState();
         }
 
         // ---------- Delete selected ----------
         private async Task DeleteSelectedAsync()
         {
-            var targets = SelectedSteps.Count > 0
-                ? SelectedSteps.ToList()
-                : (SelectedStep != null ? new List<MakroBefehl> { SelectedStep } : null);
-            if (targets == null || targets.Count == 0) return;
+            var targets = GetOrderedSelection();
+            if (targets.Count == 0) return;
 
             string message = targets.Count == 1
                 ? Loc.Get("Step.Delete.One")
@@ -797,6 +925,7 @@ namespace DesktopAutomationApp.ViewModels
             NormalizeGroups();
             SelectedStep = Steps.ElementAtOrDefault(Math.Max(0, firstIdx - 1));
             SelectedSteps.Clear();
+            NotifySelectionChanged();
             UpdateDirtyState();
             InvalidateAllCommands();
         }

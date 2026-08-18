@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Input;
+using DesktopAutomationApp.Localization;
 using System.Windows.Controls.Primitives;
 
 namespace DesktopAutomationApp.Views
@@ -15,6 +16,7 @@ namespace DesktopAutomationApp.Views
         private MakroStepsViewModel? _vm;
         private bool _syncingSelection;
         private MacroListItem? _contextItem;
+        private bool _contextUsesStepSelection;
 
         public MakroStepsView()
         {
@@ -40,6 +42,19 @@ namespace DesktopAutomationApp.Views
             if (!StepsList.IsKeyboardFocusWithin || ViewShortcutRouter.IsTextInputFocused
                 || Keyboard.FocusedElement is ButtonBase or ComboBox)
                 return;
+
+            if (AppShortcutGestures.Matches(e, AppShortcutGestures.SelectAll))
+            {
+                StepsList.SelectAll();
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                StepsList.UnselectAll();
+                e.Handled = true;
+                return;
+            }
 
             if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.AddStep, _vm.AddStepCommand)
                 || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.EditStep, _vm.EditStepCommand, _vm.SelectedStep)
@@ -67,7 +82,7 @@ namespace DesktopAutomationApp.Views
 
         private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName != nameof(MakroStepsViewModel.SelectedStep)) return;
+            if (_syncingSelection || e.PropertyName != nameof(MakroStepsViewModel.SelectedStep)) return;
 
             var visibleItem = _vm!.SelectedStep is null ? null : _vm.GetVisibleItem(_vm.SelectedStep);
             if (visibleItem != null && StepsList.SelectedItems.Contains(visibleItem))
@@ -102,23 +117,27 @@ namespace DesktopAutomationApp.Views
                 return;
 
             _contextItem = item.DataContext as MacroListItem;
+            _contextUsesStepSelection = false;
             if (_contextItem is MacroGroupListItem)
             {
+                if (StepsList.SelectedItems.Count > 1)
+                {
+                    _contextUsesStepSelection = true;
+                    return;
+                }
                 StepsList.SelectedItems.Clear();
                 item.IsSelected = true;
                 return;
             }
 
             if (item.IsSelected) return;
-
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == 0)
-                StepsList.SelectedItems.Clear();
+            StepsList.SelectedItems.Clear();
             item.IsSelected = true;
         }
 
         private void StepsContextMenu_Opened(object sender, RoutedEventArgs e)
         {
-            var groupContext = _contextItem is MacroGroupListItem;
+            var groupContext = _contextItem is MacroGroupListItem && !_contextUsesStepSelection;
             var groupVisibility = groupContext ? Visibility.Visible : Visibility.Collapsed;
             var stepVisibility = groupContext ? Visibility.Collapsed : Visibility.Visible;
 
@@ -131,6 +150,21 @@ namespace DesktopAutomationApp.Views
             StepCopyMenuItem.Visibility = stepVisibility;
             StepDuplicateMenuItem.Visibility = stepVisibility;
             StepDeleteMenuItem.Visibility = stepVisibility;
+
+            if (!groupContext && _vm is { } viewModel)
+            {
+                var count = Math.Max(1, viewModel.SelectedStepCount);
+                var multiple = count > 1;
+                StepCopyMenuItem.Header = multiple
+                    ? Loc.Format("Ui.Common.CopySelected", count)
+                    : Loc.Get("Ui.Common.Copy");
+                StepDuplicateMenuItem.Header = multiple
+                    ? Loc.Format("Ui.Common.DuplicateSelected", count)
+                    : Loc.Get("Ui.Macro.Steps.DuplicateStep");
+                StepDeleteMenuItem.Header = multiple
+                    ? Loc.Format("Ui.Common.DeleteSelected", count)
+                    : Loc.Get("Ui.Macro.Steps.DeleteStep");
+            }
 
             if (_contextItem is MacroGroupListItem group)
             {

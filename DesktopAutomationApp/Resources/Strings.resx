@@ -2595,6 +2595,13 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Job bearbeiten</value></data>
   <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job wird ausgeführt</value></data>
   <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} ausgewählt</value></data>
+  <data name="Ui.Macro.Steps.SelectedCount" xml:space="preserve"><value>{0} Steps ausgewählt</value></data>
+  <data name="Ui.Job.Steps.ToggleSelected" xml:space="preserve"><value>{0} Steps aktivieren/deaktivieren</value></data>
+  <data name="Ui.Common.DeleteSelected" xml:space="preserve"><value>{0} Steps löschen</value></data>
+  <data name="Ui.Common.CopySelected" xml:space="preserve"><value>{0} Steps kopieren</value></data>
+  <data name="Ui.Common.DuplicateSelected" xml:space="preserve"><value>{0} Steps duplizieren</value></data>
+  <data name="Ui.Job.Debug.ToggleBreakpoints" xml:space="preserve"><value>{0} Breakpoints umschalten</value></data>
+  <data name="Ui.Macro.Group.CopyTitle" xml:space="preserve"><value>{0} – Kopie</value></data>
   <data name="Ui.Job.Steps.ProblemCount" xml:space="preserve"><value>{0} Probleme</value></data>
   <data name="Ui.Job.Steps.EnableStep" xml:space="preserve"><value>Step aktivieren</value></data>
   <data name="Ui.Job.Steps.DisableStep" xml:space="preserve"><value>Step deaktivieren</value></data>

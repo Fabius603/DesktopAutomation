@@ -19,6 +19,7 @@ public static class AppShortcutGestures
     public static KeyGesture Undo { get; } = new(Key.Z, ModifierKeys.Control);
     public static KeyGesture Redo { get; } = new(Key.Y, ModifierKeys.Control);
     public static KeyGesture RedoAlternate { get; } = new(Key.Z, ModifierKeys.Control | ModifierKeys.Shift);
+    public static KeyGesture SelectAll { get; } = new(Key.A, ModifierKeys.Control);
     public static KeyGesture Execute { get; } = new(Key.F5);
     public static KeyGesture Stop { get; } = new(Key.F5, ModifierKeys.Shift);
     public static KeyGesture Back { get; } = new(Key.Left, ModifierKeys.Alt);

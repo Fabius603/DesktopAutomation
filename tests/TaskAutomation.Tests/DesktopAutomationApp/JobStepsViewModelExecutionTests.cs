@@ -63,6 +63,96 @@ public sealed class JobStepsViewModelExecutionTests
     }
 
     [Fact]
+    public async Task MultiSelection_DuplicatesInListOrderAndDisablesSingleEdit()
+    {
+        var first = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 100 } };
+        var middle = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 200 } };
+        var last = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 300 } };
+        var viewModel = CreateViewModel(new Job { Name = "Multi", Steps = [first, middle, last] });
+        viewModel.SetSelectedSteps([last, first], viewModel.Steps);
+
+        Assert.False(viewModel.EditStepCommand.CanExecute(first));
+        var command = Assert.IsType<AsyncRelayCommand>(viewModel.DuplicateStepCommand);
+        command.Execute(null);
+        while (command.IsExecuting) await Task.Yield();
+
+        Assert.Equal([100, 200, 300, 100, 300], viewModel.Steps.Select(step => Assert.IsType<TimeoutStep>(step).Settings.DelayMs));
+        Assert.Equal(2, viewModel.SelectedStepCount);
+        Assert.DoesNotContain(viewModel.Steps.Skip(3), clone => clone.Id == first.Id || clone.Id == last.Id);
+    }
+
+    [Fact]
+    public async Task MultiSelection_MovesAsBlockAndTogglesSharedState()
+    {
+        var first = new TimeoutStep();
+        var second = new TimeoutStep();
+        var third = new TimeoutStep { IsEnabled = false };
+        var fourth = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job { Name = "Batch", Steps = [first, second, third, fourth] });
+        viewModel.SetSelectedSteps([second, third], viewModel.Steps);
+
+        var move = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.MoveStepUpCommand);
+        move.Execute(second);
+        while (move.IsExecuting) await Task.Yield();
+        Assert.Equal([second, third, first, fourth], viewModel.Steps);
+
+        var toggle = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.ToggleStepEnabledCommand);
+        toggle.Execute(second);
+        while (toggle.IsExecuting) await Task.Yield();
+        Assert.True(second.IsEnabled);
+        Assert.True(third.IsEnabled);
+
+        var breakpoints = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.ToggleBreakpointCommand);
+        breakpoints.Execute(second);
+        while (breakpoints.IsExecuting) await Task.Yield();
+        Assert.True(second.IsBreakpoint);
+        Assert.True(third.IsBreakpoint);
+    }
+
+    [Fact]
+    public async Task MultiSelection_MovesTogetherToAnotherJobPhase()
+    {
+        var first = new TimeoutStep();
+        var second = new TimeoutStep();
+        var remaining = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job { Name = "Phases", Steps = [first, second, remaining] });
+        viewModel.SetSelectedSteps([first, second], viewModel.Steps);
+        var command = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.MoveToStartSectionCommand);
+
+        command.Execute(first);
+        while (command.IsExecuting) await Task.Yield();
+
+        Assert.Equal([first, second], viewModel.StartSteps);
+        Assert.Equal([remaining], viewModel.Steps);
+        Assert.Equal(2, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
+    public async Task MultiSelection_MovesCompleteConditionalStructureToAnotherPhase()
+    {
+        var untouchedBefore = new TimeoutStep();
+        var conditional = new IfStep();
+        var body = new TimeoutStep();
+        var endIf = new EndIfStep();
+        var selectedAfter = new TimeoutStep();
+        var untouchedAfter = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job
+        {
+            Name = "Conditional batch",
+            Steps = [untouchedBefore, conditional, body, endIf, selectedAfter, untouchedAfter]
+        });
+        viewModel.SetSelectedSteps([conditional, selectedAfter], viewModel.Steps);
+        var command = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.MoveToStartSectionCommand);
+
+        command.Execute(conditional);
+        while (command.IsExecuting) await Task.Yield();
+
+        Assert.Equal([conditional, body, endIf, selectedAfter], viewModel.StartSteps);
+        Assert.Equal([untouchedBefore, untouchedAfter], viewModel.Steps);
+        Assert.Equal(4, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
     public async Task DiscardCommand_RequiresConfirmation()
     {
         var job = new Job { Name = "Discard", Repeating = false, Steps = [new TimeoutStep()] };
@@ -80,6 +170,39 @@ public sealed class JobStepsViewModelExecutionTests
         while (command.IsExecuting) await Task.Yield();
         Assert.False(viewModel.IsRepeating);
         Assert.Equal(2, dialog.ConfirmCalls);
+    }
+
+    [Fact]
+    public async Task DiscardCommand_RestoresSavedStepsAndResetsEditorState()
+    {
+        var original = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 250 } };
+        var dialog = new DialogServiceStub { ConfirmResult = true };
+        var viewModel = CreateViewModel(new Job { Name = "Discard steps", Steps = [original] }, dialog: dialog);
+        viewModel.SelectedStep = original;
+        var cancelNotifications = 0;
+        viewModel.CancelCommand.CanExecuteChanged += (_, _) => cancelNotifications++;
+        var duplicate = Assert.IsType<AsyncRelayCommand>(viewModel.DuplicateStepCommand);
+
+        duplicate.Execute(null);
+        while (duplicate.IsExecuting) await Task.Yield();
+        await viewModel.WaitForDirtyStateAsync();
+
+        Assert.True(viewModel.HasUnsavedChanges);
+        Assert.True(viewModel.CanUndo);
+        Assert.True(cancelNotifications > 0);
+        var discard = Assert.IsType<AsyncRelayCommand>(viewModel.CancelCommand);
+        discard.Execute(null);
+        while (discard.IsExecuting) await Task.Yield();
+
+        var restored = Assert.IsType<TimeoutStep>(Assert.Single(viewModel.Steps));
+        Assert.Equal(250, restored.Settings.DelayMs);
+        Assert.Equal(original.Id, restored.Id);
+        Assert.False(viewModel.HasUnsavedChanges);
+        Assert.False(viewModel.CanUndo);
+        Assert.False(viewModel.CanRedo);
+        Assert.Null(viewModel.SelectedStep);
+        Assert.Empty(viewModel.SelectedSteps);
+        Assert.Equal(1, dialog.ConfirmCalls);
     }
 
     private static JobStepsViewModel CreateViewModel(

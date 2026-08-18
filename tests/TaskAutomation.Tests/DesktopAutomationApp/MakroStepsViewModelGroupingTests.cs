@@ -68,6 +68,88 @@ public sealed class MakroStepsViewModelGroupingTests
     }
 
     [Fact]
+    public void MultiSelection_MovesAsBlockAndDisablesSingleEdit()
+    {
+        var first = new MouseMoveAbsoluteBefehl();
+        var second = new MouseMoveAbsoluteBefehl();
+        var third = new MouseMoveAbsoluteBefehl();
+        var fourth = new MouseMoveAbsoluteBefehl();
+        using var viewModel = CreateViewModel(new Makro { Name = "Multi", Befehle = [first, second, third, fourth] });
+        var live = viewModel.Steps.ToList();
+        viewModel.SetSelectedSteps([new MacroStepListItem(live[1], 2), new MacroStepListItem(live[2], 3)]);
+
+        Assert.False(viewModel.EditStepCommand.CanExecute(live[1]));
+        viewModel.MoveStepUpCommand.Execute(live[1]);
+
+        Assert.Equal([live[1].Id, live[2].Id, live[0].Id, live[3].Id], viewModel.Steps.Select(step => step.Id));
+        Assert.Equal(2, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
+    public void DuplicateCompleteGroup_CreatesIndependentGroupAndStepIdentities()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        var macro = CreateMacro(group);
+        using var viewModel = CreateViewModel(macro);
+        var originals = viewModel.Steps.ToList();
+        viewModel.SetSelectedSteps([new MacroGroupListItem(group.Id, group.Title, string.Empty, false)]);
+
+        viewModel.DuplicateStepCommand.Execute(viewModel.SelectedStep);
+
+        Assert.Equal(4, viewModel.Steps.Count);
+        Assert.Equal(2, viewModel.Groups.Count);
+        var copies = viewModel.Steps.Skip(2).ToList();
+        Assert.Single(copies.Select(step => step.GroupId).Distinct());
+        Assert.NotEqual(group.Id, copies[0].GroupId);
+        Assert.DoesNotContain(copies, copy => originals.Any(original => original.Id == copy.Id));
+        Assert.Equal(2, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
+    public void CreateGroup_IsDisabledForNonContiguousSelection()
+    {
+        var first = new MouseMoveAbsoluteBefehl();
+        var middle = new MouseMoveAbsoluteBefehl();
+        var last = new MouseMoveAbsoluteBefehl();
+        using var viewModel = CreateViewModel(new Makro { Name = "Group", Befehle = [first, middle, last] });
+        viewModel.SetSelectedSteps([
+            new MacroStepListItem(viewModel.Steps[0], 1),
+            new MacroStepListItem(viewModel.Steps[2], 3)]);
+
+        Assert.False(viewModel.CreateGroupCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void DraggingSelectedStep_MovesTheWholeSelectionAsOneBlock()
+    {
+        var first = new MouseMoveAbsoluteBefehl { Id = "first" };
+        var second = new MouseMoveAbsoluteBefehl { Id = "second" };
+        var third = new MouseMoveAbsoluteBefehl { Id = "third" };
+        var fourth = new MouseMoveAbsoluteBefehl { Id = "fourth" };
+        using var viewModel = CreateViewModel(new Makro
+        {
+            Name = "Drag batch",
+            Befehle = [first, second, third, fourth]
+        });
+        var sourceItem = viewModel.VisibleItems.OfType<MacroStepListItem>().Single(item => item.Step.Id == "second");
+        var targetItem = viewModel.VisibleItems.OfType<MacroStepListItem>().Single(item => item.Step.Id == "fourth");
+        viewModel.SetSelectedSteps(viewModel.VisibleItems.OfType<MacroStepListItem>()
+            .Where(item => item.Step.Id is "second" or "third"));
+        var visibleItems = (System.Collections.IList)viewModel.VisibleItems;
+
+        viewModel.ReorderStepCommand.Execute(new StepDragDrop.MoveRequest(
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(sourceItem),
+            visibleItems,
+            viewModel.VisibleItems.Count,
+            targetItem,
+            InsertAfterTarget: true));
+
+        Assert.Equal(["first", "fourth", "second", "third"], viewModel.Steps.Select(step => step.Id));
+        Assert.Equal(2, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
     public async Task DiscardCommand_RequiresConfirmation()
     {
         var group = new MakroGruppe { Id = "group", Title = "Group" };
