@@ -196,8 +196,18 @@ namespace DesktopAutomationApp.ViewModels
             Open = () => RequestOpenAutomation?.Invoke(automation),
             Execute = () => _ = RunAutomationFromLibraryAsync(automation),
             CanExecute = () => automation.Active,
+            RenameAsync = () => RenameAutomationFromLibraryAsync(automation),
             DeleteAsync = () => DeleteAutomationFromLibraryAsync(automation)
         };
+
+        private async Task RenameAutomationFromLibraryAsync(EditableAutomation automation)
+        {
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), automation.Name);
+            if (string.IsNullOrWhiteSpace(name) || name.Trim() == automation.Name) return;
+            automation.Name = name.Trim();
+            await _automationAppService.SaveAsync(automation.ToDomain());
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
 
         private async Task RunAutomationFromLibraryAsync(EditableAutomation automation)
         {

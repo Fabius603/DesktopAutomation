@@ -32,8 +32,12 @@ namespace DesktopAutomationApp.ViewModels
         private readonly EditableAutomation _snapshot;
         private readonly bool _isNew;
         private readonly EditorChangeTracker<AutomationEditState> _changeTracker;
+        private readonly Stack<EditableAutomation> _undoStack = new();
+        private readonly Stack<EditableAutomation> _redoStack = new();
+        private EditableAutomation _historyCurrent;
         private bool _baselineAccepted;
         private bool _suppressDirtyTracking;
+        private bool _suppressHistoryTracking;
 
         private bool _hasUnsavedChanges;
         private readonly HashSet<string> _invalidDateTimeInputs = new();
@@ -58,31 +62,34 @@ namespace DesktopAutomationApp.ViewModels
             get => _selectedAction;
             set
             {
-                _selectedAction = value;
-                if (value != null)
+                RunHistoryTransaction(() =>
                 {
-                    if (value.Category == "Makro")
+                    _selectedAction = value;
+                    if (value != null)
                     {
-                        EditedAutomation.Action.ActionType = AutomationActionTarget.Makro;
-                        EditedAutomation.Action.MakroId = value.Id;
-                        EditedAutomation.Action.JobId = null;
+                        if (value.Category == "Makro")
+                        {
+                            EditedAutomation.Action.ActionType = AutomationActionTarget.Makro;
+                            EditedAutomation.Action.MakroId = value.Id;
+                            EditedAutomation.Action.JobId = null;
+                        }
+                        else
+                        {
+                            EditedAutomation.Action.ActionType = AutomationActionTarget.Job;
+                            EditedAutomation.Action.JobId = value.Id;
+                            EditedAutomation.Action.MakroId = null;
+                        }
+
+                        EditedAutomation.Action.Name = value.Name;
+                        OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
                     }
                     else
                     {
-                        EditedAutomation.Action.ActionType = AutomationActionTarget.Job;
-                        EditedAutomation.Action.JobId = value.Id;
+                        EditedAutomation.Action.JobId = null;
                         EditedAutomation.Action.MakroId = null;
+                        EditedAutomation.Action.Name = string.Empty;
                     }
-
-                    EditedAutomation.Action.Name = value.Name;
-                    OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
-                }
-                else
-                {
-                    EditedAutomation.Action.JobId = null;
-                    EditedAutomation.Action.MakroId = null;
-                    EditedAutomation.Action.Name = string.Empty;
-                }
+                });
 
                 OnPropertyChanged();
                 UpdateDirtyState();
@@ -125,6 +132,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenFileCommand { get; }
         public ICommand TriggerCommand { get; }
         public ICommand CaptureHotkeyCommand { get; }
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
         public ICommand BrowseFileSystemFolderCommand { get; }
         public ICommand ClearActiveWindowCommand { get; }
         public ICommand CopyWebhookUrlCommand { get; }
@@ -153,6 +162,7 @@ namespace DesktopAutomationApp.ViewModels
             _log = log;
             _isNew = automation.CreatedAt == automation.UpdatedAt && string.IsNullOrWhiteSpace(automation.Action.Name);
             _snapshot = automation.Clone();
+            _historyCurrent = automation.Clone();
             _baselineAccepted = !_isNew;
             _changeTracker = new EditorChangeTracker<AutomationEditState>(
                 CaptureEditState(EditedAutomation),
@@ -186,17 +196,24 @@ namespace DesktopAutomationApp.ViewModels
 
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand = new RelayCommand(async () => await SaveAsync(), () => HasUnsavedChanges && _invalidDateTimeInputs.Count == 0);
-            CancelCommand = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
+            CancelCommand = new RelayCommand(async () => await ConfirmDiscardChangesAsync(), () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await RenameAsync());
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
             TriggerCommand = new RelayCommand(async () => await _automationAppService.TriggerAsync(EditedAutomation.Id),
                 () => !_isNew && EditedAutomation.Active && !HasUnsavedChanges);
-            CaptureHotkeyCommand = new RelayCommand(async () => await CaptureHotkeyAsync(), () => !IsCapturingHotkey);
+            CaptureHotkeyCommand = new RelayCommand(
+                async () => await CaptureHotkeyAsync(),
+                () => EditedAutomation.TriggerKind == AutomationTriggerKind.Hotkey && !IsCapturingHotkey);
+            UndoCommand = new RelayCommand(Undo, () => _undoStack.Count > 0);
+            RedoCommand = new RelayCommand(Redo, () => _redoStack.Count > 0);
             BrowseFileSystemFolderCommand = new RelayCommand(BrowseFileSystemFolder);
             ClearActiveWindowCommand = new RelayCommand(() =>
             {
-                EditedAutomation.EnabledFrom = null;
-                EditedAutomation.EnabledUntil = null;
+                RunHistoryTransaction(() =>
+                {
+                    EditedAutomation.EnabledFrom = null;
+                    EditedAutomation.EnabledUntil = null;
+                });
                 ReportDateTimeInputValidity("EnabledFrom", true);
                 ReportDateTimeInputValidity("EnabledUntil", true);
             });
@@ -294,8 +311,11 @@ namespace DesktopAutomationApp.ViewModels
             {
                 IsCapturingHotkey = true;
                 var captured = await _hotkeyService.CaptureNextAsync();
-                EditedAutomation.Modifiers = captured.Modifiers;
-                EditedAutomation.VirtualKeyCode = captured.VirtualKeyCode;
+                RunHistoryTransaction(() =>
+                {
+                    EditedAutomation.Modifiers = captured.Modifiers;
+                    EditedAutomation.VirtualKeyCode = captured.VirtualKeyCode;
+                });
                 UpdateDirtyState();
             }
             catch (Exception ex)
@@ -369,6 +389,18 @@ namespace DesktopAutomationApp.ViewModels
             }
 
             _changeTracker.Accept(CaptureEditState(EditedAutomation));
+            _historyCurrent = EditedAutomation.Clone();
+            _undoStack.Clear();
+            _redoStack.Clear();
+            InvalidateHistoryCommands();
+        }
+
+        private async Task ConfirmDiscardChangesAsync()
+        {
+            if (await _dialogService.ConfirmAsync(
+                    Loc.Get("Dialog.Discard.Message"),
+                    Loc.Get("Dialog.Discard.Title")))
+                DiscardChanges();
         }
 
         private static string LocalizeValidationError(AutomationValidationError error) => error switch
@@ -432,6 +464,7 @@ namespace DesktopAutomationApp.ViewModels
                 or nameof(EditableAutomation.LastRunDisplay))
                 return;
 
+            RecordHistoryChange();
             UpdateDirtyState();
             if (e.PropertyName is nameof(EditableAutomation.TriggerKind)
                 or nameof(EditableAutomation.Modifiers)
@@ -446,18 +479,22 @@ namespace DesktopAutomationApp.ViewModels
                 OnPropertyChanged(nameof(EditedAutomation.DisplayTrigger));
             }
             if (e.PropertyName == nameof(EditableAutomation.TriggerKind))
+            {
                 OnPropertyChanged(nameof(TriggerDescription));
+                (CaptureHotkeyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
         }
 
         private void OnEditedActionChanged(object? sender, PropertyChangedEventArgs e)
         {
+            RecordHistoryChange();
             UpdateDirtyState();
             OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
         }
 
         private void OnWindowsEventPickerChanged()
         {
-            SyncWindowsEvent();
+            RunHistoryTransaction(SyncWindowsEvent);
             UpdateDirtyState();
             OnPropertyChanged(nameof(TriggerDescription));
         }
@@ -477,6 +514,83 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         internal Task WaitForDirtyStateAsync() => _changeTracker.WhenIdleAsync();
+
+        private void RecordHistoryChange()
+        {
+            if (_suppressHistoryTracking)
+                return;
+
+            var currentState = CaptureEditState(EditedAutomation);
+            if (currentState == CaptureEditState(_historyCurrent))
+                return;
+
+            _undoStack.Push(_historyCurrent.Clone());
+            _historyCurrent = EditedAutomation.Clone();
+            _redoStack.Clear();
+            InvalidateHistoryCommands();
+        }
+
+        private void RunHistoryTransaction(Action change)
+        {
+            var wasSuppressed = _suppressHistoryTracking;
+            _suppressHistoryTracking = true;
+            try
+            {
+                change();
+            }
+            finally
+            {
+                _suppressHistoryTracking = wasSuppressed;
+            }
+
+            if (!wasSuppressed)
+                RecordHistoryChange();
+        }
+
+        private void Undo()
+        {
+            if (_undoStack.Count == 0) return;
+            _redoStack.Push(EditedAutomation.Clone());
+            RestoreHistorySnapshot(_undoStack.Pop());
+        }
+
+        private void Redo()
+        {
+            if (_redoStack.Count == 0) return;
+            _undoStack.Push(EditedAutomation.Clone());
+            RestoreHistorySnapshot(_redoStack.Pop());
+        }
+
+        private void RestoreHistorySnapshot(EditableAutomation snapshot)
+        {
+            _suppressHistoryTracking = true;
+            _suppressDirtyTracking = true;
+            try
+            {
+                CopyFrom(snapshot, EditedAutomation);
+                WindowsEventPicker.Load(snapshot.WindowsEventType, snapshot.WindowsEventFilters);
+                ResolveSelectedAction();
+                _historyCurrent = EditedAutomation.Clone();
+            }
+            finally
+            {
+                _suppressDirtyTracking = false;
+                _suppressHistoryTracking = false;
+            }
+
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(EditedAutomation.DisplayTrigger));
+            OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
+            OnPropertyChanged(nameof(TriggerDescription));
+            UpdateDirtyState();
+            InvalidateHistoryCommands();
+        }
+
+        private void InvalidateHistoryCommands()
+        {
+            (UndoCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
 
         private static AutomationEditState CaptureEditState(EditableAutomation automation)
         {

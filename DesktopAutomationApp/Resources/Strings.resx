@@ -1194,6 +1194,12 @@
   <data name="Dialog.Unsaved.Message" xml:space="preserve">
     <value>Es gibt ungespeicherte Änderungen. Möchten Sie speichern?</value>
   </data>
+  <data name="Dialog.Discard.Title" xml:space="preserve">
+    <value>Änderungen verwerfen?</value>
+  </data>
+  <data name="Dialog.Discard.Message" xml:space="preserve">
+    <value>Möchten Sie alle ungespeicherten Änderungen wirklich verwerfen? Diese Aktion kann nicht rückgängig gemacht werden.</value>
+  </data>
   <data name="Dialog.Delete.Title" xml:space="preserve">
     <value>Löschen bestätigen</value>
   </data>
@@ -3033,4 +3039,30 @@ Fehlercode: {3}</value>
   <data name="Macro.Step.Type.MouseWheel" xml:space="preserve"><value>Mausrad bewegen</value></data>
   <data name="Ui.Macro.StepEditor.Description.MouseWheel" xml:space="preserve"><value>Scrollt horizontal oder vertikal mit dem Mausrad.</value></data>
   <data name="Ui.Macro.Group.Scroll" xml:space="preserve"><value>Scrollen</value></data>
+  <data name="Shortcut.CtrlN" xml:space="preserve"><value>Strg+N</value></data>
+  <data name="Shortcut.CtrlShiftN" xml:space="preserve"><value>Strg+Umschalt+N</value></data>
+  <data name="Shortcut.F2" xml:space="preserve"><value>F2</value></data>
+  <data name="Shortcut.AltUp" xml:space="preserve"><value>Alt+Hoch</value></data>
+  <data name="Shortcut.Delete" xml:space="preserve"><value>Entf</value></data>
+  <data name="Shortcut.Enter" xml:space="preserve"><value>Eingabe</value></data>
+  <data name="Shortcut.NavigateJobs" xml:space="preserve"><value>Jobs öffnen (Strg+1)</value></data>
+  <data name="Shortcut.NavigateMacros" xml:space="preserve"><value>Makros öffnen (Strg+2)</value></data>
+  <data name="Shortcut.NavigateAutomations" xml:space="preserve"><value>Automationen öffnen (Strg+3)</value></data>
+  <data name="Shortcut.Save" xml:space="preserve"><value>Speichern (Strg+S)</value></data>
+  <data name="Shortcut.Back" xml:space="preserve"><value>Zurück (Alt+Links)</value></data>
+  <data name="Shortcut.CtrlO" xml:space="preserve"><value>Strg+O</value></data>
+  <data name="Shortcut.RunJob" xml:space="preserve"><value>Job ausführen (F5)</value></data>
+  <data name="Shortcut.StopJob" xml:space="preserve"><value>Job oder Debugging stoppen (Umschalt+F5)</value></data>
+  <data name="Shortcut.RunMacro" xml:space="preserve"><value>Makro ausführen (F5)</value></data>
+  <data name="Shortcut.StopMacro" xml:space="preserve"><value>Makro stoppen (Umschalt+F5)</value></data>
+  <data name="Shortcut.RunAutomation" xml:space="preserve"><value>Automation jetzt ausführen (F5)</value></data>
+  <data name="Shortcut.Space" xml:space="preserve"><value>Leertaste</value></data>
+  <data name="Shortcut.CtrlB" xml:space="preserve"><value>Strg+B</value></data>
+  <data name="Shortcut.CtrlC" xml:space="preserve"><value>Strg+C</value></data>
+  <data name="Shortcut.CtrlD" xml:space="preserve"><value>Strg+D</value></data>
+  <data name="Shortcut.CtrlG" xml:space="preserve"><value>Strg+G</value></data>
+  <data name="Shortcut.CtrlShiftG" xml:space="preserve"><value>Strg+Umschalt+G</value></data>
+  <data name="Shortcut.AltDown" xml:space="preserve"><value>Alt+Runter</value></data>
+  <data name="Shortcut.Help.Title" xml:space="preserve"><value>Tastenkürzel (F1)</value></data>
+  <data name="Shortcut.Help.Message" xml:space="preserve"><value>Navigation&#x0A;Strg+1 Jobs · Strg+2 Makros · Strg+3 Automationen&#x0A;&#x0A;Bibliotheken&#x0A;Strg+F Suchen · Strg+N Neu · Strg+Umschalt+N Neuer Ordner&#x0A;Eingabe Öffnen · F2 Umbenennen · Entf Löschen&#x0A;F5 Ausführen · Umschalt+F5 Stoppen · Alt+Hoch Eine Ebene nach oben&#x0A;&#x0A;Editoren&#x0A;Strg+S Speichern · Alt+Links Zurück · Strg+O Datei öffnen&#x0A;Einfg/Strg+N Step hinzufügen · Eingabe Bearbeiten · Strg+D Duplizieren&#x0A;Alt+Hoch/Runter Verschieben · Strg+Z/Y Rückgängig/Wiederholen&#x0A;&#x0A;Jobs&#x0A;F6 Debuggen · F7 Debug-Step · F8 Fortsetzen · Strg+B Breakpoint · Leertaste Aktivieren&#x0A;&#x0A;Makros&#x0A;Strg+G Gruppieren · Strg+Umschalt+G Gruppe entfernen · Strg+P Vorschau&#x0A;Die konfigurierte Aufnahmetaste startet oder stoppt die Aufnahme. Die Force-Stop-Taste hat immer Vorrang.</value></data>
 </root>

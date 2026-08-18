@@ -46,6 +46,67 @@ public sealed class AutomationDetailViewModelExecutionTests
         Assert.Equal([automation.Id], automationService.TriggeredIds);
     }
 
+    [Fact]
+    public async Task UndoAndRedo_RestoreAutomationEditsAndDirtyState()
+    {
+        var job = new Job { Name = "Target" };
+        var automation = CreateExistingAutomation(job);
+        using var viewModel = CreateViewModel(automation, job);
+        var originalDescription = automation.Description;
+
+        automation.Description = "Changed";
+        Assert.True(viewModel.UndoCommand.CanExecute(null));
+
+        viewModel.UndoCommand.Execute(null);
+        await viewModel.WaitForDirtyStateAsync();
+
+        Assert.Equal(originalDescription, automation.Description);
+        Assert.False(viewModel.HasUnsavedChanges);
+        Assert.True(viewModel.RedoCommand.CanExecute(null));
+
+        viewModel.RedoCommand.Execute(null);
+        await viewModel.WaitForDirtyStateAsync();
+
+        Assert.Equal("Changed", automation.Description);
+        Assert.True(viewModel.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public void Undo_RestoresActionSelectionAsSingleChange()
+    {
+        var job = new Job { Name = "Target" };
+        var automation = CreateExistingAutomation(job);
+        using var viewModel = CreateViewModel(automation, job);
+
+        viewModel.SelectedAction = null;
+        viewModel.UndoCommand.Execute(null);
+
+        Assert.Equal(job.Id, automation.Action.JobId);
+        Assert.Equal(job.Name, automation.Action.Name);
+        Assert.Equal(AutomationActionTarget.Job, automation.Action.ActionType);
+        Assert.False(viewModel.UndoCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task DiscardCommand_RequiresConfirmation()
+    {
+        var job = new Job { Name = "Target" };
+        var automation = CreateExistingAutomation(job);
+        var dialog = new DialogServiceStub { ConfirmResult = false };
+        using var viewModel = CreateViewModel(automation, job, dialog: dialog);
+        automation.Description = "Changed";
+
+        viewModel.CancelCommand.Execute(null);
+        await Task.Yield();
+        Assert.Equal("Changed", automation.Description);
+
+        dialog.ConfirmResult = true;
+        viewModel.CancelCommand.Execute(null);
+        await Task.Yield();
+        Assert.Equal(string.Empty, automation.Description);
+        Assert.Equal(2, dialog.ConfirmCalls);
+    }
+
     private static EditableAutomation CreateExistingAutomation(Job job) => new()
     {
         Name = "Manual trigger",
@@ -63,10 +124,11 @@ public sealed class AutomationDetailViewModelExecutionTests
     private static AutomationDetailViewModel CreateViewModel(
         EditableAutomation automation,
         Job job,
-        AutomationApplicationServiceStub? automationService = null) => new(
+        AutomationApplicationServiceStub? automationService = null,
+        DialogServiceStub? dialog = null) => new(
             automation,
             automationService ?? new AutomationApplicationServiceStub(),
-            new DialogServiceStub(),
+            dialog ?? new DialogServiceStub(),
             new JobApplicationServiceStub(job),
             new MakroApplicationServiceStub(),
             new HotkeyServiceStub(),
@@ -107,7 +169,13 @@ public sealed class AutomationDetailViewModelExecutionTests
 
     private sealed class DialogServiceStub : IDialogService
     {
-        public Task<bool> ConfirmAsync(string message, string title) => Task.FromResult(true);
+        public bool ConfirmResult { get; set; } = true;
+        public int ConfirmCalls { get; private set; }
+        public Task<bool> ConfirmAsync(string message, string title)
+        {
+            ConfirmCalls++;
+            return Task.FromResult(ConfirmResult);
+        }
         public Task<bool?> ConfirmWithCancelAsync(string message, string title) => Task.FromResult<bool?>(true);
         public Task<string?> AskForNameAsync(string title, string prompt, string? defaultValue = null) =>
             Task.FromResult(defaultValue);

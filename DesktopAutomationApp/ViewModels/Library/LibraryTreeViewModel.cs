@@ -35,6 +35,7 @@ public sealed class LibraryItemDescriptor
     public Action? Stop { get; init; }
     public Func<bool>? IsRunning { get; init; }
     public Func<bool>? CanExecute { get; init; }
+    public Func<Task>? RenameAsync { get; init; }
     public Func<Task<bool>>? DeleteAsync { get; init; }
 }
 
@@ -218,6 +219,12 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             else node.Item.Execute?.Invoke();
             node.RefreshState();
         }, node => node?.IsItem == true && (node.IsRunning || node.CanExecute));
+        StartNodeCommand = new RelayCommand<LibraryTreeNodeViewModel?>(
+            node => { node?.Item?.Execute?.Invoke(); node?.RefreshState(); },
+            node => node?.IsItem == true && !node.IsRunning && node.CanExecute);
+        StopNodeCommand = new RelayCommand<LibraryTreeNodeViewModel?>(
+            node => { node?.Item?.Stop?.Invoke(); node?.RefreshState(); },
+            node => node?.IsItem == true && node.IsRunning && node.Item?.Stop != null);
         NewFolderCommand = new AsyncRelayCommand(CreateFolderAsync);
         NewItemCommand = new AsyncRelayCommand(CreateItemAsync);
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
@@ -226,6 +233,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         NewItemInFolderCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(
             CreateItemInFolderAsync, node => node?.IsFolder == true);
         RenameFolderCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(RenameFolderAsync, node => node?.IsFolder == true);
+        RenameNodeCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(RenameNodeAsync, node => node?.IsFolder == true || node?.Item?.RenameAsync != null);
         DeleteNodeCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(DeleteNodeAsync, node => node != null);
         MoveUpOneLevelCommand = new AsyncRelayCommand<LibraryTreeNodeViewModel?>(
             MoveUpOneLevelAsync,
@@ -238,12 +246,15 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     public event Func<Guid?, Task>? RequestCreateItem;
     public ICommand OpenNodeCommand { get; }
     public ICommand ExecuteNodeCommand { get; }
+    public ICommand StartNodeCommand { get; }
+    public ICommand StopNodeCommand { get; }
     public ICommand NewFolderCommand { get; }
     public ICommand NewItemCommand { get; }
     public ICommand ClearSearchCommand { get; }
     public ICommand NewSubfolderCommand { get; }
     public ICommand NewItemInFolderCommand { get; }
     public ICommand RenameFolderCommand { get; }
+    public ICommand RenameNodeCommand { get; }
     public ICommand DeleteNodeCommand { get; }
     public ICommand MoveUpOneLevelCommand { get; }
     public bool HasItems => VisibleNodes.Count > 0;
@@ -315,6 +326,8 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         foreach (var node in VisibleNodes)
             node.RefreshState();
         (ExecuteNodeCommand as RelayCommand<LibraryTreeNodeViewModel?>)?.RaiseCanExecuteChanged();
+        (StartNodeCommand as RelayCommand<LibraryTreeNodeViewModel?>)?.RaiseCanExecuteChanged();
+        (StopNodeCommand as RelayCommand<LibraryTreeNodeViewModel?>)?.RaiseCanExecuteChanged();
     }
 
     public void BeginDrag(LibraryTreeNodeViewModel node)
@@ -492,6 +505,18 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         {
             _dialogs.ShowError(exception.Message, Loc.Get("Ui.Library.OperationFailed"));
         }
+    }
+
+    private async Task RenameNodeAsync(LibraryTreeNodeViewModel? node)
+    {
+        if (node?.IsFolder == true)
+        {
+            await RenameFolderAsync(node);
+            return;
+        }
+
+        if (node?.Item?.RenameAsync is { } renameAsync)
+            await renameAsync();
     }
 
     private async Task DeleteNodeAsync(LibraryTreeNodeViewModel? node)

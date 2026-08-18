@@ -9,9 +9,24 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
+             behaviors:ViewShortcutGuard.IsEnabled="True"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+             xmlns:input="clr-namespace:DesktopAutomationApp.Input"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Save}" Command="{Binding SaveCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NewItem}" Command="{Binding AddStepCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Back}" Command="{Binding BackCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Rename}" Command="{Binding RenameCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.OpenFile}" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Execute}" Command="{Binding StartJobCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Stop}" Command="{Binding StopJobCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.DebugJob}" Command="{Binding DebugJobCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.DebugStep}" Command="{Binding DebugStepCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.DebugContinue}" Command="{Binding DebugContinueCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ToggleBreakpoint}" Command="{Binding ToggleBreakpointCommand}" CommandParameter="{Binding SelectedStep}"/>
+    </UserControl.InputBindings>
     <UserControl.Resources>
         <ResourceDictionary>
             <conv:JobStepDetailsConverter x:Key="JobStepDetailsConverter"/>
@@ -415,8 +430,8 @@
                                           HasExecutionCommands="True"
                                           IsRunning="{Binding IsJobRunning}"
                                           HasUnsavedChanges="{Binding HasUnsavedChanges}"
-                                          ExecuteToolTip="{loc:Translate Key=Ui.Job.Steps.RunJob}"
-                                          StopToolTip="{loc:Translate Key=Ui.Job.Steps.StopJob}"/>
+                                          ExecuteToolTip="{loc:Translate Key=Shortcut.RunJob}"
+                                          StopToolTip="{loc:Translate Key=Shortcut.StopJob}"/>
 
                 <Grid Margin="0,12,0,0">
                     <Grid.ColumnDefinitions>
@@ -638,6 +653,11 @@
                         behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}">
 
                     <ListBox.InputBindings>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.AddStep}" Command="{Binding AddStepCommand}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.EditStep}" Command="{Binding EditStepCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.MoveUp}" Command="{Binding MoveStepUpCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.MoveDown}" Command="{Binding MoveStepDownCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ToggleEnabled}" Command="{Binding ToggleStepEnabledCommand}" CommandParameter="{Binding SelectedStep}"/>
                         <KeyBinding Key="Delete"              Command="{Binding DeleteSelectedCommand}"/>
                         <KeyBinding Key="C" Modifiers="Ctrl"  Command="{Binding CopyCommand}"/>
                         <KeyBinding Key="V" Modifiers="Ctrl"  Command="{Binding PasteCommand}"/>

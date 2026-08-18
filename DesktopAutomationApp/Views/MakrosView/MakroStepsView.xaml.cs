@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Input;
 using DesktopAutomationApp.ViewModels;
+using DesktopAutomationApp.Input;
+using System.Windows.Controls.Primitives;
 
 namespace DesktopAutomationApp.Views
 {
@@ -18,6 +20,42 @@ namespace DesktopAutomationApp.Views
         {
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
+            PreviewKeyDown += OnPreviewKeyDown;
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Handled || _vm is null) return;
+
+            if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Save, _vm.SaveCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.NewItem, _vm.AddStepCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Back, _vm.BackCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Rename, _vm.RenameCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.OpenFile, _vm.OpenFileCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Execute, _vm.StartMakroCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Stop, _vm.StopMakroCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.PreviewMacro, _vm.PreviewPlaybackCommand))
+                return;
+
+            if (!StepsList.IsKeyboardFocusWithin || ViewShortcutRouter.IsTextInputFocused
+                || Keyboard.FocusedElement is ButtonBase or ComboBox)
+                return;
+
+            if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.AddStep, _vm.AddStepCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.EditStep, _vm.EditStepCommand, _vm.SelectedStep)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.DuplicateStep, _vm.DuplicateStepCommand, _vm.SelectedStep)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.MoveUp, _vm.MoveStepUpCommand, _vm.SelectedStep)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.MoveDown, _vm.MoveStepDownCommand, _vm.SelectedStep)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.CreateGroup, _vm.CreateGroupCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.RemoveFromGroup, _vm.RemoveFromGroupCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Delete, _vm.DeleteSelectedCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Copy, _vm.CopyCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Paste, _vm.PasteCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Undo, _vm.UndoCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Redo, _vm.RedoCommand))
+                return;
+
+            ViewShortcutRouter.TryExecute(e, AppShortcutGestures.RedoAlternate, _vm.RedoCommand);
         }
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

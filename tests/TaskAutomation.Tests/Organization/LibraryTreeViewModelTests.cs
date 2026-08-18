@@ -195,6 +195,30 @@ public sealed class LibraryTreeViewModelTests
     }
 
     [Fact]
+    public async Task RenameNodeCommandInvokesItemRenameAction()
+    {
+        var renamed = false;
+        var item = new LibraryItemDescriptor
+        {
+            Id = Guid.NewGuid(),
+            Name = "Daily report",
+            Model = new object(),
+            Open = () => { },
+            RenameAsync = () => { renamed = true; return Task.CompletedTask; }
+        };
+        var viewModel = CreateViewModel(
+            new InMemoryOrganizationService(new LibraryLayout()),
+            new TestPreferencesService());
+        await viewModel.SetItemsAsync([item]);
+        var itemNode = Assert.Single(viewModel.VisibleNodes, node => node.IsItem);
+
+        viewModel.RenameNodeCommand.Execute(itemNode);
+        await Task.Yield();
+
+        Assert.True(renamed);
+    }
+
+    [Fact]
     public async Task FolderCountsIncludeItemsFromNestedFolders()
     {
         var parent = new LibraryFolder

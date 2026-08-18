@@ -68,6 +68,25 @@ public sealed class MakroStepsViewModelGroupingTests
     }
 
     [Fact]
+    public async Task DiscardCommand_RequiresConfirmation()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        var dialog = new DialogServiceStub { ConfirmResult = false };
+        using var viewModel = CreateViewModel(CreateMacro(group), dialog: dialog);
+        viewModel.DissolveGroupCommand.Execute(group.Id);
+
+        viewModel.CancelCommand.Execute(null);
+        await Task.Yield();
+        Assert.Empty(viewModel.Groups);
+
+        dialog.ConfirmResult = true;
+        viewModel.CancelCommand.Execute(null);
+        await Task.Yield();
+        Assert.Single(viewModel.Groups);
+        Assert.Equal(2, dialog.ConfirmCalls);
+    }
+
+    [Fact]
     public void PreserveEditedStepIdentity_KeepsIdAndGroupAssignment()
     {
         var original = new MouseMoveAbsoluteBefehl { Id = "step", GroupId = "group" };
@@ -250,12 +269,13 @@ public sealed class MakroStepsViewModelGroupingTests
 
     private static MakroStepsViewModel CreateViewModel(
         Makro macro,
-        RecordingJobDispatcher? dispatcher = null) => new(
+        RecordingJobDispatcher? dispatcher = null,
+        DialogServiceStub? dialog = null) => new(
         macro,
         NullLogger<MakroStepsViewModel>.Instance,
         new PreviewStub(),
         new MacroApplicationServiceStub(),
-        new DialogServiceStub(),
+        dialog ?? new DialogServiceStub(),
         new HotkeyServiceStub(),
         dispatcher ?? new RecordingJobDispatcher());
 
@@ -277,7 +297,13 @@ public sealed class MakroStepsViewModelGroupingTests
 
     private sealed class DialogServiceStub : IDialogService
     {
-        public Task<bool> ConfirmAsync(string message, string title) => Task.FromResult(true);
+        public bool ConfirmResult { get; set; } = true;
+        public int ConfirmCalls { get; private set; }
+        public Task<bool> ConfirmAsync(string message, string title)
+        {
+            ConfirmCalls++;
+            return Task.FromResult(ConfirmResult);
+        }
         public Task<bool?> ConfirmWithCancelAsync(string message, string title) => Task.FromResult<bool?>(true);
         public Task<string?> AskForNameAsync(string title, string prompt, string? defaultValue = null)
             => Task.FromResult(defaultValue);

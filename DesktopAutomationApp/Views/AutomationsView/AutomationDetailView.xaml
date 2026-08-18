@@ -5,7 +5,21 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:windows="clr-namespace:DesktopAutomationApp.Controls.WindowsIntegration"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+             xmlns:input="clr-namespace:DesktopAutomationApp.Input"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
+             behaviors:ViewShortcutGuard.IsEnabled="True"
              Style="{StaticResource ContentViewBase}">
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Save}" Command="{Binding SaveCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Back}" Command="{Binding BackCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Rename}" Command="{Binding RenameCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.OpenFile}" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Execute}" Command="{Binding TriggerCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.CaptureAutomationHotkey}" Command="{Binding CaptureHotkeyCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Undo}" Command="{Binding UndoCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Redo}" Command="{Binding RedoCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.RedoAlternate}" Command="{Binding RedoCommand}"/>
+    </UserControl.InputBindings>
     <UserControl.Resources>
         <Style x:Key="AutomationExpanderToggleStyle" TargetType="ToggleButton">
             <Setter Property="Background" Value="Transparent"/>
@@ -72,7 +86,7 @@
                                       SaveCommand="{Binding SaveCommand}"
                                       DiscardCommand="{Binding CancelCommand}"
                                       HasExecutionCommands="True"
-                                      ExecuteToolTip="{loc:Translate Key=Ui.Automation.List.RunNow}"
+                                      ExecuteToolTip="{loc:Translate Key=Shortcut.RunAutomation}"
                                       HasUnsavedChanges="{Binding HasUnsavedChanges}"/>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

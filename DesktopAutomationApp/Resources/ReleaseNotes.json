@@ -6,7 +6,13 @@
       {
         "title": { "de": "Darstellung", "en": "Appearance" },
         "changes": [
-          { "category": "Changed", "de": "Die Bearbeitungsansichten für Jobs, Makros und Automationen verwenden eine einheitliche Kopfzeile, in der Speichern und Verwerfen nur bei tatsächlichen Abweichungen direkt vor Ausführen erscheinen; der Makro-Editor zeigt Statistiken bei den Filtern sowie kompaktere Aufnahme- und Vorschauaktionen.", "en": "The job, macro, and automation editors use a consistent header where save and discard appear directly before run only for actual differences; the macro editor shows statistics beside the filters and provides more compact recording and preview actions." }
+          { "category": "Changed", "de": "Die Bearbeitungsansichten für Jobs, Makros und Automationen verwenden eine einheitliche Kopfzeile, in der Speichern und Verwerfen nur bei tatsächlichen Abweichungen direkt vor Ausführen erscheinen und Verwerfen immer bestätigt werden muss; der Makro-Editor zeigt Statistiken bei den Filtern sowie kompaktere Aufnahme- und Vorschauaktionen.", "en": "The job, macro, and automation editors use a consistent header where save and discard appear directly before run only for actual differences and discarding always requires confirmation; the macro editor shows statistics beside the filters and provides more compact recording and preview actions." }
+        ]
+      },
+      {
+        "title": { "de": "Bedienung", "en": "Productivity" },
+        "changes": [
+          { "category": "Added", "de": "Jobs, Makros und Automationen lassen sich in Bibliotheken und Editoren durchgängig per Tastatur suchen, anlegen, öffnen, umbenennen, bearbeiten, ausführen und stoppen; Änderungen an Automationen können rückgängig gemacht und wiederhergestellt werden, während globale Aufnahme- und Force-Stop-Tasten Vorrang behalten.", "en": "Jobs, macros, and automations can be consistently searched, created, opened, renamed, edited, run, and stopped from the keyboard in libraries and editors; automation changes can be undone and redone while global recording and force-stop keys retain priority." }
         ]
       },
       {

@@ -364,6 +364,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand RedoCommand { get; }
         public ICommand CopyCommand { get; }
         public ICommand PasteCommand { get; }
+        public ICommand DuplicateStepCommand { get; }
         public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand DebugJobCommand { get; }
@@ -428,7 +429,7 @@ namespace DesktopAutomationApp.ViewModels
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new AsyncRelayCommand(Save, () => HasUnsavedChanges && !IsDebugActive && !IsMutationBusy);
-            CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges && !IsDebugActive);
+            CancelCommand = new AsyncRelayCommand(ConfirmDiscardChangesAsync, () => HasUnsavedChanges && !IsDebugActive);
             RenameCommand = new AsyncRelayCommand(Rename, () => !IsDebugActive);
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
@@ -445,6 +446,7 @@ namespace DesktopAutomationApp.ViewModels
             RedoCommand           = new AsyncRelayCommand(RedoAsync, () => !IsDebugActive && !IsMutationBusy && CanRedo);
             CopyCommand           = new AsyncRelayCommand(CopySelectedAsync, () => !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
             PasteCommand          = new AsyncRelayCommand(PasteAsync, () => !IsDebugActive && !IsMutationBusy && _clipboard.Count > 0);
+            DuplicateStepCommand  = new AsyncRelayCommand(DuplicateSelectedAsync, () => !IsDebugActive && !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
 
             StartJobCommand = new RelayCommand(() =>
             {
@@ -453,8 +455,11 @@ namespace DesktopAutomationApp.ViewModels
             }, () => !IsJobRunning && !HasUnsavedChanges && !IsDebugActive && AllSteps().Any(step => step.IsEnabled));
             StopJobCommand = new RelayCommand(() =>
             {
-                _dispatcher.CancelJobsByDefinition(Job.Id);
-            }, () => CanRequestJobStop);
+                if (IsDebugActive && _debugSession != null)
+                    _dispatcher.CancelDebugJob(_debugSession.InstanceId);
+                else
+                    _dispatcher.CancelJobsByDefinition(Job.Id);
+            }, () => CanRequestJobStop || IsDebugActive);
             DebugJobCommand = new RelayCommand(StartDebugJob,
                 () => !IsJobRunning && !HasUnsavedChanges && AllSteps().Any(step => step.IsEnabled));
             DebugStepCommand = new RelayCommand(
@@ -1007,6 +1012,14 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(IsRepeating));
             _changeTracker.Accept(CaptureSavedEditState());
             ScheduleValidation();
+        }
+
+        private async Task ConfirmDiscardChangesAsync()
+        {
+            if (await _dialogService.ConfirmAsync(
+                    Loc.Get("Dialog.Discard.Message"),
+                    Loc.Get("Dialog.Discard.Title")))
+                DiscardChanges();
         }
 
         // ---------- Save ----------
@@ -1578,6 +1591,12 @@ namespace DesktopAutomationApp.ViewModels
             });
         }
 
+        private async Task DuplicateSelectedAsync()
+        {
+            await CopySelectedAsync();
+            await PasteAsync();
+        }
+
         private async Task RunMutationAsync(Func<Task> action)
         {
             await _mutationGate.WaitAsync();
@@ -1939,6 +1958,7 @@ namespace DesktopAutomationApp.ViewModels
             (DeleteStepCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (DeleteSelectedCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (CopyCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (DuplicateStepCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void InvalidateHistoryCommands()
@@ -1960,6 +1980,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void InvalidateDebugCommands()
         {
+            (StopJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DebugStepCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DebugContinueCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelDebugCommand as RelayCommand)?.RaiseCanExecuteChanged();
@@ -1993,6 +2014,7 @@ namespace DesktopAutomationApp.ViewModels
             (RedoCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (CopyCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (PasteCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (DuplicateStepCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (AddElseIfCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (AddElseCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (MoveToStartSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();

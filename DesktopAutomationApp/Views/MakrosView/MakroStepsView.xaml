@@ -6,11 +6,23 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
+             behaviors:ViewShortcutGuard.IsEnabled="True"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+             xmlns:input="clr-namespace:DesktopAutomationApp.Input"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Save}" Command="{Binding SaveCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NewItem}" Command="{Binding AddStepCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Back}" Command="{Binding BackCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Rename}" Command="{Binding RenameCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.OpenFile}" Command="{Binding OpenFileCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Execute}" Command="{Binding StartMakroCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.Stop}" Command="{Binding StopMakroCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.PreviewMacro}" Command="{Binding PreviewPlaybackCommand}"/>
+    </UserControl.InputBindings>
     <UserControl.Resources>
         <ResourceDictionary Source="/Resources/Makros/MakroStepTemplates.xaml"/>
     </UserControl.Resources>
@@ -34,8 +46,8 @@
                                           HasExecutionCommands="True"
                                           IsRunning="{Binding IsMakroRunning}"
                                           HasUnsavedChanges="{Binding HasUnsavedChanges}"
-                                          ExecuteToolTip="{loc:Translate Key=Ui.Macro.Steps.RunMacro}"
-                                          StopToolTip="{loc:Translate Key=Ui.Macro.Steps.StopMacro}"/>
+                                          ExecuteToolTip="{loc:Translate Key=Shortcut.RunMacro}"
+                                          StopToolTip="{loc:Translate Key=Shortcut.StopMacro}"/>
         </StackPanel>
 
         <!-- Durchgehende Arbeitsfläche -->
@@ -191,21 +203,29 @@
                                       Command="{Binding DissolveGroupCommand}"
                                       CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
 
-                            <MenuItem x:Name="StepCreateGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Create}" Command="{Binding CreateGroupCommand}"/>
-                            <MenuItem x:Name="StepRemoveGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.RemoveSelected}" Command="{Binding RemoveFromGroupCommand}"/>
+                            <MenuItem x:Name="StepCreateGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Create}" InputGestureText="{loc:Translate Key=Shortcut.CtrlG}" Command="{Binding CreateGroupCommand}"/>
+                            <MenuItem x:Name="StepRemoveGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.RemoveSelected}" InputGestureText="{loc:Translate Key=Shortcut.CtrlShiftG}" Command="{Binding RemoveFromGroupCommand}"/>
                             <Separator x:Name="StepContextSeparator"/>
-                            <MenuItem x:Name="StepCopyMenuItem" Header="{loc:Translate Key=Ui.Common.Copy}" Command="{Binding CopyCommand}"/>
-                            <MenuItem x:Name="StepDuplicateMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}" Command="{Binding DuplicateStepCommand}" CommandParameter="{Binding SelectedStep}"/>
-                            <MenuItem x:Name="StepDeleteMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}" Command="{Binding DeleteSelectedCommand}"/>
+                            <MenuItem x:Name="StepCopyMenuItem" Header="{loc:Translate Key=Ui.Common.Copy}" InputGestureText="{loc:Translate Key=Shortcut.CtrlC}" Command="{Binding CopyCommand}"/>
+                            <MenuItem x:Name="StepDuplicateMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}" InputGestureText="{loc:Translate Key=Shortcut.CtrlD}" Command="{Binding DuplicateStepCommand}" CommandParameter="{Binding SelectedStep}"/>
+                            <MenuItem x:Name="StepDeleteMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}" InputGestureText="{loc:Translate Key=Shortcut.Delete}" Command="{Binding DeleteSelectedCommand}"/>
                         </ContextMenu>
                     </ListBox.ContextMenu>
 
                     <ListBox.InputBindings>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.AddStep}" Command="{Binding AddStepCommand}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.EditStep}" Command="{Binding EditStepCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.DuplicateStep}" Command="{Binding DuplicateStepCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.MoveUp}" Command="{Binding MoveStepUpCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.MoveDown}" Command="{Binding MoveStepDownCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.CreateGroup}" Command="{Binding CreateGroupCommand}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.RemoveFromGroup}" Command="{Binding RemoveFromGroupCommand}"/>
                         <KeyBinding Key="Delete"             Command="{Binding DeleteSelectedCommand}"/>
                         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyCommand}"/>
                         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}"/>
                         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
                         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}"/>
+                        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.RedoAlternate}" Command="{Binding RedoCommand}"/>
                     </ListBox.InputBindings>
                     <ListBox.Resources>
                         <DataTemplate DataType="{x:Type vm:MacroStepListItem}">

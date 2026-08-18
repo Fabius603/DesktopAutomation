@@ -207,7 +207,7 @@ namespace DesktopAutomationApp.ViewModels
 
             BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
             SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
-            CancelCommand = new RelayCommand(DiscardChanges, () => HasUnsavedChanges);
+            CancelCommand = new RelayCommand(async () => await ConfirmDiscardChangesAsync(), () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await Rename());
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
@@ -330,6 +330,14 @@ namespace DesktopAutomationApp.ViewModels
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
             RecalculatePresentation();
+        }
+
+        private async Task ConfirmDiscardChangesAsync()
+        {
+            if (await _dialogService.ConfirmAsync(
+                    Loc.Get("Dialog.Discard.Message"),
+                    Loc.Get("Dialog.Discard.Title")))
+                DiscardChanges();
         }
 
         // ---------- Save ----------

@@ -3,12 +3,38 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using DesktopAutomationApp.ViewModels;
+using DesktopAutomationApp.Input;
+using System.Windows.Input;
 
 namespace DesktopAutomationApp.Views
 {
     public partial class AutomationDetailView : UserControl
     {
-        public AutomationDetailView() => InitializeComponent();
+        public AutomationDetailView()
+        {
+            InitializeComponent();
+            PreviewKeyDown += OnPreviewKeyDown;
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Handled || DataContext is not AutomationDetailViewModel viewModel) return;
+
+            if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Save, viewModel.SaveCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Back, viewModel.BackCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Rename, viewModel.RenameCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.OpenFile, viewModel.OpenFileCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Execute, viewModel.TriggerCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Undo, viewModel.UndoCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Redo, viewModel.RedoCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.RedoAlternate, viewModel.RedoCommand))
+                return;
+
+            ViewShortcutRouter.TryExecute(
+                e,
+                AppShortcutGestures.CaptureAutomationHotkey,
+                viewModel.CaptureHotkeyCommand);
+        }
 
         private void Picker_LostKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e)
         {

@@ -4,38 +4,53 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
+             behaviors:ViewShortcutGuard.IsEnabled="True"
              AllowDrop="True"
              PreviewDragOver="LibraryTree_PreviewDragOver"
              PreviewDrop="LibraryTree_PreviewDrop"
+             PreviewKeyDown="LibraryTree_PreviewKeyDown"
              GiveFeedback="LibraryTree_GiveFeedback">
     <UserControl.Resources>
         <ContextMenu x:Key="LibraryFolderContextMenu">
             <MenuItem Header="{Binding PlacementTarget.Tag.NewItemLabel, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      InputGestureText="{loc:Translate Key=Shortcut.CtrlN}"
                       Command="{Binding PlacementTarget.Tag.NewItemInFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.NewFolder}"
+                      InputGestureText="{loc:Translate Key=Shortcut.CtrlShiftN}"
                       Command="{Binding PlacementTarget.Tag.NewSubfolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.RenameFolder}"
+                      InputGestureText="{loc:Translate Key=Shortcut.F2}"
                       Command="{Binding PlacementTarget.Tag.RenameFolderCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.MoveUpOneLevel}"
+                      InputGestureText="{loc:Translate Key=Shortcut.AltUp}"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanMoveUpOneLevel, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Click="MoveUpOneLevel_Click"/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.Delete}"
+                      InputGestureText="{loc:Translate Key=Shortcut.Delete}"
                       Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
         <ContextMenu x:Key="LibraryItemContextMenu">
             <MenuItem Header="{loc:Translate Key=Ui.Common.Open}"
+                      InputGestureText="{loc:Translate Key=Shortcut.Enter}"
                       Command="{Binding PlacementTarget.Tag.OpenNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <MenuItem Header="{loc:Translate Key=Ui.Common.Rename}"
+                      InputGestureText="{loc:Translate Key=Shortcut.F2}"
+                      Command="{Binding PlacementTarget.Tag.RenameNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
             <Separator/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.MoveUpOneLevel}"
+                      InputGestureText="{loc:Translate Key=Shortcut.AltUp}"
                       IsEnabled="{Binding PlacementTarget.DataContext.CanMoveUpOneLevel, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       Click="MoveUpOneLevel_Click"/>
             <MenuItem Header="{loc:Translate Key=Ui.Library.Delete}"
+                      InputGestureText="{loc:Translate Key=Shortcut.Delete}"
                       Command="{Binding PlacementTarget.Tag.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
@@ -81,7 +96,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Grid Width="420" MaxWidth="520" HorizontalAlignment="Left">
-                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="36"
                                      Padding="34,6,34,6"
                                      controls:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Library.Search}"/>
@@ -113,7 +128,7 @@
                 </Border>
 
                 <Grid Grid.Row="1" Background="{DynamicResource App.Brush.WindowBackground}">
-                    <ListBox ItemsSource="{Binding VisibleNodes}"
+                    <ListBox x:Name="LibraryNodes" ItemsSource="{Binding VisibleNodes}"
                              Padding="6"
                              BorderThickness="0"
                              Background="Transparent"

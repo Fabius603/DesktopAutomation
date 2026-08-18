@@ -18,6 +18,7 @@ using DesktopAutomationApp.ViewModels;
 using DesktopAutomationApp.Behaviors;
 using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
+using DesktopAutomationApp.Input;
 
 namespace DesktopAutomationApp.Views
 {
@@ -33,6 +34,55 @@ namespace DesktopAutomationApp.Views
         {
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
+            PreviewKeyDown += OnPreviewKeyDown;
+        }
+
+        private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Handled) return;
+            if (_vm is null) return;
+
+            // View-wide commands must be handled during the preview phase. Relying on
+            // InputBindings alone is unreliable because editors and nested controls can
+            // consume the normal KeyDown event first.
+            if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Save, _vm.SaveCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.NewItem, _vm.AddStepCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Back, _vm.BackCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Rename, _vm.RenameCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.OpenFile, _vm.OpenFileCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Execute, _vm.StartJobCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.Stop, _vm.StopJobCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.DebugJob, _vm.DebugJobCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.DebugStep, _vm.DebugStepCommand)
+                || ViewShortcutRouter.TryExecute(e, AppShortcutGestures.DebugContinue, _vm.DebugContinueCommand))
+                return;
+
+            if (!AllStepLists().Any(list => list.IsKeyboardFocusWithin)) return;
+
+            if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.ToggleBreakpoint, _vm.ToggleBreakpointCommand, _vm.SelectedStep))
+                return;
+
+            if (ViewShortcutRouter.IsTextInputFocused || Keyboard.FocusedElement is ButtonBase or ComboBox) return;
+
+            if (AppShortcutGestures.Matches(e, AppShortcutGestures.AddStep)) Execute(_vm.AddStepCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.EditStep)) Execute(_vm.EditStepCommand, _vm.SelectedStep, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.DuplicateStep)) Execute(_vm.DuplicateStepCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.MoveUp)) Execute(_vm.MoveStepUpCommand, _vm.SelectedStep, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.MoveDown)) Execute(_vm.MoveStepDownCommand, _vm.SelectedStep, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.ToggleEnabled)) Execute(_vm.ToggleStepEnabledCommand, _vm.SelectedStep, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Delete)) Execute(_vm.DeleteSelectedCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Copy)) Execute(_vm.CopyCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Paste)) Execute(_vm.PasteCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Undo)) Execute(_vm.UndoCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Redo)) Execute(_vm.RedoCommand, null, e);
+            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.RedoAlternate)) Execute(_vm.RedoCommand, null, e);
+        }
+
+        private static void Execute(ICommand command, object? parameter, KeyEventArgs e)
+        {
+            if (!command.CanExecute(parameter)) return;
+            command.Execute(parameter);
+            e.Handled = true;
         }
 
         // ── VM → View: react when SelectedStep changes programmatically (delete, paste, undo …) ──
@@ -127,16 +177,17 @@ namespace DesktopAutomationApp.Views
             }
 
             var menu = new ContextMenu { PlacementTarget = item };
-            AddMenuItem(menu, Loc.Get("Ui.Common.Edit"), vm.EditStepCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Common.Edit"), vm.EditStepCommand, step, Loc.Get("Shortcut.Enter"));
             if (step.CanBeDisabled)
                 AddMenuItem(menu, Loc.Get(step.IsEnabled
                     ? "Ui.Job.Steps.DisableStep"
-                    : "Ui.Job.Steps.EnableStep"), vm.ToggleStepEnabledCommand, step);
-            AddMenuItem(menu, Loc.Get("Ui.Job.Debug.ToggleBreakpoint"), vm.ToggleBreakpointCommand, step);
+                    : "Ui.Job.Steps.EnableStep"), vm.ToggleStepEnabledCommand, step, Loc.Get("Shortcut.Space"));
+            AddMenuItem(menu, Loc.Get("Ui.Job.Debug.ToggleBreakpoint"), vm.ToggleBreakpointCommand, step, Loc.Get("Shortcut.CtrlB"));
             menu.Items.Add(new Separator());
-            AddMenuItem(menu, Loc.Get("Ui.Common.Copy"), vm.CopyCommand);
-            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), vm.MoveStepUpCommand, step);
-            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), vm.MoveStepDownCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Common.Copy"), vm.CopyCommand, null, Loc.Get("Shortcut.CtrlC"));
+            AddMenuItem(menu, Loc.Get("Ui.Macro.Steps.DuplicateStep"), vm.DuplicateStepCommand, null, Loc.Get("Shortcut.CtrlD"));
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), vm.MoveStepUpCommand, step, Loc.Get("Shortcut.AltUp"));
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), vm.MoveStepDownCommand, step, Loc.Get("Shortcut.AltDown"));
             menu.Items.Add(new Separator());
             AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToStart"), vm.MoveToStartSectionCommand, step);
             AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToRun"), vm.MoveToRunSectionCommand, step);
@@ -148,7 +199,7 @@ namespace DesktopAutomationApp.Views
                 AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), vm.AddElseCommand, step);
             }
             menu.Items.Add(new Separator());
-            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.DeleteStep"), vm.DeleteStepCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.DeleteStep"), vm.DeleteStepCommand, step, Loc.Get("Shortcut.Delete"));
             menu.IsOpen = true;
             e.Handled = true;
         }
@@ -157,13 +208,15 @@ namespace DesktopAutomationApp.Views
             ItemsControl menu,
             string header,
             ICommand command,
-            object? parameter = null)
+            object? parameter = null,
+            string? inputGestureText = null)
         {
             menu.Items.Add(new MenuItem
             {
                 Header = header,
                 Command = command,
-                CommandParameter = parameter
+                CommandParameter = parameter,
+                InputGestureText = inputGestureText
             });
         }
 

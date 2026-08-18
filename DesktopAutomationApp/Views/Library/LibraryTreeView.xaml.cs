@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using DesktopAutomationApp.ViewModels.Library;
+using DesktopAutomationApp.Input;
+using System.Windows.Controls.Primitives;
 
 namespace DesktopAutomationApp.Views.Library;
 
@@ -65,6 +67,66 @@ public partial class LibraryTreeView : UserControl
         {
             viewModel.EndDrag();
         }
+    }
+
+    private void LibraryTree_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not LibraryTreeViewModel viewModel) return;
+
+        if (AppShortcutGestures.Matches(e, AppShortcutGestures.FocusSearch))
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (Keyboard.FocusedElement is TextBoxBase)
+        {
+            if (e.Key == Key.Escape && viewModel.HasSearchText)
+            {
+                viewModel.ClearSearchCommand.Execute(null);
+                LibraryNodes.Focus();
+                e.Handled = true;
+                return;
+            }
+
+            // Keep native text editing intact, but do not disable unrelated
+            // library shortcuts merely because the search box owns the focus.
+            if (AppShortcutGestures.Matches(e, AppShortcutGestures.Copy)
+                || AppShortcutGestures.Matches(e, AppShortcutGestures.Paste)
+                || AppShortcutGestures.Matches(e, AppShortcutGestures.Undo)
+                || AppShortcutGestures.Matches(e, AppShortcutGestures.Redo)
+                || AppShortcutGestures.Matches(e, AppShortcutGestures.RedoAlternate)
+                || e.Key is Key.Delete or Key.Back or Key.Enter
+                || (Keyboard.Modifiers == ModifierKeys.None && e.Key is >= Key.A and <= Key.Z))
+                return;
+        }
+
+        var selected = LibraryNodes.SelectedItem as LibraryTreeNodeViewModel;
+        if (AppShortcutGestures.Matches(e, AppShortcutGestures.NewFolder))
+            Execute(viewModel.NewFolderCommand, null, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.NewItem))
+            Execute(viewModel.NewItemCommand, null, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Open))
+            Execute(viewModel.OpenNodeCommand, selected, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Rename))
+            Execute(viewModel.RenameNodeCommand, selected, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Delete))
+            Execute(viewModel.DeleteNodeCommand, selected, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Execute))
+            Execute(viewModel.StartNodeCommand, selected, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.Stop))
+            Execute(viewModel.StopNodeCommand, selected, e);
+        else if (AppShortcutGestures.Matches(e, AppShortcutGestures.MoveUp))
+            Execute(viewModel.MoveUpOneLevelCommand, selected, e);
+    }
+
+    private static void Execute(ICommand command, object? parameter, KeyEventArgs e)
+    {
+        if (!command.CanExecute(parameter)) return;
+        command.Execute(parameter);
+        e.Handled = true;
     }
 
     private void LibraryTree_PreviewDragOver(object sender, DragEventArgs e)

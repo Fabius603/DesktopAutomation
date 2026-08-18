@@ -245,8 +245,18 @@ namespace DesktopAutomationApp.ViewModels
             },
             Stop = () => _dispatcher.CancelJobsByDefinition(job.Id),
             IsRunning = () => RunningJobIds.Contains(job.Id),
+            RenameAsync = () => RenameJobFromLibraryAsync(job),
             DeleteAsync = () => DeleteJobFromLibraryAsync(job)
         };
+
+        private async Task RenameJobFromLibraryAsync(Job job)
+        {
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), job.Name);
+            if (string.IsNullOrWhiteSpace(name) || name.Trim() == job.Name) return;
+            job.Name = name.Trim();
+            await _jobAppService.SaveJobAsync(job);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
 
         private async Task<bool> DeleteJobFromLibraryAsync(Job job)
         {

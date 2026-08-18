@@ -214,8 +214,18 @@ namespace DesktopAutomationApp.ViewModels
             Execute = () => _dispatcher.StartMakro(makro.Id),
             Stop = () => _dispatcher.CancelMakro(makro.Id),
             IsRunning = () => RunningMakroIds.Contains(makro.Id),
+            RenameAsync = () => RenameMakroFromLibraryAsync(makro),
             DeleteAsync = () => DeleteMakroFromLibraryAsync(makro)
         };
+
+        private async Task RenameMakroFromLibraryAsync(Makro makro)
+        {
+            var name = await _dialogService.AskForNameAsync(Loc.Get("Common.Rename"), Loc.Get("Dialog.NewName"), makro.Name);
+            if (string.IsNullOrWhiteSpace(name) || name.Trim() == makro.Name) return;
+            makro.Name = name.Trim();
+            await _makroAppService.SaveMakroAsync(makro);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
 
         private async Task<bool> DeleteMakroFromLibraryAsync(Makro makro)
         {

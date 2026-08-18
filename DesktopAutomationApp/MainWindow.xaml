@@ -6,6 +6,7 @@
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                  xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+                 xmlns:input="clr-namespace:DesktopAutomationApp.Input"
                  Title="{Binding WindowTitle}"
                  Icon="Assets/App.ico"
                  MinWidth="1300" MinHeight="600"
@@ -17,6 +18,14 @@
                  BorderThickness="0"
                  GlowBrush="Transparent"
                  WindowStartupLocation="CenterScreen">
+    <mah:MetroWindow.InputBindings>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateJobs}" Command="{Binding ShowListJobs}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateMacros}" Command="{Binding ShowListMakros}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateAutomations}" Command="{Binding ShowListAutomations}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelp}" Command="{Binding ShowShortcutHelpCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelpQuestion}" Command="{Binding ShowShortcutHelpCommand}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelpQuestionAlternate}" Command="{Binding ShowShortcutHelpCommand}"/>
+    </mah:MetroWindow.InputBindings>
     <mah:MetroWindow.TitleTemplate>
         <DataTemplate>
             <TextBlock VerticalAlignment="Center">
@@ -143,6 +152,7 @@
                     <!-- Automationen -->
                     <Button Command="{Binding ShowListAutomations}"
                             Tag="ListAutomationsViewModel"
+                            ToolTip="{loc:Translate Key=Shortcut.NavigateAutomations}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="CalendarClock" Width="18" Height="18"
@@ -154,6 +164,7 @@
                     <!-- Makros -->
                     <Button Command="{Binding ShowListMakros}"
                             Tag="ListMakrosViewModel"
+                            ToolTip="{loc:Translate Key=Shortcut.NavigateMacros}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="RepeatVariant" Width="18" Height="18"
@@ -165,6 +176,7 @@
                     <!-- Jobs -->
                     <Button Command="{Binding ShowListJobs}"
                             Tag="ListJobsViewModel"
+                            ToolTip="{loc:Translate Key=Shortcut.NavigateJobs}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="PlaylistPlay" Width="18" Height="18"

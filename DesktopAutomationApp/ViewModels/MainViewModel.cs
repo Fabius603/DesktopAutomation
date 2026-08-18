@@ -165,6 +165,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowExecutionLogs { get; }
         public ICommand ShowSettings { get; }
         public ICommand StopAllJobsCommand { get; }
+        public ICommand ShowShortcutHelpCommand { get; }
 
         public MainViewModel(
             IViewModelFactory viewModelFactory,
@@ -232,6 +233,12 @@ namespace DesktopAutomationApp.ViewModels
             _applicationLogs.RequestBack += OpenLogsHome;
             ShowExecutionLogs = new RelayCommand(async () => await NavigateAsync(_logsHome));
             ShowSettings = new RelayCommand(async () => await NavigateAsync(_settings));
+            ShowShortcutHelpCommand = new RelayCommand(() =>
+                AppDialog.Show(
+                    Loc.Get("Shortcut.Help.Message"),
+                    Loc.Get("Shortcut.Help.Title"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information));
             StopAllJobsCommand = new RelayCommand(() =>
             {
                 _jobDispatcher.CancelAllJobs();
