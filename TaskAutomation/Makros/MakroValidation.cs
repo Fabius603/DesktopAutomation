@@ -94,6 +94,8 @@ public static class MakroValidation
         {
             MouseMoveAbsoluteBefehl => MakroValidationError.None,
             MouseMoveRelativeBefehl => MakroValidationError.None,
+            MouseWheelBefehl s when s.DeltaX != 0 || s.DeltaY != 0 => MakroValidationError.None,
+            MouseWheelBefehl => MakroValidationError.UnknownCommand,
             MouseDownBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
             MouseUpBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
             MouseDownBefehl or MouseUpBefehl => MakroValidationError.MouseButtonInvalid,

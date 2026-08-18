@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
 using DesktopAutomation.Application.Interfaces;
+using DesktopAutomationApp.Behaviors;
 using DesktopAutomationApp.Services.Preview;
 using DesktopAutomationApp.ViewModels;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -35,18 +36,35 @@ public sealed class MakroStepsViewModelGroupingTests
     }
 
     [Fact]
-    public void Undo_DissolvedGroupReturnsToSavedStateWithoutRemainingDirty()
+    public async Task Undo_DissolvedGroupReturnsToSavedStateWithoutRemainingDirty()
     {
         var group = new MakroGruppe { Id = "group", Title = "Group" };
         using var viewModel = CreateViewModel(CreateMacro(group));
 
         viewModel.DissolveGroupCommand.Execute(group.Id);
         viewModel.UndoCommand.Execute(null);
+        await viewModel.WaitForDirtyStateAsync();
 
         Assert.Equal(group.Id, Assert.Single(viewModel.Groups).Id);
         Assert.All(viewModel.Steps, step => Assert.Equal(group.Id, step.GroupId));
         Assert.False(viewModel.HasUnsavedChanges);
         Assert.True(viewModel.CanRedo);
+    }
+
+    [Fact]
+    public async Task ManuallyRestoredStepOrder_ClearsUnsavedState()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        using var viewModel = CreateViewModel(CreateMacro(group));
+        var first = viewModel.Steps[0];
+
+        viewModel.MoveStepDownCommand.Execute(first);
+        viewModel.MoveStepUpCommand.Execute(first);
+        await viewModel.WaitForDirtyStateAsync();
+
+        Assert.False(viewModel.HasUnsavedChanges);
+        Assert.False(viewModel.SaveCommand.CanExecute(null));
+        Assert.False(viewModel.CancelCommand.CanExecute(null));
     }
 
     [Fact]
@@ -81,6 +99,144 @@ public sealed class MakroStepsViewModelGroupingTests
         Assert.False(viewModel.HasUnsavedChanges);
     }
 
+    [Fact]
+    public void StartMakroCommand_IsDisabledWhileChangesAreUnsaved()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        var dispatcher = new RecordingJobDispatcher();
+        using var viewModel = CreateViewModel(CreateMacro(group), dispatcher);
+
+        Assert.True(viewModel.StartMakroCommand.CanExecute(null));
+
+        viewModel.DissolveGroupCommand.Execute(group.Id);
+
+        Assert.True(viewModel.HasUnsavedChanges);
+        Assert.False(viewModel.StartMakroCommand.CanExecute(null));
+        viewModel.StartMakroCommand.Execute(null);
+        Assert.Empty(dispatcher.StartedMakros);
+    }
+
+    [Fact]
+    public void PlaybackPreview_IsDisabledWhileAPreviewIsActive()
+    {
+        Assert.False(MakroStepsViewModel.CanStartPreview(
+            stepCount: 3,
+            isBusy: false,
+            isActive: true));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReorderStep_DroppedOnGroup_MovesBeforeOrAfterWholeGroup(bool insertAfter)
+    {
+        var group = new MakroGruppe { Id = "target", Title = "Target" };
+        var loose = new KeyDownBefehl { Id = "loose", Key = "A" };
+        var groupedOne = new MouseMoveAbsoluteBefehl { Id = "group-1", GroupId = group.Id };
+        var groupedTwo = new MouseMoveRelativeBefehl { Id = "group-2", GroupId = group.Id };
+        var commands = insertAfter
+            ? new MakroBefehl[] { loose, groupedOne, groupedTwo }
+            : [groupedOne, groupedTwo, loose];
+        using var viewModel = CreateViewModel(new Makro
+        {
+            Name = "Macro",
+            Gruppen = new ObservableCollection<MakroGruppe>([group]),
+            Befehle = new ObservableCollection<MakroBefehl>(commands)
+        });
+        var sourceItem = viewModel.VisibleItems.OfType<MacroStepListItem>().Single(item => item.Step.Id == "loose");
+        var targetItem = viewModel.VisibleItems.OfType<MacroGroupListItem>().Single();
+        var visibleItems = (System.Collections.IList)viewModel.VisibleItems;
+
+        viewModel.ReorderStepCommand.Execute(new StepDragDrop.MoveRequest(
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(sourceItem),
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(targetItem),
+            targetItem,
+            insertAfter));
+
+        var expected = insertAfter
+            ? new[] { "group-1", "group-2", "loose" }
+            : ["loose", "group-1", "group-2"];
+        Assert.Equal(expected, viewModel.Steps.Select(step => step.Id));
+        Assert.Null(viewModel.Steps.Single(step => step.Id == "loose").GroupId);
+        Assert.True(viewModel.HasUnsavedChanges);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReorderGroup_DroppedOnGroup_MovesBeforeOrAfterWholeGroup(bool insertAfter)
+    {
+        var sourceGroup = new MakroGruppe { Id = "source", Title = "Source" };
+        var targetGroup = new MakroGruppe { Id = "target", Title = "Target" };
+        MakroBefehl[] sourceSteps =
+        [
+            new MouseMoveAbsoluteBefehl { Id = "source-1", GroupId = sourceGroup.Id },
+            new MouseMoveRelativeBefehl { Id = "source-2", GroupId = sourceGroup.Id }
+        ];
+        MakroBefehl[] targetSteps =
+        [
+            new MouseMoveAbsoluteBefehl { Id = "target-1", GroupId = targetGroup.Id },
+            new MouseMoveRelativeBefehl { Id = "target-2", GroupId = targetGroup.Id }
+        ];
+        var commands = insertAfter ? sourceSteps.Concat(targetSteps) : targetSteps.Concat(sourceSteps);
+        using var viewModel = CreateViewModel(new Makro
+        {
+            Name = "Macro",
+            Gruppen = new ObservableCollection<MakroGruppe>([sourceGroup, targetGroup]),
+            Befehle = new ObservableCollection<MakroBefehl>(commands)
+        });
+        var sourceItem = viewModel.VisibleItems.OfType<MacroGroupListItem>().Single(item => item.GroupId == sourceGroup.Id);
+        var targetItem = viewModel.VisibleItems.OfType<MacroGroupListItem>().Single(item => item.GroupId == targetGroup.Id);
+        var visibleItems = (System.Collections.IList)viewModel.VisibleItems;
+
+        viewModel.ReorderStepCommand.Execute(new StepDragDrop.MoveRequest(
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(sourceItem),
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(targetItem),
+            targetItem,
+            insertAfter));
+
+        var expected = insertAfter
+            ? new[] { "target-1", "target-2", "source-1", "source-2" }
+            : ["source-1", "source-2", "target-1", "target-2"];
+        Assert.Equal(expected, viewModel.Steps.Select(step => step.Id));
+        Assert.True(viewModel.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public void ReorderOnlyStep_DroppedOnItsGroup_RemovesTheEmptyGroup()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Group" };
+        using var viewModel = CreateViewModel(new Makro
+        {
+            Name = "Macro",
+            Gruppen = new ObservableCollection<MakroGruppe>([group]),
+            Befehle = new ObservableCollection<MakroBefehl>(
+            [
+                new MouseMoveAbsoluteBefehl { Id = "step", GroupId = group.Id }
+            ])
+        });
+        viewModel.ToggleGroupCommand.Execute(group.Id);
+        var sourceItem = viewModel.VisibleItems.OfType<MacroStepListItem>().Single();
+        var targetItem = viewModel.VisibleItems.OfType<MacroGroupListItem>().Single();
+        var visibleItems = (System.Collections.IList)viewModel.VisibleItems;
+
+        viewModel.ReorderStepCommand.Execute(new StepDragDrop.MoveRequest(
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(sourceItem),
+            visibleItems,
+            viewModel.VisibleItems.IndexOf(targetItem),
+            targetItem,
+            InsertAfterTarget: true));
+
+        Assert.Empty(viewModel.Groups);
+        Assert.Null(Assert.Single(viewModel.Steps).GroupId);
+        Assert.True(viewModel.HasUnsavedChanges);
+    }
+
     private static Makro CreateMacro(MakroGruppe group) => new()
     {
         Name = "Macro",
@@ -92,14 +248,16 @@ public sealed class MakroStepsViewModelGroupingTests
         ])
     };
 
-    private static MakroStepsViewModel CreateViewModel(Makro macro) => new(
+    private static MakroStepsViewModel CreateViewModel(
+        Makro macro,
+        RecordingJobDispatcher? dispatcher = null) => new(
         macro,
         NullLogger<MakroStepsViewModel>.Instance,
         new PreviewStub(),
         new MacroApplicationServiceStub(),
         new DialogServiceStub(),
         new HotkeyServiceStub(),
-        new RecordingJobDispatcher());
+        dispatcher ?? new RecordingJobDispatcher());
 
     private sealed class PreviewStub : IMacroPreviewService
     {

@@ -3,29 +3,25 @@
 Diese Anleitung beschreibt alle Stellen, die ein neuer `JobStep` im aktuellen
 Projekt benötigt. Ein Step gilt erst als vollständig integriert, wenn
 Serialisierung, Ausführung, Result-Vertrag, Backend-Validierung, Editor,
-Lokalisierung und Tests umgesetzt sind.
+Lokalisierung, Release Notes und Tests umgesetzt sind.
 
 Die Result-Verträge werden ergänzend in
 [`RESULT_CONTRACTS.md`](RESULT_CONTRACTS.md) beschrieben.
 
-## Schrittweise Umstellung auf frontendneutrale Step-Definitionen
+## Frontendneutrale Step-Definitionen
 
-Neue einfache Steps sollen ihre bearbeitbaren Felder und ihre Darstellung über
-eine `IStepDefinition` unter `TaskAutomation/Steps/Definitions/` beschreiben.
+Jeder neue Step beschreibt seine bearbeitbaren Felder und seine Darstellung über
+eine `IStepDefinition` unter `TaskAutomation/Steps/Definitions/`.
 Transportierbare Metadaten wie Feldtypen, Constraints, Editorabschnitte,
 Zusammenfassung und Detailfelder liegen im plattformneutralen Projekt
 `TaskAutomation.Contracts`.
 
-`TimeoutStep`, die Eingabesperren, `EndJobStep`, `ContinueJobStep`,
-`DesktopDuplicationStep`, `ScriptExecutionStep` und `GetProcessStep` sind
-zusammen mit `MakroExecutionStep`, `JobExecutionStep`, `ActiveProcessStep` und
-`ActiveWindowStep` Referenzimplementierungen.
-Ihre WPF-Editoren werden aus den Definitionen
-erzeugt; Laden, Bearbeiten, Validieren und Erstellen laufen über einen
-frontendneutralen `StepDraft`. Felder, Abschnitte, Checkboxen, Hinweise und
-eingeklappte erweiterte Einstellungen werden aus dem Darstellungsvertrag
-erzeugt. Das persistierte Job-JSON und die Runtime-Handler bleiben davon
-unabhängig.
+Alle eingebauten Steps verwenden diesen Definitionspfad. Ihre WPF-Editoren
+werden aus den Definitionen erzeugt; Laden, Bearbeiten, Validieren und Erstellen
+laufen über einen frontendneutralen `StepDraft`. Felder, Abschnitte, Checkboxen,
+Hinweise und eingeklappte erweiterte Einstellungen werden aus dem
+Darstellungsvertrag erzeugt. Das persistierte Job-JSON und die Runtime-Handler
+bleiben davon unabhängig.
 
 Frontend-spezifische Komfortfunktionen werden über stabile `EditorHint`-Werte
 angefordert. `monitor-picker`, `file-picker`, `directory-picker`, `file-or-folder-picker`, `camera-picker`, `visual-overlay`, `roi-picker`, `yolo-picker`, `condition-editor`, `windows-capability-picker`, `process-name-suggestions`,
@@ -42,12 +38,11 @@ tragen eine stabile ID und einen lesbaren Namen. Ein anderes Frontend darf eine
 passende eigene Darstellung verwenden. Der persistierte fachliche Wert bleibt
 davon unabhängig.
 
-Bis die Migration abgeschlossen ist, gelten für noch nicht migrierte Steps die
-nachfolgenden bisherigen Integrationsschritte. Ein migrierter einfacher Step
-soll dagegen keine eigenen Properties im `AddJobStepDialogViewModel`, keinen
-eigenen Create-/Load-Switchzweig und kein eigenes WPF-Control mehr benötigen.
-Komplexe Steps dürfen einen spezialisierten Frontend-Editor behalten, müssen
-aber denselben `StepDraft` und dieselbe Backendvalidierung verwenden.
+Ein neuer Step erhält keine eigenen Properties im `AddJobStepDialogViewModel`,
+keinen eigenen Create-/Load-Switchzweig und kein eigenes WPF-Control. Komplexe
+Eingaben werden als wiederverwendbare, frontendneutrale Editor-Hints
+beschrieben. Nur der Adapter für einen neuen Editor-Hint ist
+frontend-spezifisch; fachliche Werte und Validierung bleiben in `TaskAutomation`.
 
 Zusammengesetzte Editor-Hints dürfen keine konkreten Step-Typen im Frontend
 voraussetzen. `visual-overlay` deklariert deshalb seine Detection- und
@@ -222,6 +217,17 @@ aus den bereits in den `JobExecutor` injizierten Abhängigkeiten übergeben.
 Fehlt diese Registrierung, lässt sich der Step zwar speichern und anzeigen,
 wird aber nicht ausgeführt.
 
+Benötigt der Handler eine neue Laufzeitabhängigkeit, muss sie zusätzlich:
+
+1. über den Konstruktor des `JobExecutor` beziehungsweise den passenden
+   Pipeline-Kontext geführt werden,
+2. in `DesktopAutomationApp/App.xaml.cs` für die Desktop-Anwendung registriert
+   werden und
+3. in Tests durch einen geeigneten Test-Double bereitgestellt werden.
+
+Backend-Verträge dürfen dabei keine Abhängigkeit auf WPF oder
+`DesktopAutomationApp` erhalten.
+
 ## 5. Eingaben aus vorherigen Results
 
 Wenn ein Step ein Ergebnis eines vorherigen Steps konsumiert:
@@ -350,7 +356,7 @@ Allgemeine Result-Bindings verwenden `ResultBindingPicker` zusammen mit einer
 stabilen `InputContractId`. Das Frontend ermittelt daraus den bereits im Backend
 registrierten Eingabevertrag und bietet ausschließlich kompatible Ergebnisse an.
 
-Ein einfacher migrierter Step erhält keine eigene `Show...`-Property, keine
+Ein einfacher Step erhält keine eigene `Show...`-Property, keine
 duplizierten ViewModel-Felder, keine Create-/Load-Switchzweige und kein eigenes
 WPF-Control. Ein spezialisierter Editor ist nur für zusammengesetzte Eingaben
 wie Result-Bindings, interaktive ROI-Erfassung oder dynamische Collections
@@ -385,7 +391,28 @@ C# `Loc.Get`, `Loc.Format` oder `StepLocalization`.
 Die stabile Result-ID und der Lokalisierungsschlüssel sind unterschiedliche
 Konzepte: Die ID wird persistiert, die Übersetzung darf geändert werden.
 
-## 9. Tests
+## 9. Release Notes
+
+Ein neuer Step ist eine sichtbare Funktion und benötigt deshalb einen kurzen
+Eintrag in `DesktopAutomationApp/Resources/ReleaseNotes.json`:
+
+- Die veröffentlichte Version immer aus Git `HEAD` lesen:
+  `git show HEAD:DesktopAutomationApp/DesktopAutomationApp.csproj`.
+- Für den neuen Eintrag genau die Patch-Komponente um eins erhöhen. Während
+  normaler Entwicklungsarbeit die `<Version>` im Projekt nicht ändern.
+- Je einen deutschen (`de`) und englischen (`en`) Text in einer bestehenden
+  Kategorie `Added`, `Changed` oder `Fixed` ergänzen.
+- Nur den wahrnehmbaren Nutzen beschreiben. Keine Handler, Registries,
+  Verträge, Refactorings oder Tests erwähnen.
+- Vor dem Ergänzen den gesamten unveröffentlichten Block prüfen und einen
+  vorhandenen Eintrag zum selben Ergebnis erweitern, statt einen weiteren
+  ähnlichen Bullet anzulegen.
+- Die neue Version steht an erster Stelle; ältere Einträge bleiben unverändert.
+
+Nach der Änderung muss die Datei als JSON parsebar sein. Die normale
+Release-Build-Prüfung validiert zusätzlich die eingebettete Ressource.
+
+## 10. Tests
 
 Die folgenden Szenarien beschreiben die erforderliche Abdeckung des vollständigen
 Steps. Sie verlangen weder einen eigenen Test pro Aufzählungspunkt oder Feld noch
@@ -413,7 +440,7 @@ prüft automatisch alle bekannten Result-Verträge. Fehlende
 `ResultProperty`-Attribute führen bereits beim Aufbau der Metadaten zu einem
 Fehler.
 
-## 10. Abschlussprüfung
+## 11. Abschlussprüfung
 
 Für Änderungen an Backend und UI werden beide Prüfungen ausgeführt:
 
@@ -433,9 +460,14 @@ Abschließende Checkliste:
 - [ ] Fester oder dynamischer Handler implementiert
 - [ ] `StepPipelineRegistry` ergänzt
 - [ ] Handler im `JobExecutor` registriert
+- [ ] Neue Laufzeitabhängigkeiten durch Konstruktor/Pipeline geführt und in der
+      Desktop-DI registriert
 - [ ] Eingabeverträge und `ResultBindingResolver` verwendet
 - [ ] Backend-Validierung ergänzt
-- [ ] Step-Auswahl, ViewModel und Editor vollständig integriert
+- [ ] `IStepDefinition` im `BuiltInStepDefinitions`-Katalog registriert
+- [ ] Generischer Editor, Zusammenfassung und Detaildarstellung vollständig beschrieben
 - [ ] Deutsche und englische Ressourcen ergänzt
+- [ ] Zweisprachige Release Notes in der nächsten Patch-Version ergänzt oder
+      mit einem passenden Eintrag zusammengeführt
 - [ ] Serialisierungs-, Handler-, Vertrags- und Validierungstests ergänzt
 - [ ] Testprojekt und WPF-App erfolgreich validiert

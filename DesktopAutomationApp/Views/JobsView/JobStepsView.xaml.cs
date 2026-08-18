@@ -184,9 +184,6 @@ namespace DesktopAutomationApp.Views
             }
         }
 
-        private void HeaderMoreButton_Click(object sender, RoutedEventArgs e)
-            => StepMoreButton_Click(sender, e);
-
         private void EndSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             EndSettingsPopup.IsOpen = !EndSettingsPopup.IsOpen;

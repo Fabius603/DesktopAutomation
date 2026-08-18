@@ -1,0 +1,85 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.LibraryEditorHeader"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             x:Name="Root">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource ButtonPrimary}"
+                    Command="{Binding SaveCommand, ElementName=Root}" Margin="0,0,8,0"
+                    Visibility="{Binding HasUnsavedChanges, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14"
+                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Common.Save}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource ButtonSecondary}"
+                    Command="{Binding DiscardCommand, ElementName=Root}"
+                    Visibility="{Binding HasUnsavedChanges, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="Undo" Width="14" Height="14"
+                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Border x:Name="ExecutionSeparator" Style="{StaticResource ToolbarSeparator}"/>
+            <Button x:Name="ExecuteButton"
+                    Style="{StaticResource ButtonPrimary}"
+                    Command="{Binding ExecuteCommand, ElementName=Root}"
+                    ToolTip="{Binding ExecuteToolTip, ElementName=Root}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="Play" Width="14" Height="14"
+                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Common.Execute}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="StopButton"
+                    Style="{StaticResource ButtonDanger}"
+                    Command="{Binding StopCommand, ElementName=Root}"
+                    ToolTip="{Binding StopToolTip, ElementName=Root}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="Stop" Width="14" Height="14"
+                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Common.Stop}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Button Style="{StaticResource ButtonSecondary}"
+                    Command="{Binding BackCommand, ElementName=Root}" Margin="0,0,12,0">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14"
+                                                VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Common.Back}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <TextBlock Text="{Binding Title, ElementName=Root}" Style="{StaticResource PageTitle}"
+                       Margin="0,0,8,0" TextTrimming="CharacterEllipsis"/>
+            <Button Style="{StaticResource ButtonIcon}"
+                    Tag="{Binding ElementName=Root}"
+                    Click="MoreButton_Click"
+                    ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}">
+                <iconPacks:PackIconMaterial Kind="DotsVertical" Width="16" Height="16"/>
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{loc:Translate Key=Ui.Common.Rename}"
+                                  Command="{Binding PlacementTarget.Tag.RenameCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="{loc:Translate Key=Ui.Logs.OpenFile}"
+                                  Command="{Binding PlacementTarget.Tag.OpenFileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+            <Border Padding="9,3" Margin="8,0,0,0" CornerRadius="10"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource App.Brush.AccentSubtle}"
+                    BorderBrush="{DynamicResource App.Brush.Accent}" BorderThickness="1"
+                    Visibility="{Binding HasUnsavedChanges, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{loc:Translate Key=Ui.Common.Unsaved}" FontSize="11"
+                           FontWeight="SemiBold" Foreground="{DynamicResource App.Brush.Accent}"/>
+            </Border>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

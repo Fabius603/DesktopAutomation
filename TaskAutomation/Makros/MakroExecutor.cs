@@ -73,6 +73,10 @@ namespace TaskAutomation.Makros
                             pressedMouseButtons.Remove(m.Button);
                             break;
 
+                        case MouseWheelBefehl m:
+                            _input.MouseWheel(m.DeltaX, m.DeltaY);
+                            break;
+
                         case KeyDownBefehl k when TryMapKey(k.Key, out var vkDown):
                             _input.Key(vkDown, true);
                             pressedKeys.Add(vkDown);

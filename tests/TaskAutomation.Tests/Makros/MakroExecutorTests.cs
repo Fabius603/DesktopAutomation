@@ -17,10 +17,11 @@ public sealed class MakroExecutorTests
             new MouseMoveRelativeBefehl { DeltaX = 5, DeltaY = -3 },
             new MouseDownBefehl { Button = "Middle" },
             new MouseUpBefehl { Button = "Middle" },
+            new MouseWheelBefehl { DeltaX = -120, DeltaY = 240 },
             new KeyDownBefehl { Key = "A" },
             new KeyUpBefehl { Key = "A" });
         await executor.ExecuteMakro(macro, null!, default);
-        Assert.Equal(["relative:5:-3", "mouse:Middle:True", "mouse:Middle:False", "key:VK_A:True", "key:VK_A:False"], input.Calls);
+        Assert.Equal(["relative:5:-3", "mouse:Middle:True", "mouse:Middle:False", "wheel:-120:240", "key:VK_A:True", "key:VK_A:False"], input.Calls);
     }
 
     [Fact]
@@ -70,6 +71,7 @@ public sealed class MakroExecutorTests
         public void MoveAbsolute(double x, double y) => Calls.Add($"absolute:{x}:{y}");
         public void MoveRelative(int deltaX, int deltaY) => Calls.Add($"relative:{deltaX}:{deltaY}");
         public void MouseButton(string button, bool down) => Calls.Add($"mouse:{button}:{down}");
+        public void MouseWheel(int deltaX, int deltaY) => Calls.Add($"wheel:{deltaX}:{deltaY}");
         public void Key(VirtualKeyCode key, bool down) => Calls.Add($"key:{key}:{down}");
     }
 

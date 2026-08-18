@@ -41,6 +41,13 @@ namespace DesktopAutomationApp.ViewModels
             List<JobStep> RunSteps,
             List<JobStep> EndSteps);
 
+        private sealed record JobEditState(
+            IReadOnlyList<JobStep> StartSteps,
+            IReadOnlyList<JobStep> RunSteps,
+            IReadOnlyList<JobStep> EndSteps,
+            int EndPhaseTimeoutSeconds,
+            bool Repeating);
+
         private readonly Stack<JobStepsSnapshot> _undoStack = new();
         private readonly Stack<JobStepsSnapshot> _redoStack = new();
         private List<JobStep> _clipboard  = new();
@@ -49,6 +56,8 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> _savedEndSnapshot;
         private int _savedEndPhaseTimeoutSeconds;
         private bool _savedRepeating;
+        private readonly EditorChangeTracker<JobEditState> _changeTracker;
+        private bool _suppressDirtyTracking;
         private CancellationTokenSource? _validationCts;
         private int _validationGeneration;
         private JobDebugSession? _debugSession;
@@ -201,7 +210,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (_isRepeating == value) return;
                 _isRepeating = value;
                 OnPropertyChanged();
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             }
         }
 
@@ -217,7 +226,7 @@ namespace DesktopAutomationApp.ViewModels
                 if (_endPhaseTimeoutSeconds == normalized) return;
                 _endPhaseTimeoutSeconds = normalized;
                 OnPropertyChanged();
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             }
         }
 
@@ -355,6 +364,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand RedoCommand { get; }
         public ICommand CopyCommand { get; }
         public ICommand PasteCommand { get; }
+        public ICommand StartJobCommand { get; }
         public ICommand StopJobCommand { get; }
         public ICommand DebugJobCommand { get; }
         public ICommand DebugStepCommand { get; }
@@ -404,6 +414,11 @@ namespace DesktopAutomationApp.ViewModels
             _savedEndPhaseTimeoutSeconds = _endPhaseTimeoutSeconds;
             _isRepeating = Job.Repeating;
             _savedRepeating = _isRepeating;
+            _changeTracker = new EditorChangeTracker<JobEditState>(
+                CaptureSavedEditState(),
+                JobStatesMatchAsync,
+                isDirty => HasUnsavedChanges = isDirty,
+                TimeSpan.FromMilliseconds(60));
 
             _runSteps.CollectionChanged += OnSectionCollectionChanged;
             _startSteps.CollectionChanged += OnSectionCollectionChanged;
@@ -431,6 +446,11 @@ namespace DesktopAutomationApp.ViewModels
             CopyCommand           = new AsyncRelayCommand(CopySelectedAsync, () => !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
             PasteCommand          = new AsyncRelayCommand(PasteAsync, () => !IsDebugActive && !IsMutationBusy && _clipboard.Count > 0);
 
+            StartJobCommand = new RelayCommand(() =>
+            {
+                try { _dispatcher.StartJob(Job.Id); }
+                catch (JobLimitExceededException) { }
+            }, () => !IsJobRunning && !HasUnsavedChanges && !IsDebugActive && AllSteps().Any(step => step.IsEnabled));
             StopJobCommand = new RelayCommand(() =>
             {
                 _dispatcher.CancelJobsByDefinition(Job.Id);
@@ -520,7 +540,7 @@ namespace DesktopAutomationApp.ViewModels
             if (e.PropertyName == nameof(JobStep.IsEnabled))
             {
                 JobValidation.RemoveInvalidSourceSelections(AllSteps());
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
                 InvalidateStructureCommands();
                 (DebugJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 ScheduleValidation();
@@ -546,6 +566,7 @@ namespace DesktopAutomationApp.ViewModels
             NotifySectionStateChanged();
             InvalidateStructureCommands();
             ScheduleValidation();
+            ScheduleDirtyCheck();
         }
 
         private void BeginCollectionUpdate() => _collectionUpdateDepth++;
@@ -562,6 +583,48 @@ namespace DesktopAutomationApp.ViewModels
         {
             _allJobStepsSnapshot = _startSteps.Concat(_runSteps).Concat(_endSteps).ToArray();
             OnPropertyChanged(nameof(AllJobSteps));
+        }
+
+        private void ScheduleDirtyCheck()
+        {
+            if (_suppressDirtyTracking)
+                return;
+
+            _changeTracker.Evaluate(CaptureCurrentEditState());
+        }
+
+        internal Task WaitForDirtyStateAsync() => _changeTracker.WhenIdleAsync();
+
+        private JobEditState CaptureSavedEditState() => new(
+            _savedStartSnapshot,
+            _savedSnapshot,
+            _savedEndSnapshot,
+            _savedEndPhaseTimeoutSeconds,
+            _savedRepeating);
+
+        private JobEditState CaptureCurrentEditState() => new(
+            _startSteps.ToArray(),
+            _runSteps.ToArray(),
+            _endSteps.ToArray(),
+            EndPhaseTimeoutSeconds,
+            IsRepeating);
+
+        private static async Task<bool> JobStatesMatchAsync(
+            JobEditState baseline,
+            JobEditState current,
+            CancellationToken cancellationToken)
+        {
+            if (baseline.EndPhaseTimeoutSeconds != current.EndPhaseTimeoutSeconds
+                || baseline.Repeating != current.Repeating)
+                return false;
+
+            var baselineSerialized = await JobStepsSnapshotService.SerializeAsync(
+                baseline.StartSteps, baseline.RunSteps, baseline.EndSteps, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            var currentSerialized = await JobStepsSnapshotService.SerializeAsync(
+                current.StartSteps, current.RunSteps, current.EndSteps, cancellationToken).ConfigureAwait(false);
+
+            return baselineSerialized == currentSerialized;
         }
 
         private void ReconcileStepSubscriptions()
@@ -920,6 +983,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public void DiscardChanges()
         {
+            _suppressDirtyTracking = true;
             BeginCollectionUpdate();
             try
             {
@@ -930,6 +994,7 @@ namespace DesktopAutomationApp.ViewModels
             finally
             {
                 EndCollectionUpdate();
+                _suppressDirtyTracking = false;
             }
             Job.StartSteps = DeepCloneSteps(_savedStartSnapshot);
             Job.Steps = DeepCloneSteps(_savedSnapshot);
@@ -940,7 +1005,7 @@ namespace DesktopAutomationApp.ViewModels
             Job.Repeating = _savedRepeating;
             OnPropertyChanged(nameof(EndPhaseTimeoutSeconds));
             OnPropertyChanged(nameof(IsRepeating));
-            HasUnsavedChanges = false;
+            _changeTracker.Accept(CaptureSavedEditState());
             ScheduleValidation();
         }
 
@@ -982,7 +1047,7 @@ namespace DesktopAutomationApp.ViewModels
             _savedEndSnapshot = savedMaterialized.EndSteps.ToList();
             _savedEndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
             _savedRepeating = IsRepeating;
-            HasUnsavedChanges = false;
+            _changeTracker.Accept(CaptureSavedEditState());
         }
 
         // ---------- Rename ----------
@@ -1032,7 +1097,7 @@ namespace DesktopAutomationApp.ViewModels
                     _steps.InsertRange(insertIndex, insertion);
                 // If-Abfrage: automatisch EndIf direkt dahinter einfügen
                     SelectedStep = vm.CreatedStep;
-                    HasUnsavedChanges = true;
+                    ScheduleDirtyCheck();
                 });
             }
         }
@@ -1081,7 +1146,7 @@ namespace DesktopAutomationApp.ViewModels
                 await PushUndoAsync();
                 _steps[idx] = vm.CreatedStep;
                 SelectedStep = vm.CreatedStep;
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1124,7 +1189,7 @@ namespace DesktopAutomationApp.ViewModels
                 _steps = section;
                 JobValidation.RemoveInvalidSourceSelections(AllSteps());
                 SelectedStep = step;
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1205,7 +1270,7 @@ namespace DesktopAutomationApp.ViewModels
                 _steps = target;
                 SelectedSteps.Clear();
                 SelectedSteps.AddRange(moving);
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
                 ExpandSection(target);
                 InvalidateSelectionCommands();
             });
@@ -1398,7 +1463,7 @@ namespace DesktopAutomationApp.ViewModels
                 var remaining = _steps.Where((_, index) => !indicesToRemove.Contains(index)).ToList();
                 _steps.ReplaceRange(remaining);
                 SelectedStep = remaining.ElementAtOrDefault(Math.Max(0, idx - 1));
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1478,7 +1543,7 @@ namespace DesktopAutomationApp.ViewModels
             }
             SelectedStep = null;
             SelectedSteps.Clear();
-            HasUnsavedChanges = true;
+            ScheduleDirtyCheck();
         }
 
         // ---------- Copy / Paste ----------
@@ -1509,7 +1574,7 @@ namespace DesktopAutomationApp.ViewModels
                 await PushUndoAsync();
                 _steps.InsertRange(insertAt, toInsert);
                 SelectedStep = toInsert[^1];
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1594,7 +1659,7 @@ namespace DesktopAutomationApp.ViewModels
                 _steps.ReplaceRange(remaining);
                 SelectedStep = remaining.ElementAtOrDefault(Math.Max(0, firstRemoved - 1));
                 SelectedSteps.Clear();
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1793,7 +1858,7 @@ namespace DesktopAutomationApp.ViewModels
                     await PushUndoAsync();
                     _steps.InsertRange(insertIdx, [vm.CreatedStep]);
                     SelectedStep = vm.CreatedStep;
-                    HasUnsavedChanges = true;
+                    ScheduleDirtyCheck();
                 });
             }
         }
@@ -1818,7 +1883,7 @@ namespace DesktopAutomationApp.ViewModels
                 var elseStep = new TaskAutomation.Jobs.ElseStep();
                 _steps.InsertRange(endIfIdx, [elseStep]);
                 SelectedStep = elseStep;
-                HasUnsavedChanges = true;
+                ScheduleDirtyCheck();
             });
         }
 
@@ -1860,6 +1925,7 @@ namespace DesktopAutomationApp.ViewModels
                 }
                 foreach (var step in _startSteps.Concat(_runSteps).Concat(_endSteps))
                     step.PropertyChanged -= OnStepPropertyChanged;
+                _changeTracker.Dispose();
                 _validationCts?.Cancel();
                 _validationCts?.Dispose();
             }
@@ -1888,6 +1954,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DebugJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
@@ -1938,6 +2005,7 @@ namespace DesktopAutomationApp.ViewModels
             InvalidateSaveCommands();
             InvalidateMutationCommands();
             (RenameCommand        as AsyncRelayCommand)?.RaiseCanExecuteChanged();
+            (StartJobCommand      as RelayCommand)?.RaiseCanExecuteChanged();
             (StopJobCommand       as RelayCommand)?.RaiseCanExecuteChanged();
             InvalidateDebugCommands();
             (ExpandDebugContextCommand as RelayCommand)?.RaiseCanExecuteChanged();

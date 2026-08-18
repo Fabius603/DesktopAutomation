@@ -76,6 +76,30 @@
             </Grid>
         </DataTemplate>
 
+        <!-- MouseWheel -->
+        <DataTemplate DataType="{x:Type mak:MouseWheelBefehl}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="TypeCol"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.Steps.MouseWheel}" Style="{StaticResource TypeLabel}"/>
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="ParamLabelCol"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*" SharedSizeGroup="ParamValueCol"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.ScrollHorizontal}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding DeltaX}" Style="{StaticResource ParamValue}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Translate Key=Ui.Macro.StepEditor.ScrollVertical}" Style="{StaticResource ParamLabel}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding DeltaY}" Style="{StaticResource ParamValue}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
         <!-- MouseDown -->
         <DataTemplate DataType="{x:Type mak:MouseDownBefehl}">
             <Grid>

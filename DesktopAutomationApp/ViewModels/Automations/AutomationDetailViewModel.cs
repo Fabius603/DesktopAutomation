@@ -31,6 +31,9 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ILogger<AutomationDetailViewModel> _log;
         private readonly EditableAutomation _snapshot;
         private readonly bool _isNew;
+        private readonly EditorChangeTracker<AutomationEditState> _changeTracker;
+        private bool _baselineAccepted;
+        private bool _suppressDirtyTracking;
 
         private bool _hasUnsavedChanges;
         private readonly HashSet<string> _invalidDateTimeInputs = new();
@@ -82,14 +85,20 @@ namespace DesktopAutomationApp.ViewModels
                 }
 
                 OnPropertyChanged();
-                HasUnsavedChanges = true;
+                UpdateDirtyState();
             }
         }
 
         public bool HasUnsavedChanges
         {
             get => _hasUnsavedChanges;
-            private set { _hasUnsavedChanges = value; OnPropertyChanged(); InvalidateAllCommands(); }
+            private set
+            {
+                if (_hasUnsavedChanges == value) return;
+                _hasUnsavedChanges = value;
+                OnPropertyChanged();
+                InvalidateAllCommands();
+            }
         }
 
         private bool _isCapturingHotkey;
@@ -114,6 +123,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand CancelCommand { get; }
         public ICommand RenameCommand { get; }
         public ICommand OpenFileCommand { get; }
+        public ICommand TriggerCommand { get; }
         public ICommand CaptureHotkeyCommand { get; }
         public ICommand BrowseFileSystemFolderCommand { get; }
         public ICommand ClearActiveWindowCommand { get; }
@@ -143,6 +153,11 @@ namespace DesktopAutomationApp.ViewModels
             _log = log;
             _isNew = automation.CreatedAt == automation.UpdatedAt && string.IsNullOrWhiteSpace(automation.Action.Name);
             _snapshot = automation.Clone();
+            _baselineAccepted = !_isNew;
+            _changeTracker = new EditorChangeTracker<AutomationEditState>(
+                CaptureEditState(EditedAutomation),
+                static (baseline, current, _) => Task.FromResult(baseline == current),
+                isDirty => HasUnsavedChanges = isDirty);
 
             WindowsEventPicker = new WindowsCapabilityPickerViewModel(windowsCatalog, WindowsCapabilityPickerMode.Event,
                 automation.WindowsEventType, automation.WindowsEventFilters);
@@ -174,6 +189,8 @@ namespace DesktopAutomationApp.ViewModels
             CancelCommand = new RelayCommand(() => { if (!_isNew) DiscardChanges(); }, () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await RenameAsync());
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
+            TriggerCommand = new RelayCommand(async () => await _automationAppService.TriggerAsync(EditedAutomation.Id),
+                () => !_isNew && EditedAutomation.Active && !HasUnsavedChanges);
             CaptureHotkeyCommand = new RelayCommand(async () => await CaptureHotkeyAsync(), () => !IsCapturingHotkey);
             BrowseFileSystemFolderCommand = new RelayCommand(BrowseFileSystemFolder);
             ClearActiveWindowCommand = new RelayCommand(() =>
@@ -189,7 +206,7 @@ namespace DesktopAutomationApp.ViewModels
             RegenerateWebhookSecretCommand = new RelayCommand(() =>
             {
                 EditedAutomation.WebhookSecret = WebhookAutomationTrigger.GenerateSecret();
-                HasUnsavedChanges = true;
+                UpdateDirtyState();
             });
 
             EditedAutomation.PropertyChanged += OnEditedAutomationChanged;
@@ -279,7 +296,7 @@ namespace DesktopAutomationApp.ViewModels
                 var captured = await _hotkeyService.CaptureNextAsync();
                 EditedAutomation.Modifiers = captured.Modifiers;
                 EditedAutomation.VirtualKeyCode = captured.VirtualKeyCode;
-                HasUnsavedChanges = true;
+                UpdateDirtyState();
             }
             catch (Exception ex)
             {
@@ -299,7 +316,7 @@ namespace DesktopAutomationApp.ViewModels
 
             EditedAutomation.Name = newName.Trim();
             OnPropertyChanged(nameof(Title));
-            HasUnsavedChanges = true;
+            UpdateDirtyState();
         }
 
         private void BrowseFileSystemFolder()
@@ -332,15 +349,26 @@ namespace DesktopAutomationApp.ViewModels
 
             await _automationAppService.SaveAsync(automation);
             _log.LogInformation("Automation gespeichert: {Name}", EditedAutomation.Name);
-            HasUnsavedChanges = false;
+            CopyFrom(EditedAutomation, _snapshot);
+            _baselineAccepted = true;
+            _changeTracker.Accept(CaptureEditState(EditedAutomation));
         }
 
         public void DiscardChanges()
         {
-            CopyFrom(_snapshot, EditedAutomation);
-            WindowsEventPicker.Load(_snapshot.WindowsEventType, _snapshot.WindowsEventFilters);
-            ResolveSelectedAction();
-            HasUnsavedChanges = false;
+            _suppressDirtyTracking = true;
+            try
+            {
+                CopyFrom(_snapshot, EditedAutomation);
+                WindowsEventPicker.Load(_snapshot.WindowsEventType, _snapshot.WindowsEventFilters);
+                ResolveSelectedAction();
+            }
+            finally
+            {
+                _suppressDirtyTracking = false;
+            }
+
+            _changeTracker.Accept(CaptureEditState(EditedAutomation));
         }
 
         private static string LocalizeValidationError(AutomationValidationError error) => error switch
@@ -404,7 +432,7 @@ namespace DesktopAutomationApp.ViewModels
                 or nameof(EditableAutomation.LastRunDisplay))
                 return;
 
-            HasUnsavedChanges = true;
+            UpdateDirtyState();
             if (e.PropertyName is nameof(EditableAutomation.TriggerKind)
                 or nameof(EditableAutomation.Modifiers)
                 or nameof(EditableAutomation.VirtualKeyCode)
@@ -423,16 +451,84 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnEditedActionChanged(object? sender, PropertyChangedEventArgs e)
         {
-            HasUnsavedChanges = true;
+            UpdateDirtyState();
             OnPropertyChanged(nameof(EditedAutomation.DisplayAction));
         }
 
         private void OnWindowsEventPickerChanged()
         {
             SyncWindowsEvent();
-            HasUnsavedChanges = true;
+            UpdateDirtyState();
             OnPropertyChanged(nameof(TriggerDescription));
         }
+
+        private void UpdateDirtyState()
+        {
+            if (_suppressDirtyTracking)
+                return;
+
+            if (!_baselineAccepted)
+            {
+                HasUnsavedChanges = true;
+                return;
+            }
+
+            _changeTracker.Evaluate(CaptureEditState(EditedAutomation));
+        }
+
+        internal Task WaitForDirtyStateAsync() => _changeTracker.WhenIdleAsync();
+
+        private static AutomationEditState CaptureEditState(EditableAutomation automation)
+        {
+            var definition = automation.ToDomain();
+            return new AutomationEditState(
+                definition.Id,
+                definition.Name,
+                definition.Description,
+                definition.Active,
+                CaptureTriggerState(definition.Trigger),
+                definition.Action.Name,
+                definition.Action.JobId,
+                definition.Action.MakroId,
+                definition.Action.ActionType,
+                definition.RunPolicy.AlreadyRunningBehavior,
+                definition.RunPolicy.Cooldown,
+                definition.RunPolicy.EnabledFrom,
+                definition.RunPolicy.EnabledUntil,
+                definition.CreatedAt,
+                definition.UpdatedAt,
+                definition.LastRunAt);
+        }
+
+        private static string CaptureTriggerState(AutomationTrigger trigger) => trigger switch
+        {
+            ScheduleAutomationTrigger schedule =>
+                $"{schedule.Kind}|{schedule.TimeOfDay:O}|{string.Join(',', schedule.Days.OrderBy(day => day))}",
+            WindowsEventAutomationTrigger windowsEvent =>
+                $"{windowsEvent.Kind}|{windowsEvent.EventType}|{windowsEvent.Debounce:c}|{windowsEvent.DelayAfterEvent:c}|"
+                + string.Join('|', windowsEvent.Filters
+                    .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(pair => $"{pair.Key.Length}:{pair.Key}={pair.Value?.Length ?? -1}:{pair.Value}")),
+            _ => System.Text.Json.JsonSerializer.Serialize(trigger, trigger.GetType())
+        };
+
+        private sealed record AutomationEditState(
+            Guid Id,
+            string Name,
+            string Description,
+            bool Active,
+            string Trigger,
+            string ActionName,
+            Guid? JobId,
+            Guid? MakroId,
+            AutomationActionTarget ActionType,
+            AutomationAlreadyRunningBehavior AlreadyRunningBehavior,
+            TimeSpan Cooldown,
+            TimeOnly? EnabledFrom,
+            TimeOnly? EnabledUntil,
+            DateTimeOffset CreatedAt,
+            DateTimeOffset UpdatedAt,
+            DateTimeOffset? LastRunAt);
 
         private void SyncWindowsEvent()
         {
@@ -489,6 +585,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (TriggerCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void CopyToClipboard(string value)
@@ -519,6 +616,7 @@ namespace DesktopAutomationApp.ViewModels
                 LocalizationService.Instance.CultureChanged -= OnCultureChanged;
                 EditedAutomation.PropertyChanged -= OnEditedAutomationChanged;
                 EditedAutomation.Action.PropertyChanged -= OnEditedActionChanged;
+                _changeTracker.Dispose();
             }
             base.Dispose(disposing);
         }

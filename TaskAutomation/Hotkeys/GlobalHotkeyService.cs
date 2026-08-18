@@ -42,6 +42,8 @@ namespace TaskAutomation.Hotkeys
         private const int WM_XBUTTONDOWN = 0x020B;
         private const int WM_XBUTTONUP = 0x020C;
         private const int WM_MOUSEMOVE = 0x0200;
+        private const int WM_MOUSEWHEEL = 0x020A;
+        private const int WM_MOUSEHWHEEL = 0x020E;
 
         private static bool IsModifierVk(uint vk) =>
             vk is
@@ -387,6 +389,12 @@ namespace TaskAutomation.Hotkeys
                         break;
                     case WM_XBUTTONUP:
                         AddRecordedEvent(new MouseUpCaptured((((data.mouseData >> 16) & 0xFFFF) == 1) ? MouseButtons.X1 : MouseButtons.X2, x, y));
+                        break;
+                    case WM_MOUSEWHEEL:
+                        AddRecordedEvent(new MouseWheelCaptured(0, unchecked((short)(data.mouseData >> 16))));
+                        break;
+                    case WM_MOUSEHWHEEL:
+                        AddRecordedEvent(new MouseWheelCaptured(unchecked((short)(data.mouseData >> 16)), 0));
                         break;
                     case WM_MOUSEMOVE:
                         var nowUs = ElapsedMicroseconds();

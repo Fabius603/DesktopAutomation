@@ -4,6 +4,7 @@
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:windows="clr-namespace:DesktopAutomationApp.Controls.WindowsIntegration"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              Style="{StaticResource ContentViewBase}">
     <UserControl.Resources>
         <Style x:Key="AutomationExpanderToggleStyle" TargetType="ToggleButton">
@@ -62,37 +63,17 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource ButtonPrimary}" Command="{Binding SaveCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="ContentSave" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Save}"/>
-                    </StackPanel>
-                </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CancelCommand}" Margin="8,0,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Cancel" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Discard}"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding BackCommand}" Margin="0,0,12,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="ArrowLeft" Width="14" Height="14" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Back}"/>
-                    </StackPanel>
-                </Button>
-                <TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" Margin="0,0,12,0"/>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RenameCommand}" ToolTip="{loc:Translate Key=Ui.Common.Rename}">
-                    <iconPacks:PackIconMaterial Kind="Pencil" Width="14" Height="14"/>
-                </Button>
-                <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFileCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Key=Ui.Logs.OpenFile}">
-                    <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14"/>
-                </Button>
-            </StackPanel>
-        </DockPanel>
+        <controls:LibraryEditorHeader Margin="0,0,0,12"
+                                      Title="{Binding Title}"
+                                      BackCommand="{Binding BackCommand}"
+                                      RenameCommand="{Binding RenameCommand}"
+                                      OpenFileCommand="{Binding OpenFileCommand}"
+                                      ExecuteCommand="{Binding TriggerCommand}"
+                                      SaveCommand="{Binding SaveCommand}"
+                                      DiscardCommand="{Binding CancelCommand}"
+                                      HasExecutionCommands="True"
+                                      ExecuteToolTip="{loc:Translate Key=Ui.Automation.List.RunNow}"
+                                      HasUnsavedChanges="{Binding HasUnsavedChanges}"/>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,12,0">

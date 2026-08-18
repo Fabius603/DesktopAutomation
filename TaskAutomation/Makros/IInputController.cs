@@ -9,6 +9,7 @@ public interface IInputController
     void MoveAbsolute(double x, double y);
     void MoveRelative(int deltaX, int deltaY);
     void MouseButton(string button, bool down);
+    void MouseWheel(int deltaX, int deltaY);
     void Key(VirtualKeyCode key, bool down);
 }
 
@@ -16,6 +17,8 @@ public sealed class WindowsInputController : IInputController
 {
     private const uint MouseEventMiddleDown = 0x0020;
     private const uint MouseEventMiddleUp = 0x0040;
+    private const uint MouseEventWheel = 0x0800;
+    private const uint MouseEventHorizontalWheel = 0x1000;
 
     [DllImport("user32.dll")]
     private static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extraInfo);
@@ -39,6 +42,12 @@ public sealed class WindowsInputController : IInputController
             case "x2": if (down) _simulator.Mouse.XButtonDown(2); else _simulator.Mouse.XButtonUp(2); break;
             default: throw new ArgumentOutOfRangeException(nameof(button), button, "Unbekannte Maustaste.");
         }
+    }
+
+    public void MouseWheel(int deltaX, int deltaY)
+    {
+        if (deltaY != 0) mouse_event(MouseEventWheel, 0, 0, unchecked((uint)deltaY), UIntPtr.Zero);
+        if (deltaX != 0) mouse_event(MouseEventHorizontalWheel, 0, 0, unchecked((uint)deltaX), UIntPtr.Zero);
     }
 
     public void Key(VirtualKeyCode key, bool down)

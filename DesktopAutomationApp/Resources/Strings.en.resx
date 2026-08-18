@@ -285,6 +285,9 @@
   <data name="Ui.Common.Stop" xml:space="preserve">
     <value>Stop</value>
   </data>
+  <data name="Ui.Common.Unsaved" xml:space="preserve">
+    <value>Unsaved</value>
+  </data>
   <data name="Ui.Common.RemoveSymbol" xml:space="preserve">
     <value>×</value>
   </data>
@@ -1002,6 +1005,9 @@
   </data>
   <data name="Ui.Job.Steps.StopJob" xml:space="preserve">
     <value>Stop job</value>
+  </data>
+  <data name="Ui.Job.Steps.RunJob" xml:space="preserve">
+    <value>Run job</value>
   </data>
   <data name="Ui.Common.NewStep" xml:space="preserve">
     <value>New step</value>
@@ -2917,4 +2923,9 @@ Error code: {3}</value>
   <data name="Enum.TemplateMatchMode.CCoeffNormed" xml:space="preserve"><value>Correlation coefficient (normalized)</value></data>
   <data name="Ui.Step.Generated.RoiStatic" xml:space="preserve"><value>Static: X {0} · Y {1} · {2} × {3} px</value></data>
   <data name="Ui.Step.Generated.RoiDynamic" xml:space="preserve"><value>Dynamic: {0}</value></data>
+  <data name="Ui.Macro.Steps.MouseWheel" xml:space="preserve"><value>Scroll mouse wheel</value></data>
+  <data name="Ui.Macro.StepEditor.ScrollHorizontal" xml:space="preserve"><value>Horizontal:</value></data>
+  <data name="Ui.Macro.StepEditor.ScrollVertical" xml:space="preserve"><value>Vertical:</value></data>
+  <data name="Macro.Step.Type.MouseWheel" xml:space="preserve"><value>Scroll mouse wheel</value></data>
+  <data name="Ui.Macro.StepEditor.Description.MouseWheel" xml:space="preserve"><value>Scrolls horizontally or vertically with the mouse wheel.</value></data>
 </root>

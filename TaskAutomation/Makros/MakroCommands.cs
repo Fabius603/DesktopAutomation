@@ -57,6 +57,7 @@ namespace TaskAutomation.Makros
     [JsonDerivedType(typeof(MouseMoveRelativeBefehl), "mouse_move_relative")]
     [JsonDerivedType(typeof(MouseDownBefehl), "mouse_down")]
     [JsonDerivedType(typeof(MouseUpBefehl), "mouse_up")]
+    [JsonDerivedType(typeof(MouseWheelBefehl), "mouse_wheel")]
     [JsonDerivedType(typeof(KeyDownBefehl), "key_down")]
     [JsonDerivedType(typeof(KeyUpBefehl), "key_up")]
     [JsonDerivedType(typeof(TimeoutBefehl), "timeout")]
@@ -209,6 +210,12 @@ namespace TaskAutomation.Makros
     public sealed class MouseUpBefehl : MakroBefehl
     {
         [JsonPropertyName("button")] public string Button { get; set; } = string.Empty;
+    }
+
+    public sealed class MouseWheelBefehl : MakroBefehl
+    {
+        [JsonPropertyName("deltaX")] public int DeltaX { get; set; }
+        [JsonPropertyName("deltaY")] public int DeltaY { get; set; }
     }
 
     public sealed class KeyDownBefehl : MakroBefehl

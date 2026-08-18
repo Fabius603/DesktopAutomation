@@ -82,6 +82,22 @@ public sealed class MakroRecordingMapperTests
         Assert.Empty(MakroRecordingMapper.Map(events, settings, FormatKey, FormatButton));
     }
 
+    [Fact]
+    public void Map_PreservesVerticalAndHorizontalWheelDeltasWithTiming()
+    {
+        CapturedInputEvent[] events =
+        [
+            new MouseWheelCaptured(0, 120) { TimestampMicroseconds = 1_500 },
+            new MouseWheelCaptured(-240, 0) { TimestampMicroseconds = 2_250 }
+        ];
+
+        var result = MakroRecordingMapper.Map(events, Settings(MakroRecordingMode.ClicksOnly), FormatKey, FormatButton);
+
+        Assert.Collection(result,
+            item => { var wheel = Assert.IsType<MouseWheelBefehl>(item); Assert.Equal((0, 120, 1_500), (wheel.DeltaX, wheel.DeltaY, wheel.DelayBeforeMicroseconds)); },
+            item => { var wheel = Assert.IsType<MouseWheelBefehl>(item); Assert.Equal((-240, 0, 750), (wheel.DeltaX, wheel.DeltaY, wheel.DelayBeforeMicroseconds)); });
+    }
+
     private static MakroRecordingSettings Settings(MakroRecordingMode mode) => new() { Mode = mode, RemoveStopGesture = false };
     private static string FormatKey(KeyModifiers _, uint key) => key.ToString();
     private static string FormatButton(MouseButtons button) => button.ToString();

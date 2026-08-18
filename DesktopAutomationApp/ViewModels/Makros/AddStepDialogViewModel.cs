@@ -28,7 +28,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public ICommand CaptureKeyCommand { get; }
 
-        public string[] StepTypes { get; } = { "MouseMoveAbsolute", "MouseMoveRelative", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
+        public string[] StepTypes { get; } = { "MouseMoveAbsolute", "MouseMoveRelative", "MouseWheel", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
 
         private string _selectedType = "MouseMoveAbsolute";
         public string SelectedType
@@ -64,7 +64,7 @@ namespace DesktopAutomationApp.ViewModels
         public string SelectedStepCategory => Loc.Get(SelectedType switch
         {
             "MouseMoveAbsolute" or "MouseMoveRelative" => "Ui.Macro.StepEditor.Category.Movement",
-            "MouseDown" or "MouseUp" => "Ui.Macro.StepEditor.Category.Mouse",
+            "MouseWheel" or "MouseDown" or "MouseUp" => "Ui.Macro.StepEditor.Category.Mouse",
             "KeyDown" or "KeyUp" => "Ui.Macro.StepEditor.Category.Keyboard",
             _ => "Ui.Macro.StepEditor.Category.Timing"
         });
@@ -72,7 +72,7 @@ namespace DesktopAutomationApp.ViewModels
 
         // Sichtbarkeiten
         public bool ShowMouseXY => SelectedType is "MouseMoveAbsolute";
-        public bool ShowMouseDelta => SelectedType is "MouseMoveRelative";
+        public bool ShowMouseDelta => SelectedType is "MouseMoveRelative" or "MouseWheel";
         public bool ShowMouseButton => SelectedType is "MouseDown" or "MouseUp";
         public bool ShowKey => SelectedType is "KeyDown" or "KeyUp";
         public bool ShowDuration => SelectedType is "Timeout";
@@ -152,6 +152,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 "MouseMoveAbsolute" => new MouseMoveAbsoluteBefehl { X = X, Y = Y },
                 "MouseMoveRelative" => new MouseMoveRelativeBefehl { DeltaX = DeltaX, DeltaY = DeltaY },
+                "MouseWheel" => new MouseWheelBefehl { DeltaX = DeltaX, DeltaY = DeltaY },
                 "MouseDown" => new MouseDownBefehl { Button = MouseButton },
                 "MouseUp" => new MouseUpBefehl { Button = MouseButton },
                 "KeyDown" => new KeyDownBefehl { Key = Key },

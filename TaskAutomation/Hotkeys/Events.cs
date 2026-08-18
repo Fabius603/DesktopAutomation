@@ -19,4 +19,5 @@ namespace TaskAutomation.Hotkeys
     public sealed record MouseMoveCaptured(int X, int Y) : CapturedInputEvent;
     public sealed record MouseDownCaptured(MouseButtons Button, int X, int Y) : CapturedInputEvent;
     public sealed record MouseUpCaptured(MouseButtons Button, int X, int Y) : CapturedInputEvent;
+    public sealed record MouseWheelCaptured(int DeltaX, int DeltaY) : CapturedInputEvent;
 }

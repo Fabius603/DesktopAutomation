@@ -56,6 +56,15 @@ public sealed class MakroSerializationTests
     }
 
     [Fact]
+    public void MouseWheel_RoundTripPreservesBothAxes()
+    {
+        var macro = new Makro { Befehle = new ObservableCollection<MakroBefehl> { new MouseWheelBefehl { DeltaX = -120, DeltaY = 240 } } };
+        var restored = JsonSerializer.Deserialize<Makro>(JsonSerializer.Serialize(macro, Options), Options)!;
+        var wheel = Assert.IsType<MouseWheelBefehl>(Assert.Single(restored.Befehle));
+        Assert.Equal((-120, 240), (wheel.DeltaX, wheel.DeltaY));
+    }
+
+    [Fact]
     public void ExplicitNullCollectionsAndSettingsAreNormalized()
     {
         var restored = JsonSerializer.Deserialize<Makro>("""{"name":"legacy","commands":null,"groups":null,"recordingSettings":null}""", Options)!;

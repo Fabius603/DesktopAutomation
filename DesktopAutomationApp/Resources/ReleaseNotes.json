@@ -1,5 +1,24 @@
 [
   {
+    "version": "1.5.13",
+    "date": "2026-08-18",
+    "sections": [
+      {
+        "title": { "de": "Darstellung", "en": "Appearance" },
+        "changes": [
+          { "category": "Changed", "de": "Die Bearbeitungsansichten für Jobs, Makros und Automationen verwenden eine einheitliche Kopfzeile, in der Speichern und Verwerfen nur bei tatsächlichen Abweichungen direkt vor Ausführen erscheinen; der Makro-Editor zeigt Statistiken bei den Filtern sowie kompaktere Aufnahme- und Vorschauaktionen.", "en": "The job, macro, and automation editors use a consistent header where save and discard appear directly before run only for actual differences; the macro editor shows statistics beside the filters and provides more compact recording and preview actions." }
+        ]
+      },
+      {
+        "title": { "de": "Makros", "en": "Macros" },
+        "changes": [
+          { "category": "Fixed", "de": "Steps und ganze Gruppen lassen sich per Drag-and-drop zuverlässig oberhalb oder unterhalb einer Makrogruppe einfügen.", "en": "Steps and entire groups can be reliably inserted above or below a macro group using drag and drop." },
+          { "category": "Fixed", "de": "Makroaufnahmen erfassen und wiederholen jetzt vertikale und horizontale Mausradbewegungen.", "en": "Macro recordings now capture and replay vertical and horizontal mouse-wheel movement." }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.12",
     "date": "2026-07-30",
     "sections": [

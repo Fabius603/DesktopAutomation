@@ -17,7 +17,13 @@ public static class StepDragDrop
 {
     public const string DataFormat = "DesktopAutomation.StepDragDrop";
 
-    public sealed record MoveRequest(IList Source, int SourceIndex, IList Target, int TargetIndex);
+    public sealed record MoveRequest(
+        IList Source,
+        int SourceIndex,
+        IList Target,
+        int TargetIndex,
+        object? TargetItem = null,
+        bool InsertAfterTarget = false);
     public sealed record DragPayload(IList Source, int SourceIndex);
 
     public static readonly DependencyProperty MoveCommandProperty =
@@ -147,7 +153,14 @@ public static class StepDragDrop
             return;
 
         var placement = GetInsertionPlacement(list, e.GetPosition(list));
-        var request = new MoveRequest(payload.Source, payload.SourceIndex, target, placement.Index);
+        var dropTarget = GetDropTarget(list, e);
+        var request = new MoveRequest(
+            payload.Source,
+            payload.SourceIndex,
+            target,
+            placement.Index,
+            dropTarget.Item,
+            dropTarget.InsertAfter);
         if (command.CanExecute(request))
             command.Execute(request);
 
@@ -224,6 +237,19 @@ public static class StepDragDrop
         return previous is { } last
             ? (last.Index + 1, last.Bottom + last.Margin.Bottom / 2)
             : (list.Items.Count, Math.Max(1, list.ActualHeight - 2));
+    }
+
+    private static (object? Item, bool InsertAfter) GetDropTarget(ListBox list, DragEventArgs e)
+    {
+        var container = ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) as ListBoxItem;
+        if (container == null)
+            return (null, false);
+
+        var index = list.ItemContainerGenerator.IndexFromContainer(container);
+        if (index < 0 || index >= list.Items.Count)
+            return (null, false);
+
+        return (list.Items[index], e.GetPosition(container).Y >= container.ActualHeight / 2);
     }
 
     private static double GetEndInsertionY(ListBox list)

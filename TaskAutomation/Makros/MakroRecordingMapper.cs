@@ -71,6 +71,9 @@ public static class MakroRecordingMapper
                     AddMoveTo(mouse.X, mouse.Y, captured.TimestampMicroseconds);
                     Add(new MouseUpBefehl { Button = formatMouseButton(mouse.Button) }, captured.TimestampMicroseconds);
                     break;
+                case MouseWheelCaptured wheel:
+                    Add(new MouseWheelBefehl { DeltaX = wheel.DeltaX, DeltaY = wheel.DeltaY }, captured.TimestampMicroseconds);
+                    break;
             }
         }
 

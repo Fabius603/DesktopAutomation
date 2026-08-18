@@ -46,7 +46,7 @@ namespace TaskAutomation.Makros
             if (!root.TryGetProperty("type", out var typeProp))
                 throw new JsonException("Makroeintrag enthält kein 'type'-Feld.");
 
-            string type = typeProp.GetString();
+            string? type = typeProp.GetString();
 
             return type switch
             {
@@ -55,6 +55,7 @@ namespace TaskAutomation.Makros
                 "mouseMove" => JsonSerializer.Deserialize<MouseMoveAbsoluteBefehl>(root.GetRawText(), options), // Legacy compatibility
                 "mouseDown" or "mouse_down" => JsonSerializer.Deserialize<MouseDownBefehl>(root.GetRawText(), options),
                 "mouseUp" or "mouse_up" => JsonSerializer.Deserialize<MouseUpBefehl>(root.GetRawText(), options),
+                "mouseWheel" or "mouse_wheel" => JsonSerializer.Deserialize<MouseWheelBefehl>(root.GetRawText(), options),
                 "keyDown" or "key_down" => JsonSerializer.Deserialize<KeyDownBefehl>(root.GetRawText(), options),
                 "keyUp" or "key_up" => JsonSerializer.Deserialize<KeyUpBefehl>(root.GetRawText(), options),
                 "timeout" => JsonSerializer.Deserialize<TimeoutBefehl>(root.GetRawText(), options),
