@@ -13,7 +13,7 @@
         "title": { "de": "Makros", "en": "Macros" },
         "changes": [
           { "category": "Fixed", "de": "Steps und ganze Gruppen lassen sich per Drag-and-drop zuverlässig oberhalb oder unterhalb einer Makrogruppe einfügen.", "en": "Steps and entire groups can be reliably inserted above or below a macro group using drag and drop." },
-          { "category": "Fixed", "de": "Makroaufnahmen erfassen und wiederholen jetzt vertikale und horizontale Mausradbewegungen.", "en": "Macro recordings now capture and replay vertical and horizontal mouse-wheel movement." }
+          { "category": "Fixed", "de": "Makroaufnahmen erfassen und wiederholen jetzt vertikale und horizontale Mausradbewegungen und fassen zusammenhängendes Scrollen automatisch in übersichtlichen Gruppen zusammen.", "en": "Macro recordings now capture and replay vertical and horizontal mouse-wheel movement and automatically combine continuous scrolling into clear groups." }
         ]
       }
     ]

@@ -2286,8 +2286,8 @@ Error code: {3}</value>
   <data name="Ui.Macro.Validation.GroupStructureInvalid" xml:space="preserve"><value>The macro groups are inconsistent.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Delay before</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Time since the previous step; value and unit can be selected freely.</value></data>
-  <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatic movement groups</value></data>
-  <data name="Ui.Macro.Recording.AutoGroups.Help" xml:space="preserve"><value>Combines consecutive mouse movements into clear groups after recording.</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatic input groups</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups.Help" xml:space="preserve"><value>Combines consecutive mouse and mouse-wheel movements into separate groups after recording.</value></data>
   <data name="Ui.Macro.Stats.Duration" xml:space="preserve"><value>Total duration</value></data>
   <data name="Ui.Macro.Stats.Steps" xml:space="preserve"><value>Steps</value></data>
   <data name="Ui.Macro.Stats.Groups" xml:space="preserve"><value>Groups</value></data>
@@ -2928,4 +2928,5 @@ Error code: {3}</value>
   <data name="Ui.Macro.StepEditor.ScrollVertical" xml:space="preserve"><value>Vertical:</value></data>
   <data name="Macro.Step.Type.MouseWheel" xml:space="preserve"><value>Scroll mouse wheel</value></data>
   <data name="Ui.Macro.StepEditor.Description.MouseWheel" xml:space="preserve"><value>Scrolls horizontally or vertically with the mouse wheel.</value></data>
+  <data name="Ui.Macro.Group.Scroll" xml:space="preserve"><value>Scroll</value></data>
 </root>

@@ -71,15 +71,29 @@ public static class MakroGrouping
     public static IReadOnlyList<MakroGruppe> CreateAutomaticMovementGroups(
         IReadOnlyList<MakroBefehl> commands,
         string titlePrefix = "Bewegung")
+        => CreateAutomaticGroups(commands,
+            command => command is MouseMoveAbsoluteBefehl or MouseMoveRelativeBefehl,
+            titlePrefix);
+
+    public static IReadOnlyList<MakroGruppe> CreateAutomaticWheelGroups(
+        IReadOnlyList<MakroBefehl> commands,
+        string titlePrefix = "Scrollen")
+        => CreateAutomaticGroups(commands, command => command is MouseWheelBefehl, titlePrefix);
+
+    private static IReadOnlyList<MakroGruppe> CreateAutomaticGroups(
+        IReadOnlyList<MakroBefehl> commands,
+        Func<MakroBefehl, bool> matches,
+        string titlePrefix)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        ArgumentNullException.ThrowIfNull(matches);
         var groups = new List<MakroGruppe>();
         var runStart = -1;
 
         for (var index = 0; index <= commands.Count; index++)
         {
             var isMovement = index < commands.Count
-                && commands[index] is MouseMoveAbsoluteBefehl or MouseMoveRelativeBefehl
+                && matches(commands[index])
                 && string.IsNullOrWhiteSpace(commands[index].GroupId);
 
             if (isMovement && runStart < 0)

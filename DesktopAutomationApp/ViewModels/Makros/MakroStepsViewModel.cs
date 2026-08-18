@@ -1066,8 +1066,12 @@ namespace DesktopAutomationApp.ViewModels
                     if (triggeredByHotkey)
                         mappingSettings.RemoveStopGesture = false;
                     var mapped = MakroRecordingMapper.Map(events, mappingSettings, _hotkeys.FormatKey, _hotkeys.FormatMouseButton);
-                    var automaticGroups = mappingSettings.AutomaticMovementGroups
-                        ? MakroGrouping.CreateAutomaticMovementGroups(mapped, Loc.Get("Ui.Macro.Group.Movement"))
+                    IReadOnlyList<MakroGruppe> automaticGroups = mappingSettings.AutomaticMovementGroups
+                        ?
+                        [
+                            .. MakroGrouping.CreateAutomaticMovementGroups(mapped, Loc.Get("Ui.Macro.Group.Movement")),
+                            .. MakroGrouping.CreateAutomaticWheelGroups(mapped, Loc.Get("Ui.Macro.Group.Scroll"))
+                        ]
                         : Array.Empty<MakroGruppe>();
                     var desktop = ScreenHelper.GetVirtualDesktopBounds();
                     var initialCursor = events.OfType<MouseMoveCaptured>().FirstOrDefault();

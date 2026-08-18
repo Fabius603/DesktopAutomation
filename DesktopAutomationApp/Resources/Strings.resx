@@ -2390,8 +2390,8 @@ Fehlercode: {3}</value>
   <data name="Ui.Macro.Validation.GroupStructureInvalid" xml:space="preserve"><value>Die Gruppen des Makros sind inkonsistent.</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore" xml:space="preserve"><value>Verzögerung davor</value></data>
   <data name="Ui.Macro.StepEditor.DelayBefore.Help" xml:space="preserve"><value>Zeit seit dem vorherigen Step; Wert und Einheit können frei gewählt werden.</value></data>
-  <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatische Bewegungsgruppen</value></data>
-  <data name="Ui.Macro.Recording.AutoGroups.Help" xml:space="preserve"><value>Fasst aufeinanderfolgende Mausbewegungen nach der Aufnahme zu übersichtlichen Gruppen zusammen.</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups" xml:space="preserve"><value>Automatische Eingabegruppen</value></data>
+  <data name="Ui.Macro.Recording.AutoGroups.Help" xml:space="preserve"><value>Fasst aufeinanderfolgende Maus- und Mausradbewegungen nach der Aufnahme in getrennten Gruppen zusammen.</value></data>
   <data name="Ui.Macro.Stats.Duration" xml:space="preserve"><value>Gesamtdauer</value></data>
   <data name="Ui.Macro.Stats.Steps" xml:space="preserve"><value>Steps</value></data>
   <data name="Ui.Macro.Stats.Groups" xml:space="preserve"><value>Gruppen</value></data>
@@ -3032,4 +3032,5 @@ Fehlercode: {3}</value>
   <data name="Ui.Macro.StepEditor.ScrollVertical" xml:space="preserve"><value>Vertikal:</value></data>
   <data name="Macro.Step.Type.MouseWheel" xml:space="preserve"><value>Mausrad bewegen</value></data>
   <data name="Ui.Macro.StepEditor.Description.MouseWheel" xml:space="preserve"><value>Scrollt horizontal oder vertikal mit dem Mausrad.</value></data>
+  <data name="Ui.Macro.Group.Scroll" xml:space="preserve"><value>Scrollen</value></data>
 </root>

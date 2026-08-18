@@ -73,6 +73,33 @@ public sealed class MakroTimelineAndGroupingTests
     }
 
     [Fact]
+    public void AutomaticWheelGrouping_GroupsOnlyConsecutiveWheelRunsWithAtLeastTwoSteps()
+    {
+        MakroBefehl[] commands =
+        [
+            new MouseWheelBefehl { DeltaY = 120 },
+            new MouseWheelBefehl { DeltaY = 120 },
+            new MouseMoveAbsoluteBefehl(),
+            new MouseWheelBefehl { DeltaX = -120 },
+            new KeyDownBefehl { Key = "A" },
+            new MouseWheelBefehl { DeltaY = -120 },
+            new MouseWheelBefehl { DeltaY = -120 }
+        ];
+
+        var groups = MakroGrouping.CreateAutomaticWheelGroups(commands, "Scroll");
+
+        Assert.Equal(2, groups.Count);
+        Assert.Equal("Scroll 1", groups[0].Title);
+        Assert.Equal("Scroll 2", groups[1].Title);
+        Assert.Equal(commands[0].GroupId, commands[1].GroupId);
+        Assert.Null(commands[2].GroupId);
+        Assert.Null(commands[3].GroupId);
+        Assert.Equal(commands[5].GroupId, commands[6].GroupId);
+        Assert.NotEqual(commands[0].GroupId, commands[5].GroupId);
+        Assert.All(groups, group => Assert.True(group.IsAutomatic));
+    }
+
+    [Fact]
     public void MoveGroupBefore_MovesTheWholeGroupWithoutChangingItsInternalOrder()
     {
         var first = new KeyDownBefehl { Key = "A" };
