@@ -55,8 +55,48 @@ public sealed class ExecutionLogServiceTests
             service.Complete(session, true);
         }
         using var reloaded = new ExecutionLogService(directory.Path);
+        reloaded.ReloadSessions();
         var sessionReloaded = Assert.Single(reloaded.Sessions, session => session.Id == sessionId);
         Assert.Contains(reloaded.ReadEntries(sessionReloaded.Id), entry => entry.Message == "entry-199");
+    }
+
+    [Fact]
+    public void ReloadSessions_LoadsOnlyRequestedNewestPageAndReportsMoreSessions()
+    {
+        using var directory = new TemporaryDirectory();
+        var jobDirectory = Path.Combine(directory.Path, ExecutionLogKind.Job.ToString());
+        Directory.CreateDirectory(jobDirectory);
+        for (var index = 0; index < 55; index++)
+        {
+            var timestamp = new DateTime(2026, 1, 1).AddMinutes(index);
+            var fileName = $"{timestamp:yyyyMMdd-HHmmss-fff}_job-{index:D2}_{Guid.NewGuid():N}.log";
+            File.WriteAllText(Path.Combine(jobDirectory, fileName), string.Empty);
+        }
+
+        using var service = new ExecutionLogService(directory.Path);
+        service.ReloadSessions(50);
+
+        Assert.Equal(50, service.Sessions.Count);
+        Assert.True(service.HasMoreSessions);
+        Assert.Equal("job-54", service.Sessions[0].Name);
+
+        service.ReloadSessions(100);
+
+        Assert.Equal(55, service.Sessions.Count);
+        Assert.False(service.HasMoreSessions);
+    }
+
+    [Fact]
+    public void SharedFileStorage_ReadLastLinesDoesNotRequireScanningFromTheBeginning()
+    {
+        using var directory = new TemporaryDirectory();
+        var filePath = Path.Combine(directory.Path, "large.log");
+        File.WriteAllLines(filePath, Enumerable.Range(0, 10_000).Select(index => $"entry-{index}"));
+        var storage = new LogFileStorageService();
+
+        var entries = storage.ReadLastLines(filePath, 3);
+
+        Assert.Equal(["entry-9997", "entry-9998", "entry-9999"], entries);
     }
 
     [Fact]

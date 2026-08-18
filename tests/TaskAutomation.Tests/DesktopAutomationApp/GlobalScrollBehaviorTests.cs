@@ -28,6 +28,18 @@ public sealed class GlobalScrollBehaviorTests
             xaml, "VirtualizingStackPanel.ScrollUnit=\"Pixel\""));
     }
 
+    [Theory]
+    [InlineData("ExecutionLogsView.xaml")]
+    [InlineData("AutomationLogsView.xaml")]
+    [InlineData("ApplicationLogsView.xaml")]
+    public void LogPages_FollowTheLatestEntry(string fileName)
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "LogsView", fileName));
+
+        Assert.Contains("LogTailFollowBehavior.IsEnabled=\"True\"", xaml, StringComparison.Ordinal);
+    }
+
     private static int CountOccurrences(string value, string search)
     {
         var count = 0;

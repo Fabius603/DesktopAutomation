@@ -34,6 +34,7 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
     public List<ExecutionLogEntry> Entries { get; } = [];
     public List<(ExecutionLogSession Session, bool Success, bool Cancelled, string? Details)> Completions { get; } = [];
     public IReadOnlyList<ExecutionLogSession> Sessions => MutableSessions;
+    public bool HasMoreSessions => false;
 
     public ExecutionLogSession BeginJob(Guid jobId, string jobName, JobStartContext? startContext = null)
     {
@@ -63,7 +64,7 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
         Entries.Where(entry => entry.SessionId == sessionId).TakeLast(maxEntries).ToArray();
     public Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000,
         CancellationToken cancellationToken = default) => Task.FromResult(ReadEntries(sessionId, maxEntries));
-    public void ReloadSessions() { }
+    public void ReloadSessions(int maxSessions = 200) { }
 }
 
 internal sealed class NoOpRecordingIndicator : IRecordingIndicatorOverlay

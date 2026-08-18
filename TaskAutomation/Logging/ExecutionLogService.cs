@@ -86,13 +86,14 @@ namespace TaskAutomation.Logging
         event EventHandler<ExecutionLogSession>? SessionChanged;
 
         IReadOnlyList<ExecutionLogSession> Sessions { get; }
+        bool HasMoreSessions { get; }
 
         ExecutionLogSession BeginJob(Guid jobId, string jobName, JobStartContext? startContext = null);
         void Write(ExecutionLogSession session, ExecutionLogLevel level, string message, string? details = null, string? stepId = null, string? stepType = null, long? durationMs = null, JobExecutionState? jobState = null);
         void Complete(ExecutionLogSession session, bool success, string? details = null, bool cancelled = false);
         IReadOnlyList<ExecutionLogEntry> ReadEntries(Guid sessionId, int maxEntries = 2000);
         Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000, CancellationToken cancellationToken = default);
-        void ReloadSessions();
+        void ReloadSessions(int maxSessions = 200);
     }
 
     public sealed class ExecutionLogService : IExecutionLogService, IDisposable
@@ -104,9 +105,10 @@ namespace TaskAutomation.Logging
         private readonly BlockingCollection<PendingLogWrite> _writeQueue;
         private readonly Thread _writerThread;
         private readonly string _counterFilePath;
+        private readonly ILogFileStorageService _fileStorage;
         private readonly Dictionary<Guid, long> _jobCounters = new();
         private bool _disposed;
-        private const int MaxInMemorySessions = 200;
+        private const int MaxInMemorySessions = MaxStoredLogFiles;
         private const int MaxEntriesPerSession = 3000;
         private const int MaxPendingLogWrites = 8192;
         private const int MaxWritesPerBatch = 256;
@@ -120,18 +122,24 @@ namespace TaskAutomation.Logging
             Converters = { new JsonStringEnumConverter() }
         };
         private long _droppedWrites;
+        private bool _hasMoreSessions;
 
         public event EventHandler<ExecutionLogEntry>? EntryWritten;
         public event EventHandler<ExecutionLogSession>? SessionChanged;
 
-        public ExecutionLogService() : this(AppPaths.ExecutionLogsDirectory)
+        public ExecutionLogService(ILogFileStorageService fileStorage) : this(AppPaths.ExecutionLogsDirectory, fileStorage)
         {
         }
 
-        internal ExecutionLogService(string rootDirectory)
+        internal ExecutionLogService(string rootDirectory) : this(rootDirectory, new LogFileStorageService())
+        {
+        }
+
+        private ExecutionLogService(string rootDirectory, ILogFileStorageService fileStorage)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
             _rootDirectory = Path.GetFullPath(rootDirectory);
+            _fileStorage = fileStorage;
             Directory.CreateDirectory(_rootDirectory);
             _counterFilePath = Path.Combine(_rootDirectory, "job-counters.json");
             LoadJobCounters();
@@ -142,7 +150,9 @@ namespace TaskAutomation.Logging
                 Name = "ExecutionLogWriter"
             };
             _writerThread.Start();
-            ReloadSessions();
+            _ = Task.Run(() => _fileStorage.ApplyRetention(
+                Path.Combine(_rootDirectory, ExecutionLogKind.Job.ToString()), "*.log", MaxStoredLogFiles,
+                MaxStoredLogBytes, MaxLogAge, path => [path + ".meta.json"]));
         }
 
         public IReadOnlyList<ExecutionLogSession> Sessions
@@ -250,11 +260,20 @@ namespace TaskAutomation.Logging
             if (!File.Exists(session.FilePath))
                 return Array.Empty<ExecutionLogEntry>();
 
-            return ReadLastLines(session.FilePath, maxEntries)
+            return _fileStorage.ReadLastLines(session.FilePath, maxEntries)
                 .Select(line => TryParseEntry(session.Id, line))
                 .Where(entry => entry != null)
                 .Cast<ExecutionLogEntry>()
                 .ToArray();
+        }
+
+        public bool HasMoreSessions
+        {
+            get
+            {
+                lock (_gate)
+                    return _hasMoreSessions;
+            }
         }
 
         public Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(
@@ -272,13 +291,14 @@ namespace TaskAutomation.Logging
             }, cancellationToken);
         }
 
-        public void ReloadSessions()
+        public void ReloadSessions(int maxSessions = 200)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxSessions);
             var jobDirectory = Path.Combine(_rootDirectory, ExecutionLogKind.Job.ToString());
             Directory.CreateDirectory(jobDirectory);
-            ApplyRetentionPolicy(jobDirectory);
 
-            var sessions = Directory.EnumerateFiles(jobDirectory, "*.log")
+            var candidates = _fileStorage.GetNewestFiles(jobDirectory, "*.log", maxSessions, out var hasMoreSessions);
+            var sessions = candidates
                 .Select(TryCreateSessionFromFile)
                 .Where(session => session != null)
                 .Cast<ExecutionLogSession>()
@@ -286,6 +306,7 @@ namespace TaskAutomation.Logging
 
             lock (_gate)
             {
+                _hasMoreSessions = hasMoreSessions;
                 var discoveredPaths = new HashSet<string>(sessions.Select(s => s.FilePath), StringComparer.OrdinalIgnoreCase);
                 _sessions.RemoveAll(session => !session.IsRunning && !discoveredPaths.Contains(session.FilePath));
 
@@ -543,94 +564,6 @@ namespace TaskAutomation.Logging
 
             foreach (var sessionId in _entries.Keys.Where(id => !retained.Contains(id)).ToList())
                 _entries.Remove(sessionId);
-        }
-
-        private static IEnumerable<string> ReadLastLines(string filePath, int maxLines)
-        {
-            if (maxLines <= 0)
-                return Array.Empty<string>();
-
-            const int blockSize = 64 * 1024;
-            using var stream = new FileStream(
-                filePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete,
-                blockSize,
-                FileOptions.RandomAccess);
-
-            if (stream.Length == 0)
-                return Array.Empty<string>();
-
-            var chunks = new List<byte[]>();
-            var remaining = stream.Length;
-            var newlineCount = 0;
-            while (remaining > 0 && newlineCount <= maxLines)
-            {
-                var count = (int)Math.Min(blockSize, remaining);
-                remaining -= count;
-                stream.Position = remaining;
-
-                var buffer = new byte[count];
-                stream.ReadExactly(buffer);
-                chunks.Add(buffer);
-                newlineCount += buffer.Count(value => value == (byte)'\n');
-            }
-
-            var totalLength = chunks.Sum(chunk => chunk.Length);
-            var bytes = new byte[totalLength];
-            var offset = 0;
-            for (var index = chunks.Count - 1; index >= 0; index--)
-            {
-                Buffer.BlockCopy(chunks[index], 0, bytes, offset, chunks[index].Length);
-                offset += chunks[index].Length;
-            }
-
-            var text = Encoding.UTF8.GetString(bytes);
-            var lines = text.Split('\n');
-            var end = lines.Length;
-            while (end > 0 && string.IsNullOrEmpty(lines[end - 1]))
-                end--;
-
-            var start = Math.Max(0, end - maxLines);
-            return lines[start..end]
-                .Select(line => line.TrimStart('\uFEFF').TrimEnd('\r'))
-                .ToArray();
-        }
-
-        private static void ApplyRetentionPolicy(string directory)
-        {
-            try
-            {
-                var cutoff = DateTime.UtcNow - MaxLogAge;
-                var files = Directory.EnumerateFiles(directory, "*.log")
-                    .Select(path => new FileInfo(path))
-                    .OrderByDescending(file => file.LastWriteTimeUtc)
-                    .ToList();
-
-                foreach (var expired in files.Where(file => file.LastWriteTimeUtc < cutoff).ToList())
-                {
-                    TryDelete(expired);
-                    files.Remove(expired);
-                }
-
-                var retainedBytes = 0L;
-                for (var index = 0; index < files.Count; index++)
-                {
-                    var file = files[index];
-                    retainedBytes += file.Exists ? file.Length : 0;
-                    if (index >= MaxStoredLogFiles || retainedBytes > MaxStoredLogBytes)
-                        TryDelete(file);
-                }
-            }
-            catch (IOException)
-            {
-                // Retention must not prevent the application from starting.
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // Retention must not prevent the application from starting.
-            }
         }
 
         private static void TryDelete(FileInfo file)

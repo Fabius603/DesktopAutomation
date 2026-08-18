@@ -3,80 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              Style="{StaticResource ContentViewBase}">
-    <UserControl.Resources>
-        <Style x:Key="LogListBoxStyle" TargetType="ListBox">
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-        </Style>
-
-        <Style x:Key="LogSessionItemContainerStyle" TargetType="ListBoxItem">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,0,8,8"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Chrome"
-                                Background="{DynamicResource App.Brush.RowOdd}"
-                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                                BorderThickness="1"
-                                CornerRadius="6"
-                                Padding="12,10"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.TextMuted}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="LogEntryItemContainerStyle" TargetType="ListBoxItem">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,0,8,4"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Chrome"
-                                Background="{DynamicResource App.Brush.RowOdd}"
-                                BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                                BorderThickness="1"
-                                CornerRadius="6"
-                                Padding="10,6"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.TextMuted}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -113,10 +41,16 @@
             <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="{loc:Translate Key=Ui.Logs.Executions}" Style="{StaticResource Heading2}" Margin="0,0,0,10"/>
+                    <Button DockPanel.Dock="Bottom"
+                            Command="{Binding LoadMoreSessionsCommand}"
+                            Visibility="{Binding HasMoreSessions, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Margin="0,8,8,0"
+                            Content="{loc:Translate Key=Execution.LoadMoreSessions}"/>
                     <ListBox ItemsSource="{Binding Sessions}"
                              SelectedItem="{Binding SelectedSession}"
-                             Style="{StaticResource LogListBoxStyle}"
-                             ItemContainerStyle="{StaticResource LogSessionItemContainerStyle}"
+                             Style="{StaticResource SharedLogListBoxStyle}"
+                             ItemContainerStyle="{StaticResource SharedLogSessionItemStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
                              ScrollViewer.CanContentScroll="True"
@@ -189,10 +123,11 @@
                     </DockPanel>
 
                     <ListBox x:Name="LogEntriesList"
+                             behaviors:LogTailFollowBehavior.IsEnabled="True"
                              ItemsSource="{Binding Entries}"
                              SelectedItem="{Binding SelectedEntry}"
-                             Style="{StaticResource LogListBoxStyle}"
-                             ItemContainerStyle="{StaticResource LogEntryItemContainerStyle}"
+                             Style="{StaticResource SharedLogListBoxStyle}"
+                             ItemContainerStyle="{StaticResource SharedLogEntryItemStyle}"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
                              VirtualizingPanel.CacheLength="1"

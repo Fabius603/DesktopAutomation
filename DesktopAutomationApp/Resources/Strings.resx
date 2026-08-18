@@ -1368,6 +1368,9 @@
   <data name="Execution.LogSearch" xml:space="preserve">
     <value>Logs durchsuchen</value>
   </data>
+  <data name="Execution.LoadMoreSessions" xml:space="preserve">
+    <value>Weitere laden</value>
+  </data>
   <data name="Update.Downloading" xml:space="preserve">
     <value>Wird heruntergeladen …</value>
   </data>

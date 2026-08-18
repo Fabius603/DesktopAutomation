@@ -1383,6 +1383,9 @@
   <data name="Execution.LogSearch" xml:space="preserve">
     <value>Search logs</value>
   </data>
+  <data name="Execution.LoadMoreSessions" xml:space="preserve">
+    <value>Load more</value>
+  </data>
   <data name="Update.Downloading" xml:space="preserve">
     <value>Downloading …</value>
   </data>

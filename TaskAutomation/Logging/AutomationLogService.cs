@@ -42,6 +42,8 @@ public interface IAutomationLogService
     void Synchronize(IEnumerable<AutomationDefinition> automations);
     void Write(Guid automationId, ExecutionLogLevel level, string message, string? details = null);
     IReadOnlyList<AutomationLogEntry> ReadEntries(Guid automationId, int maxEntries = 3000);
+    Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class AutomationLogService : IAutomationLogService
@@ -49,13 +51,15 @@ public sealed class AutomationLogService : IAutomationLogService
     private readonly object _gate = new();
     private readonly Dictionary<Guid, AutomationLog> _logs = new();
     private readonly string _directory;
+    private readonly ILogFileStorageService _fileStorage;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         Converters = { new JsonStringEnumConverter() }
     };
 
-    public AutomationLogService()
+    public AutomationLogService(ILogFileStorageService fileStorage)
     {
+        _fileStorage = fileStorage;
         _directory = AppPaths.AutomationLogsDirectory;
         Directory.CreateDirectory(_directory);
     }
@@ -129,7 +133,7 @@ public sealed class AutomationLogService : IAutomationLogService
         if (filePath == null || !File.Exists(filePath)) return Array.Empty<AutomationLogEntry>();
         try
         {
-            return File.ReadLines(filePath)
+            return _fileStorage.ReadLastLines(filePath, maxEntries)
                 .Select(line =>
                 {
                     try { return JsonSerializer.Deserialize<AutomationLogEntry>(line.TrimStart('\uFEFF'), JsonOptions); }
@@ -137,10 +141,22 @@ public sealed class AutomationLogService : IAutomationLogService
                 })
                 .Where(entry => entry != null)
                 .Cast<AutomationLogEntry>()
-                .TakeLast(maxEntries)
                 .ToArray();
         }
         catch (IOException) { return Array.Empty<AutomationLogEntry>(); }
         catch (UnauthorizedAccessException) { return Array.Empty<AutomationLogEntry>(); }
+    }
+
+    public Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var entries = ReadEntries(automationId, maxEntries);
+            cancellationToken.ThrowIfCancellationRequested();
+            return entries;
+        }, cancellationToken);
     }
 }

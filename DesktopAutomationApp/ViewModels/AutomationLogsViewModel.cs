@@ -12,11 +12,15 @@ namespace DesktopAutomationApp.ViewModels;
 
 public sealed class AutomationLogsViewModel : ViewModelBase
 {
+    private const int MaxBufferedEntries = 3000;
     private readonly IAutomationLogService _service;
-    private readonly ObservableCollection<AutomationLogEntryItem> _entries = new();
+    private readonly ObservableRangeCollection<AutomationLogEntryItem> _entries = new();
     private AutomationLog? _selectedLog;
     private ExecutionLogLevel _selectedMinimumLevel = ExecutionLogLevel.Information;
     private string _searchText = string.Empty;
+    private CancellationTokenSource? _loadCancellation;
+    private bool _isLoading;
+    private bool _isTruncated;
 
     public AutomationLogsViewModel(IAutomationLogService service)
     {
@@ -38,6 +42,21 @@ public sealed class AutomationLogsViewModel : ViewModelBase
     public ICommand OpenLogFolderCommand { get; }
     public ICommand BackCommand { get; }
     public event Action? RequestBack;
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (_isLoading == value) return;
+            SetProperty(ref _isLoading, value);
+            OnPropertyChanged(nameof(EntryStatusText));
+        }
+    }
+
+    public string EntryStatusText => IsLoading
+        ? Localization.Loc.Get("Execution.LogsLoading")
+        : Localization.Loc.Format(_isTruncated ? "Execution.LogEntryCountTruncated" : "Execution.LogEntryCount", _entries.Count);
 
     public AutomationLog? SelectedLog
     {
@@ -68,20 +87,40 @@ public sealed class AutomationLogsViewModel : ViewModelBase
         var logs = await Task.Run(() => _service.Logs.ToArray());
         Logs.Clear();
         foreach (var log in logs) Logs.Add(log);
-        SelectedLog = Logs.FirstOrDefault(log => log.AutomationId == selectedId) ?? Logs.FirstOrDefault();
-        if (SelectedLog != null) await LoadEntriesAsync();
+        var nextSelection = Logs.FirstOrDefault(log => log.AutomationId == selectedId) ?? Logs.FirstOrDefault();
+        if (!Equals(_selectedLog, nextSelection)) SetProperty(ref _selectedLog, nextSelection, nameof(SelectedLog));
+        await LoadEntriesAsync();
     }
 
     private async Task LoadEntriesAsync()
     {
-        _entries.Clear();
-        if (SelectedLog == null) return;
+        _loadCancellation?.Cancel();
+        _loadCancellation?.Dispose();
+        _loadCancellation = new CancellationTokenSource();
+        var cancellationToken = _loadCancellation.Token;
+        if (SelectedLog == null)
+        {
+            _entries.Clear();
+            _isTruncated = false;
+            OnPropertyChanged(nameof(EntryStatusText));
+            return;
+        }
         var selectedId = SelectedLog.AutomationId;
-        var entries = await Task.Run(() => _service.ReadEntries(selectedId));
-        if (SelectedLog?.AutomationId != selectedId) return;
-        foreach (var entry in entries)
-            _entries.Add(new AutomationLogEntryItem(entry));
-        Entries.Refresh();
+        IsLoading = true;
+        try
+        {
+            var entries = await _service.ReadEntriesAsync(selectedId, MaxBufferedEntries, cancellationToken);
+            if (cancellationToken.IsCancellationRequested || SelectedLog?.AutomationId != selectedId) return;
+            _isTruncated = entries.Count >= MaxBufferedEntries;
+            _entries.ReplaceRange(entries.Select(entry => new AutomationLogEntryItem(entry)));
+            Entries.Refresh();
+            OnPropertyChanged(nameof(EntryStatusText));
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            if (!cancellationToken.IsCancellationRequested && SelectedLog?.AutomationId == selectedId) IsLoading = false;
+        }
     }
 
     private bool IsVisible(object item) => item is AutomationLogEntryItem entry
@@ -104,7 +143,8 @@ public sealed class AutomationLogsViewModel : ViewModelBase
     {
         if (SelectedLog?.AutomationId != entry.AutomationId) return;
         _entries.Add(new AutomationLogEntryItem(entry));
-        while (_entries.Count > 3000) _entries.RemoveAt(0);
+        while (_entries.Count > MaxBufferedEntries) { _entries.RemoveAt(0); _isTruncated = true; }
+        OnPropertyChanged(nameof(EntryStatusText));
     });
 
     private static void RunOnUi(Action action)
@@ -112,6 +152,18 @@ public sealed class AutomationLogsViewModel : ViewModelBase
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher == null || dispatcher.CheckAccess()) action();
         else dispatcher.InvokeAsync(action);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _loadCancellation?.Cancel();
+            _loadCancellation?.Dispose();
+            _service.EntryWritten -= OnEntryWritten;
+            _service.LogsChanged -= OnLogsChanged;
+        }
+        base.Dispose(disposing);
     }
 }
 

@@ -74,7 +74,8 @@ namespace DesktopAutomationApp
 
             AppPaths.MigrateLegacyData();
             var logDirectory = AppPaths.LogsDirectory;
-            var applicationLogService = new ApplicationLogService(logDirectory);
+            var logFileStorageService = new LogFileStorageService();
+            var applicationLogService = new ApplicationLogService(logDirectory, logFileStorageService);
 
             // Logs must live outside Velopack's replaceable application directory.
             Log.Logger = new LoggerConfiguration()
@@ -138,6 +139,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IReleaseNotesService, ReleaseNotesService>();
+                    services.AddSingleton<ILogFileStorageService>(logFileStorageService);
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
                     services.AddSingleton<IAutomationLogService, AutomationLogService>();
                     services.AddSingleton<IApplicationLogService>(applicationLogService);

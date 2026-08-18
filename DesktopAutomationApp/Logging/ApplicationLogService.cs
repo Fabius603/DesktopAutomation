@@ -28,10 +28,12 @@ public sealed partial class ApplicationLogService : IApplicationLogService, ILog
 {
     private readonly object _gate = new();
     private readonly List<ApplicationLogEntry> _liveEntries = new();
+    private readonly ILogFileStorageService _fileStorage;
 
-    public ApplicationLogService(string logDirectory)
+    public ApplicationLogService(string logDirectory, ILogFileStorageService fileStorage)
     {
         LogDirectory = logDirectory;
+        _fileStorage = fileStorage;
         Directory.CreateDirectory(LogDirectory);
     }
 
@@ -60,36 +62,17 @@ public sealed partial class ApplicationLogService : IApplicationLogService, ILog
 
     public IReadOnlyList<ApplicationLogEntry> ReadEntries(int maxEntries = 5000)
     {
-        var entries = new List<ApplicationLogEntry>();
+        var entries = new List<ApplicationLogEntry>(maxEntries);
         try
         {
             foreach (var file in Directory.EnumerateFiles(LogDirectory, "desktop-automation-*.log")
-                         .OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+                         .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase))
             {
-                ApplicationLogEntry? pending = null;
-                var pendingDetails = new List<string>();
-                foreach (var line in File.ReadLines(file))
-                {
-                    var match = LogLineRegex().Match(line);
-                    if (!match.Success)
-                    {
-                        if (pending != null && !string.IsNullOrWhiteSpace(line)) pendingDetails.Add(line);
-                        continue;
-                    }
-                    if (pending != null) entries.Add(WithDetails(pending, pendingDetails));
-                    pending = null;
-                    pendingDetails.Clear();
-                    if (!DateTimeOffset.TryParseExact(match.Groups[1].Value, "yyyy-MM-dd HH:mm:ss.fff",
-                            CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var timestamp)) continue;
-                    pending = new ApplicationLogEntry
-                    {
-                        Timestamp = timestamp,
-                        Level = ParseLevel(match.Groups[2].Value),
-                        Source = match.Groups[3].Value,
-                        Message = match.Groups[4].Value
-                    };
-                }
-                if (pending != null) entries.Add(WithDetails(pending, pendingDetails));
+                var remaining = maxEntries - entries.Count;
+                if (remaining <= 0) break;
+                var lines = _fileStorage.ReadLastLines(file, checked(remaining * 8));
+                var fileEntries = ParseEntries(lines);
+                entries.AddRange(fileEntries.TakeLast(remaining));
             }
         }
         catch (IOException) { }
@@ -101,6 +84,36 @@ public sealed partial class ApplicationLogService : IApplicationLogService, ILog
             entries.AddRange(_liveEntries.Where(entry => entry.Timestamp > latestFileTimestamp));
         }
         return entries.OrderBy(entry => entry.Timestamp).TakeLast(maxEntries).ToArray();
+    }
+
+    private static IReadOnlyList<ApplicationLogEntry> ParseEntries(IEnumerable<string> lines)
+    {
+        var entries = new List<ApplicationLogEntry>();
+        ApplicationLogEntry? pending = null;
+        var pendingDetails = new List<string>();
+        foreach (var line in lines)
+        {
+            var match = LogLineRegex().Match(line);
+            if (!match.Success)
+            {
+                if (pending != null && !string.IsNullOrWhiteSpace(line)) pendingDetails.Add(line);
+                continue;
+            }
+            if (pending != null) entries.Add(WithDetails(pending, pendingDetails));
+            pending = null;
+            pendingDetails.Clear();
+            if (!DateTimeOffset.TryParseExact(match.Groups[1].Value, "yyyy-MM-dd HH:mm:ss.fff",
+                    CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var timestamp)) continue;
+            pending = new ApplicationLogEntry
+            {
+                Timestamp = timestamp,
+                Level = ParseLevel(match.Groups[2].Value),
+                Source = match.Groups[3].Value,
+                Message = match.Groups[4].Value
+            };
+        }
+        if (pending != null) entries.Add(WithDetails(pending, pendingDetails));
+        return entries;
     }
 
     private static ExecutionLogLevel MapLevel(LogEventLevel level) => level switch

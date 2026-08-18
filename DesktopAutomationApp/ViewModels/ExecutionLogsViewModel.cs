@@ -23,7 +23,8 @@ namespace DesktopAutomationApp.ViewModels
     public sealed class ExecutionLogsViewModel : ViewModelBase
     {
         private const int MaxBufferedEntries = 3000;
-        private const int MaxBufferedSessions = 200;
+        private const int MaxBufferedSessions = 1000;
+        private const int SessionPageSize = 50;
         private const int MaxPendingLiveEntries = 5000;
 
         private readonly IExecutionLogService _logService;
@@ -41,6 +42,8 @@ namespace DesktopAutomationApp.ViewModels
         private string _searchText = string.Empty;
         private DateTimeOffset _latestLoadedTimestamp = DateTimeOffset.MinValue;
         private int _refreshVersion;
+        private int _requestedSessionCount = SessionPageSize;
+        private bool _hasMoreSessions;
 
         public ObservableCollection<ExecutionLogSessionItem> Sessions { get; } = new();
         public ICollectionView Entries { get; }
@@ -54,9 +57,16 @@ namespace DesktopAutomationApp.ViewModels
             });
 
         public ICommand RefreshCommand { get; }
+        public ICommand LoadMoreSessionsCommand { get; }
         public ICommand OpenLogFolderCommand { get; }
         public ICommand BackCommand { get; }
         public event Action? RequestBack;
+
+        public bool HasMoreSessions
+        {
+            get => _hasMoreSessions;
+            private set => SetProperty(ref _hasMoreSessions, value);
+        }
 
         public bool IsLoading
         {
@@ -120,6 +130,7 @@ namespace DesktopAutomationApp.ViewModels
             Entries = CollectionViewSource.GetDefaultView(_entryBuffer);
             Entries.Filter = IsVisibleItem;
             RefreshCommand = new RelayCommand(async () => await RefreshAsync());
+            LoadMoreSessionsCommand = new AsyncRelayCommand(LoadMoreSessionsAsync, () => HasMoreSessions);
             OpenLogFolderCommand = new RelayCommand(OpenLogFolder);
             BackCommand = new RelayCommand(() => RequestBack?.Invoke());
 
@@ -141,7 +152,7 @@ namespace DesktopAutomationApp.ViewModels
             var selectedId = SelectedSession?.Id;
             try
             {
-                await Task.Run(_logService.ReloadSessions);
+                await Task.Run(() => _logService.ReloadSessions(_requestedSessionCount));
             }
             catch (IOException)
             {
@@ -158,10 +169,18 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var session in _logService.Sessions.OrderByDescending(s => s.StartedAt))
                 Sessions.Add(new ExecutionLogSessionItem(session));
             TrimSessions();
+            HasMoreSessions = _logService.HasMoreSessions && Sessions.Count < MaxBufferedSessions;
+            (LoadMoreSessionsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 
             SelectedSession = selectedId.HasValue
                 ? Sessions.FirstOrDefault(s => s.Id == selectedId.Value) ?? Sessions.FirstOrDefault()
                 : Sessions.FirstOrDefault();
+        }
+
+        private async Task LoadMoreSessionsAsync()
+        {
+            _requestedSessionCount = Math.Min(MaxBufferedSessions, _requestedSessionCount + SessionPageSize);
+            await RefreshAsync();
         }
 
         public ExecutionLogEntryItem? SelectedEntry

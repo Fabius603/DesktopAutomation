@@ -54,6 +54,9 @@ internal sealed class RecordingAutomationLogService : IAutomationLogService
     }
     public IReadOnlyList<AutomationLogEntry> ReadEntries(Guid automationId, int maxEntries = 3000) =>
         Entries.Where(entry => entry.AutomationId == automationId).TakeLast(maxEntries).ToArray();
+    public Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(ReadEntries(automationId, maxEntries));
 }
 
 internal sealed class RecordingJobDispatcher : IJobDispatcher
