@@ -15,8 +15,23 @@ Step result behaviour is owned by the backend.
 - `StepResultContractRegistry` resolves the contract of the fully configured
   step. Fixed steps use their registered CLR result type; dynamic steps use a
   dedicated provider.
-- `ResultBinding` persists both `property_id` and the legacy `property_path`.
-  New code resolves the stable ID first and falls back to the path.
+- New value references persist only `provider_id` and the provider-owned
+  `source_id`. The `step_result` provider encodes the stable step and property
+  IDs in its versioned source ID. Legacy `source_step_id`, `property_id`, and
+  `property_path` values remain readable for existing jobs.
+- Every non-step provider exposes typed `ValueProviderSourceDescriptor`
+  metadata to editors and implements `IRuntimeValueProvider` for resolution.
+  Compatibility is decided by the same input-contract shapes used for step
+  results; editors must not add provider-specific compatibility rules.
+- Sensitive providers expose metadata only while editing. Their values are
+  loaded only for referenced sources when execution starts, remain outside the
+  serialized job, and must never be written to logs or condition diagnostics.
+- `StepInputDescriptor.AllowedProviderIds` may restrict an input to explicit
+  providers. A missing restriction means that every registered provider is
+  allowed; type and cardinality compatibility still applies in both cases.
+- The shared `ValueReferencePicker` owns provider grouping, search, empty and
+  missing-reference states, sensitive-value masking, and compatible job-variable
+  creation. Step editors configure only their stable input-contract ID.
 
 ## Adding a fixed-result step
 

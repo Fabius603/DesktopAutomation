@@ -30,7 +30,7 @@ internal static class OutputFileStepDefinitionSupport
         "file-output",
         [
             new(ImageSourceFieldId, "Ui.Step.Settings.ImageSource", StepValueKind.ResultBinding, true,
-                EditorHint: StepEditorHints.ResultBindingPicker, InputContractId: "image", Order: 0),
+                EditorHint: StepEditorHints.ValueReferencePicker, InputContractId: "image", Order: 0),
             new(SavePathFieldId, "Ui.Step.Settings.SavePath", StepValueKind.DirectoryPath, true,
                 DefaultValue: JsonValue.Create(string.Empty), EditorHint: StepEditorHints.DirectoryPicker, Order: 1,
                 DirectoryPickerOptions: new(suggestedDirectory, "DesktopAutomation")),

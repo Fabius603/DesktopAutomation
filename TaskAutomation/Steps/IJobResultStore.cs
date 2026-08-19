@@ -31,6 +31,13 @@ namespace TaskAutomation.Steps
         /// </summary>
         StepResultBase? GetRaw(string stepId);
 
+        /// <summary>Returns a persisted job variable by its stable ID.</summary>
+        JobVariable? GetVariable(Guid variableId) => null;
+
+        /// <summary>Resolves a non-step value through the provider registry.</summary>
+        RuntimeValueReadResult ReadProvider(string providerId, string sourceId) =>
+            new(RuntimeValueReadStatus.ProviderUnavailable);
+
         /// <summary>
         /// Schreibt das Ergebnis eines Steps (wird von der Handler-Basisklasse automatisch aufgerufen).
         /// </summary>

@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Text.Json.Nodes;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -88,6 +89,95 @@ public sealed class ResultBindingResolverTests
         _store.Set<TestStep>(new CollectionResult { WasExecuted = true, Values = [] }, "source");
         Assert.Equal(ResultResolutionStatus.EmptyCollection,
             ResultBindingResolver.Resolve<int>(_store, Binding("source", "Values")).Status);
+    }
+
+    [Fact]
+    public void Resolve_ReadsTypedJobVariableThroughProviderReference()
+    {
+        var variable = new JobVariable
+        {
+            Id = Guid.NewGuid(),
+            Name = "Timeout",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(45)
+        };
+        var store = new JobResultStore([variable]);
+        var binding = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        };
+
+        var result = ResultBindingResolver.Resolve<int>(store, binding);
+
+        Assert.Equal(ResultResolutionStatus.Success, result.Status);
+        Assert.Equal(45, result.FirstOrDefault);
+    }
+
+    [Fact]
+    public void Resolve_ReadsSecretThroughProviderReference()
+    {
+        var secretId = Guid.NewGuid();
+        var descriptor = new ValueProviderSourceDescriptor(
+            ValueProviderIds.Secret,
+            secretId.ToString("D"),
+            "API token",
+            string.Empty,
+            ResultValueKind.Text,
+            ResultCardinality.Single,
+            IsSensitive: true);
+        var store = new JobResultStore(
+            secrets: new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>
+            {
+                [secretId] = (descriptor, "top-secret")
+            });
+
+        var result = ResultBindingResolver.Resolve<string>(store, new ResultBinding
+        {
+            ProviderId = ValueProviderIds.Secret,
+            SourceId = secretId.ToString("D")
+        });
+
+        Assert.Equal(ResultResolutionStatus.Success, result.Status);
+        Assert.Equal("top-secret", result.FirstOrDefault);
+    }
+
+    [Fact]
+    public void Resolve_LoadsImageJobVariableAndReleasesFileOnDispose()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"job-variable-{Guid.NewGuid():N}.png");
+        using (var source = new Bitmap(2, 3))
+            source.Save(path);
+
+        try
+        {
+            var variable = new JobVariable
+            {
+                Id = Guid.NewGuid(),
+                Name = "Image",
+                ValueKind = ResultValueKind.Image,
+                Value = JsonValue.Create(path)
+            };
+            var store = new JobResultStore([variable]);
+
+            var result = ResultBindingResolver.Resolve<Bitmap>(store, new ResultBinding
+            {
+                ProviderId = ValueProviderIds.JobVariable,
+                SourceId = variable.Id.ToString("D")
+            });
+
+            Assert.Equal(ResultResolutionStatus.Success, result.Status);
+            Assert.Equal(new Size(2, 3), Assert.IsType<Bitmap>(result.FirstOrDefault).Size);
+
+            store.DisposeAndClear();
+            File.Delete(path);
+            Assert.False(File.Exists(path));
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
     }
 
     [Fact]

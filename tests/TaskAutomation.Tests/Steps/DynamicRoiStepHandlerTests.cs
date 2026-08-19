@@ -9,6 +9,17 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class DynamicRoiStepHandlerTests
 {
     [Fact]
+    public void LegacySettingsWithoutPaddingSource_RemainReadable()
+    {
+        var settings = System.Text.Json.JsonSerializer.Deserialize<DynamicRoiSettings>("""
+            {"padding":9,"minimum_confidence":0.5}
+            """)!;
+
+        Assert.Equal(9, settings.Padding);
+        Assert.False(settings.PaddingSource.IsConfigured);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_ValidDetectionAppliesPaddingAndUpdatesState()
     {
         var context = Context(new Rectangle(10, 20, 30, 40), .8);
@@ -19,6 +30,36 @@ public sealed class DynamicRoiStepHandlerTests
         Assert.Equal(new Rectangle(5, 15, 40, 50), result.GlobalBounds);
         Assert.Equal(result.GlobalBounds, context.DynamicRoiStates[step.Id].GlobalBounds);
         Assert.Equal(0, result.ConsecutiveMisses);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ResolvesPaddingFromJobVariable()
+    {
+        var padding = new JobVariable
+        {
+            Name = "ROI padding",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(7)
+        };
+        var context = new PipelineContextStub([padding]);
+        context.Results.Set<TemplateMatchingStep>(new TemplateMatchingResult
+        {
+            WasExecuted = true,
+            Found = true,
+            BoundingBox = new Rectangle(10, 20, 30, 40),
+            Confidence = .8
+        }, "source");
+        var step = Step();
+        step.Settings.Padding = -1;
+        step.Settings.PaddingSource = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = padding.Id.ToString("D")
+        };
+
+        var result = await Execute(step, context);
+
+        Assert.Equal(new Rectangle(3, 13, 44, 54), result.GlobalBounds);
     }
 
     [Fact]

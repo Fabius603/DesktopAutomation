@@ -1,4 +1,5 @@
 using TaskAutomation.Jobs;
+using TaskAutomation.Contracts.Steps;
 
 namespace TaskAutomation.Steps;
 
@@ -6,6 +7,9 @@ public sealed record AcceptedResultShape(ResultValueKind ValueKind, params Resul
 {
     public bool Accepts(ResultPropertyDescriptor property) => ValueKind == property.DataType
         && (Cardinalities.Length == 0 || Cardinalities.Contains(property.Cardinality));
+
+    public bool Accepts(ResultValueKind valueKind, ResultCardinality cardinality) =>
+        ValueKind == valueKind && (Cardinalities.Length == 0 || Cardinalities.Contains(cardinality));
 }
 
 public enum CollectionConsumptionMode { NotApplicable, FirstValue, AllValues }
@@ -17,7 +21,15 @@ public sealed record StepInputDescriptor(
     CollectionConsumptionMode CollectionConsumption,
     params AcceptedResultShape[] AcceptedShapes)
 {
+    public IReadOnlySet<string>? AllowedProviderIds { get; init; }
+
+    public bool AllowsProvider(string providerId) =>
+        AllowedProviderIds is null || AllowedProviderIds.Contains(providerId);
+
     public bool Accepts(ResultPropertyDescriptor property) => AcceptedShapes.Any(shape => shape.Accepts(property));
+
+    public bool Accepts(JobVariable variable) => AcceptedShapes.Any(shape =>
+        shape.Accepts(variable.ValueKind, variable.Cardinality));
 
     public ResultPropertyDescriptor? FindPreferredProperty(IEnumerable<ResultPropertyDescriptor> properties)
     {
@@ -45,6 +57,8 @@ public static class StepInputContractRegistry
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape Text = new(ResultValueKind.Text,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
+    private static readonly AcceptedResultShape Integer = new(ResultValueKind.Integer,
+        ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape[] DisplayableText =
     [
         new(ResultValueKind.Text, ResultCardinality.Single, ResultCardinality.OptionalSingle),
@@ -68,7 +82,9 @@ public static class StepInputContractRegistry
         [typeof(PredictMovementStep)] = [Required("points", CollectionConsumptionMode.AllValues, Points)],
         [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
-        [typeof(DynamicRoiStep)] = [Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(DynamicRoiStep)] = [
+            Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles),
+            Required("padding", CollectionConsumptionMode.FirstValue, Integer)],
         [typeof(ShowOnDesktopStep)] = [
             Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
             Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
@@ -103,6 +119,22 @@ public static class StepInputContractRegistry
 
     public static StepInputDescriptor? Get(Type stepType, string key) =>
         Get(stepType).FirstOrDefault(input => input.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+
+    public static StepInputDescriptor ForField(StepFieldDescriptor field)
+    {
+        var cardinality = field.ValueKind == StepValueKind.Collection
+            ? ResultCardinality.Collection
+            : ResultCardinality.Single;
+        var kind = JobVariableInputMigration.MapKind(field.ValueKind);
+        return new StepInputDescriptor(
+            field.Id,
+            true,
+            MissingValuePolicy.FailStep,
+            cardinality == ResultCardinality.Collection
+                ? CollectionConsumptionMode.AllValues
+                : CollectionConsumptionMode.NotApplicable,
+            new AcceptedResultShape(kind, cardinality));
+    }
 
     private static StepInputDescriptor Required(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
         new(key, true, MissingValuePolicy.FailStep, collection, shapes);

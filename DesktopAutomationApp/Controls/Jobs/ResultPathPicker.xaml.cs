@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Windows.Input;
 using DesktopAutomationApp.ViewModels;
 
 namespace DesktopAutomationApp.Controls.Jobs;
@@ -10,6 +11,7 @@ namespace DesktopAutomationApp.Controls.Jobs;
 public partial class ResultPathPicker : UserControl
 {
     private ScrollViewer? _ancestorScrollViewer;
+    private bool _popupWasOpen;
     private bool _repositionPending;
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
@@ -21,11 +23,21 @@ public partial class ResultPathPicker : UserControl
     public static readonly DependencyProperty SecondaryTextProperty = DependencyProperty.Register(
         nameof(SecondaryText), typeof(string), typeof(ResultPathPicker));
 
+    public static readonly DependencyProperty PreviewTextProperty = DependencyProperty.Register(
+        nameof(PreviewText), typeof(string), typeof(ResultPathPicker));
+
+    public static readonly DependencyProperty SourceTextProperty = DependencyProperty.Register(
+        nameof(SourceText), typeof(string), typeof(ResultPathPicker));
+
+    public static readonly DependencyProperty IsRichPreviewProperty = DependencyProperty.Register(
+        nameof(IsRichPreview), typeof(bool), typeof(ResultPathPicker), new PropertyMetadata(false));
+
     public ResultPathPicker()
     {
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        PreviewKeyDown += OnPreviewKeyDown;
     }
 
     public IEnumerable? ItemsSource
@@ -44,6 +56,24 @@ public partial class ResultPathPicker : UserControl
     {
         get => (string?)GetValue(SecondaryTextProperty);
         set => SetValue(SecondaryTextProperty, value);
+    }
+
+    public string? PreviewText
+    {
+        get => (string?)GetValue(PreviewTextProperty);
+        set => SetValue(PreviewTextProperty, value);
+    }
+
+    public string? SourceText
+    {
+        get => (string?)GetValue(SourceTextProperty);
+        set => SetValue(SourceTextProperty, value);
+    }
+
+    public bool IsRichPreview
+    {
+        get => (bool)GetValue(IsRichPreviewProperty);
+        set => SetValue(IsRichPreviewProperty, value);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -99,5 +129,35 @@ public partial class ResultPathPicker : UserControl
 
         var item = VisualTreeHelperExtensions.GetAncestor<TreeViewItem>(button);
         if (item is not null) item.IsExpanded = !item.IsExpanded;
+    }
+
+    private void DropDownToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        _popupWasOpen = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+        });
+    }
+
+    private void DropDownToggle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!SelectionPopup.IsOpen && !_popupWasOpen) return;
+        SelectionPopup.IsOpen = false;
+        _popupWasOpen = false;
+        DropDownToggle.Focus();
+        e.Handled = true;
+    }
+
+    private void SelectionPopup_Closed(object? sender, EventArgs e) =>
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => _popupWasOpen = false);
+
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || !SelectionPopup.IsOpen) return;
+        SelectionPopup.IsOpen = false;
+        DropDownToggle.Focus();
+        e.Handled = true;
     }
 }

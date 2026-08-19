@@ -22,7 +22,7 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
         if (resolved.IsSuccess && confidence >= step.Settings.MinimumConfidence)
         {
             var box = resolved.FirstOrDefault;
-            var padding = System.Math.Max(0, step.Settings.Padding);
+            var padding = ResolvePadding(step, ctx);
             box = box.Inflate(padding, padding);
             state.GlobalBounds = box;
             state.ConsecutiveMisses = 0;
@@ -62,4 +62,20 @@ public sealed class DynamicRoiStepHandler : JobStepHandler<DynamicRoiStep, Dynam
     }
 
     protected override DynamicRoiResult CreateDefault() => DynamicRoiResult.Default;
+
+    private static int ResolvePadding(DynamicRoiStep step, IStepPipelineContext context)
+    {
+        if (!step.Settings.PaddingSource.IsConfigured)
+        {
+            if (step.Settings.Padding >= 0)
+                return step.Settings.Padding;
+            throw new InvalidOperationException("Für den Rand wurde keine Wertreferenz ausgewählt.");
+        }
+
+        var resolved = ResultBindingResolver.Resolve<int>(context.Results, step.Settings.PaddingSource);
+        if (!resolved.IsSuccess)
+            throw new InvalidOperationException(
+                resolved.Error ?? "Die ausgewählte Wertreferenz für den Rand konnte nicht gelesen werden.");
+        return System.Math.Max(0, resolved.FirstOrDefault);
+    }
 }

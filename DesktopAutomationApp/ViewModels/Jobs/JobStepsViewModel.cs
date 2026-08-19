@@ -20,6 +20,7 @@ using DesktopAutomationApp.Behaviors;
 using DesktopAutomationApp.Converters;
 using DesktopAutomationApp.Services.Jobs;
 using System.Threading;
+using TaskAutomation.Security;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -35,6 +36,8 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobDispatcher _dispatcher;
         private readonly ICameraCaptureService _cameraCaptureService;
         private readonly IStepDefinitionCatalog _stepDefinitionCatalog;
+        private readonly ISecretStore? _secretStore;
+        private IReadOnlyList<ValueProviderSourceDescriptor> _providerSources = [];
 
         private sealed record JobStepsSnapshot(
             List<JobStep> StartSteps,
@@ -45,6 +48,7 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyList<JobStep> StartSteps,
             IReadOnlyList<JobStep> RunSteps,
             IReadOnlyList<JobStep> EndSteps,
+            IReadOnlyList<JobVariable> Variables,
             int EndPhaseTimeoutSeconds,
             bool Repeating);
 
@@ -54,6 +58,7 @@ namespace DesktopAutomationApp.ViewModels
         private List<JobStep> _savedSnapshot;
         private List<JobStep> _savedStartSnapshot;
         private List<JobStep> _savedEndSnapshot;
+        private List<JobVariable> _savedVariables;
         private int _savedEndPhaseTimeoutSeconds;
         private bool _savedRepeating;
         private readonly EditorChangeTracker<JobEditState> _changeTracker;
@@ -197,7 +202,11 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<JobStep> Steps => _runSteps;
         public ObservableCollection<JobStep> StartSteps => _startSteps;
         public ObservableCollection<JobStep> EndSteps => _endSteps;
+        public ObservableCollection<JobVariableEditorViewModel> JobVariables { get; } = [];
+        public IReadOnlyList<JobVariable> Variables => Job.Variables;
+        public IReadOnlyList<ValueProviderSourceDescriptor> ProviderSources => _providerSources;
         public IReadOnlyList<JobStep> AllJobSteps => _allJobStepsSnapshot;
+        public bool HasJobVariables => JobVariables.Count > 0;
 
         private int _endPhaseTimeoutSeconds;
         private bool _isRepeating;
@@ -383,18 +392,32 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveToStartSectionCommand { get; }
         public ICommand MoveToRunSectionCommand { get; }
         public ICommand MoveToEndSectionCommand { get; }
+        public ICommand OpenVariablesCommand { get; }
+        public ICommand AddVariableCommand { get; }
+        public ICommand DeleteVariableCommand { get; }
 
         public event Action? RequestBack;
 
-        public JobStepsViewModel(Job job, IJobExecutor jobExecutionContext, IJobApplicationService jobAppService, IDialogService dialogService, IJobDispatcher dispatcher, ICameraCaptureService cameraCaptureService, IStepDefinitionCatalog? stepDefinitionCatalog = null)
+        public JobStepsViewModel(
+            Job job,
+            IJobExecutor jobExecutionContext,
+            IJobApplicationService jobAppService,
+            IDialogService dialogService,
+            IJobDispatcher dispatcher,
+            ICameraCaptureService cameraCaptureService,
+            IStepDefinitionCatalog? stepDefinitionCatalog = null,
+            ISecretStore? secretStore = null)
         {
             Job = job ?? throw new ArgumentNullException(nameof(job));
+            Job.Variables ??= [];
             _jobExecutionContext = jobExecutionContext;
             _jobAppService = jobAppService;
             _dialogService = dialogService;
             _dispatcher = dispatcher;
             _cameraCaptureService = cameraCaptureService;
             _stepDefinitionCatalog = stepDefinitionCatalog ?? BuiltInStepDefinitions.Instance;
+            _secretStore = secretStore;
+            JobVariableInputMigration.Migrate(Job, _stepDefinitionCatalog);
 
             _startSteps = new ObservableRangeCollection<JobStep>();
             _startSteps.ReplaceRange(Job.StartSteps ?? Enumerable.Empty<JobStep>());
@@ -409,6 +432,8 @@ namespace DesktopAutomationApp.ViewModels
             _savedStartSnapshot = DeepCloneSteps(_startSteps);
             _savedSnapshot = DeepCloneSteps(_runSteps);
             _savedEndSnapshot = DeepCloneSteps(_endSteps);
+            _savedVariables = DeepCloneVariables(Job.Variables);
+            ResetVariableEditors(Job.Variables);
             _endPhaseTimeoutSeconds = Math.Clamp(
                 Job.EndPhaseTimeoutSeconds,
                 Job.MinEndPhaseTimeoutSeconds,
@@ -508,6 +533,13 @@ namespace DesktopAutomationApp.ViewModels
             MoveToEndSectionCommand = new AsyncRelayCommand<JobStep?>(
                 step => MoveSelectionToSectionAsync(step, _endSteps),
                 step => !IsDebugActive && !IsMutationBusy && CanMoveSelectionToSection(step, _endSteps));
+            OpenVariablesCommand = new RelayCommand(
+                OpenVariablesDialog,
+                () => !IsDebugActive && !IsMutationBusy);
+            AddVariableCommand = new RelayCommand(AddVariable, () => !IsDebugActive && !IsMutationBusy);
+            DeleteVariableCommand = new AsyncRelayCommand<JobVariableEditorViewModel?>(
+                DeleteVariableAsync,
+                variable => variable != null && !IsDebugActive && !IsMutationBusy);
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _debugSession = _dispatcher.DebugSessions.FirstOrDefault(session => session.JobId == Job.Id);
@@ -519,6 +551,7 @@ namespace DesktopAutomationApp.ViewModels
             IsJobRunning = _dispatcher.RunningJobIds.Contains(Job.Id);
             CanRequestJobStop = _dispatcher.RunningJobInstances.Any(instance =>
                 instance.JobId == Job.Id && instance.State.CanRequestStop());
+            InitializeProviderSources();
             ScheduleValidation();
         }
 
@@ -605,6 +638,7 @@ namespace DesktopAutomationApp.ViewModels
             _savedStartSnapshot,
             _savedSnapshot,
             _savedEndSnapshot,
+            _savedVariables,
             _savedEndPhaseTimeoutSeconds,
             _savedRepeating);
 
@@ -612,6 +646,7 @@ namespace DesktopAutomationApp.ViewModels
             _startSteps.ToArray(),
             _runSteps.ToArray(),
             _endSteps.ToArray(),
+            Job.Variables.ToArray(),
             EndPhaseTimeoutSeconds,
             IsRepeating);
 
@@ -629,8 +664,119 @@ namespace DesktopAutomationApp.ViewModels
             cancellationToken.ThrowIfCancellationRequested();
             var currentSerialized = await JobStepsSnapshotService.SerializeAsync(
                 current.StartSteps, current.RunSteps, current.EndSteps, cancellationToken).ConfigureAwait(false);
+            if (baselineSerialized != currentSerialized) return false;
 
-            return baselineSerialized == currentSerialized;
+            var baselineVariables = JsonSerializer.Serialize(baseline.Variables);
+            var currentVariables = JsonSerializer.Serialize(current.Variables);
+            return baselineVariables == currentVariables;
+        }
+
+        private void AddVariable()
+        {
+            var variable = new JobVariable
+            {
+                Name = Loc.Get("Ui.Job.Variables.NewName"),
+                ValueKind = ResultValueKind.Text,
+                Cardinality = ResultCardinality.Single,
+                Value = System.Text.Json.Nodes.JsonValue.Create(string.Empty)
+            };
+            Job.Variables.Add(variable);
+            JobVariables.Add(CreateVariableEditor(variable));
+            OnPropertyChanged(nameof(HasJobVariables));
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+            ScheduleValidation();
+        }
+
+        private void RegisterCreatedVariable(JobVariable variable)
+        {
+            if (Job.Variables.Any(existing => existing.Id == variable.Id)) return;
+            Job.Variables.Add(variable);
+            JobVariables.Add(CreateVariableEditor(variable));
+            OnPropertyChanged(nameof(Variables));
+            OnPropertyChanged(nameof(HasJobVariables));
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+            ScheduleValidation();
+        }
+
+        private async Task DeleteVariableAsync(JobVariableEditorViewModel? editor)
+        {
+            if (editor == null) return;
+            var workingJob = new Job
+            {
+                StartSteps = _startSteps.ToList(),
+                Steps = _runSteps.ToList(),
+                EndSteps = _endSteps.ToList()
+            };
+            var usages = ValueReferenceUsageInspector.Find(
+                workingJob,
+                ValueProviderIds.JobVariable,
+                editor.Model.Id.ToString("D"));
+            if (usages.Count > 0)
+            {
+                var steps = usages.Select(usage => StepLocalization.Type(usage.Step.GetType().Name))
+                    .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                    .Take(5)
+                    .ToArray();
+                _dialogService.ShowError(
+                    Loc.Format(
+                        "Ui.Job.Variables.Delete.InUse",
+                        editor.Name,
+                        usages.Count,
+                        string.Join(", ", steps)),
+                    Loc.Get("Ui.Job.Variables.Delete.InUseTitle"));
+                return;
+            }
+            var message = Loc.Format("Ui.Job.Variables.Delete.Message", editor.Name);
+            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Ui.Job.Variables.Delete.Title"))) return;
+
+            Job.Variables.Remove(editor.Model);
+            JobVariables.Remove(editor);
+            OnPropertyChanged(nameof(HasJobVariables));
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+            ScheduleValidation();
+        }
+
+        private JobVariableEditorViewModel CreateVariableEditor(JobVariable variable)
+            => new(variable, OnVariableChanged);
+
+        private void ResetVariableEditors(IEnumerable<JobVariable> variables)
+        {
+            JobVariables.Clear();
+            foreach (var variable in variables) JobVariables.Add(CreateVariableEditor(variable));
+            OnPropertyChanged(nameof(Variables));
+            OnPropertyChanged(nameof(HasJobVariables));
+        }
+
+        private void OpenVariablesDialog()
+        {
+            var dialog = new JobVariablesDialog
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = this
+            };
+            dialog.ShowDialog();
+        }
+
+        private void OnVariableChanged()
+        {
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+            ScheduleValidation();
+        }
+
+        private void InvalidateReferenceDisplays()
+        {
+            StepsVersion++;
+            OnPropertyChanged(nameof(StepsVersion));
+        }
+
+        private static List<JobVariable> DeepCloneVariables(IEnumerable<JobVariable> variables)
+        {
+            var json = JsonSerializer.Serialize(variables);
+            return JsonSerializer.Deserialize<List<JobVariable>>(json) ?? [];
         }
 
         private void ReconcileStepSubscriptions()
@@ -797,7 +943,7 @@ namespace DesktopAutomationApp.ViewModels
                     continue;
 
                 var outputNodes = snapshot.ConditionEvaluation is { } conditionEvaluation
-                    ? BuildConditionDebugNodes(conditionEvaluation, steps)
+                    ? BuildConditionDebugNodes(conditionEvaluation, steps, Job.Variables)
                     : snapshot.OutputValues;
                 var values = outputNodes
                     .Select((node, nodeIndex) => new DebugContextValue(
@@ -843,7 +989,8 @@ namespace DesktopAutomationApp.ViewModels
 
         private static IReadOnlyList<JobDebugValueNode> BuildConditionDebugNodes(
             ConditionDebugEvaluation evaluation,
-            IList<JobStep> steps)
+            IList<JobStep> steps,
+            IReadOnlyList<JobVariable> variables)
         {
             var conditionNodes = evaluation.Conditions
                 .Select((item, index) =>
@@ -852,7 +999,10 @@ namespace DesktopAutomationApp.ViewModels
                     {
                         new(
                             Loc.Get("Ui.Job.Debug.Condition.Expression"),
-                            ConditionDisplayFormatter.Format(item.Definition, steps as System.Collections.IList),
+                            ConditionDisplayFormatter.Format(
+                                item.Definition,
+                                steps as System.Collections.IList,
+                                variables),
                             "String",
                             []),
                         new(
@@ -1085,6 +1235,8 @@ namespace DesktopAutomationApp.ViewModels
             Job.StartSteps = DeepCloneSteps(_savedStartSnapshot);
             Job.Steps = DeepCloneSteps(_savedSnapshot);
             Job.EndSteps = DeepCloneSteps(_savedEndSnapshot);
+            Job.Variables = DeepCloneVariables(_savedVariables);
+            ResetVariableEditors(Job.Variables);
             _endPhaseTimeoutSeconds = _savedEndPhaseTimeoutSeconds;
             Job.EndPhaseTimeoutSeconds = _savedEndPhaseTimeoutSeconds;
             _isRepeating = _savedRepeating;
@@ -1117,13 +1269,14 @@ namespace DesktopAutomationApp.ViewModels
                 _startSteps.ToArray(), _runSteps.ToArray(), _endSteps.ToArray());
             var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized);
             var validation = await Task.Run(() => JobValidation.ValidateJob(new Job
-            {
-                StartSteps = materialized.StartSteps.ToList(),
-                Steps = materialized.RunSteps.ToList(),
-                EndSteps = materialized.EndSteps.ToList(),
-                Repeating = IsRepeating,
-                EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds
-            }));
+                {
+                    StartSteps = materialized.StartSteps.ToList(),
+                    Steps = materialized.RunSteps.ToList(),
+                    EndSteps = materialized.EndSteps.ToList(),
+                    Variables = Job.Variables.ToList(),
+                    Repeating = IsRepeating,
+                    EndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds
+                }, _providerSources));
             ApplyValidation(validation, generation);
             if (!validation.IsValid)
             {
@@ -1143,6 +1296,7 @@ namespace DesktopAutomationApp.ViewModels
             _savedStartSnapshot = savedMaterialized.StartSteps.ToList();
             _savedSnapshot = savedMaterialized.RunSteps.ToList();
             _savedEndSnapshot = savedMaterialized.EndSteps.ToList();
+            _savedVariables = DeepCloneVariables(Job.Variables);
             _savedEndPhaseTimeoutSeconds = EndPhaseTimeoutSeconds;
             _savedRepeating = IsRepeating;
             _changeTracker.Accept(CaptureSavedEditState());
@@ -1169,7 +1323,8 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIndex);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog)
+            var providerSources = await LoadProviderSourcesAsync();
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable)
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -1223,8 +1378,9 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, idx);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
+            var providerSources = await LoadProviderSourcesAsync();
             var vm = new AddJobStepDialogViewModel(
-                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog);
+                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable);
             using (vm.DeferNotifications())
             {
                 vm.Mode = StepDialogMode.Edit;
@@ -1475,6 +1631,7 @@ namespace DesktopAutomationApp.ViewModels
             var startSnapshot = _startSteps.ToArray();
             var runSnapshot = _runSteps.ToArray();
             var endSnapshot = _endSteps.ToArray();
+            var variableSnapshot = DeepCloneVariables(Job.Variables);
             _ = ValidateAsync();
 
             async Task ValidateAsync()
@@ -1489,11 +1646,12 @@ namespace DesktopAutomationApp.ViewModels
                     var materialized = await JobStepsSnapshotService.DeserializeAsync(serialized);
                     if (cts.IsCancellationRequested || generation != _validationGeneration) return;
                     var result = await Task.Run(() => JobValidation.ValidateJob(new Job
-                    {
-                        StartSteps = materialized.StartSteps.ToList(),
-                        Steps = materialized.RunSteps.ToList(),
-                        EndSteps = materialized.EndSteps.ToList()
-                    }));
+                        {
+                            StartSteps = materialized.StartSteps.ToList(),
+                            Steps = materialized.RunSteps.ToList(),
+                            EndSteps = materialized.EndSteps.ToList(),
+                            Variables = variableSnapshot
+                        }, _providerSources));
                     if (cts.IsCancellationRequested || generation != _validationGeneration) return;
                     await Application.Current.Dispatcher.InvokeAsync(() => ApplyValidation(result, generation));
                 }
@@ -1723,6 +1881,38 @@ namespace DesktopAutomationApp.ViewModels
             {
                 IsMutationBusy = false;
                 _mutationGate.Release();
+            }
+        }
+
+        private async Task<IReadOnlyList<ValueProviderSourceDescriptor>> LoadProviderSourcesAsync()
+        {
+            if (_secretStore is null) return [];
+            var secrets = await _secretStore.ListAsync();
+            _providerSources = secrets.Select(secret => new ValueProviderSourceDescriptor(
+                    ValueProviderIds.Secret,
+                    secret.Id.ToString("D"),
+                    secret.Name,
+                    secret.Description,
+                    ResultValueKind.Text,
+                    ResultCardinality.Single,
+                    IsSensitive: true))
+                .ToArray();
+            OnPropertyChanged(nameof(ProviderSources));
+            InvalidateReferenceDisplays();
+            return _providerSources;
+        }
+
+        private async void InitializeProviderSources()
+        {
+            try
+            {
+                await LoadProviderSourcesAsync();
+                ScheduleValidation();
+            }
+            catch (SecretStoreException)
+            {
+                // The Secrets settings page owns storage error reporting. The job editor
+                // remains usable and validates secret references again after the next load.
             }
         }
 
@@ -1962,7 +2152,8 @@ namespace DesktopAutomationApp.ViewModels
             var precedingSteps = GetPrecedingSteps(_steps, insertIdx);
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog)
+            var providerSources = await LoadProviderSourcesAsync();
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable)
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 
@@ -2118,6 +2309,9 @@ namespace DesktopAutomationApp.ViewModels
             (MoveToStartSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (MoveToRunSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
             (MoveToEndSectionCommand as AsyncRelayCommand<JobStep?>)?.RaiseCanExecuteChanged();
+            (OpenVariablesCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (AddVariableCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (DeleteVariableCommand as AsyncRelayCommand<JobVariableEditorViewModel?>)?.RaiseCanExecuteChanged();
         }
 
         private void InvalidateAllCommands()

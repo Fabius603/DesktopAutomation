@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services.Jobs;
 using DesktopAutomationApp.ViewModels;
 using OpenCvSharp;
@@ -46,10 +47,10 @@ public sealed class StepDefinitionCatalogTests
         var groups = editor.Sections.Single(section => section.Descriptor.Id == "general")
             .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().ToArray();
 
-        groups[0].SelectedBranch = groups[0].Branches[1];
+        groups[0].SelectedBranch = groups[0].Branches[0];
 
-        Assert.Equal("TaskResult", groups[0].SelectedBranch.Value);
-        Assert.Equal("ExplicitPath", groups[1].SelectedBranch.Value);
+        Assert.Equal("ExplicitPath", groups[0].SelectedBranch.Value);
+        Assert.Equal("TaskResult", groups[1].SelectedBranch.Value);
         Assert.Single(groups[0].SelectedBranch.Children);
         Assert.Single(groups[1].SelectedBranch.Children);
     }
@@ -150,6 +151,7 @@ public sealed class StepDefinitionCatalogTests
         var text = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextFieldId);
         var result = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextResultFieldId);
         var draft = definition.CreateDraft();
+        draft.Values[ShowTextStepDefinition.TextSourceFieldId] = JsonValue.Create("ExplicitText");
         draft.Values[ShowTextStepDefinition.TextFieldId] = JsonValue.Create("Visible text");
         draft.Values[ShowTextStepDefinition.TextResultFieldId] = null;
 
@@ -300,6 +302,60 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Contains("notepad", summary);
         Assert.Contains("Editor", summary);
+    }
+
+    [Fact]
+    public void DetailsProvider_RendersJobVariableReferenceByName()
+    {
+        var variable = new JobVariable { Name = "Greeting", ValueKind = ResultValueKind.Text };
+        var step = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = variable.Id.ToString("D")
+                }
+            }
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step,
+            new JobStep[] { step },
+            new[] { variable });
+
+        Assert.Contains(details.Groups.SelectMany(group => group.Items), item => item.Value == variable.Name);
+    }
+
+    [Fact]
+    public void DetailsProvider_RendersConditionJobVariableReferencesByName()
+    {
+        var variable = new JobVariable { Name = "Enabled", ValueKind = ResultValueKind.Boolean };
+        var reference = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.JobVariable,
+                SourceId = variable.Id.ToString("D")
+            }
+        };
+        var step = new IfStep { Settings = new IfConditionSettings { Conditions = [reference] } };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step,
+            new JobStep[] { step },
+            new[] { variable });
+        var condition = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.Name.Contains("1.", StringComparison.Ordinal));
+
+        Assert.Equal(2, condition.Value.Split(variable.Name, StringSplitOptions.None).Length - 1);
+        Assert.DoesNotContain(variable.Id.ToString("D"), condition.Value);
     }
 
     [Fact]
@@ -949,12 +1005,24 @@ public sealed class StepDefinitionCatalogTests
         Assert.Empty(definition.ValidateDraft(draft));
         Assert.Equal("bounds", definition.Descriptor.Fields.Single(field =>
             field.Id == DynamicRoiStepDefinition.BoundsSourceFieldId).InputContractId);
+        var paddingField = definition.Descriptor.Fields.Single(field =>
+            field.Id == DynamicRoiStepDefinition.PaddingSourceFieldId);
+        Assert.Equal(StepValueKind.ResultBinding, paddingField.ValueKind);
+        Assert.Equal("padding", paddingField.InputContractId);
         Assert.Equal("detection", updated.Settings.BoundsSource.SourceStepId);
+        Assert.Equal(35, updated.Settings.Padding);
         Assert.Equal(0.75, updated.Settings.MinimumConfidence);
 
         draft.Values[DynamicRoiStepDefinition.MinimumConfidenceFieldId] =
             System.Text.Json.Nodes.JsonValue.Create(1.1);
         Assert.Equal("StepValidation.Maximum", Assert.Single(definition.ValidateDraft(draft)).Code);
+
+        var fresh = definition.CreateDraft();
+        fresh.Values[DynamicRoiStepDefinition.BoundsSourceFieldId] = JsonSerializer.SerializeToNode(
+            ResultBinding.ForStepResult("detection", "bounds"));
+        Assert.Contains(definition.ValidateDraft(fresh), issue =>
+            issue.FieldId == DynamicRoiStepDefinition.PaddingSourceFieldId
+            && issue.Code == "StepValidation.Required");
     }
 
     [Fact]
@@ -1380,6 +1448,33 @@ public sealed class StepDefinitionCatalogTests
         var ifStep = Assert.IsType<IfStep>(created);
         Assert.Equal(ConditionMatchMode.Any, ifStep.Settings.MatchMode);
         Assert.Equal("source", Assert.Single(ifStep.Settings.Conditions).SourceStepId);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_UsesJobVariablesAsValueReferences()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Enabled",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        GeneratedConditionEditorViewModel? conditionEditor = null;
+        var editor = new GeneratedStepEditorViewModel(
+            new IfStepDefinition(),
+            conditionResolver: (_, value) => conditionEditor =
+                new GeneratedConditionEditorViewModel(value, [], [variable]));
+
+        var row = Assert.Single(conditionEditor!.Conditions);
+        row.ComparisonIsJobResult = true;
+        var comparisonVariable = Assert.Single(Assert.Single(row.ComparisonSelectionTree).Children);
+        comparisonVariable.SelectCommand!.Execute(null);
+
+        Assert.True(editor.TryCreateStep(out var created));
+        var condition = Assert.Single(Assert.IsType<IfStep>(created).Settings.Conditions);
+        Assert.Equal(ValueProviderIds.JobVariable, condition.ProviderId);
+        Assert.Equal(variable.Id.ToString("D"), condition.SourceId);
+        Assert.True(string.IsNullOrEmpty(condition.SourceStepId));
     }
 
     [Fact]
@@ -2212,25 +2307,307 @@ public sealed class StepDefinitionCatalogTests
         var resultType = StepResultMetadata.ResultTypes.Single(type =>
             type.TypeName == nameof(TemplateMatchingResult));
         var source = new SourceStepItem("detection", "Detection", resultType);
-        var picker = new ResultBindingPickerViewModel(
-            [source],
-            StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!,
-            true);
-        var bindingEditor = new GeneratedResultBindingEditorViewModel(null, picker);
+        var padding = new JobVariable
+        {
+            Name = "ROI padding",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(12)
+        };
         var editor = new GeneratedStepEditorViewModel(
             new DynamicRoiStepDefinition(),
-            resultBindingResolver: (_, _) => bindingEditor);
+            resultBindingResolver: (field, value) =>
+            {
+                if (field.ValueKind != StepValueKind.ResultBinding) return null;
+                var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), field.InputContractId!)!;
+                return new GeneratedResultBindingEditorViewModel(
+                    value,
+                    new ResultBindingPickerViewModel(
+                        field.InputContractId == "bounds" ? [source] : [],
+                        contract,
+                        true,
+                        [padding]));
+            });
         var sourceField = editor.Fields.Single(field => field.Descriptor.Id == DynamicRoiStepDefinition.BoundsSourceFieldId);
+        var paddingField = editor.Fields.Single(field => field.Descriptor.Id == DynamicRoiStepDefinition.PaddingSourceFieldId);
         var confidence = editor.Fields.Single(field => field.Descriptor.Id == DynamicRoiStepDefinition.MinimumConfidenceFieldId);
 
-        Assert.True(sourceField.UsesResultBindingPicker);
+        Assert.True(sourceField.UsesValueReferencePicker);
+        Assert.True(paddingField.UsesValueReferencePicker);
         Assert.True(confidence.UsesPercentagePicker);
         confidence.NumberValue = 0.6;
 
         Assert.True(editor.TryCreateStep(out var created));
         var dynamicRoi = Assert.IsType<DynamicRoiStep>(created);
         Assert.Equal("detection", dynamicRoi.Settings.BoundsSource.SourceStepId);
+        Assert.Equal(ValueProviderIds.JobVariable, dynamicRoi.Settings.PaddingSource.ProviderId);
+        Assert.Equal(padding.Id.ToString("D"), dynamicRoi.Settings.PaddingSource.SourceId);
         Assert.Equal(0.6, dynamicRoi.Settings.MinimumConfidence, 3);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_SelectsCompatibleJobVariableAsProviderReference()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Target",
+            ValueKind = ResultValueKind.Point,
+            Cardinality = ResultCardinality.Single,
+            Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
+        };
+        var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
+        var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
+
+        Assert.Equal(3, picker.SelectionTree.Count);
+        Assert.All(picker.SelectionTree, group => Assert.False(group.IsExpanded));
+        var jobVariables = picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+        var variableNode = jobVariables.Children.Single(node => node.DisplayName == variable.Name);
+        Assert.Contains("x: 10", variableNode.SecondaryText);
+        Assert.Contains("y: 20", variableNode.SecondaryText);
+        variableNode.SelectCommand!.Execute(null);
+        var binding = picker.ToBinding();
+
+        Assert.Equal(ValueProviderIds.JobVariable, binding.ProviderId);
+        Assert.Equal(variable.Id.ToString("D"), binding.SourceId);
+        Assert.True(string.IsNullOrEmpty(binding.SourceStepId));
+        Assert.True(string.IsNullOrEmpty(binding.PropertyId));
+        Assert.Equal(variable.Name, picker.SelectedPropertyName);
+        Assert.Contains("x: 10", picker.SelectedPreviewValue);
+        Assert.Equal(Loc.Get("Ui.ValueReference.JobVariables"), picker.SelectedPreviewSource);
+        Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
+    }
+
+    [Fact]
+    public void ValueReferencePicker_GroupsStepResultsAndUsesVariablePlaceholder()
+    {
+        var resultType = StepResultMetadata.ResultTypes.Single(type =>
+            type.TypeName == nameof(TemplateMatchingResult));
+        var source = new SourceStepItem("detection", "Detection", resultType);
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!;
+
+        var picker = new ValueReferencePickerViewModel([source], contract, selectDefault: false);
+
+        var resultVariables = picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.ResultVariables"));
+        Assert.Equal(Loc.Get("Ui.ValueReference.ResultVariables"), resultVariables.DisplayName);
+        Assert.Equal("Detection", Assert.Single(resultVariables.Children).DisplayName);
+        Assert.Equal(Loc.Get("Ui.ValueReference.SelectVariable"), picker.SelectedDisplayPath);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_SelectsCompatibleSecretAsProviderReference()
+    {
+        var secretId = Guid.NewGuid();
+        var secret = new ValueProviderSourceDescriptor(
+            ValueProviderIds.Secret,
+            secretId.ToString("D"),
+            "API token",
+            string.Empty,
+            ResultValueKind.Text,
+            ResultCardinality.Single,
+            IsSensitive: true);
+        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, selectDefault: false, providerSources: [secret]);
+
+        var secrets = picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
+        var secretNode = secrets.Children.Single(node => node.DisplayName == secret.Name);
+        secretNode.SelectCommand!.Execute(null);
+
+        Assert.Equal(ValueProviderIds.Secret, picker.ToBinding().ProviderId);
+        Assert.Equal(secretId.ToString("D"), picker.ToBinding().SourceId);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_SearchesValuesAndKeepsAllStandardGroupsVisible()
+    {
+        var variables = new[]
+        {
+            new JobVariable
+            {
+                Name = "Outer padding",
+                Description = "Space around the detection",
+                ValueKind = ResultValueKind.Integer,
+                Value = JsonValue.Create(25)
+            },
+            new JobVariable
+            {
+                Name = "Retries",
+                ValueKind = ResultValueKind.Integer,
+                Value = JsonValue.Create(3)
+            }
+        };
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false, variables);
+
+        picker.SearchText = "Space around";
+
+        Assert.Equal(3, picker.SelectionTree.Count);
+        Assert.All(picker.SelectionTree, group => Assert.True(group.IsExpanded));
+        var jobVariables = picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+        Assert.Contains(jobVariables.Children, child => child.DisplayName == "Outer padding");
+        Assert.DoesNotContain(jobVariables.Children, child => child.DisplayName == "Retries");
+        Assert.Contains(picker.SelectionTree, group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.ResultVariables"));
+        Assert.Contains(picker.SelectionTree, group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
+    }
+
+    [Fact]
+    public void ValueReferencePicker_CreatesAndSelectsCompatibleJobVariable()
+    {
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var created = new JobVariable
+        {
+            Name = "dynamischen_bildbereich_erstellen_rand_px",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(15)
+        };
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, context: new ValueReferencePickerContext(
+                "Dynamischen Bildbereich erstellen",
+                "Rand (px)",
+                _ => created));
+
+        picker.CreateJobVariableCommand.Execute(null);
+
+        Assert.Equal(ValueProviderIds.JobVariable, picker.ToBinding().ProviderId);
+        Assert.Equal(created.Id.ToString("D"), picker.ToBinding().SourceId);
+        var group = picker.SelectionTree.Single(node =>
+            node.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+        Assert.Contains(group.Children, node => node.DisplayName == created.Name);
+    }
+
+    [Fact]
+    public void QuickCreateJobVariable_RequiresUserSuppliedUniqueNameAndProvidesValue()
+    {
+        var existing = new[]
+        {
+            new JobVariable { Name = "bildschirm_duplizieren_desktop" }
+        };
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+
+        var viewModel = new QuickCreateJobVariableViewModel(
+            contract, "Bildschirm duplizieren", "Desktop", existing);
+
+        Assert.Equal(string.Empty, viewModel.Variable.Name);
+        Assert.False(viewModel.CanCreate);
+        viewModel.Name = "bildschirm_duplizieren_desktop";
+        Assert.False(viewModel.CanCreate);
+        viewModel.Name = "Mein Rand";
+        Assert.True(viewModel.CanCreate);
+        Assert.Equal("Mein Rand", viewModel.Variable.Name);
+        Assert.Contains("Desktop", viewModel.Variable.Description);
+        Assert.Equal(ResultValueKind.Integer, viewModel.Variable.ValueKind);
+        Assert.Equal(ResultValueKind.Integer, viewModel.SelectedKind.Kind);
+        Assert.Contains(viewModel.TypeOptions, option => option.Kind == ResultValueKind.Integer);
+        Assert.Equal(0, viewModel.Variable.Value!.GetValue<int>());
+    }
+
+    [Fact]
+    public void ValueReferencePicker_RespectsProviderRestrictionsAndExplainsHiddenValues()
+    {
+        var secret = new ValueProviderSourceDescriptor(
+            ValueProviderIds.Secret, Guid.NewGuid().ToString("D"), "Token", string.Empty,
+            ResultValueKind.Text, ResultCardinality.Single, IsSensitive: true);
+        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")! with
+        {
+            AllowedProviderIds = new HashSet<string>
+            {
+                ValueProviderIds.JobVariable,
+                ValueProviderIds.StepResult
+            }
+        };
+
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, providerSources: [secret]);
+
+        var secrets = picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
+        Assert.DoesNotContain(secrets.Children, node => node.DisplayName == "Token");
+        Assert.True(picker.HasIncompatible);
+        picker.ShowIncompatible = true;
+        Assert.Contains(
+            picker.SelectionTree.Single(group => group.DisplayName == Loc.Get("Ui.ValueReference.Secrets")).Children,
+            node => node.DisplayName == "Token" && !node.IsEnabled);
+    }
+
+    [Fact]
+    public void NewDataInputEditors_DefaultToReferencesWhileLegacyModelsKeepLiteralDefaults()
+    {
+        Assert.Equal(ShowTextSource.TaskResult,
+            new ShowTextStepDefinition().CreateDefaultStep().Settings.TextSource);
+        var fileSystem = new FileSystemOperationStepDefinition().CreateDefaultStep();
+        Assert.Equal(FileSystemPathSource.TaskResult, fileSystem.Settings.SourceMode);
+        Assert.Equal(FileSystemPathSource.TaskResult, fileSystem.Settings.TargetMode);
+
+        var owner = new System.Collections.ObjectModel.ObservableCollection<PointEntryViewModel>();
+        Assert.Equal(PointEntrySource.JobResult, new PointEntryViewModel(owner, []).Source);
+
+        Assert.Equal(ShowTextSource.ExplicitText, new ShowTextSettings().TextSource);
+        Assert.Equal(FileSystemPathSource.ExplicitPath, new FileSystemOperationSettings().SourceMode);
+    }
+
+    [Fact]
+    public void PointEntryAndVisualOverlayEditors_ExposeCompatibleJobVariables()
+    {
+        var pointVariable = new JobVariable
+        {
+            Name = "Target point",
+            ValueKind = ResultValueKind.Point,
+            Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
+        };
+        var pointEditor = new GeneratedPointEntryListEditorViewModel(null, [], [pointVariable]);
+        var pointBinding = Assert.Single(pointEditor.Points).PointsSource.ToBinding();
+        Assert.Equal(ValueProviderIds.JobVariable, pointBinding.ProviderId);
+        Assert.Equal(pointVariable.Id.ToString("D"), pointBinding.SourceId);
+
+        var detectionContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
+        var textContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!;
+        var overlay = new GeneratedVisualOverlayEditorViewModel(
+            null, [], detectionContract, textContract, false, variables: [pointVariable]);
+        overlay.AddOverlayDetectionCommand.Execute(null);
+        var row = Assert.Single(overlay.OverlayDetectionRows);
+        var variableNode = row.Source.SelectionTree
+            .Single(group => group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"))
+            .Children.Single(node => node.DisplayName == pointVariable.Name);
+        variableNode.SelectCommand!.Execute(null);
+
+        Assert.Equal(ValueProviderIds.JobVariable, row.Source.ToBinding().ProviderId);
+    }
+
+    [Fact]
+    public void VisualOverlayDefinition_PreservesProviderReferences()
+    {
+        var variableId = Guid.NewGuid();
+        var existing = new ShowOnDesktopStep
+        {
+            Settings = new ShowOnDesktopSettings
+            {
+                Overlay = new VisualOverlaySettings
+                {
+                    DetectionResults =
+                    [
+                        new ResultBinding
+                        {
+                            ProviderId = ValueProviderIds.JobVariable,
+                            SourceId = variableId.ToString("D")
+                        }
+                    ]
+                }
+            }
+        };
+        var definition = new ShowOnDesktopStepDefinition();
+
+        var updated = Assert.IsType<ShowOnDesktopStep>(
+            definition.ApplyDraft(definition.CreateDraft(existing), existing));
+        var binding = Assert.Single(updated.Settings.Overlay.DetectionResults);
+
+        Assert.Equal(ValueProviderIds.JobVariable, binding.ProviderId);
+        Assert.Equal(variableId.ToString("D"), binding.SourceId);
+        Assert.Null(binding.LegacySourceStepId);
     }
 
     [Fact]
@@ -2291,6 +2668,10 @@ public sealed class StepDefinitionCatalogTests
     public void GeneratedEditor_UpdatesConditionalFileSystemFieldsAndCreatesMoveStep()
     {
         var editor = new GeneratedStepEditorViewModel(new FileSystemOperationStepDefinition());
+        var sourceGroups = editor.Sections.Single(section => section.Descriptor.Id == "general")
+            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().ToArray();
+        sourceGroups[0].SelectedBranch = sourceGroups[0].Branches[0];
+        sourceGroups[1].SelectedBranch = sourceGroups[1].Branches[0];
         var operation = editor.Fields.Single(field =>
             field.Descriptor.Id == FileSystemOperationStepDefinition.OperationFieldId);
         var sourcePath = editor.Fields.Single(field =>
@@ -2323,6 +2704,8 @@ public sealed class StepDefinitionCatalogTests
     public void GeneratedEditor_CreatesShowTextWithMultilineAndColorFields()
     {
         var editor = new GeneratedStepEditorViewModel(new ShowTextStepDefinition());
+        var sourceGroup = editor.Sections[0].Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+        sourceGroup.SelectedBranch = sourceGroup.Branches[0];
         var text = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextFieldId);
         var color = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.FontColorFieldId);
         var monitor = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.DesktopFieldId);

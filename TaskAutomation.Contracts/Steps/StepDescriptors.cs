@@ -46,6 +46,7 @@ public static class StepEditorHints
     public const string ProcessTargetPicker = "process-target-picker";
     public const string ExecutableProcessTargetPicker = "executable-process-target-picker";
     public const string ResultBindingPicker = "result-binding-picker";
+    public const string ValueReferencePicker = "value-reference-picker";
     public const string Percentage = "percentage";
     public const string RoiPicker = "roi-picker";
     public const string YoloPicker = "yolo-picker";
@@ -61,7 +62,7 @@ public static class StepEditorHints
     [
         MonitorPicker, FilePicker, DirectoryPicker, FileOrFolderPicker, CameraPicker, VisualOverlay,
         ProcessNameSuggestions, ExecutablePathSuggestions, StartProgramPicker, MacroPicker, JobPicker,
-        ProcessTargetPicker, ExecutableProcessTargetPicker, ResultBindingPicker, Percentage, RoiPicker,
+        ProcessTargetPicker, ExecutableProcessTargetPicker, ResultBindingPicker, ValueReferencePicker, Percentage, RoiPicker,
         YoloPicker, ConditionEditor, WindowsCapabilityPicker, ScreenPointPicker, UserChoiceOptions,
         PointEntryList, AxisExpressionList, EmojiText
     ];

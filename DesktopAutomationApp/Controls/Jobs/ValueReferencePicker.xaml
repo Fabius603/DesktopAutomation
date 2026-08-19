@@ -1,17 +1,23 @@
-<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.ResultBindingPicker"
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.ValueReferencePicker"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
-             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             PreviewKeyDown="OnPreviewKeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <jobs:ResultPathPicker ItemsSource="{Binding SelectionTree}"
-                               DisplayText="{Binding SelectedDisplayPath}"
-                               SecondaryText="{Binding SelectedCardinality}"/>
+        <jobs:ResultPathPicker x:Name="PathPicker"
+                               ItemsSource="{Binding SelectionTree}"
+                               IsRichPreview="True"
+                               DisplayText="{Binding SelectedPropertyName}"
+                               PreviewText="{Binding SelectedPreviewValue}"
+                               SourceText="{Binding SelectedPreviewSource}"
+                               SecondaryText="{Binding SelectedPreviewType}"/>
 
         <Button Grid.Column="1"
                 Width="30" Height="30"
@@ -26,6 +32,7 @@
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding CanClear}" Value="True"/>
                                 <Condition Binding="{Binding ShowClearButton, ElementName=Root}" Value="True"/>
+                                <Condition Binding="{Binding IsConfigured}" Value="True"/>
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Visible"/>
                         </MultiDataTrigger>

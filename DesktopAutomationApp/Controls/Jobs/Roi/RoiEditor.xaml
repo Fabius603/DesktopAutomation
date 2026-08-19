@@ -33,7 +33,7 @@
                       IsChecked="{Binding UseDynamicRoi, Mode=TwoWay}"
                       FontWeight="SemiBold"
                       Margin="0,0,0,6"/>
-            <jobs:ResultBindingPicker DataContext="{Binding DetectionDynamicRoiSource}"
+            <jobs:ValueReferencePicker DataContext="{Binding DetectionDynamicRoiSource}"
                                       Margin="0,0,0,8"
                                       Visibility="{Binding UseDynamicRoi, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 

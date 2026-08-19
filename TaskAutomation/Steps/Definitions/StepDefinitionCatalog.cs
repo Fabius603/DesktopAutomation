@@ -94,6 +94,7 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has inconsistent length constraints.");
             if (field.EditorHint is TaskAutomation.Contracts.Steps.StepEditorHints.ResultBindingPicker
+                    or TaskAutomation.Contracts.Steps.StepEditorHints.ValueReferencePicker
                     or TaskAutomation.Contracts.Steps.StepEditorHints.ProcessTargetPicker
                     or TaskAutomation.Contracts.Steps.StepEditorHints.ExecutableProcessTargetPicker
                     or TaskAutomation.Contracts.Steps.StepEditorHints.PointEntryList

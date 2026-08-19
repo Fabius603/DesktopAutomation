@@ -11,8 +11,24 @@ namespace TaskAutomation.Steps
         private readonly Dictionary<Type, StepResultBase>   _byType = new();
         private readonly Dictionary<string, StepResultBase> _byId   = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Type> _stepTypesById = new(StringComparer.OrdinalIgnoreCase);
+        private readonly IReadOnlyDictionary<Guid, JobVariable> _variables;
+        private readonly RuntimeValueProviderRegistry _valueProviders;
 
-        public JobResultStore() { }
+        public JobResultStore(
+            IEnumerable<JobVariable>? variables = null,
+            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null)
+        {
+            var variableList = (variables ?? []).ToArray();
+            _variables = variableList.Where(variable => variable.Id != Guid.Empty)
+                .GroupBy(variable => variable.Id)
+                .ToDictionary(group => group.Key, group => group.Last());
+            _valueProviders = new RuntimeValueProviderRegistry(
+            [
+                new JobVariableRuntimeValueProvider(variableList),
+                new SecretRuntimeValueProvider(secrets
+                    ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>())
+            ]);
+        }
 
         // ── Lesen ──────────────────────────────────────────────────────────────
 
@@ -53,6 +69,12 @@ namespace TaskAutomation.Steps
         public StepResultBase? GetRaw(string stepId)
             => _byId.TryGetValue(stepId, out var r) ? r : null;
 
+        public JobVariable? GetVariable(Guid variableId)
+            => _variables.GetValueOrDefault(variableId);
+
+        public RuntimeValueReadResult ReadProvider(string providerId, string sourceId) =>
+            _valueProviders.Read(providerId, sourceId);
+
         // ── Interne Verwaltung ─────────────────────────────────────────────────
 
         /// <summary>
@@ -66,6 +88,7 @@ namespace TaskAutomation.Steps
             _byType.Clear();
             _byId.Clear();
             _stepTypesById.Clear();
+            _valueProviders.Dispose();
         }
 
         /// <summary>Behält nur Ergebnisse der angegebenen Steps und gibt alle übrigen Ressourcen frei.</summary>

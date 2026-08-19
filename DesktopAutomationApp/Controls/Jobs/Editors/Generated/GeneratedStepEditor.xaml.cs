@@ -18,6 +18,7 @@ public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
 
         var key = field switch
         {
+            { UsesInputReference: true } => "InputReferenceFieldTemplate",
             { UsesEmojiText: true } => "EmojiTextFieldTemplate",
             { UsesMultilineTextInput: true } => "MultilineTextFieldTemplate",
             { IsBoolean: true } => "BooleanFieldTemplate",
@@ -30,7 +31,7 @@ public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
             { UsesDirectoryPicker: true } => "DirectoryFieldTemplate",
             { UsesFileOrFolderPicker: true } => "FileOrFolderFieldTemplate",
             { UsesMonitorPicker: true } => "MonitorFieldTemplate",
-            { UsesResultBindingPicker: true } => "ResultBindingFieldTemplate",
+            { UsesValueReferencePicker: true } => "ValueReferenceFieldTemplate",
             { UsesPercentagePicker: true } => "PercentageFieldTemplate",
             { UsesColorPicker: true } => "ColorFieldTemplate",
             { UsesCameraPicker: true } => "CameraFieldTemplate",

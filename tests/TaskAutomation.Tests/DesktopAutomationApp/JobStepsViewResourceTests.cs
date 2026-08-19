@@ -92,11 +92,11 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("GeneratedStepFieldTemplateSelector", xaml);
         Assert.Contains("ContentTemplateSelector=\"{StaticResource GeneratedStepFieldTemplateSelector}\"", xaml);
-        Assert.Contains("x:Key=\"ResultBindingFieldTemplate\"", xaml);
+        Assert.Contains("x:Key=\"ValueReferenceFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"VisualOverlayFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"RoiFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"WindowsCapabilityFieldTemplate\"", xaml);
-        Assert.DoesNotContain("Visibility=\"{Binding UsesResultBindingPicker,", xaml);
+        Assert.DoesNotContain("Visibility=\"{Binding UsesValueReferencePicker,", xaml);
         Assert.DoesNotContain("Visibility=\"{Binding UsesVisualOverlay,", xaml);
         Assert.DoesNotContain("Visibility=\"{Binding UsesRoiPicker,", xaml);
         Assert.DoesNotContain("Visibility=\"{Binding UsesWindowsCapabilityPicker,", xaml);

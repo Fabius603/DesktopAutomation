@@ -69,6 +69,7 @@ public sealed class JobStepDetailsProvider
             ["OriginX"] = "Ui.Step.Settings.Origin",
             ["OriginY"] = "Ui.Step.Settings.Origin",
             ["Padding"] = "Ui.Step.DynamicRoi.Padding",
+            ["PaddingSource"] = "Ui.Step.DynamicRoi.Padding",
             ["PlacementMode"] = "Ui.Step.Settings.Position",
             ["Points"] = "Ui.Step.Settings.PointsToCheck",
             ["PointsSource"] = "Ui.Step.Settings.PointSource",
@@ -103,7 +104,10 @@ public sealed class JobStepDetailsProvider
             ["WindowTitleContains"] = "Ui.Step.Settings.WindowTitleContains"
         };
 
-    public string GetSummary(JobStep step, IEnumerable? steps)
+    public string GetSummary(
+        JobStep step,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables = null)
     {
         if (!BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
             return string.Empty;
@@ -114,6 +118,14 @@ public sealed class JobStepDetailsProvider
         foreach (var item in definition.Descriptor.Presentation.SummaryItems
                      .OrderByDescending(item => item.Priority))
         {
+            if (step.Inputs.TryGetValue(item.FieldId, out var input) && input.IsConfigured)
+            {
+                var reference = FormatBinding(input, steps, variables, null);
+                values.Add(string.IsNullOrWhiteSpace(item.LabelKey)
+                    ? reference
+                    : $"{Loc.Get(item.LabelKey)}: {reference}");
+                continue;
+            }
             if (!fields.TryGetValue(item.FieldId, out var field)
                 || !draft.Values.TryGetValue(item.FieldId, out var value)
                 || value is null
@@ -121,7 +133,7 @@ public sealed class JobStepDetailsProvider
                 || item.HideWhenEmpty && IsSummaryValueEmpty(field, value))
                 continue;
 
-            var formatted = FormatSummaryValue(item, field, value, steps);
+            var formatted = FormatSummaryValue(item, field, value, steps, variables, null);
             if (item.HideWhenEmpty && string.IsNullOrWhiteSpace(formatted))
                 continue;
             values.Add(string.IsNullOrWhiteSpace(item.LabelKey)
@@ -131,18 +143,22 @@ public sealed class JobStepDetailsProvider
         return string.Join(" · ", values);
     }
 
-    public JobStepDetails GetDetails(JobStep step, IEnumerable? steps)
+    public JobStepDetails GetDetails(
+        JobStep step,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
         var items = new List<(string Group, StepDetailItem Item)>();
         var settings = step.GetType().GetProperty("Settings")?.GetValue(step);
         if (BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
         {
-            AddDefinitionDetails(definition, step, items, steps);
+            AddDefinitionDetails(definition, step, items, steps, variables, providerSources);
         }
         else if (settings is IfConditionSettings conditions)
-            AddConditions(conditions, items, steps);
+            AddConditions(conditions, items, steps, variables);
         else if (settings is not null)
-            AddProperties(settings, string.Empty, items, steps, 0);
+            AddProperties(settings, string.Empty, items, steps, variables, providerSources, 0);
 
         var order = new[] { "source", "detection", "roi", "general", "conditions", "advanced" };
         var groups = items.GroupBy(item => item.Group)
@@ -156,14 +172,23 @@ public sealed class JobStepDetailsProvider
         IStepDefinition definition,
         JobStep step,
         List<(string Group, StepDetailItem Item)> target,
-        IEnumerable? steps)
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
         var draft = definition.CreateDraft(step);
         var fields = definition.Descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
         foreach (var fieldId in definition.Descriptor.Presentation.DetailFieldIds)
         {
-            if (!fields.TryGetValue(fieldId, out var field)
-                || !draft.Values.TryGetValue(fieldId, out var value)
+            if (!fields.TryGetValue(fieldId, out var field)) continue;
+            if (step.Inputs.TryGetValue(fieldId, out var input) && input.IsConfigured)
+            {
+                target.Add(("general", new StepDetailItem(
+                    Loc.Get(field.LabelKey),
+                    FormatBinding(input, steps, variables, providerSources))));
+                continue;
+            }
+            if (!draft.Values.TryGetValue(fieldId, out var value)
                 || value is null
                 || !IsDefinitionFieldVisible(field, draft))
                 continue;
@@ -172,7 +197,7 @@ public sealed class JobStepDetailsProvider
                 try
                 {
                     var settings = value.Deserialize<IfConditionSettings>();
-                    if (settings is not null) AddConditions(settings, target, steps);
+                    if (settings is not null) AddConditions(settings, target, steps, variables);
                 }
                 catch (JsonException) { }
                 continue;
@@ -184,7 +209,7 @@ public sealed class JobStepDetailsProvider
             }
             target.Add(("general", new StepDetailItem(
                 Loc.Get(field.LabelKey),
-                FormatDefinitionValue(field, value, steps))));
+                FormatDefinitionValue(field, value, steps, variables, providerSources))));
         }
     }
 
@@ -212,14 +237,16 @@ public sealed class JobStepDetailsProvider
     private static string FormatDefinitionValue(
         StepFieldDescriptor field,
         System.Text.Json.Nodes.JsonNode value,
-        IEnumerable? steps)
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
         if (string.Equals(field.EditorHint, StepEditorHints.CameraPicker, StringComparison.Ordinal))
             return FormatCameraSelection(value);
         if (string.Equals(field.EditorHint, StepEditorHints.VisualOverlay, StringComparison.Ordinal))
             return FormatVisualOverlay(value);
         if (string.Equals(field.EditorHint, StepEditorHints.RoiPicker, StringComparison.Ordinal))
-            return FormatRoi(value, steps);
+            return FormatRoi(value, steps, variables, providerSources);
         if (string.Equals(field.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
             return FormatYoloSelection(value);
         if (string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal))
@@ -234,6 +261,10 @@ public sealed class JobStepDetailsProvider
             return FormatPointEntries(value);
         if (string.Equals(field.EditorHint, StepEditorHints.AxisExpressionList, StringComparison.Ordinal))
             return FormatAxisExpressions(value);
+        if (field.ValueKind == StepValueKind.ResultBinding)
+            return FormatDefinitionBinding(value, steps, variables, providerSources);
+        if (field.ValueKind == StepValueKind.Object)
+            return FormatDefinitionObject(value, steps, variables, providerSources);
         if (value is not JsonValue jsonValue)
             return value.ToJsonString();
 
@@ -249,8 +280,6 @@ public sealed class JobStepDetailsProvider
                 flag ? Loc.Get("Ui.Common.Yes") : Loc.Get("Ui.Common.No"),
             StepValueKind.Enum when jsonValue.TryGetValue<string>(out var option) =>
                 FormatDefinitionOption(field, option),
-            StepValueKind.ResultBinding => FormatDefinitionBinding(value, steps),
-            StepValueKind.Object => FormatDefinitionObject(value, steps),
             _ when jsonValue.TryGetValue<string>(out var text) => text,
             _ => value.ToJsonString()
         };
@@ -339,9 +368,11 @@ public sealed class JobStepDetailsProvider
         StepSummaryItemDescriptor item,
         StepFieldDescriptor field,
         System.Text.Json.Nodes.JsonNode value,
-        IEnumerable? steps)
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
-        var formatted = FormatDefinitionValue(field, value, steps);
+        var formatted = FormatDefinitionValue(field, value, steps, variables, providerSources);
         return item.Format switch
         {
             StepSummaryValueFormat.ShortText when formatted.Length > 80 => formatted[..77] + "...",
@@ -448,15 +479,19 @@ public sealed class JobStepDetailsProvider
 
     private static string FormatDefinitionBinding(
         System.Text.Json.Nodes.JsonNode value,
-        IEnumerable? steps)
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
-        try { return FormatBinding(value.Deserialize<ResultBinding>() ?? new ResultBinding(), steps); }
+        try { return FormatBinding(value.Deserialize<ResultBinding>() ?? new ResultBinding(), steps, variables, providerSources); }
         catch (System.Text.Json.JsonException) { return value.ToJsonString(); }
     }
 
     private static string FormatDefinitionObject(
         System.Text.Json.Nodes.JsonNode value,
-        IEnumerable? steps)
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
         try
         {
@@ -470,7 +505,7 @@ public sealed class JobStepDetailsProvider
             var selector = value.Deserialize<StepProcessSelectorValue>();
             var binding = selector?.ProcessSource?.Deserialize<ResultBinding>();
             if (binding?.IsConfigured == true)
-                return FormatBinding(binding, steps);
+                return FormatBinding(binding, steps, variables, providerSources);
             var process = !string.IsNullOrWhiteSpace(selector?.ProcessName)
                 ? selector.ProcessName
                 : selector?.ExecutablePath;
@@ -484,7 +519,11 @@ public sealed class JobStepDetailsProvider
         return value.ToJsonString();
     }
 
-    private static string FormatRoi(System.Text.Json.Nodes.JsonNode value, IEnumerable? steps)
+    private static string FormatRoi(
+        System.Text.Json.Nodes.JsonNode value,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
         try
         {
@@ -495,7 +534,7 @@ public sealed class JobStepDetailsProvider
                 : string.Empty;
             var dynamicBinding = roi.DynamicSource?.Deserialize<ResultBinding>();
             var dynamicValue = dynamicBinding?.IsConfigured == true
-                ? Loc.Format("Ui.Step.Generated.RoiDynamic", FormatBinding(dynamicBinding, steps))
+                ? Loc.Format("Ui.Step.Generated.RoiDynamic", FormatBinding(dynamicBinding, steps, variables, providerSources))
                 : string.Empty;
             if (staticValue.Length > 0 && dynamicValue.Length > 0)
                 return $"{staticValue} · {dynamicValue}";
@@ -578,7 +617,9 @@ public sealed class JobStepDetailsProvider
     }
 
     private static void AddConditions(IfConditionSettings settings,
-        List<(string Group, StepDetailItem Item)> target, IEnumerable? steps)
+        List<(string Group, StepDetailItem Item)> target,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables)
     {
         target.Add(("general", new StepDetailItem(Loc.Get("Ui.Step.Settings.ConditionMatchMode"),
             settings.MatchMode == ConditionMatchMode.All
@@ -588,11 +629,15 @@ public sealed class JobStepDetailsProvider
         foreach (var condition in settings.Conditions)
             target.Add(("conditions", new StepDetailItem(
                 $"{index++}. {Loc.Get("Ui.Step.IfEditor.Condition")}",
-                ConditionDisplayFormatter.Format(condition, steps as IList))));
+                ConditionDisplayFormatter.Format(condition, steps as IList, variables))));
     }
 
     private static void AddProperties(object owner, string prefix,
-        List<(string Group, StepDetailItem Item)> target, IEnumerable? steps, int depth)
+        List<(string Group, StepDetailItem Item)> target,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources,
+        int depth)
     {
         if (depth > 3) return;
         foreach (var property in owner.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -604,14 +649,14 @@ public sealed class JobStepDetailsProvider
             if (value is ResultBinding binding)
             {
                 target.Add(("source", new StepDetailItem(
-                    prefix + LocalizedSettingName(property.Name), FormatBinding(binding, steps))));
+                    prefix + LocalizedSettingName(property.Name), FormatBinding(binding, steps, variables, providerSources))));
                 continue;
             }
 
             if (IsNested(property.PropertyType))
             {
                 if (value is not null)
-                    AddProperties(value, prefix + LocalizedSettingName(property.Name) + " / ", target, steps, depth + 1);
+                    AddProperties(value, prefix + LocalizedSettingName(property.Name) + " / ", target, steps, variables, providerSources, depth + 1);
                 continue;
             }
 
@@ -743,16 +788,51 @@ public sealed class JobStepDetailsProvider
         List<(string Group, StepDetailItem Item)> target, string group) =>
         target.Add((group, new StepDetailItem(LocalizedSettingPath(name), FormatValue(value))));
 
-    private static string FormatBinding(ResultBinding binding, IEnumerable? steps)
+    private static string FormatBinding(
+        ResultBinding binding,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
+        if (binding.HasProviderReference
+            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+            && providerSources?.FirstOrDefault(source =>
+                string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
+                && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } providerSource)
+            return $"{ProviderLabel(providerSource.ProviderId)} → {providerSource.Name}";
+
+        if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            && Guid.TryParse(binding.SourceId, out var variableId))
+        {
+            var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
+            return variable?.Name ?? Loc.Get("Ui.Job.Steps.SourceUnavailable");
+        }
+
+        var sourceStep = steps?.Cast<object>().OfType<JobStep>()
+            .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId);
         var source = ResolveStep(binding.SourceStepId, steps) ?? binding.SourceStepId;
         var property = string.IsNullOrWhiteSpace(binding.PropertyPath)
             ? binding.PropertyId
             : binding.PropertyPath;
+        if (sourceStep is not null)
+        {
+            var resultType = StepResultMetadata.GetResultTypeForStep(sourceStep);
+            if (resultType is not null
+                && StepResultMetadata.TryGetProperty(
+                    resultType, binding.PropertyId, binding.PropertyPath, out var descriptor))
+                property = descriptor.Name;
+        }
         return string.IsNullOrWhiteSpace(property)
             ? source
             : $"{source} → {LocalizedPropertyName(property)}";
     }
+
+    private static string ProviderLabel(string providerId) => providerId switch
+    {
+        ValueProviderIds.JobVariable => Loc.Get("Ui.ValueReference.JobVariables"),
+        ValueProviderIds.Secret => Loc.Get("Ui.ValueReference.Secrets"),
+        _ => providerId
+    };
 
     private static StepResultDetails? CreateResultDetails(JobStep step)
     {

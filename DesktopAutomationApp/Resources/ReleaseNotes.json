@@ -1,5 +1,23 @@
 [
   {
+    "version": "1.5.14",
+    "date": "2026-08-19",
+    "sections": [
+      {
+        "title": { "de": "Einstellungen", "en": "Settings" },
+        "changes": [
+          { "category": "Added", "de": "Die neu gegliederten Einstellungen bündeln Allgemeines, sicher verwaltete Secrets mit Name und Beschreibung, KI-Modelle und Updates in übersichtlichen Unterseiten.", "en": "The reorganized settings combine general options, securely managed secrets with names and descriptions, AI models, and updates in clear subpages." }
+        ]
+      },
+      {
+        "title": { "de": "Jobs", "en": "Jobs" },
+        "changes": [
+          { "category": "Added", "de": "Alle Job-Step-Eingaben verwenden typisierte Variablen oder andere Wertreferenzen statt eigener Festwerte; vorhandene Jobs werden automatisch kompatibel übernommen, Variablen lassen sich mit Name, vorausgewähltem Typ und Wert direkt in der durchsuchbaren Referenzauswahl anlegen und verwendete Variablen sind vor versehentlichem Löschen geschützt. Die Auswahl zeigt Name, Wert, Typ und Quelle übersichtlich an und startet mit eingeklappten Kategorien.", "en": "All job-step inputs use typed variables or other value references instead of their own fixed values; existing jobs are migrated automatically, variables can be created with a name, preselected type, and value directly from the searchable reference picker, and variables in use are protected from accidental deletion. The picker clearly shows the name, value, type, and source and starts with collapsed categories." }
+        ]
+      }
+    ]
+  },
+  {
     "version": "1.5.13",
     "date": "2026-08-18",
     "sections": [

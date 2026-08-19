@@ -22,6 +22,25 @@
         </Style.Triggers>
     </Style>
 
+    <!-- PasswordBox — gleiche Darstellung wie normale TextBoxen -->
+    <Style TargetType="PasswordBox" BasedOn="{StaticResource MahApps.Styles.PasswordBox}">
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextDisabled}"/>
+                <Setter Property="Opacity" Value="0.72"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ═══ ComboBox — abgerundete Ecken, einheitliche Höhe ═══ -->
     <Style TargetType="ComboBox" BasedOn="{StaticResource MahApps.Styles.ComboBox}">
         <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>

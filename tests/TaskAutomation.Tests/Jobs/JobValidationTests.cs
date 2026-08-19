@@ -1,9 +1,68 @@
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps;
 
 namespace TaskAutomation.Tests.Jobs;
 
 public sealed class JobValidationTests
 {
+    [Fact]
+    public void ValidateCandidate_AcceptsDynamicRoiPaddingFromIntegerVariable()
+    {
+        var padding = new JobVariable
+        {
+            Name = "ROI padding",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(8)
+        };
+        var source = new TemplateMatchingStep { Id = "source" };
+        var dynamicRoi = new DynamicRoiStep
+        {
+            Settings = new DynamicRoiSettings
+            {
+                Padding = -1,
+                BoundsSource = new ResultBinding
+                {
+                    SourceStepId = source.Id,
+                    PropertyPath = nameof(TemplateMatchingResult.BoundingBox)
+                },
+                PaddingSource = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = padding.Id.ToString("D")
+                }
+            }
+        };
+
+        var result = JobValidation.ValidateCandidate(
+            [source], dynamicRoi, [source, dynamicRoi], [padding]);
+
+        Assert.True(result.IsValid, result.Error);
+    }
+
+    [Fact]
+    public void ValidateJob_AcceptsConditionBackedByCompatibleJobVariable()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Enabled",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            Operator = ConditionOperator.IsTrue
+        };
+        var job = new Job
+        {
+            Variables = [variable],
+            Steps = [new IfStep { Settings = new() { Conditions = [condition] } }, new EndIfStep()]
+        };
+
+        Assert.True(JobValidation.ValidateJob(job).IsValid);
+    }
+
     [Fact]
     public void ValidateJob_EmptyJob_IsValid() => Assert.True(JobValidation.ValidateJob(new Job()).IsValid);
 

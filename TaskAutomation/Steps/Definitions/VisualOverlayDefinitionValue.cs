@@ -60,8 +60,10 @@ internal static class VisualOverlayDefinitionValue
 
     private static ResultBinding Clone(ResultBinding binding) => new()
     {
-        SourceStepId = binding.SourceStepId,
-        PropertyId = binding.PropertyId,
-        PropertyPath = binding.PropertyPath
+        ProviderId = binding.ProviderId,
+        SourceId = binding.SourceId,
+        LegacySourceStepId = binding.LegacySourceStepId,
+        LegacyPropertyId = binding.LegacyPropertyId,
+        LegacyPropertyPath = binding.LegacyPropertyPath
     };
 }

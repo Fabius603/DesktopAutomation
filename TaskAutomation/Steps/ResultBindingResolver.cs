@@ -34,6 +34,9 @@ public static class ResultBindingResolver
         if (binding?.IsConfigured != true)
             return Failure<T>(ResultResolutionStatus.NotConfigured, null, "Keine Ergebnis-Eigenschaft ausgewählt.");
 
+        if (binding.HasProviderReference
+            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+            return ResolveProviderValue<T>(results, binding);
         var source = results.GetRaw(binding.SourceStepId);
         if (source is null || !source.WasExecuted)
             return Failure<T>(ResultResolutionStatus.SourceNotExecuted, source,
@@ -170,4 +173,29 @@ public static class ResultBindingResolver
 
     private static ResolvedResultValue<T> Failure<T>(ResultResolutionStatus status, StepResultBase? source, string error) =>
         new(status, Array.Empty<T>(), source, error);
+
+    private static ResolvedResultValue<T> ResolveProviderValue<T>(
+        IJobResultStore results,
+        ValueReference reference)
+    {
+        var read = results.ReadProvider(reference.ProviderId, reference.SourceId);
+        if (!read.IsSuccess)
+            return Failure<T>(ResultResolutionStatus.SourceNotExecuted, null,
+                read.Error ?? "Die ausgewählte Wertquelle ist nicht verfügbar.");
+        if (read.Value is null)
+            return Failure<T>(ResultResolutionStatus.ValueIsNull, null,
+                "Die ausgewählte Wertquelle enthält keinen Wert.");
+        if (read.Value is T typed)
+            return new(ResultResolutionStatus.Success, [typed], null);
+        if (read.Value is IEnumerable enumerable and not string)
+        {
+            var values = enumerable.Cast<object?>().OfType<T>().ToArray();
+            return values.Length > 0
+                ? new(ResultResolutionStatus.Success, values, null)
+                : Failure<T>(ResultResolutionStatus.EmptyCollection, null,
+                    "Die ausgewählte Wertquelle enthält keine passenden Werte.");
+        }
+        return Failure<T>(ResultResolutionStatus.TypeMismatch, null,
+            $"Die ausgewählte Wertquelle ist nicht vom erwarteten Typ {typeof(T).Name}.");
+    }
 }

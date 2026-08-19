@@ -24,6 +24,8 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
     private static readonly JobStepDetailsProvider Provider = new();
     private int _cacheVersion = int.MinValue;
     private IEnumerable? _cacheSteps;
+    private IReadOnlyList<JobVariable>? _cacheVariables;
+    private IReadOnlyList<ValueProviderSourceDescriptor>? _cacheProviderSources;
     private Dictionary<JobStep, JobStepDetails> _cache =
         new(ReferenceEqualityComparer.Instance);
 
@@ -34,14 +36,23 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
 
         var steps = values.Skip(1).FirstOrDefault() as IEnumerable;
         var version = values.Length > 2 && values[2] is int value ? value : 0;
-        if (!ReferenceEquals(steps, _cacheSteps) || version != _cacheVersion)
+        var variables = values.Length > 3 ? values[3] as IReadOnlyList<JobVariable> : null;
+        var providerSources = values.Length > 4
+            ? values[4] as IReadOnlyList<ValueProviderSourceDescriptor>
+            : null;
+        if (!ReferenceEquals(steps, _cacheSteps)
+            || !ReferenceEquals(variables, _cacheVariables)
+            || !ReferenceEquals(providerSources, _cacheProviderSources)
+            || version != _cacheVersion)
         {
             _cache = new Dictionary<JobStep, JobStepDetails>(ReferenceEqualityComparer.Instance);
             _cacheSteps = steps;
+            _cacheVariables = variables;
+            _cacheProviderSources = providerSources;
             _cacheVersion = version;
         }
         if (!_cache.TryGetValue(step, out var details))
-            _cache[step] = details = Provider.GetDetails(step, steps);
+            _cache[step] = details = Provider.GetDetails(step, steps, variables, providerSources);
         return details;
     }
 

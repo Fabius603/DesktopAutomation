@@ -23,11 +23,11 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
         "show_text", "AnzeigenSpeichern", "Step.Type.ShowText", "Step.Description.ShowText", "text",
         [
             new(TextSourceFieldId, "Ui.Step.Settings.TextSource", StepValueKind.Enum, true,
-                JsonValue.Create("ExplicitText"), Constraints: new(AllowedValues: ["ExplicitText", "TaskResult"]), Order: 0,
+                JsonValue.Create("TaskResult"), Constraints: new(AllowedValues: ["ExplicitText", "TaskResult"]), Order: 0,
                 Options: [new("ExplicitText", "Ui.Step.IfEditor.LiteralValue"), new("TaskResult", "Ui.Step.IfEditor.JobResultValue")]),
             new(TextFieldId, "Ui.Step.Settings.DisplayText", StepValueKind.MultilineText, Required: true, Order: 1),
             new(TextResultFieldId, "Ui.Step.Settings.TaskResult", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 2,
+                EditorHint: StepEditorHints.ValueReferencePicker, Order: 2,
                 InputContractId: "text"),
             new(DesktopFieldId, "Ui.Step.Settings.DesktopIndex", StepValueKind.Integer,
                 DefaultValue: JsonValue.Create(0), EditorHint: StepEditorHints.MonitorPicker,
@@ -68,7 +68,10 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
             [TextSourceFieldId, TextFieldId, TextResultFieldId, DesktopFieldId, FontSizeFieldId, FontColorFieldId,
                 OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId]));
 
-    public override ShowTextStep CreateDefaultStep() => new();
+    public override ShowTextStep CreateDefaultStep() => new()
+    {
+        Settings = new ShowTextSettings { TextSource = ShowTextSource.TaskResult }
+    };
 
     protected override StepDraft Read(ShowTextStep step)
     {

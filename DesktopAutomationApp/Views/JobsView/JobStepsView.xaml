@@ -1,7 +1,6 @@
 <UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.JobStepsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:jobs="clr-namespace:TaskAutomation.Jobs;assembly=TaskAutomation"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -462,6 +461,14 @@
                                 <TextBlock Text="{loc:Translate Key=Ui.Common.NewStep}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenVariablesCommand}"
+                                Margin="8,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="CodeBraces" Width="14" Height="14"
+                                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Button}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <Border Style="{StaticResource ToolbarSeparator}"/>
                         <Button Style="{StaticResource ButtonSecondary}" Command="{Binding DebugJobCommand}"
                                 ToolTip="{loc:Translate Key=Ui.Job.Debug.StartTooltip}">
@@ -859,6 +866,8 @@
                                                 <Binding/>
                                                 <Binding Path="DataContext.AllJobSteps" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                                 <Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                <Binding Path="DataContext.Variables" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
+                                                <Binding Path="DataContext.ProviderSources" RelativeSource="{RelativeSource AncestorType=UserControl}" Mode="OneWay"/>
                                             </MultiBinding>
                                         </ContentControl.Content>
                                         <ContentControl.ContentTemplate>

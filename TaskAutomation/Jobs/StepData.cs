@@ -65,6 +65,14 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("id")]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
+        /// <summary>
+        /// Typed references for every user-configurable step input. Legacy settings remain readable,
+        /// but migrated and newly edited jobs use these references as the runtime source of truth.
+        /// </summary>
+        [JsonPropertyName("inputs")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public Dictionary<string, ResultBinding> Inputs { get; set; } = new(StringComparer.Ordinal);
+
         private bool _isEnabled = true;
 
         /// <summary>Gibt an, ob dieser Step beim Ausführen des Jobs berücksichtigt wird.</summary>
@@ -258,6 +266,9 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("padding")]
         public int Padding { get; set; } = 25;
+
+        [JsonPropertyName("padding_source")]
+        public ResultBinding PaddingSource { get; set; } = new();
 
         [JsonPropertyName("minimum_confidence")]
         public double MinimumConfidence { get; set; }
@@ -686,7 +697,7 @@ namespace TaskAutomation.Jobs
 
     public enum ComparisonOperandKind { Literal, JobResult }
 
-    public sealed class ComparisonOperand
+    public sealed class ComparisonOperand : ResultBinding
     {
         [JsonPropertyName("kind")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -696,31 +707,10 @@ namespace TaskAutomation.Jobs
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Value { get; set; }
 
-        [JsonPropertyName("source_step_id")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? SourceStepId { get; set; }
-
-        [JsonPropertyName("property_id")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? PropertyId { get; set; }
-
-        [JsonPropertyName("property_path")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? PropertyPath { get; set; }
     }
 
-    public sealed class StepCondition
+    public sealed class StepCondition : ResultBinding
     {
-        [JsonPropertyName("source_step_id")]
-        public string SourceStepId { get; set; } = "";
-
-        [JsonPropertyName("property_id")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? PropertyId { get; set; }
-
-        [JsonPropertyName("property_path")]
-        public string PropertyPath { get; set; } = "";
-
         [JsonPropertyName("operator")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ConditionOperator Operator { get; set; } = ConditionOperator.IsTrue;

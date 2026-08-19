@@ -185,17 +185,6 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- YOLO Downloads -->
-                    <Button Command="{Binding ShowYoloDownloads}"
-                            Tag="YoloDownloadsViewModel"
-                            Style="{DynamicResource SidebarNavButton}">
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="Download" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.Yolo.YOLODownloads}" VerticalAlignment="Center" FontSize="14"/>
-                        </StackPanel>
-                    </Button>
-
                     <!-- Logs -->
                     <Button Command="{Binding ShowExecutionLogs}"
                             Tag="ExecutionLogsViewModel"

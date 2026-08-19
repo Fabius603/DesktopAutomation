@@ -10,6 +10,74 @@ namespace TaskAutomation.Tests.Jobs;
 public sealed class JobExecutorControlFlowTests
 {
     [Fact]
+    public async Task ExecuteJob_LoadsReferencedSecretOnlyForRuntimeResolution()
+    {
+        var builder = new JobExecutorTestBuilder();
+        var secret = builder.Secrets.Add("API token", "top-secret");
+        var job = new Job
+        {
+            Name = "secret input",
+            Steps =
+            [
+                new ShowTextStep
+                {
+                    Settings = new ShowTextSettings
+                    {
+                        TextSource = ShowTextSource.TaskResult,
+                        TextResult = new ResultBinding
+                        {
+                            ProviderId = ValueProviderIds.Secret,
+                            SourceId = secret.Id.ToString("D")
+                        }
+                    }
+                }
+            ]
+        };
+        builder.WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal("top-secret", Assert.Single(builder.Overlay.TextCalls).Text);
+    }
+
+    [Fact]
+    public async Task ExecuteJob_ConditionReadsJobVariableReference()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Feature enabled",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            Operator = ConditionOperator.IsTrue
+        };
+        var job = new Job
+        {
+            Name = "variable condition",
+            Variables = [variable],
+            Steps =
+            [
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("enabled"),
+                new ElseStep(),
+                Text("disabled"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["enabled"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
     public async Task ExecuteJob_UserChoiceConditionComparesStableIdAndSelectsNamedBranch()
     {
         var choice = new UserChoiceStep

@@ -63,8 +63,11 @@ public static class StepLocalization
     }
 
     public static string ResultValueType(ResultPropertyDescriptor property)
+        => ResultValueType(property.DataType, property.Cardinality);
+
+    public static string ResultValueType(ResultValueKind valueKind, ResultCardinality cardinality)
     {
-        var key = property.DataType switch
+        var key = valueKind switch
         {
             ResultValueKind.Boolean => "Boolean",
             ResultValueKind.Integer => "Integer",
@@ -77,10 +80,10 @@ public static class StepLocalization
             ResultValueKind.ProcessReference => "Process",
             ResultValueKind.Detection => "Detection",
             ResultValueKind.Enum => "Enum",
-            _ => property.DataType.ToString()
+            _ => valueKind.ToString()
         };
         var type = GetOrFallback($"Step.ResultValueType.{key}", key);
-        return property.Cardinality == ResultCardinality.Collection
+        return cardinality == ResultCardinality.Collection
             ? GetOrFallback("Step.ResultValueType.Collection", "List of {0}").Replace("{0}", type, StringComparison.Ordinal)
             : type;
     }

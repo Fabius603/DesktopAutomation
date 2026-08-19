@@ -27,7 +27,7 @@ Frontend-spezifische Komfortfunktionen werden über stabile `EditorHint`-Werte
 angefordert. `monitor-picker`, `file-picker`, `directory-picker`, `file-or-folder-picker`, `camera-picker`, `visual-overlay`, `roi-picker`, `yolo-picker`, `condition-editor`, `windows-capability-picker`, `process-name-suggestions`,
 `executable-path-suggestions`, `start-program-picker`, `macro-picker`,
 `job-picker`, `process-target-picker`, `executable-process-target-picker`,
-`result-binding-picker`, `screen-point-picker`, `user-choice-options`,
+`value-reference-picker`, `screen-point-picker`, `user-choice-options`,
 `point-entry-list`, `axis-expression-list`, `emoji-text` und `percentage`
 beschreiben nur die gewünschte
 Auswahlhilfe; WPF kann
@@ -236,7 +236,7 @@ Wenn ein Step ein Ergebnis eines vorherigen Steps konsumiert:
 2. Einen Backend-Vertrag in
    `TaskAutomation/Steps/StepInputContractRegistry.cs` registrieren.
 3. Im Handler ausschließlich über `ResultBindingResolver` auflösen.
-4. Im Frontend einen `ResultBindingPickerViewModel` mit demselben Contract-Key
+4. Im Frontend einen `ValueReferencePickerViewModel` mit demselben Contract-Key
    verwenden.
 
 Beispiel für einen verpflichtenden einzelnen Textwert:
@@ -352,7 +352,7 @@ werden. `VisibleWhen` beziehungsweise `VisibleWhenAll` beschreibt nur zusätzlic
 fachliche Bedingungen. Beim Umschalten dürfen inaktive Eingabewerte nicht
 verworfen werden.
 
-Allgemeine Result-Bindings verwenden `ResultBindingPicker` zusammen mit einer
+Allgemeine Wertreferenzen verwenden `ValueReferencePicker` zusammen mit einer
 stabilen `InputContractId`. Das Frontend ermittelt daraus den bereits im Backend
 registrierten Eingabevertrag und bietet ausschließlich kompatible Ergebnisse an.
 

@@ -83,6 +83,15 @@
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:GeneralSettingsViewModel}">
+                <views:GeneralSettingsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CredentialsSettingsViewModel}">
+                <views:CredentialsSettingsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:UpdateSettingsViewModel}">
+                <views:UpdateSettingsView/>
+            </DataTemplate>
 
         </ResourceDictionary>
     </Application.Resources>

@@ -96,7 +96,6 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListMakrosViewModel _listMakros;
         private readonly ListJobsViewModel _listJobs;
         private readonly ListAutomationsViewModel _listAutomations;
-        private readonly YoloDownloadsViewModel _yoloDownloads;
         private readonly ExecutionLogsViewModel _executionLogs;
         private readonly LogsHomeViewModel _logsHome;
         private readonly AutomationLogsViewModel _automationLogs;
@@ -144,7 +143,6 @@ namespace DesktopAutomationApp.ViewModels
             || ReferenceEquals(vm, _listMakros)
             || ReferenceEquals(vm, _listJobs)
             || ReferenceEquals(vm, _listAutomations)
-            || ReferenceEquals(vm, _yoloDownloads)
             || ReferenceEquals(vm, _executionLogs)
             || ReferenceEquals(vm, _logsHome)
             || ReferenceEquals(vm, _automationLogs)
@@ -161,7 +159,6 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListMakros { get; }
         public ICommand ShowListJobs { get; }
         public ICommand ShowListAutomations { get; }
-        public ICommand ShowYoloDownloads { get; }
         public ICommand ShowExecutionLogs { get; }
         public ICommand ShowSettings { get; }
         public ICommand StopAllJobsCommand { get; }
@@ -176,7 +173,6 @@ namespace DesktopAutomationApp.ViewModels
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
             ListAutomationsViewModel listAutomationsViewModel,
-            YoloDownloadsViewModel yoloDownloadsViewModel,
             ExecutionLogsViewModel executionLogsViewModel,
             LogsHomeViewModel logsHomeViewModel,
             AutomationLogsViewModel automationLogsViewModel,
@@ -202,7 +198,6 @@ namespace DesktopAutomationApp.ViewModels
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listAutomations = listAutomationsViewModel;
-            _yoloDownloads = yoloDownloadsViewModel;
             _executionLogs = executionLogsViewModel;
             _logsHome = logsHomeViewModel;
             _automationLogs = automationLogsViewModel;
@@ -226,7 +221,6 @@ namespace DesktopAutomationApp.ViewModels
             ShowListMakros    = new RelayCommand(async () => await NavigateAsync(_listMakros, _listMakros.RefreshAsync));
             ShowListJobs      = new RelayCommand(async () => await NavigateAsync(_listJobs, _listJobs.RefreshAsync));
             ShowListAutomations = new RelayCommand(async () => await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync));
-            ShowYoloDownloads = new RelayCommand(async () => await NavigateAsync(_yoloDownloads, _yoloDownloads.RefreshModelsAsync));
             _logsHome.RequestOpen += OpenLogPage;
             _executionLogs.RequestBack += OpenLogsHome;
             _automationLogs.RequestBack += OpenLogsHome;
@@ -395,7 +389,6 @@ namespace DesktopAutomationApp.ViewModels
             ListMakrosViewModel or MakroStepsViewModel => nameof(ListMakrosViewModel),
             ListJobsViewModel or JobStepsViewModel => nameof(ListJobsViewModel),
             ListAutomationsViewModel or AutomationDetailViewModel => nameof(ListAutomationsViewModel),
-            YoloDownloadsViewModel => nameof(YoloDownloadsViewModel),
             LogsHomeViewModel or ExecutionLogsViewModel or AutomationLogsViewModel or ApplicationLogsViewModel => nameof(ExecutionLogsViewModel),
             SettingsViewModel => nameof(SettingsViewModel),
             _ => string.Empty

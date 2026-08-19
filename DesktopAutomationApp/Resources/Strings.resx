@@ -469,7 +469,7 @@
     <value>Verkleinerungsfaktor</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Erkennungsergebnis</value>
+    <value>Wertreferenz</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Mindestanzahl Messwerte</value>
@@ -751,7 +751,7 @@
     <value>Manuell eingeben</value>
   </data>
   <data name="Ui.Step.Settings.FromDetectionResult" xml:space="preserve">
-    <value>Aus Erkennungsergebnis</value>
+    <value>Aus Referenz</value>
   </data>
   <data name="Ui.Step.Settings.CoordinatesXY" xml:space="preserve">
     <value>Koordinaten (X / Y)</value>
@@ -2167,7 +2167,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Step.Settings.Centered" xml:space="preserve"><value>Zentriert</value></data>
   <data name="Ui.Step.Settings.Custom" xml:space="preserve"><value>Benutzerdefiniert</value></data>
   <data name="Ui.Step.IfEditor.LiteralValue" xml:space="preserve"><value>Festwert</value></data>
-  <data name="Ui.Step.IfEditor.JobResultValue" xml:space="preserve"><value>Step-Ergebnis</value></data>
+  <data name="Ui.Step.IfEditor.JobResultValue" xml:space="preserve"><value>Referenz</value></data>
   <data name="Ui.Step.Settings.Action" xml:space="preserve"><value>Aktion</value></data>
   <data name="Ui.Step.Settings.StartProcess" xml:space="preserve"><value>Starten</value></data>
   <data name="Ui.Step.Settings.TerminateProcess" xml:space="preserve"><value>Beenden</value></data>
@@ -2223,7 +2223,7 @@ Fehlercode: {3}</value>
   <data name="Enum.JobExecutionState.Cancelled" xml:space="preserve"><value>Abgebrochen</value></data>
   <data name="Enum.JobExecutionState.Failed" xml:space="preserve"><value>Fehlgeschlagen</value></data>
   <data name="Ui.ResultPicker.EmptyTitle" xml:space="preserve"><value>Kein Wert ausgewählt</value></data>
-  <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Ergebnis und Eigenschaft auswählen</value></data>
+  <data name="Ui.ResultPicker.EmptyHint" xml:space="preserve"><value>Wertreferenz auswählen</value></data>
   <data name="Ui.ProcessTarget.SelectionMode" xml:space="preserve"><value>Prozess bestimmen über</value></data>
   <data name="Step.Type.GetProcess" xml:space="preserve"><value>Laufenden Prozess suchen</value></data>
   <data name="Step.Description.GetProcess" xml:space="preserve"><value>Sucht einen laufenden Prozess anhand seiner Merkmale und stellt die konkrete Prozessreferenz für nachfolgende Steps bereit.</value></data>
@@ -2326,7 +2326,7 @@ Fehlercode: {3}</value>
   <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows-Updates</value></data>
   <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Systemstart und Herunterfahren</value></data>
   <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Textquelle</value></data>
-  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Step-Ergebnis</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Wertreferenz</value></data>
   <data name="Enum.AutomationTriggerKind.Webhook" xml:space="preserve"><value>Webhook</value></data>
   <data name="Enum.WebhookNetworkMode.Offline" xml:space="preserve"><value>Offline (nur dieser PC)</value></data>
   <data name="Enum.WebhookNetworkMode.Lan" xml:space="preserve"><value>LAN</value></data>
@@ -3075,4 +3075,93 @@ Fehlercode: {3}</value>
   <data name="Shortcut.AltDown" xml:space="preserve"><value>Alt+Runter</value></data>
   <data name="Shortcut.Help.Title" xml:space="preserve"><value>Tastenkürzel (F1)</value></data>
   <data name="Shortcut.Help.Message" xml:space="preserve"><value>Navigation&#x0A;Strg+1 Jobs · Strg+2 Makros · Strg+3 Automationen&#x0A;&#x0A;Bibliotheken&#x0A;Strg+F Suchen · Strg+N Neu · Strg+Umschalt+N Neuer Ordner&#x0A;Eingabe Öffnen · F2 Umbenennen · Entf Löschen&#x0A;F5 Ausführen · Umschalt+F5 Stoppen · Alt+Hoch Eine Ebene nach oben&#x0A;&#x0A;Editoren&#x0A;Strg+S Speichern · Alt+Links Zurück · Strg+O Datei öffnen&#x0A;Einfg/Strg+N Step hinzufügen · Eingabe Bearbeiten · Strg+D Duplizieren&#x0A;Alt+Hoch/Runter Verschieben · Strg+Z/Y Rückgängig/Wiederholen&#x0A;&#x0A;Jobs&#x0A;F6 Debuggen · F7 Debug-Step · F8 Fortsetzen · Strg+B Breakpoint · Leertaste Aktivieren&#x0A;&#x0A;Makros&#x0A;Strg+G Gruppieren · Strg+Umschalt+G Gruppe entfernen · Strg+P Vorschau&#x0A;Die konfigurierte Aufnahmetaste startet oder stoppt die Aufnahme. Die Force-Stop-Taste hat immer Vorrang.</value></data>
+  <data name="Settings.Description" xml:space="preserve"><value>Konfiguriere die Anwendung und verwalte lokale Ressourcen.</value></data>
+  <data name="Settings.Navigation.General" xml:space="preserve"><value>Allgemein</value></data>
+  <data name="Settings.Navigation.Credentials" xml:space="preserve"><value>Secrets</value></data>
+  <data name="Settings.Navigation.Models" xml:space="preserve"><value>KI-Modelle</value></data>
+  <data name="Settings.Navigation.Updates" xml:space="preserve"><value>Updates</value></data>
+  <data name="Settings.Credentials.Title" xml:space="preserve"><value>Secrets</value></data>
+  <data name="Settings.Credentials.Description" xml:space="preserve"><value>Geheime Textwerte sicher verwalten.</value></data>
+  <data name="Settings.Credentials.Add" xml:space="preserve"><value>Secret hinzufügen</value></data>
+  <data name="Settings.Credentials.Search" xml:space="preserve"><value>Secrets durchsuchen</value></data>
+  <data name="Settings.Credentials.Updated" xml:space="preserve"><value>Zuletzt geändert</value></data>
+  <data name="Settings.Credentials.HiddenHint" xml:space="preserve"><value>Der geschützte Wert wird nicht angezeigt. Er kann bei Bedarf vollständig ersetzt werden.</value></data>
+  <data name="Settings.Credentials.Empty" xml:space="preserve"><value>Wähle ein Secret aus oder erstelle ein neues.</value></data>
+  <data name="Settings.Credentials.Replace" xml:space="preserve"><value>Secret ersetzen</value></data>
+  <data name="Settings.Credentials.Delete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Settings.Credentials.EditorTitle" xml:space="preserve"><value>Secret bearbeiten</value></data>
+  <data name="Settings.Credentials.SecretDescription" xml:space="preserve"><value>Beschreibung</value></data>
+  <data name="Settings.Credentials.Type" xml:space="preserve"><value>Typ</value></data>
+  <data name="Settings.Credentials.Username" xml:space="preserve"><value>Benutzername</value></data>
+  <data name="Settings.Credentials.SecretValue" xml:space="preserve"><value>Geheimer Wert</value></data>
+  <data name="Settings.Credentials.ConfirmSecret" xml:space="preserve"><value>Geheimen Wert wiederholen</value></data>
+  <data name="Settings.Credentials.LoadError" xml:space="preserve"><value>Die Secrets konnten nicht geladen werden.</value></data>
+  <data name="Settings.Credentials.SaveError" xml:space="preserve"><value>Das Secret konnte nicht gespeichert werden.</value></data>
+  <data name="Settings.Credentials.DeleteError" xml:space="preserve"><value>Das Secret konnte nicht gelöscht werden.</value></data>
+  <data name="Settings.Credentials.DeleteConfirmation" xml:space="preserve"><value>Soll das Secret „{0}“ wirklich gelöscht werden?</value></data>
+  <data name="Settings.Credentials.Validation.Metadata" xml:space="preserve"><value>Gib einen Namen an.</value></data>
+  <data name="Settings.Credentials.Validation.Secret" xml:space="preserve"><value>Gib einen geheimen Textwert ein.</value></data>
+  <data name="Settings.Credentials.Validation.Username" xml:space="preserve"><value>Gib einen Benutzernamen an.</value></data>
+  <data name="Settings.Credentials.Kind.Generic" xml:space="preserve"><value>Allgemein</value></data>
+  <data name="Settings.Credentials.Kind.ApiKey" xml:space="preserve"><value>API-Schlüssel</value></data>
+  <data name="Settings.Credentials.Kind.BearerToken" xml:space="preserve"><value>Bearer-Token</value></data>
+  <data name="Settings.Credentials.Kind.UsernamePassword" xml:space="preserve"><value>Benutzername und Passwort</value></data>
+  <data name="Ui.ValueReference.JobVariables" xml:space="preserve"><value>Jobvariablen</value></data>
+  <data name="Ui.ValueReference.ResultVariables" xml:space="preserve"><value>Ergebnisvariablen</value></data>
+  <data name="Ui.ValueReference.SelectVariable" xml:space="preserve"><value>Variable wählen</value></data>
+  <data name="Ui.ValueReference.Search" xml:space="preserve"><value>Variablen durchsuchen …</value></data>
+  <data name="Ui.ValueReference.EmptyValue" xml:space="preserve"><value>Kein Wert</value></data>
+  <data name="Ui.ValueReference.Missing" xml:space="preserve"><value>Variable nicht mehr vorhanden</value></data>
+  <data name="Ui.ValueReference.Invalid" xml:space="preserve"><value>Ungültige Referenz</value></data>
+  <data name="Ui.ValueReference.Empty.JobVariables" xml:space="preserve"><value>Keine passende Jobvariable vorhanden.</value></data>
+  <data name="Ui.ValueReference.Empty.ResultVariables" xml:space="preserve"><value>Keine passende Ergebnisvariable vorhanden.</value></data>
+  <data name="Ui.ValueReference.Empty.Secrets" xml:space="preserve"><value>Kein passendes Secret vorhanden.</value></data>
+  <data name="Ui.ValueReference.Empty.Provider" xml:space="preserve"><value>Keine passende Variable vorhanden.</value></data>
+  <data name="Ui.ValueReference.Empty.Search" xml:space="preserve"><value>Keine passenden Variablen gefunden.</value></data>
+  <data name="Ui.ValueReference.ProviderNotAllowed" xml:space="preserve"><value>Dieser Variablenbereich ist für dieses Feld nicht erlaubt.</value></data>
+  <data name="Ui.ValueReference.CreateVariable" xml:space="preserve"><value>Variable erstellen</value></data>
+  <data name="Ui.ValueReference.CreateVariable.Hint" xml:space="preserve"><value>Neue passende Jobvariable erstellen und auswählen</value></data>
+  <data name="Ui.ValueReference.CreateVariable.Unsupported" xml:space="preserve"><value>Dieser Datentyp kann noch nicht als Jobvariable erstellt werden.</value></data>
+  <data name="Ui.ValueReference.CreateVariable.DialogHint" xml:space="preserve"><value>Gib einen Namen und den gewünschten Wert für die neue Jobvariable ein.</value></data>
+  <data name="Ui.ValueReference.CreateVariable.NameRequired" xml:space="preserve"><value>Gib einen Namen ein.</value></data>
+  <data name="Ui.ValueReference.CreateVariable.NameDuplicate" xml:space="preserve"><value>Dieser Name wird bereits verwendet.</value></data>
+  <data name="Ui.ValueReference.CreateVariable.Description" xml:space="preserve"><value>Verwendet für „{0}“ im Step „{1}“.</value></data>
+  <data name="Ui.ValueReference.ShowIncompatible" xml:space="preserve"><value>{0} nicht kompatible Variablen anzeigen</value></data>
+  <data name="Ui.ValueReference.HideIncompatible" xml:space="preserve"><value>{0} nicht kompatible Variablen ausblenden</value></data>
+  <data name="Ui.ValueReference.Incompatible" xml:space="preserve"><value>{0} – erwartet wird {1}</value></data>
+  <data name="Ui.ValueReference.Secrets" xml:space="preserve"><value>Secrets</value></data>
+  <data name="Ui.ValueReference.Sensitive" xml:space="preserve"><value>Geheimer Textwert</value></data>
+  <data name="Ui.Job.Variables.Title" xml:space="preserve"><value>Variablen</value></data>
+  <data name="Ui.Job.Variables.Button" xml:space="preserve"><value>Job Variablen</value></data>
+  <data name="Ui.Job.Variables.DialogTitle" xml:space="preserve"><value>Job Variablen</value></data>
+  <data name="Ui.Job.Variables.DialogDescription" xml:space="preserve"><value>Zentrale Werte für diesen Job verwalten und in mehreren Steps wiederverwenden.</value></data>
+  <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>Variable hinzufügen</value></data>
+  <data name="Ui.Job.Variables.Empty" xml:space="preserve"><value>Noch keine Variablen vorhanden. Lege zentrale Werte an, die du in mehreren Steps verwenden kannst.</value></data>
+  <data name="Ui.Job.Variables.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Ui.Job.Variables.Type.Object" xml:space="preserve"><value>Zusammengesetzter Wert</value></data>
+  <data name="Ui.Job.Variables.Type.Enum" xml:space="preserve"><value>Auswahlwert</value></data>
+  <data name="Ui.Job.Variables.Type.Detection" xml:space="preserve"><value>Erkennung</value></data>
+  <data name="Ui.Job.Variables.Type.Process" xml:space="preserve"><value>Prozessreferenz</value></data>
+  <data name="Ui.Job.Variables.Description" xml:space="preserve"><value>Beschreibung</value></data>
+  <data name="Ui.Job.Variables.Type" xml:space="preserve"><value>Typ</value></data>
+  <data name="Ui.Job.Variables.Value" xml:space="preserve"><value>Wert</value></data>
+  <data name="Ui.Job.Variables.BooleanValue" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="Ui.Job.Variables.Width" xml:space="preserve"><value>Breite</value></data>
+  <data name="Ui.Job.Variables.Height" xml:space="preserve"><value>Höhe</value></data>
+  <data name="Ui.Job.Variables.X" xml:space="preserve"><value>X</value></data>
+  <data name="Ui.Job.Variables.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="Ui.Job.Variables.NewName" xml:space="preserve"><value>Neue Variable</value></data>
+  <data name="Ui.Job.Variables.Delete.Title" xml:space="preserve"><value>Variable löschen</value></data>
+  <data name="Ui.Job.Variables.Delete.Message" xml:space="preserve"><value>Soll die Variable „{0}“ wirklich gelöscht werden?</value></data>
+  <data name="Ui.Job.Variables.Delete.InUseTitle" xml:space="preserve"><value>Variable wird verwendet</value></data>
+  <data name="Ui.Job.Variables.Delete.InUse" xml:space="preserve"><value>Die Variable „{0}“ kann nicht gelöscht werden, weil sie von {1} Referenz(en) verwendet wird: {2}</value></data>
+  <data name="Ui.Job.Variables.Type.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Ui.Job.Variables.Type.Boolean" xml:space="preserve"><value>Ja/Nein</value></data>
+  <data name="Ui.Job.Variables.Type.Integer" xml:space="preserve"><value>Ganzzahl</value></data>
+  <data name="Ui.Job.Variables.Type.Number" xml:space="preserve"><value>Zahl</value></data>
+  <data name="Ui.Job.Variables.Type.DateTime" xml:space="preserve"><value>Datum</value></data>
+  <data name="Ui.Job.Variables.Type.Point" xml:space="preserve"><value>Punkt</value></data>
+  <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Bereich</value></data>
+  <data name="Ui.Job.Variables.Type.Image" xml:space="preserve"><value>Bild</value></data>
+  <data name="Ui.Job.Variables.ImagePath" xml:space="preserve"><value>Pfad zur Bilddatei</value></data>
 </root>

@@ -23,7 +23,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         "klick_on_point_3d", "MausTastatur", "Step.Type.KlickOnPoint3D", "Step.Description.KlickOnPoint3D", "mouse-click-3d",
         [
             new(PointsSourceFieldId, "Ui.Step.Settings.DetectionStep", StepValueKind.ResultBinding, true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 0, InputContractId: "points"),
+                EditorHint: StepEditorHints.ValueReferencePicker, Order: 0, InputContractId: "points"),
             new(OriginFieldId, "Ui.Step.Settings.Origin", StepValueKind.Object, true,
                 JsonSerializer.SerializeToNode(new StepScreenPointSelectionValue(0, 0, 0, KlickOnPoint3DSettings.MonitorLocalCoordinates)),
                 "Ui.Step.Settings.OriginLocalHelp", StepEditorHints.ScreenPointPicker, Order: 1,

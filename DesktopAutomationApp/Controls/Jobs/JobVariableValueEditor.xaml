@@ -1,0 +1,40 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.JobVariableValueEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
+    <Grid>
+        <TextBox Text="{Binding TextValue, UpdateSourceTrigger=PropertyChanged}"
+                 Visibility="{Binding IsText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <CheckBox IsChecked="{Binding BooleanValue}"
+                  Content="{loc:Translate Key=Ui.Job.Variables.BooleanValue}"
+                  Visibility="{Binding IsBoolean, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <mah:NumericUpDown Value="{Binding IntegerValue, UpdateSourceTrigger=PropertyChanged}"
+                           NumericInputMode="Numbers" Interval="1"
+                           Visibility="{Binding IsInteger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <mah:NumericUpDown Value="{Binding NumberValue, UpdateSourceTrigger=PropertyChanged}"
+                           NumericInputMode="All" Interval="0.1"
+                           Visibility="{Binding IsNumber, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <DatePicker SelectedDate="{Binding DateTimeValue, UpdateSourceTrigger=PropertyChanged}"
+                    Visibility="{Binding IsDateTime, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBox Text="{Binding ImagePath, UpdateSourceTrigger=PropertyChanged}"
+                 mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Job.Variables.ImagePath}"
+                 Visibility="{Binding IsImage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBox Text="{Binding JsonText, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" TextWrapping="NoWrap" MinHeight="100"
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                 Visibility="{Binding IsResultObject, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <Grid Visibility="{Binding IsPoint, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.X}"/><mah:NumericUpDown Value="{Binding X}" NumericInputMode="Numbers"/></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Y}"/><mah:NumericUpDown Value="{Binding Y}" NumericInputMode="Numbers"/></StackPanel>
+        </Grid>
+        <Grid Visibility="{Binding IsRectangle, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="10"/><ColumnDefinition/><ColumnDefinition Width="10"/><ColumnDefinition/><ColumnDefinition Width="10"/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.X}"/><mah:NumericUpDown Value="{Binding X}" NumericInputMode="Numbers"/></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Y}"/><mah:NumericUpDown Value="{Binding Y}" NumericInputMode="Numbers"/></StackPanel>
+            <StackPanel Grid.Column="4"><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Width}"/><mah:NumericUpDown Value="{Binding Width}" Minimum="0" NumericInputMode="Numbers"/></StackPanel>
+            <StackPanel Grid.Column="6"><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Height}"/><mah:NumericUpDown Value="{Binding Height}" Minimum="0" NumericInputMode="Numbers"/></StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

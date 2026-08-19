@@ -205,6 +205,71 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.Equal(1, dialog.ConfirmCalls);
     }
 
+    [Fact]
+    public async Task JobVariables_ParticipateInDirtyTrackingAndDiscard()
+    {
+        var original = new JobVariable
+        {
+            Name = "URL",
+            Description = "Service endpoint",
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("https://example.test")
+        };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [original] });
+
+        var editor = Assert.Single(viewModel.JobVariables);
+        editor.TextValue = "https://changed.test";
+        await viewModel.WaitForDirtyStateAsync();
+
+        Assert.True(viewModel.HasUnsavedChanges);
+        Assert.Equal("https://changed.test", original.Value!.GetValue<string>());
+
+        viewModel.DiscardChanges();
+
+        var restored = Assert.Single(viewModel.JobVariables);
+        Assert.Equal(original.Id, restored.Id);
+        Assert.Equal("https://example.test", restored.TextValue);
+        Assert.False(viewModel.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public async Task DeleteVariableCommand_BlocksDeletionWhileVariableIsReferenced()
+    {
+        var variable = new JobVariable
+        {
+            Name = "URL",
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("https://example.test")
+        };
+        var consumingStep = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = variable.Id.ToString("D")
+                }
+            }
+        };
+        var dialog = new DialogServiceStub();
+        var viewModel = CreateViewModel(
+            new Job { Name = "Variables", Variables = [variable], Steps = [consumingStep] },
+            dialog: dialog);
+        var editor = Assert.Single(viewModel.JobVariables, candidate => candidate.Id == variable.Id);
+        var variableCount = viewModel.JobVariables.Count;
+        var command = Assert.IsType<AsyncRelayCommand<JobVariableEditorViewModel?>>(viewModel.DeleteVariableCommand);
+
+        command.Execute(editor);
+        while (command.IsExecuting) await Task.Yield();
+
+        Assert.Equal(variableCount, viewModel.JobVariables.Count);
+        Assert.Contains(viewModel.Job.Variables, candidate => candidate.Id == variable.Id);
+        Assert.NotNull(dialog.LastError);
+        Assert.Equal(0, dialog.ConfirmCalls);
+    }
+
     private static JobStepsViewModel CreateViewModel(
         Job job,
         RecordingJobDispatcher? dispatcher = null,
@@ -231,6 +296,7 @@ public sealed class JobStepsViewModelExecutionTests
     {
         public bool ConfirmResult { get; set; } = true;
         public int ConfirmCalls { get; private set; }
+        public string? LastError { get; private set; }
         public Task<bool> ConfirmAsync(string message, string title)
         {
             ConfirmCalls++;
@@ -239,6 +305,6 @@ public sealed class JobStepsViewModelExecutionTests
         public Task<bool?> ConfirmWithCancelAsync(string message, string title) => Task.FromResult<bool?>(true);
         public Task<string?> AskForNameAsync(string title, string prompt, string? defaultValue = null) =>
             Task.FromResult(defaultValue);
-        public void ShowError(string message, string title) { }
+        public void ShowError(string message, string title) => LastError = message;
     }
 }

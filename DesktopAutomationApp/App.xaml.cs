@@ -44,6 +44,7 @@ using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using TaskAutomation.WindowsIntegration;
 using DesktopAutomationApp.Behaviors;
+using TaskAutomation.Security;
 
 namespace DesktopAutomationApp
 {
@@ -149,6 +150,9 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IWindowsSystemStateService, WindowsSystemStateService>();
                     services.AddSingleton<IWindowsSettingProvider, DefaultWindowsSettingProvider>();
                     services.AddSingleton<IWindowsSystemSettingService, WindowsSystemSettingService>();
+                    services.AddSingleton<ISecretStore>(services => new DpapiSecretStore(
+                        AppPaths.SecretsDirectory,
+                        services.GetRequiredService<ILogger<DpapiSecretStore>>()));
                     services.AddSingleton<IWindowsEventSource, NativeWindowsEventSource>();
                     services.AddSingleton<IWindowsEventSource, ProcessTraceWindowsEventSource>();
                     services.AddSingleton<IWindowsEventSource, WlanWindowsEventSource>();
@@ -195,6 +199,9 @@ namespace DesktopAutomationApp
                     services.AddSingleton<AutomationLogsViewModel>();
                     services.AddSingleton<ApplicationLogsViewModel>();
                     services.AddSingleton<SettingsViewModel>();
+                    services.AddSingleton<GeneralSettingsViewModel>();
+                    services.AddSingleton<CredentialsSettingsViewModel>();
+                    services.AddSingleton<UpdateSettingsViewModel>();
                     services.AddTransient<JobStepsViewModel>();
                     services.AddTransient<AutomationDetailViewModel>();
 
@@ -458,6 +465,7 @@ namespace DesktopAutomationApp
                 AllowTrailingCommas = true
             };
             jsonOpts.Converters.Add(new JsonStringEnumConverter());
+            JobJsonSerialization.Configure(jsonOpts);
             return jsonOpts;
         }
     }

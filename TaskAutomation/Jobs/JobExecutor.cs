@@ -26,6 +26,7 @@ using TaskAutomation.Events;
 using TaskAutomation.Logging;
 using TaskAutomation.Timing;
 using TaskAutomation.WindowsIntegration;
+using TaskAutomation.Security;
 
 namespace TaskAutomation.Jobs
 {
@@ -43,6 +44,7 @@ namespace TaskAutomation.Jobs
         private readonly IDesktopCaptureService _desktopCaptureService;
         private readonly ICameraCaptureService _cameraCaptureService;
         private readonly IExecutionLogService _executionLogService;
+        private readonly ISecretStore? _secretStore;
         private bool _disposed = false;
 
         private readonly DxgiResources _dxgiResources = DxgiResources.Instance;
@@ -123,7 +125,8 @@ namespace TaskAutomation.Jobs
             IWindowsSystemStateService windowsStateService,
             IUserChoiceService userChoiceService,
             Lazy<IJobLauncher>? lazyLauncher = null,
-            IWindowsSystemSettingService? windowsSettingService = null)
+            IWindowsSystemSettingService? windowsSettingService = null,
+            ISecretStore? secretStore = null)
         {
             _logger               = logger;
             _jobRepository        = jobRepo;
@@ -137,6 +140,7 @@ namespace TaskAutomation.Jobs
             _desktopCaptureService = desktopCaptureService;
             _cameraCaptureService = cameraCaptureService;
             _executionLogService = executionLogService;
+            _secretStore = secretStore;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
             _stepHandlers[typeof(TimeoutStep)] = new TimeoutStepHandler(preciseDelayService);
             _stepHandlers[typeof(WindowsStateQueryStep)] = new WindowsStateQueryStepHandler(windowsStateService);
@@ -166,6 +170,7 @@ namespace TaskAutomation.Jobs
                     _logger.LogWarning("Job ohne gültigen Namen ignoriert.");
                     continue;
                 }
+                JobVariableInputMigration.Migrate(j);
                 _allJobs[j.Id.ToString()] = j;
                 added++;
             }
@@ -358,6 +363,7 @@ namespace TaskAutomation.Jobs
                 var allSteps = job.EnumerateAllSteps().ToList();
                 videoStep = allSteps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
                 desktopDuplicationStep = allSteps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
+                var secretValues = await LoadSecretValuesAsync(job, ct).ConfigureAwait(false);
 
                 // ── Pipeline-Kontext erstellen ────────────────────────────────
                 var launcher = _lazyLauncher.Value;
@@ -379,7 +385,8 @@ namespace TaskAutomation.Jobs
                     _executionLogService,
                     launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
-                    launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)));
+                    launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
+                    secrets: secretValues);
             }
             catch (OperationCanceledException ex)
             {
@@ -535,6 +542,7 @@ namespace TaskAutomation.Jobs
                         // ── Control-flow steps: handle without executing ────────
                         if (step is IfStep ifStep)
                         {
+                            ifStep = (IfStep)StepInputMaterializer.Materialize(ifStep, pipelineCtx.Results);
                             var evaluation = parentActive
                                 ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
                                 : NotEvaluated(ifStep.Settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
@@ -550,6 +558,7 @@ namespace TaskAutomation.Jobs
 
                         if (step is ElseIfStep elseIfStep)
                         {
+                            elseIfStep = (ElseIfStep)StepInputMaterializer.Materialize(elseIfStep, pipelineCtx.Results);
                             ConditionEvaluation? debugEvaluation = null;
                             if (branchStack.Count > 0)
                             {
@@ -936,6 +945,7 @@ namespace TaskAutomation.Jobs
 
                 if (step is IfStep ifStep)
                 {
+                    ifStep = (IfStep)StepInputMaterializer.Materialize(ifStep, pipelineCtx.Results);
                     var evaluation = parentActive
                         ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
                         : NotEvaluated(ifStep.Settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
@@ -954,6 +964,7 @@ namespace TaskAutomation.Jobs
 
                 if (step is ElseIfStep elseIfStep)
                 {
+                    elseIfStep = (ElseIfStep)StepInputMaterializer.Materialize(elseIfStep, pipelineCtx.Results);
                     ConditionEvaluation? debugEvaluation = null;
                     if (branchStack.Count == 0)
                     {
@@ -1145,7 +1156,8 @@ namespace TaskAutomation.Jobs
                         stepType: step.GetType().Name);
                 }
 
-                await handler.ExecuteAsync(step, ctx, ct);
+                var materializedStep = StepInputMaterializer.Materialize(step, ctx.Results);
+                await handler.ExecuteAsync(materializedStep, ctx, ct);
 
                 stopwatch.Stop();
                 if (ctx.ExecutionLogSession != null)
@@ -1607,13 +1619,12 @@ namespace TaskAutomation.Jobs
             IJobResultStore results,
             IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
         {
-            if (string.IsNullOrEmpty(condition.SourceStepId)
-                || (string.IsNullOrEmpty(condition.PropertyId) && string.IsNullOrEmpty(condition.PropertyPath)))
-                return Unavailable("Quell-Step oder Ergebniseigenschaft fehlt.");
+            if (!condition.IsConfigured)
+                return Unavailable("Die Wertreferenz der Bedingung fehlt.");
 
-            var leftName = FormatResultReference(condition.SourceStepId, condition.PropertyPath, conditionSources);
-            if (!TryReadResultValue(results, condition.SourceStepId, condition.PropertyId, condition.PropertyPath,
-                    conditionSources, out var descriptor, out var value, out var leftWasExecuted))
+            var leftName = FormatValueReference(condition, results, conditionSources);
+            if (!TryReadReferenceValue(results, condition, conditionSources,
+                    out var descriptor, out var value, out var leftWasExecuted))
                 return Unavailable($"{leftName}: Wert ist nicht verfügbar.");
             var leftStatus = leftWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
 
@@ -1648,9 +1659,9 @@ namespace TaskAutomation.Jobs
             }
             else
             {
-                var rightName = FormatResultReference(comparison.SourceStepId, comparison.PropertyPath, conditionSources);
-                if (!TryReadResultValue(results, comparison.SourceStepId, comparison.PropertyId, comparison.PropertyPath,
-                        conditionSources, out var rightDescriptor, out expected, out var rightWasExecuted))
+                var rightName = FormatValueReference(comparison, results, conditionSources);
+                if (!TryReadReferenceValue(results, comparison, conditionSources,
+                        out var rightDescriptor, out expected, out var rightWasExecuted))
                     return Unavailable(
                         $"{rightName}: Vergleichswert ist nicht verfügbar.",
                         FormatLogValue(value));
@@ -1714,6 +1725,21 @@ namespace TaskAutomation.Jobs
                 ? source.Label
                 : string.IsNullOrWhiteSpace(stepId) ? "Unbekannter Step" : stepId;
             return $"{step} → {(string.IsNullOrWhiteSpace(propertyPath) ? "Unbekannte Eigenschaft" : propertyPath)}";
+        }
+
+        private static string FormatValueReference(
+            ResultBinding binding,
+            IJobResultStore results,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
+        {
+            if (binding.HasProviderReference
+                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+            {
+                var providerValue = results.ReadProvider(binding.ProviderId, binding.SourceId);
+                if (providerValue.Descriptor is { } providerSource)
+                    return $"{providerSource.ProviderId} → {providerSource.Name}";
+            }
+            return FormatResultReference(binding.SourceStepId, binding.PropertyPath, conditionSources);
         }
 
         private static string FormatConditionOperator(ConditionOperator conditionOperator) => conditionOperator switch
@@ -1787,6 +1813,63 @@ namespace TaskAutomation.Jobs
                          result.GetType(), propertyId, propertyPath, out descriptor))
                 return false;
             return StepResultMetadata.TryReadValue(result, descriptor, out value);
+        }
+
+        private static bool TryReadReferenceValue(
+            IJobResultStore results,
+            ResultBinding binding,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
+            out ResultPropertyDescriptor descriptor,
+            out object? value,
+            out bool wasExecuted)
+        {
+            if (binding.HasProviderReference
+                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+            {
+                var providerValue = results.ReadProvider(binding.ProviderId, binding.SourceId);
+                descriptor = providerValue.Descriptor?.ToResultProperty()!;
+                value = providerValue.Value;
+                wasExecuted = true;
+                return providerValue.IsSuccess
+                       && providerValue.Descriptor is { IsSensitive: false };
+            }
+            return TryReadResultValue(
+                results, binding.SourceStepId, binding.PropertyId, binding.PropertyPath,
+                conditionSources, out descriptor, out value, out wasExecuted);
+        }
+
+        private async Task<IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>>
+            LoadSecretValuesAsync(Job job, CancellationToken cancellationToken)
+        {
+            var ids = ValueReferenceUsageInspector.Find(job)
+                .Where(usage => string.Equals(
+                    usage.Reference.ProviderId, ValueProviderIds.Secret, StringComparison.Ordinal))
+                .Select(usage => Guid.TryParse(usage.Reference.SourceId, out var id) ? id : Guid.Empty)
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToArray();
+            if (ids.Length == 0 || _secretStore is null)
+                return new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>();
+
+            var descriptors = (await _secretStore.ListAsync(cancellationToken).ConfigureAwait(false))
+                .ToDictionary(secret => secret.Id);
+            var values = new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>();
+            foreach (var id in ids)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!descriptors.TryGetValue(id, out var secret)) continue;
+                var read = await _secretStore.ReadAsync(id, cancellationToken).ConfigureAwait(false);
+                if (read.Status != SecretReadStatus.Success || read.Value is null) continue;
+                values[id] = (new ValueProviderSourceDescriptor(
+                    ValueProviderIds.Secret,
+                    id.ToString("D"),
+                    secret.Name,
+                    secret.Description,
+                    ResultValueKind.Text,
+                    ResultCardinality.Single,
+                    IsSensitive: true), read.Value);
+            }
+            return values;
         }
 
         private static bool CompareForOperator(object value, ResultPropertyDescriptor descriptor, ConditionOperator op, object? expected)

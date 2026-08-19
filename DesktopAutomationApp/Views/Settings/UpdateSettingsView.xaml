@@ -1,0 +1,25 @@
+<UserControl x:Class="DesktopAutomationApp.Views.UpdateSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <StackPanel>
+        <TextBlock Text="{loc:Translate Key=Settings.Navigation.Updates}" Style="{StaticResource Heading1}" Margin="0,0,0,16"/>
+        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <iconPacks:PackIconMaterial Kind="Update" Width="28" Height="28" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Settings.Updates.Title}" Style="{StaticResource Heading2}"/><TextBlock Text="{loc:Translate Key=Settings.Updates.Description}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap"/><TextBlock Text="{Binding UpdateCheckStatus}" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,6,0,0"/></StackPanel>
+                <Button Grid.Column="2" Command="{Binding CheckForUpdatesCommand}" Style="{StaticResource ButtonSecondary}" Content="{loc:Translate Key=Settings.Updates.CheckNow}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+        <Border Style="{StaticResource CardBorderStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <iconPacks:PackIconMaterial Kind="NewspaperVariantOutline" Width="28" Height="28" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsTitle}" Style="{StaticResource Heading2}"/><TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsDescription}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap"/></StackPanel>
+                <Button Grid.Column="2" Command="{Binding ShowReleaseNotesCommand}" Style="{StaticResource ButtonSecondary}" Content="{loc:Translate Key=Ui.ReleaseNotes.Show}" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>

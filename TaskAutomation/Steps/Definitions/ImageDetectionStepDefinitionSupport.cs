@@ -16,7 +16,7 @@ internal static class ImageDetectionStepDefinitionSupport
         "Ui.Step.Settings.ImageSource",
         StepValueKind.ResultBinding,
         Required: true,
-        EditorHint: StepEditorHints.ResultBindingPicker,
+        EditorHint: StepEditorHints.ValueReferencePicker,
         Order: order,
         InputContractId: "image");
 

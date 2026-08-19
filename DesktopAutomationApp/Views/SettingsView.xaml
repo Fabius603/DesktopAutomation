@@ -4,230 +4,70 @@
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              Style="{StaticResource ContentViewBase}">
-    <UserControl.Resources>
-        <Style x:Key="SettingsSectionIcon" TargetType="Border">
-            <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-            <Setter Property="Margin" Value="0,0,12,0"/>
-        </Style>
-        <Style x:Key="SettingsLabel" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="SettingsDescription" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,4,0,0"/>
-        </Style>
-    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel MaxWidth="920" HorizontalAlignment="Stretch">
-            <StackPanel Margin="0,0,0,20">
-                <TextBlock Text="{loc:Translate Settings.Title}" Style="{StaticResource PageTitle}"/>
-                <Border Width="42" Height="2" Background="{DynamicResource App.Brush.Accent}"
-                        HorizontalAlignment="Left" Margin="0,9,0,0"/>
-            </StackPanel>
-
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
-                            <Border Style="{StaticResource SettingsSectionIcon}">
-                                <iconPacks:PackIconMaterial Kind="Translate" Width="19" Height="19"
-                                                            Foreground="{DynamicResource App.Brush.Accent}"
-                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{loc:Translate Settings.Language}" Style="{StaticResource Heading2}"/>
-                                <TextBlock Text="{loc:Translate Settings.Language.Description}" Style="{StaticResource SettingsDescription}"/>
-                            </StackPanel>
-                        </StackPanel>
-                        <ComboBox ItemsSource="{Binding Languages}"
-                                  DisplayMemberPath="DisplayName"
-                                  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
-                                  HorizontalAlignment="Stretch"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
-                            <Border Style="{StaticResource SettingsSectionIcon}">
-                                <iconPacks:PackIconMaterial Kind="PaletteOutline" Width="19" Height="19"
-                                                            Foreground="{DynamicResource App.Brush.Accent}"
-                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBlock Text="{loc:Translate Settings.Appearance}" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <TextBlock Text="{loc:Translate Settings.Theme}" Style="{StaticResource SettingsLabel}"/>
-                        <ComboBox ItemsSource="{Binding Themes}" DisplayMemberPath="DisplayName"
-                                  SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" Margin="0,7,0,14"/>
-
-                        <TextBlock Text="{loc:Translate Settings.Accent}" Style="{StaticResource SettingsLabel}"/>
-                        <ComboBox ItemsSource="{Binding Accents}" SelectedItem="{Binding SelectedAccent, Mode=TwoWay}" Margin="0,7,0,0">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="16" Height="16" Fill="{Binding Color}" Margin="0,0,9,0"/>
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
-                        <Border Style="{StaticResource SettingsSectionIcon}">
-                            <iconPacks:PackIconMaterial Kind="RocketLaunchOutline" Width="19" Height="19"
-                                                        Foreground="{DynamicResource App.Brush.Accent}"
-                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="{loc:Translate Settings.Startup}" Style="{StaticResource Heading2}" VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <Border Background="{DynamicResource App.Brush.WindowBackground}" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,20,0">
-                                <TextBlock Text="{loc:Translate Settings.StartWithWindows}" Style="{StaticResource SettingsLabel}"/>
-                                <TextBlock Text="{loc:Translate Settings.StartWithWindows.Description}" Style="{StaticResource SettingsDescription}"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" IsChecked="{Binding StartWithWindows, Mode=TwoWay}"
-                                      VerticalAlignment="Center" ToolTip="{loc:Translate Settings.StartWithWindows}"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Background="{DynamicResource App.Brush.WindowBackground}" CornerRadius="8" Padding="14,12">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,20,0">
-                                <TextBlock Text="{loc:Translate Settings.StartInBackground}" Style="{StaticResource SettingsLabel}"/>
-                                <TextBlock Text="{loc:Translate Settings.StartInBackground.Description}" Style="{StaticResource SettingsDescription}"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1"
-                                      IsChecked="{Binding StartInBackgroundAtWindowsStartup, Mode=TwoWay}"
-                                      IsEnabled="{Binding StartWithWindows}"
-                                      VerticalAlignment="Center"
-                                      ToolTip="{loc:Translate Settings.StartInBackground}"/>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource SettingsSectionIcon}">
-                        <iconPacks:PackIconMaterial Kind="KeyboardOutline"
-                                                    Width="19"
-                                                    Height="19"
-                                                    Foreground="{DynamicResource App.Brush.Accent}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
-                        <TextBlock Text="{loc:Translate Key=Settings.ForceStopKey.Title}"
-                                   Style="{StaticResource Heading2}"/>
-                        <TextBlock Text="{loc:Translate Key=Settings.ForceStopKey.Description}"
-                                   Style="{StaticResource SettingsDescription}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border MinWidth="64"
-                                Padding="12,7"
-                                Margin="0,0,10,0"
-                                CornerRadius="6"
-                                Background="{DynamicResource App.Brush.WindowBackground}">
-                            <TextBlock Text="{Binding ForceStopKeyDisplay}"
-                                       HorizontalAlignment="Center"
-                                       FontWeight="SemiBold"/>
-                        </Border>
-                        <Button Command="{Binding CaptureForceStopKeyCommand}"
-                                Style="{StaticResource ButtonSecondary}"
-                                Content="{Binding ForceStopKeyButtonText}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,16">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource SettingsSectionIcon}">
-                        <iconPacks:PackIconMaterial Kind="Update"
-                                                    Width="19"
-                                                    Height="19"
-                                                    Foreground="{DynamicResource App.Brush.Accent}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
-                        <TextBlock Text="{loc:Translate Key=Settings.Updates.Title}"
-                                   Style="{StaticResource Heading2}"/>
-                        <TextBlock Text="{loc:Translate Key=Settings.Updates.Description}"
-                                   Style="{StaticResource SettingsDescription}"/>
-                        <TextBlock Text="{Binding UpdateCheckStatus}"
-                                   Foreground="{DynamicResource App.Brush.Accent}"
-                                   FontSize="12"
-                                   Margin="0,6,0,0"/>
-                    </StackPanel>
-                    <Button Grid.Column="2"
-                            Command="{Binding CheckForUpdatesCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            VerticalAlignment="Center"
-                            Content="{loc:Translate Key=Settings.Updates.CheckNow}"/>
-                </Grid>
-            </Border>
-
-            <Border Style="{StaticResource CardBorderStyle}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource SettingsSectionIcon}">
-                        <iconPacks:PackIconMaterial Kind="NewspaperVariantOutline"
-                                                    Width="19"
-                                                    Height="19"
-                                                    Foreground="{DynamicResource App.Brush.Accent}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
-                        <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsTitle}"
-                                   Style="{StaticResource Heading2}"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.ReleaseNotes.SettingsDescription}"
-                                   Style="{StaticResource SettingsDescription}"/>
-                    </StackPanel>
-                    <Button Grid.Column="2"
-                            Command="{Binding ShowReleaseNotesCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            VerticalAlignment="Center"
-                            Content="{loc:Translate Key=Ui.ReleaseNotes.Show}"/>
-                </Grid>
-            </Border>
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="{loc:Translate Settings.Title}" Style="{StaticResource PageTitle}"/>
+            <TextBlock Text="{loc:Translate Settings.Description}"
+                       Foreground="{DynamicResource App.Brush.TextSecondary}"
+                       Margin="0,4,0,0"/>
         </StackPanel>
-    </ScrollViewer>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="8">
+                <ListBox ItemsSource="{Binding Sections}"
+                         SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         HorizontalContentAlignment="Stretch">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,0,0,4"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="ItemBorder" CornerRadius="7" Padding="12,10" Background="Transparent">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconMaterial Kind="{Binding Icon}" Width="18" Height="18"
+                                                            Foreground="{DynamicResource App.Brush.Accent}"
+                                                            VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <ContentControl Grid.Column="2" Content="{Binding SelectedSection.Content}"/>
+        </Grid>
+    </Grid>
 </UserControl>

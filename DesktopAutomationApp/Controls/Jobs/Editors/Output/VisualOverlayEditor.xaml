@@ -24,7 +24,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <jobs:ResultBindingPicker DataContext="{Binding Source}"
+                            <jobs:ValueReferencePicker DataContext="{Binding Source}"
                                                       ShowClearButton="False"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
                                 <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>
@@ -55,7 +55,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <jobs:ResultBindingPicker DataContext="{Binding Source}"
+                                <jobs:ValueReferencePicker DataContext="{Binding Source}"
                                                           ShowClearButton="False"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
                                     <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>

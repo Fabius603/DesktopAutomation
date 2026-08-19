@@ -50,9 +50,18 @@ namespace TaskAutomation.Steps
                 durationMs:  s.DurationMs,
                 clearOnJobEnd: s.ClearOnJobEnd);
 
-            ctx.Logger.LogInformation(
-                "ShowTextStepHandler: Text '{Text}' auf Monitor {Index} bei ({X},{Y}) angezeigt.",
-                text, s.DesktopIndex, s.OffsetX, s.OffsetY);
+            if (string.Equals(s.TextResult.ProviderId, ValueProviderIds.Secret, StringComparison.Ordinal))
+            {
+                ctx.Logger.LogInformation(
+                    "ShowTextStepHandler: Secret-Text auf Monitor {Index} bei ({X},{Y}) angezeigt.",
+                    s.DesktopIndex, s.OffsetX, s.OffsetY);
+            }
+            else
+            {
+                ctx.Logger.LogInformation(
+                    "ShowTextStepHandler: Text '{Text}' auf Monitor {Index} bei ({X},{Y}) angezeigt.",
+                    text, s.DesktopIndex, s.OffsetX, s.OffsetY);
+            }
 
             return Task.FromResult(new ShowTextResult { WasExecuted = true, Success = true });
         }

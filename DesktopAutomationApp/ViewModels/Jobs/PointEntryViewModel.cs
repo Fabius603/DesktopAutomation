@@ -24,7 +24,7 @@ namespace DesktopAutomationApp.ViewModels
         private void OnChange([CallerMemberName] string? p = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
-        public ResultBindingPickerViewModel PointsSource { get; }
+        public ValueReferencePickerViewModel PointsSource { get; }
 
         private PointEntrySource _source = PointEntrySource.Manual;
 
@@ -85,10 +85,15 @@ namespace DesktopAutomationApp.ViewModels
 
         public PointEntryViewModel(
             ObservableCollection<PointEntryViewModel> owner,
-            IReadOnlyList<SourceStepItem> detectionSteps)
+            IReadOnlyList<SourceStepItem> detectionSteps,
+            IReadOnlyList<JobVariable>? variables = null,
+            IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+            ValueReferencePickerContext? pickerContext = null)
         {
-            PointsSource = new ResultBindingPickerViewModel(detectionSteps,
-                StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true);
+            PointsSource = new ValueReferencePickerViewModel(detectionSteps,
+                StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true,
+                variables, providerSources, pickerContext);
+            _source = PointEntrySource.JobResult;
             RemoveCommand            = new RelayCommand(() => owner.Remove(this));
         }
 

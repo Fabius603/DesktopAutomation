@@ -23,7 +23,7 @@
                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.DetectionStep}"
                                VerticalAlignment="Center" FontSize="11"
                                Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                    <jobs:ResultBindingPicker Grid.Column="1" DataContext="{Binding PointsSource}"/>
+                    <jobs:ValueReferencePicker Grid.Column="1" DataContext="{Binding PointsSource}"/>
                 </Grid>
             </Grid>
         </DataTemplate>

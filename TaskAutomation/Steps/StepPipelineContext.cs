@@ -23,7 +23,8 @@ namespace TaskAutomation.Steps
     /// </summary>
     internal sealed class StepPipelineContext : IStepPipelineContext, IDisposable
     {
-        private JobResultStore _results = new();
+        private JobResultStore _results;
+        private readonly IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)> _secrets;
 
         // ── IStepPipelineContext ───────────────────────────────────────────────
 
@@ -86,7 +87,8 @@ namespace TaskAutomation.Steps
             IExecutionLogService?               executionLogService = null,
             Func<Guid, Guid>?                  startJobViaDispatcher  = null,
             Action<Guid>?                      cancelJobViaDispatcher = null,
-            Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null)
+            Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null,
+            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null)
         {
             Logger                     = logger;
             DxgiResources              = dxgiResources;
@@ -101,6 +103,9 @@ namespace TaskAutomation.Steps
             ExecutionLogService        = executionLogService
                 ?? throw new ArgumentNullException(nameof(executionLogService));
             CurrentJob                 = currentJob;
+            _secrets                   = secrets
+                ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>();
+            _results                   = new JobResultStore(CurrentJob.Variables, _secrets);
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;
             CameraCaptureService       = cameraCaptureService;
@@ -118,7 +123,7 @@ namespace TaskAutomation.Steps
         public void ResetResults()
         {
             _results.DisposeAndClear();
-            _results = new JobResultStore();
+            _results = new JobResultStore(CurrentJob.Variables, _secrets);
         }
 
         /// <summary>

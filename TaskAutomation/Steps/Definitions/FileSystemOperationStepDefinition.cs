@@ -32,20 +32,20 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
             EnumField(OperationFieldId, "Ui.Step.FileSystem.Operation", "Copy", Operations,
                 [new("Copy", "Ui.Step.FileSystem.Copy"), new("Move", "Ui.Step.FileSystem.Move"),
                  new("Rename", "Ui.Step.FileSystem.Rename"), new("Delete", "Ui.Step.FileSystem.Delete")], 0),
-            EnumField(SourceModeFieldId, "Ui.Step.FileSystem.Source", "ExplicitPath", PathSources,
+            EnumField(SourceModeFieldId, "Ui.Step.FileSystem.Source", "TaskResult", PathSources,
                 [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 1),
             new(SourcePathFieldId, "Ui.Step.FileSystem.Source", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
                 Order: 2),
             new(SourceResultFieldId, "Ui.Step.FileSystem.Source", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 3,
+                EditorHint: StepEditorHints.ValueReferencePicker, Order: 3,
                 InputContractId: "source"),
-            EnumField(TargetModeFieldId, "Ui.Step.FileSystem.Target", "ExplicitPath", PathSources,
+            EnumField(TargetModeFieldId, "Ui.Step.FileSystem.Target", "TaskResult", PathSources,
                 [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 4,
                 [AnyOf(OperationFieldId, "Copy", "Move")]),
             new(TargetPathFieldId, "Ui.Step.FileSystem.Target", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
                 Order: 5, VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
             new(TargetResultFieldId, "Ui.Step.FileSystem.Target", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ResultBindingPicker, Order: 6, InputContractId: "target",
+                EditorHint: StepEditorHints.ValueReferencePicker, Order: 6, InputContractId: "target",
                 VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
             new(NewNameFieldId, "Ui.Step.FileSystem.NewName", StepValueKind.Text, Order: 7,
                 VisibleWhen: Is(OperationFieldId, "Rename")),
@@ -84,7 +84,14 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
                 TargetPathFieldId, TargetResultFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId,
                 RetryLockedFieldId, RetryCountFieldId, RetryDelayFieldId]));
 
-    public override FileSystemOperationStep CreateDefaultStep() => new();
+    public override FileSystemOperationStep CreateDefaultStep() => new()
+    {
+        Settings = new FileSystemOperationSettings
+        {
+            SourceMode = FileSystemPathSource.TaskResult,
+            TargetMode = FileSystemPathSource.TaskResult
+        }
+    };
 
     protected override StepDraft Read(FileSystemOperationStep step)
     {

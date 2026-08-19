@@ -79,6 +79,9 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyList<JobStep> _precedingSteps;
         private readonly IReadOnlyList<JobStep> _allJobSteps;
         private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
+        private readonly IReadOnlyList<JobVariable> _jobVariables;
+        private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
+        private readonly Action<JobVariable>? _jobVariableCreated;
         private readonly Guid? _currentJobId;
         private readonly ICameraCaptureService _cameraCaptureService;
         private readonly IStepDefinitionCatalog _stepDefinitionCatalog;
@@ -100,7 +103,10 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyList<JobStep>? allJobSteps = null,
             PreparedSources? preparedSources = null,
             ICameraCaptureService? cameraCaptureService = null,
-            IStepDefinitionCatalog? stepDefinitionCatalog = null)
+            IStepDefinitionCatalog? stepDefinitionCatalog = null,
+            IReadOnlyList<JobVariable>? jobVariables = null,
+            IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+            Action<JobVariable>? jobVariableCreated = null)
         {
             _ctx = ctx;
             _precedingSteps = precedingSteps;
@@ -109,6 +115,9 @@ namespace DesktopAutomationApp.ViewModels
             _cameraCaptureService = cameraCaptureService
                 ?? throw new ArgumentNullException(nameof(cameraCaptureService));
             _stepDefinitionCatalog = stepDefinitionCatalog ?? BuiltInStepDefinitions.Instance;
+            _jobVariables = jobVariables ?? [];
+            _providerSources = providerSources ?? [];
+            _jobVariableCreated = jobVariableCreated;
             StepTypeItems = CreateStepTypeItems(_stepDefinitionCatalog);
             AvailableJobs = new ObservableCollection<Job>(
                 (_ctx.AllJobs?.Values ?? Enumerable.Empty<Job>())
@@ -213,7 +222,8 @@ namespace DesktopAutomationApp.ViewModels
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
                 return false;
             }
-            var result = JobValidation.ValidateCandidate(_precedingSteps, CreatedStep, _allJobSteps);
+            var result = JobValidation.ValidateCandidate(
+                _precedingSteps, CreatedStep, _allJobSteps, _jobVariables, _providerSources);
             _validationError = result.Error;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
@@ -402,7 +412,19 @@ namespace DesktopAutomationApp.ViewModels
                 ResolveGeneratedScreenPoint,
                 ResolveGeneratedUserChoiceOptions,
                 ResolveGeneratedPointEntryList,
-                ResolveGeneratedAxisExpressionList);
+                ResolveGeneratedAxisExpressionList,
+                (field, binding) => ResolveGeneratedInputReference(definition, field, binding));
+
+        private GeneratedResultBindingEditorViewModel ResolveGeneratedInputReference(
+            IStepDefinition definition,
+            StepFieldDescriptor field,
+            ResultBinding? binding)
+        {
+            var contract = StepInputContractRegistry.ForField(field);
+            return new GeneratedResultBindingEditorViewModel(
+                System.Text.Json.JsonSerializer.SerializeToNode(binding ?? new ResultBinding()),
+                CreateValueReferencePicker(definition, field, contract, false));
+        }
 
         private IEnumerable<string>? ResolveGeneratedSuggestions(StepFieldDescriptor field) =>
             field.EditorHint switch
@@ -440,7 +462,7 @@ namespace DesktopAutomationApp.ViewModels
                     $"Eingabevertrag 'process' für {definition.StepType.Name} fehlt.");
             return new GeneratedProcessTargetEditorViewModel(
                 value,
-                new ResultBindingPickerViewModel(_conditionSourceSteps, contract, false),
+                CreateValueReferencePicker(definition, field, contract, false),
                 _availableProcessNames,
                 string.Equals(field.EditorHint, StepEditorHints.ExecutableProcessTargetPicker, StringComparison.Ordinal));
         }
@@ -450,7 +472,8 @@ namespace DesktopAutomationApp.ViewModels
             StepFieldDescriptor field,
             System.Text.Json.Nodes.JsonNode? value)
         {
-            if (!string.Equals(field.EditorHint, StepEditorHints.ResultBindingPicker, StringComparison.Ordinal))
+            if (!string.Equals(field.EditorHint, StepEditorHints.ValueReferencePicker, StringComparison.Ordinal)
+                && !string.Equals(field.EditorHint, StepEditorHints.ResultBindingPicker, StringComparison.Ordinal))
                 return null;
             if (string.IsNullOrWhiteSpace(field.InputContractId))
                 throw new InvalidOperationException($"Eingabevertrag für {definition.StepType.Name} fehlt im Descriptor.");
@@ -459,7 +482,7 @@ namespace DesktopAutomationApp.ViewModels
                     $"Eingabevertrag '{field.InputContractId}' für {definition.StepType.Name} fehlt.");
             return new GeneratedResultBindingEditorViewModel(
                 value,
-                new ResultBindingPickerViewModel(_conditionSourceSteps, contract, field.Required));
+                CreateValueReferencePicker(definition, field, contract, field.Required));
         }
 
         private GeneratedCameraEditorViewModel? ResolveGeneratedCamera(
@@ -493,7 +516,11 @@ namespace DesktopAutomationApp.ViewModels
                 detectionContract,
                 textContract,
                 options.SupportsDesktopPlacement,
-                ChooseMonitorForOverlayText);
+                ChooseMonitorForOverlayText,
+                _jobVariables,
+                _providerSources,
+                CreateValueReferenceContext(definition, field),
+                CreateValueReferenceContext(definition, field));
         }
 
         private GeneratedRoiEditorViewModel? ResolveGeneratedRoi(
@@ -511,7 +538,54 @@ namespace DesktopAutomationApp.ViewModels
                     $"Input contract '{options.DynamicInputContractId}' for {definition.StepType.Name} is missing.");
             return new GeneratedRoiEditorViewModel(
                 value,
-                new ResultBindingPickerViewModel(_conditionSourceSteps, contract, false));
+                CreateValueReferencePicker(definition, field, contract, false));
+        }
+
+        private ValueReferencePickerViewModel CreateValueReferencePicker(
+            IStepDefinition definition,
+            StepFieldDescriptor field,
+            StepInputDescriptor contract,
+            bool selectDefault)
+        {
+            return new ValueReferencePickerViewModel(
+                _conditionSourceSteps,
+                contract,
+                selectDefault,
+                _jobVariables,
+                _providerSources,
+                CreateValueReferenceContext(definition, field));
+        }
+
+        private ValueReferencePickerContext CreateValueReferenceContext(
+            IStepDefinition definition,
+            StepFieldDescriptor field)
+        {
+            var stepName = Loc.Get(definition.Descriptor.DisplayNameKey);
+            var fieldName = Loc.Get(field.LabelKey);
+            return new ValueReferencePickerContext(
+                stepName,
+                fieldName,
+                contract => CreateJobVariable(contract, stepName, fieldName));
+        }
+
+        private JobVariable? CreateJobVariable(
+            StepInputDescriptor contract,
+            string stepName,
+            string fieldName)
+        {
+            if (!contract.AcceptedShapes.Any(shape =>
+                    JobVariableEditorViewModel.SupportedKinds.Contains(shape.ValueKind)))
+                return null;
+            var viewModel = new QuickCreateJobVariableViewModel(contract, stepName, fieldName, _jobVariables);
+            var dialog = new QuickCreateJobVariableDialog
+            {
+                Owner = System.Windows.Application.Current.MainWindow,
+                DataContext = viewModel
+            };
+            if (dialog.ShowDialog() != true) return null;
+            if (_jobVariableCreated is not null) _jobVariableCreated(viewModel.Variable);
+            else if (_jobVariables is ICollection<JobVariable> variables) variables.Add(viewModel.Variable);
+            return viewModel.Variable;
         }
 
         private GeneratedYoloEditorViewModel? ResolveGeneratedYolo(
@@ -529,7 +603,11 @@ namespace DesktopAutomationApp.ViewModels
             StepFieldDescriptor field,
             System.Text.Json.Nodes.JsonNode? value) =>
             string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal)
-                ? new GeneratedConditionEditorViewModel(value, _conditionSourceSteps)
+                ? new GeneratedConditionEditorViewModel(
+                    value,
+                    _conditionSourceSteps,
+                    _jobVariables,
+                    _providerSources.Where(source => !source.IsSensitive).ToArray())
                 : null;
 
         private static GeneratedWindowsCapabilityEditorViewModel? ResolveGeneratedWindowsCapability(
@@ -565,7 +643,15 @@ namespace DesktopAutomationApp.ViewModels
             StepFieldDescriptor field,
             System.Text.Json.Nodes.JsonNode? value) =>
             field.EditorHint == StepEditorHints.PointEntryList
-                ? new GeneratedPointEntryListEditorViewModel(value, _conditionSourceSteps)
+                ? new GeneratedPointEntryListEditorViewModel(
+                    value, _conditionSourceSteps, _jobVariables, _providerSources,
+                    new ValueReferencePickerContext(
+                        Loc.Get("Step.Type.PointComparison"),
+                        Loc.Get(field.LabelKey),
+                        contract => CreateJobVariable(
+                            contract,
+                            Loc.Get("Step.Type.PointComparison"),
+                            Loc.Get(field.LabelKey))))
                 : null;
 
         private static GeneratedAxisExpressionListEditorViewModel? ResolveGeneratedAxisExpressionList(

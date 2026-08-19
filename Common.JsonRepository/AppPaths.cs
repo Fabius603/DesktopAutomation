@@ -24,6 +24,7 @@ public static class AppPaths
     public static string YoloModelsDirectory => Path.Combine(RoamingRoot, "YoloModels");
 
     public static string SettingsFile => Path.Combine(LocalRoot, "settings.json");
+    public static string SecretsDirectory => Path.Combine(LocalRoot, "Secrets");
     public static string LogsDirectory => Path.Combine(LocalRoot, "Logs");
     public static string ExecutionLogsDirectory => Path.Combine(LogsDirectory, "Executions");
     public static string JobExecutionLogsDirectory => Path.Combine(ExecutionLogsDirectory, "Job");

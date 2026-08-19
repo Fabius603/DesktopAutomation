@@ -28,6 +28,16 @@ namespace DesktopAutomationApp.Converters
             if (values[0] is not ResultBinding { IsConfigured: true } binding)
                 return Loc.Get("Ui.Job.Steps.NoSourceSelected");
 
+            if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+                && Guid.TryParse(binding.SourceId, out var variableId))
+            {
+                var variable = (values.Length > 3 ? values[3] as IReadOnlyList<JobVariable> : null)?
+                    .FirstOrDefault(candidate => candidate.Id == variableId);
+                return variable is null
+                    ? Loc.Get("Ui.Job.Steps.SourceUnavailable")
+                    : $"{Loc.Get("Ui.ValueReference.JobVariables")} → {variable.Name}";
+            }
+
             var list = values[1] as IList;
             if (list is null) return binding.SourceStepId;
 

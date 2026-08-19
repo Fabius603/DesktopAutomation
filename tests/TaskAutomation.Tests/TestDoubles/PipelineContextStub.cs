@@ -17,7 +17,10 @@ namespace TaskAutomation.Tests.TestDoubles;
 
 internal sealed class PipelineContextStub : IStepPipelineContext
 {
-    public IJobResultStore Results { get; } = new JobResultStore();
+    public PipelineContextStub(IEnumerable<JobVariable>? variables = null) =>
+        Results = new JobResultStore(variables);
+
+    public IJobResultStore Results { get; }
     public IDictionary<string, DynamicRoiState> DynamicRoiStates { get; } = new Dictionary<string, DynamicRoiState>();
     public ILogger Logger { get; } = NullLogger.Instance;
     public DxgiResources DxgiResources { get; init; } = null!;

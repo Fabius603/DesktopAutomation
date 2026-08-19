@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
+using TaskAutomation.Security;
 using TaskAutomation.Steps;
 using TaskAutomation.WindowsIntegration;
 
@@ -16,6 +17,7 @@ internal sealed class JobExecutorTestBuilder
     public SequenceWindowsStateService WindowsStates { get; private set; } = new(new NetworkConnectivityQueryResult());
     public RecordingWindowsSettingService WindowsSettings { get; } = new();
     public StubUserChoiceService UserChoices { get; } = new();
+    public StubSecretStore Secrets { get; } = new();
 
     public JobExecutorTestBuilder WithJobs(params Job[] jobs) { _jobs.AddRange(jobs); return this; }
     public JobExecutorTestBuilder WithWindowsStates(params WindowsStateQueryResult[] states)
@@ -41,11 +43,48 @@ internal sealed class JobExecutorTestBuilder
             Delay,
             WindowsStates,
             UserChoices,
-            windowsSettingService: WindowsSettings);
+            windowsSettingService: WindowsSettings,
+            secretStore: Secrets);
         await executor.ReloadJobsAsync();
         await executor.ReloadMakrosAsync();
         return executor;
     }
+}
+
+internal sealed class StubSecretStore : ISecretStore
+{
+    private readonly Dictionary<Guid, (SecretDescriptor Descriptor, string Value)> _secrets = [];
+
+    public SecretDescriptor Add(string name, string value)
+    {
+        var now = DateTime.UtcNow;
+        var descriptor = new SecretDescriptor(Guid.NewGuid(), name, string.Empty, SecretKind.Generic, now, now);
+        _secrets[descriptor.Id] = (descriptor, value);
+        return descriptor;
+    }
+
+    public Task<IReadOnlyList<SecretDescriptor>> ListAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<SecretDescriptor>>(_secrets.Values.Select(secret => secret.Descriptor).ToArray());
+
+    public Task<SecretDescriptor?> GetDescriptorAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_secrets.TryGetValue(id, out var secret) ? secret.Descriptor : null);
+
+    public Task<SecretReadResult> ReadAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_secrets.TryGetValue(id, out var secret)
+            ? SecretReadResult.Success(secret.Value)
+            : SecretReadResult.NotFound());
+
+    public Task<SecretDescriptor> CreateAsync(SecretCreateRequest request, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+    public Task<SecretDescriptor> UpdateMetadataAsync(Guid id, string name, string description,
+        CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+    public Task ReplaceValueAsync(Guid id, string value, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
+    public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
 }
 
 internal sealed class StubUserChoiceService : IUserChoiceService

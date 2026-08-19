@@ -68,8 +68,7 @@ internal static class ConditionStepDefinitionSupport
         if (!Enum.IsDefined(settings.MatchMode) || settings.Conditions.Count == 0)
             return [new("StepValidation.Required", IfStepDefinition.ConditionsFieldId)];
         if (settings.Conditions.Any(condition =>
-                string.IsNullOrWhiteSpace(condition.SourceStepId)
-                || string.IsNullOrWhiteSpace(condition.PropertyId) && string.IsNullOrWhiteSpace(condition.PropertyPath)
+                !condition.IsConfigured
                 || !Enum.IsDefined(condition.Operator)))
             return [new("StepValidation.Invalid", IfStepDefinition.ConditionsFieldId)];
         return [];

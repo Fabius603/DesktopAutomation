@@ -16,10 +16,14 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
         ObservableCollection<DetectionOverlayRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
         StepInputDescriptor inputContract,
-        ResultBinding? binding = null)
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+        ResultBinding? binding = null,
+        ValueReferencePickerContext? pickerContext = null)
     {
         _owner = owner;
-        Source = new ResultBindingPickerViewModel(sources, inputContract, false);
+        Source = new ValueReferencePickerViewModel(
+            sources, inputContract, false, variables, providerSources, pickerContext);
         Source.PropertyChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
         if (binding is not null) Source.Load(binding);
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
@@ -27,7 +31,7 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
         MoveDownCommand = new RelayCommand(() => Move(1));
     }
 
-    public ResultBindingPickerViewModel Source { get; }
+    public ValueReferencePickerViewModel Source { get; }
     public ICommand RemoveCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
@@ -60,10 +64,14 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         IReadOnlyList<SourceStepItem> sources,
         StepInputDescriptor inputContract,
         Action<TextOverlayRowViewModel>? chooseMonitor,
-        TextResultOverlaySettings? settings = null)
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+        TextResultOverlaySettings? settings = null,
+        ValueReferencePickerContext? pickerContext = null)
     {
         _owner = owner;
-        Source = new ResultBindingPickerViewModel(sources, inputContract, false);
+        Source = new ValueReferencePickerViewModel(
+            sources, inputContract, false, variables, providerSources, pickerContext);
         Source.PropertyChanged += (_, _) => OnChange(nameof(Source));
         if (settings is not null)
         {
@@ -84,7 +92,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         ChooseMonitorCommand = new RelayCommand(() => chooseMonitor?.Invoke(this));
     }
 
-    public ResultBindingPickerViewModel Source { get; }
+    public ValueReferencePickerViewModel Source { get; }
     public ICommand RemoveCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
