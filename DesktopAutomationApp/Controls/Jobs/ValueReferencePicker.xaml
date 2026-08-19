@@ -17,6 +17,7 @@
                                DisplayText="{Binding SelectedPropertyName}"
                                PreviewText="{Binding SelectedPreviewValue}"
                                SourceText="{Binding SelectedPreviewSource}"
+                               ContextText="{Binding PickerContextText}"
                                SecondaryText="{Binding SelectedPreviewType}"/>
 
         <Button Grid.Column="1"

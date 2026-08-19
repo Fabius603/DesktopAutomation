@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Runtime.CompilerServices;
 using DesktopAutomationApp.Localization;
+using DesktopAutomationApp.Services.Jobs;
 using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.ViewModels;
@@ -51,6 +52,43 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     public JobVariable Model { get; }
     public IReadOnlyList<JobVariableKindOption> KindOptions { get; }
     public Guid Id => Model.Id;
+    public bool IsStepValue => Model.Scope == JobVariableScope.StepValue;
+    public bool IsShared => Model.Scope == JobVariableScope.Shared;
+    public string ScopeLabel => Loc.Get(IsStepValue
+        ? "Ui.Job.Variables.Scope.StepValues"
+        : "Ui.Job.Variables.Scope.Shared");
+    public int UsageCount { get; private set; }
+    public string UsageText => Loc.Format(
+        UsageCount == 1 ? "Ui.Job.Variables.Usage.One" : "Ui.Job.Variables.Usage.Many",
+        UsageCount);
+    public string UsageSummary { get; private set; } = string.Empty;
+    public IReadOnlyList<string> UsageSteps { get; private set; } = [];
+    public bool HasMultipleUsages => UsageCount > 1;
+    public bool IsUsed => UsageCount > 0;
+    public string SearchValue => ValueReferenceDisplayFormatter.Instance.CompactValue(Model);
+
+    public void SetUsage(int count, string summary, IReadOnlyList<string>? steps = null)
+    {
+        UsageCount = Math.Max(0, count);
+        UsageSummary = summary;
+        UsageSteps = steps ?? [];
+        OnPropertyChanged(nameof(UsageCount));
+        OnPropertyChanged(nameof(UsageText));
+        OnPropertyChanged(nameof(UsageSummary));
+        OnPropertyChanged(nameof(HasMultipleUsages));
+        OnPropertyChanged(nameof(IsUsed));
+        OnPropertyChanged(nameof(UsageSteps));
+    }
+
+    public void PromoteToShared()
+    {
+        if (Model.Scope == JobVariableScope.Shared) return;
+        Model.Scope = JobVariableScope.Shared;
+        OnPropertyChanged(nameof(IsStepValue));
+        OnPropertyChanged(nameof(IsShared));
+        OnPropertyChanged(nameof(ScopeLabel));
+        Changed();
+    }
 
     public string Name
     {
@@ -218,6 +256,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Description));
+        OnPropertyChanged(nameof(SearchValue));
         _changed();
     }
 

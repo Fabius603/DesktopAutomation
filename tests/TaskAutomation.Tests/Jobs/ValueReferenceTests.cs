@@ -57,6 +57,7 @@ public sealed class ValueReferenceTests
                 {
                     Name = "Origin",
                     Description = "Click origin",
+                    Scope = JobVariableScope.Shared,
                     ValueKind = ResultValueKind.Point,
                     Value = new JsonObject { ["x"] = 12, ["y"] = 34 }
                 }
@@ -67,7 +68,17 @@ public sealed class ValueReferenceTests
 
         var variable = Assert.Single(restored.Variables);
         Assert.Equal(ResultValueKind.Point, variable.ValueKind);
+        Assert.Equal(JobVariableScope.Shared, variable.Scope);
         Assert.Equal(12, variable.Value!["x"]!.GetValue<int>());
+    }
+
+    [Fact]
+    public void LegacyVariableWithoutScope_LoadsAsStepValue()
+    {
+        var variable = JsonSerializer.Deserialize<JobVariable>(
+            "{\"name\":\"Legacy value\",\"value_kind\":\"Text\",\"value\":\"hello\"}")!;
+
+        Assert.Equal(JobVariableScope.StepValue, variable.Scope);
     }
 
     [Fact]
@@ -120,5 +131,23 @@ public sealed class ValueReferenceTests
 
         Assert.IsType<IfStep>(usage.Step);
         Assert.Contains(nameof(IfConditionSettings.Conditions), usage.Path);
+    }
+
+    [Fact]
+    public void UsageInspector_FindsReferencesInStepInputDictionary()
+    {
+        var variableId = Guid.NewGuid();
+        var step = new TimeoutStep();
+        step.Inputs["delay"] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variableId.ToString("D")
+        };
+
+        var usage = Assert.Single(ValueReferenceUsageInspector.Find(
+            new Job { Steps = [step] }, ValueProviderIds.JobVariable, variableId.ToString("D")));
+
+        Assert.Same(step, usage.Step);
+        Assert.Contains("delay", usage.Path);
     }
 }

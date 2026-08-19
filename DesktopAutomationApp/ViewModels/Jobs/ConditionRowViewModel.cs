@@ -19,7 +19,8 @@ public sealed class ConditionSelectionNode
     public ConditionSelectionNode(string displayName, IReadOnlyList<ConditionSelectionNode>? children = null,
         ICommand? selectCommand = null, string? secondaryText = null,
         string? description = null, PackIconMaterialKind? icon = null,
-        bool isEnabled = true, bool isExpanded = false)
+        bool isEnabled = true, bool isExpanded = false, string? sourceText = null,
+        bool isSelected = false)
     {
         DisplayName = displayName;
         Children = children ?? [];
@@ -29,6 +30,8 @@ public sealed class ConditionSelectionNode
         Icon = icon;
         IsEnabled = isEnabled;
         IsExpanded = isExpanded;
+        SourceText = sourceText;
+        IsSelected = isSelected;
     }
 
     public string DisplayName { get; }
@@ -40,6 +43,8 @@ public sealed class ConditionSelectionNode
     public bool HasIcon => Icon is not null;
     public bool IsEnabled { get; }
     public bool IsExpanded { get; }
+    public string? SourceText { get; }
+    public bool IsSelected { get; }
     public bool IsSelectable => IsEnabled && SelectCommand is not null;
 }
 

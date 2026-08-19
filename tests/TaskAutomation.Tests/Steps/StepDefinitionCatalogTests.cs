@@ -197,6 +197,145 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void AddStepDialog_CreatesEditableLocalStepValueForLiteralField()
+    {
+        var createdVariables = new List<JobVariable>();
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            jobVariableCreated: createdVariables.Add);
+        viewModel.SelectedType = "Timeout";
+        var field = Assert.Single(viewModel.GeneratedEditor!.Fields);
+
+        Assert.True(field.IsInlineStepValue);
+        Assert.True(field.ShowsDirectInput);
+        Assert.False(field.ShowsInputSourcePicker);
+        field.IntegerValue = 2500;
+        viewModel.ConfirmCommand.Execute(null);
+
+        var variable = Assert.Single(createdVariables);
+        Assert.Equal(JobVariableScope.StepValue, variable.Scope);
+        Assert.Equal(2500, variable.Value!.GetValue<int>());
+        var step = Assert.IsType<TimeoutStep>(viewModel.CreatedStep);
+        var binding = Assert.Contains(TimeoutStepDefinition.DelayFieldId, step.Inputs);
+        Assert.Equal(variable.Id.ToString("D"), binding.SourceId);
+    }
+
+    [Fact]
+    public void AddStepDialog_DoesNotCommitReplacedAutomaticStepValue()
+    {
+        var shared = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Shared delay",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(500)
+        };
+        var createdVariables = new List<JobVariable>();
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            jobVariables: [shared],
+            jobVariableCreated: createdVariables.Add);
+        viewModel.SelectedType = "Timeout";
+        var picker = Assert.Single(viewModel.GeneratedEditor!.Fields).InputReferenceEditor!.Picker;
+        var sharedNode = picker.SelectionTree
+            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"))
+            .Children.Single(node => node.DisplayName == shared.Name);
+
+        var field = Assert.Single(viewModel.GeneratedEditor.Fields);
+        field.UseVariableCommand.Execute(null);
+        Assert.True(field.ShowsInputSourcePicker);
+        Assert.False(field.ShowsDirectInput);
+        sharedNode.SelectCommand!.Execute(null);
+        Assert.True(field.UsesExternalInputReference);
+        viewModel.ConfirmCommand.Execute(null);
+
+        Assert.Empty(createdVariables);
+        var step = Assert.IsType<TimeoutStep>(viewModel.CreatedStep);
+        Assert.Equal(shared.Id.ToString("D"), step.Inputs[TimeoutStepDefinition.DelayFieldId].SourceId);
+    }
+
+    [Fact]
+    public void AddStepDialog_CanReturnFromVariableToIndependentDirectValue()
+    {
+        var shared = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Shared delay",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(500)
+        };
+        var createdVariables = new List<JobVariable>();
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            jobVariables: [shared], jobVariableCreated: createdVariables.Add);
+        viewModel.SelectedType = "Timeout";
+        var field = Assert.Single(viewModel.GeneratedEditor!.Fields);
+        field.UseVariableCommand.Execute(null);
+        var sharedNode = field.InputReferenceEditor!.Picker.SelectionTree
+            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"))
+            .Children.Single(node => node.DisplayName == shared.Name);
+        sharedNode.SelectCommand!.Execute(null);
+
+        field.UseDirectValueCommand.Execute(null);
+        field.IntegerValue = 1750;
+        viewModel.ConfirmCommand.Execute(null);
+
+        Assert.True(field.ShowsDirectInput);
+        Assert.False(field.UsesExternalInputReference);
+        var direct = Assert.Single(createdVariables);
+        Assert.Equal(JobVariableScope.StepValue, direct.Scope);
+        Assert.Equal(1750, direct.Value!.GetValue<int>());
+        Assert.Equal(direct.Id.ToString("D"), Assert.IsType<TimeoutStep>(viewModel.CreatedStep)
+            .Inputs[TimeoutStepDefinition.DelayFieldId].SourceId);
+    }
+
+    [Fact]
+    public void AddStepDialog_ShowsOnlySourcePickerWhenFieldDisallowsDirectValues()
+    {
+        var original = new TimeoutStepDefinition();
+        var descriptor = original.Descriptor with
+        {
+            Fields = original.Descriptor.Fields
+                .Select(field => field with { AllowsDirectValue = false })
+                .ToArray()
+        };
+        var catalog = new StepDefinitionCatalog(
+            [new DescriptorOverrideDefinition(original, descriptor)]);
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            stepDefinitionCatalog: catalog);
+        viewModel.SelectedType = "Timeout";
+
+        var field = Assert.Single(viewModel.GeneratedEditor!.Fields);
+
+        Assert.False(field.SupportsDirectValue);
+        Assert.False(field.ShowsDirectInput);
+        Assert.True(field.ShowsInputSourcePicker);
+        Assert.False(field.UseDirectValueCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void AddStepDialog_AllowsDirectFilePathValuesByDefault()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "TemplateMatching";
+        var field = viewModel.GeneratedEditor!.Fields.Single(candidate =>
+            candidate.Descriptor.Id == TemplateMatchingStepDefinition.TemplatePathFieldId);
+
+        Assert.True(field.SupportsDirectValue);
+        Assert.True(field.ShowsDirectInput);
+        Assert.False(field.ShowsInputSourcePicker);
+    }
+
+    [Fact]
     public void AddStepDialog_KeepsSelectionWhenSearchHasNoMatches()
     {
         var viewModel = new AddJobStepDialogViewModel(
@@ -307,7 +446,11 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void DetailsProvider_RendersJobVariableReferenceByName()
     {
-        var variable = new JobVariable { Name = "Greeting", ValueKind = ResultValueKind.Text };
+        var variable = new JobVariable
+        {
+            Name = "Greeting", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = JsonValue.Create("Hello")
+        };
         var step = new ShowTextStep
         {
             Settings = new ShowTextSettings
@@ -326,7 +469,34 @@ public sealed class StepDefinitionCatalogTests
             new JobStep[] { step },
             new[] { variable });
 
-        Assert.Contains(details.Groups.SelectMany(group => group.Items), item => item.Value == variable.Name);
+        var item = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.Value.Contains(variable.Name));
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), item.SourceLabel);
+        Assert.Equal(Loc.Format("Ui.Job.Steps.DetailsUsageCount", 1), item.UsageText);
+        Assert.False(item.IsWarning);
+    }
+
+    [Fact]
+    public void DetailsProvider_MarksMissingVariableSourceAsWarning()
+    {
+        var step = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = Guid.NewGuid().ToString("D")
+                }
+            }
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(step, new JobStep[] { step }, []);
+        var item = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.IsWarning);
+
+        Assert.Equal(Loc.Get("Ui.Job.Steps.DetailsSourceMissing"), item.SourceLabel);
     }
 
     [Fact]
@@ -2357,10 +2527,11 @@ public sealed class StepDefinitionCatalogTests
         var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
         var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
 
-        Assert.Equal(3, picker.SelectionTree.Count);
-        Assert.All(picker.SelectionTree, group => Assert.False(group.IsExpanded));
+        Assert.Equal(5, picker.SelectionTree.Count);
+        Assert.True(picker.SelectionTree.Single(group =>
+            group.DisplayName == Loc.Get("Ui.ValueReference.Recommended")).IsExpanded);
         var jobVariables = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+            group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"));
         var variableNode = jobVariables.Children.Single(node => node.DisplayName == variable.Name);
         Assert.Contains("x: 10", variableNode.SecondaryText);
         Assert.Contains("y: 20", variableNode.SecondaryText);
@@ -2375,6 +2546,11 @@ public sealed class StepDefinitionCatalogTests
         Assert.Contains("x: 10", picker.SelectedPreviewValue);
         Assert.Equal(Loc.Get("Ui.ValueReference.JobVariables"), picker.SelectedPreviewSource);
         Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
+        var selectedNode = picker.SelectionTree
+            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"))
+            .Children.Single(node => node.DisplayName == variable.Name);
+        Assert.True(selectedNode.IsSelected);
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.StepValues"), selectedNode.SourceText);
     }
 
     [Fact]
@@ -2443,10 +2619,10 @@ public sealed class StepDefinitionCatalogTests
 
         picker.SearchText = "Space around";
 
-        Assert.Equal(3, picker.SelectionTree.Count);
+        Assert.Equal(4, picker.SelectionTree.Count);
         Assert.All(picker.SelectionTree, group => Assert.True(group.IsExpanded));
         var jobVariables = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+            group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"));
         Assert.Contains(jobVariables.Children, child => child.DisplayName == "Outer padding");
         Assert.DoesNotContain(jobVariables.Children, child => child.DisplayName == "Retries");
         Assert.Contains(picker.SelectionTree, group =>
@@ -2476,8 +2652,76 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(ValueProviderIds.JobVariable, picker.ToBinding().ProviderId);
         Assert.Equal(created.Id.ToString("D"), picker.ToBinding().SourceId);
         var group = picker.SelectionTree.Single(node =>
-            node.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"));
+            node.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"));
         Assert.Contains(group.Children, node => node.DisplayName == created.Name);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_RequiresExplicitChoiceBeforeEditingMultiplyUsedStepValue()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.StepValue,
+            Name = "Timeout · Duration",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1000)
+        };
+        var contract = StepInputContractRegistry.ForField(
+            new TimeoutStepDefinition().Descriptor.Fields.Single());
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, [variable], context: new ValueReferencePickerContext(
+                "Timeout", "Duration", GetVariableUsageCount: _ => 2));
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        });
+
+        Assert.True(picker.RequiresInlineEditChoice);
+        Assert.False(picker.CanEditStepValueInline);
+
+        picker.EditEverywhereCommand.Execute(null);
+
+        Assert.False(picker.RequiresInlineEditChoice);
+        Assert.True(picker.CanEditStepValueInline);
+        Assert.Equal(variable.Id.ToString("D"), picker.ToBinding().SourceId);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_DetachesMultiplyUsedStepValueForCurrentField()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.StepValue,
+            Name = "Timeout · Duration",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1000)
+        };
+        JobVariable? detached = null;
+        var contract = StepInputContractRegistry.ForField(
+            new TimeoutStepDefinition().Descriptor.Fields.Single());
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, [variable], context: new ValueReferencePickerContext(
+                "Timeout", "Duration", GetVariableUsageCount: _ => 2,
+                DetachStepValue: source => detached = new JobVariable
+                {
+                    Scope = JobVariableScope.StepValue,
+                    Name = "Timeout · Duration 2",
+                    ValueKind = source.ValueKind,
+                    Value = source.Value?.DeepClone()
+                }));
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        });
+
+        picker.EditOnlyHereCommand.Execute(null);
+
+        Assert.NotNull(detached);
+        Assert.Equal(detached!.Id.ToString("D"), picker.ToBinding().SourceId);
+        Assert.True(picker.CanEditStepValueInline);
+        Assert.Equal(1000, detached.Value!.GetValue<int>());
     }
 
     [Fact]
@@ -2499,6 +2743,7 @@ public sealed class StepDefinitionCatalogTests
         viewModel.Name = "Mein Rand";
         Assert.True(viewModel.CanCreate);
         Assert.Equal("Mein Rand", viewModel.Variable.Name);
+        Assert.Equal(JobVariableScope.Shared, viewModel.Variable.Scope);
         Assert.Contains("Desktop", viewModel.Variable.Description);
         Assert.Equal(ResultValueKind.Integer, viewModel.Variable.ValueKind);
         Assert.Equal(ResultValueKind.Integer, viewModel.SelectedKind.Kind);
@@ -2571,7 +2816,7 @@ public sealed class StepDefinitionCatalogTests
         overlay.AddOverlayDetectionCommand.Execute(null);
         var row = Assert.Single(overlay.OverlayDetectionRows);
         var variableNode = row.Source.SelectionTree
-            .Single(group => group.DisplayName == Loc.Get("Ui.ValueReference.JobVariables"))
+            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"))
             .Children.Single(node => node.DisplayName == pointVariable.Name);
         variableNode.SelectCommand!.Execute(null);
 

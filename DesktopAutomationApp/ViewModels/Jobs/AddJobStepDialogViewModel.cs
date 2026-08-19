@@ -82,6 +82,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyList<JobVariable> _jobVariables;
         private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
         private readonly Action<JobVariable>? _jobVariableCreated;
+        private readonly List<JobVariable> _draftStepVariables = [];
         private readonly Guid? _currentJobId;
         private readonly ICameraCaptureService _cameraCaptureService;
         private readonly IStepDefinitionCatalog _stepDefinitionCatalog;
@@ -209,6 +210,16 @@ namespace DesktopAutomationApp.ViewModels
         private void Confirm()
         {
             CreateStep();
+            var referencedIds = CreatedStep is null
+                ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                : ValueReferenceUsageInspector.Find(new Job { Steps = [CreatedStep] })
+                    .Where(usage => string.Equals(usage.Reference.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
+                    .Select(usage => usage.Reference.SourceId)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var variable in _draftStepVariables
+                         .Where(variable => referencedIds.Contains(variable.Id.ToString("D"))).ToArray())
+                CommitCreatedVariable(variable);
+            _draftStepVariables.Clear();
             RequestClose?.Invoke(true);
         }
 
@@ -223,7 +234,7 @@ namespace DesktopAutomationApp.ViewModels
                 return false;
             }
             var result = JobValidation.ValidateCandidate(
-                _precedingSteps, CreatedStep, _allJobSteps, _jobVariables, _providerSources);
+                _precedingSteps, CreatedStep, _allJobSteps, CurrentVariables(), _providerSources);
             _validationError = result.Error;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
@@ -361,6 +372,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public bool TryLoadGeneratedStep(JobStep step)
         {
+            _draftStepVariables.Clear();
             if (step is StartProcessStep { Settings.Action: StartProcessAction.Terminate } legacyTerminate
                 && _stepDefinitionCatalog.TryGetByType(typeof(TerminateProcessStep), out var terminateDefinition))
             {
@@ -388,6 +400,7 @@ namespace DesktopAutomationApp.ViewModels
 
         private void SetGeneratedEditor(string selectedType)
         {
+            _draftStepVariables.Clear();
             GeneratedEditor = _stepDefinitionCatalog.TryGetByName(selectedType, out var definition)
                 ? CreateGeneratedEditor(definition)
                 : null;
@@ -421,9 +434,51 @@ namespace DesktopAutomationApp.ViewModels
             ResultBinding? binding)
         {
             var contract = StepInputContractRegistry.ForField(field);
+            if (binding?.IsConfigured != true && field.ValueKind != StepValueKind.ResultBinding)
+            {
+                var variable = CreateDraftStepVariable(definition, field);
+                binding = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = variable.Id.ToString("D")
+                };
+            }
+            var picker = CreateValueReferencePicker(definition, field, contract, false);
             return new GeneratedResultBindingEditorViewModel(
                 System.Text.Json.JsonSerializer.SerializeToNode(binding ?? new ResultBinding()),
-                CreateValueReferencePicker(definition, field, contract, false));
+                picker);
+        }
+
+        private JobVariable CreateDraftStepVariable(IStepDefinition definition, StepFieldDescriptor field)
+        {
+            var stem = $"{Loc.Get(definition.Descriptor.DisplayNameKey)} · {Loc.Get(field.LabelKey)}";
+            var names = CurrentVariables().Select(variable => variable.Name)
+                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+            var name = stem;
+            for (var suffix = 2; names.Contains(name); suffix++) name = $"{stem} {suffix}";
+            var variable = new JobVariable
+            {
+                Name = name,
+                Description = Loc.Format("Ui.Job.Variables.StepValue.Description",
+                    Loc.Get(field.LabelKey), Loc.Get(definition.Descriptor.DisplayNameKey)),
+                Scope = JobVariableScope.StepValue,
+                ValueKind = JobVariableInputMigration.MapKind(field.ValueKind),
+                Cardinality = field.ValueKind == StepValueKind.Collection
+                    ? ResultCardinality.Collection
+                    : ResultCardinality.Single,
+                Value = field.DefaultValue?.DeepClone()
+            };
+            _draftStepVariables.Add(variable);
+            return variable;
+        }
+
+        private IReadOnlyList<JobVariable> CurrentVariables() =>
+            _jobVariables.Concat(_draftStepVariables).DistinctBy(variable => variable.Id).ToArray();
+
+        private void CommitCreatedVariable(JobVariable variable)
+        {
+            if (_jobVariableCreated is not null) _jobVariableCreated(variable);
+            else if (_jobVariables is ICollection<JobVariable> variables) variables.Add(variable);
         }
 
         private IEnumerable<string>? ResolveGeneratedSuggestions(StepFieldDescriptor field) =>
@@ -551,7 +606,7 @@ namespace DesktopAutomationApp.ViewModels
                 _conditionSourceSteps,
                 contract,
                 selectDefault,
-                _jobVariables,
+                CurrentVariables(),
                 _providerSources,
                 CreateValueReferenceContext(definition, field));
         }
@@ -565,7 +620,35 @@ namespace DesktopAutomationApp.ViewModels
             return new ValueReferencePickerContext(
                 stepName,
                 fieldName,
-                contract => CreateJobVariable(contract, stepName, fieldName));
+                contract => CreateJobVariable(contract, stepName, fieldName),
+                GetVariableUsageCount,
+                variable => DetachStepValue(variable, stepName, fieldName),
+                () => CreateDraftStepVariable(definition, field));
+        }
+
+        private int GetVariableUsageCount(Guid variableId) => ValueReferenceUsageInspector.Find(
+            new Job { Steps = _allJobSteps.ToList() },
+            ValueProviderIds.JobVariable,
+            variableId.ToString("D")).Count;
+
+        private JobVariable DetachStepValue(JobVariable source, string stepName, string fieldName)
+        {
+            var stem = $"{stepName} · {fieldName}";
+            var names = CurrentVariables().Select(variable => variable.Name)
+                .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
+            var name = stem;
+            for (var suffix = 2; names.Contains(name); suffix++) name = $"{stem} {suffix}";
+            var detached = new JobVariable
+            {
+                Name = name,
+                Description = Loc.Format("Ui.Job.Variables.StepValue.Description", fieldName, stepName),
+                Scope = JobVariableScope.StepValue,
+                ValueKind = source.ValueKind,
+                Cardinality = source.Cardinality,
+                Value = source.Value?.DeepClone()
+            };
+            _draftStepVariables.Add(detached);
+            return detached;
         }
 
         private JobVariable? CreateJobVariable(
@@ -576,7 +659,7 @@ namespace DesktopAutomationApp.ViewModels
             if (!contract.AcceptedShapes.Any(shape =>
                     JobVariableEditorViewModel.SupportedKinds.Contains(shape.ValueKind)))
                 return null;
-            var viewModel = new QuickCreateJobVariableViewModel(contract, stepName, fieldName, _jobVariables);
+            var viewModel = new QuickCreateJobVariableViewModel(contract, stepName, fieldName, CurrentVariables());
             var dialog = new QuickCreateJobVariableDialog
             {
                 Owner = System.Windows.Application.Current.MainWindow,

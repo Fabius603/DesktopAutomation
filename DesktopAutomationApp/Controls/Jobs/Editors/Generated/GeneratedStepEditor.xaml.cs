@@ -11,6 +11,8 @@ public partial class GeneratedStepEditor : UserControl
 
 public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
 {
+    public bool IgnoreInputReference { get; set; }
+
     public override DataTemplate? SelectTemplate(object item, DependencyObject container)
     {
         if (item is not GeneratedStepFieldViewModel field || container is not FrameworkElement element)
@@ -18,7 +20,7 @@ public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
 
         var key = field switch
         {
-            { UsesInputReference: true } => "InputReferenceFieldTemplate",
+            { UsesInputReference: true } when !IgnoreInputReference => "InputReferenceFieldTemplate",
             { UsesEmojiText: true } => "EmojiTextFieldTemplate",
             { UsesMultilineTextInput: true } => "MultilineTextFieldTemplate",
             { IsBoolean: true } => "BooleanFieldTemplate",

@@ -183,9 +183,8 @@ public sealed class JobStepDetailsProvider
             if (!fields.TryGetValue(fieldId, out var field)) continue;
             if (step.Inputs.TryGetValue(fieldId, out var input) && input.IsConfigured)
             {
-                target.Add(("general", new StepDetailItem(
-                    Loc.Get(field.LabelKey),
-                    FormatBinding(input, steps, variables, providerSources))));
+                target.Add(("source", CreateBindingDetailItem(
+                    Loc.Get(field.LabelKey), input, steps, variables, providerSources)));
                 continue;
             }
             if (!draft.Values.TryGetValue(fieldId, out var value)
@@ -206,6 +205,20 @@ public sealed class JobStepDetailsProvider
             {
                 AddWindowsCapabilityDetails(value, target);
                 continue;
+            }
+            if (field.ValueKind == StepValueKind.ResultBinding)
+            {
+                try
+                {
+                    var binding = value.Deserialize<ResultBinding>();
+                    if (binding?.IsConfigured == true)
+                    {
+                        target.Add(("source", CreateBindingDetailItem(
+                            Loc.Get(field.LabelKey), binding, steps, variables, providerSources)));
+                        continue;
+                    }
+                }
+                catch (JsonException) { }
             }
             target.Add(("general", new StepDetailItem(
                 Loc.Get(field.LabelKey),
@@ -648,8 +661,8 @@ public sealed class JobStepDetailsProvider
 
             if (value is ResultBinding binding)
             {
-                target.Add(("source", new StepDetailItem(
-                    prefix + LocalizedSettingName(property.Name), FormatBinding(binding, steps, variables, providerSources))));
+                target.Add(("source", CreateBindingDetailItem(
+                    prefix + LocalizedSettingName(property.Name), binding, steps, variables, providerSources)));
                 continue;
             }
 
@@ -794,19 +807,23 @@ public sealed class JobStepDetailsProvider
         IReadOnlyList<JobVariable>? variables,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
+        if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            && Guid.TryParse(binding.SourceId, out var variableId))
+        {
+            var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
+            if (variable is null) return Loc.Get("Ui.Job.Steps.SourceUnavailable");
+            var value = ValueReferenceDisplayFormatter.Instance.CompactValue(variable);
+            return variable.Scope == JobVariableScope.StepValue
+                ? value
+                : $"{variable.Name} · {value}";
+        }
+
         if (binding.HasProviderReference
             && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
             && providerSources?.FirstOrDefault(source =>
                 string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
                 && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } providerSource)
             return $"{ProviderLabel(providerSource.ProviderId)} → {providerSource.Name}";
-
-        if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
-            && Guid.TryParse(binding.SourceId, out var variableId))
-        {
-            var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
-            return variable?.Name ?? Loc.Get("Ui.Job.Steps.SourceUnavailable");
-        }
 
         var sourceStep = steps?.Cast<object>().OfType<JobStep>()
             .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId);
@@ -825,6 +842,60 @@ public sealed class JobStepDetailsProvider
         return string.IsNullOrWhiteSpace(property)
             ? source
             : $"{source} → {LocalizedPropertyName(property)}";
+    }
+
+    private static StepDetailItem CreateBindingDetailItem(
+        string name,
+        ResultBinding binding,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
+    {
+        var value = FormatBinding(binding, steps, variables, providerSources);
+        var stepList = steps?.Cast<object>().OfType<JobStep>().ToArray() ?? [];
+        if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            && Guid.TryParse(binding.SourceId, out var variableId))
+        {
+            var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
+            if (variable is null)
+                return new StepDetailItem(name, value,
+                    Loc.Get("Ui.Job.Steps.DetailsSourceMissing"), IsWarning: true);
+            var usageCount = ValueReferenceUsageInspector.Count(
+                stepList, ValueProviderIds.JobVariable, binding.SourceId);
+            return new StepDetailItem(
+                name,
+                value,
+                variable.Scope == JobVariableScope.StepValue
+                    ? Loc.Get("Ui.Job.Variables.Scope.StepValues")
+                    : Loc.Get("Ui.Job.Variables.Scope.Shared"),
+                usageCount > 0
+                    ? Loc.Format("Ui.Job.Steps.DetailsUsageCount", usageCount)
+                    : null);
+        }
+
+        if (string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+            || !string.IsNullOrWhiteSpace(binding.SourceStepId))
+        {
+            var missing = stepList.All(candidate => candidate.Id != binding.SourceStepId);
+            return new StepDetailItem(name, value,
+                missing
+                    ? Loc.Get("Ui.Job.Steps.DetailsSourceMissing")
+                    : Loc.Get("Ui.ValueReference.Result"),
+                IsWarning: missing);
+        }
+
+        var provider = providerSources?.FirstOrDefault(source =>
+            string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
+            && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase));
+        var isSecret = string.Equals(binding.ProviderId, ValueProviderIds.Secret, StringComparison.Ordinal);
+        return new StepDetailItem(
+            name,
+            value,
+            provider is null
+                ? Loc.Get("Ui.Job.Steps.DetailsSourceMissing")
+                : ProviderLabel(binding.ProviderId),
+            IsWarning: provider is null,
+            IsSensitive: isSecret);
     }
 
     private static string ProviderLabel(string providerId) => providerId switch

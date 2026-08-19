@@ -216,7 +216,8 @@ public sealed record StepFieldDescriptor(
     StepRoiPickerOptions? RoiPickerOptions = null,
     StepYoloPickerOptions? YoloPickerOptions = null,
     StepWindowsCapabilityPickerOptions? WindowsCapabilityPickerOptions = null,
-    StepScreenPointPickerOptions? ScreenPointPickerOptions = null);
+    StepScreenPointPickerOptions? ScreenPointPickerOptions = null,
+    bool? AllowsDirectValue = null);
 
 public sealed record StepEditorSectionDescriptor(
     string Id,

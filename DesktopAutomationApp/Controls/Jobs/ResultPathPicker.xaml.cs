@@ -32,6 +32,9 @@ public partial class ResultPathPicker : UserControl
     public static readonly DependencyProperty IsRichPreviewProperty = DependencyProperty.Register(
         nameof(IsRichPreview), typeof(bool), typeof(ResultPathPicker), new PropertyMetadata(false));
 
+    public static readonly DependencyProperty ContextTextProperty = DependencyProperty.Register(
+        nameof(ContextText), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
+
     public ResultPathPicker()
     {
         InitializeComponent();
@@ -74,6 +77,12 @@ public partial class ResultPathPicker : UserControl
     {
         get => (bool)GetValue(IsRichPreviewProperty);
         set => SetValue(IsRichPreviewProperty, value);
+    }
+
+    public string ContextText
+    {
+        get => (string)GetValue(ContextTextProperty);
+        set => SetValue(ContextTextProperty, value);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)

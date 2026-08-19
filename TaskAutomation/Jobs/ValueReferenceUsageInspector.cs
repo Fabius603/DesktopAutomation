@@ -20,6 +20,13 @@ public static class ValueReferenceUsageInspector
                         && string.Equals(usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase))
         .ToArray();
 
+    public static int Count(
+        IEnumerable<JobStep> steps,
+        string providerId,
+        string sourceId) => steps.Sum(step => Find(step).Count(item =>
+            string.Equals(item.Reference.ProviderId, providerId, StringComparison.Ordinal)
+            && string.Equals(item.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase)));
+
     private static IReadOnlyList<(ValueReference Reference, string Path)> Find(JobStep step)
     {
         var result = new List<(ValueReference, string)>();
@@ -40,6 +47,13 @@ public static class ValueReferenceUsageInspector
 
         if (value is ValueReference reference && reference.HasProviderReference)
             result.Add((reference, path));
+
+        if (value is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry entry in dictionary)
+                Visit(entry.Value, $"{path}[{entry.Key}]", result, visited);
+            return;
+        }
 
         if (value is IEnumerable items)
         {

@@ -18,6 +18,7 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
     <UserControl.Resources>
         <generated:GeneratedStepFieldTemplateSelector x:Key="GeneratedStepFieldTemplateSelector"/>
+        <generated:GeneratedStepFieldTemplateSelector x:Key="InlineStepValueTemplateSelector" IgnoreInputReference="True"/>
         <DataTemplate x:Key="TextFieldTemplate">
             <TextBox MinWidth="220" HorizontalAlignment="Stretch"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
@@ -124,7 +125,64 @@
             <jobs:ValueReferencePicker DataContext="{Binding ResultBindingEditor.Picker}"/>
         </DataTemplate>
         <DataTemplate x:Key="InputReferenceFieldTemplate">
-            <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"/>
+            <Grid>
+                <Grid Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ContentControl Content="{Binding}"
+                                    ContentTemplateSelector="{StaticResource InlineStepValueTemplateSelector}"
+                                    Visibility="{Binding CanEditInlineStepValue, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button Grid.Column="1" Margin="8,0,0,0" Padding="9,5"
+                            Style="{StaticResource ButtonSecondary}"
+                            Command="{Binding UseVariableCommand}"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="LinkVariant" Width="14" Height="14" Margin="0,0,5,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.StepInput.UseVariable}"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Grid Visibility="{Binding ShowsInputSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"/>
+                    <Button Grid.Column="1" Margin="8,0,0,0" Padding="9,5"
+                            Style="{StaticResource ButtonSecondary}"
+                            Command="{Binding UseDirectValueCommand}"
+                            Visibility="{Binding SupportsDirectValue, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Kind="FormTextbox" Width="14" Height="14" Margin="0,0,5,0"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.StepInput.UseDirectValue}"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Border Padding="10,8" CornerRadius="6"
+                        Background="{DynamicResource App.Brush.AccentSubtle}"
+                        Visibility="{Binding RequiresInlineEditChoice, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding InputReferenceEditor.Picker.MultipleUsageText}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Inline.ChooseAction}"
+                                       Margin="0,2,0,0" FontSize="10"
+                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
+                            <Button Content="{loc:Translate Key=Ui.Job.Variables.Inline.EditEverywhere}"
+                                    Command="{Binding InputReferenceEditor.Picker.EditEverywhereCommand}"
+                                    Style="{StaticResource ButtonSecondary}" Margin="0,0,6,0"/>
+                            <Button Content="{loc:Translate Key=Ui.Job.Variables.Inline.EditOnlyHere}"
+                                    Command="{Binding InputReferenceEditor.Picker.EditOnlyHereCommand}"
+                                    Style="{StaticResource ButtonPrimary}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
         </DataTemplate>
         <DataTemplate x:Key="PercentageFieldTemplate">
             <shared:PercentageInput Value="{Binding NumberValue, Mode=TwoWay}"/>

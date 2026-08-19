@@ -270,6 +270,51 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.Equal(0, dialog.ConfirmCalls);
     }
 
+    [Fact]
+    public void VariableView_FiltersByScopeUsageAndSearchesUsingStepName()
+    {
+        var used = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
+        var unused = new JobVariable { Name = "Retries", Scope = JobVariableScope.StepValue,
+            ValueKind = ResultValueKind.Integer, Value = System.Text.Json.Nodes.JsonValue.Create(3) };
+        var step = new ShowTextStep { Settings = new ShowTextSettings
+        {
+            TextSource = ShowTextSource.TaskResult,
+            TextResult = new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = used.Id.ToString("D") }
+        } };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [used, unused], Steps = [step] });
+
+        viewModel.ShowUnusedVariables = false;
+        Assert.All(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => Assert.True(candidate.IsUsed));
+        Assert.DoesNotContain(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == unused.Id);
+
+        viewModel.ShowUnusedVariables = true;
+        viewModel.VariableSearchText = viewModel.JobVariables.Single(candidate => candidate.Id == used.Id).UsageSteps.Single();
+        Assert.Contains(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == used.Id);
+
+        viewModel.VariableSearchText = string.Empty;
+        viewModel.ShowSharedVariables = false;
+        Assert.All(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => Assert.True(candidate.IsStepValue));
+        Assert.Contains(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == unused.Id);
+    }
+
+    [Fact]
+    public void VariableView_CanDuplicateAndPromoteStepValue()
+    {
+        var variable = new JobVariable { Name = "Retries", Scope = JobVariableScope.StepValue,
+            ValueKind = ResultValueKind.Integer, Value = System.Text.Json.Nodes.JsonValue.Create(3) };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [variable] });
+        var editor = Assert.Single(viewModel.JobVariables);
+
+        viewModel.DuplicateVariableCommand.Execute(editor);
+        var copy = Assert.Single(viewModel.JobVariables, candidate => candidate.Id != editor.Id);
+        Assert.Equal(3, copy.IntegerValue);
+
+        viewModel.PromoteVariableCommand.Execute(editor);
+        Assert.True(editor.IsShared);
+        Assert.Equal(JobVariableScope.Shared, variable.Scope);
+    }
+
     private static JobStepsViewModel CreateViewModel(
         Job job,
         RecordingJobDispatcher? dispatcher = null,

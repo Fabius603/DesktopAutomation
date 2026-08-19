@@ -26,6 +26,7 @@ public sealed class JobVariableInputMigrationTests
                 Assert.Equal(ValueProviderIds.JobVariable, reference.ProviderId);
                 var variable = Assert.Single(job.Variables, candidate =>
                     candidate.Id.ToString("D") == reference.SourceId);
+                Assert.Equal(JobVariableScope.StepValue, variable.Scope);
                 if (field.ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding)
                     Assert.Equal(JobVariableInputMigration.MapKind(field.ValueKind), variable.ValueKind);
             });

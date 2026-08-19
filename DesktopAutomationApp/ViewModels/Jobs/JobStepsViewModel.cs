@@ -203,10 +203,43 @@ namespace DesktopAutomationApp.ViewModels
         public ObservableCollection<JobStep> StartSteps => _startSteps;
         public ObservableCollection<JobStep> EndSteps => _endSteps;
         public ObservableCollection<JobVariableEditorViewModel> JobVariables { get; } = [];
+        public IReadOnlyList<JobVariableEditorViewModel> FilteredJobVariables =>
+            JobVariables.Where(MatchesVariableFilter).ToArray();
         public IReadOnlyList<JobVariable> Variables => Job.Variables;
         public IReadOnlyList<ValueProviderSourceDescriptor> ProviderSources => _providerSources;
         public IReadOnlyList<JobStep> AllJobSteps => _allJobStepsSnapshot;
         public bool HasJobVariables => JobVariables.Count > 0;
+        public bool HasFilteredJobVariables => FilteredJobVariables.Count > 0;
+        private string _variableSearchText = string.Empty;
+        public string VariableSearchText
+        {
+            get => _variableSearchText;
+            set { value ??= string.Empty; if (_variableSearchText == value) return; SetProperty(ref _variableSearchText, value); RefreshVariableFilter(); }
+        }
+        private bool _showSharedVariables = true;
+        public bool ShowSharedVariables
+        {
+            get => _showSharedVariables;
+            set { if (_showSharedVariables == value) return; SetProperty(ref _showSharedVariables, value); RefreshVariableFilter(); }
+        }
+        private bool _showStepValues = true;
+        public bool ShowStepValues
+        {
+            get => _showStepValues;
+            set { if (_showStepValues == value) return; SetProperty(ref _showStepValues, value); RefreshVariableFilter(); }
+        }
+        private bool _showUsedVariables = true;
+        public bool ShowUsedVariables
+        {
+            get => _showUsedVariables;
+            set { if (_showUsedVariables == value) return; SetProperty(ref _showUsedVariables, value); RefreshVariableFilter(); }
+        }
+        private bool _showUnusedVariables = true;
+        public bool ShowUnusedVariables
+        {
+            get => _showUnusedVariables;
+            set { if (_showUnusedVariables == value) return; SetProperty(ref _showUnusedVariables, value); RefreshVariableFilter(); }
+        }
 
         private int _endPhaseTimeoutSeconds;
         private bool _isRepeating;
@@ -395,6 +428,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand OpenVariablesCommand { get; }
         public ICommand AddVariableCommand { get; }
         public ICommand DeleteVariableCommand { get; }
+        public ICommand DuplicateVariableCommand { get; }
+        public ICommand PromoteVariableCommand { get; }
 
         public event Action? RequestBack;
 
@@ -540,6 +575,12 @@ namespace DesktopAutomationApp.ViewModels
             DeleteVariableCommand = new AsyncRelayCommand<JobVariableEditorViewModel?>(
                 DeleteVariableAsync,
                 variable => variable != null && !IsDebugActive && !IsMutationBusy);
+            DuplicateVariableCommand = new RelayCommand<JobVariableEditorViewModel?>(
+                DuplicateVariable,
+                variable => variable != null && !IsDebugActive && !IsMutationBusy);
+            PromoteVariableCommand = new RelayCommand<JobVariableEditorViewModel?>(
+                PromoteVariable,
+                variable => variable?.IsStepValue == true && !IsDebugActive && !IsMutationBusy);
 
             _dispatcher.RunningJobsChanged += OnRunningJobsChanged;
             _debugSession = _dispatcher.DebugSessions.FirstOrDefault(session => session.JobId == Job.Id);
@@ -676,6 +717,7 @@ namespace DesktopAutomationApp.ViewModels
             var variable = new JobVariable
             {
                 Name = Loc.Get("Ui.Job.Variables.NewName"),
+                Scope = JobVariableScope.Shared,
                 ValueKind = ResultValueKind.Text,
                 Cardinality = ResultCardinality.Single,
                 Value = System.Text.Json.Nodes.JsonValue.Create(string.Empty)
@@ -683,6 +725,7 @@ namespace DesktopAutomationApp.ViewModels
             Job.Variables.Add(variable);
             JobVariables.Add(CreateVariableEditor(variable));
             OnPropertyChanged(nameof(HasJobVariables));
+            RefreshVariableFilter();
             InvalidateReferenceDisplays();
             ScheduleDirtyCheck();
             ScheduleValidation();
@@ -695,6 +738,7 @@ namespace DesktopAutomationApp.ViewModels
             JobVariables.Add(CreateVariableEditor(variable));
             OnPropertyChanged(nameof(Variables));
             OnPropertyChanged(nameof(HasJobVariables));
+            RefreshVariableFilter();
             InvalidateReferenceDisplays();
             ScheduleDirtyCheck();
             ScheduleValidation();
@@ -734,13 +778,38 @@ namespace DesktopAutomationApp.ViewModels
             Job.Variables.Remove(editor.Model);
             JobVariables.Remove(editor);
             OnPropertyChanged(nameof(HasJobVariables));
+            RefreshVariableFilter();
             InvalidateReferenceDisplays();
             ScheduleDirtyCheck();
             ScheduleValidation();
         }
 
         private JobVariableEditorViewModel CreateVariableEditor(JobVariable variable)
-            => new(variable, OnVariableChanged);
+        {
+            var editor = new JobVariableEditorViewModel(variable, OnVariableChanged);
+            UpdateVariableUsage(editor);
+            return editor;
+        }
+
+        private void UpdateVariableUsage(JobVariableEditorViewModel editor)
+        {
+            var usages = ValueReferenceUsageInspector.Find(
+                new Job { StartSteps = _startSteps.ToList(), Steps = _runSteps.ToList(), EndSteps = _endSteps.ToList() },
+                ValueProviderIds.JobVariable,
+                editor.Id.ToString("D"));
+            var usageSteps = usages
+                .Select(usage => StepLocalization.Type(usage.Step.GetType().Name))
+                .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+            var summary = string.Join(Environment.NewLine, usageSteps);
+            editor.SetUsage(usages.Count, summary, usageSteps);
+        }
+
+        private void RefreshVariableUsages()
+        {
+            foreach (var editor in JobVariables) UpdateVariableUsage(editor);
+            RefreshVariableFilter();
+        }
 
         private void ResetVariableEditors(IEnumerable<JobVariable> variables)
         {
@@ -748,10 +817,12 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var variable in variables) JobVariables.Add(CreateVariableEditor(variable));
             OnPropertyChanged(nameof(Variables));
             OnPropertyChanged(nameof(HasJobVariables));
+            RefreshVariableFilter();
         }
 
         private void OpenVariablesDialog()
         {
+            RefreshVariableUsages();
             var dialog = new JobVariablesDialog
             {
                 Owner = Application.Current.MainWindow,
@@ -762,9 +833,75 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnVariableChanged()
         {
+            RefreshVariableFilter();
             InvalidateReferenceDisplays();
             ScheduleDirtyCheck();
             ScheduleValidation();
+        }
+
+        private void DuplicateVariable(JobVariableEditorViewModel? editor)
+        {
+            if (editor is null) return;
+            var copy = DeepCloneVariables([editor.Model]).Single();
+            copy.Id = Guid.NewGuid();
+            copy.Name = Loc.Format("Ui.Job.Variables.CopyName", editor.Name);
+            Job.Variables.Add(copy);
+            JobVariables.Add(CreateVariableEditor(copy));
+            OnPropertyChanged(nameof(Variables));
+            OnPropertyChanged(nameof(HasJobVariables));
+            RefreshVariableFilter();
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+        }
+
+        private void PromoteVariable(JobVariableEditorViewModel? editor)
+        {
+            if (editor?.IsStepValue != true) return;
+            editor.PromoteToShared();
+            RefreshVariableFilter();
+            InvalidateReferenceDisplays();
+            ScheduleDirtyCheck();
+        }
+
+        private bool MatchesVariableFilter(object item)
+        {
+            if (item is not JobVariableEditorViewModel variable) return false;
+            if (variable.IsShared && !ShowSharedVariables || variable.IsStepValue && !ShowStepValues) return false;
+            if (variable.IsUsed && !ShowUsedVariables || !variable.IsUsed && !ShowUnusedVariables) return false;
+            if (string.IsNullOrWhiteSpace(VariableSearchText)) return true;
+            var search = VariableSearchText.Trim();
+            return variable.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                   || variable.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                   || variable.SearchValue.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                   || variable.UsageSummary.Contains(search, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private void RefreshVariableFilter()
+        {
+            OnPropertyChanged(nameof(FilteredJobVariables));
+            OnPropertyChanged(nameof(HasFilteredJobVariables));
+        }
+
+        private void CleanupUnusedStepValues()
+        {
+            var usedIds = ValueReferenceUsageInspector.Find(new Job
+                {
+                    StartSteps = _startSteps.ToList(), Steps = _runSteps.ToList(), EndSteps = _endSteps.ToList()
+                })
+                .Where(usage => string.Equals(usage.Reference.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
+                .Select(usage => usage.Reference.SourceId)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var unused = Job.Variables
+                .Where(variable => variable.Scope == JobVariableScope.StepValue
+                                   && !usedIds.Contains(variable.Id.ToString("D")))
+                .ToArray();
+            foreach (var variable in unused)
+            {
+                Job.Variables.Remove(variable);
+                var editor = JobVariables.FirstOrDefault(candidate => candidate.Id == variable.Id);
+                if (editor is not null) JobVariables.Remove(editor);
+            }
+            if (unused.Length > 0) OnPropertyChanged(nameof(HasJobVariables));
         }
 
         private void InvalidateReferenceDisplays()
@@ -1346,6 +1483,7 @@ namespace DesktopAutomationApp.ViewModels
                         ? new JobStep[] { vm.CreatedStep, new TaskAutomation.Jobs.EndIfStep() }
                         : [vm.CreatedStep];
                     _steps.InsertRange(insertIndex, insertion);
+                    CleanupUnusedStepValues();
                 // If-Abfrage: automatisch EndIf direkt dahinter einfügen
                     SelectedStep = vm.CreatedStep;
                     ScheduleDirtyCheck();
@@ -1397,6 +1535,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 await PushUndoAsync();
                 _steps[idx] = vm.CreatedStep;
+                CleanupUnusedStepValues();
                 SelectedStep = vm.CreatedStep;
                 ScheduleDirtyCheck();
             });

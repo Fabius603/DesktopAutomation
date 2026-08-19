@@ -27,6 +27,7 @@ public sealed class QuickCreateJobVariableViewModel : ViewModelBase
         {
             Name = string.Empty,
             Description = Loc.Format("Ui.ValueReference.CreateVariable.Description", fieldName, stepName),
+            Scope = JobVariableScope.Shared,
             ValueKind = supported[0],
             Cardinality = contract.AcceptedShapes[0].Cardinalities.FirstOrDefault(ResultCardinality.Single),
             Value = DefaultValue(supported[0])

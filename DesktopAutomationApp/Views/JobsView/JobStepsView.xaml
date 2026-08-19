@@ -873,6 +873,30 @@
                                         <ContentControl.ContentTemplate>
                                             <DataTemplate>
                                                 <StackPanel>
+                                                    <DockPanel Margin="0,0,0,12">
+                                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.DetailsOverview}"
+                                                                   FontSize="14" FontWeight="SemiBold"
+                                                                   VerticalAlignment="Center"/>
+                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right">
+                                                            <Button Style="{StaticResource ButtonSecondary}"
+                                                                    Margin="0,0,6,0" Padding="8,4"
+                                                                    Command="{Binding DataContext.OpenVariablesCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <iconPacks:PackIconMaterial Kind="CodeBraces" Width="14" Height="14" Margin="0,0,5,0"/>
+                                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.DetailsManageVariables}"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                            <Button Style="{StaticResource ButtonSecondary}" Padding="8,4"
+                                                                    Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <iconPacks:PackIconMaterial Kind="PencilOutline" Width="14" Height="14" Margin="0,0,5,0"/>
+                                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.DetailsEditStep}"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DockPanel>
                                                     <ItemsControl ItemsSource="{Binding Groups}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
@@ -882,11 +906,54 @@
                                                                     <ItemsControl ItemsSource="{Binding Items}">
                                                                         <ItemsControl.ItemTemplate>
                                                                             <DataTemplate>
-                                                                                <Grid Margin="0,2">
-                                                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="260"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                                                                    <TextBlock Text="{Binding Name}" Opacity="0.7" TextWrapping="Wrap"/>
-                                                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                                                                                </Grid>
+                                                                                <Border Margin="0,2" Padding="8,6" CornerRadius="5"
+                                                                                        Background="{DynamicResource App.Brush.WindowBackground}"
+                                                                                        BorderBrush="{DynamicResource App.Brush.CardBorder}"
+                                                                                        BorderThickness="1">
+                                                                                    <Border.Style>
+                                                                                        <Style TargetType="Border">
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                                                                                    <Setter Property="BorderBrush" Value="{DynamicResource MahApps.Brushes.SystemControlErrorTextForeground}"/>
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Border.Style>
+                                                                                    <Grid>
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="220"/>
+                                                                                            <ColumnDefinition Width="*"/>
+                                                                                            <ColumnDefinition Width="Auto"/>
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <TextBlock Text="{Binding Name}" Opacity="0.72" TextWrapping="Wrap"
+                                                                                                   VerticalAlignment="Center"/>
+                                                                                        <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                                                                                            <TextBlock Text="{Binding Value}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                                                            <TextBlock Text="{Binding UsageText}" Margin="0,2,0,0" FontSize="10"
+                                                                                                       Foreground="{DynamicResource App.Brush.TextSecondary}"
+                                                                                                       Visibility="{Binding HasUsageText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                                        </StackPanel>
+                                                                                        <Border Grid.Column="2" Padding="6,2" CornerRadius="3"
+                                                                                                Background="{DynamicResource App.Brush.SurfaceHover}"
+                                                                                                VerticalAlignment="Center"
+                                                                                                Visibility="{Binding HasSourceLabel, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                                            <StackPanel Orientation="Horizontal">
+                                                                                                <iconPacks:PackIconMaterial Width="13" Height="13" Margin="0,0,4,0">
+                                                                                                    <iconPacks:PackIconMaterial.Style>
+                                                                                                        <Style TargetType="iconPacks:PackIconMaterial">
+                                                                                                            <Setter Property="Kind" Value="SourceBranch"/>
+                                                                                                            <Style.Triggers>
+                                                                                                                <DataTrigger Binding="{Binding IsWarning}" Value="True"><Setter Property="Kind" Value="AlertOutline"/></DataTrigger>
+                                                                                                                <DataTrigger Binding="{Binding IsSensitive}" Value="True"><Setter Property="Kind" Value="LockOutline"/></DataTrigger>
+                                                                                                            </Style.Triggers>
+                                                                                                        </Style>
+                                                                                                    </iconPacks:PackIconMaterial.Style>
+                                                                                                </iconPacks:PackIconMaterial>
+                                                                                                <TextBlock Text="{Binding SourceLabel}" FontSize="10"/>
+                                                                                            </StackPanel>
+                                                                                        </Border>
+                                                                                    </Grid>
+                                                                                </Border>
                                                                             </DataTemplate>
                                                                         </ItemsControl.ItemTemplate>
                                                                     </ItemsControl>

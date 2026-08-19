@@ -6,7 +6,17 @@ using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.Converters;
 
-public sealed record StepDetailItem(string Name, string Value);
+public sealed record StepDetailItem(
+    string Name,
+    string Value,
+    string? SourceLabel = null,
+    string? UsageText = null,
+    bool IsWarning = false,
+    bool IsSensitive = false)
+{
+    public bool HasSourceLabel => !string.IsNullOrWhiteSpace(SourceLabel);
+    public bool HasUsageText => !string.IsNullOrWhiteSpace(UsageText);
+}
 public sealed record StepDetailGroup(string Title, IReadOnlyList<StepDetailItem> Items);
 public sealed record StepResultPropertyDetails(
     string Name,

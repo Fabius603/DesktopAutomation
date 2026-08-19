@@ -39,6 +39,7 @@ public static class JobVariableInputMigration
                     {
                         Name = UniqueName(job.Variables, $"{definition.Descriptor.TypeId}_{field.Id}"),
                         Description = $"{definition.Descriptor.TypeId}.{field.Id}",
+                        Scope = JobVariableScope.StepValue,
                         ValueKind = shape?.ValueKind ?? ResultValueKind.ResultObject,
                         Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
                                       ?? ResultCardinality.Single,
@@ -59,6 +60,7 @@ public static class JobVariableInputMigration
                 {
                     Name = UniqueName(job.Variables, $"{definition.Descriptor.TypeId}_{field.Id}"),
                     Description = $"{definition.Descriptor.TypeId}.{field.Id}",
+                    Scope = JobVariableScope.StepValue,
                     ValueKind = MapKind(field.ValueKind),
                     Cardinality = field.ValueKind == StepValueKind.Collection
                         ? ResultCardinality.Collection

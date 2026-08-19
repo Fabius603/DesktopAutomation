@@ -3,6 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace TaskAutomation.Jobs;
 
+public enum JobVariableScope
+{
+    StepValue,
+    Shared
+}
+
 public sealed class JobVariable
 {
     [JsonPropertyName("id")]
@@ -13,6 +19,10 @@ public sealed class JobVariable
 
     [JsonPropertyName("description")]
     public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("scope")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public JobVariableScope Scope { get; set; } = JobVariableScope.StepValue;
 
     [JsonPropertyName("value_kind")]
     [JsonConverter(typeof(JsonStringEnumConverter))]

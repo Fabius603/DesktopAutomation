@@ -371,6 +371,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private bool _isVisible = true;
     private string? _filePreviewPath;
     private ImageSource? _filePreview;
+    private bool _showInputSourcePicker;
 
     public GeneratedStepFieldViewModel(
         StepFieldDescriptor descriptor,
@@ -445,6 +446,21 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             _selectedEnumOption = EnumOptions.FirstOrDefault();
         if (_selectedEnumOption is not null)
             _inputText = _selectedEnumOption.Value;
+        LoadInlineStepValue();
+        _showInputSourcePicker = !SupportsDirectValue || UsesExternalInputReference;
+        UseVariableCommand = new RelayCommand(() =>
+        {
+            _showInputSourcePicker = true;
+            NotifyInputMode();
+        });
+        UseDirectValueCommand = new RelayCommand(() =>
+        {
+            InputReferenceEditor?.Picker.UseDirectValueCommand.Execute(null);
+            _showInputSourcePicker = false;
+            LoadInlineStepValue();
+            NotifyInputMode();
+        }, () => SupportsDirectValue
+                 && InputReferenceEditor?.Picker.UseDirectValueCommand.CanExecute(null) == true);
     }
 
     private static string ResolveSuggestedDirectory(StepDirectoryPickerOptions options)
@@ -471,6 +487,32 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public GeneratedProcessTargetEditorViewModel? ProcessTargetEditor { get; }
     public GeneratedResultBindingEditorViewModel? ResultBindingEditor { get; }
     public GeneratedResultBindingEditorViewModel? InputReferenceEditor { get; }
+    public ICommand UseVariableCommand { get; }
+    public ICommand UseDirectValueCommand { get; }
+    public bool SupportsDirectValue => InputReferenceEditor is not null
+                                       && (Descriptor.AllowsDirectValue
+                                           ?? Descriptor.ValueKind != StepValueKind.ResultBinding)
+                                       && Descriptor.ValueKind is StepValueKind.Text
+                                         or StepValueKind.MultilineText
+                                         or StepValueKind.Boolean
+                                         or StepValueKind.Integer
+                                         or StepValueKind.Duration
+                                         or StepValueKind.Number
+                                         or StepValueKind.Enum
+                                         or StepValueKind.Color
+                                         or StepValueKind.FilePath
+                                         or StepValueKind.DirectoryPath;
+    public bool IsInlineStepValue => SupportsDirectValue
+                                     && InputReferenceEditor?.Picker.IsStepValue == true;
+    public bool UsesExternalInputReference => InputReferenceEditor is not null && !IsInlineStepValue;
+    public bool CanEditInlineStepValue => IsInlineStepValue
+                                          && InputReferenceEditor?.Picker.CanEditStepValueInline == true;
+    public bool RequiresInlineEditChoice => IsInlineStepValue
+                                            && InputReferenceEditor?.Picker.RequiresInlineEditChoice == true;
+    public bool ShowsDirectInput => IsInlineStepValue && !_showInputSourcePicker;
+    public bool ShowsInputSourcePicker => !SupportsDirectValue
+                                          || UsesExternalInputReference
+                                          || _showInputSourcePicker;
     public GeneratedCameraEditorViewModel? CameraEditor { get; }
     public GeneratedVisualOverlayEditorViewModel? VisualOverlayEditor { get; }
     public GeneratedRoiEditorViewModel? RoiEditor { get; }
@@ -616,6 +658,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             if (ReferenceEquals(_selectedEnumOption, value)) return;
             _selectedEnumOption = value;
             _inputText = value?.Value ?? string.Empty;
+            StoreInlineStepValue();
             InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
@@ -637,6 +680,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             _inputText = value is null
                 ? string.Empty
                 : JsonSerializer.SerializeToNode(value.Value)?.ToJsonString() ?? string.Empty;
+            StoreInlineStepValue();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedChoice)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
         }
@@ -684,6 +728,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         {
             if (_inputText == value) return;
             _inputText = value;
+            StoreInlineStepValue();
             InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
             if (IsBoolean)
@@ -900,7 +945,51 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
 
     private void OnInputReferenceChanged()
     {
+        LoadInlineStepValue();
+        if (UsesExternalInputReference) _showInputSourcePicker = true;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputReferenceEditor)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsInlineStepValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsesExternalInputReference)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanEditInlineStepValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RequiresInlineEditChoice)));
+        NotifyInputMode();
+    }
+
+    private void NotifyInputMode()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsDirectInput)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsInputSourcePicker)));
+    }
+
+    private void LoadInlineStepValue()
+    {
+        if (!IsInlineStepValue || InputReferenceEditor?.Picker.SelectedJobVariable is not { } variable) return;
+        _inputText = FormatValue(variable.Value, Descriptor.ValueKind);
+        _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
+            string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumberValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
+    }
+
+    private void StoreInlineStepValue()
+    {
+        if (!IsInlineStepValue || InputReferenceEditor?.Picker.SelectedJobVariable is not { } variable) return;
+        var text = _inputText.Trim();
+        variable.Value = Descriptor.ValueKind switch
+        {
+            StepValueKind.Integer or StepValueKind.Duration
+                when int.TryParse(text, NumberStyles.Integer, CultureInfo.CurrentCulture, out var integer)
+                => JsonValue.Create(integer),
+            StepValueKind.Number
+                when decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out var number)
+                => JsonValue.Create(number),
+            StepValueKind.Boolean when bool.TryParse(text, out var flag) => JsonValue.Create(flag),
+            _ => JsonValue.Create(_inputText)
+        };
+        InputReferenceEditor.Picker.RefreshSelectedValue();
     }
 
     private void OnCameraChanged()

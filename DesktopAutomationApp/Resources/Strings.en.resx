@@ -2027,6 +2027,11 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Detection</value></data>
   <data name="Ui.Job.Steps.DetailsRoi" xml:space="preserve"><value>Image region (ROI)</value></data>
   <data name="Ui.Job.Steps.DetailsGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="Ui.Job.Steps.DetailsOverview" xml:space="preserve"><value>Step overview</value></data>
+  <data name="Ui.Job.Steps.DetailsEditStep" xml:space="preserve"><value>Edit step</value></data>
+  <data name="Ui.Job.Steps.DetailsManageVariables" xml:space="preserve"><value>Manage variables</value></data>
+  <data name="Ui.Job.Steps.DetailsSourceMissing" xml:space="preserve"><value>Source missing</value></data>
+  <data name="Ui.Job.Steps.DetailsUsageCount" xml:space="preserve"><value>Used in {0} place(s)</value></data>
   <data name="Ui.Job.Steps.DetailsAdvanced" xml:space="preserve"><value>Advanced</value></data>
   <data name="Ui.Job.Steps.DetailsReturnValue" xml:space="preserve"><value>Return value and properties</value></data>
   <data name="Ui.Common.Yes" xml:space="preserve"><value>Yes</value></data>
@@ -3060,4 +3065,30 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Region</value></data>
   <data name="Ui.Job.Variables.Type.Image" xml:space="preserve"><value>Image</value></data>
   <data name="Ui.Job.Variables.ImagePath" xml:space="preserve"><value>Path to image file</value></data>
+  <data name="Ui.Job.Variables.Scope.StepValues" xml:space="preserve"><value>Step values</value></data>
+  <data name="Ui.Job.Variables.Scope.Shared" xml:space="preserve"><value>Shared job variables</value></data>
+  <data name="Ui.Job.Variables.Usage.One" xml:space="preserve"><value>{0} usage</value></data>
+  <data name="Ui.Job.Variables.Usage.Many" xml:space="preserve"><value>{0} usages</value></data>
+  <data name="Ui.Job.Variables.Usage.Warning" xml:space="preserve"><value>Changes to this value affect every usage.</value></data>
+  <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Search by name, value, description, or step …</value></data>
+  <data name="Ui.Job.Variables.Filter.Shared" xml:space="preserve"><value>Shared</value></data>
+  <data name="Ui.Job.Variables.Filter.StepValues" xml:space="preserve"><value>Step values</value></data>
+  <data name="Ui.Job.Variables.Filter.Used" xml:space="preserve"><value>Used</value></data>
+  <data name="Ui.Job.Variables.Filter.Unused" xml:space="preserve"><value>Unused</value></data>
+  <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>No values match this search and filter.</value></data>
+  <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Duplicate variable</value></data>
+  <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Copy</value></data>
+  <data name="Ui.Job.Variables.PromoteToShared" xml:space="preserve"><value>Use as shared variable</value></data>
+  <data name="Ui.Job.StepInput.UseVariable" xml:space="preserve"><value>Use variable</value></data>
+  <data name="Ui.Job.StepInput.UseDirectValue" xml:space="preserve"><value>Enter directly</value></data>
+  <data name="Ui.ValueReference.Recommended" xml:space="preserve"><value>Recommended</value></data>
+  <data name="Ui.ValueReference.PickerHint" xml:space="preserve"><value>Choose a compatible source for this field.</value></data>
+  <data name="Ui.ValueReference.PickerTitle" xml:space="preserve"><value>Select value source</value></data>
+  <data name="Ui.ValueReference.PickerContext" xml:space="preserve"><value>{0} · Step “{1}”</value></data>
+  <data name="Ui.ValueReference.Result" xml:space="preserve"><value>Step result</value></data>
+  <data name="Ui.Job.Variables.StepValue.Description" xml:space="preserve"><value>Value for “{0}” in the “{1}” step.</value></data>
+  <data name="Ui.Job.Variables.Inline.MultipleUsage" xml:space="preserve"><value>This value is used in {0} places.</value></data>
+  <data name="Ui.Job.Variables.Inline.ChooseAction" xml:space="preserve"><value>Choose where the change should apply before editing.</value></data>
+  <data name="Ui.Job.Variables.Inline.EditEverywhere" xml:space="preserve"><value>Change everywhere</value></data>
+  <data name="Ui.Job.Variables.Inline.EditOnlyHere" xml:space="preserve"><value>Change only here</value></data>
 </root>
