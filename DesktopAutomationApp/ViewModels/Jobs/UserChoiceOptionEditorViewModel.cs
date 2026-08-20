@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Text.Json.Nodes;
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 
 namespace DesktopAutomationApp.ViewModels;
@@ -43,11 +45,46 @@ public sealed class UserChoiceOptionEditorViewModel : INotifyPropertyChanged
         set { _value = value; OnChange(); }
     }
 
+    public GeneratedStepFieldViewModel? LabelField { get; private set; }
+    public GeneratedStepFieldViewModel? ValueField { get; private set; }
+
+    public void ConfigureNestedInputs(
+        string keyPrefix,
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel> resolver)
+    {
+        LabelField = CreateField($"{keyPrefix}.label", Label, resolver);
+        ValueField = CreateField($"{keyPrefix}.value", Value, resolver);
+        LabelField.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputText)) Label = LabelField.InputText;
+            else OnChange();
+        };
+        ValueField.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputText)) Value = ValueField.InputText;
+            else OnChange();
+        };
+        OnChange(nameof(LabelField));
+        OnChange(nameof(ValueField));
+    }
+
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
     public ICommand RemoveCommand { get; }
 
     public UserChoiceOption ToOption() => new() { Id = Id, Label = Label, Value = Value };
+
+    private static GeneratedStepFieldViewModel CreateField(
+        string key,
+        string value,
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel> resolver)
+    {
+        var node = JsonValue.Create(value);
+        var descriptor = new StepFieldDescriptor(key, string.Empty, StepValueKind.Text,
+            DefaultValue: node, EditorHint: StepEditorHints.EmojiText);
+        return new GeneratedStepFieldViewModel(descriptor, node,
+            inputReferenceEditor: resolver(key, StepValueKind.Text, node));
+    }
 
     private void MoveUp()
     {

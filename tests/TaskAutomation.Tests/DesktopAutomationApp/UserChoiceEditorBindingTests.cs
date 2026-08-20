@@ -13,15 +13,21 @@ public sealed class UserChoiceEditorBindingTests
             "GeneratedStepEditor.xaml"));
         XNamespace emoji = "clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf";
 
+        XNamespace generated = "clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated";
         var textInputs = document.Descendants(emoji + "RichTextBox").ToList();
+        var sourceInputs = document.Descendants(generated + "GeneratedValueSourceInput")
+            .Select(input => input.Attribute("DataContext")?.Value)
+            .ToList();
 
-        Assert.Equal(3, textInputs.Count);
+        Assert.Single(textInputs);
         Assert.All(textInputs, input =>
         {
             var binding = input.Attribute("Text")?.Value;
             Assert.Contains("Mode=TwoWay", binding, StringComparison.Ordinal);
             Assert.Contains("UpdateSourceTrigger=PropertyChanged", binding, StringComparison.Ordinal);
         });
+        Assert.Contains("{Binding LabelField}", sourceInputs);
+        Assert.Contains("{Binding ValueField}", sourceInputs);
     }
 
     private static string RepositoryRoot([CallerFilePath] string sourceFile = "") =>

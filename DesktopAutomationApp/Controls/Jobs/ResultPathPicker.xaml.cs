@@ -143,11 +143,6 @@ public partial class ResultPathPicker : UserControl
     private void DropDownToggle_Checked(object sender, RoutedEventArgs e)
     {
         _popupWasOpen = true;
-        Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
-        {
-            SearchBox.Focus();
-            SearchBox.SelectAll();
-        });
     }
 
     private void DropDownToggle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

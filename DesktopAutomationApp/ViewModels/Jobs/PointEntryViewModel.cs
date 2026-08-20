@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Text.Json.Nodes;
 using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
@@ -68,17 +69,19 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowJobResult => _source == PointEntrySource.JobResult;
 
         private int _manualX;
+        public GeneratedStepFieldViewModel? ManualXField { get; private set; }
+        public GeneratedStepFieldViewModel? ManualYField { get; private set; }
         public int ManualX
         {
-            get => _manualX;
-            set { _manualX = value; OnChange(); }
+            get => ManualXField?.IntegerValue ?? _manualX;
+            set { Source = PointEntrySource.Manual; if (ManualXField is not null) ManualXField.IntegerValue = value; _manualX = value; OnChange(); }
         }
 
         private int _manualY;
         public int ManualY
         {
-            get => _manualY;
-            set { _manualY = value; OnChange(); }
+            get => ManualYField?.IntegerValue ?? _manualY;
+            set { Source = PointEntrySource.Manual; if (ManualYField is not null) ManualYField.IntegerValue = value; _manualY = value; OnChange(); }
         }
 
         public ICommand RemoveCommand { get; }
@@ -93,17 +96,39 @@ namespace DesktopAutomationApp.ViewModels
             PointsSource = new ValueReferencePickerViewModel(detectionSteps,
                 StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true,
                 variables, providerSources, pickerContext);
-            _source = PointEntrySource.JobResult;
+            _source = PointEntrySource.Manual;
             RemoveCommand            = new RelayCommand(() => owner.Remove(this));
         }
 
         public PointEntry ToPointEntry() => new PointEntry
         {
             Source                = _source,
-            ManualX               = _manualX,
-            ManualY               = _manualY,
+            ManualX               = ManualX,
+            ManualY               = ManualY,
             PointsSource = PointsSource.ToBinding()
         };
+
+        public void ConfigureNestedInputs(
+            string keyPrefix,
+            Func<string, TaskAutomation.Contracts.Steps.StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel> resolver)
+        {
+            ManualXField = CreateNestedField($"{keyPrefix}.manual_x", _manualX, resolver);
+            ManualYField = CreateNestedField($"{keyPrefix}.manual_y", _manualY, resolver);
+            OnChange(nameof(ManualXField));
+            OnChange(nameof(ManualYField));
+        }
+
+        private static GeneratedStepFieldViewModel CreateNestedField(
+            string key,
+            int value,
+            Func<string, TaskAutomation.Contracts.Steps.StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel> resolver)
+        {
+            var node = JsonValue.Create(value);
+            var descriptor = new TaskAutomation.Contracts.Steps.StepFieldDescriptor(
+                key, string.Empty, TaskAutomation.Contracts.Steps.StepValueKind.Integer, DefaultValue: node);
+            return new GeneratedStepFieldViewModel(descriptor, node,
+                inputReferenceEditor: resolver(key, TaskAutomation.Contracts.Steps.StepValueKind.Integer, node));
+        }
 
         public void LoadFrom(PointEntry e)
         {

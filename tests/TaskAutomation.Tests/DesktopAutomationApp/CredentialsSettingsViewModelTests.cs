@@ -58,6 +58,27 @@ public sealed class CredentialsSettingsViewModelTests
         Assert.Equal(1, dialogs.ConfirmCount);
     }
 
+    [Fact]
+    public async Task QuickCreateSecret_RequiresNameAndValueAndReturnsOnlyDescriptor()
+    {
+        var store = new RecordingSecretStore();
+        var viewModel = new QuickCreateSecretViewModel(store);
+
+        Assert.False(viewModel.CanCreate);
+        Assert.False(await viewModel.CreateAsync());
+
+        viewModel.Name = "API token";
+        viewModel.Description = "Created from a job input";
+        viewModel.Value = "super-secret";
+
+        Assert.True(await viewModel.CreateAsync());
+        Assert.NotNull(viewModel.CreatedSecret);
+        Assert.Equal("API token", viewModel.CreatedSecret!.Name);
+        Assert.Equal(string.Empty, viewModel.Value);
+        Assert.Equal("super-secret", store.Values[viewModel.CreatedSecret.Id]);
+        Assert.Equal(0, store.ReadCount);
+    }
+
     private static CredentialsSettingsViewModel ViewModel(RecordingSecretStore store, DialogStub? dialogs = null) =>
         new(store, dialogs ?? new DialogStub(), LocalizationService.Instance, NullLogger<CredentialsSettingsViewModel>.Instance);
 

@@ -3127,6 +3127,12 @@ Fehlercode: {3}</value>
   <data name="Ui.ValueReference.CreateVariable" xml:space="preserve"><value>Variable erstellen</value></data>
   <data name="Ui.ValueReference.CreateVariable.Hint" xml:space="preserve"><value>Neue passende Jobvariable erstellen und auswählen</value></data>
   <data name="Ui.ValueReference.CreateVariable.Unsupported" xml:space="preserve"><value>Dieser Datentyp kann noch nicht als Jobvariable erstellt werden.</value></data>
+  <data name="Ui.ValueReference.CreateSecret" xml:space="preserve"><value>Secret erstellen</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Hint" xml:space="preserve"><value>Neues Secret sicher speichern und auswählen</value></data>
+  <data name="Ui.ValueReference.CreateSecret.DialogHint" xml:space="preserve"><value>Das Secret wird sicher für dein Windows-Benutzerkonto gespeichert. Im Job wird nur der Verweis darauf abgelegt.</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Value" xml:space="preserve"><value>Geheimer Wert</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Validation" xml:space="preserve"><value>Gib einen Namen und einen geheimen Wert ein.</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Error" xml:space="preserve"><value>Das Secret konnte nicht gespeichert werden.</value></data>
   <data name="Ui.ValueReference.CreateVariable.DialogHint" xml:space="preserve"><value>Gib einen Namen und den gewünschten Wert für die neue Jobvariable ein.</value></data>
   <data name="Ui.ValueReference.CreateVariable.NameRequired" xml:space="preserve"><value>Gib einen Namen ein.</value></data>
   <data name="Ui.ValueReference.CreateVariable.NameDuplicate" xml:space="preserve"><value>Dieser Name wird bereits verwendet.</value></data>
@@ -3195,4 +3201,12 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Inline.ChooseAction" xml:space="preserve"><value>Lege vor der Bearbeitung fest, wo die Änderung gelten soll.</value></data>
   <data name="Ui.Job.Variables.Inline.EditEverywhere" xml:space="preserve"><value>Überall ändern</value></data>
   <data name="Ui.Job.Variables.Inline.EditOnlyHere" xml:space="preserve"><value>Nur hier ändern</value></data>
+  <data name="Ui.Job.StepInput.Source.ToolTip" xml:space="preserve"><value>Wertquelle auswählen</value></data>
+  <data name="Ui.Job.StepInput.Source.Direct" xml:space="preserve"><value>Direkter Wert</value></data>
+  <data name="Ui.Job.StepInput.Source.JobVariable" xml:space="preserve"><value>Jobvariable</value></data>
+  <data name="Ui.Job.StepInput.Source.StepResult" xml:space="preserve"><value>Step-Ergebnis</value></data>
+  <data name="Ui.Job.StepInput.Source.Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Ui.Job.StepInput.Source.Other" xml:space="preserve"><value>Weitere Wertquelle</value></data>
+  <data name="Ui.Common.XCoordinate" xml:space="preserve"><value>X</value></data>
+  <data name="Ui.Common.YCoordinate" xml:space="preserve"><value>Y</value></data>
 </root>

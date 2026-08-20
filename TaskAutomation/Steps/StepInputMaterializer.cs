@@ -38,6 +38,26 @@ internal static class StepInputMaterializer
             resolvedValues[field.Id] = resolved;
             changed |= !JsonNode.DeepEquals(sourceDraft.Values.GetValueOrDefault(field.Id), resolved);
         }
+        foreach (var (key, reference) in source.Inputs.Where(input => input.Key.Contains('.')))
+        {
+            if (!reference.IsConfigured) continue;
+            var separator = key.IndexOf('.');
+            var fieldId = key[..separator];
+            if (!definition.Descriptor.Fields.Any(field => field.Id == fieldId)) continue;
+            var root = (resolvedValues.GetValueOrDefault(fieldId)
+                        ?? sourceDraft.Values.GetValueOrDefault(fieldId))?.DeepClone();
+            if (root is null) continue;
+            var value = Resolve(results, reference);
+            var resolved = value switch
+            {
+                null => null,
+                JsonNode node => node.DeepClone(),
+                _ => JsonSerializer.SerializeToNode(value, value.GetType())
+            };
+            if (!TrySetNestedValue(root, key[(separator + 1)..], resolved)) continue;
+            resolvedValues[fieldId] = root;
+            changed = true;
+        }
         if (!changed) return source;
         var clone = Clone(source);
         var draft = definition.CreateDraft(clone);
@@ -45,6 +65,43 @@ internal static class StepInputMaterializer
             draft.Values[fieldId] = value?.DeepClone();
         return definition.ApplyDraft(draft, clone);
     }
+
+    private static bool TrySetNestedValue(JsonNode root, string path, JsonNode? value)
+    {
+        var current = root;
+        var segments = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        for (var index = 0; index < segments.Length; index++)
+        {
+            if (current is JsonArray arrayValue
+                && int.TryParse(segments[index], out var arrayIndex)
+                && arrayIndex >= 0 && arrayIndex < arrayValue.Count)
+            {
+                if (index == segments.Length - 1)
+                {
+                    arrayValue[arrayIndex] = value?.DeepClone();
+                    return true;
+                }
+                if (arrayValue[arrayIndex] is not { } arrayChild) return false;
+                current = arrayChild;
+                continue;
+            }
+            if (current is not JsonObject objectValue) return false;
+            var property = objectValue.FirstOrDefault(candidate =>
+                Normalize(candidate.Key) == Normalize(segments[index])).Key;
+            if (string.IsNullOrEmpty(property)) return false;
+            if (index == segments.Length - 1)
+            {
+                objectValue[property] = value?.DeepClone();
+                return true;
+            }
+            if (objectValue[property] is not { } child) return false;
+            current = child;
+        }
+        return false;
+    }
+
+    private static string Normalize(string value) =>
+        new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
     private static object? Resolve(IJobResultStore results, ResultBinding reference)
     {

@@ -1461,7 +1461,7 @@ namespace DesktopAutomationApp.ViewModels
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
             var providerSources = await LoadProviderSourcesAsync();
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable, _secretStore)
                 { Mode = StepDialogMode.Add };
 
             ShowDialogWithVm(vm, out bool? result);
@@ -1518,7 +1518,7 @@ namespace DesktopAutomationApp.ViewModels
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
             var providerSources = await LoadProviderSourcesAsync();
             var vm = new AddJobStepDialogViewModel(
-                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable);
+                _jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable, _secretStore);
             using (vm.DeferNotifications())
             {
                 vm.Mode = StepDialogMode.Edit;
@@ -2292,7 +2292,7 @@ namespace DesktopAutomationApp.ViewModels
             var allSteps = AllSteps();
             var preparedSources = await PrepareDialogSourcesAsync(precedingSteps);
             var providerSources = await LoadProviderSourcesAsync();
-            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable)
+            var vm = new AddJobStepDialogViewModel(_jobExecutionContext, precedingSteps, Job.Id, allSteps, preparedSources, _cameraCaptureService, _stepDefinitionCatalog, Job.Variables, providerSources, RegisterCreatedVariable, _secretStore)
                 { Mode = StepDialogMode.Add, IsTypeLocked = true };
             vm.SelectedType = "ElseIf";
 

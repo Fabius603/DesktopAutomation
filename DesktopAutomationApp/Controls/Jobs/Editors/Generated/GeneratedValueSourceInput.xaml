@@ -1,0 +1,44 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Generated.GeneratedValueSourceInput"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <Grid x:Name="InputValueHost">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid>
+            <ContentControl Content="{Binding}"
+                            ContentTemplateSelector="{DynamicResource InlineStepValueTemplateSelector}"
+                            Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
+                                       Visibility="{Binding DataContext.ShowsInputSourcePicker, ElementName=InputValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+        <Button Grid.Column="1" Width="34" MinHeight="30" Margin="5,0,0,0"
+                Padding="0" Style="{StaticResource ButtonSecondary}"
+                ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
+                Click="OpenValueSourceMenu_Click">
+            <Button.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.Direct}"
+                              Command="{Binding UseDirectValueCommand}"
+                              IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsDirectSource, Mode=OneWay}"/>
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.JobVariable}"
+                              Command="{Binding InputReferenceEditor.Picker.UseJobVariableCommand}"
+                              IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsJobVariableSource, Mode=OneWay}"/>
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.StepResult}"
+                              Command="{Binding InputReferenceEditor.Picker.UseStepResultCommand}"
+                              IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsStepResultSource, Mode=OneWay}"/>
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.Secret}"
+                              Command="{Binding InputReferenceEditor.Picker.UseSecretCommand}"
+                              IsCheckable="True" IsChecked="{Binding InputReferenceEditor.Picker.IsSecretSource, Mode=OneWay}"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            <iconPacks:PackIconMaterial Kind="RhombusOutline" Width="15" Height="15"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource App.Brush.Accent}"/>
+        </Button>
+    </Grid>
+</UserControl>

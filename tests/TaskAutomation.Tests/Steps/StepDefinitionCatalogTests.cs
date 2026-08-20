@@ -241,9 +241,8 @@ public sealed class StepDefinitionCatalogTests
             jobVariableCreated: createdVariables.Add);
         viewModel.SelectedType = "Timeout";
         var picker = Assert.Single(viewModel.GeneratedEditor!.Fields).InputReferenceEditor!.Picker;
-        var sharedNode = picker.SelectionTree
-            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"))
-            .Children.Single(node => node.DisplayName == shared.Name);
+        picker.UseJobVariableCommand.Execute(null);
+        var sharedNode = picker.SelectionTree.Single(node => node.DisplayName == shared.Name);
 
         var field = Assert.Single(viewModel.GeneratedEditor.Fields);
         field.UseVariableCommand.Execute(null);
@@ -277,8 +276,7 @@ public sealed class StepDefinitionCatalogTests
         var field = Assert.Single(viewModel.GeneratedEditor!.Fields);
         field.UseVariableCommand.Execute(null);
         var sharedNode = field.InputReferenceEditor!.Picker.SelectionTree
-            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"))
-            .Children.Single(node => node.DisplayName == shared.Name);
+            .Single(node => node.DisplayName == shared.Name);
         sharedNode.SelectCommand!.Execute(null);
 
         field.UseDirectValueCommand.Execute(null);
@@ -2519,6 +2517,7 @@ public sealed class StepDefinitionCatalogTests
     {
         var variable = new JobVariable
         {
+            Scope = JobVariableScope.Shared,
             Name = "Target",
             ValueKind = ResultValueKind.Point,
             Cardinality = ResultCardinality.Single,
@@ -2526,15 +2525,11 @@ public sealed class StepDefinitionCatalogTests
         };
         var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
         var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
+        picker.UseJobVariableCommand.Execute(null);
 
-        Assert.Equal(5, picker.SelectionTree.Count);
-        Assert.True(picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.Recommended")).IsExpanded);
-        var jobVariables = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"));
-        var variableNode = jobVariables.Children.Single(node => node.DisplayName == variable.Name);
-        Assert.Contains("x: 10", variableNode.SecondaryText);
-        Assert.Contains("y: 20", variableNode.SecondaryText);
+        Assert.Single(picker.SelectionTree);
+        var variableNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
+        Assert.Equal(["x", "y"], variableNode.Children.Select(node => node.DisplayName));
         variableNode.SelectCommand!.Execute(null);
         var binding = picker.ToBinding();
 
@@ -2546,11 +2541,9 @@ public sealed class StepDefinitionCatalogTests
         Assert.Contains("x: 10", picker.SelectedPreviewValue);
         Assert.Equal(Loc.Get("Ui.ValueReference.JobVariables"), picker.SelectedPreviewSource);
         Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
-        var selectedNode = picker.SelectionTree
-            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"))
-            .Children.Single(node => node.DisplayName == variable.Name);
+        var selectedNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
         Assert.True(selectedNode.IsSelected);
-        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.StepValues"), selectedNode.SourceText);
+        Assert.Null(selectedNode.SourceText);
     }
 
     [Fact]
@@ -2562,11 +2555,9 @@ public sealed class StepDefinitionCatalogTests
         var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!;
 
         var picker = new ValueReferencePickerViewModel([source], contract, selectDefault: false);
+        picker.UseStepResultCommand.Execute(null);
 
-        var resultVariables = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.ResultVariables"));
-        Assert.Equal(Loc.Get("Ui.ValueReference.ResultVariables"), resultVariables.DisplayName);
-        Assert.Equal("Detection", Assert.Single(resultVariables.Children).DisplayName);
+        Assert.Equal("Detection", Assert.Single(picker.SelectionTree).DisplayName);
         Assert.Equal(Loc.Get("Ui.ValueReference.SelectVariable"), picker.SelectedDisplayPath);
     }
 
@@ -2585,23 +2576,51 @@ public sealed class StepDefinitionCatalogTests
         var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
         var picker = new ValueReferencePickerViewModel(
             [], contract, selectDefault: false, providerSources: [secret]);
+        picker.UseSecretCommand.Execute(null);
 
-        var secrets = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
-        var secretNode = secrets.Children.Single(node => node.DisplayName == secret.Name);
+        var secretNode = picker.SelectionTree.Single(node => node.DisplayName == secret.Name);
         secretNode.SelectCommand!.Execute(null);
 
         Assert.Equal(ValueProviderIds.Secret, picker.ToBinding().ProviderId);
         Assert.Equal(secretId.ToString("D"), picker.ToBinding().SourceId);
+        Assert.Equal("••••••••", picker.SelectedPreviewValue);
     }
 
     [Fact]
-    public void ValueReferencePicker_SearchesValuesAndKeepsAllStandardGroupsVisible()
+    public void ValueReferencePicker_CreatesSecretInsideSecretSourceAndSelectsIt()
+    {
+        var created = new ValueProviderSourceDescriptor(
+            ValueProviderIds.Secret,
+            Guid.NewGuid().ToString("D"),
+            "New token",
+            "Created from the step field",
+            ResultValueKind.Text,
+            ResultCardinality.Single,
+            IsSensitive: true);
+        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, selectDefault: false,
+            context: new ValueReferencePickerContext("Show text", "Text", CreateSecret: () => created));
+
+        picker.UseSecretCommand.Execute(null);
+        picker.CreateSecretCommand.Execute(null);
+
+        Assert.True(picker.IsSecretSource);
+        Assert.Equal(created.SourceId, picker.ToBinding().SourceId);
+        Assert.Equal(created.Name, picker.SelectedPropertyName);
+        Assert.Equal("••••••••", picker.SelectedPreviewValue);
+        Assert.Contains(picker.SelectionTree,
+            node => node.DisplayName == created.Name && node.IsSelected);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_ListsCompatibleVariablesDirectlyInSelectedSourceKind()
     {
         var variables = new[]
         {
             new JobVariable
             {
+                Scope = JobVariableScope.Shared,
                 Name = "Outer padding",
                 Description = "Space around the detection",
                 ValueKind = ResultValueKind.Integer,
@@ -2609,6 +2628,7 @@ public sealed class StepDefinitionCatalogTests
             },
             new JobVariable
             {
+                Scope = JobVariableScope.Shared,
                 Name = "Retries",
                 ValueKind = ResultValueKind.Integer,
                 Value = JsonValue.Create(3)
@@ -2616,19 +2636,10 @@ public sealed class StepDefinitionCatalogTests
         };
         var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
         var picker = new ValueReferencePickerViewModel([], contract, false, variables);
+        picker.UseJobVariableCommand.Execute(null);
 
-        picker.SearchText = "Space around";
-
-        Assert.Equal(4, picker.SelectionTree.Count);
-        Assert.All(picker.SelectionTree, group => Assert.True(group.IsExpanded));
-        var jobVariables = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"));
-        Assert.Contains(jobVariables.Children, child => child.DisplayName == "Outer padding");
-        Assert.DoesNotContain(jobVariables.Children, child => child.DisplayName == "Retries");
-        Assert.Contains(picker.SelectionTree, group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.ResultVariables"));
-        Assert.Contains(picker.SelectionTree, group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
+        Assert.Contains(picker.SelectionTree, child => child.DisplayName == "Outer padding");
+        Assert.Contains(picker.SelectionTree, child => child.DisplayName == "Retries");
     }
 
     [Fact]
@@ -2651,9 +2662,7 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Equal(ValueProviderIds.JobVariable, picker.ToBinding().ProviderId);
         Assert.Equal(created.Id.ToString("D"), picker.ToBinding().SourceId);
-        var group = picker.SelectionTree.Single(node =>
-            node.DisplayName == Loc.Get("Ui.Job.Variables.Scope.Shared"));
-        Assert.Contains(group.Children, node => node.DisplayName == created.Name);
+        Assert.Contains(picker.SelectionTree, node => node.DisplayName == created.Name);
     }
 
     [Fact]
@@ -2768,15 +2777,12 @@ public sealed class StepDefinitionCatalogTests
 
         var picker = new ValueReferencePickerViewModel(
             [], contract, false, providerSources: [secret]);
+        picker.SelectSourceKind(StepInputSourceKind.Secret);
 
-        var secrets = picker.SelectionTree.Single(group =>
-            group.DisplayName == Loc.Get("Ui.ValueReference.Secrets"));
-        Assert.DoesNotContain(secrets.Children, node => node.DisplayName == "Token");
+        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == "Token");
         Assert.True(picker.HasIncompatible);
         picker.ShowIncompatible = true;
-        Assert.Contains(
-            picker.SelectionTree.Single(group => group.DisplayName == Loc.Get("Ui.ValueReference.Secrets")).Children,
-            node => node.DisplayName == "Token" && !node.IsEnabled);
+        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == "Token");
     }
 
     [Fact]
@@ -2789,7 +2795,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(FileSystemPathSource.TaskResult, fileSystem.Settings.TargetMode);
 
         var owner = new System.Collections.ObjectModel.ObservableCollection<PointEntryViewModel>();
-        Assert.Equal(PointEntrySource.JobResult, new PointEntryViewModel(owner, []).Source);
+        Assert.Equal(PointEntrySource.Manual, new PointEntryViewModel(owner, []).Source);
 
         Assert.Equal(ShowTextSource.ExplicitText, new ShowTextSettings().TextSource);
         Assert.Equal(FileSystemPathSource.ExplicitPath, new FileSystemOperationSettings().SourceMode);
@@ -2800,6 +2806,7 @@ public sealed class StepDefinitionCatalogTests
     {
         var pointVariable = new JobVariable
         {
+            Scope = JobVariableScope.Shared,
             Name = "Target point",
             ValueKind = ResultValueKind.Point,
             Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
@@ -2815,9 +2822,9 @@ public sealed class StepDefinitionCatalogTests
             null, [], detectionContract, textContract, false, variables: [pointVariable]);
         overlay.AddOverlayDetectionCommand.Execute(null);
         var row = Assert.Single(overlay.OverlayDetectionRows);
+        row.Source.UseJobVariableCommand.Execute(null);
         var variableNode = row.Source.SelectionTree
-            .Single(group => group.DisplayName == Loc.Get("Ui.Job.Variables.Scope.StepValues"))
-            .Children.Single(node => node.DisplayName == pointVariable.Name);
+            .Single(node => node.DisplayName == pointVariable.Name);
         variableNode.SelectCommand!.Execute(null);
 
         Assert.Equal(ValueProviderIds.JobVariable, row.Source.ToBinding().ProviderId);

@@ -7,6 +7,13 @@ namespace DesktopAutomationApp.Controls.Jobs.Editors.Generated;
 public partial class GeneratedStepEditor : UserControl
 {
     public GeneratedStepEditor() => InitializeComponent();
+
+    private void OpenValueSourceMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { ContextMenu: { } menu } button) return;
+        menu.PlacementTarget = button;
+        menu.IsOpen = true;
+    }
 }
 
 public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector

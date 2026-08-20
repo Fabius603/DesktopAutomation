@@ -3023,6 +3023,12 @@ Error code: {3}</value>
   <data name="Ui.ValueReference.CreateVariable" xml:space="preserve"><value>Create variable</value></data>
   <data name="Ui.ValueReference.CreateVariable.Hint" xml:space="preserve"><value>Create and select a new compatible job variable</value></data>
   <data name="Ui.ValueReference.CreateVariable.Unsupported" xml:space="preserve"><value>This data type cannot yet be created as a job variable.</value></data>
+  <data name="Ui.ValueReference.CreateSecret" xml:space="preserve"><value>Create secret</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Hint" xml:space="preserve"><value>Securely store and select a new secret</value></data>
+  <data name="Ui.ValueReference.CreateSecret.DialogHint" xml:space="preserve"><value>The secret is stored securely for your Windows user account. Only its reference is saved in the job.</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Value" xml:space="preserve"><value>Secret value</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Validation" xml:space="preserve"><value>Enter a name and a secret value.</value></data>
+  <data name="Ui.ValueReference.CreateSecret.Error" xml:space="preserve"><value>The secret could not be saved.</value></data>
   <data name="Ui.ValueReference.CreateVariable.DialogHint" xml:space="preserve"><value>Enter a name and the desired value for the new job variable.</value></data>
   <data name="Ui.ValueReference.CreateVariable.NameRequired" xml:space="preserve"><value>Enter a name.</value></data>
   <data name="Ui.ValueReference.CreateVariable.NameDuplicate" xml:space="preserve"><value>This name is already in use.</value></data>
@@ -3091,4 +3097,12 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Inline.ChooseAction" xml:space="preserve"><value>Choose where the change should apply before editing.</value></data>
   <data name="Ui.Job.Variables.Inline.EditEverywhere" xml:space="preserve"><value>Change everywhere</value></data>
   <data name="Ui.Job.Variables.Inline.EditOnlyHere" xml:space="preserve"><value>Change only here</value></data>
+  <data name="Ui.Job.StepInput.Source.ToolTip" xml:space="preserve"><value>Select value source</value></data>
+  <data name="Ui.Job.StepInput.Source.Direct" xml:space="preserve"><value>Direct value</value></data>
+  <data name="Ui.Job.StepInput.Source.JobVariable" xml:space="preserve"><value>Job variable</value></data>
+  <data name="Ui.Job.StepInput.Source.StepResult" xml:space="preserve"><value>Step result</value></data>
+  <data name="Ui.Job.StepInput.Source.Secret" xml:space="preserve"><value>Secret</value></data>
+  <data name="Ui.Job.StepInput.Source.Other" xml:space="preserve"><value>Other value source</value></data>
+  <data name="Ui.Common.XCoordinate" xml:space="preserve"><value>X</value></data>
+  <data name="Ui.Common.YCoordinate" xml:space="preserve"><value>Y</value></data>
 </root>

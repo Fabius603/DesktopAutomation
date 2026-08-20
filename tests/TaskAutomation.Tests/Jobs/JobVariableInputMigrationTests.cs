@@ -60,6 +60,41 @@ public sealed class JobVariableInputMigrationTests
     }
 
     [Fact]
+    public void Materialize_OverlaysReferencedCompositeSubValues()
+    {
+        var target = new JobVariable
+        {
+            Name = "Prozessziel",
+            ValueKind = ResultValueKind.ResultObject,
+            Value = JsonSerializer.SerializeToNode(new TaskAutomation.Contracts.Steps.StepProcessSelectorValue(
+                null, "notepad", string.Empty, "Editor"))
+        };
+        var title = new JobVariable
+        {
+            Name = "Fenstertitel",
+            ValueKind = ResultValueKind.Text,
+            Value = JsonValue.Create("Bericht")
+        };
+        var step = new ActiveProcessStep();
+        step.Inputs[ActiveProcessStepDefinition.ProcessTargetFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = target.Id.ToString("D")
+        };
+        step.Inputs[$"{ActiveProcessStepDefinition.ProcessTargetFieldId}.window_title_contains"] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = title.Id.ToString("D")
+        };
+        var results = new JobResultStore([target, title]);
+
+        var materialized = Assert.IsType<ActiveProcessStep>(StepInputMaterializer.Materialize(step, results));
+
+        Assert.Equal("notepad", materialized.Settings.Target.ProcessName);
+        Assert.Equal("Bericht", materialized.Settings.Target.WindowTitleContains);
+    }
+
+    [Fact]
     public void ReferenceBackedStep_SerializesWithoutLiteralSettings()
     {
         var step = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 9876 } };

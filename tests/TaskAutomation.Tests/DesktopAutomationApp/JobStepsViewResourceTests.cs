@@ -20,25 +20,26 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void ProcessChoiceEditor_UsesSeparateContentContextForEachSourceMode()
+    public void ProcessEditor_ShowsOnlyManualContent()
     {
         var xaml = File.ReadAllText(Path.Combine(
             RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
             "GeneratedStepEditor.xaml"));
 
         Assert.Contains(
-            "SelectedContent=\"{Binding ProcessTargetEditor.SelectedSourceContent}\"",
+            "Content=\"{Binding ProcessTargetEditor.ManualSourceContent}\"",
             xaml);
+        Assert.DoesNotContain("ProcessTargetEditor.SelectedSourceOption", xaml);
         Assert.Contains(
             "DataType=\"{x:Type viewModels:GeneratedProcessNameTargetContentViewModel}\"",
             xaml);
-        Assert.Contains(
+        Assert.DoesNotContain(
             "DataType=\"{x:Type viewModels:GeneratedProcessReferenceTargetContentViewModel}\"",
             xaml);
         Assert.Contains("Text=\"{loc:Translate Key=Ui.Step.Settings.ProcessName}\"", xaml);
         Assert.Contains("Text=\"{loc:Translate Key=Ui.Step.Settings.WindowTitleContains}\"", xaml);
         Assert.Contains(
-            "Text=\"{Binding Editor.WindowTitleContains, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}\"",
+            "DataContext=\"{Binding Editor.WindowTitleField}\"",
             xaml);
         Assert.DoesNotContain("x:Key=\"ProcessSourceContentTemplate\"", xaml);
         Assert.Contains("Content=\"{Binding SelectedContent, ElementName=Root}\"", File.ReadAllText(Path.Combine(
@@ -120,14 +121,13 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void ExistingManualOrResultEditors_UseSharedChoiceGroupEditor()
+    public void RemainingSemanticChoiceEditors_UseSharedChoiceGroupEditor()
     {
         var root = RepositoryRoot();
         var files = new[]
         {
             Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated", "GeneratedStepEditor.xaml"),
-            Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml"),
-            Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Analysis", "PointEntryEditor.xaml")
+            Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml")
         };
 
         Assert.All(files, file => Assert.Contains("ChoiceGroupEditor", File.ReadAllText(file)));

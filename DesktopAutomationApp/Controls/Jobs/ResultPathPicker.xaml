@@ -294,42 +294,10 @@
                     BorderBrush="{DynamicResource App.Brush.Accent}"
                     BorderThickness="1"
                     CornerRadius="0,0,7,7">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.28" Color="Black"/>
-                </Border.Effect>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Margin="6,4,6,8">
-                        <TextBlock Text="{loc:Translate Key=Ui.ValueReference.PickerTitle}"
-                                   FontSize="13" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding ContextText, ElementName=Root}"
-                                   Margin="0,2,0,0" FontSize="10"
-                                   Foreground="{DynamicResource App.Brush.Accent}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ContextText, ElementName=Root}" Value="">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock Text="{loc:Translate Key=Ui.ValueReference.PickerHint}"
-                                   Margin="0,2,0,0" FontSize="10" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                    </StackPanel>
-                    <TextBox x:Name="SearchBox" Grid.Row="1"
-                             Margin="2,2,2,6"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.ValueReference.Search}"
-                             mah:TextBoxHelper.UseFloatingWatermark="False"/>
-                <TreeView Grid.Row="2" ItemsSource="{Binding ItemsSource, ElementName=Root}"
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.28" Color="Black"/>
+            </Border.Effect>
+                <TreeView ItemsSource="{Binding ItemsSource, ElementName=Root}"
                           ItemContainerStyle="{StaticResource PickerTreeItemStyle}"
                           Background="Transparent"
                           BorderThickness="0"
@@ -342,62 +310,16 @@
                             <Button Style="{StaticResource PickerTreeRowStyle}"
                                     Command="{Binding SelectCommand}"
                                     IsEnabled="{Binding IsEnabled}"
-                                    ToolTip="{Binding Description}"
                                     Click="TreeNode_Click">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <iconPacks:PackIconMaterial Kind="{Binding Icon}"
-                                                                Width="14" Height="14" Margin="0,0,7,0"
-                                                                Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                                Visibility="{Binding HasIcon, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding DisplayName}"
-                                                   FontSize="12"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding SecondaryText}"
-                                                   Margin="0,1,0,0"
-                                                   FontSize="9"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource App.Brush.TextSecondary}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding SecondaryText}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding SecondaryText}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                    <Border Grid.Column="2" Margin="8,0,0,0" Padding="5,2"
-                                            Background="{DynamicResource App.Brush.SurfaceHover}"
-                                            CornerRadius="3" VerticalAlignment="Center">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SourceText}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding SourceText}" Value="">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <TextBlock Text="{Binding SourceText}" FontSize="9"
-                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                    </Border>
-                                    <iconPacks:PackIconMaterial Grid.Column="3" Kind="CheckCircle"
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontSize="12"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <iconPacks:PackIconMaterial Grid.Column="1" Kind="CheckCircle"
                                                                 Width="15" Height="15" Margin="8,0,1,0"
                                                                 Foreground="{DynamicResource App.Brush.Accent}"
                                                                 Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -406,15 +328,6 @@
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
-                    <Button Grid.Row="3" Margin="2,6,2,1" Padding="7,4"
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource PickerTreeRowStyle}"
-                            Command="{Binding ToggleIncompatibleCommand}"
-                            Visibility="{Binding HasIncompatible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="{Binding IncompatibleText}" FontSize="10"
-                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                    </Button>
-                </Grid>
             </Border>
         </Popup>
     </Grid>
