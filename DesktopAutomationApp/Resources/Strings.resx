@@ -469,7 +469,7 @@
     <value>Verkleinerungsfaktor</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Wertreferenz</value>
+    <value>Erkennungsergebnis</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Mindestanzahl Messwerte</value>
@@ -1573,7 +1573,7 @@ Fehlercode: {3}</value>
     <value>Bewegung vorhersagen</value>
   </data>
   <data name="Step.Type.KlickOnPoint" xml:space="preserve">
-    <value>Erkannten Punkt anklicken</value>
+    <value>Punkt anklicken</value>
   </data>
   <data name="Step.Type.KlickOnPoint3D" xml:space="preserve">
     <value>3D-Ziel anklicken</value>
@@ -1654,7 +1654,7 @@ Fehlercode: {3}</value>
     <value>Erkennt Objekte mithilfe eines YOLO-Modells und speichert ihre Position.</value>
   </data>
   <data name="Step.Description.KlickOnPoint" xml:space="preserve">
-    <value>Klickt auf den zuletzt erkannten Bildpunkt.</value>
+    <value>Klickt auf einen direkt angegebenen oder referenzierten Punkt.</value>
   </data>
   <data name="Step.Description.KlickOnPoint3D" xml:space="preserve">
     <value>Bewegt die Maus per FOV-Berechnung auf ein Zielobjekt und klickt es an.</value>
@@ -2331,7 +2331,7 @@ Fehlercode: {3}</value>
   <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows-Updates</value></data>
   <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Systemstart und Herunterfahren</value></data>
   <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Textquelle</value></data>
-  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Wertreferenz</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Textergebnis</value></data>
   <data name="Enum.AutomationTriggerKind.Webhook" xml:space="preserve"><value>Webhook</value></data>
   <data name="Enum.WebhookNetworkMode.Offline" xml:space="preserve"><value>Offline (nur dieser PC)</value></data>
   <data name="Enum.WebhookNetworkMode.Lan" xml:space="preserve"><value>LAN</value></data>

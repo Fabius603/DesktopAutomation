@@ -528,7 +528,12 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         ? string.Empty
         : Loc.Get(Descriptor.DescriptionKey);
     public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
-    public bool IsBoolean => Descriptor.ValueKind == StepValueKind.Boolean;
+    private StepValueKind EffectiveValueKind => Descriptor.ValueKind == StepValueKind.ResultBinding
+        && IsInlineStepValue
+        && InputReferenceEditor?.Picker.SelectedJobVariable is { } variable
+            ? MapDirectValueKind(variable.ValueKind)
+            : Descriptor.ValueKind;
+    public bool IsBoolean => EffectiveValueKind == StepValueKind.Boolean;
     public bool UsesMonitorPicker => string.Equals(
         Descriptor.EditorHint,
         StepEditorHints.MonitorPicker,
@@ -594,15 +599,15 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         Descriptor.EditorHint,
         StepEditorHints.ExecutableProcessTargetPicker,
         StringComparison.Ordinal);
-    public bool UsesEnumPicker => Descriptor.ValueKind == StepValueKind.Enum;
-    public bool UsesValueReferencePicker => string.Equals(
+    public bool UsesEnumPicker => EffectiveValueKind == StepValueKind.Enum;
+    public bool UsesValueReferencePicker => !IsInlineStepValue && (string.Equals(
         Descriptor.EditorHint,
         StepEditorHints.ResultBindingPicker,
         StringComparison.Ordinal)
         || string.Equals(
             Descriptor.EditorHint,
             StepEditorHints.ValueReferencePicker,
-            StringComparison.Ordinal);
+            StringComparison.Ordinal));
     public bool UsesInputReference => InputReferenceEditor is not null
                                       && !UsesProcessTargetPicker
                                       && !UsesRoiPicker
@@ -643,8 +648,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool UsesPointEntryList => Descriptor.EditorHint == StepEditorHints.PointEntryList;
     public bool UsesAxisExpressionList => Descriptor.EditorHint == StepEditorHints.AxisExpressionList;
     public bool UsesEmojiText => Descriptor.EditorHint == StepEditorHints.EmojiText;
-    public bool UsesColorPicker => Descriptor.ValueKind == StepValueKind.Color;
-    public bool UsesMultilineTextInput => Descriptor.ValueKind == StepValueKind.MultilineText && !UsesEmojiText;
+    public bool UsesColorPicker => EffectiveValueKind == StepValueKind.Color;
+    public bool UsesMultilineTextInput => EffectiveValueKind == StepValueKind.MultilineText && !UsesEmojiText;
     public bool UsesTextInput => !IsBoolean && !UsesMonitorPicker && !UsesFilePicker && !UsesDirectoryPicker
         && !UsesFileOrFolderPicker && !UsesColorPicker && !UsesMultilineTextInput && !UsesCameraPicker
         && !UsesVisualOverlay && !UsesRoiPicker && !UsesYoloPicker && !UsesConditionEditor
@@ -739,11 +744,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
             if (IsBoolean)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
-            if (Descriptor.ValueKind is StepValueKind.Integer or StepValueKind.Duration)
+            if (EffectiveValueKind is StepValueKind.Integer or StepValueKind.Duration)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
-            if (Descriptor.ValueKind == StepValueKind.Number)
+            if (EffectiveValueKind == StepValueKind.Number)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumberValue)));
-            if (Descriptor.ValueKind == StepValueKind.Color)
+            if (EffectiveValueKind == StepValueKind.Color)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ColorValue)));
         }
     }
@@ -970,7 +975,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private void LoadInlineStepValue()
     {
         if (!IsInlineStepValue || InputReferenceEditor?.Picker.SelectedJobVariable is not { } variable) return;
-        _inputText = FormatValue(variable.Value, Descriptor.ValueKind);
+        _inputText = FormatValue(variable.Value, EffectiveValueKind);
         _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
             string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
@@ -1011,7 +1016,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         if (UsesAxisExpressionList && AxisExpressionListEditor is not null) return AxisExpressionListEditor.ToNode();
 
         var text = _inputText.Trim();
-        return Descriptor.ValueKind switch
+        return EffectiveValueKind switch
         {
             StepValueKind.Integer or StepValueKind.Duration
                 when int.TryParse(text, NumberStyles.Integer, CultureInfo.CurrentCulture, out var integer)
@@ -1023,6 +1028,17 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             _ => JsonValue.Create(_inputText)
         };
     }
+
+    private static StepValueKind MapDirectValueKind(ResultValueKind kind) => kind switch
+    {
+        ResultValueKind.Boolean => StepValueKind.Boolean,
+        ResultValueKind.Integer => StepValueKind.Integer,
+        ResultValueKind.Number => StepValueKind.Number,
+        ResultValueKind.Enum => StepValueKind.Enum,
+        ResultValueKind.Point => StepValueKind.Point,
+        ResultValueKind.Rectangle => StepValueKind.Rectangle,
+        _ => StepValueKind.Text
+    };
 
     private void OnCameraChanged()
     {

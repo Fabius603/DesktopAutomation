@@ -22,6 +22,7 @@ public sealed record StepInputDescriptor(
     params AcceptedResultShape[] AcceptedShapes)
 {
     public IReadOnlySet<string>? AllowedProviderIds { get; init; }
+    public bool AllowsDirectValue { get; init; }
 
     public bool AllowsProvider(string providerId) =>
         AllowedProviderIds is null || AllowedProviderIds.Contains(providerId);
@@ -46,6 +47,17 @@ public sealed record StepInputDescriptor(
 /// <summary>Backend-owned input contract. UI and validation only show paths accepted here.</summary>
 public static class StepInputContractRegistry
 {
+    private static readonly IReadOnlySet<string> DirectOnlyProviders = new HashSet<string>();
+    private static readonly IReadOnlySet<string> StepResultProviders = new HashSet<string>
+    {
+        ValueProviderIds.StepResult
+    };
+    private static readonly IReadOnlySet<string> ReusableValueProviders = new HashSet<string>
+    {
+        ValueProviderIds.JobVariable,
+        ValueProviderIds.StepResult
+    };
+
     private static readonly AcceptedResultShape Image = new(ResultValueKind.Image,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape Points = new(ResultValueKind.Point,
@@ -80,11 +92,23 @@ public static class StepInputContractRegistry
         [typeof(YOLODetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(KeyPointMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(PredictMovementStep)] = [Required("points", CollectionConsumptionMode.AllValues, Points)],
-        [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
-        [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points)],
+        [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points) with
+        {
+            AllowedProviderIds = ReusableValueProviders,
+            AllowsDirectValue = true
+        }],
+        [typeof(KlickOnPoint3DStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points) with
+        {
+            AllowedProviderIds = ReusableValueProviders,
+            AllowsDirectValue = true
+        }],
         [typeof(DynamicRoiStep)] = [
             Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles),
-            Required("padding", CollectionConsumptionMode.FirstValue, Integer)],
+            Required("padding", CollectionConsumptionMode.FirstValue, Integer) with
+            {
+                AllowedProviderIds = ReusableValueProviders,
+                AllowsDirectValue = true
+            }],
         [typeof(ShowOnDesktopStep)] = [
             Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
             Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
@@ -106,7 +130,11 @@ public static class StepInputContractRegistry
         [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(ActiveWindowStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(PointComparisonStep)] = [Optional("points", CollectionConsumptionMode.AllValues, Points)],
-        [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText)],
+        [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText) with
+        {
+            AllowedProviderIds = ReusableValueProviders,
+            AllowsDirectValue = true
+        }],
         [typeof(FileSystemOperationStep)] =
         [
             Optional("source", CollectionConsumptionMode.NotApplicable, Text),
@@ -120,24 +148,55 @@ public static class StepInputContractRegistry
     public static StepInputDescriptor? Get(Type stepType, string key) =>
         Get(stepType).FirstOrDefault(input => input.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 
+    public static StepInputDescriptor Resolve(Type stepType, StepFieldDescriptor field)
+    {
+        if (string.IsNullOrWhiteSpace(field.InputContractId) || OwnsNestedInputContract(field))
+            return ForField(field);
+        return Get(stepType, field.InputContractId)
+               ?? throw new InvalidOperationException(
+                   $"Input contract '{field.InputContractId}' for {stepType.Name} is missing.");
+    }
+
     public static StepInputDescriptor ForField(StepFieldDescriptor field)
     {
         var cardinality = field.ValueKind == StepValueKind.Collection
             ? ResultCardinality.Collection
             : ResultCardinality.Single;
         var kind = JobVariableInputMigration.MapKind(field.ValueKind);
+        var providers = IsDirectOnly(field)
+            ? DirectOnlyProviders
+            : ReusableValueProviders;
         return new StepInputDescriptor(
             field.Id,
-            true,
-            MissingValuePolicy.FailStep,
+            field.Required,
+            field.Required ? MissingValuePolicy.FailStep : MissingValuePolicy.SkipStep,
             cardinality == ResultCardinality.Collection
                 ? CollectionConsumptionMode.AllValues
                 : CollectionConsumptionMode.NotApplicable,
-            new AcceptedResultShape(kind, cardinality));
+            new AcceptedResultShape(kind, cardinality))
+        {
+            AllowedProviderIds = providers,
+            AllowsDirectValue = true
+        };
     }
 
     private static StepInputDescriptor Required(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
-        new(key, true, MissingValuePolicy.FailStep, collection, shapes);
+        new(key, true, MissingValuePolicy.FailStep, collection, shapes)
+        {
+            AllowedProviderIds = StepResultProviders
+        };
     private static StepInputDescriptor Optional(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
-        new(key, false, MissingValuePolicy.SkipStep, collection, shapes);
+        new(key, false, MissingValuePolicy.SkipStep, collection, shapes)
+        {
+            AllowedProviderIds = StepResultProviders
+        };
+
+    private static bool IsDirectOnly(StepFieldDescriptor field) =>
+        field.ValueKind is StepValueKind.Object or StepValueKind.Collection
+        || field.ValueKind == StepValueKind.Enum
+           && field.Constraints?.AllowedValues is { Count: > 0 };
+
+    private static bool OwnsNestedInputContract(StepFieldDescriptor field) => field.EditorHint is
+        StepEditorHints.ProcessTargetPicker or StepEditorHints.ExecutableProcessTargetPicker
+        or StepEditorHints.RoiPicker or StepEditorHints.PointEntryList;
 }

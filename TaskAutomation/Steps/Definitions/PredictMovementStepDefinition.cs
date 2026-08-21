@@ -28,7 +28,7 @@ public sealed class PredictMovementStepDefinition : StepDefinition<PredictMoveme
         IconKey: "movement-prediction",
         Fields:
         [
-            new StepFieldDescriptor(PointsSourceFieldId, "Ui.Step.Settings.DetectionStep", StepValueKind.ResultBinding,
+            new StepFieldDescriptor(PointsSourceFieldId, "Ui.Step.Settings.PointSource", StepValueKind.ResultBinding,
                 Required: true, EditorHint: StepEditorHints.ValueReferencePicker, Order: 0, InputContractId: "points"),
             new StepFieldDescriptor(PredictionModelFieldId, "Ui.Step.Settings.PredictionModel", StepValueKind.Enum,
                 Required: true, DefaultValue: JsonValue.Create("Automatic"),

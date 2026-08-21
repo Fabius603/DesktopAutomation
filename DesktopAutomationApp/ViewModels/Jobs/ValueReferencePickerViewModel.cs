@@ -73,7 +73,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         ToggleIncompatibleCommand = new RelayCommand(() => ShowIncompatible = !ShowIncompatible);
         EditEverywhereCommand = new RelayCommand(EnableInlineEdit, () => RequiresInlineEditChoice);
         EditOnlyHereCommand = new RelayCommand(DetachStepValue, () => RequiresInlineEditChoice && _context?.DetachStepValue is not null);
-        UseDirectValueCommand = new RelayCommand(UseDirectValue, () => _context?.CreateStepValue is not null);
+        UseDirectValueCommand = new RelayCommand(UseDirectValue, () => CanUseDirectValue);
         UseJobVariableCommand = new RelayCommand(
             () => SelectSourceKind(StepInputSourceKind.JobVariable),
             () => CanUseJobVariables);
@@ -87,6 +87,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             () => SelectSourceKind(StepInputSourceKind.ExternalProvider),
             () => CanUseExternalProviders);
         CreateSecretCommand = new RelayCommand(CreateSecret, () => CanCreateSecret);
+        SetActiveSourceKind(DefaultSourceKind());
         RebuildTree();
         if (selectDefault)
         {
@@ -120,9 +121,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public bool IsSecretSource => ActiveSourceKind == StepInputSourceKind.Secret;
     public bool IsExternalProviderSource => ActiveSourceKind == StepInputSourceKind.ExternalProvider;
     public bool CanUseJobVariables => _contract.AllowsProvider(ValueProviderIds.JobVariable);
-    public bool CanUseStepResults => _contract.AllowsProvider(ValueProviderIds.StepResult)
-                                     && _sources.Any(source =>
-                                         _contract.FindPreferredProperty(source.ResultType.Properties) is not null);
+    public bool CanUseStepResults => _contract.AllowsProvider(ValueProviderIds.StepResult);
     public bool CanUseSecrets => _contract.AllowsProvider(ValueProviderIds.Secret)
                                  && _contract.AcceptedShapes.Any(shape => shape.ValueKind == ResultValueKind.Text);
     public bool CanUseExternalProviders => _providerSources.Any(source =>
@@ -138,6 +137,8 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
                                         && _contract.AllowsProvider(ValueProviderIds.JobVariable)
                                         && _contract.AcceptedShapes.Any(shape =>
                                             JobVariableEditorViewModel.SupportedKinds.Contains(shape.ValueKind));
+    public bool CanUseDirectValue => _contract.AllowsDirectValue
+                                     && _context?.CreateStepValue is not null;
     public bool IsConfigured => _missingReference is not null
                                 || _selectedProviderSource is not null
                                 || _selectedSource is not null && _selectedProperty is not null;
@@ -277,15 +278,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _selectedProperty = null;
         _selectedProviderSource = null;
         _missingReference = binding;
-        SetActiveSourceKind(binding.HasProviderReference
-            ? binding.ProviderId switch
-            {
-                ValueProviderIds.JobVariable => StepInputSourceKind.JobVariable,
-                ValueProviderIds.Secret => StepInputSourceKind.Secret,
-                ValueProviderIds.StepResult => StepInputSourceKind.StepResult,
-                _ => StepInputSourceKind.ExternalProvider
-            }
-            : StepInputSourceKind.StepResult);
+        SetActiveSourceKind(DefaultSourceKind());
         NotifySelection();
     }
 
@@ -598,6 +591,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private void UseDirectValue()
     {
+        if (!CanUseDirectValue) return;
         SetActiveSourceKind(StepInputSourceKind.Direct);
         var variable = _context?.CreateStepValue?.Invoke();
         if (variable is null || variable.Id == Guid.Empty) return;
@@ -614,6 +608,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     public void SelectSourceKind(StepInputSourceKind kind)
     {
+        if (!AllowsSourceKind(kind)) return;
         if (kind == StepInputSourceKind.Direct)
         {
             UseDirectValue();
@@ -688,8 +683,35 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     }
 
     private bool Accepts(ValueProviderSourceDescriptor source) =>
-        _contract.AllowsProvider(source.ProviderId)
-        && _contract.AcceptedShapes.Any(shape => shape.Accepts(source.ValueKind, source.Cardinality));
+        IsDirectStepValue(source)
+            ? _contract.AllowsDirectValue
+              && _contract.AcceptedShapes.Any(shape => shape.Accepts(source.ValueKind, source.Cardinality))
+            : _contract.AllowsProvider(source.ProviderId)
+              && _contract.AcceptedShapes.Any(shape => shape.Accepts(source.ValueKind, source.Cardinality));
+
+    private bool IsDirectStepValue(ValueProviderSourceDescriptor source) =>
+        string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        && _jobVariables.TryGetValue(source.SourceId, out var variable)
+        && variable.Scope == JobVariableScope.StepValue;
+
+    private bool AllowsSourceKind(StepInputSourceKind kind) => kind switch
+    {
+        StepInputSourceKind.Direct => CanUseDirectValue,
+        StepInputSourceKind.JobVariable => CanUseJobVariables,
+        StepInputSourceKind.StepResult => _contract.AllowsProvider(ValueProviderIds.StepResult),
+        StepInputSourceKind.Secret => CanUseSecrets,
+        StepInputSourceKind.ExternalProvider => CanUseExternalProviders,
+        _ => false
+    };
+
+    private StepInputSourceKind DefaultSourceKind()
+    {
+        if (_contract.AllowsDirectValue) return StepInputSourceKind.Direct;
+        if (_contract.AllowsProvider(ValueProviderIds.StepResult)) return StepInputSourceKind.StepResult;
+        if (_contract.AllowsProvider(ValueProviderIds.JobVariable)) return StepInputSourceKind.JobVariable;
+        if (_contract.AllowsProvider(ValueProviderIds.Secret)) return StepInputSourceKind.Secret;
+        return StepInputSourceKind.ExternalProvider;
+    }
 
     private bool MatchesSearch(params string?[] values) => string.IsNullOrWhiteSpace(SearchText)
         || values.Any(value => value?.Contains(SearchText.Trim(), StringComparison.CurrentCultureIgnoreCase) == true);

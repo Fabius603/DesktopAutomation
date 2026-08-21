@@ -15,16 +15,20 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class StepDefinitionCatalogTests
 {
     [Fact]
-    public void FileSystemEditor_DeclaresTwoIndependentChoiceGroups()
+    public void FileSystemEditor_UsesSingleDirectoryFieldsWithoutSourceModeDropdowns()
     {
-        var section = new FileSystemOperationStepDefinition().Descriptor.Presentation.EditorSections
-            .Single(candidate => candidate.Id == "general");
-        var groups = section.EditorNodes!.OfType<StepChoiceGroupDescriptor>().ToArray();
+        var definition = new FileSystemOperationStepDefinition();
+        var fields = definition.Descriptor.Fields;
+        var section = definition.Descriptor.Presentation.EditorSections.Single(candidate => candidate.Id == "general");
 
-        Assert.Equal(2, groups.Length);
-        Assert.Equal(FileSystemOperationStepDefinition.SourceModeFieldId, groups[0].SelectionFieldId);
-        Assert.Equal(FileSystemOperationStepDefinition.TargetModeFieldId, groups[1].SelectionFieldId);
-        Assert.All(groups, group => Assert.Equal(2, group.Branches.Count));
+        Assert.DoesNotContain(fields, field => field.Id is FileSystemOperationStepDefinition.SourceModeFieldId
+            or FileSystemOperationStepDefinition.SourceResultFieldId
+            or FileSystemOperationStepDefinition.TargetModeFieldId
+            or FileSystemOperationStepDefinition.TargetResultFieldId);
+        Assert.Empty(section.EditorNodes!.OfType<StepChoiceGroupDescriptor>());
+        Assert.All(fields.Where(field => field.Id is FileSystemOperationStepDefinition.SourcePathFieldId
+                or FileSystemOperationStepDefinition.TargetPathFieldId), field =>
+            Assert.Equal(StepEditorHints.DirectoryPicker, field.EditorHint));
     }
 
     [Fact]
@@ -41,34 +45,32 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void GeneratedEditor_KeepsMultipleChoiceGroupsIndependent()
+    public void ShowTextEditor_UsesOneUnifiedTextFieldWithoutSourceDropdown()
     {
-        var editor = new GeneratedStepEditorViewModel(new FileSystemOperationStepDefinition());
-        var groups = editor.Sections.Single(section => section.Descriptor.Id == "general")
-            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().ToArray();
+        var definition = new ShowTextStepDefinition();
+        var fields = definition.Descriptor.Fields;
+        var general = definition.Descriptor.Presentation.EditorSections.Single(section => section.Id == "general");
 
-        groups[0].SelectedBranch = groups[0].Branches[0];
-
-        Assert.Equal("ExplicitPath", groups[0].SelectedBranch.Value);
-        Assert.Equal("TaskResult", groups[1].SelectedBranch.Value);
-        Assert.Single(groups[0].SelectedBranch.Children);
-        Assert.Single(groups[1].SelectedBranch.Children);
+        Assert.DoesNotContain(fields, field => field.Id is ShowTextStepDefinition.TextSourceFieldId
+            or ShowTextStepDefinition.TextFieldId);
+        Assert.Contains(fields, field => field.Id == ShowTextStepDefinition.TextResultFieldId);
+        Assert.Empty(general.EditorNodes?.OfType<StepChoiceGroupDescriptor>() ?? []);
     }
 
     [Fact]
     public void Catalog_RejectsInvalidChoiceGroupStructure()
     {
-        var showText = new ShowTextStepDefinition();
-        var general = showText.Descriptor.Presentation.EditorSections[0];
-        var invalidGroup = new StepChoiceGroupDescriptor(ShowTextStepDefinition.TextSourceFieldId,
+        var pointComparison = new PointComparisonStepDefinition();
+        var general = pointComparison.Descriptor.Presentation.EditorSections[0];
+        var invalidGroup = new StepChoiceGroupDescriptor(PointComparisonStepDefinition.ReferenceSourceFieldId,
         [
-            new("ExplicitText", "Ui.Step.IfEditor.LiteralValue", [new StepFieldNodeDescriptor(ShowTextStepDefinition.TextFieldId)]),
-            new("ExplicitText", "Ui.Step.IfEditor.JobResultValue", [new StepFieldNodeDescriptor("missing")])
+            new("Manual", "Ui.Step.IfEditor.LiteralValue", [new StepFieldNodeDescriptor(PointComparisonStepDefinition.ReferenceXFieldId)]),
+            new("Manual", "Ui.Step.IfEditor.JobResultValue", [new StepFieldNodeDescriptor("missing")])
         ]);
-        var invalid = new DescriptorOverrideDefinition(showText, showText.Descriptor with
+        var invalid = new DescriptorOverrideDefinition(pointComparison, pointComparison.Descriptor with
         {
-            TypeId = "show_text_invalid_choice_group",
-            Presentation = showText.Descriptor.Presentation with
+            TypeId = "point_comparison_invalid_choice_group",
+            Presentation = pointComparison.Descriptor.Presentation with
             {
                 EditorSections = [general with { EditorNodes = [invalidGroup] }]
             }
@@ -79,39 +81,28 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void ExistingManualOrResultChoices_DeclareHierarchicalChoiceGroups()
+    public void RemainingManualOrResultChoice_DeclaresHierarchicalChoiceGroup()
     {
-        var fields = new[]
-        {
-            new ShowTextStepDefinition().Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextSourceFieldId),
-            new FileSystemOperationStepDefinition().Descriptor.Fields.Single(field => field.Id == FileSystemOperationStepDefinition.SourceModeFieldId),
-            new FileSystemOperationStepDefinition().Descriptor.Fields.Single(field => field.Id == FileSystemOperationStepDefinition.TargetModeFieldId),
-            new PointComparisonStepDefinition().Descriptor.Fields.Single(field => field.Id == PointComparisonStepDefinition.ReferenceSourceFieldId)
-        };
+        var field = new PointComparisonStepDefinition().Descriptor.Fields.Single(candidate =>
+            candidate.Id == PointComparisonStepDefinition.ReferenceSourceFieldId);
 
-        Assert.All(fields, field => Assert.Null(field.EditorHint));
-        Assert.All(fields, field => Assert.Equal(2, field.Options?.Count));
+        Assert.Null(field.EditorHint);
+        Assert.Equal(2, field.Options?.Count);
     }
 
     [Fact]
-    public void GeneratedChoiceGroup_PreservesManualValueWhileSwitchingSources()
+    public void ShowTextField_IsARequiredDirectCapableValueReference()
     {
-        var editor = new GeneratedStepEditorViewModel(
-            new ShowTextStepDefinition(),
-            new ShowTextStep { Settings = new ShowTextSettings { Text = "Beibehalten" } });
-        var manual = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextFieldId);
-        var result = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
-        var group = editor.Sections[0].Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+        var field = Assert.Single(new ShowTextStepDefinition().Descriptor.Fields,
+            candidate => candidate.Id == ShowTextStepDefinition.TextResultFieldId);
+        var contract = StepInputContractRegistry.Resolve(typeof(ShowTextStep), field);
 
-        Assert.True(manual.IsVisible);
-        Assert.False(result.IsVisible);
-        group.SelectedBranch = group.Branches[1];
-        Assert.False(manual.IsVisible);
-        Assert.True(result.IsVisible);
-        group.SelectedBranch = group.Branches[0];
-
-        Assert.Equal("Beibehalten", manual.InputText);
-        Assert.True(manual.IsVisible);
+        Assert.True(field.Required);
+        Assert.True(field.AllowsDirectValue);
+        Assert.True(contract.AllowsDirectValue);
+        Assert.True(contract.AllowsProvider(ValueProviderIds.JobVariable));
+        Assert.True(contract.AllowsProvider(ValueProviderIds.StepResult));
+        Assert.False(contract.AllowsProvider(ValueProviderIds.Secret));
     }
 
     [Fact]
@@ -145,21 +136,11 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void ChoiceGroupStructure_DeterminesWhichBranchFieldsAreActive()
+    public void ShowTextDefinition_RequiresItsUnifiedTextBinding()
     {
         var definition = new ShowTextStepDefinition();
-        var text = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextFieldId);
-        var result = definition.Descriptor.Fields.Single(field => field.Id == ShowTextStepDefinition.TextResultFieldId);
         var draft = definition.CreateDraft();
-        draft.Values[ShowTextStepDefinition.TextSourceFieldId] = JsonValue.Create("ExplicitText");
-        draft.Values[ShowTextStepDefinition.TextFieldId] = JsonValue.Create("Visible text");
         draft.Values[ShowTextStepDefinition.TextResultFieldId] = null;
-
-        Assert.Null(text.VisibleWhen);
-        Assert.Null(result.VisibleWhen);
-        Assert.Empty(definition.ValidateDraft(draft));
-
-        draft.Values[ShowTextStepDefinition.TextSourceFieldId] = JsonValue.Create("TaskResult");
 
         Assert.Contains(definition.ValidateDraft(draft), issue =>
             issue.FieldId == ShowTextStepDefinition.TextResultFieldId
@@ -331,6 +312,170 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(field.SupportsDirectValue);
         Assert.True(field.ShowsDirectInput);
         Assert.False(field.ShowsInputSourcePicker);
+    }
+
+    [Fact]
+    public void AddStepDialog_UsesTheFieldSpecificSourcePolicy()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+
+        viewModel.SelectedType = "CameraCapture";
+        var camera = Assert.Single(viewModel.GeneratedEditor!.Fields);
+        Assert.True(camera.SupportsDirectValue);
+        Assert.True(camera.InputReferenceEditor!.Picker.IsDirectSource);
+        Assert.True(camera.InputReferenceEditor.Picker.IsConfigured);
+        Assert.False(camera.InputReferenceEditor.Picker.CanUseJobVariables);
+        Assert.False(camera.InputReferenceEditor.Picker.CanUseSecrets);
+
+        viewModel.SelectedType = "DynamicRoi";
+        var bounds = viewModel.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == DynamicRoiStepDefinition.BoundsSourceFieldId);
+        var padding = viewModel.GeneratedEditor.Fields.Single(field =>
+            field.Descriptor.Id == DynamicRoiStepDefinition.PaddingSourceFieldId);
+        Assert.False(bounds.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.False(bounds.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.True(bounds.InputReferenceEditor.Picker.IsStepResultSource);
+        Assert.True(padding.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.True(padding.InputReferenceEditor.Picker.CanUseStepResults);
+        Assert.False(padding.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.True(padding.InputReferenceEditor.Picker.IsDirectSource);
+        Assert.Equal(0, padding.IntegerValue);
+        Assert.False(padding.UsesValueReferencePicker);
+        Assert.True(padding.UsesTextInput);
+
+        viewModel.SelectedType = "PredictMovement";
+        var points = viewModel.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == PredictMovementStepDefinition.PointsSourceFieldId);
+        var model = viewModel.GeneratedEditor.Fields.Single(field =>
+            field.Descriptor.Id == PredictMovementStepDefinition.PredictionModelFieldId);
+        var confidence = viewModel.GeneratedEditor.Fields.Single(field =>
+            field.Descriptor.Id == PredictMovementStepDefinition.MinimumConfidenceFieldId);
+        Assert.False(points.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.False(points.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.True(model.SupportsDirectValue);
+        Assert.False(model.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.False(model.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.True(model.InputReferenceEditor.Picker.IsDirectSource);
+        Assert.True(confidence.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.False(confidence.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.True(confidence.InputReferenceEditor.Picker.IsDirectSource);
+
+        foreach (var stepType in new[] { "KlickOnPoint", "KlickOnPoint3D" })
+        {
+            viewModel.SelectedType = stepType;
+            var point = viewModel.GeneratedEditor!.Fields.Single(field =>
+                field.Descriptor.Id == (stepType == "KlickOnPoint"
+                    ? KlickOnPointStepDefinition.PointsSourceFieldId
+                    : KlickOnPoint3DStepDefinition.PointsSourceFieldId));
+            Assert.True(point.InputReferenceEditor!.Picker.IsDirectSource);
+            Assert.False(point.UsesValueReferencePicker);
+            Assert.True(point.UsesTextInput);
+            Assert.True(point.InputReferenceEditor.Picker.CanUseJobVariables);
+            Assert.True(point.InputReferenceEditor.Picker.CanUseStepResults);
+            Assert.False(point.InputReferenceEditor.Picker.CanUseSecrets);
+        }
+
+        viewModel.SelectedType = "FileSystemOperation";
+        foreach (var id in new[]
+                 {
+                     FileSystemOperationStepDefinition.SourcePathFieldId,
+                     FileSystemOperationStepDefinition.TargetPathFieldId
+                 })
+        {
+            var path = viewModel.GeneratedEditor!.Fields.Single(field => field.Descriptor.Id == id);
+            Assert.True(path.UsesDirectoryPicker);
+            Assert.True(path.InputReferenceEditor!.Picker.IsDirectSource);
+            Assert.True(path.InputReferenceEditor.Picker.CanUseJobVariables);
+            Assert.True(path.InputReferenceEditor.Picker.CanUseStepResults);
+            Assert.False(path.InputReferenceEditor.Picker.CanUseSecrets);
+        }
+
+        viewModel.SelectedType = "ShowText";
+        var displayText = viewModel.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
+        Assert.True(displayText.InputReferenceEditor!.Picker.IsDirectSource);
+        Assert.False(displayText.UsesValueReferencePicker);
+        Assert.True(displayText.UsesTextInput);
+        Assert.True(displayText.InputReferenceEditor.Picker.CanUseJobVariables);
+        Assert.True(displayText.InputReferenceEditor.Picker.CanUseStepResults);
+        Assert.False(displayText.InputReferenceEditor.Picker.CanUseSecrets);
+
+        viewModel.SelectedType = "YOLODetection";
+        var yolo = viewModel.GeneratedEditor!.Fields.Single(field => field.YoloEditor is not null).YoloEditor!;
+        foreach (var field in new[] { yolo.ModelField!, yolo.ClassField! })
+        {
+            Assert.True(field.InputReferenceEditor!.Picker.IsDirectSource);
+            Assert.False(field.InputReferenceEditor.Picker.CanUseJobVariables);
+            Assert.False(field.InputReferenceEditor.Picker.CanUseStepResults);
+            Assert.False(field.InputReferenceEditor.Picker.CanUseSecrets);
+        }
+    }
+
+    [Fact]
+    public void ValueReferencePicker_DoesNotUseDisallowedLegacyBindingAsDefaultSource()
+    {
+        var legacyDirectValue = new JobVariable
+        {
+            Scope = JobVariableScope.StepValue,
+            ValueKind = ResultValueKind.Rectangle,
+            Value = new JsonObject { ["x"] = 1, ["y"] = 2, ["width"] = 3, ["height"] = 4 }
+        };
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "bounds")!;
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, [legacyDirectValue], context: new ValueReferencePickerContext(
+                "Dynamic region", "Detection result", CreateStepValue: () => legacyDirectValue));
+
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = legacyDirectValue.Id.ToString("D")
+        });
+
+        Assert.True(picker.HasMissingReference);
+        Assert.True(picker.IsStepResultSource);
+        Assert.False(picker.UseDirectValueCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void AddStepDialog_EveryFieldStartsWithAnEnabledAllowedSourceKind()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        var stepTypes = AddJobStepDialogViewModel.CreateStepTypeItems(BuiltInStepDefinitions.Instance)
+            .Cast<AddJobStepDialogViewModel.StepTypeItem>()
+            .Select(item => item.Name)
+            .ToArray();
+
+        foreach (var stepType in stepTypes)
+        {
+            viewModel.SelectedType = stepType;
+            foreach (var field in viewModel.GeneratedEditor!.Fields)
+            {
+                var picker = field.InputReferenceEditor!.Picker;
+                var hasAllowedSource = picker.CanUseDirectValue
+                                       || picker.CanUseJobVariables
+                                       || picker.CanUseStepResults
+                                       || picker.CanUseSecrets
+                                       || picker.CanUseExternalProviders;
+                Assert.True(hasAllowedSource,
+                    $"{stepType}.{field.Descriptor.Id} has no enabled source kind.");
+
+                var activeSourceIsAllowed = picker.ActiveSourceKind switch
+                {
+                    StepInputSourceKind.Direct => picker.CanUseDirectValue,
+                    StepInputSourceKind.JobVariable => picker.CanUseJobVariables,
+                    StepInputSourceKind.StepResult => picker.CanUseStepResults,
+                    StepInputSourceKind.Secret => picker.CanUseSecrets,
+                    StepInputSourceKind.ExternalProvider => picker.CanUseExternalProviders,
+                    _ => false
+                };
+                Assert.True(activeSourceIsAllowed,
+                    $"{stepType}.{field.Descriptor.Id} starts with disabled source {picker.ActiveSourceKind}.");
+            }
+        }
     }
 
     [Fact]
@@ -1160,7 +1305,7 @@ public sealed class StepDefinitionCatalogTests
                     SourceStepId = "detection",
                     PropertyId = "bounds"
                 },
-                Padding = 35,
+                PaddingSource = ResultBinding.ForStepResult("padding", "value"),
                 MinimumConfidence = 0.75,
                 FullSearchInterval = 8,
                 ResetAfterMisses = 4
@@ -1178,7 +1323,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(StepValueKind.ResultBinding, paddingField.ValueKind);
         Assert.Equal("padding", paddingField.InputContractId);
         Assert.Equal("detection", updated.Settings.BoundsSource.SourceStepId);
-        Assert.Equal(35, updated.Settings.Padding);
+        Assert.Equal("padding", updated.Settings.PaddingSource.SourceStepId);
         Assert.Equal(0.75, updated.Settings.MinimumConfidence);
 
         draft.Values[DynamicRoiStepDefinition.MinimumConfidenceFieldId] =
@@ -1264,7 +1409,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void FileSystemOperationDefinition_RoundTripsResultSourcesAndValidatesOperationSpecificFields()
+    public void FileSystemOperationDefinition_RoundTripsUnifiedDirectoryPathsAndValidatesOperationSpecificFields()
     {
         var definition = new FileSystemOperationStepDefinition();
         var existing = new FileSystemOperationStep
@@ -1272,8 +1417,8 @@ public sealed class StepDefinitionCatalogTests
             Settings = new FileSystemOperationSettings
             {
                 Operation = FileSystemOperation.Move,
-                SourceMode = FileSystemPathSource.TaskResult,
-                SourceResult = new ResultBinding { SourceStepId = "source", PropertyId = "path" },
+                SourceMode = FileSystemPathSource.ExplicitPath,
+                SourcePath = @"C:\Source",
                 TargetMode = FileSystemPathSource.ExplicitPath,
                 TargetPath = @"C:\Target",
                 CreateParentDirectories = false,
@@ -1288,7 +1433,8 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Empty(definition.ValidateDraft(draft));
         Assert.Equal(FileSystemOperation.Move, updated.Settings.Operation);
-        Assert.Equal("source", updated.Settings.SourceResult.SourceStepId);
+        Assert.Equal(@"C:\Source", updated.Settings.SourcePath);
+        Assert.False(updated.Settings.SourceResult.IsConfigured);
         Assert.Equal(@"C:\Target", updated.Settings.TargetPath);
         Assert.False(updated.Settings.CreateParentDirectories);
         Assert.Equal(7, updated.Settings.RetryCount);
@@ -2046,9 +2192,7 @@ public sealed class StepDefinitionCatalogTests
 
         explicitPath.Settings.SourceMode = FileSystemPathSource.TaskResult;
         explicitPath.Settings.SourceResult = Binding("source", "Value");
-        var input = Assert.Single(fileSystem.GetInputBindings(explicitPath));
-        Assert.Equal("source", input.ContractId);
-        Assert.Equal("source", input.Binding.SourceStepId);
+        Assert.Empty(fileSystem.GetInputBindings(explicitPath));
 
         IStepDefinition comparison = new PointComparisonStepDefinition();
         var points = new PointComparisonStep
@@ -2477,6 +2621,7 @@ public sealed class StepDefinitionCatalogTests
         var source = new SourceStepItem("detection", "Detection", resultType);
         var padding = new JobVariable
         {
+            Scope = JobVariableScope.Shared,
             Name = "ROI padding",
             ValueKind = ResultValueKind.Integer,
             Value = System.Text.Json.Nodes.JsonValue.Create(12)
@@ -2523,7 +2668,12 @@ public sealed class StepDefinitionCatalogTests
             Cardinality = ResultCardinality.Single,
             Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
         };
-        var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
+        var contract = new StepInputDescriptor(
+            "point", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
+            new AcceptedResultShape(ResultValueKind.Point, ResultCardinality.Single))
+        {
+            AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
+        };
         var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
         picker.UseJobVariableCommand.Execute(null);
 
@@ -2562,12 +2712,11 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void ValueReferencePicker_SelectsCompatibleSecretAsProviderReference()
+    public void ValueReferencePicker_DoesNotOfferSecretsForStepInputs()
     {
-        var secretId = Guid.NewGuid();
         var secret = new ValueProviderSourceDescriptor(
             ValueProviderIds.Secret,
-            secretId.ToString("D"),
+            Guid.NewGuid().ToString("D"),
             "API token",
             string.Empty,
             ResultValueKind.Text,
@@ -2575,42 +2724,13 @@ public sealed class StepDefinitionCatalogTests
             IsSensitive: true);
         var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
         var picker = new ValueReferencePickerViewModel(
-            [], contract, selectDefault: false, providerSources: [secret]);
-        picker.UseSecretCommand.Execute(null);
+            [], contract, selectDefault: false, providerSources: [secret],
+            context: new ValueReferencePickerContext("Show text", "Text", CreateSecret: () => secret));
 
-        var secretNode = picker.SelectionTree.Single(node => node.DisplayName == secret.Name);
-        secretNode.SelectCommand!.Execute(null);
-
-        Assert.Equal(ValueProviderIds.Secret, picker.ToBinding().ProviderId);
-        Assert.Equal(secretId.ToString("D"), picker.ToBinding().SourceId);
-        Assert.Equal("••••••••", picker.SelectedPreviewValue);
-    }
-
-    [Fact]
-    public void ValueReferencePicker_CreatesSecretInsideSecretSourceAndSelectsIt()
-    {
-        var created = new ValueProviderSourceDescriptor(
-            ValueProviderIds.Secret,
-            Guid.NewGuid().ToString("D"),
-            "New token",
-            "Created from the step field",
-            ResultValueKind.Text,
-            ResultCardinality.Single,
-            IsSensitive: true);
-        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
-        var picker = new ValueReferencePickerViewModel(
-            [], contract, selectDefault: false,
-            context: new ValueReferencePickerContext("Show text", "Text", CreateSecret: () => created));
-
-        picker.UseSecretCommand.Execute(null);
-        picker.CreateSecretCommand.Execute(null);
-
-        Assert.True(picker.IsSecretSource);
-        Assert.Equal(created.SourceId, picker.ToBinding().SourceId);
-        Assert.Equal(created.Name, picker.SelectedPropertyName);
-        Assert.Equal("••••••••", picker.SelectedPreviewValue);
-        Assert.Contains(picker.SelectionTree,
-            node => node.DisplayName == created.Name && node.IsSelected);
+        Assert.False(picker.CanUseSecrets);
+        Assert.False(picker.UseSecretCommand.CanExecute(null));
+        Assert.False(picker.CanCreateSecret);
+        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == secret.Name);
     }
 
     [Fact]
@@ -2761,6 +2881,24 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void JobVariableEditor_OffersOnlySimpleVariableTypesButKeepsLegacyTypesReadable()
+    {
+        Assert.DoesNotContain(ResultValueKind.ResultObject, JobVariableEditorViewModel.SupportedKinds);
+        Assert.DoesNotContain(ResultValueKind.Detection, JobVariableEditorViewModel.SupportedKinds);
+        Assert.DoesNotContain(ResultValueKind.ProcessReference, JobVariableEditorViewModel.SupportedKinds);
+
+        var legacyVariable = new JobVariable
+        {
+            ValueKind = ResultValueKind.ResultObject,
+            Value = new System.Text.Json.Nodes.JsonObject { ["value"] = 42 }
+        };
+        var editor = new JobVariableEditorViewModel(legacyVariable, () => { });
+
+        Assert.Equal(ResultValueKind.ResultObject, editor.SelectedKind.Kind);
+        Assert.Equal(42, legacyVariable.Value!["value"]!.GetValue<int>());
+    }
+
+    [Fact]
     public void ValueReferencePicker_RespectsProviderRestrictionsAndExplainsHiddenValues()
     {
         var secret = new ValueProviderSourceDescriptor(
@@ -2786,13 +2924,13 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void NewDataInputEditors_DefaultToReferencesWhileLegacyModelsKeepLiteralDefaults()
+    public void UnifiedDataInputEditors_DefaultToDirectValuesWhileLegacyModelsKeepLiteralDefaults()
     {
         Assert.Equal(ShowTextSource.TaskResult,
             new ShowTextStepDefinition().CreateDefaultStep().Settings.TextSource);
         var fileSystem = new FileSystemOperationStepDefinition().CreateDefaultStep();
-        Assert.Equal(FileSystemPathSource.TaskResult, fileSystem.Settings.SourceMode);
-        Assert.Equal(FileSystemPathSource.TaskResult, fileSystem.Settings.TargetMode);
+        Assert.Equal(FileSystemPathSource.ExplicitPath, fileSystem.Settings.SourceMode);
+        Assert.Equal(FileSystemPathSource.ExplicitPath, fileSystem.Settings.TargetMode);
 
         var owner = new System.Collections.ObjectModel.ObservableCollection<PointEntryViewModel>();
         Assert.Equal(PointEntrySource.Manual, new PointEntryViewModel(owner, []).Source);
@@ -2802,7 +2940,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void PointEntryAndVisualOverlayEditors_ExposeCompatibleJobVariables()
+    public void CalculatedPointAndOverlayInputs_DoNotOfferJobVariables()
     {
         var pointVariable = new JobVariable
         {
@@ -2812,9 +2950,10 @@ public sealed class StepDefinitionCatalogTests
             Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
         };
         var pointEditor = new GeneratedPointEntryListEditorViewModel(null, [], [pointVariable]);
-        var pointBinding = Assert.Single(pointEditor.Points).PointsSource.ToBinding();
-        Assert.Equal(ValueProviderIds.JobVariable, pointBinding.ProviderId);
-        Assert.Equal(pointVariable.Id.ToString("D"), pointBinding.SourceId);
+        var pointSource = Assert.Single(pointEditor.Points).PointsSource;
+        Assert.False(pointSource.CanUseJobVariables);
+        Assert.False(pointSource.CanUseSecrets);
+        Assert.False(pointSource.ToBinding().IsConfigured);
 
         var detectionContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
         var textContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!;
@@ -2822,12 +2961,10 @@ public sealed class StepDefinitionCatalogTests
             null, [], detectionContract, textContract, false, variables: [pointVariable]);
         overlay.AddOverlayDetectionCommand.Execute(null);
         var row = Assert.Single(overlay.OverlayDetectionRows);
-        row.Source.UseJobVariableCommand.Execute(null);
-        var variableNode = row.Source.SelectionTree
-            .Single(node => node.DisplayName == pointVariable.Name);
-        variableNode.SelectCommand!.Execute(null);
 
-        Assert.Equal(ValueProviderIds.JobVariable, row.Source.ToBinding().ProviderId);
+        Assert.False(row.Source.CanUseJobVariables);
+        Assert.False(row.Source.CanUseSecrets);
+        Assert.False(row.Source.ToBinding().IsConfigured);
     }
 
     [Fact]
@@ -2920,10 +3057,6 @@ public sealed class StepDefinitionCatalogTests
     public void GeneratedEditor_UpdatesConditionalFileSystemFieldsAndCreatesMoveStep()
     {
         var editor = new GeneratedStepEditorViewModel(new FileSystemOperationStepDefinition());
-        var sourceGroups = editor.Sections.Single(section => section.Descriptor.Id == "general")
-            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().ToArray();
-        sourceGroups[0].SelectedBranch = sourceGroups[0].Branches[0];
-        sourceGroups[1].SelectedBranch = sourceGroups[1].Branches[0];
         var operation = editor.Fields.Single(field =>
             field.Descriptor.Id == FileSystemOperationStepDefinition.OperationFieldId);
         var sourcePath = editor.Fields.Single(field =>
@@ -2933,7 +3066,8 @@ public sealed class StepDefinitionCatalogTests
         var newName = editor.Fields.Single(field =>
             field.Descriptor.Id == FileSystemOperationStepDefinition.NewNameFieldId);
 
-        Assert.True(sourcePath.UsesFileOrFolderPicker);
+        Assert.True(sourcePath.UsesDirectoryPicker);
+        Assert.True(targetPath.UsesDirectoryPicker);
         Assert.True(targetPath.IsVisible);
         Assert.False(newName.IsVisible);
         operation.SelectedEnumOption = operation.EnumOptions.Single(option => option.Value == "Rename");
@@ -2953,27 +3087,40 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void GeneratedEditor_CreatesShowTextWithMultilineAndColorFields()
+    public void AddStepDialog_CreatesShowTextFromUnifiedDirectTextField()
     {
-        var editor = new GeneratedStepEditorViewModel(new ShowTextStepDefinition());
-        var sourceGroup = editor.Sections[0].Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
-        sourceGroup.SelectedBranch = sourceGroup.Branches[0];
-        var text = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextFieldId);
+        var createdVariables = new List<JobVariable>();
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            jobVariableCreated: createdVariables.Add);
+        viewModel.SelectedType = "ShowText";
+        var editor = viewModel.GeneratedEditor!;
+        var text = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
         var color = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.FontColorFieldId);
         var monitor = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.DesktopFieldId);
 
-        Assert.True(text.UsesMultilineTextInput);
+        Assert.True(text.ShowsDirectInput);
+        Assert.True(text.InputReferenceEditor!.Picker.CanUseJobVariables);
+        Assert.True(text.InputReferenceEditor.Picker.CanUseStepResults);
+        Assert.False(text.InputReferenceEditor.Picker.CanUseSecrets);
         Assert.True(color.UsesColorPicker);
         Assert.True(monitor.UsesMonitorPicker);
         text.InputText = "First line\nSecond line";
         color.ColorValue = System.Windows.Media.Color.FromRgb(0x12, 0x34, 0x56);
         monitor.IntegerValue = 1;
 
-        Assert.True(editor.TryCreateStep(out var created));
-        var showText = Assert.IsType<ShowTextStep>(created);
-        Assert.Equal("First line\nSecond line", showText.Settings.Text);
-        Assert.Equal("#123456", showText.Settings.FontColor);
-        Assert.Equal(1, showText.Settings.DesktopIndex);
+        viewModel.ConfirmCommand.Execute(null);
+        var showText = Assert.IsType<ShowTextStep>(viewModel.CreatedStep);
+        var textVariable = Assert.Single(createdVariables, variable =>
+            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.TextResultFieldId].SourceId);
+        var colorVariable = Assert.Single(createdVariables, variable =>
+            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.FontColorFieldId].SourceId);
+        var monitorVariable = Assert.Single(createdVariables, variable =>
+            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.DesktopFieldId].SourceId);
+        Assert.Equal("First line\nSecond line", textVariable.Value!.GetValue<string>());
+        Assert.Equal("#123456", colorVariable.Value!.GetValue<string>());
+        Assert.Equal(1, monitorVariable.Value!.GetValue<int>());
     }
 
     [Fact]

@@ -157,7 +157,9 @@ public static class JobValidation
             && definition.Descriptor.Fields.All(field =>
                 step.Inputs.TryGetValue(field.Id, out var reference) && reference.IsConfigured))
             return null;
-        var hasError = definition.ValidateDraft(definition.CreateDraft(step))
+        var draft = definition.CreateDraft(step);
+        SupplyLegacyValuesForUnifiedFields(step, draft);
+        var hasError = definition.ValidateDraft(draft)
             .Any(issue => issue.Severity == StepValidationSeverity.Error);
         return hasError ? invalid : null;
     }
@@ -233,10 +235,7 @@ public static class JobValidation
         {
             var key = field.Id;
             var binding = step.Inputs.GetValueOrDefault(key) ?? new ResultBinding();
-            var contract = !string.IsNullOrWhiteSpace(field.InputContractId)
-                ? StepInputContractRegistry.Get(step.GetType(), field.InputContractId)
-                : StepInputContractRegistry.ForField(field);
-            if (contract is null) return $"Für die Eingabe '{key}' fehlt der Backend-Vertrag.";
+            var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
             if (!binding.IsConfigured)
             {
                 return $"Für die Eingabe '{key}' wurde keine Variable ausgewählt.";
@@ -248,6 +247,12 @@ public static class JobValidation
                 var providerSource = ResolveProviderSource(variables, providerSources, binding);
                 if (providerSource is null)
                     return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
+                var directValue = string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+                                  && Guid.TryParse(binding.SourceId, out var variableId)
+                                  && variables.FirstOrDefault(variable => variable.Id == variableId)?.Scope
+                                  == JobVariableScope.StepValue;
+                if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
+                    return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
                 if (!contract.AcceptedShapes.Any(shape =>
                         shape.Accepts(providerSource.ValueKind, providerSource.Cardinality)))
                     return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
@@ -275,7 +280,24 @@ public static class JobValidation
         IReadOnlyList<JobVariable> variables,
         IReadOnlyList<ValueProviderSourceDescriptor> providerSources)
     {
-        foreach (var configuredInput in definition.GetInputBindings(step))
+        var configuredInputs = definition.GetInputBindings(step).ToList();
+        if (step is FileSystemOperationStep fileSystem)
+        {
+            if (fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult)
+            {
+                if (!fileSystem.Settings.SourceResult.IsConfigured)
+                    return "Für die Eingabe 'source' wurde keine Ergebnis-Eigenschaft ausgewählt.";
+                configuredInputs.Add(new StepInputBinding("source", fileSystem.Settings.SourceResult));
+            }
+            if (fileSystem.Settings.Operation is FileSystemOperation.Copy or FileSystemOperation.Move
+                && fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult)
+            {
+                if (!fileSystem.Settings.TargetResult.IsConfigured)
+                    return "Für die Eingabe 'target' wurde keine Ergebnis-Eigenschaft ausgewählt.";
+                configuredInputs.Add(new StepInputBinding("target", fileSystem.Settings.TargetResult));
+            }
+        }
+        foreach (var configuredInput in configuredInputs)
         {
             var key = configuredInput.ContractId;
             var binding = configuredInput.Binding;
@@ -293,6 +315,12 @@ public static class JobValidation
                 var providerSource = ResolveProviderSource(variables, providerSources, binding);
                 if (providerSource is null)
                     return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
+                var directValue = string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+                                  && Guid.TryParse(binding.SourceId, out var variableId)
+                                  && variables.FirstOrDefault(variable => variable.Id == variableId)?.Scope
+                                  == JobVariableScope.StepValue;
+                if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
+                    return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
                 if (!contract.AcceptedShapes.Any(shape =>
                         shape.Accepts(providerSource.ValueKind, providerSource.Cardinality)))
                     return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
@@ -311,9 +339,48 @@ public static class JobValidation
     }
 
     private static bool HasReadableLegacyInput(JobStep step, string contractId) =>
-        step is DynamicRoiStep dynamicRoi
-        && string.Equals(contractId, "padding", StringComparison.Ordinal)
-        && dynamicRoi.Settings.Padding >= 0;
+        step switch
+        {
+            DynamicRoiStep dynamicRoi when string.Equals(contractId, "padding", StringComparison.Ordinal)
+                => dynamicRoi.Settings.Padding >= 0,
+            ShowTextStep showText when string.Equals(contractId, "text", StringComparison.Ordinal)
+                => showText.Settings.TextSource == ShowTextSource.ExplicitText
+                   && !string.IsNullOrWhiteSpace(showText.Settings.Text),
+            _ => false
+        };
+
+    private static void SupplyLegacyValuesForUnifiedFields(JobStep step, StepDraft draft)
+    {
+        if (step is FileSystemOperationStep fileSystem)
+        {
+            if (fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult
+                && fileSystem.Settings.SourceResult.IsConfigured)
+                draft.Values[FileSystemOperationStepDefinition.SourcePathFieldId] =
+                    System.Text.Json.Nodes.JsonValue.Create("legacy-result");
+            if (fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult
+                && fileSystem.Settings.TargetResult.IsConfigured)
+                draft.Values[FileSystemOperationStepDefinition.TargetPathFieldId] =
+                    System.Text.Json.Nodes.JsonValue.Create("legacy-result");
+        }
+        if (step is ShowTextStep showText
+            && showText.Settings.TextSource == ShowTextSource.ExplicitText
+            && !string.IsNullOrWhiteSpace(showText.Settings.Text))
+            draft.Values[ShowTextStepDefinition.TextResultFieldId] =
+                System.Text.Json.JsonSerializer.SerializeToNode(new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = Guid.Empty.ToString("D")
+                });
+        if (step is DynamicRoiStep dynamicRoi
+            && dynamicRoi.Settings.PaddingSource.IsConfigured == false
+            && dynamicRoi.Settings.Padding >= 0)
+            draft.Values[DynamicRoiStepDefinition.PaddingSourceFieldId] =
+                System.Text.Json.JsonSerializer.SerializeToNode(new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = Guid.Empty.ToString("D")
+                });
+    }
 
     private static ValueProviderSourceDescriptor? ResolveProviderSource(
         IReadOnlyList<JobVariable> variables,

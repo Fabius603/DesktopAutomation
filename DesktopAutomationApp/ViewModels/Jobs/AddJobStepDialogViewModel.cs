@@ -439,10 +439,11 @@ namespace DesktopAutomationApp.ViewModels
             StepFieldDescriptor field,
             ResultBinding? binding)
         {
-            var contract = StepInputContractRegistry.ForField(field);
-            if (binding?.IsConfigured != true && field.ValueKind != StepValueKind.ResultBinding)
+            var contract = StepInputContractRegistry.Resolve(definition.StepType, field);
+            if (binding?.IsConfigured != true
+                && (field.ValueKind != StepValueKind.ResultBinding || contract.AllowsDirectValue))
             {
-                var variable = CreateDraftStepVariable(definition, field);
+                var variable = CreateDraftStepVariable(definition, field, contract);
                 binding = new ResultBinding
                 {
                     ProviderId = ValueProviderIds.JobVariable,
@@ -455,23 +456,31 @@ namespace DesktopAutomationApp.ViewModels
                 picker);
         }
 
-        private JobVariable CreateDraftStepVariable(IStepDefinition definition, StepFieldDescriptor field)
+        private JobVariable CreateDraftStepVariable(
+            IStepDefinition definition,
+            StepFieldDescriptor field,
+            StepInputDescriptor? contract = null)
         {
             var stem = $"{Loc.Get(definition.Descriptor.DisplayNameKey)} · {Loc.Get(field.LabelKey)}";
             var names = CurrentVariables().Select(variable => variable.Name)
                 .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             var name = stem;
             for (var suffix = 2; names.Contains(name); suffix++) name = $"{stem} {suffix}";
+            contract ??= StepInputContractRegistry.Resolve(definition.StepType, field);
+            var shape = field.ValueKind == StepValueKind.ResultBinding
+                ? contract.AcceptedShapes.FirstOrDefault()
+                : null;
             var variable = new JobVariable
             {
                 Name = name,
                 Description = Loc.Format("Ui.Job.Variables.StepValue.Description",
                     Loc.Get(field.LabelKey), Loc.Get(definition.Descriptor.DisplayNameKey)),
                 Scope = JobVariableScope.StepValue,
-                ValueKind = JobVariableInputMigration.MapKind(field.ValueKind),
-                Cardinality = field.ValueKind == StepValueKind.Collection
-                    ? ResultCardinality.Collection
-                    : ResultCardinality.Single,
+                ValueKind = shape?.ValueKind ?? JobVariableInputMigration.MapKind(field.ValueKind),
+                Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
+                              ?? (field.ValueKind == StepValueKind.Collection
+                                  ? ResultCardinality.Collection
+                                  : ResultCardinality.Single),
                 Value = field.DefaultValue?.DeepClone()
             };
             _draftStepVariables.Add(variable);
@@ -541,6 +550,8 @@ namespace DesktopAutomationApp.ViewModels
         {
             var descriptor = new StepFieldDescriptor(key, owner.LabelKey, kind, DefaultValue: literal?.DeepClone());
             var contract = StepInputContractRegistry.ForField(descriptor);
+            if (string.Equals(owner.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
+                contract = contract with { AllowedProviderIds = new HashSet<string>() };
             JobVariable CreateStepValue() => CreateDraftNestedVariable(definition, owner, key, kind, literal);
             var stepName = Loc.Get(definition.Descriptor.DisplayNameKey);
             var fieldName = key[(key.LastIndexOf('.') + 1)..].Replace('_', ' ');

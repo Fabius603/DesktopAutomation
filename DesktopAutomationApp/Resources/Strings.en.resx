@@ -484,7 +484,7 @@
     <value>Downscale factor</value>
   </data>
   <data name="Ui.Step.Settings.DetectionStep" xml:space="preserve">
-    <value>Value reference</value>
+    <value>Detection result</value>
   </data>
   <data name="Ui.Step.Settings.MinValues" xml:space="preserve">
     <value>Minimum sample count</value>
@@ -1588,7 +1588,7 @@ Error code: {3}</value>
     <value>Predict movement</value>
   </data>
   <data name="Step.Type.KlickOnPoint" xml:space="preserve">
-    <value>Click detected point</value>
+    <value>Click point</value>
   </data>
   <data name="Step.Type.KlickOnPoint3D" xml:space="preserve">
     <value>Click 3D target</value>
@@ -1669,7 +1669,7 @@ Error code: {3}</value>
     <value>Detects objects with a YOLO model and stores their position.</value>
   </data>
   <data name="Step.Description.KlickOnPoint" xml:space="preserve">
-    <value>Clicks the most recently detected image point.</value>
+    <value>Clicks a directly entered or referenced point.</value>
   </data>
   <data name="Step.Description.KlickOnPoint3D" xml:space="preserve">
     <value>Moves the pointer to a target using an FOV calculation and clicks it.</value>
@@ -2227,7 +2227,7 @@ Error code: {3}</value>
   <data name="Enum.WindowsEventCategory.WindowsUpdate" xml:space="preserve"><value>Windows updates</value></data>
   <data name="Enum.WindowsEventCategory.SystemLifecycle" xml:space="preserve"><value>Startup and shutdown</value></data>
   <data name="Ui.Step.Settings.TextSource" xml:space="preserve"><value>Text source</value></data>
-  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Value reference</value></data>
+  <data name="Ui.Step.Settings.TaskResult" xml:space="preserve"><value>Text result</value></data>
   <data name="Enum.AutomationTriggerKind.Webhook" xml:space="preserve"><value>Webhook</value></data>
   <data name="Enum.WebhookNetworkMode.Offline" xml:space="preserve"><value>Offline (this PC only)</value></data>
   <data name="Enum.WebhookNetworkMode.Lan" xml:space="preserve"><value>LAN</value></data>

@@ -39,7 +39,7 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
                 VisibleWhen: OffsetMode),
             new(ReferenceYFieldId, "Ui.Step.Settings.Y", StepValueKind.Integer, DefaultValue: JsonValue.Create(0), Order: 5,
                 VisibleWhen: OffsetMode),
-            new(ReferencePointsFieldId, "Ui.Step.Settings.DetectionStep", StepValueKind.ResultBinding, Required: true,
+            new(ReferencePointsFieldId, "Ui.Step.Settings.PointSource", StepValueKind.ResultBinding, Required: true,
                 EditorHint: StepEditorHints.ValueReferencePicker, Order: 6, InputContractId: "points",
                 VisibleWhen: OffsetMode),
             new(OffsetXFieldId, "Ui.Step.Settings.XOffsetPixels", StepValueKind.Integer, DefaultValue: JsonValue.Create(10),

@@ -19,8 +19,11 @@ public sealed class JobVariableInputMigrationTests
             Assert.True(JobVariableInputMigration.Migrate(job));
 
             Assert.Equal(Job.CurrentFormatVersion, job.FormatVersion);
-            Assert.Equal(definition.Descriptor.Fields.Count, step.Inputs.Count);
-            Assert.All(definition.Descriptor.Fields, field =>
+            var migratableFields = definition.Descriptor.Fields.Where(field =>
+                field.ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding
+                || StepInputContractRegistry.Resolve(definition.StepType, field).AllowsDirectValue).ToArray();
+            Assert.Equal(migratableFields.Length, step.Inputs.Count);
+            Assert.All(migratableFields, field =>
             {
                 var reference = Assert.Contains(field.Id, step.Inputs);
                 Assert.Equal(ValueProviderIds.JobVariable, reference.ProviderId);
@@ -107,5 +110,43 @@ public sealed class JobVariableInputMigrationTests
 
         Assert.Contains("\"inputs\"", json);
         Assert.DoesNotContain("\"settings\"", json);
+    }
+
+    [Fact]
+    public void Migrate_MapsLegacyUnifiedFieldsWithoutLosingTheirValues()
+    {
+        var sourceBinding = ResultBinding.ForStepResult("source", "path");
+        var fileSystem = new FileSystemOperationStep
+        {
+            Settings = new FileSystemOperationSettings
+            {
+                Operation = FileSystemOperation.Delete,
+                SourceMode = FileSystemPathSource.TaskResult,
+                SourceResult = sourceBinding
+            }
+        };
+        var showText = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.ExplicitText,
+                Text = "Legacy text"
+            }
+        };
+        var dynamicRoi = new DynamicRoiStep
+        {
+            Settings = new DynamicRoiSettings { Padding = 23 }
+        };
+        var job = new Job { Steps = [fileSystem, showText, dynamicRoi], FormatVersion = 1 };
+
+        Assert.True(JobVariableInputMigration.Migrate(job));
+
+        Assert.Same(sourceBinding, fileSystem.Inputs[FileSystemOperationStepDefinition.SourcePathFieldId]);
+        var textVariable = Assert.Single(job.Variables, variable =>
+            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.TextResultFieldId].SourceId);
+        Assert.Equal("Legacy text", textVariable.Value!.GetValue<string>());
+        var paddingVariable = Assert.Single(job.Variables, variable =>
+            variable.Id.ToString("D") == dynamicRoi.Inputs[DynamicRoiStepDefinition.PaddingSourceFieldId].SourceId);
+        Assert.Equal(23, paddingVariable.Value!.GetValue<int>());
     }
 }

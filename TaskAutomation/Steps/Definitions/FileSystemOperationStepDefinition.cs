@@ -23,8 +23,6 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
     public const string RetryDelayFieldId = "retry_delay_ms";
 
     private static readonly string[] Operations = ["Copy", "Move", "Rename", "Delete"];
-    private static readonly string[] PathSources = ["ExplicitPath", "TaskResult"];
-
     public override StepDescriptor Descriptor { get; } = new(
         "file_system_operation", "DateienOrdner", "Step.Type.FileSystemOperation",
         "Step.Description.FileSystemOperation", "folder",
@@ -32,20 +30,10 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
             EnumField(OperationFieldId, "Ui.Step.FileSystem.Operation", "Copy", Operations,
                 [new("Copy", "Ui.Step.FileSystem.Copy"), new("Move", "Ui.Step.FileSystem.Move"),
                  new("Rename", "Ui.Step.FileSystem.Rename"), new("Delete", "Ui.Step.FileSystem.Delete")], 0),
-            EnumField(SourceModeFieldId, "Ui.Step.FileSystem.Source", "TaskResult", PathSources,
-                [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 1),
-            new(SourcePathFieldId, "Ui.Step.FileSystem.Source", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
-                Order: 2),
-            new(SourceResultFieldId, "Ui.Step.FileSystem.Source", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ValueReferencePicker, Order: 3,
-                InputContractId: "source"),
-            EnumField(TargetModeFieldId, "Ui.Step.FileSystem.Target", "TaskResult", PathSources,
-                [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath"), new("TaskResult", "Ui.Step.FileSystem.StepResult")], 4,
-                [AnyOf(OperationFieldId, "Copy", "Move")]),
-            new(TargetPathFieldId, "Ui.Step.FileSystem.Target", StepValueKind.Text, Required: true, EditorHint: StepEditorHints.FileOrFolderPicker,
-                Order: 5, VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
-            new(TargetResultFieldId, "Ui.Step.FileSystem.Target", StepValueKind.ResultBinding, Required: true,
-                EditorHint: StepEditorHints.ValueReferencePicker, Order: 6, InputContractId: "target",
+            new(SourcePathFieldId, "Ui.Step.FileSystem.Source", StepValueKind.DirectoryPath, Required: true,
+                EditorHint: StepEditorHints.DirectoryPicker, Order: 1),
+            new(TargetPathFieldId, "Ui.Step.FileSystem.Target", StepValueKind.DirectoryPath, Required: true,
+                EditorHint: StepEditorHints.DirectoryPicker, Order: 2,
                 VisibleWhen: AnyOf(OperationFieldId, "Copy", "Move")),
             new(NewNameFieldId, "Ui.Step.FileSystem.NewName", StepValueKind.Text, Order: 7,
                 VisibleWhen: Is(OperationFieldId, "Rename")),
@@ -64,32 +52,27 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
                 VisibleWhen: Is(RetryLockedFieldId, true))
         ],
         new(
-            [new("general", null, [OperationFieldId, SourceModeFieldId, SourcePathFieldId, SourceResultFieldId,
-                TargetModeFieldId, TargetPathFieldId, TargetResultFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId],
+            [new("general", null, [OperationFieldId, SourcePathFieldId,
+                TargetPathFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId],
                 EditorNodes:
                 [new StepFieldNodeDescriptor(OperationFieldId),
-                 new StepChoiceGroupDescriptor(SourceModeFieldId,
-                    [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath", [new StepFieldNodeDescriptor(SourcePathFieldId)]),
-                     new("TaskResult", "Ui.Step.FileSystem.StepResult", [new StepFieldNodeDescriptor(SourceResultFieldId)])]),
-                 new StepChoiceGroupDescriptor(TargetModeFieldId,
-                    [new("ExplicitPath", "Ui.Step.FileSystem.ExplicitPath", [new StepFieldNodeDescriptor(TargetPathFieldId)]),
-                     new("TaskResult", "Ui.Step.FileSystem.StepResult", [new StepFieldNodeDescriptor(TargetResultFieldId)])]),
+                 new StepFieldNodeDescriptor(SourcePathFieldId),
+                 new StepFieldNodeDescriptor(TargetPathFieldId),
                  new StepFieldNodeDescriptor(NewNameFieldId),
                  new StepFieldNodeDescriptor(FilterFieldId),
                  new StepFieldNodeDescriptor(CreateParentsFieldId)]),
              new("advanced", "Ui.Step.Settings.Advanced", [RetryLockedFieldId, RetryCountFieldId, RetryDelayFieldId],
                  1, true, false)],
             [new(OperationFieldId), new(SourcePathFieldId, StepSummaryValueFormat.FileName)],
-            [OperationFieldId, SourceModeFieldId, SourcePathFieldId, SourceResultFieldId, TargetModeFieldId,
-                TargetPathFieldId, TargetResultFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId,
+            [OperationFieldId, SourcePathFieldId, TargetPathFieldId, NewNameFieldId, FilterFieldId, CreateParentsFieldId,
                 RetryLockedFieldId, RetryCountFieldId, RetryDelayFieldId]));
 
     public override FileSystemOperationStep CreateDefaultStep() => new()
     {
         Settings = new FileSystemOperationSettings
         {
-            SourceMode = FileSystemPathSource.TaskResult,
-            TargetMode = FileSystemPathSource.TaskResult
+            SourceMode = FileSystemPathSource.ExplicitPath,
+            TargetMode = FileSystemPathSource.ExplicitPath
         }
     };
 
@@ -117,12 +100,12 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
     {
         var s = step.Settings;
         s.Operation = EnumValue<FileSystemOperation>(draft, OperationFieldId);
-        s.SourceMode = EnumValue<FileSystemPathSource>(draft, SourceModeFieldId);
+        s.SourceMode = FileSystemPathSource.ExplicitPath;
         s.SourcePath = DefinitionValueReader.String(draft, SourcePathFieldId);
-        s.SourceResult = DefinitionValueReader.Binding(draft, SourceResultFieldId);
-        s.TargetMode = EnumValue<FileSystemPathSource>(draft, TargetModeFieldId);
+        s.SourceResult = new ResultBinding();
+        s.TargetMode = FileSystemPathSource.ExplicitPath;
         s.TargetPath = DefinitionValueReader.String(draft, TargetPathFieldId);
-        s.TargetResult = DefinitionValueReader.Binding(draft, TargetResultFieldId);
+        s.TargetResult = new ResultBinding();
         s.NewName = DefinitionValueReader.String(draft, NewNameFieldId);
         s.Filter = DefinitionValueReader.String(draft, FilterFieldId);
         s.CreateParentDirectories = DefinitionValueReader.Boolean(draft, CreateParentsFieldId);

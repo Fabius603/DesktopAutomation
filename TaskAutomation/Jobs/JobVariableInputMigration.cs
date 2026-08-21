@@ -19,6 +19,7 @@ public static class JobVariableInputMigration
         {
             step.Inputs ??= new Dictionary<string, ResultBinding>(StringComparer.Ordinal);
             if (!catalog.TryGetByType(step.GetType(), out var definition)) continue;
+            changed |= MigrateLegacyAliases(step);
             var draft = definition.CreateDraft(step);
             foreach (var field in definition.Descriptor.Fields)
             {
@@ -31,10 +32,9 @@ public static class JobVariableInputMigration
                         changed = true;
                     }
                     if (binding.IsConfigured || step.Inputs.ContainsKey(field.Id)) continue;
-                    var contract = !string.IsNullOrWhiteSpace(field.InputContractId)
-                        ? StepInputContractRegistry.Get(step.GetType(), field.InputContractId)
-                        : null;
+                    var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
                     var shape = contract?.AcceptedShapes.FirstOrDefault();
+                    if (contract?.AllowsDirectValue != true) continue;
                     var placeholder = new JobVariable
                     {
                         Name = UniqueName(job.Variables, $"{definition.Descriptor.TypeId}_{field.Id}"),
@@ -43,7 +43,8 @@ public static class JobVariableInputMigration
                         ValueKind = shape?.ValueKind ?? ResultValueKind.ResultObject,
                         Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
                                       ?? ResultCardinality.Single,
-                        Value = null
+                        Value = LegacyDirectValue(step, field)?.DeepClone()
+                                ?? field.DefaultValue?.DeepClone()
                     };
                     job.Variables.Add(placeholder);
                     step.Inputs[field.Id] = new ResultBinding
@@ -94,6 +95,38 @@ public static class JobVariableInputMigration
         StepValueKind.Rectangle => ResultValueKind.Rectangle,
         StepValueKind.Object or StepValueKind.Collection => ResultValueKind.ResultObject,
         _ => ResultValueKind.Text
+    };
+
+    private static bool MigrateLegacyAliases(JobStep step)
+    {
+        var changed = false;
+        if (step is FileSystemOperationStep fileSystem)
+        {
+            if (fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult
+                && fileSystem.Settings.SourceResult.IsConfigured
+                && !step.Inputs.ContainsKey(FileSystemOperationStepDefinition.SourcePathFieldId))
+            {
+                step.Inputs[FileSystemOperationStepDefinition.SourcePathFieldId] = fileSystem.Settings.SourceResult;
+                changed = true;
+            }
+            if (fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult
+                && fileSystem.Settings.TargetResult.IsConfigured
+                && !step.Inputs.ContainsKey(FileSystemOperationStepDefinition.TargetPathFieldId))
+            {
+                step.Inputs[FileSystemOperationStepDefinition.TargetPathFieldId] = fileSystem.Settings.TargetResult;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private static JsonNode? LegacyDirectValue(JobStep step, StepFieldDescriptor field) => step switch
+    {
+        DynamicRoiStep dynamicRoi when field.Id == DynamicRoiStepDefinition.PaddingSourceFieldId
+            && dynamicRoi.Settings.Padding >= 0 => JsonValue.Create(dynamicRoi.Settings.Padding),
+        ShowTextStep showText when field.Id == ShowTextStepDefinition.TextResultFieldId
+            && showText.Settings.TextSource == ShowTextSource.ExplicitText => JsonValue.Create(showText.Settings.Text),
+        _ => null
     };
 
     private static ResultBinding ReadBinding(JsonNode? value)

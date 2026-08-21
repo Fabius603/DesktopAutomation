@@ -18,10 +18,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         ResultValueKind.DateTime,
         ResultValueKind.Point,
         ResultValueKind.Rectangle,
-        ResultValueKind.Image,
-        ResultValueKind.ResultObject,
-        ResultValueKind.Detection,
-        ResultValueKind.ProcessReference
+        ResultValueKind.Image
     };
 
     private readonly Action _changed;
@@ -41,11 +38,10 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
             new(ResultValueKind.DateTime, "Ui.Job.Variables.Type.DateTime"),
             new(ResultValueKind.Point, "Ui.Job.Variables.Type.Point"),
             new(ResultValueKind.Rectangle, "Ui.Job.Variables.Type.Rectangle"),
-            new(ResultValueKind.Image, "Ui.Job.Variables.Type.Image"),
-            new(ResultValueKind.ResultObject, "Ui.Job.Variables.Type.Object"),
-            new(ResultValueKind.Detection, "Ui.Job.Variables.Type.Detection"),
-            new(ResultValueKind.ProcessReference, "Ui.Job.Variables.Type.Process")
+            new(ResultValueKind.Image, "Ui.Job.Variables.Type.Image")
         ];
+        if (!SupportedKinds.Contains(Model.ValueKind))
+            KindOptions = [.. KindOptions, LegacyKindOption(Model.ValueKind)];
         LoadValue();
     }
 
@@ -272,6 +268,14 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsImage));
         OnPropertyChanged(nameof(IsResultObject));
     }
+
+    private static JobVariableKindOption LegacyKindOption(ResultValueKind kind) => kind switch
+    {
+        ResultValueKind.ResultObject => new(kind, "Ui.Job.Variables.Type.Object"),
+        ResultValueKind.Detection => new(kind, "Ui.Job.Variables.Type.Detection"),
+        ResultValueKind.ProcessReference => new(kind, "Ui.Job.Variables.Type.Process"),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+    };
 }
 
 public sealed class JobVariableKindOption(ResultValueKind kind, string labelKey)
