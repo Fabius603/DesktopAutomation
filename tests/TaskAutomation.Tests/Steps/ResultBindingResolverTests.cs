@@ -115,6 +115,51 @@ public sealed class ResultBindingResolverTests
     }
 
     [Fact]
+    public void Resolve_ReadsMemberOfCompoundJobVariableThroughValuePath()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Area",
+            ValueKind = ResultValueKind.Rectangle,
+            Value = JsonNode.Parse("""{"x":10,"y":20,"width":300,"height":200}""")
+        };
+        var store = new JobResultStore([variable]);
+        var binding = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            ValuePath = "Center.X"
+        };
+
+        var result = ResultBindingResolver.Resolve<int>(store, binding);
+
+        Assert.Equal(ResultResolutionStatus.Success, result.Status);
+        Assert.Equal(160, result.FirstOrDefault);
+    }
+
+    [Fact]
+    public void Resolve_ReadsNestedMemberOfJsonObjectJobVariable()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Options",
+            ValueKind = ResultValueKind.ResultObject,
+            Value = JsonNode.Parse("""{"layout":{"columns":3}}""")
+        };
+        var store = new JobResultStore([variable]);
+
+        var result = ResultBindingResolver.Resolve<int>(store, new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            ValuePath = "layout.columns"
+        });
+
+        Assert.Equal(ResultResolutionStatus.Success, result.Status);
+        Assert.Equal(3, result.FirstOrDefault);
+    }
+
+    [Fact]
     public void Resolve_ReadsSecretThroughProviderReference()
     {
         var secretId = Guid.NewGuid();

@@ -3112,11 +3112,15 @@ Fehlercode: {3}</value>
   <data name="Settings.Credentials.Kind.BearerToken" xml:space="preserve"><value>Bearer-Token</value></data>
   <data name="Settings.Credentials.Kind.UsernamePassword" xml:space="preserve"><value>Benutzername und Passwort</value></data>
   <data name="Ui.ValueReference.JobVariables" xml:space="preserve"><value>Jobvariablen</value></data>
+  <data name="Ui.ValueReference.DirectValue" xml:space="preserve"><value>Direkter Wert</value></data>
   <data name="Ui.ValueReference.ResultVariables" xml:space="preserve"><value>Ergebnisvariablen</value></data>
   <data name="Ui.ValueReference.SelectVariable" xml:space="preserve"><value>Variable wählen</value></data>
   <data name="Ui.ValueReference.Search" xml:space="preserve"><value>Variablen durchsuchen …</value></data>
+  <data name="Ui.ValueReference.ExpectedType" xml:space="preserve"><value>Erwartet: {0}</value></data>
+  <data name="Ui.ValueReference.ToolTip.Value" xml:space="preserve"><value>Wert</value></data>
   <data name="Ui.ValueReference.EmptyValue" xml:space="preserve"><value>Kein Wert</value></data>
   <data name="Ui.ValueReference.Missing" xml:space="preserve"><value>Variable nicht mehr vorhanden</value></data>
+  <data name="Ui.ValueReference.Missing.ToolTip" xml:space="preserve"><value>Die gespeicherte Auswahl ist nicht mehr verfügbar. Wähle eine neue passende Variable aus.</value></data>
   <data name="Ui.ValueReference.Invalid" xml:space="preserve"><value>Ungültige Referenz</value></data>
   <data name="Ui.ValueReference.Empty.JobVariables" xml:space="preserve"><value>Keine passende Jobvariable vorhanden.</value></data>
   <data name="Ui.ValueReference.Empty.ResultVariables" xml:space="preserve"><value>Keine passende Ergebnisvariable vorhanden.</value></data>
@@ -3167,28 +3171,57 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Delete.InUseTitle" xml:space="preserve"><value>Variable wird verwendet</value></data>
   <data name="Ui.Job.Variables.Delete.InUse" xml:space="preserve"><value>Die Variable „{0}“ kann nicht gelöscht werden, weil sie von {1} Referenz(en) verwendet wird: {2}</value></data>
   <data name="Ui.Job.Variables.Type.Text" xml:space="preserve"><value>Text</value></data>
-  <data name="Ui.Job.Variables.Type.Boolean" xml:space="preserve"><value>Ja/Nein</value></data>
+  <data name="Ui.Job.Variables.Type.Boolean" xml:space="preserve"><value>Bool</value></data>
   <data name="Ui.Job.Variables.Type.Integer" xml:space="preserve"><value>Ganzzahl</value></data>
   <data name="Ui.Job.Variables.Type.Number" xml:space="preserve"><value>Zahl</value></data>
-  <data name="Ui.Job.Variables.Type.DateTime" xml:space="preserve"><value>Datum</value></data>
+  <data name="Ui.Job.Variables.Type.DateTime" xml:space="preserve"><value>Zeitpunkt</value></data>
   <data name="Ui.Job.Variables.Type.Point" xml:space="preserve"><value>Punkt</value></data>
-  <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Bereich</value></data>
+  <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Rechteck</value></data>
   <data name="Ui.Job.Variables.Type.Image" xml:space="preserve"><value>Bild</value></data>
+  <data name="Ui.Job.Variables.Type.Color" xml:space="preserve"><value>Farbe</value></data>
+  <data name="Ui.Job.Variables.Type.FilePath" xml:space="preserve"><value>Dateipfad</value></data>
+  <data name="Ui.Job.Variables.Type.JobReference" xml:space="preserve"><value>Jobreferenz</value></data>
+  <data name="Ui.Job.Variables.Type.MacroReference" xml:space="preserve"><value>Makroreferenz</value></data>
   <data name="Ui.Job.Variables.ImagePath" xml:space="preserve"><value>Pfad zur Bilddatei</value></data>
   <data name="Ui.Job.Variables.Scope.StepValues" xml:space="preserve"><value>Step-Werte</value></data>
   <data name="Ui.Job.Variables.Scope.Shared" xml:space="preserve"><value>Gemeinsame Jobvariablen</value></data>
   <data name="Ui.Job.Variables.Usage.One" xml:space="preserve"><value>{0} Verwendung</value></data>
   <data name="Ui.Job.Variables.Usage.Many" xml:space="preserve"><value>{0} Verwendungen</value></data>
   <data name="Ui.Job.Variables.Usage.Warning" xml:space="preserve"><value>Änderungen an diesem Wert wirken sich auf alle Verwendungen aus.</value></data>
-  <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Nach Name, Wert, Beschreibung oder Step suchen …</value></data>
+  <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Variablen durchsuchen …</value></data>
   <data name="Ui.Job.Variables.Filter.Shared" xml:space="preserve"><value>Gemeinsam</value></data>
   <data name="Ui.Job.Variables.Filter.StepValues" xml:space="preserve"><value>Step-Werte</value></data>
   <data name="Ui.Job.Variables.Filter.Used" xml:space="preserve"><value>Verwendet</value></data>
   <data name="Ui.Job.Variables.Filter.Unused" xml:space="preserve"><value>Ungenutzt</value></data>
+  <data name="Ui.Job.Variables.Filter.Title" xml:space="preserve"><value>Variablen filtern</value></data>
+  <data name="Ui.Job.Variables.Filter.Scope" xml:space="preserve"><value>Bereich</value></data>
+  <data name="Ui.Job.Variables.Filter.Usage" xml:space="preserve"><value>Verwendung</value></data>
+  <data name="Ui.Job.Variables.Filter.Type" xml:space="preserve"><value>Variablentyp</value></data>
+  <data name="Ui.Job.Variables.Filter.AllTypes" xml:space="preserve"><value>Alle Typen</value></data>
+  <data name="Ui.Job.Variables.Filter.Reset" xml:space="preserve"><value>Filter zurücksetzen</value></data>
   <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>Für diese Suche und Filter wurden keine Werte gefunden.</value></data>
   <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Variable duplizieren</value></data>
   <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Kopie</value></data>
   <data name="Ui.Job.Variables.PromoteToShared" xml:space="preserve"><value>Als gemeinsame Variable verwenden</value></data>
+  <data name="Ui.Job.Variables.SelectHint" xml:space="preserve"><value>Wähle links eine Variable aus, um sie zu bearbeiten.</value></data>
+  <data name="Ui.Job.Variables.Usage.Title" xml:space="preserve"><value>Verwendungen</value></data>
+  <data name="Ui.Job.Variables.Usage.None" xml:space="preserve"><value>Diese Variable wird momentan in keinem Step verwendet.</value></data>
+  <data name="Ui.Job.Variables.Usage.Open" xml:space="preserve"><value>Im Job anzeigen</value></data>
+  <data name="Ui.Job.Variables.Delete.Action" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Ui.Job.Variables.Image.Browse" xml:space="preserve"><value>Auswählen</value></data>
+  <data name="Ui.Job.Variables.Image.Select" xml:space="preserve"><value>Bilddatei auswählen</value></data>
+  <data name="Ui.Job.Variables.Image.Filter" xml:space="preserve"><value>Bilddateien|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|Alle Dateien|*.*</value></data>
+  <data name="Ui.Job.Variables.Image.Empty" xml:space="preserve"><value>Noch keine Bilddatei ausgewählt.</value></data>
+  <data name="Ui.Job.Variables.Image.Available" xml:space="preserve"><value>Bilddatei gefunden.</value></data>
+  <data name="Ui.Job.Variables.Image.Missing" xml:space="preserve"><value>Die Bilddatei wurde nicht gefunden oder kann nicht gelesen werden.</value></data>
+  <data name="Ui.Job.Variables.FilePath.Watermark" xml:space="preserve"><value>Pfad zu einer Datei</value></data>
+  <data name="Ui.Job.Variables.FilePath.Browse" xml:space="preserve"><value>Auswählen</value></data>
+  <data name="Ui.Job.Variables.FilePath.Select" xml:space="preserve"><value>Datei auswählen</value></data>
+  <data name="Ui.Job.Variables.FilePath.Filter" xml:space="preserve"><value>Alle Dateien|*.*</value></data>
+  <data name="Step.ResultValueType.Color" xml:space="preserve"><value>Farbe</value></data>
+  <data name="Step.ResultValueType.FilePath" xml:space="preserve"><value>Dateipfad</value></data>
+  <data name="Ui.Job.Steps.ResultType.Color" xml:space="preserve"><value>Farbe</value></data>
+  <data name="Ui.Job.Steps.ResultType.FilePath" xml:space="preserve"><value>Dateipfad</value></data>
   <data name="Ui.Job.StepInput.UseVariable" xml:space="preserve"><value>Variable verwenden</value></data>
   <data name="Ui.Job.StepInput.UseDirectValue" xml:space="preserve"><value>Direkt eingeben</value></data>
   <data name="Ui.ValueReference.Recommended" xml:space="preserve"><value>Empfohlen</value></data>

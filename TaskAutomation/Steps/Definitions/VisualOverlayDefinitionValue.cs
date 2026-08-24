@@ -62,6 +62,7 @@ internal static class VisualOverlayDefinitionValue
     {
         ProviderId = binding.ProviderId,
         SourceId = binding.SourceId,
+        ValuePath = binding.ValuePath,
         LegacySourceStepId = binding.LegacySourceStepId,
         LegacyPropertyId = binding.LegacyPropertyId,
         LegacyPropertyPath = binding.LegacyPropertyPath

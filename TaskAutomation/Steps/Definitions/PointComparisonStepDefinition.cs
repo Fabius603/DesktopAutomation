@@ -54,14 +54,9 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         ],
         new([
                 new("general", "Ui.Step.Settings.BasicSettings", [ModeFieldId, MatchRequirementFieldId, PointsFieldId]),
-                new("offset", "Ui.Step.Settings.ReferencePointTolerance", [ReferenceSourceFieldId, ReferenceXFieldId,
-                    ReferenceYFieldId, ReferencePointsFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
-                    [new StepChoiceGroupDescriptor(ReferenceSourceFieldId,
-                        [new("Manual", "Ui.Step.Settings.EnterManually",
-                            [new StepPointFieldPairDescriptor(
-                                ReferenceXFieldId, ReferenceYFieldId)]),
-                         new("JobResult", "Ui.Step.Settings.FromDetectionResult",
-                            [new StepFieldNodeDescriptor(ReferencePointsFieldId)])]),
+                new("offset", "Ui.Step.Settings.ReferencePointTolerance", [ReferenceXFieldId,
+                    ReferenceYFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
+                    [new StepPointFieldPairDescriptor(ReferenceXFieldId, ReferenceYFieldId),
                      new StepFieldNodeDescriptor(OffsetXFieldId),
                      new StepFieldNodeDescriptor(OffsetYFieldId)]),
                 new("expression", "Ui.Step.Settings.AxisExpressions", [CombineModeFieldId, ExpressionsFieldId], 2)

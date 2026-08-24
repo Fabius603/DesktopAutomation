@@ -77,6 +77,8 @@ public static class StepLocalization
             ResultValueKind.Image => "Image",
             ResultValueKind.Point => "Point",
             ResultValueKind.Rectangle => "Rectangle",
+            ResultValueKind.Color => "Color",
+            ResultValueKind.FilePath => "FilePath",
             ResultValueKind.ProcessReference => "Process",
             ResultValueKind.Detection => "Detection",
             ResultValueKind.Enum => "Enum",

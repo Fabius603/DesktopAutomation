@@ -12,6 +12,18 @@ public class ResultBinding : ValueReference
     private string? _legacyPropertyId;
     private string? _legacyPropertyPath;
 
+    [JsonPropertyName("schema_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? SchemaId { get; set; }
+
+    [JsonPropertyName("members")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public Dictionary<string, ResultBinding>? Members { get; set; }
+
+    [JsonPropertyName("items")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<ResultBinding>? Items { get; set; }
+
     [JsonPropertyName("source_step_id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string? LegacySourceStepId
@@ -61,7 +73,12 @@ public class ResultBinding : ValueReference
     public bool IsConfigured => HasProviderReference
                                 || (!string.IsNullOrWhiteSpace(_legacySourceStepId)
                                     && (!string.IsNullOrWhiteSpace(_legacyPropertyId)
-                                        || !string.IsNullOrWhiteSpace(_legacyPropertyPath)));
+                                        || !string.IsNullOrWhiteSpace(_legacyPropertyPath)))
+                                || Members?.Values.Any(binding => binding.IsConfigured) == true
+                                || Items?.Any(binding => binding.IsConfigured) == true;
+
+    [JsonIgnore]
+    public bool HasStructuredChildren => Members is { Count: > 0 } || Items is { Count: > 0 };
 
     public static ResultBinding ForStepResult(string stepId, string propertyId) => new()
     {

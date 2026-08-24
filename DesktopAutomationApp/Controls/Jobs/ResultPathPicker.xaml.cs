@@ -11,14 +11,17 @@ namespace DesktopAutomationApp.Controls.Jobs;
 public partial class ResultPathPicker : UserControl
 {
     private ScrollViewer? _ancestorScrollViewer;
-    private bool _popupWasOpen;
     private bool _repositionPending;
+    private Window? _ownerWindow;
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
         nameof(ItemsSource), typeof(IEnumerable), typeof(ResultPathPicker));
 
     public static readonly DependencyProperty DisplayTextProperty = DependencyProperty.Register(
         nameof(DisplayText), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
+
+    public static readonly DependencyProperty InlineTextProperty = DependencyProperty.Register(
+        nameof(InlineText), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
 
     public static readonly DependencyProperty SecondaryTextProperty = DependencyProperty.Register(
         nameof(SecondaryText), typeof(string), typeof(ResultPathPicker));
@@ -35,12 +38,35 @@ public partial class ResultPathPicker : UserControl
     public static readonly DependencyProperty ContextTextProperty = DependencyProperty.Register(
         nameof(ContextText), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
 
+    public static readonly DependencyProperty ToolTipValueProperty = DependencyProperty.Register(
+        nameof(ToolTipValue), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
+
+    public static readonly DependencyProperty ToolTipDescriptionProperty = DependencyProperty.Register(
+        nameof(ToolTipDescription), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
+
+    public static readonly DependencyProperty SearchTextProperty = DependencyProperty.Register(
+        nameof(SearchText), typeof(string), typeof(ResultPathPicker),
+        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+    public static readonly DependencyProperty ExpectedTypeTextProperty = DependencyProperty.Register(
+        nameof(ExpectedTypeText), typeof(string), typeof(ResultPathPicker), new PropertyMetadata(string.Empty));
+
+    public static readonly DependencyProperty CreateCommandProperty = DependencyProperty.Register(
+        nameof(CreateCommand), typeof(ICommand), typeof(ResultPathPicker));
+
+    public static readonly DependencyProperty ShowCreateActionProperty = DependencyProperty.Register(
+        nameof(ShowCreateAction), typeof(bool), typeof(ResultPathPicker), new PropertyMetadata(false));
+
+    public static readonly DependencyProperty PreviewDensityProperty = DependencyProperty.Register(
+        nameof(PreviewDensity), typeof(string), typeof(ResultPathPicker), new PropertyMetadata("Wide"));
+
     public ResultPathPicker()
     {
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         PreviewKeyDown += OnPreviewKeyDown;
+        SizeChanged += OnSizeChanged;
     }
 
     public IEnumerable? ItemsSource
@@ -53,6 +79,12 @@ public partial class ResultPathPicker : UserControl
     {
         get => (string)GetValue(DisplayTextProperty);
         set => SetValue(DisplayTextProperty, value);
+    }
+
+    public string InlineText
+    {
+        get => (string)GetValue(InlineTextProperty);
+        set => SetValue(InlineTextProperty, value);
     }
 
     public string? SecondaryText
@@ -85,17 +117,74 @@ public partial class ResultPathPicker : UserControl
         set => SetValue(ContextTextProperty, value);
     }
 
+    public string ToolTipValue
+    {
+        get => (string)GetValue(ToolTipValueProperty);
+        set => SetValue(ToolTipValueProperty, value);
+    }
+
+    public string ToolTipDescription
+    {
+        get => (string)GetValue(ToolTipDescriptionProperty);
+        set => SetValue(ToolTipDescriptionProperty, value);
+    }
+
+    public string SearchText
+    {
+        get => (string)GetValue(SearchTextProperty);
+        set => SetValue(SearchTextProperty, value);
+    }
+
+    public string ExpectedTypeText
+    {
+        get => (string)GetValue(ExpectedTypeTextProperty);
+        set => SetValue(ExpectedTypeTextProperty, value);
+    }
+
+    public ICommand? CreateCommand
+    {
+        get => (ICommand?)GetValue(CreateCommandProperty);
+        set => SetValue(CreateCommandProperty, value);
+    }
+
+    public bool ShowCreateAction
+    {
+        get => (bool)GetValue(ShowCreateActionProperty);
+        set => SetValue(ShowCreateActionProperty, value);
+    }
+
+    public string PreviewDensity
+    {
+        get => (string)GetValue(PreviewDensityProperty);
+        private set => SetValue(PreviewDensityProperty, value);
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _ancestorScrollViewer = VisualTreeHelperExtensions.GetAncestor<ScrollViewer>(this);
         if (_ancestorScrollViewer != null)
             _ancestorScrollViewer.ScrollChanged += OnAncestorScrollChanged;
+        _ownerWindow = Window.GetWindow(this);
+        UpdatePreviewDensity(ActualWidth);
     }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e) =>
+        UpdatePreviewDensity(e.NewSize.Width);
+
+    private void UpdatePreviewDensity(double width) => PreviewDensity = width switch
+    {
+        < 170 => "VeryNarrow",
+        < 280 => "Compact",
+        < 400 => "Normal",
+        _ => "Wide"
+    };
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         if (_ancestorScrollViewer != null)
             _ancestorScrollViewer.ScrollChanged -= OnAncestorScrollChanged;
+        DetachOwnerWindowHandlers();
+        _ownerWindow = null;
         _ancestorScrollViewer = null;
         SelectionPopup.IsOpen = false;
     }
@@ -130,32 +219,44 @@ public partial class ResultPathPicker : UserControl
     private void TreeNode_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: ConditionSelectionNode node } button) return;
-        if (node.IsSelectable)
-        {
-            SelectionPopup.IsOpen = false;
-            return;
-        }
+        if (node.IsSelectable) return;
 
         var item = VisualTreeHelperExtensions.GetAncestor<TreeViewItem>(button);
         if (item is not null) item.IsExpanded = !item.IsExpanded;
     }
 
-    private void DropDownToggle_Checked(object sender, RoutedEventArgs e)
-    {
-        _popupWasOpen = true;
-    }
-
     private void DropDownToggle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!SelectionPopup.IsOpen && !_popupWasOpen) return;
+        if (!SelectionPopup.IsOpen) return;
         SelectionPopup.IsOpen = false;
-        _popupWasOpen = false;
         DropDownToggle.Focus();
         e.Handled = true;
     }
 
-    private void SelectionPopup_Closed(object? sender, EventArgs e) =>
-        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => _popupWasOpen = false);
+    private void SelectionPopup_Closed(object? sender, EventArgs e)
+    {
+        DetachOwnerWindowHandlers();
+        DropDownToggle.IsChecked = false;
+    }
+
+    private void SelectionPopup_Opened(object? sender, EventArgs e)
+    {
+        _ownerWindow ??= Window.GetWindow(this);
+        if (_ownerWindow is not null)
+        {
+            _ownerWindow.Deactivated -= OwnerWindow_Deactivated;
+            _ownerWindow.Deactivated += OwnerWindow_Deactivated;
+        }
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => SearchBox.Focus());
+    }
+
+    private void OwnerWindow_Deactivated(object? sender, EventArgs e) => SelectionPopup.IsOpen = false;
+
+    private void DetachOwnerWindowHandlers()
+    {
+        if (_ownerWindow is null) return;
+        _ownerWindow.Deactivated -= OwnerWindow_Deactivated;
+    }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {

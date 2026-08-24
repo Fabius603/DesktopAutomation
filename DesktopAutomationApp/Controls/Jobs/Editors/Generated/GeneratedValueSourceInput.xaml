@@ -18,6 +18,7 @@
         </Grid>
         <Button Grid.Column="1" Width="34" MinHeight="30" Margin="5,0,0,0"
                 Padding="0" Style="{StaticResource ButtonSecondary}"
+                Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
                 Click="OpenValueSourceMenu_Click">
             <Button.ContextMenu>

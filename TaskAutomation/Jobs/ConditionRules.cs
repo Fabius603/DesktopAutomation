@@ -24,7 +24,7 @@ public static class ConditionRules
     {
         ResultValueKind.Boolean => BoolOperators,
         ResultValueKind.Enum => BoolOperators,
-        ResultValueKind.Text => StringOperators,
+        ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath => StringOperators,
         ResultValueKind.Integer or ResultValueKind.Number or ResultValueKind.DateTime => OrderedOperators,
         _ => []
     };
@@ -33,7 +33,7 @@ public static class ConditionRules
         GetOperators(dataType).Contains(conditionOperator)
         || dataType == ResultValueKind.Boolean
             && conditionOperator is ConditionOperator.IsTrue or ConditionOperator.IsFalse
-        || dataType == ResultValueKind.Text
+        || dataType is ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath
             && conditionOperator is ConditionOperator.IsEmpty or ConditionOperator.IsNotEmpty;
 
     public static bool RequiresComparisonValue(ConditionOperator conditionOperator) => conditionOperator is not
@@ -55,7 +55,7 @@ public static class ConditionRules
             ResultValueKind.Integer => Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture),
             ResultValueKind.DateTime => ((DateTime)value).ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
             ResultValueKind.Boolean => Convert.ToBoolean(value, CultureInfo.InvariantCulture).ToString(),
-            ResultValueKind.Text => value.ToString(),
+            ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath => value.ToString(),
             ResultValueKind.Enum => value.ToString(),
             _ => null
         };

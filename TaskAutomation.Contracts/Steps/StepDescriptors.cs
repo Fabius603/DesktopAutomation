@@ -10,6 +10,7 @@ public enum StepValueKind
     MultilineText,
     Integer,
     Number,
+    DateTime,
     Boolean,
     Enum,
     FilePath,

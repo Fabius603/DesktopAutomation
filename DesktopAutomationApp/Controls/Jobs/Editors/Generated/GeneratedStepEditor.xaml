@@ -38,6 +38,10 @@
             <CheckBox HorizontalAlignment="Left" VerticalAlignment="Center"
                       IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </DataTemplate>
+        <DataTemplate x:Key="DateTimeFieldTemplate">
+            <mah:DateTimePicker SelectedDateTime="{Binding DateTimeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"/>
+        </DataTemplate>
         <DataTemplate x:Key="SuggestionsFieldTemplate">
             <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
                       ItemsSource="{Binding Suggestions}"
@@ -110,9 +114,6 @@
                                   SelectCommand="{Binding DataContext.ChooseMonitorCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
                                   SelectCommandParameter="{Binding}"/>
         </DataTemplate>
-        <DataTemplate x:Key="ValueReferenceFieldTemplate">
-            <jobs:ValueReferencePicker DataContext="{Binding ResultBindingEditor.Picker}"/>
-        </DataTemplate>
         <DataTemplate x:Key="InputReferenceFieldTemplate">
             <Grid x:Name="InputValueHost">
                 <Grid.ColumnDefinitions>
@@ -149,6 +150,7 @@
                 </Grid>
                 <Button Grid.Column="1" Width="34" MinHeight="30" Margin="5,0,0,0"
                         Padding="0" Style="{StaticResource ButtonSecondary}"
+                        Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                         ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
                         Click="OpenValueSourceMenu_Click">
                     <Button.ContextMenu>

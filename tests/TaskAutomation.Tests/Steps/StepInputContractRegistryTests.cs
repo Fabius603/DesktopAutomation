@@ -21,6 +21,8 @@ public sealed class StepInputContractRegistryTests
         var padding = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
         var points = StepInputContractRegistry.Get(typeof(PredictMovementStep), "points")!;
         var clickPoints = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
+        var overlayDetections = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
+        var overlayText = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!;
 
         Assert.Empty(camera.AllowedProviderIds!);
         Assert.True(camera.AllowsDirectValue);
@@ -40,6 +42,10 @@ public sealed class StepInputContractRegistryTests
         Assert.True(clickPoints.AllowsProvider(ValueProviderIds.JobVariable));
         Assert.True(clickPoints.AllowsProvider(ValueProviderIds.StepResult));
         Assert.False(clickPoints.AllowsProvider(ValueProviderIds.Secret));
+        Assert.True(overlayDetections.AllowsProvider(ValueProviderIds.JobVariable));
+        Assert.True(overlayDetections.AllowsProvider(ValueProviderIds.StepResult));
+        Assert.True(overlayText.AllowsProvider(ValueProviderIds.JobVariable));
+        Assert.True(overlayText.AllowsProvider(ValueProviderIds.StepResult));
     }
 
     [Fact]
@@ -60,6 +66,24 @@ public sealed class StepInputContractRegistryTests
                 && field.Constraints?.AllowedValues is { Count: > 0 })
                 Assert.Empty(contract.AllowedProviderIds!);
         }
+    }
+
+    [Fact]
+    public void ColorAndFileFields_UseTypedVariablesAndKeepExistingTextReferencesCompatible()
+    {
+        var colorField = new ShowTextStepDefinition().Descriptor.Fields.Single(field =>
+            field.Id == ShowTextStepDefinition.FontColorFieldId);
+        var fileField = new StartProcessStepDefinition().Descriptor.Fields.Single(field =>
+            field.Id == StartProcessStepDefinition.ExecutablePathFieldId);
+        var color = StepInputContractRegistry.ForField(colorField);
+        var file = StepInputContractRegistry.ForField(fileField);
+
+        Assert.Equal(ResultValueKind.Color, Assert.Single(color.AcceptedShapes).ValueKind);
+        Assert.Equal(ResultValueKind.FilePath, Assert.Single(file.AcceptedShapes).ValueKind);
+        Assert.True(color.Accepts(ResultValueKind.Text, ResultCardinality.Single));
+        Assert.True(file.Accepts(ResultValueKind.Text, ResultCardinality.Single));
+        Assert.False(color.Accepts(ResultValueKind.Text, ResultCardinality.Single, includeLegacy: false));
+        Assert.False(file.Accepts(ResultValueKind.Text, ResultCardinality.Single, includeLegacy: false));
     }
 
     [Fact]

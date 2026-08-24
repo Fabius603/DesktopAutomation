@@ -27,13 +27,7 @@ internal static class StepInputMaterializer
             }
             else
             {
-                var value = Resolve(results, reference);
-                resolved = value switch
-                {
-                    null => null,
-                    JsonNode node => node.DeepClone(),
-                    _ => JsonSerializer.SerializeToNode(value, value.GetType())
-                };
+                resolved = ResolveNode(results, reference);
             }
             resolvedValues[field.Id] = resolved;
             changed |= !JsonNode.DeepEquals(sourceDraft.Values.GetValueOrDefault(field.Id), resolved);
@@ -105,8 +99,7 @@ internal static class StepInputMaterializer
 
     private static object? Resolve(IJobResultStore results, ResultBinding reference)
     {
-        if (reference.HasProviderReference
-            && !string.Equals(reference.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+        if (reference.HasProviderReference)
         {
             var read = results.ReadProvider(reference.ProviderId, reference.SourceId);
             if (!read.IsSuccess)
@@ -121,6 +114,47 @@ internal static class StepInputMaterializer
             || !StepResultMetadata.TryReadValue(result, property, out var value))
             throw new InvalidOperationException($"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
         return value;
+    }
+
+    private static JsonNode? ResolveNode(
+        IJobResultStore results,
+        ResultBinding binding,
+        JsonNode? inherited = null)
+    {
+        JsonNode? resolved = inherited?.DeepClone();
+        if (binding.HasProviderReference || binding.TryGetStepResult(out _))
+        {
+            var value = Resolve(results, binding);
+            resolved = value switch
+            {
+                null => null,
+                JsonNode node => node.DeepClone(),
+                _ => JsonSerializer.SerializeToNode(value, value.GetType())
+            };
+        }
+
+        if (binding.Members is { Count: > 0 })
+        {
+            if (resolved is not JsonObject objectValue)
+                resolved = objectValue = new JsonObject();
+            foreach (var (memberId, childBinding) in binding.Members)
+            {
+                var property = objectValue.FirstOrDefault(candidate =>
+                    Normalize(candidate.Key) == Normalize(memberId)).Key;
+                if (string.IsNullOrEmpty(property)) property = memberId;
+                objectValue[property] = ResolveNode(results, childBinding, objectValue[property]);
+            }
+        }
+
+        if (binding.Items is { Count: > 0 })
+        {
+            if (resolved is not JsonArray arrayValue)
+                resolved = arrayValue = [];
+            while (arrayValue.Count < binding.Items.Count) arrayValue.Add(null);
+            for (var index = 0; index < binding.Items.Count; index++)
+                arrayValue[index] = ResolveNode(results, binding.Items[index], arrayValue[index]);
+        }
+        return resolved;
     }
 
     private static JobStep Clone(JobStep source)

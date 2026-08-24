@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+             xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
              xmlns:geometry="clr-namespace:DesktopAutomationApp.Controls.Jobs.Geometry"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared">
@@ -24,8 +25,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <jobs:ValueReferencePicker DataContext="{Binding Source}"
-                                                      ShowClearButton="False"/>
+                            <generated:GeneratedValueSourceInput DataContext="{Binding SourceField}"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
                                 <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>
                                 <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Style="{StaticResource ButtonIcon}" Margin="4,0,0,0"/>
@@ -55,8 +55,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <jobs:ValueReferencePicker DataContext="{Binding Source}"
-                                                          ShowClearButton="False"/>
+                                <generated:GeneratedValueSourceInput DataContext="{Binding TextSourceField}"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
                                     <Button Content="{loc:Translate Key=Ui.Common.MoveUpSymbol}" Command="{Binding MoveUpCommand}" Style="{StaticResource ButtonIcon}"/>
                                     <Button Content="{loc:Translate Key=Ui.Common.MoveDownSymbol}" Command="{Binding MoveDownCommand}" Style="{StaticResource ButtonIcon}" Margin="4,0,0,0"/>
@@ -68,41 +67,43 @@
                                     <Grid Style="{StaticResource StepFieldGrid}">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.FontSizePt}" Style="{StaticResource StepFieldLabel}"/>
-                                        <TextBox Grid.Column="1" Text="{Binding FontSize, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding FontSizeField}"/>
                                     </Grid>
                                     <Grid Style="{StaticResource StepFieldGrid}">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.FontColor}" Style="{StaticResource StepFieldLabel}"/>
-                                        <mah:ColorPicker Grid.Column="1" SelectedColor="{Binding FontColor}" HorizontalAlignment="Left"/>
+                                        <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding FontColorField}"/>
                                     </Grid>
                                     <Grid Style="{StaticResource StepFieldGrid}">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.OpacityPercent}" Style="{StaticResource StepFieldLabel}"/>
-                                        <shared:PercentageInput Grid.Column="1" Value="{Binding Opacity, Mode=TwoWay}"/>
+                                        <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding OpacityField}"/>
                                     </Grid>
                                     <Grid Style="{StaticResource StepFieldGrid}">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Position}" Style="{StaticResource StepFieldLabel}"/>
-                                        <geometry:GeometryValueEditor Grid.Column="1"
-                                                                      X="{Binding OffsetX, Mode=TwoWay}"
-                                                                      Y="{Binding OffsetY, Mode=TwoWay}"/>
+                                        <Grid Grid.Column="1">
+                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="8"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                            <StackPanel><TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryFieldLabel}"/><generated:GeneratedValueSourceInput DataContext="{Binding OffsetXField}"/></StackPanel>
+                                            <StackPanel Grid.Column="2"><TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryFieldLabel}"/><generated:GeneratedValueSourceInput DataContext="{Binding OffsetYField}"/></StackPanel>
+                                        </Grid>
                                     </Grid>
                                     <StackPanel Visibility="{Binding DataContext.ShowOverlayDesktopOptions, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Grid Style="{StaticResource StepFieldGrid}">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                             <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.DesktopIndex}" Style="{StaticResource StepFieldLabel}"/>
-                                            <shared:MonitorPicker Grid.Column="1"
-                                                                  HorizontalAlignment="Left"
-                                                                  MonitorIndex="{Binding DesktopIndex, Mode=TwoWay}"
-                                                                  SelectCommand="{Binding ChooseMonitorCommand}"/>
+                                            <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding DesktopIndexField}"/>
                                         </Grid>
                                         <Grid Style="{StaticResource StepFieldGrid}">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
                                             <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.DisplayDurationMs}" Style="{StaticResource StepFieldLabel}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding DurationMs, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding DurationField}"/>
                                         </Grid>
-                                        <CheckBox Content="{loc:Translate Key=Ui.Step.Settings.RemoveWhenJobEnds}"
-                                                  IsChecked="{Binding ClearOnJobEnd}"/>
+                                        <Grid Style="{StaticResource StepFieldGrid}">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.RemoveWhenJobEnds}" Style="{StaticResource StepFieldLabel}"/>
+                                            <generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding ClearOnJobEndField}"/>
+                                        </Grid>
                                     </StackPanel>
                                 </StackPanel>
                             </Expander>

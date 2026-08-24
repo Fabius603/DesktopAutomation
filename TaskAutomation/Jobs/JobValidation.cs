@@ -56,7 +56,8 @@ public static class JobValidation
         Job job,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
-        var variables = job.Variables ?? [];
+        var variables = (job.Variables ?? []).Cast<JobVariable>()
+            .Concat(job.LocalValues ?? []).ToArray();
         var results = ValidateSection(job.StartSteps, [], variables, providerSources ?? [])
             .Concat(ValidateSection(job.Steps, job.StartSteps, variables, providerSources ?? []))
             .Concat(ValidateSection(job.EndSteps, job.StartSteps.Concat(job.Steps).ToList(), variables, providerSources ?? []))
@@ -241,16 +242,18 @@ public static class JobValidation
                 return $"Für die Eingabe '{key}' wurde keine Variable ausgewählt.";
             }
 
+            var structuredError = ValidateStructuredBinding(
+                binding, steps, consumerIndex, variables, providerSources, key);
+            if (structuredError is not null) return structuredError;
+
             if (binding.HasProviderReference
                 && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
             {
                 var providerSource = ResolveProviderSource(variables, providerSources, binding);
                 if (providerSource is null)
                     return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
-                var directValue = string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
-                                  && Guid.TryParse(binding.SourceId, out var variableId)
-                                  && variables.FirstOrDefault(variable => variable.Id == variableId)?.Scope
-                                  == JobVariableScope.StepValue;
+                var directValue = string.Equals(
+                    binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal);
                 if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
                     return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
                 if (!contract.AcceptedShapes.Any(shape =>
@@ -271,6 +274,90 @@ public static class JobValidation
         }
         return null;
     }
+
+    private static string? ValidateStructuredBinding(
+        ResultBinding binding,
+        IReadOnlyList<JobStep> steps,
+        int consumerIndex,
+        IReadOnlyList<JobVariable> variables,
+        IReadOnlyList<ValueProviderSourceDescriptor> providerSources,
+        string path)
+    {
+        if (!binding.HasStructuredChildren) return null;
+        if (string.IsNullOrWhiteSpace(binding.SchemaId)
+            || !ValueBindingSchemaRegistry.TryGet(binding.SchemaId, out var schema))
+            return $"Die zusammengesetzte Eingabe '{path}' verwendet kein bekanntes Wertschema.";
+
+        if (binding.Members is not null)
+        {
+            foreach (var (memberId, child) in binding.Members)
+            {
+                if (!schema.Members.TryGetValue(memberId, out var member))
+                    return $"Das Feld '{path}.{memberId}' gehört nicht zum Wertschema '{schema.Id}'.";
+                var error = ValidateStructuredChild(
+                    child, member, steps, consumerIndex, variables, providerSources, $"{path}.{memberId}");
+                if (error is not null) return error;
+            }
+        }
+
+        if (binding.Items is not null)
+        {
+            if (schema.ItemSchemaId is null)
+                return $"Die Eingabe '{path}' ist laut Wertschema keine Collection.";
+            for (var index = 0; index < binding.Items.Count; index++)
+            {
+                var child = binding.Items[index];
+                if (!child.HasStructuredChildren) continue;
+                var error = ValidateStructuredBinding(
+                    child, steps, consumerIndex, variables, providerSources, $"{path}.{index}");
+                if (error is not null) return error;
+            }
+        }
+        return null;
+    }
+
+    private static string? ValidateStructuredChild(
+        ResultBinding binding,
+        ValueBindingMemberDescriptor expected,
+        IReadOnlyList<JobStep> steps,
+        int consumerIndex,
+        IReadOnlyList<JobVariable> variables,
+        IReadOnlyList<ValueProviderSourceDescriptor> providerSources,
+        string path)
+    {
+        if (expected.NestedSchemaId is not null || binding.HasStructuredChildren)
+            return ValidateStructuredBinding(binding, steps, consumerIndex, variables, providerSources, path);
+        if (!binding.IsConfigured) return $"Für die Eingabe '{path}' wurde keine Variable ausgewählt.";
+
+        if (binding.HasProviderReference
+            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+        {
+            var source = ResolveProviderSource(variables, providerSources, binding);
+            if (source is null) return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
+            if (expected.AllowedProviderIds?.Contains(binding.ProviderId) == false)
+                return $"Die Wertquelle '{source.Name}' ist für '{path}' nicht erlaubt.";
+            return source.ValueKind != expected.ValueKind || !CardinalityMatches(source.Cardinality, expected.Cardinality)
+                ? $"Die Wertquelle '{source.Name}' besitzt nicht den erwarteten Typ für '{path}'."
+                : null;
+        }
+
+        if (expected.AllowedProviderIds?.Contains(ValueProviderIds.StepResult) == false)
+            return $"Step-Ergebnisse sind für '{path}' nicht erlaubt.";
+
+        var sourceStep = steps.Take(Math.Max(0, consumerIndex))
+            .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
+        if (sourceStep is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
+        var resultType = StepResultMetadata.GetResultTypeForStep(sourceStep);
+        if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
+            return $"Die Ergebnis-Eigenschaft für '{path}' existiert nicht.";
+        return property.DataType != expected.ValueKind || !CardinalityMatches(property.Cardinality, expected.Cardinality)
+            ? $"Die Ergebnis-Eigenschaft '{property.DisplayName}' besitzt nicht den erwarteten Typ für '{path}'."
+            : null;
+    }
+
+    private static bool CardinalityMatches(ResultCardinality actual, ResultCardinality expected) =>
+        actual == expected
+        || expected == ResultCardinality.Single && actual == ResultCardinality.OptionalSingle;
 
     private static string? ValidateLegacyResultBindings(
         IReadOnlyList<JobStep> steps,
@@ -315,10 +402,8 @@ public static class JobValidation
                 var providerSource = ResolveProviderSource(variables, providerSources, binding);
                 if (providerSource is null)
                     return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
-                var directValue = string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
-                                  && Guid.TryParse(binding.SourceId, out var variableId)
-                                  && variables.FirstOrDefault(variable => variable.Id == variableId)?.Scope
-                                  == JobVariableScope.StepValue;
+                var directValue = string.Equals(
+                    binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal);
                 if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
                     return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
                 if (!contract.AcceptedShapes.Any(shape =>
@@ -387,10 +472,22 @@ public static class JobValidation
         IReadOnlyList<ValueProviderSourceDescriptor> providerSources,
         ValueReference reference)
     {
-        if (string.Equals(reference.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        if (reference.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
             && Guid.TryParse(reference.SourceId, out var variableId)
             && variables.FirstOrDefault(variable => variable.Id == variableId) is { } variable)
-            return ValueProviderSourceDescriptor.FromVariable(variable);
+        {
+            var root = ValueProviderSourceDescriptor.FromVariable(variable);
+            if (string.IsNullOrWhiteSpace(reference.ValuePath)) return root;
+            var property = JobVariablePropertyMetadata.GetProperties(variable).FirstOrDefault(candidate =>
+                candidate.Name.Equals(reference.ValuePath, StringComparison.OrdinalIgnoreCase));
+            return property is null ? null : new ValueProviderSourceDescriptor(
+                root.ProviderId,
+                root.SourceId,
+                $"{root.Name} › {property.DisplayName}",
+                property.Description ?? root.Description,
+                property.DataType,
+                property.Cardinality);
+        }
 
         var source = providerSources.FirstOrDefault(candidate =>
             string.Equals(candidate.ProviderId, reference.ProviderId, StringComparison.Ordinal)

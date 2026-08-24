@@ -166,7 +166,8 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             step.Inputs[field.Descriptor.Id] = field.InputReferenceEditor!.Picker.ToBinding();
         foreach (var composite in Fields.SelectMany(CompositeInputEditors))
             foreach (var (key, binding) in composite.InputBindings)
-                step.Inputs[key] = binding;
+                ValueBindingTree.Set(step.Inputs, key, binding);
+        ValueBindingTree.ApplySchemas(step.Inputs, _definition.Descriptor.Fields);
         if (_existingStep is not null)
         {
             step.Id = _existingStep.Id;
@@ -184,6 +185,7 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         if (field.ScreenPointEditor is IGeneratedCompositeInputEditor screenPoint) yield return screenPoint;
         if (field.YoloEditor is IGeneratedCompositeInputEditor yolo) yield return yolo;
         if (field.UserChoiceOptionsEditor is IGeneratedCompositeInputEditor choices) yield return choices;
+        if (field.VisualOverlayEditor is IGeneratedCompositeInputEditor overlay) yield return overlay;
     }
 
     private void OnFieldChanged(object? sender, PropertyChangedEventArgs e)
@@ -513,6 +515,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                                             && InputReferenceEditor?.Picker.RequiresInlineEditChoice == true;
     public bool ShowsDirectInput => IsInlineStepValue;
     public bool ShowsInputSourcePicker => !IsInlineStepValue;
+    public bool ShowsInputSourceSelector => InputReferenceEditor?.Picker.CanSwitchSource == true;
     public GeneratedCameraEditorViewModel? CameraEditor { get; }
     public GeneratedVisualOverlayEditorViewModel? VisualOverlayEditor { get; }
     public GeneratedRoiEditorViewModel? RoiEditor { get; }
@@ -534,6 +537,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             ? MapDirectValueKind(variable.ValueKind)
             : Descriptor.ValueKind;
     public bool IsBoolean => EffectiveValueKind == StepValueKind.Boolean;
+    public bool UsesDateTimePicker => EffectiveValueKind == StepValueKind.DateTime;
     public bool UsesMonitorPicker => string.Equals(
         Descriptor.EditorHint,
         StepEditorHints.MonitorPicker,
@@ -650,7 +654,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool UsesEmojiText => Descriptor.EditorHint == StepEditorHints.EmojiText;
     public bool UsesColorPicker => EffectiveValueKind == StepValueKind.Color;
     public bool UsesMultilineTextInput => EffectiveValueKind == StepValueKind.MultilineText && !UsesEmojiText;
-    public bool UsesTextInput => !IsBoolean && !UsesMonitorPicker && !UsesFilePicker && !UsesDirectoryPicker
+    public bool UsesTextInput => !IsBoolean && !UsesDateTimePicker && !UsesMonitorPicker && !UsesFilePicker && !UsesDirectoryPicker
         && !UsesFileOrFolderPicker && !UsesColorPicker && !UsesMultilineTextInput && !UsesCameraPicker
         && !UsesVisualOverlay && !UsesRoiPicker && !UsesYoloPicker && !UsesConditionEditor
         && !UsesWindowsCapabilityPicker
@@ -726,6 +730,13 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         set => InputText = value.ToString(CultureInfo.CurrentCulture);
     }
 
+    public DateTime? DateTimeValue
+    {
+        get => DateTime.TryParse(_inputText, CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind, out var value) ? value : null;
+        set => InputText = value?.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
     public Color ColorValue
     {
         get => WpfColorParser.TryParse(_inputText, out var color) ? color : Colors.White;
@@ -748,6 +759,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
             if (EffectiveValueKind == StepValueKind.Number)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumberValue)));
+            if (EffectiveValueKind == StepValueKind.DateTime)
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DateTimeValue)));
             if (EffectiveValueKind == StepValueKind.Color)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ColorValue)));
         }
@@ -763,6 +776,9 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                 error = Loc.Format("Ui.Step.Generated.Validation.Required", Label);
                 return false;
             }
+            if (InputReferenceEditor.Picker.IsStepValue
+                && Descriptor.ValueKind != StepValueKind.ResultBinding)
+                draft.Values[Descriptor.Id] = CurrentDirectValue();
             return true;
         }
         if (UsesChoicePicker)
@@ -975,6 +991,12 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private void LoadInlineStepValue()
     {
         if (!IsInlineStepValue || InputReferenceEditor?.Picker.SelectedJobVariable is not { } variable) return;
+        if (variable.Value is null && CurrentDirectValue() is { } initialValue)
+        {
+            variable.Value = initialValue;
+            InputReferenceEditor.Picker.RefreshSelectedValue();
+            return;
+        }
         _inputText = FormatValue(variable.Value, EffectiveValueKind);
         _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
             string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
@@ -1025,6 +1047,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                 when decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out var number)
                 => JsonValue.Create(number),
             StepValueKind.Boolean when bool.TryParse(text, out var flag) => JsonValue.Create(flag),
+            StepValueKind.DateTime when DateTime.TryParse(text, CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind, out var dateTime) => JsonValue.Create(dateTime.ToUniversalTime()),
             _ => JsonValue.Create(_inputText)
         };
     }
@@ -1034,6 +1058,9 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         ResultValueKind.Boolean => StepValueKind.Boolean,
         ResultValueKind.Integer => StepValueKind.Integer,
         ResultValueKind.Number => StepValueKind.Number,
+        ResultValueKind.DateTime => StepValueKind.DateTime,
+        ResultValueKind.Color => StepValueKind.Color,
+        ResultValueKind.FilePath => StepValueKind.FilePath,
         ResultValueKind.Enum => StepValueKind.Enum,
         ResultValueKind.Point => StepValueKind.Point,
         ResultValueKind.Rectangle => StepValueKind.Rectangle,
@@ -1108,16 +1135,22 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
     private readonly IReadOnlyList<SourceStepItem> _sources;
     private readonly IReadOnlyList<JobVariable> _variables;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
+    private readonly string _inputKeyPrefix;
+    private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
 
     public GeneratedConditionEditorViewModel(
         JsonNode? value,
         IReadOnlyList<SourceStepItem> sources,
         IReadOnlyList<JobVariable>? variables = null,
-        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+        string inputKeyPrefix = "conditions",
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
     {
         _sources = sources;
         _variables = variables ?? [];
         _providerSources = providerSources ?? [];
+        _inputKeyPrefix = inputKeyPrefix;
+        _nestedInputResolver = nestedInputResolver;
         Conditions.CollectionChanged += OnCollectionChanged;
         AddCommand = new RelayCommand(AddCondition);
 
@@ -1129,7 +1162,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
         _matchMode = settings.MatchMode;
         foreach (var condition in settings.Conditions)
         {
-            var row = new ConditionRowViewModel(Conditions, _sources, _variables, _providerSources);
+            var row = CreateRow();
             row.LoadFrom(condition);
             Conditions.Add(row);
         }
@@ -1161,8 +1194,12 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
         Conditions = Conditions.Select(condition => condition.ToCondition()).ToList()
     };
 
-    private void AddCondition() =>
-        Conditions.Add(new ConditionRowViewModel(Conditions, _sources, _variables, _providerSources));
+    private void AddCondition() => Conditions.Add(CreateRow());
+
+    private ConditionRowViewModel CreateRow() => new(
+        Conditions, _sources, _variables, _providerSources,
+        $"{_inputKeyPrefix}.{Conditions.Count}.comparison",
+        _nestedInputResolver);
 
     private void SetMatchMode(ConditionMatchMode value)
     {
@@ -2229,7 +2266,7 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChanged
+public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChanged, IGeneratedCompositeInputEditor
 {
     private readonly IReadOnlyList<SourceStepItem> _sources;
     private readonly StepInputDescriptor _detectionInputContract;
@@ -2239,6 +2276,8 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
     private readonly ValueReferencePickerContext? _detectionPickerContext;
     private readonly ValueReferencePickerContext? _textPickerContext;
+    private readonly string _inputKeyPrefix;
+    private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
 
     public GeneratedVisualOverlayEditorViewModel(
         JsonNode? value,
@@ -2250,7 +2289,9 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         ValueReferencePickerContext? detectionPickerContext = null,
-        ValueReferencePickerContext? textPickerContext = null)
+        ValueReferencePickerContext? textPickerContext = null,
+        string inputKeyPrefix = "overlay",
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
     {
         _sources = sources;
         _detectionInputContract = detectionInputContract;
@@ -2260,6 +2301,8 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
         _providerSources = providerSources ?? [];
         _detectionPickerContext = detectionPickerContext;
         _textPickerContext = textPickerContext;
+        _inputKeyPrefix = inputKeyPrefix;
+        _nestedInputResolver = nestedInputResolver;
         ShowOverlayDesktopOptions = showDesktopOptions;
         OverlayDetectionRows.CollectionChanged += OnCollectionChanged;
         OverlayTextRows.CollectionChanged += OnCollectionChanged;
@@ -2271,8 +2314,7 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
             OverlayDetectionRows.Add(new(OverlayDetectionRows, sources, detectionInputContract,
                 _variables, _providerSources, binding, _detectionPickerContext));
         foreach (var text in settings.TextResults)
-            OverlayTextRows.Add(new(OverlayTextRows, sources, textInputContract, chooseMonitor,
-                _variables, _providerSources, text, _textPickerContext));
+            AddText(text);
     }
 
     public ObservableCollection<DetectionOverlayRowViewModel> OverlayDetectionRows { get; } = [];
@@ -2280,6 +2322,10 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
     public ICommand AddOverlayDetectionCommand { get; }
     public ICommand AddOverlayTextCommand { get; }
     public bool ShowOverlayDesktopOptions { get; }
+    public IReadOnlyDictionary<string, ResultBinding> InputBindings => OverlayTextRows
+        .SelectMany((row, index) => row.InputBindings.Select(pair => new KeyValuePair<string, ResultBinding>(
+            $"{_inputKeyPrefix}.text_results.{index}.{pair.Key[(pair.Key.LastIndexOf('.') + 1)..]}", pair.Value)))
+        .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? Changed;
 
@@ -2293,9 +2339,15 @@ public sealed class GeneratedVisualOverlayEditorViewModel : INotifyPropertyChang
         OverlayDetectionRows.Add(new(OverlayDetectionRows, _sources, _detectionInputContract,
             _variables, _providerSources, pickerContext: _detectionPickerContext));
 
-    private void AddText() =>
+    private void AddText() => AddText(null);
+
+    private void AddText(TextResultOverlaySettings? settings)
+    {
+        var index = OverlayTextRows.Count;
         OverlayTextRows.Add(new(OverlayTextRows, _sources, _textInputContract, _chooseMonitor,
-            _variables, _providerSources, pickerContext: _textPickerContext));
+            _variables, _providerSources, settings, _textPickerContext,
+            $"{_inputKeyPrefix}.text_results.{index}", _nestedInputResolver));
+    }
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {

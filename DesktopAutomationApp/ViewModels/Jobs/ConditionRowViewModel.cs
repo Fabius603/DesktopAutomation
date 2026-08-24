@@ -2,9 +2,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Nodes;
 using System.Windows.Input;
 using DesktopAutomationApp.Localization;
 using MahApps.Metro.IconPacks;
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -20,7 +22,8 @@ public sealed class ConditionSelectionNode
         ICommand? selectCommand = null, string? secondaryText = null,
         string? description = null, PackIconMaterialKind? icon = null,
         bool isEnabled = true, bool isExpanded = false, string? sourceText = null,
-        bool isSelected = false)
+        bool isSelected = false, string? valueText = null, string? fullValueText = null,
+        string? colorPreview = null)
     {
         DisplayName = displayName;
         Children = children ?? [];
@@ -32,6 +35,9 @@ public sealed class ConditionSelectionNode
         IsExpanded = isExpanded;
         SourceText = sourceText;
         IsSelected = isSelected;
+        ValueText = valueText;
+        FullValueText = fullValueText;
+        ColorPreview = colorPreview;
     }
 
     public string DisplayName { get; }
@@ -45,11 +51,24 @@ public sealed class ConditionSelectionNode
     public bool IsExpanded { get; }
     public string? SourceText { get; }
     public bool IsSelected { get; }
+    public string? ValueText { get; }
+    public string? FullValueText { get; }
+    public string? ColorPreview { get; }
+    public bool HasSecondaryText => !string.IsNullOrWhiteSpace(SecondaryText);
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
+    public bool HasSourceText => !string.IsNullOrWhiteSpace(SourceText);
+    public bool HasValueText => !string.IsNullOrWhiteSpace(ValueText);
+    public bool HasFullValueText => !string.IsNullOrWhiteSpace(FullValueText);
+    public bool HasColorPreview => !string.IsNullOrWhiteSpace(ColorPreview);
     public bool IsSelectable => IsEnabled && SelectCommand is not null;
 }
 
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
 {
+    private readonly string _comparisonInputKey;
+    private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
+    private GeneratedStepFieldViewModel? _comparisonField;
+    private bool _loadingSourcePicker;
     public IReadOnlyList<EditorChoiceOptionViewModel> ComparisonSourceOptions { get; } =
     [
         new("Literal", Loc.Get("Ui.Step.IfEditor.LiteralValue")),
@@ -84,6 +103,13 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public IReadOnlyList<ConditionSelectionNode> SelectionTree { get; }
     public IReadOnlyList<ConditionSelectionNode> ComparisonSelectionTree { get; private set; } = [];
     public ObservableCollection<ConditionOperator> AvailableOperators { get; } = [];
+    public ValueReferencePickerViewModel SourcePicker { get; }
+    public GeneratedStepFieldViewModel SourceField { get; }
+    public GeneratedStepFieldViewModel? ComparisonField
+    {
+        get => _comparisonField;
+        private set { _comparisonField = value; OnChange(); }
+    }
 
     private SourceStepItem? _selectedSourceStep;
     public SourceStepItem? SelectedSourceStep { get => _selectedSourceStep; private set { _selectedSourceStep = value; OnChange(); OnChange(nameof(SelectedPath)); } }
@@ -98,6 +124,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             OnChange();
             RefreshOperators();
             RefreshComparisonChoices();
+            RefreshComparisonField();
             OnChange(nameof(SelectedPath));
         }
     }
@@ -182,7 +209,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool ShowLiteralComparisonValue => ShowComparisonValue && ComparisonIsLiteral;
     public bool ShowJobResultComparisonValue => ShowComparisonValue && ComparisonIsJobResult;
     public bool ShowNumericValue => ShowLiteralComparisonValue && SelectedProperty?.DataType is ResultValueKind.Number or ResultValueKind.Integer;
-    public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Text;
+    public bool ShowTextValue => ShowLiteralComparisonValue && SelectedProperty?.DataType is
+        ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath;
     public bool ShowDateValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.DateTime;
     public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Boolean;
     public bool ShowEnumValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Enum;
@@ -204,7 +232,11 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _ => string.Empty
     });
     public bool IsComparisonValueValid => SelectedProperty is not null &&
-        (!ShowComparisonValue || (ComparisonIsLiteral
+        (!ShowComparisonValue || (ComparisonField?.InputReferenceEditor?.Picker is { } picker
+            ? picker.IsConfigured && (!picker.IsStepValue
+                || ConditionRules.IsComparisonValueValid(
+                    SelectedProperty, SelectedOperator, GetLiteralComparisonValue()))
+            : ComparisonIsLiteral
             ? ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
             : (SelectedComparisonSourceStep is not null || _selectedComparisonVariable is not null)
                 && SelectedComparisonProperty is not null
@@ -219,31 +251,87 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private readonly ObservableCollection<ConditionRowViewModel> _owner;
     private readonly IReadOnlyList<SourceStepItem> _availableSourceSteps;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _availableVariables;
+    private readonly IReadOnlyDictionary<string, JobVariable> _jobVariables;
 
     public ConditionRowViewModel(
         ObservableCollection<ConditionRowViewModel> owner,
         IReadOnlyList<SourceStepItem> sources,
         IReadOnlyList<JobVariable>? variables = null,
-        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
+        string comparisonInputKey = "conditions.0.comparison",
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
     {
         _owner = owner;
+        _comparisonInputKey = comparisonInputKey;
+        _nestedInputResolver = nestedInputResolver;
         RemoveCommand = new RelayCommand(
             () => { if (owner.Count > 1) owner.Remove(this); },
             () => owner.Count > 1);
         _availableSourceSteps = sources;
+        _jobVariables = (variables ?? []).Where(variable => variable.Id != Guid.Empty)
+            .ToDictionary(variable => variable.Id.ToString("D"), StringComparer.OrdinalIgnoreCase);
         _availableVariables = (variables ?? []).Select(ValueProviderSourceDescriptor.FromVariable)
             .Concat(providerSources ?? [])
-            .Where(IsConditionValue)
             .DistinctBy(source => (source.ProviderId, source.SourceId))
             .ToArray();
+        SourcePicker = new ValueReferencePickerViewModel(
+            sources, CreateConditionSourceContract(), false, variables, _availableVariables);
+        SourceField = new GeneratedStepFieldViewModel(
+            new StepFieldDescriptor("condition_source", string.Empty, StepValueKind.ResultBinding,
+                Required: true, AllowsDirectValue: false),
+            null,
+            inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
+                JsonValue.Create(string.Empty), SourcePicker));
+        SourcePicker.PropertyChanged += (_, _) => SyncSourceFromPicker();
         SelectionTree = BuildSelectionTree(sources, _availableVariables);
         owner.CollectionChanged += OnOwnerCollectionChanged;
         var firstSource = sources.FirstOrDefault();
         var firstProperty = firstSource?.ResultType.Properties.FirstOrDefault();
         if (firstSource is not null && firstProperty is not null)
+        {
             SelectPath(firstSource, firstProperty);
-        else if (_availableVariables.FirstOrDefault() is { } firstVariable)
+            SourcePicker.Load(ResultBinding.ForStepResult(firstSource.StepId, firstProperty.StableId));
+        }
+        else if (_availableVariables.FirstOrDefault(IsConditionValue) is { } firstVariable)
+        {
             SelectVariable(firstVariable, Describe(firstVariable));
+            SourcePicker.Load(new ResultBinding { ProviderId = firstVariable.ProviderId, SourceId = firstVariable.SourceId });
+        }
+    }
+
+    private static StepInputDescriptor CreateConditionSourceContract() => new(
+        "condition", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.NotApplicable,
+        new AcceptedResultShape(ResultValueKind.Boolean, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.Number, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.DateTime, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.Color, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.FilePath, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new AcceptedResultShape(ResultValueKind.Enum, ResultCardinality.Single, ResultCardinality.OptionalSingle))
+    {
+        AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable, ValueProviderIds.StepResult }
+    };
+
+    private void SyncSourceFromPicker()
+    {
+        if (_loadingSourcePicker || !SourcePicker.IsConfigured) return;
+        var binding = SourcePicker.ToBinding();
+        if (binding.HasProviderReference
+            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+            && _availableVariables.FirstOrDefault(source =>
+                string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
+                && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
+        {
+            SelectVariable(variable, Describe(variable, binding.ValuePath));
+            return;
+        }
+        var source = _availableSourceSteps.FirstOrDefault(item => item.StepId == binding.SourceStepId);
+        var property = source?.ResultType.Properties.FirstOrDefault(item =>
+            item.StableId.Equals(binding.PropertyId, StringComparison.OrdinalIgnoreCase)
+            || item.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
+        if (source is not null && property is not null)
+            SelectPath(source, property);
     }
 
     private void OnOwnerCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -263,6 +351,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     {
         var nodes = new List<ConditionSelectionNode>();
         var variableNodes = variables
+            .Where(IsConditionValue)
             .Select(variable => (Variable: variable, Property: Describe(variable)))
             .Where(item => filter is null || filter(item.Property))
             .Select(item => new ConditionSelectionNode(
@@ -367,10 +456,15 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         variable.Cardinality != ResultCardinality.Collection
         && variable.ValueKind is ResultValueKind.Boolean or ResultValueKind.Integer
             or ResultValueKind.Number or ResultValueKind.Text or ResultValueKind.DateTime
-            or ResultValueKind.Enum;
+            or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath;
 
-    private static ResultPropertyDescriptor Describe(ValueProviderSourceDescriptor variable) =>
-        variable.ToResultProperty();
+    private ResultPropertyDescriptor Describe(ValueProviderSourceDescriptor variable, string? valuePath = null) =>
+        !string.IsNullOrWhiteSpace(valuePath)
+        && _jobVariables.TryGetValue(variable.SourceId, out var jobVariable)
+        && JobVariablePropertyMetadata.GetProperties(jobVariable).FirstOrDefault(property =>
+            property.Name.Equals(valuePath, StringComparison.OrdinalIgnoreCase)) is { } property
+            ? property
+            : variable.ToResultProperty();
 
     private static SourceStepItem VariableSource(ValueProviderSourceDescriptor variable, ResultPropertyDescriptor property) => new(
         variable.SourceId,
@@ -384,17 +478,36 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         var condition = new StepCondition
         {
             Operator = SelectedOperator,
-            Comparison = ShowComparisonValue ? new ComparisonOperand
-            {
-                Kind = ComparisonKind,
-                Value = ComparisonIsLiteral ? GetLiteralComparisonValue() : null
-            } : null
+            Comparison = ShowComparisonValue ? CreateComparisonOperand() : null
         };
         ApplyReference(condition, _selectedSourceVariable, SelectedSourceStep, SelectedProperty);
-        if (condition.Comparison is not null && ComparisonIsJobResult)
+        if (condition.Comparison is not null && ComparisonField is null && ComparisonIsJobResult)
             ApplyReference(condition.Comparison, _selectedComparisonVariable,
                 SelectedComparisonSourceStep, SelectedComparisonProperty);
         return condition;
+    }
+
+    private ComparisonOperand CreateComparisonOperand()
+    {
+        if (ComparisonField?.InputReferenceEditor?.Picker is { } picker)
+        {
+            var binding = picker.ToBinding();
+            return new ComparisonOperand
+            {
+                Kind = binding.IsConfigured ? ComparisonOperandKind.JobResult : ComparisonOperandKind.Literal,
+                ProviderId = binding.ProviderId,
+                SourceId = binding.SourceId,
+                ValuePath = binding.ValuePath,
+                LegacySourceStepId = binding.LegacySourceStepId,
+                LegacyPropertyId = binding.LegacyPropertyId,
+                LegacyPropertyPath = binding.LegacyPropertyPath
+            };
+        }
+        return new ComparisonOperand
+        {
+            Kind = ComparisonKind,
+            Value = ComparisonIsLiteral ? GetLiteralComparisonValue() : null
+        };
     }
 
     private static void ApplyReference(
@@ -407,6 +520,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         {
             binding.ProviderId = variable.ProviderId;
             binding.SourceId = variable.SourceId;
+            binding.ValuePath = property is not null
+                                && !property.Name.Equals(variable.Name, StringComparison.OrdinalIgnoreCase)
+                ? property.Name
+                : null;
         }
         else if (source is not null && property is not null)
         {
@@ -418,20 +535,68 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private string? GetLiteralComparisonValue()
     {
         if (SelectedProperty is null || !ShowComparisonValue || !ComparisonIsLiteral) return null;
+        if (ComparisonField is not null)
+            return ComparisonField.Descriptor.ValueKind == StepValueKind.DateTime
+                ? ComparisonField.DateTimeValue?.ToUniversalTime().ToString("O")
+                : ComparisonField.InputText;
         object? editorValue = SelectedProperty.DataType switch
         {
             ResultValueKind.Number or ResultValueKind.Integer => ComparisonNumber,
             ResultValueKind.DateTime => ComparisonDate,
             ResultValueKind.Boolean => ComparisonBoolean,
-            ResultValueKind.Text => ComparisonValue,
+            ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath => ComparisonValue,
             ResultValueKind.Enum => ComparisonEnum,
             _ => null
         };
         return ConditionRules.FormatComparisonValue(SelectedProperty, editorValue);
     }
 
+    private void RefreshComparisonField(string? literal = null, ResultBinding? binding = null)
+    {
+        if (_nestedInputResolver is null || SelectedProperty is null)
+        {
+            ComparisonField = null;
+            return;
+        }
+        var kind = SelectedProperty.DataType switch
+        {
+            ResultValueKind.Boolean => StepValueKind.Boolean,
+            ResultValueKind.Integer => StepValueKind.Integer,
+            ResultValueKind.Number => StepValueKind.Number,
+            ResultValueKind.DateTime => StepValueKind.DateTime,
+            ResultValueKind.Enum => StepValueKind.Enum,
+            ResultValueKind.Color => StepValueKind.Color,
+            ResultValueKind.FilePath => StepValueKind.FilePath,
+            _ => StepValueKind.Text
+        };
+        literal ??= GetLiteralComparisonValue();
+        var node = literal is null ? null : JsonValue.Create(literal);
+        if (kind == StepValueKind.Integer && int.TryParse(literal, out var integer)) node = JsonValue.Create(integer);
+        if (kind == StepValueKind.Number && double.TryParse(literal,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out var number)) node = JsonValue.Create(number);
+        if (kind == StepValueKind.Boolean && bool.TryParse(literal, out var boolean)) node = JsonValue.Create(boolean);
+        var enumTypeName = SelectedProperty.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
+        var options = kind == StepValueKind.Enum
+            ? (SelectedProperty.EnumValues ?? []).Select(value => new StepFieldOptionDescriptor(
+                value, $"Enum.{enumTypeName}.{value}")).ToArray()
+            : null;
+        var descriptor = new StepFieldDescriptor(_comparisonInputKey, string.Empty, kind,
+            Required: true, DefaultValue: node, Options: options);
+        var field = new GeneratedStepFieldViewModel(descriptor, node,
+            inputReferenceEditor: _nestedInputResolver(_comparisonInputKey, kind, node));
+        if (binding?.IsConfigured == true)
+            field.InputReferenceEditor!.Picker.Load(binding);
+        field.PropertyChanged += (_, _) => { NotifyValidation(); OnChange(nameof(ComparisonKind)); };
+        ComparisonField = field;
+        OnChange(nameof(IsComparisonValueValid));
+    }
+
     public void LoadFrom(StepCondition condition)
     {
+        _loadingSourcePicker = true;
+        try { SourcePicker.Load(condition); }
+        finally { _loadingSourcePicker = false; }
         if (condition.HasProviderReference
             && !string.Equals(condition.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
             && _availableVariables.FirstOrDefault(variable =>
@@ -439,7 +604,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 && string.Equals(variable.SourceId, condition.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
         {
             _selectedSourceVariable = variable;
-            _selectedProperty = Describe(variable);
+            _selectedProperty = Describe(variable, condition.ValuePath);
             _selectedSourceStep = VariableSource(variable, _selectedProperty);
         }
         else
@@ -497,7 +662,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                     && string.Equals(item.SourceId, comparison.SourceId, StringComparison.OrdinalIgnoreCase)) is { } comparisonVariable)
             {
                 _selectedComparisonVariable = comparisonVariable;
-                _selectedComparisonProperty = Describe(comparisonVariable);
+                _selectedComparisonProperty = Describe(comparisonVariable, comparison.ValuePath);
                 _selectedComparisonSourceStep = VariableSource(comparisonVariable, _selectedComparisonProperty);
             }
             else
@@ -512,6 +677,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                         && StepResultMetadata.AreComparable(_selectedProperty, p));
             }
         }
+        RefreshComparisonField(comparison.Value,
+            comparison.Kind == ComparisonOperandKind.JobResult ? comparison : null);
         OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
         OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(ComparisonEnum)); OnChange(nameof(EnumValues)); OnChange(nameof(EnumOptions)); OnChange(nameof(SelectedPath));
         OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));

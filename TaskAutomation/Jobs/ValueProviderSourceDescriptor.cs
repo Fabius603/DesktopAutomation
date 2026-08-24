@@ -21,7 +21,7 @@ public sealed record ValueProviderSourceDescriptor(
         Id: SourceId);
 
     public static ValueProviderSourceDescriptor FromVariable(JobVariable variable) => new(
-        ValueProviderIds.JobVariable,
+        variable is LocalValue ? ValueProviderIds.LocalValue : ValueProviderIds.JobVariable,
         variable.Id.ToString("D"),
         variable.Name,
         variable.Description,

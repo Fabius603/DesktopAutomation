@@ -1,6 +1,7 @@
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomationApp.ViewModels;
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps.Definitions;
 using TaskAutomation.Tests.TestDoubles;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
@@ -60,6 +61,68 @@ public sealed class JobStepsViewModelExecutionTests
         var duplicate = Assert.IsType<TimeoutStep>(viewModel.Steps[1]);
         Assert.Equal(original.Settings.DelayMs, duplicate.Settings.DelayMs);
         Assert.NotEqual(original.Id, duplicate.Id);
+    }
+
+    [Fact]
+    public async Task DuplicateStepCommand_RemapsLocalValuesInsideStructuredBindings()
+    {
+        var original = new ActiveProcessStep();
+        var target = new LocalValue
+        {
+            OwnerStepId = original.Id,
+            InputPath = ActiveProcessStepDefinition.ProcessTargetFieldId,
+            ValueKind = ResultValueKind.ResultObject,
+            Value = System.Text.Json.JsonSerializer.SerializeToNode(
+                new TaskAutomation.Contracts.Steps.StepProcessSelectorValue(null, "notepad", string.Empty, "Editor"))
+        };
+        var title = new LocalValue
+        {
+            OwnerStepId = original.Id,
+            InputPath = $"{ActiveProcessStepDefinition.ProcessTargetFieldId}.window_title_contains",
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("Bericht")
+        };
+        original.Inputs[ActiveProcessStepDefinition.ProcessTargetFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = target.Id.ToString("D")
+        };
+        ValueBindingTree.Set(original.Inputs, title.InputPath, new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = title.Id.ToString("D")
+        });
+        Assert.True(BuiltInStepDefinitions.Instance.TryGetByType(typeof(ActiveProcessStep), out var definition));
+        ValueBindingTree.ApplySchemas(original.Inputs, definition.Descriptor.Fields);
+        var job = new Job
+        {
+            Name = "Structured duplicate",
+            FormatVersion = Job.CurrentFormatVersion,
+            Steps = [original],
+            LocalValues = [target, title]
+        };
+        var viewModel = CreateViewModel(job);
+        viewModel.SelectedStep = original;
+        var command = Assert.IsType<AsyncRelayCommand>(viewModel.DuplicateStepCommand);
+
+        command.Execute(null);
+        while (command.IsExecuting) await Task.Yield();
+
+        var duplicate = Assert.IsType<ActiveProcessStep>(viewModel.Steps[1]);
+        var originalReferences = ValueBindingTree.EnumerateReferences(original.Inputs)
+            .Where(item => item.Binding.ProviderId == ValueProviderIds.LocalValue).ToArray();
+        var duplicateReferences = ValueBindingTree.EnumerateReferences(duplicate.Inputs)
+            .Where(item => item.Binding.ProviderId == ValueProviderIds.LocalValue).ToArray();
+        Assert.Equal(originalReferences.Select(item => item.Path), duplicateReferences.Select(item => item.Path));
+        Assert.All(duplicateReferences, item =>
+        {
+            Assert.DoesNotContain(originalReferences, originalItem =>
+                originalItem.Binding.SourceId == item.Binding.SourceId);
+            var local = Assert.Single(job.LocalValues, candidate =>
+                candidate.Id.ToString("D") == item.Binding.SourceId);
+            Assert.Equal(duplicate.Id, local.OwnerStepId);
+            Assert.Equal(item.Path, local.InputPath);
+        });
     }
 
     [Fact]
@@ -212,6 +275,7 @@ public sealed class JobStepsViewModelExecutionTests
         {
             Name = "URL",
             Description = "Service endpoint",
+            Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Text,
             Value = System.Text.Json.Nodes.JsonValue.Create("https://example.test")
         };
@@ -238,6 +302,7 @@ public sealed class JobStepsViewModelExecutionTests
         var variable = new JobVariable
         {
             Name = "URL",
+            Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Text,
             Value = System.Text.Json.Nodes.JsonValue.Create("https://example.test")
         };
@@ -275,7 +340,7 @@ public sealed class JobStepsViewModelExecutionTests
     {
         var used = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
-        var unused = new JobVariable { Name = "Retries", Scope = JobVariableScope.StepValue,
+        var unused = new JobVariable { Name = "Retries", Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Integer, Value = System.Text.Json.Nodes.JsonValue.Create(3) };
         var step = new ShowTextStep { Settings = new ShowTextSettings
         {
@@ -292,16 +357,26 @@ public sealed class JobStepsViewModelExecutionTests
         viewModel.VariableSearchText = viewModel.JobVariables.Single(candidate => candidate.Id == used.Id).UsageSteps.Single();
         Assert.Contains(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == used.Id);
 
+        viewModel.VariableSearchText = "does not exist";
+        Assert.True(viewModel.HasEmptyVariableFilterResult);
+
         viewModel.VariableSearchText = string.Empty;
-        viewModel.ShowSharedVariables = false;
-        Assert.All(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => Assert.True(candidate.IsStepValue));
         Assert.Contains(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == unused.Id);
+
+        viewModel.SelectedVariableTypeFilter = viewModel.VariableTypeFilterOptions.Single(option =>
+            option.Kind == ResultValueKind.Integer);
+        Assert.Equal(unused.Id, Assert.Single(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>()).Id);
+        Assert.True(viewModel.HasTypeVariableFilter);
+
+        viewModel.ResetVariableFiltersCommand.Execute(null);
+        Assert.Equal(2, viewModel.FilteredJobVariables.Count);
+        Assert.False(viewModel.HasActiveVariableFilters);
     }
 
     [Fact]
-    public void VariableView_CanDuplicateAndPromoteStepValue()
+    public void VariableView_CanDuplicateSharedVariable()
     {
-        var variable = new JobVariable { Name = "Retries", Scope = JobVariableScope.StepValue,
+        var variable = new JobVariable { Name = "Retries", Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Integer, Value = System.Text.Json.Nodes.JsonValue.Create(3) };
         var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [variable] });
         var editor = Assert.Single(viewModel.JobVariables);
@@ -310,9 +385,68 @@ public sealed class JobStepsViewModelExecutionTests
         var copy = Assert.Single(viewModel.JobVariables, candidate => candidate.Id != editor.Id);
         Assert.Equal(3, copy.IntegerValue);
 
-        viewModel.PromoteVariableCommand.Execute(editor);
         Assert.True(editor.IsShared);
-        Assert.Equal(JobVariableScope.Shared, variable.Scope);
+        Assert.True(copy.IsShared);
+        Assert.Same(copy, viewModel.SelectedJobVariable);
+    }
+
+    [Fact]
+    public void JobVariableEditing_KeepsFilteredCollectionSelectionAndTypeStable()
+    {
+        var first = new JobVariable
+        {
+            Name = "First",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("one")
+        };
+        var second = new JobVariable
+        {
+            Name = "Second",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("two")
+        };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [first, second] });
+        var filteredVariables = viewModel.FilteredJobVariables;
+        var editor = viewModel.JobVariables.Single(candidate => candidate.Id == second.Id);
+        viewModel.SelectedJobVariable = editor;
+
+        editor.TextValue = "changed";
+        editor.SelectedKindValue = ResultValueKind.Integer;
+
+        Assert.Same(filteredVariables, viewModel.FilteredJobVariables);
+        Assert.Same(editor, viewModel.SelectedJobVariable);
+        Assert.Contains(editor, viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>());
+        Assert.Equal(ResultValueKind.Integer, editor.SelectedKindValue);
+        Assert.Equal(ResultValueKind.Integer, editor.SelectedKind.Kind);
+    }
+
+    [Fact]
+    public void VariableUsage_NavigatesToTheConsumingStep()
+    {
+        var variable = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
+        var first = new TimeoutStep();
+        var consuming = new ShowTextStep { Settings = new ShowTextSettings
+        {
+            TextSource = ShowTextSource.TaskResult,
+            TextResult = new ResultBinding { ProviderId = ValueProviderIds.JobVariable, SourceId = variable.Id.ToString("D") }
+        } };
+        var viewModel = CreateViewModel(new Job
+        {
+            Name = "Variables",
+            Variables = [variable],
+            Steps = [first, consuming]
+        });
+        var editor = Assert.Single(viewModel.JobVariables);
+        var usage = Assert.Single(editor.UsageItems);
+
+        viewModel.OpenVariableUsageCommand.Execute(usage);
+
+        Assert.Same(consuming, viewModel.SelectedStep);
+        Assert.NotEmpty(usage.InputName);
+        Assert.Contains("2", usage.StepName);
     }
 
     private static JobStepsViewModel CreateViewModel(

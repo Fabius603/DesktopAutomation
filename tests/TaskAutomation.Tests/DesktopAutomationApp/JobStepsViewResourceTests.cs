@@ -93,7 +93,7 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("GeneratedStepFieldTemplateSelector", xaml);
         Assert.Contains("ContentTemplateSelector=\"{StaticResource GeneratedStepFieldTemplateSelector}\"", xaml);
-        Assert.Contains("x:Key=\"ValueReferenceFieldTemplate\"", xaml);
+        Assert.DoesNotContain("x:Key=\"ValueReferenceFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"VisualOverlayFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"RoiFieldTemplate\"", xaml);
         Assert.Contains("x:Key=\"WindowsCapabilityFieldTemplate\"", xaml);
@@ -121,16 +121,19 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void RemainingSemanticChoiceEditors_UseSharedChoiceGroupEditor()
+    public void GeneratedSemanticChoiceEditor_UsesSharedChoiceGroupEditor()
     {
         var root = RepositoryRoot();
-        var files = new[]
-        {
-            Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated", "GeneratedStepEditor.xaml"),
-            Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml")
-        };
+        var file = Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated", "GeneratedStepEditor.xaml");
+        Assert.Contains("ChoiceGroupEditor", File.ReadAllText(file));
+    }
 
-        Assert.All(files, file => Assert.Contains("ChoiceGroupEditor", File.ReadAllText(file)));
+    [Fact]
+    public void ConditionComparison_UsesSharedVariableInput()
+    {
+        var root = RepositoryRoot();
+        var file = Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml");
+        Assert.Contains("GeneratedValueSourceInput", File.ReadAllText(file));
     }
 
     [Fact]

@@ -23,14 +23,24 @@ public sealed record StepInputDescriptor(
 {
     public IReadOnlySet<string>? AllowedProviderIds { get; init; }
     public bool AllowsDirectValue { get; init; }
+    public IReadOnlyList<AcceptedResultShape> LegacyAcceptedShapes { get; init; } = [];
 
     public bool AllowsProvider(string providerId) =>
-        AllowedProviderIds is null || AllowedProviderIds.Contains(providerId);
+        string.Equals(providerId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+            ? AllowsDirectValue
+            : AllowedProviderIds is null || AllowedProviderIds.Contains(providerId);
 
-    public bool Accepts(ResultPropertyDescriptor property) => AcceptedShapes.Any(shape => shape.Accepts(property));
+    public bool Accepts(ResultPropertyDescriptor property) => AcceptedShapes.Any(shape => shape.Accepts(property))
+                                                                || LegacyAcceptedShapes.Any(shape => shape.Accepts(property));
 
     public bool Accepts(JobVariable variable) => AcceptedShapes.Any(shape =>
-        shape.Accepts(variable.ValueKind, variable.Cardinality));
+                                                   shape.Accepts(variable.ValueKind, variable.Cardinality))
+                                               || LegacyAcceptedShapes.Any(shape =>
+                                                   shape.Accepts(variable.ValueKind, variable.Cardinality));
+
+    public bool Accepts(ResultValueKind valueKind, ResultCardinality cardinality, bool includeLegacy = true) =>
+        AcceptedShapes.Any(shape => shape.Accepts(valueKind, cardinality))
+        || includeLegacy && LegacyAcceptedShapes.Any(shape => shape.Accepts(valueKind, cardinality));
 
     public ResultPropertyDescriptor? FindPreferredProperty(IEnumerable<ResultPropertyDescriptor> properties)
     {
@@ -69,6 +79,8 @@ public static class StepInputContractRegistry
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape Text = new(ResultValueKind.Text,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
+    private static readonly AcceptedResultShape FilePath = new(ResultValueKind.FilePath,
+        ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape Integer = new(ResultValueKind.Integer,
         ResultCardinality.Single, ResultCardinality.OptionalSingle);
     private static readonly AcceptedResultShape[] DisplayableText =
@@ -78,6 +90,8 @@ public static class StepInputContractRegistry
         new(ResultValueKind.Integer, ResultCardinality.Single, ResultCardinality.OptionalSingle),
         new(ResultValueKind.Number, ResultCardinality.Single, ResultCardinality.OptionalSingle),
         new(ResultValueKind.DateTime, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.Color, ResultCardinality.Single, ResultCardinality.OptionalSingle),
+        new(ResultValueKind.FilePath, ResultCardinality.Single, ResultCardinality.OptionalSingle),
         new(ResultValueKind.Enum, ResultCardinality.Single, ResultCardinality.OptionalSingle),
         new(ResultValueKind.Point, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection),
         new(ResultValueKind.Rectangle, ResultCardinality.Single, ResultCardinality.OptionalSingle, ResultCardinality.Collection),
@@ -110,20 +124,20 @@ public static class StepInputContractRegistry
                 AllowsDirectValue = true
             }],
         [typeof(ShowOnDesktopStep)] = [
-            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
-            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+            OptionalReusable("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            OptionalReusable("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(ShowImageStep)] = [
             Required("image", CollectionConsumptionMode.NotApplicable, Image),
-            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
-            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+            OptionalReusable("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            OptionalReusable("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(VideoCreationStep)] = [
             Required("image", CollectionConsumptionMode.NotApplicable, Image),
-            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
-            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+            OptionalReusable("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            OptionalReusable("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(SaveImageStep)] = [
             Required("image", CollectionConsumptionMode.NotApplicable, Image),
-            Optional("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
-            Optional("text", CollectionConsumptionMode.AllValues, DisplayableText)],
+            OptionalReusable("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
+            OptionalReusable("text", CollectionConsumptionMode.AllValues, DisplayableText)],
         [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(StartProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
         [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
@@ -137,8 +151,8 @@ public static class StepInputContractRegistry
         }],
         [typeof(FileSystemOperationStep)] =
         [
-            Optional("source", CollectionConsumptionMode.NotApplicable, Text),
-            Optional("target", CollectionConsumptionMode.NotApplicable, Text)
+            Optional("source", CollectionConsumptionMode.NotApplicable, Text, FilePath),
+            Optional("target", CollectionConsumptionMode.NotApplicable, Text, FilePath)
         ]
     };
 
@@ -162,11 +176,11 @@ public static class StepInputContractRegistry
         var cardinality = field.ValueKind == StepValueKind.Collection
             ? ResultCardinality.Collection
             : ResultCardinality.Single;
-        var kind = JobVariableInputMigration.MapKind(field.ValueKind);
+        var kind = JobVariableInputMigration.MapKind(field);
         var providers = IsDirectOnly(field)
             ? DirectOnlyProviders
             : ReusableValueProviders;
-        return new StepInputDescriptor(
+        var descriptor = new StepInputDescriptor(
             field.Id,
             field.Required,
             field.Required ? MissingValuePolicy.FailStep : MissingValuePolicy.SkipStep,
@@ -178,6 +192,12 @@ public static class StepInputContractRegistry
             AllowedProviderIds = providers,
             AllowsDirectValue = true
         };
+        return kind is ResultValueKind.Color or ResultValueKind.FilePath
+            ? descriptor with
+            {
+                LegacyAcceptedShapes = [new AcceptedResultShape(ResultValueKind.Text, cardinality)]
+            }
+            : descriptor;
     }
 
     private static StepInputDescriptor Required(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
@@ -189,6 +209,11 @@ public static class StepInputContractRegistry
         new(key, false, MissingValuePolicy.SkipStep, collection, shapes)
         {
             AllowedProviderIds = StepResultProviders
+        };
+    private static StepInputDescriptor OptionalReusable(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
+        new(key, false, MissingValuePolicy.SkipStep, collection, shapes)
+        {
+            AllowedProviderIds = ReusableValueProviders
         };
 
     private static bool IsDirectOnly(StepFieldDescriptor field) =>

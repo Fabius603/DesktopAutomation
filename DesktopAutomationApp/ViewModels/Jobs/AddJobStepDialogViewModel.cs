@@ -83,8 +83,10 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyList<JobStep> _allJobSteps;
         private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
         private readonly IReadOnlyList<JobVariable> _jobVariables;
+        private readonly IReadOnlyList<LocalValue> _localValues;
         private readonly List<ValueProviderSourceDescriptor> _providerSources;
         private readonly Action<JobVariable>? _jobVariableCreated;
+        private readonly Action<LocalValue>? _localValueCreated;
         private readonly List<JobVariable> _draftStepVariables = [];
         private readonly Guid? _currentJobId;
         private readonly ICameraCaptureService _cameraCaptureService;
@@ -112,7 +114,9 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyList<JobVariable>? jobVariables = null,
             IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
             Action<JobVariable>? jobVariableCreated = null,
-            ISecretStore? secretStore = null)
+            ISecretStore? secretStore = null,
+            IReadOnlyList<LocalValue>? localValues = null,
+            Action<LocalValue>? localValueCreated = null)
         {
             _ctx = ctx;
             _precedingSteps = precedingSteps;
@@ -122,8 +126,10 @@ namespace DesktopAutomationApp.ViewModels
                 ?? throw new ArgumentNullException(nameof(cameraCaptureService));
             _stepDefinitionCatalog = stepDefinitionCatalog ?? BuiltInStepDefinitions.Instance;
             _jobVariables = jobVariables ?? [];
+            _localValues = localValues ?? [];
             _providerSources = (providerSources ?? []).ToList();
             _jobVariableCreated = jobVariableCreated;
+            _localValueCreated = localValueCreated;
             _secretStore = secretStore;
             StepTypeItems = CreateStepTypeItems(_stepDefinitionCatalog);
             AvailableJobs = new ObservableCollection<Job>(
@@ -216,15 +222,24 @@ namespace DesktopAutomationApp.ViewModels
         private void Confirm()
         {
             CreateStep();
-            var referencedIds = CreatedStep is null
-                ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                : ValueReferenceUsageInspector.Find(new Job { Steps = [CreatedStep] })
-                    .Where(usage => string.Equals(usage.Reference.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
-                    .Select(usage => usage.Reference.SourceId)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            foreach (var variable in _draftStepVariables
-                         .Where(variable => referencedIds.Contains(variable.Id.ToString("D"))).ToArray())
-                CommitCreatedVariable(variable);
+            var localInputs = CreatedStep is null
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : ValueBindingTree.EnumerateReferences(CreatedStep.Inputs)
+                    .Where(input => string.Equals(
+                        input.Binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
+                    .ToDictionary(input => input.Binding.SourceId, input => input.Path, StringComparer.OrdinalIgnoreCase);
+            if (CreatedStep is not null)
+                foreach (var usage in ValueReferenceUsageInspector.Find(new Job { Steps = [CreatedStep] })
+                             .Where(usage => string.Equals(
+                                 usage.Reference.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)))
+                    localInputs.TryAdd(usage.Reference.SourceId, usage.Path);
+            foreach (var local in _draftStepVariables.OfType<LocalValue>()
+                         .Where(value => localInputs.ContainsKey(value.Id.ToString("D"))).ToArray())
+            {
+                local.OwnerStepId = CreatedStep!.Id;
+                local.InputPath = localInputs[local.Id.ToString("D")];
+                CommitCreatedLocalValue(local);
+            }
             _draftStepVariables.Clear();
             RequestClose?.Invoke(true);
         }
@@ -423,10 +438,10 @@ namespace DesktopAutomationApp.ViewModels
                 (field, value) => ResolveGeneratedProcessTarget(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedResultBinding(definition, field, value),
                 ResolveGeneratedCamera,
-                (field, value) => ResolveGeneratedVisualOverlay(definition, field, value),
+                (field, value) => ResolveGeneratedVisualOverlay(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedRoi(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedYolo(definition, field, value, step?.Inputs),
-                ResolveGeneratedCondition,
+                (field, value) => ResolveGeneratedCondition(definition, field, value, step?.Inputs),
                 ResolveGeneratedWindowsCapability,
                 (field, value) => ResolveGeneratedScreenPoint(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedUserChoiceOptions(definition, field, value, step?.Inputs),
@@ -434,7 +449,7 @@ namespace DesktopAutomationApp.ViewModels
                 ResolveGeneratedAxisExpressionList,
                 (field, binding) => ResolveGeneratedInputReference(definition, field, binding));
 
-        private GeneratedResultBindingEditorViewModel ResolveGeneratedInputReference(
+        private GeneratedResultBindingEditorViewModel? ResolveGeneratedInputReference(
             IStepDefinition definition,
             StepFieldDescriptor field,
             ResultBinding? binding)
@@ -446,7 +461,7 @@ namespace DesktopAutomationApp.ViewModels
                 var variable = CreateDraftStepVariable(definition, field, contract);
                 binding = new ResultBinding
                 {
-                    ProviderId = ValueProviderIds.JobVariable,
+                    ProviderId = ValueProviderIds.LocalValue,
                     SourceId = variable.Id.ToString("D")
                 };
             }
@@ -470,13 +485,13 @@ namespace DesktopAutomationApp.ViewModels
             var shape = field.ValueKind == StepValueKind.ResultBinding
                 ? contract.AcceptedShapes.FirstOrDefault()
                 : null;
-            var variable = new JobVariable
+            var variable = new LocalValue
             {
                 Name = name,
                 Description = Loc.Format("Ui.Job.Variables.StepValue.Description",
                     Loc.Get(field.LabelKey), Loc.Get(definition.Descriptor.DisplayNameKey)),
                 Scope = JobVariableScope.StepValue,
-                ValueKind = shape?.ValueKind ?? JobVariableInputMigration.MapKind(field.ValueKind),
+                ValueKind = shape?.ValueKind ?? JobVariableInputMigration.MapKind(field),
                 Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
                               ?? (field.ValueKind == StepValueKind.Collection
                                   ? ResultCardinality.Collection
@@ -488,12 +503,14 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         private IReadOnlyList<JobVariable> CurrentVariables() =>
-            _jobVariables.Concat(_draftStepVariables).DistinctBy(variable => variable.Id).ToArray();
+            _jobVariables.Cast<JobVariable>().Concat(_localValues).Concat(_draftStepVariables)
+                .DistinctBy(variable => variable.Id).ToArray();
 
-        private void CommitCreatedVariable(JobVariable variable)
+        private void CommitCreatedLocalValue(LocalValue variable)
         {
-            if (_jobVariableCreated is not null) _jobVariableCreated(variable);
-            else if (_jobVariables is ICollection<JobVariable> variables) variables.Add(variable);
+            if (_localValueCreated is not null) _localValueCreated(variable);
+            else if (_jobVariableCreated is not null) _jobVariableCreated(variable);
+            else if (_localValues is ICollection<LocalValue> { IsReadOnly: false } values) values.Add(variable);
         }
 
         private IEnumerable<string>? ResolveGeneratedSuggestions(StepFieldDescriptor field) =>
@@ -554,7 +571,7 @@ namespace DesktopAutomationApp.ViewModels
                 contract = contract with { AllowedProviderIds = new HashSet<string>() };
             JobVariable CreateStepValue() => CreateDraftNestedVariable(definition, owner, key, kind, literal);
             var stepName = Loc.Get(definition.Descriptor.DisplayNameKey);
-            var fieldName = key[(key.LastIndexOf('.') + 1)..].Replace('_', ' ');
+            var fieldName = NestedFieldName(key);
             var context = new ValueReferencePickerContext(
                 stepName,
                 fieldName,
@@ -563,13 +580,13 @@ namespace DesktopAutomationApp.ViewModels
                 variable => DetachStepValue(variable, stepName, fieldName),
                 CreateStepValue,
                 CreateSecret);
-            var binding = inputs?.GetValueOrDefault(key);
+            var binding = ValueBindingTree.Find(inputs, key);
             if (binding?.IsConfigured != true)
             {
                 var variable = CreateStepValue();
                 binding = new ResultBinding
                 {
-                    ProviderId = ValueProviderIds.JobVariable,
+                    ProviderId = ValueProviderIds.LocalValue,
                     SourceId = variable.Id.ToString("D")
                 };
             }
@@ -585,8 +602,8 @@ namespace DesktopAutomationApp.ViewModels
             StepValueKind kind,
             JsonNode? literal)
         {
-            var nestedName = key[(key.LastIndexOf('.') + 1)..].Replace('_', ' ');
-            var variable = new JobVariable
+            var nestedName = NestedFieldName(key);
+            var variable = new LocalValue
             {
                 Name = $"{Loc.Get(definition.Descriptor.DisplayNameKey)} · {nestedName}",
                 Description = Loc.Format("Ui.Job.Variables.StepValue.Description", nestedName, Loc.Get(owner.LabelKey)),
@@ -598,6 +615,21 @@ namespace DesktopAutomationApp.ViewModels
             _draftStepVariables.Add(variable);
             return variable;
         }
+
+        private static string NestedFieldName(string key) =>
+            key[(key.LastIndexOf('.') + 1)..] switch
+            {
+                "font_size" => Loc.Get("Ui.Step.Settings.FontSizePt"),
+                "font_color" => Loc.Get("Ui.Step.Settings.FontColor"),
+                "opacity" => Loc.Get("Ui.Step.Settings.OpacityPercent"),
+                "desktop_index" or "monitor_index" => Loc.Get("Ui.Step.Settings.DesktopIndex"),
+                "offset_x" or "x" => Loc.Get("Ui.Common.XCoordinate"),
+                "offset_y" or "y" => Loc.Get("Ui.Common.YCoordinate"),
+                "duration_ms" => Loc.Get("Ui.Step.Settings.DisplayDurationMs"),
+                "clear_on_job_end" => Loc.Get("Ui.Step.Settings.RemoveWhenJobEnds"),
+                "comparison" => Loc.Get("Ui.Step.Settings.Value"),
+                var name => name.Replace('_', ' ')
+            };
 
         private GeneratedResultBindingEditorViewModel? ResolveGeneratedResultBinding(
             IStepDefinition definition,
@@ -627,7 +659,8 @@ namespace DesktopAutomationApp.ViewModels
         private GeneratedVisualOverlayEditorViewModel? ResolveGeneratedVisualOverlay(
             IStepDefinition definition,
             StepFieldDescriptor field,
-            System.Text.Json.Nodes.JsonNode? value)
+            System.Text.Json.Nodes.JsonNode? value,
+            IReadOnlyDictionary<string, ResultBinding>? inputs)
         {
             if (!string.Equals(field.EditorHint, StepEditorHints.VisualOverlay, StringComparison.Ordinal))
                 return null;
@@ -652,7 +685,10 @@ namespace DesktopAutomationApp.ViewModels
                 _jobVariables,
                 _providerSources,
                 CreateValueReferenceContext(definition, field),
-                CreateValueReferenceContext(definition, field));
+                CreateValueReferenceContext(definition, field),
+                field.Id,
+                (key, kind, literal) => ResolveNestedInputReference(
+                    definition, field, key, kind, literal, inputs));
         }
 
         private GeneratedRoiEditorViewModel? ResolveGeneratedRoi(
@@ -707,10 +743,13 @@ namespace DesktopAutomationApp.ViewModels
                 CreateSecret);
         }
 
-        private int GetVariableUsageCount(Guid variableId) => ValueReferenceUsageInspector.Find(
-            new Job { Steps = _allJobSteps.ToList() },
-            ValueProviderIds.JobVariable,
-            variableId.ToString("D")).Count;
+        private int GetVariableUsageCount(Guid variableId)
+        {
+            var job = new Job { Steps = _allJobSteps.ToList() };
+            var sourceId = variableId.ToString("D");
+            return ValueReferenceUsageInspector.Find(job, ValueProviderIds.LocalValue, sourceId).Count
+                   + ValueReferenceUsageInspector.Find(job, ValueProviderIds.JobVariable, sourceId).Count;
+        }
 
         private JobVariable DetachStepValue(JobVariable source, string stepName, string fieldName)
         {
@@ -719,7 +758,7 @@ namespace DesktopAutomationApp.ViewModels
                 .ToHashSet(StringComparer.CurrentCultureIgnoreCase);
             var name = stem;
             for (var suffix = 2; names.Contains(name); suffix++) name = $"{stem} {suffix}";
-            var detached = new JobVariable
+            var detached = new LocalValue
             {
                 Name = name,
                 Description = Loc.Format("Ui.Job.Variables.StepValue.Description", fieldName, stepName),
@@ -793,14 +832,19 @@ namespace DesktopAutomationApp.ViewModels
                 : null;
 
         private GeneratedConditionEditorViewModel? ResolveGeneratedCondition(
+            IStepDefinition definition,
             StepFieldDescriptor field,
-            System.Text.Json.Nodes.JsonNode? value) =>
+            System.Text.Json.Nodes.JsonNode? value,
+            IReadOnlyDictionary<string, ResultBinding>? inputs) =>
             string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal)
                 ? new GeneratedConditionEditorViewModel(
                     value,
                     _conditionSourceSteps,
                     _jobVariables,
-                    _providerSources.Where(source => !source.IsSensitive).ToArray())
+                    _providerSources.Where(source => !source.IsSensitive).ToArray(),
+                    field.Id,
+                    (key, kind, literal) => ResolveNestedInputReference(
+                        definition, field, key, kind, literal, inputs))
                 : null;
 
         private static GeneratedWindowsCapabilityEditorViewModel? ResolveGeneratedWindowsCapability(

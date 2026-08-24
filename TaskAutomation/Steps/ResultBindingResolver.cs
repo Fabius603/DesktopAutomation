@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using TaskAutomation.Jobs;
 using TaskAutomation.Contracts.Geometry;
 
@@ -34,8 +36,7 @@ public static class ResultBindingResolver
         if (binding?.IsConfigured != true)
             return Failure<T>(ResultResolutionStatus.NotConfigured, null, "Keine Ergebnis-Eigenschaft ausgewählt.");
 
-        if (binding.HasProviderReference
-            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+        if (binding.HasProviderReference)
             return ResolveProviderValue<T>(results, binding);
         var source = results.GetRaw(binding.SourceStepId);
         if (source is null || !source.WasExecuted)
@@ -126,7 +127,7 @@ public static class ResultBindingResolver
             var segment = projectCollection ? rawSegment[..^2] : rawSegment;
             if (value is null) return true;
 
-            if (value is IEnumerable enumerable and not string)
+            if (value is IEnumerable enumerable and not string and not JsonObject)
             {
                 var projected = new List<object?>();
                 foreach (var item in enumerable)
@@ -159,6 +160,16 @@ public static class ResultBindingResolver
     {
         value = null;
         if (source is null) return true;
+        if (source is JsonObject jsonObject)
+        {
+            var property = jsonObject.FirstOrDefault(candidate =>
+                candidate.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (property.Key is null) return false;
+            value = property.Value is JsonValue jsonValue
+                ? Unwrap(jsonValue)
+                : property.Value;
+            return true;
+        }
         var type = source.GetType();
         var member = (MemberInfo?)type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
                      ?? type.GetField(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
@@ -179,23 +190,49 @@ public static class ResultBindingResolver
         ValueReference reference)
     {
         var read = results.ReadProvider(reference.ProviderId, reference.SourceId);
+        var sourceResult = string.Equals(reference.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+                           && StepResultSourceIdCodec.TryParse(reference.SourceId, out var stepResultSource)
+            ? results.GetRaw(stepResultSource.StepId)
+            : null;
         if (!read.IsSuccess)
-            return Failure<T>(ResultResolutionStatus.SourceNotExecuted, null,
+            return Failure<T>(ResultResolutionStatus.SourceNotExecuted, sourceResult,
                 read.Error ?? "Die ausgewählte Wertquelle ist nicht verfügbar.");
         if (read.Value is null)
-            return Failure<T>(ResultResolutionStatus.ValueIsNull, null,
+            return Failure<T>(ResultResolutionStatus.ValueIsNull, sourceResult,
                 "Die ausgewählte Wertquelle enthält keinen Wert.");
-        if (read.Value is T typed)
-            return new(ResultResolutionStatus.Success, [typed], null);
-        if (read.Value is IEnumerable enumerable and not string)
+        var raw = read.Value;
+        if (!string.IsNullOrWhiteSpace(reference.ValuePath)
+            && !TryReadPath(raw, reference.ValuePath, out raw))
+            return Failure<T>(ResultResolutionStatus.PropertyNotFound, sourceResult,
+                $"Die Untereigenschaft '{reference.ValuePath}' ist in der ausgewählten Wertquelle nicht verfügbar.");
+        if (raw is null)
+            return Failure<T>(ResultResolutionStatus.ValueIsNull, sourceResult,
+                $"Die Untereigenschaft '{reference.ValuePath}' enthält keinen Wert.");
+        if (raw is JsonValue jsonValue)
+            raw = Unwrap(jsonValue);
+        if (raw is T typed)
+            return new(ResultResolutionStatus.Success, [typed], sourceResult);
+        if (raw is IEnumerable enumerable and not string)
         {
             var values = enumerable.Cast<object?>().OfType<T>().ToArray();
             return values.Length > 0
-                ? new(ResultResolutionStatus.Success, values, null)
-                : Failure<T>(ResultResolutionStatus.EmptyCollection, null,
+                ? new(ResultResolutionStatus.Success, values, sourceResult)
+                : Failure<T>(ResultResolutionStatus.EmptyCollection, sourceResult,
                     "Die ausgewählte Wertquelle enthält keine passenden Werte.");
         }
-        return Failure<T>(ResultResolutionStatus.TypeMismatch, null,
+        return Failure<T>(ResultResolutionStatus.TypeMismatch, sourceResult,
             $"Die ausgewählte Wertquelle ist nicht vom erwarteten Typ {typeof(T).Name}.");
+    }
+
+    private static object? Unwrap(JsonValue value)
+    {
+        if (value.TryGetValue<bool>(out var boolean)) return boolean;
+        if (value.TryGetValue<int>(out var integer)) return integer;
+        if (value.TryGetValue<long>(out var longInteger)) return longInteger;
+        if (value.TryGetValue<double>(out var number)) return number;
+        if (value.TryGetValue<decimal>(out var decimalNumber)) return decimalNumber;
+        if (value.TryGetValue<DateTime>(out var dateTime)) return dateTime;
+        if (value.TryGetValue<string>(out var text)) return text;
+        return JsonSerializer.Deserialize<object>(value.ToJsonString());
     }
 }

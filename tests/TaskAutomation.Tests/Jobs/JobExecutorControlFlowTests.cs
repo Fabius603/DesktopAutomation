@@ -78,6 +78,55 @@ public sealed class JobExecutorControlFlowTests
     }
 
     [Fact]
+    public async Task ExecuteJob_ConditionComparesAgainstPrivateLocalValue()
+    {
+        var actual = new JobVariable
+        {
+            Name = "Current count",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(7)
+        };
+        var expected = new LocalValue
+        {
+            Name = "Comparison value",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(7)
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = actual.Id.ToString("D"),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = expected.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Name = "local comparison",
+            Variables = [actual],
+            LocalValues = [expected],
+            Steps =
+            [
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("equal"),
+                new ElseStep(),
+                Text("different"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["equal"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
     public async Task ExecuteJob_UserChoiceConditionComparesStableIdAndSelectsNamedBranch()
     {
         var choice = new UserChoiceStep

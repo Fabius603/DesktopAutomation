@@ -16,15 +16,19 @@ namespace TaskAutomation.Steps
 
         public JobResultStore(
             IEnumerable<JobVariable>? variables = null,
-            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null)
+            IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null,
+            IEnumerable<LocalValue>? localValues = null)
         {
             var variableList = (variables ?? []).ToArray();
+            var localValueList = (localValues ?? []).ToArray();
             _variables = variableList.Where(variable => variable.Id != Guid.Empty)
                 .GroupBy(variable => variable.Id)
                 .ToDictionary(group => group.Key, group => group.Last());
             _valueProviders = new RuntimeValueProviderRegistry(
             [
-                new JobVariableRuntimeValueProvider(variableList),
+                new StoredValueRuntimeValueProvider(ValueProviderIds.LocalValue, localValueList),
+                new StoredValueRuntimeValueProvider(ValueProviderIds.JobVariable, variableList),
+                new StepResultRuntimeValueProvider(GetRaw),
                 new SecretRuntimeValueProvider(secrets
                     ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>())
             ]);

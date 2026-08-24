@@ -9,7 +9,7 @@ namespace TaskAutomation.Jobs
 {
     public sealed class Job
     {
-        public const int CurrentFormatVersion = 2;
+    public const int CurrentFormatVersion = 4;
         public const int DefaultEndPhaseTimeoutSeconds = 10;
         public const int MinEndPhaseTimeoutSeconds = 1;
         public const int MaxEndPhaseTimeoutSeconds = 3600;
@@ -19,6 +19,7 @@ namespace TaskAutomation.Jobs
         [JsonPropertyName("name")] public string Name { get; set; } = "";
         [JsonPropertyName("repeating")] public bool Repeating { get; set; }
         [JsonPropertyName("variables")] public List<JobVariable> Variables { get; set; } = new();
+        [JsonPropertyName("localValues")] public List<LocalValue> LocalValues { get; set; } = new();
         [JsonPropertyName("startSteps")] public List<JobStep> StartSteps { get; set; } = new();
         [JsonPropertyName("steps")] public List<JobStep> Steps { get; set; } = new();
         [JsonPropertyName("endSteps")] public List<JobStep> EndSteps { get; set; } = new();

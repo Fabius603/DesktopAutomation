@@ -27,7 +27,6 @@ public enum StepInputSourceKind
     Secret,
     ExternalProvider
 }
-
 public class ValueReferencePickerViewModel : INotifyPropertyChanged
 {
     private readonly IReadOnlyList<SourceStepItem> _sources;
@@ -40,6 +39,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private SourceStepItem? _selectedSource;
     private ResultPropertyDescriptor? _selectedProperty;
     private ValueProviderSourceDescriptor? _selectedProviderSource;
+    private ResultPropertyDescriptor? _selectedProviderProperty;
     private ResultBinding? _missingReference;
     private string _searchText = string.Empty;
     private bool _showIncompatible;
@@ -120,12 +120,15 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public bool IsStepResultSource => ActiveSourceKind == StepInputSourceKind.StepResult;
     public bool IsSecretSource => ActiveSourceKind == StepInputSourceKind.Secret;
     public bool IsExternalProviderSource => ActiveSourceKind == StepInputSourceKind.ExternalProvider;
-    public bool CanUseJobVariables => _contract.AllowsProvider(ValueProviderIds.JobVariable);
+    public bool CanUseJobVariables => _contract.AllowsProvider(ValueProviderIds.JobVariable)
+                                      && _contract.AcceptedShapes.Any(shape =>
+                                          JobVariableEditorViewModel.SupportedKinds.Contains(shape.ValueKind));
     public bool CanUseStepResults => _contract.AllowsProvider(ValueProviderIds.StepResult);
     public bool CanUseSecrets => _contract.AllowsProvider(ValueProviderIds.Secret)
                                  && _contract.AcceptedShapes.Any(shape => shape.ValueKind == ResultValueKind.Text);
     public bool CanUseExternalProviders => _providerSources.Any(source =>
-        source.ProviderId is not ValueProviderIds.JobVariable
+        source.ProviderId is not ValueProviderIds.LocalValue
+            and not ValueProviderIds.JobVariable
             and not ValueProviderIds.StepResult
             and not ValueProviderIds.Secret
         && Accepts(source));
@@ -139,17 +142,26 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
                                             JobVariableEditorViewModel.SupportedKinds.Contains(shape.ValueKind));
     public bool CanUseDirectValue => _contract.AllowsDirectValue
                                      && _context?.CreateStepValue is not null;
+    public bool CanSwitchSource => new[]
+    {
+        CanUseDirectValue,
+        CanUseJobVariables,
+        CanUseStepResults,
+        CanUseSecrets,
+        CanUseExternalProviders
+    }.Count(available => available) > 1;
     public bool IsConfigured => _missingReference is not null
                                 || _selectedProviderSource is not null
                                 || _selectedSource is not null && _selectedProperty is not null;
     public bool HasMissingReference => _missingReference is not null;
     public JobVariable? SelectedJobVariable =>
         _selectedProviderSource is not null
-        && string.Equals(_selectedProviderSource.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        && _selectedProviderSource.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
         && _jobVariables.TryGetValue(_selectedProviderSource.SourceId, out var variable)
             ? variable
             : null;
-    public bool IsStepValue => SelectedJobVariable?.Scope == JobVariableScope.StepValue;
+    public bool IsStepValue => _selectedProviderSource?.ProviderId == ValueProviderIds.LocalValue
+                               || SelectedJobVariable?.Scope == JobVariableScope.StepValue;
     public int SelectedVariableUsageCount => SelectedJobVariable is { } variable
         ? Math.Max(0, _context?.GetVariableUsageCount?.Invoke(variable.Id) ?? 1)
         : 0;
@@ -159,6 +171,14 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public string PickerContextText => _context is null
         ? string.Empty
         : Loc.Format("Ui.ValueReference.PickerContext", _context.FieldName, _context.StepName);
+    public string ExpectedTypeText => Loc.Format(
+        "Ui.ValueReference.ExpectedType",
+        string.Join(", ", _contract.AcceptedShapes
+            .Select(shape => _formatter.Type(
+                shape.ValueKind,
+                shape.Cardinalities.FirstOrDefault(ResultCardinality.Single)))
+            .Distinct()));
+    public bool ShowCreateVariableAction => IsJobVariableSource && CanCreateJobVariable;
     public int IncompatibleCount => CountIncompatible();
     public bool HasIncompatible => IncompatibleCount > 0;
     public string IncompatibleText => Loc.Format(
@@ -201,12 +221,16 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
                 : $"{Loc.Get("Ui.ValueReference.ResultVariables")} → {_selectedSource.DisplayName}";
     public string SelectedPropertyName => _missingReference is not null
         ? Loc.Get("Ui.ValueReference.Missing")
+        : _selectedProviderSource is not null && _selectedProviderProperty is not null
+            ? $"{_selectedProviderSource.Name} › {_selectedProviderProperty.DisplayName.Replace(" / ", " › ", StringComparison.Ordinal)}"
         : _selectedProviderSource?.Name ?? _selectedProperty?.DisplayName.Replace(" / ", " › ", StringComparison.Ordinal)
           ?? Loc.Get("Ui.ValueReference.SelectVariable");
     public string SelectedCardinality => _missingReference is not null
         ? Loc.Get("Ui.ValueReference.Invalid")
         : _selectedProviderSource is not null
-            ? ProviderSecondaryText(_selectedProviderSource)
+            ? _selectedProviderProperty is null
+                ? ProviderSecondaryText(_selectedProviderSource)
+                : _formatter.Type(_selectedProviderProperty.DataType, _selectedProviderProperty.Cardinality)
             : _selectedProperty is null ? string.Empty : _formatter.Type(
                 _selectedProperty.DataType, _selectedProperty.Cardinality);
     public string SelectedDisplayPath => IsConfigured && _missingReference is null
@@ -225,10 +249,27 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public string SelectedPreviewType => _missingReference is not null
         ? Loc.Get("Ui.ValueReference.Invalid")
         : _selectedProviderSource is not null
-            ? _formatter.Type(_selectedProviderSource.ValueKind, _selectedProviderSource.Cardinality)
+            ? _selectedProviderProperty is null
+                ? _formatter.Type(_selectedProviderSource.ValueKind, _selectedProviderSource.Cardinality)
+                : _formatter.Type(_selectedProviderProperty.DataType, _selectedProviderProperty.Cardinality)
             : _selectedProperty is null
                 ? string.Empty
                 : _formatter.Type(_selectedProperty.DataType, _selectedProperty.Cardinality);
+    public string SelectedInlineText => string.IsNullOrWhiteSpace(SelectedPreviewValue)
+        ? SelectedPropertyName
+        : $"{SelectedPropertyName} · {SelectedPreviewValue}";
+    public string SelectedTooltipValue => _missingReference is not null
+        ? string.Empty
+        : SelectedJobVariable is { } variable
+            ? _formatter.FullValue(variable)
+            : _selectedSource is not null && _selectedProperty is not null
+                ? SelectedDisplayPath
+                : string.Empty;
+    public string SelectedTooltipDescription => _missingReference is not null
+        ? Loc.Get("Ui.ValueReference.Missing.ToolTip")
+        : _selectedProviderSource?.Description
+          ?? _selectedProperty?.Description
+          ?? string.Empty;
 
     public ResultBinding ToBinding()
     {
@@ -237,7 +278,8 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             return new ResultBinding
             {
                 ProviderId = _selectedProviderSource.ProviderId,
-                SourceId = _selectedProviderSource.SourceId
+                SourceId = _selectedProviderSource.SourceId,
+                ValuePath = _selectedProviderProperty?.Name
             };
         return _selectedSource is not null && _selectedProperty is not null
             ? ResultBinding.ForStepResult(_selectedSource.StepId, _selectedProperty.StableId)
@@ -257,9 +299,13 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             && _providerSources.FirstOrDefault(source =>
                 string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
                 && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } providerSource
-            && Accepts(providerSource))
+            && (string.IsNullOrWhiteSpace(binding.ValuePath)
+                ? Accepts(providerSource)
+                : FindProviderProperty(providerSource, binding.ValuePath) is { } providerProperty
+                  && _contract.Accepts(providerProperty)))
         {
-            Select(providerSource);
+            if (string.IsNullOrWhiteSpace(binding.ValuePath)) Select(providerSource);
+            else Select(providerSource, FindProviderProperty(providerSource, binding.ValuePath)!);
             return;
         }
         var source = _sources.FirstOrDefault(item => item.StepId == binding.SourceStepId);
@@ -277,6 +323,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _selectedSource = null;
         _selectedProperty = null;
         _selectedProviderSource = null;
+        _selectedProviderProperty = null;
         _missingReference = binding;
         SetActiveSourceKind(DefaultSourceKind());
         NotifySelection();
@@ -295,10 +342,14 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             StepInputSourceKind.Secret => CreateProviderEntries(
                 ValueProviderIds.Secret, "Ui.ValueReference.Empty.Secrets"),
             StepInputSourceKind.ExternalProvider => _providerSources
-                .Where(source => source.ProviderId is not ValueProviderIds.JobVariable
+                .Where(source => source.ProviderId is not ValueProviderIds.LocalValue
+                    and not ValueProviderIds.JobVariable
                     and not ValueProviderIds.StepResult
                     and not ValueProviderIds.Secret)
-                .Where(Accepts)
+                .Where(AcceptsForNewSelection)
+                .Where(source => MatchesSearch(
+                    source.Name, source.Description, ProviderPreviewValue(source),
+                    ProviderSecondaryText(source), ProviderSourceText(source)))
                 .OrderBy(source => source.Name, StringComparer.CurrentCultureIgnoreCase)
                 .Select(source => CreateProviderNode(source, true))
                 .ToArray(),
@@ -316,12 +367,15 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         var entries = _providerSources.Where(source =>
                 string.Equals(source.ProviderId, providerId, StringComparison.Ordinal))
             .Where(source => filter?.Invoke(source) ?? true)
-            .Where(source => providerAllowed && Accepts(source))
+            .Where(source => providerAllowed && HasSelectableProviderValue(source))
+            .Where(MatchesProviderSearch)
             .OrderBy(source => source.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(source => CreateProviderNode(source, providerAllowed && Accepts(source)))
+            .Select(source => CreateProviderNode(source, providerAllowed && AcceptsForNewSelection(source)))
             .ToList();
         if (entries.Count == 0)
-            entries.Add(EmptyNode(Loc.Get(providerAllowed ? emptyKey : "Ui.ValueReference.ProviderNotAllowed")));
+            entries.Add(EmptyNode(Loc.Get(!string.IsNullOrWhiteSpace(SearchText)
+                ? "Ui.ValueReference.Empty.Search"
+                : providerAllowed ? emptyKey : "Ui.ValueReference.ProviderNotAllowed")));
         return entries;
     }
 
@@ -330,7 +384,8 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         if (!string.IsNullOrWhiteSpace(SearchText)) return null;
         var entries = new List<ConditionSelectionNode>();
         entries.AddRange(_providerSources
-            .Where(Accepts)
+            .Where(source => source.ProviderId != ValueProviderIds.LocalValue)
+            .Where(AcceptsForNewSelection)
             .OrderBy(source => _jobVariables.TryGetValue(source.SourceId, out var variable)
                                && variable.Scope == JobVariableScope.Shared ? 0 : 1)
             .Take(3)
@@ -360,16 +415,19 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         var entries = _sources.Select(source => CreateSourceNode(source, providerAllowed))
             .Where(node => node is not null).Cast<ConditionSelectionNode>().ToList();
         if (entries.Count == 0)
-            entries.Add(EmptyNode(Loc.Get(providerAllowed
-                ? "Ui.ValueReference.Empty.ResultVariables"
-                : "Ui.ValueReference.ProviderNotAllowed")));
+            entries.Add(EmptyNode(Loc.Get(!string.IsNullOrWhiteSpace(SearchText)
+                ? "Ui.ValueReference.Empty.Search"
+                : providerAllowed
+                    ? "Ui.ValueReference.Empty.ResultVariables"
+                    : "Ui.ValueReference.ProviderNotAllowed")));
         return entries;
     }
 
     private ConditionSelectionNode? CreateSourceNode(SourceStepItem source, bool providerAllowed)
     {
+        var sourceMatches = MatchesSearch(source.DisplayName);
         var children = source.ResultType.PropertyTree
-            .Select(node => CreateResultNode(source, node, providerAllowed))
+            .Select(node => CreateResultNode(source, node, providerAllowed, sourceMatches))
             .Where(node => node is not null).Cast<ConditionSelectionNode>().ToArray();
         return children.Length == 0 ? null : new ConditionSelectionNode(
             source.DisplayName, children);
@@ -378,17 +436,27 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private ConditionSelectionNode? CreateResultNode(
         SourceStepItem source,
         ResultPropertyNode node,
-        bool providerAllowed)
+        bool providerAllowed,
+        bool ancestorMatches)
     {
-        var children = node.Children.Select(child => CreateResultNode(source, child, providerAllowed))
+        var nodeMatches = ancestorMatches || MatchesSearch(
+            node.DisplayName,
+            node.Property?.DisplayName,
+            node.Property?.Description,
+            node.Property is null ? null : _formatter.Type(node.Property.DataType, node.Property.Cardinality));
+        var children = node.Children.Select(child => CreateResultNode(source, child, providerAllowed, nodeMatches))
             .Where(child => child is not null).Cast<ConditionSelectionNode>().ToList();
         var compatible = node.Property is not null && providerAllowed && _contract.Accepts(node.Property);
-        if (!compatible && children.Count == 0) return null;
-        if (node.Property is not null && compatible)
+        if ((!compatible || !nodeMatches) && children.Count == 0) return null;
+        if (node.Property is not null && compatible && nodeMatches)
         {
             var current = new ConditionSelectionNode(
                 children.Count > 0 ? Loc.Get("Ui.Step.IfEditor.CompleteValue") : node.DisplayName,
                 selectCommand: new RelayCommand(() => Select(source, node.Property)),
+                secondaryText: _formatter.Type(node.Property.DataType, node.Property.Cardinality),
+                description: node.Property.Description,
+                icon: TypeIcon(node.Property.DataType),
+                sourceText: source.DisplayName,
                 isSelected: IsSelected(source, node.Property));
             if (children.Count == 0) return current;
             children.Insert(0, current);
@@ -398,17 +466,91 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private ConditionSelectionNode CreateProviderNode(ValueProviderSourceDescriptor source, bool compatible)
     {
-        var children = string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
-                       && _jobVariables.TryGetValue(source.SourceId, out var variable)
-            ? CreateValueNodes(variable.Value)
-            : [];
+        var properties = ProviderProperties(source);
+        var sourceMatches = MatchesSearch(
+            source.Name, source.Description, ProviderPreviewValue(source),
+            ProviderSecondaryText(source), ProviderSourceText(source));
+        IReadOnlyList<ConditionSelectionNode> children = ResultPropertyTree.Create(properties)
+            .Select(node => CreateProviderPropertyNode(source, node, sourceMatches))
+            .Where(node => node is not null).Cast<ConditionSelectionNode>().ToArray();
+        if (children.Count == 0
+            && source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+            && _jobVariables.TryGetValue(source.SourceId, out var structuredVariable))
+            children = CreateValueNodes(structuredVariable.Value);
+        compatible = compatible && AcceptsForNewSelection(source);
+        var valueText = ProviderPreviewValue(source);
+        var fullValueText = source.IsSensitive
+            ? valueText
+            : _jobVariables.TryGetValue(source.SourceId, out var selectedVariable)
+                ? _formatter.FullValue(selectedVariable)
+                : valueText;
         return new ConditionSelectionNode(
             source.Name,
             children,
             selectCommand: compatible ? new RelayCommand(() => Select(source)) : null,
-            isEnabled: compatible,
-            isSelected: IsSelected(source));
+            secondaryText: _formatter.Type(source.ValueKind, source.Cardinality),
+            description: source.Description,
+            icon: TypeIcon(source.ValueKind),
+            isEnabled: compatible || children.Count > 0,
+            sourceText: ProviderSourceText(source),
+            isSelected: IsSelected(source),
+            valueText: valueText,
+            fullValueText: fullValueText,
+            colorPreview: source.ValueKind == ResultValueKind.Color ? valueText : null);
     }
+
+    private ConditionSelectionNode? CreateProviderPropertyNode(
+        ValueProviderSourceDescriptor source,
+        ResultPropertyNode node,
+        bool ancestorMatches)
+    {
+        var nodeMatches = ancestorMatches || MatchesSearch(
+            node.DisplayName, node.Property?.DisplayName, node.Property?.Description,
+            node.Property is null ? null : _formatter.Type(node.Property.DataType, node.Property.Cardinality));
+        var children = node.Children
+            .Select(child => CreateProviderPropertyNode(source, child, nodeMatches))
+            .Where(child => child is not null).Cast<ConditionSelectionNode>().ToList();
+        var compatible = node.Property is not null
+                         && _contract.AllowsProvider(source.ProviderId)
+                         && _contract.Accepts(
+                             node.Property.DataType, node.Property.Cardinality, includeLegacy: false);
+        if ((!compatible || !nodeMatches) && children.Count == 0) return null;
+        if (node.Property is not null && compatible && nodeMatches)
+        {
+            var current = new ConditionSelectionNode(
+                children.Count > 0 ? Loc.Get("Ui.Step.IfEditor.CompleteValue") : node.DisplayName,
+                selectCommand: new RelayCommand(() => Select(source, node.Property)),
+                secondaryText: _formatter.Type(node.Property.DataType, node.Property.Cardinality),
+                description: node.Property.Description,
+                icon: TypeIcon(node.Property.DataType),
+                sourceText: source.Name,
+                isSelected: IsSelected(source, node.Property));
+            if (children.Count == 0) return current;
+            children.Insert(0, current);
+        }
+        return new ConditionSelectionNode(node.DisplayName, children);
+    }
+
+    private IReadOnlyList<ResultPropertyDescriptor> ProviderProperties(ValueProviderSourceDescriptor source) =>
+        source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+        && _jobVariables.TryGetValue(source.SourceId, out var variable)
+            ? JobVariablePropertyMetadata.GetProperties(variable)
+            : [];
+
+    private ResultPropertyDescriptor? FindProviderProperty(ValueProviderSourceDescriptor source, string path) =>
+        ProviderProperties(source).FirstOrDefault(property =>
+            property.Name.Equals(path, StringComparison.OrdinalIgnoreCase));
+
+    private bool HasSelectableProviderValue(ValueProviderSourceDescriptor source) =>
+        AcceptsForNewSelection(source)
+        || ProviderProperties(source).Any(property => _contract.Accepts(
+            property.DataType, property.Cardinality, includeLegacy: false));
+
+    private bool MatchesProviderSearch(ValueProviderSourceDescriptor source) =>
+        MatchesSearch(source.Name, source.Description, ProviderPreviewValue(source),
+            ProviderSecondaryText(source), ProviderSourceText(source))
+        || ProviderProperties(source).Any(property => MatchesSearch(
+            property.Name, property.DisplayName, property.Description));
 
     private static IReadOnlyList<ConditionSelectionNode> CreateValueNodes(JsonNode? value)
     {
@@ -442,7 +584,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     {
         if (source.IsSensitive) return Loc.Get("Ui.ValueReference.Sensitive");
         var type = _formatter.Type(source.ValueKind, source.Cardinality);
-        return string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        return source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
                && _jobVariables.TryGetValue(source.SourceId, out var variable)
             ? $"{_formatter.CompactValue(variable)} · {type}"
             : type;
@@ -451,7 +593,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private string ProviderPreviewValue(ValueProviderSourceDescriptor source)
     {
         if (source.IsSensitive) return "••••••••";
-        return string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        return source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
                && _jobVariables.TryGetValue(source.SourceId, out var variable)
             ? _formatter.CompactValue(variable)
             : source.Description;
@@ -460,7 +602,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private string ProviderDescription(ValueProviderSourceDescriptor source)
     {
         if (source.IsSensitive) return source.Description;
-        if (!string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        if (source.ProviderId is not ValueProviderIds.LocalValue and not ValueProviderIds.JobVariable
             || !_jobVariables.TryGetValue(source.SourceId, out var variable))
             return source.Description;
         var value = _formatter.FullValue(variable);
@@ -471,18 +613,25 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private string ProviderSourceText(ValueProviderSourceDescriptor source)
     {
-        if (!string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
+        if (source.ProviderId is not ValueProviderIds.LocalValue and not ValueProviderIds.JobVariable)
             return ProviderLabel(source.ProviderId);
-        return _jobVariables.TryGetValue(source.SourceId, out var variable)
-               && variable.Scope == JobVariableScope.StepValue
+        return source.ProviderId == ValueProviderIds.LocalValue
             ? Loc.Get("Ui.Job.Variables.Scope.StepValues")
             : Loc.Get("Ui.Job.Variables.Scope.Shared");
     }
 
     private bool IsSelected(ValueProviderSourceDescriptor source) =>
         _selectedProviderSource is not null
+        && _selectedProviderProperty is null
         && string.Equals(_selectedProviderSource.ProviderId, source.ProviderId, StringComparison.Ordinal)
         && string.Equals(_selectedProviderSource.SourceId, source.SourceId, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsSelected(ValueProviderSourceDescriptor source, ResultPropertyDescriptor property) =>
+        _selectedProviderSource is not null
+        && _selectedProviderProperty is not null
+        && string.Equals(_selectedProviderSource.ProviderId, source.ProviderId, StringComparison.Ordinal)
+        && string.Equals(_selectedProviderSource.SourceId, source.SourceId, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(_selectedProviderProperty.Name, property.Name, StringComparison.OrdinalIgnoreCase);
 
     private bool IsSelected(SourceStepItem source, ResultPropertyDescriptor property) =>
         _selectedSource?.StepId == source.StepId
@@ -520,6 +669,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _inlineEditEnabled = false;
         _missingReference = null;
         _selectedProviderSource = null;
+        _selectedProviderProperty = null;
         _selectedSource = source;
         _selectedProperty = property;
         NotifySelection();
@@ -533,6 +683,19 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _selectedSource = null;
         _selectedProperty = null;
         _selectedProviderSource = source;
+        _selectedProviderProperty = null;
+        NotifySelection();
+    }
+
+    private void Select(ValueProviderSourceDescriptor source, ResultPropertyDescriptor property)
+    {
+        SetActiveSourceKind(SourceKind(source));
+        _inlineEditEnabled = false;
+        _missingReference = null;
+        _selectedSource = null;
+        _selectedProperty = null;
+        _selectedProviderSource = source;
+        _selectedProviderProperty = property;
         NotifySelection();
     }
 
@@ -543,6 +706,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _selectedSource = null;
         _selectedProperty = null;
         _selectedProviderSource = null;
+        _selectedProviderProperty = null;
         NotifySelection();
     }
 
@@ -556,6 +720,9 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         OnChange(nameof(SelectedPreviewValue));
         OnChange(nameof(SelectedPreviewSource));
         OnChange(nameof(SelectedPreviewType));
+        OnChange(nameof(SelectedInlineText));
+        OnChange(nameof(SelectedTooltipValue));
+        OnChange(nameof(SelectedTooltipDescription));
         OnChange(nameof(IsConfigured));
         OnChange(nameof(HasMissingReference));
         OnChange(nameof(SelectedJobVariable));
@@ -599,7 +766,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         var sourceId = variable.Id.ToString("D");
         _jobVariables[sourceId] = variable;
         _providerSources.RemoveAll(source =>
-            string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            source.ProviderId == ValueProviderIds.LocalValue
             && string.Equals(source.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
         var descriptor = ValueProviderSourceDescriptor.FromVariable(variable);
         _providerSources.Add(descriptor);
@@ -622,6 +789,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             _selectedSource = null;
             _selectedProperty = null;
             _selectedProviderSource = null;
+            _selectedProviderProperty = null;
         }
         NotifySelection();
     }
@@ -641,6 +809,8 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private StepInputSourceKind SourceKind(ValueProviderSourceDescriptor source)
     {
+        if (string.Equals(source.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
+            return StepInputSourceKind.Direct;
         if (string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
             return _jobVariables.TryGetValue(source.SourceId, out var variable)
                    && variable.Scope == JobVariableScope.StepValue
@@ -664,6 +834,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         OnChange(nameof(IsSecretSource));
         OnChange(nameof(IsExternalProviderSource));
         OnChange(nameof(CanCreateSecret));
+        OnChange(nameof(ShowCreateVariableAction));
         (CreateSecretCommand as RelayCommand)?.RaiseCanExecuteChanged();
     }
 
@@ -685,12 +856,21 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private bool Accepts(ValueProviderSourceDescriptor source) =>
         IsDirectStepValue(source)
             ? _contract.AllowsDirectValue
-              && _contract.AcceptedShapes.Any(shape => shape.Accepts(source.ValueKind, source.Cardinality))
+              && _contract.Accepts(source.ValueKind, source.Cardinality)
             : _contract.AllowsProvider(source.ProviderId)
-              && _contract.AcceptedShapes.Any(shape => shape.Accepts(source.ValueKind, source.Cardinality));
+              && _contract.Accepts(source.ValueKind, source.Cardinality);
+
+    private bool AcceptsForNewSelection(ValueProviderSourceDescriptor source) =>
+        Accepts(source)
+        && (source.ProviderId != ValueProviderIds.JobVariable
+            || !_jobVariables.TryGetValue(source.SourceId, out var variable)
+            || JobVariableEditorViewModel.SupportedKinds.Contains(variable.ValueKind))
+        && _contract.Accepts(source.ValueKind, source.Cardinality, includeLegacy: false);
 
     private bool IsDirectStepValue(ValueProviderSourceDescriptor source) =>
-        string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+        string.Equals(source.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+        && _jobVariables.ContainsKey(source.SourceId)
+        || string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
         && _jobVariables.TryGetValue(source.SourceId, out var variable)
         && variable.Scope == JobVariableScope.StepValue;
 
@@ -730,12 +910,15 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         ResultValueKind.DateTime => PackIconMaterialKind.CalendarClock,
         ResultValueKind.Point => PackIconMaterialKind.CrosshairsGps,
         ResultValueKind.Rectangle => PackIconMaterialKind.RectangleOutline,
+        ResultValueKind.Color => PackIconMaterialKind.PaletteOutline,
+        ResultValueKind.FilePath => PackIconMaterialKind.FileOutline,
         ResultValueKind.Image => PackIconMaterialKind.ImageOutline,
         _ => PackIconMaterialKind.Variable
     };
 
     private static string ProviderLabel(string providerId) => providerId switch
     {
+        ValueProviderIds.LocalValue => Loc.Get("Ui.ValueReference.DirectValue"),
         ValueProviderIds.JobVariable => Loc.Get("Ui.ValueReference.JobVariables"),
         ValueProviderIds.StepResult => Loc.Get("Ui.ValueReference.ResultVariables"),
         ValueProviderIds.Secret => Loc.Get("Ui.ValueReference.Secrets"),
@@ -744,17 +927,4 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private void OnChange([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
-
-/// <summary>Compatibility name for extensions compiled against the former picker API.</summary>
-[Obsolete("Use ValueReferencePickerViewModel.")]
-public sealed class ResultBindingPickerViewModel : ValueReferencePickerViewModel
-{
-    public ResultBindingPickerViewModel(
-        IReadOnlyList<SourceStepItem> sources,
-        StepInputDescriptor contract,
-        bool selectDefault = true,
-        IReadOnlyList<JobVariable>? variables = null,
-        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
-        : base(sources, contract, selectDefault, variables, providerSources) { }
 }

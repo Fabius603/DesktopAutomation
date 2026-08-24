@@ -26,7 +26,8 @@ public sealed class ValueReferenceDisplayFormatter : IValueReferenceDisplayForma
         {
             return variable.ValueKind switch
             {
-                ResultValueKind.Text or ResultValueKind.Enum => variable.Value.GetValue<string>(),
+                ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath =>
+                    variable.Value.GetValue<string>(),
                 ResultValueKind.Boolean => variable.Value.GetValue<bool>()
                     ? Loc.Get("Ui.Common.Yes")
                     : Loc.Get("Ui.Common.No"),

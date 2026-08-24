@@ -813,9 +813,12 @@ public sealed class JobStepDetailsProvider
             var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
             if (variable is null) return Loc.Get("Ui.Job.Steps.SourceUnavailable");
             var value = ValueReferenceDisplayFormatter.Instance.CompactValue(variable);
-            return variable.Scope == JobVariableScope.StepValue
+            var variableText = variable.Scope == JobVariableScope.StepValue
                 ? value
                 : $"{variable.Name} · {value}";
+            return string.IsNullOrWhiteSpace(binding.ValuePath)
+                ? variableText
+                : $"{variableText} → {LocalizedPropertyName(binding.ValuePath)}";
         }
 
         if (binding.HasProviderReference
@@ -946,6 +949,8 @@ public sealed class JobStepDetailsProvider
             ResultValueKind.Image => Loc.Get("Ui.Job.Steps.ResultType.Image"),
             ResultValueKind.Point => Loc.Get("Ui.Job.Steps.ResultType.Point"),
             ResultValueKind.Rectangle => Loc.Get("Ui.Job.Steps.ResultType.Rectangle"),
+            ResultValueKind.Color => Loc.Get("Ui.Job.Steps.ResultType.Color"),
+            ResultValueKind.FilePath => Loc.Get("Ui.Job.Steps.ResultType.FilePath"),
             ResultValueKind.Detection => Loc.Get("Ui.Job.Steps.ResultType.Detection"),
             ResultValueKind.ProcessReference => Loc.Get("Ui.Job.Steps.ResultType.Process"),
             ResultValueKind.Enum => Loc.Get("Ui.Job.Steps.ResultType.Enum"),

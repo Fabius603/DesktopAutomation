@@ -5,7 +5,8 @@ namespace TaskAutomation.Jobs;
 public enum ResultValueKind
 {
     Boolean, Integer, Number, Text, DateTime, Image, Point, Rectangle,
-    Detection, ProcessReference, ResultObject, Enum
+    Detection, ProcessReference, ResultObject, Enum, JobReference, MacroReference,
+    Color, FilePath
 }
 
 public enum ResultCardinality { Single, OptionalSingle, Collection }
@@ -22,6 +23,11 @@ public class ValueReference
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string SourceId { get; set; } = string.Empty;
 
+    /// <summary>Optional path below the provider-owned source value.</summary>
+    [JsonPropertyName("value_path")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? ValuePath { get; set; }
+
     [JsonIgnore]
     public bool HasProviderReference => !string.IsNullOrWhiteSpace(ProviderId)
                                         && !string.IsNullOrWhiteSpace(SourceId);
@@ -29,6 +35,7 @@ public class ValueReference
 
 public static class ValueProviderIds
 {
+    public const string LocalValue = "local_value";
     public const string JobVariable = "job_variable";
     public const string StepResult = "step_result";
     public const string Secret = "secret";

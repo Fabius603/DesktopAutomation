@@ -9,7 +9,7 @@ public enum JobVariableScope
     Shared
 }
 
-public sealed class JobVariable
+public class JobVariable
 {
     [JsonPropertyName("id")]
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -34,4 +34,17 @@ public sealed class JobVariable
 
     [JsonPropertyName("value")]
     public JsonNode? Value { get; set; }
+}
+
+/// <summary>
+/// Persisted value owned by exactly one step input. Local values use the same typed
+/// storage as job variables, but are not part of the user-managed job-variable catalog.
+/// </summary>
+public sealed class LocalValue : JobVariable
+{
+    [JsonPropertyName("owner_step_id")]
+    public string OwnerStepId { get; set; } = string.Empty;
+
+    [JsonPropertyName("input_path")]
+    public string InputPath { get; set; } = string.Empty;
 }

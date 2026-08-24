@@ -58,7 +58,7 @@ internal static class StepInputBindingReader
 
     private static void Add(List<StepInputBinding> bindings, string contractId, ResultBinding? binding)
     {
-        if (binding is not null) bindings.Add(new(contractId, binding));
+        if (binding?.IsConfigured == true) bindings.Add(new(contractId, binding));
     }
 
     private static T? Deserialize<T>(System.Text.Json.Nodes.JsonNode? value)

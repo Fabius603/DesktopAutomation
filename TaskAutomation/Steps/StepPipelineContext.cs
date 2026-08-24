@@ -105,7 +105,7 @@ namespace TaskAutomation.Steps
             CurrentJob                 = currentJob;
             _secrets                   = secrets
                 ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>();
-            _results                   = new JobResultStore(CurrentJob.Variables, _secrets);
+            _results                   = new JobResultStore(CurrentJob.Variables, _secrets, CurrentJob.LocalValues);
             ExecuteJob                 = executeJob;
             DesktopCaptureService      = desktopCaptureService;
             CameraCaptureService       = cameraCaptureService;
@@ -123,7 +123,7 @@ namespace TaskAutomation.Steps
         public void ResetResults()
         {
             _results.DisposeAndClear();
-            _results = new JobResultStore(CurrentJob.Variables, _secrets);
+            _results = new JobResultStore(CurrentJob.Variables, _secrets, CurrentJob.LocalValues);
         }
 
         /// <summary>

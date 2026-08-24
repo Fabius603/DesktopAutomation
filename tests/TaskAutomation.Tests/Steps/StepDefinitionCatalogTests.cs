@@ -6,6 +6,7 @@ using DesktopAutomationApp.ViewModels;
 using OpenCvSharp;
 using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
+using TaskAutomation.Makros;
 using TaskAutomation.Steps;
 using TaskAutomation.Steps.Definitions;
 using TaskAutomation.Tests.TestDoubles;
@@ -81,13 +82,19 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void RemainingManualOrResultChoice_DeclaresHierarchicalChoiceGroup()
+    public void PointComparison_KeepsLegacyReferenceSourceOutsideTheEditor()
     {
-        var field = new PointComparisonStepDefinition().Descriptor.Fields.Single(candidate =>
+        var definition = new PointComparisonStepDefinition();
+        var field = definition.Descriptor.Fields.Single(candidate =>
             candidate.Id == PointComparisonStepDefinition.ReferenceSourceFieldId);
+        var offset = definition.Descriptor.Presentation.EditorSections.Single(section => section.Id == "offset");
 
         Assert.Null(field.EditorHint);
         Assert.Equal(2, field.Options?.Count);
+        Assert.DoesNotContain(offset.EditorNodes!, node => node is StepChoiceGroupDescriptor);
+        Assert.DoesNotContain(offset.EditorNodes!.OfType<StepFieldNodeDescriptor>(), node =>
+            node.FieldId is PointComparisonStepDefinition.ReferenceSourceFieldId
+                or PointComparisonStepDefinition.ReferencePointsFieldId);
     }
 
     [Fact]
@@ -119,20 +126,17 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void GeneratedChoiceGroup_GroupsItsDependentFields()
+    public void PointComparison_ShowsReferenceCoordinatesWithoutAReferenceSourceChoice()
     {
         var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition());
-        var group = editor.Sections.Single(section => section.Descriptor.Id == "offset")
-            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+        var nodes = editor.Sections.Single(section => section.Descriptor.Id == "offset").Nodes;
 
         var manualPoint = Assert.IsType<GeneratedStepPointFieldPairViewModel>(
-            Assert.Single(group.Branches[0].Children));
+            nodes[0]);
         Assert.Equal(PointComparisonStepDefinition.ReferenceXFieldId, manualPoint.XField.Descriptor.Id);
         Assert.Equal(PointComparisonStepDefinition.ReferenceYFieldId, manualPoint.YField.Descriptor.Id);
         Assert.False(manualPoint.HasLabel);
-        Assert.Equal(
-            [PointComparisonStepDefinition.ReferencePointsFieldId],
-            group.Branches[1].Children.Cast<GeneratedStepFieldNodeViewModel>().Select(node => node.Field.Descriptor.Id));
+        Assert.DoesNotContain(nodes, node => node is GeneratedStepChoiceGroupViewModel);
     }
 
     [Fact]
@@ -148,18 +152,20 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void GeneratedChoiceGroup_HidesWithItsSelectionField()
+    public void PointComparison_ReferenceCoordinatesHideOutsideOffsetMode()
     {
         var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition());
         var mode = editor.Fields.Single(field => field.Descriptor.Id == PointComparisonStepDefinition.ModeFieldId);
-        var group = editor.Sections.Single(section => section.Descriptor.Id == "offset")
-            .Nodes.OfType<GeneratedStepChoiceGroupViewModel>().Single();
+        var point = Assert.IsType<GeneratedStepPointFieldPairViewModel>(
+            editor.Sections.Single(section => section.Descriptor.Id == "offset").Nodes[0]);
 
-        Assert.True(group.IsVisible);
+        Assert.True(point.XField.IsVisible);
+        Assert.True(point.YField.IsVisible);
 
         mode.SelectedEnumOption = mode.EnumOptions.Single(option => option.Value == "Expression");
 
-        Assert.False(group.IsVisible);
+        Assert.False(point.XField.IsVisible);
+        Assert.False(point.YField.IsVisible);
     }
 
     [Fact]
@@ -178,6 +184,36 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void AddStepDialog_CreatesJobAndMacroExecutionStepsFromDirectPickers()
+    {
+        var job = new Job { Id = Guid.NewGuid(), Name = "Child job" };
+        var macro = new Makro { Id = Guid.NewGuid(), Name = "Cleanup" };
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([job], [macro]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService());
+
+        viewModel.SelectedType = "JobExecution";
+        var jobField = viewModel.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == JobExecutionStepDefinition.JobFieldId);
+        Assert.True(jobField.InputReferenceEditor!.Picker.IsStepValue);
+        Assert.Equal(job.Id.ToString("D"), jobField.SelectedChoice!.Value.Id);
+        viewModel.CreateStep();
+        var jobStep = Assert.IsType<JobExecutionStep>(viewModel.CreatedStep);
+        Assert.Equal(job.Id, jobStep.Settings.JobId);
+        Assert.Equal(job.Name, jobStep.Settings.JobName);
+
+        viewModel.SelectedType = "MakroExecution";
+        var macroField = Assert.Single(viewModel.GeneratedEditor!.Fields);
+        Assert.True(macroField.InputReferenceEditor!.Picker.IsStepValue);
+        Assert.Equal(macro.Id.ToString("D"), macroField.SelectedChoice!.Value.Id);
+        viewModel.CreateStep();
+        var macroStep = Assert.IsType<MakroExecutionStep>(viewModel.CreatedStep);
+        Assert.Equal(macro.Id, macroStep.Settings.MakroId);
+        Assert.Equal(macro.Name, macroStep.Settings.MakroName);
+    }
+
+    [Fact]
     public void AddStepDialog_CreatesEditableLocalStepValueForLiteralField()
     {
         var createdVariables = new List<JobVariable>();
@@ -192,6 +228,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(field.IsInlineStepValue);
         Assert.True(field.ShowsDirectInput);
         Assert.False(field.ShowsInputSourcePicker);
+        Assert.True(field.ShowsInputSourceSelector);
         field.IntegerValue = 2500;
         viewModel.ConfirmCommand.Execute(null);
 
@@ -328,6 +365,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(camera.InputReferenceEditor.Picker.IsConfigured);
         Assert.False(camera.InputReferenceEditor.Picker.CanUseJobVariables);
         Assert.False(camera.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.False(camera.ShowsInputSourceSelector);
 
         viewModel.SelectedType = "DynamicRoi";
         var bounds = viewModel.GeneratedEditor!.Fields.Single(field =>
@@ -337,10 +375,12 @@ public sealed class StepDefinitionCatalogTests
         Assert.False(bounds.InputReferenceEditor!.Picker.CanUseJobVariables);
         Assert.False(bounds.InputReferenceEditor.Picker.CanUseSecrets);
         Assert.True(bounds.InputReferenceEditor.Picker.IsStepResultSource);
+        Assert.False(bounds.ShowsInputSourceSelector);
         Assert.True(padding.InputReferenceEditor!.Picker.CanUseJobVariables);
         Assert.True(padding.InputReferenceEditor.Picker.CanUseStepResults);
         Assert.False(padding.InputReferenceEditor.Picker.CanUseSecrets);
         Assert.True(padding.InputReferenceEditor.Picker.IsDirectSource);
+        Assert.True(padding.ShowsInputSourceSelector);
         Assert.Equal(0, padding.IntegerValue);
         Assert.False(padding.UsesValueReferencePicker);
         Assert.True(padding.UsesTextInput);
@@ -1780,6 +1820,10 @@ public sealed class StepDefinitionCatalogTests
                 new GeneratedConditionEditorViewModel(value, [], [variable]));
 
         var row = Assert.Single(conditionEditor!.Conditions);
+        Assert.True(row.SourcePicker.CanUseJobVariables);
+        Assert.True(row.SourcePicker.CanUseStepResults);
+        Assert.True(row.SourceField.ShowsInputSourceSelector);
+        Assert.Equal(ValueProviderIds.JobVariable, row.SourcePicker.ToBinding().ProviderId);
         row.ComparisonIsJobResult = true;
         var comparisonVariable = Assert.Single(Assert.Single(row.ComparisonSelectionTree).Children);
         comparisonVariable.SelectCommand!.Execute(null);
@@ -1789,6 +1833,35 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(ValueProviderIds.JobVariable, condition.ProviderId);
         Assert.Equal(variable.Id.ToString("D"), condition.SourceId);
         Assert.True(string.IsNullOrEmpty(condition.SourceStepId));
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_PersistsSelectedCompoundVariableMember()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Target",
+            ValueKind = ResultValueKind.Point,
+            Value = new JsonObject { ["x"] = 10, ["y"] = 20 }
+        };
+        GeneratedConditionEditorViewModel? conditionEditor = null;
+        var editor = new GeneratedStepEditorViewModel(
+            new IfStepDefinition(),
+            conditionResolver: (_, value) => conditionEditor =
+                new GeneratedConditionEditorViewModel(value, [], [variable]));
+        var row = Assert.Single(conditionEditor!.Conditions);
+        row.SourcePicker.UseJobVariableCommand.Execute(null);
+        var xNode = row.SourcePicker.SelectionTree.Single(node => node.DisplayName == variable.Name)
+            .Children.Single(node => node.DisplayName == "X");
+
+        xNode.SelectCommand!.Execute(null);
+        row.ComparisonNumber = 10;
+
+        Assert.True(editor.TryCreateStep(out var created));
+        var condition = Assert.Single(Assert.IsType<IfStep>(created).Settings.Conditions);
+        Assert.Equal(variable.Id.ToString("D"), condition.SourceId);
+        Assert.Equal("X", condition.ValuePath);
     }
 
     [Fact]
@@ -2368,7 +2441,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.NotNull(contract);
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value: null,
-            new ResultBindingPickerViewModel([], contract!, false),
+            new ValueReferencePickerViewModel([], contract!, false),
             ["explorer", "notepad"]);
         var editor = new GeneratedStepEditorViewModel(
             new ActiveProcessStepDefinition(),
@@ -2390,7 +2463,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.NotNull(contract);
         var editor = new GeneratedProcessTargetEditorViewModel(
             value: null,
-            new ResultBindingPickerViewModel([], contract!, false),
+            new ValueReferencePickerViewModel([], contract!, false),
             ["explorer", "notepad"]);
 
         var processNameContent = Assert.IsType<GeneratedProcessNameTargetContentViewModel>(
@@ -2423,7 +2496,7 @@ public sealed class StepDefinitionCatalogTests
         var value = definition.CreateDraft(existing).Values[ActiveProcessStepDefinition.ProcessTargetFieldId];
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value,
-            new ResultBindingPickerViewModel(
+            new ValueReferencePickerViewModel(
                 [],
                 StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
                 false),
@@ -2454,7 +2527,7 @@ public sealed class StepDefinitionCatalogTests
             """);
         var editor = new GeneratedProcessTargetEditorViewModel(
             value,
-            new ResultBindingPickerViewModel(
+            new ValueReferencePickerViewModel(
                 [],
                 StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
                 false),
@@ -2469,7 +2542,7 @@ public sealed class StepDefinitionCatalogTests
     {
         var editor = new GeneratedProcessTargetEditorViewModel(
             value: null,
-            new ResultBindingPickerViewModel(
+            new ValueReferencePickerViewModel(
                 [],
                 StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!,
                 false),
@@ -2526,7 +2599,7 @@ public sealed class StepDefinitionCatalogTests
         var definition = new FocusProcessStepDefinition();
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value: null,
-            new ResultBindingPickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
+            new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
             []);
         var editor = new GeneratedStepEditorViewModel(
             definition,
@@ -2565,7 +2638,7 @@ public sealed class StepDefinitionCatalogTests
         var value = definition.CreateDraft(existing).Values[FocusProcessStepDefinition.ProcessTargetFieldId];
         var processEditor = new GeneratedProcessTargetEditorViewModel(
             value,
-            new ResultBindingPickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
+            new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
             []);
         var editor = new GeneratedStepEditorViewModel(
             definition,
@@ -2634,7 +2707,7 @@ public sealed class StepDefinitionCatalogTests
                 var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), field.InputContractId!)!;
                 return new GeneratedResultBindingEditorViewModel(
                     value,
-                    new ResultBindingPickerViewModel(
+                    new ValueReferencePickerViewModel(
                         field.InputContractId == "bounds" ? [source] : [],
                         contract,
                         true,
@@ -2689,11 +2762,57 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(string.IsNullOrEmpty(binding.PropertyId));
         Assert.Equal(variable.Name, picker.SelectedPropertyName);
         Assert.Contains("x: 10", picker.SelectedPreviewValue);
+        Assert.StartsWith($"{variable.Name} · ", picker.SelectedInlineText);
+        Assert.Contains("x: 10", picker.SelectedTooltipValue);
         Assert.Equal(Loc.Get("Ui.ValueReference.JobVariables"), picker.SelectedPreviewSource);
         Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
         var selectedNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
         Assert.True(selectedNode.IsSelected);
-        Assert.Null(selectedNode.SourceText);
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), selectedNode.SourceText);
+        Assert.False(string.IsNullOrWhiteSpace(selectedNode.ValueText));
+        Assert.False(string.IsNullOrWhiteSpace(selectedNode.FullValueText));
+        Assert.False(string.IsNullOrWhiteSpace(selectedNode.SecondaryText));
+    }
+
+    [Fact]
+    public void ValueReferencePicker_SelectsCompatibleMemberOfCompoundJobVariable()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Target",
+            ValueKind = ResultValueKind.Point,
+            Value = new JsonObject { ["x"] = 10, ["y"] = 20 }
+        };
+        var contract = new StepInputDescriptor(
+            "coordinate", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
+            new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single))
+        {
+            AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
+        };
+        var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
+        picker.UseJobVariableCommand.Execute(null);
+
+        var variableNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
+        var xNode = variableNode.Children.Single(node => node.DisplayName == "X");
+        xNode.SelectCommand!.Execute(null);
+        var binding = picker.ToBinding();
+
+        Assert.Equal(ValueProviderIds.JobVariable, binding.ProviderId);
+        Assert.Equal(variable.Id.ToString("D"), binding.SourceId);
+        Assert.Equal("X", binding.ValuePath);
+        Assert.Contains("Target", picker.SelectedPropertyName);
+        Assert.Contains("X", picker.SelectedPropertyName);
+
+        var reloaded = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
+        reloaded.Load(binding);
+        Assert.Equal("X", reloaded.ToBinding().ValuePath);
+        Assert.True(reloaded.SelectionTree.Single(node => node.DisplayName == variable.Name)
+            .Children.Single(node => node.DisplayName == "X").IsSelected);
+
+        var options = new JsonSerializerOptions();
+        JobJsonSerialization.Configure(options);
+        Assert.Contains("\"value_path\":\"X\"", JsonSerializer.Serialize(binding, options));
     }
 
     [Fact]
@@ -2760,6 +2879,19 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Contains(picker.SelectionTree, child => child.DisplayName == "Outer padding");
         Assert.Contains(picker.SelectionTree, child => child.DisplayName == "Retries");
+
+        var detailed = picker.SelectionTree.Single(child => child.DisplayName == "Outer padding");
+        Assert.Equal("25", detailed.ValueText);
+        Assert.Equal("Space around the detection", detailed.Description);
+        Assert.False(string.IsNullOrWhiteSpace(detailed.SecondaryText));
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), detailed.SourceText);
+        Assert.True(detailed.HasIcon);
+
+        picker.SearchText = "Space around";
+        Assert.Equal("Outer padding", Assert.Single(picker.SelectionTree).DisplayName);
+
+        picker.SearchText = "3";
+        Assert.Equal("Retries", Assert.Single(picker.SelectionTree).DisplayName);
     }
 
     [Fact]
@@ -2883,6 +3015,21 @@ public sealed class StepDefinitionCatalogTests
     [Fact]
     public void JobVariableEditor_OffersOnlySimpleVariableTypesButKeepsLegacyTypesReadable()
     {
+        var expected = new HashSet<ResultValueKind>
+        {
+            ResultValueKind.Text,
+            ResultValueKind.Boolean,
+            ResultValueKind.Integer,
+            ResultValueKind.Number,
+            ResultValueKind.DateTime,
+            ResultValueKind.Point,
+            ResultValueKind.Rectangle,
+            ResultValueKind.Color,
+            ResultValueKind.FilePath
+        };
+        Assert.True(expected.SetEquals(JobVariableEditorViewModel.SupportedKinds));
+        Assert.DoesNotContain(ResultValueKind.Enum, JobVariableEditorViewModel.SupportedKinds);
+        Assert.DoesNotContain(ResultValueKind.Image, JobVariableEditorViewModel.SupportedKinds);
         Assert.DoesNotContain(ResultValueKind.ResultObject, JobVariableEditorViewModel.SupportedKinds);
         Assert.DoesNotContain(ResultValueKind.Detection, JobVariableEditorViewModel.SupportedKinds);
         Assert.DoesNotContain(ResultValueKind.ProcessReference, JobVariableEditorViewModel.SupportedKinds);
@@ -2892,10 +3039,89 @@ public sealed class StepDefinitionCatalogTests
             ValueKind = ResultValueKind.ResultObject,
             Value = new System.Text.Json.Nodes.JsonObject { ["value"] = 42 }
         };
-        var editor = new JobVariableEditorViewModel(legacyVariable, () => { });
+        var editor = new JobVariableEditorViewModel(legacyVariable, _ => { });
 
         Assert.Equal(ResultValueKind.ResultObject, editor.SelectedKind.Kind);
         Assert.Equal(42, legacyVariable.Value!["value"]!.GetValue<int>());
+
+        foreach (var legacyKind in new[] { ResultValueKind.Enum, ResultValueKind.Image })
+        {
+            var legacyEditor = new JobVariableEditorViewModel(new JobVariable
+            {
+                ValueKind = legacyKind,
+                Value = JsonValue.Create(string.Empty)
+            }, _ => { });
+            Assert.Equal(legacyKind, legacyEditor.SelectedKind.Kind);
+        }
+    }
+
+    [Fact]
+    public void ValueReferencePicker_OffersOnlyApprovedVariableKindsButLoadsLegacyReferences()
+    {
+        var text = Variable("Text", ResultValueKind.Text);
+        var color = Variable("Color", ResultValueKind.Color);
+        color.Value = JsonValue.Create("#123456");
+        var file = Variable("File", ResultValueKind.FilePath);
+        var legacyEnum = Variable("Legacy enum", ResultValueKind.Enum);
+        var legacyImage = Variable("Legacy image", ResultValueKind.Image);
+        var contract = new StepInputDescriptor(
+            "value", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.NotApplicable,
+            new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single),
+            new AcceptedResultShape(ResultValueKind.Color, ResultCardinality.Single),
+            new AcceptedResultShape(ResultValueKind.FilePath, ResultCardinality.Single),
+            new AcceptedResultShape(ResultValueKind.Enum, ResultCardinality.Single),
+            new AcceptedResultShape(ResultValueKind.Image, ResultCardinality.Single))
+        {
+            AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
+        };
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, [text, color, file, legacyEnum, legacyImage]);
+
+        picker.UseJobVariableCommand.Execute(null);
+
+        Assert.Contains(picker.SelectionTree, node => node.DisplayName == text.Name);
+        Assert.Contains(picker.SelectionTree, node => node.DisplayName == color.Name);
+        Assert.Contains(picker.SelectionTree, node => node.DisplayName == file.Name);
+        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == legacyEnum.Name);
+        Assert.DoesNotContain(picker.SelectionTree, node => node.DisplayName == legacyImage.Name);
+        Assert.Equal("#123456", picker.SelectionTree.Single(node => node.DisplayName == color.Name).ColorPreview);
+
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = legacyEnum.Id.ToString("D")
+        });
+        Assert.Equal(legacyEnum.Id, picker.SelectedJobVariable?.Id);
+
+        static JobVariable Variable(string name, ResultValueKind kind) => new()
+        {
+            Name = name,
+            Scope = JobVariableScope.Shared,
+            ValueKind = kind,
+            Value = JsonValue.Create(string.Empty)
+        };
+    }
+
+    [Fact]
+    public void JobVariableEditor_StoresColorFilePathAndFullTimestampValues()
+    {
+        var variable = new JobVariable
+        {
+            ValueKind = ResultValueKind.DateTime,
+            Value = JsonValue.Create(new DateTime(2026, 8, 24, 14, 35, 12))
+        };
+        var editor = new JobVariableEditorViewModel(variable, _ => { });
+
+        Assert.Equal(14, editor.DateTimeValue.Hour);
+        Assert.Equal(35, editor.DateTimeValue.Minute);
+
+        editor.SelectedKind = editor.KindOptions.Single(option => option.Kind == ResultValueKind.Color);
+        editor.ColorValue = System.Windows.Media.Color.FromRgb(0x12, 0xAB, 0xEF);
+        Assert.Equal("#12ABEF", variable.Value!.GetValue<string>());
+
+        editor.SelectedKind = editor.KindOptions.Single(option => option.Kind == ResultValueKind.FilePath);
+        editor.FilePath = @"C:\Data\input.txt";
+        Assert.Equal(@"C:\Data\input.txt", variable.Value!.GetValue<string>());
     }
 
     [Fact]
@@ -2962,9 +3188,30 @@ public sealed class StepDefinitionCatalogTests
         overlay.AddOverlayDetectionCommand.Execute(null);
         var row = Assert.Single(overlay.OverlayDetectionRows);
 
-        Assert.False(row.Source.CanUseJobVariables);
+        Assert.True(row.Source.CanUseJobVariables);
+        Assert.True(row.Source.CanUseStepResults);
+        Assert.True(row.SourceField.ShowsInputSourceSelector);
         Assert.False(row.Source.CanUseSecrets);
         Assert.False(row.Source.ToBinding().IsConfigured);
+
+    }
+
+    [Fact]
+    public void AddStepDialog_OverlayTextOffersDirectVariableAndResultSources()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "ShowOnDesktop";
+        var overlay = Assert.Single(viewModel.GeneratedEditor!.Fields).VisualOverlayEditor!;
+
+        overlay.AddOverlayTextCommand.Execute(null);
+
+        var text = Assert.Single(overlay.OverlayTextRows).TextSourceField!;
+        Assert.True(text.InputReferenceEditor!.Picker.CanUseDirectValue);
+        Assert.True(text.InputReferenceEditor.Picker.CanUseJobVariables);
+        Assert.True(text.InputReferenceEditor.Picker.CanUseStepResults);
+        Assert.True(text.ShowsInputSourceSelector);
     }
 
     [Fact]
@@ -3005,7 +3252,7 @@ public sealed class StepDefinitionCatalogTests
         var contract = StepInputContractRegistry.Get(typeof(PredictMovementStep), "points")!;
         var resultType = StepResultMetadata.ResultTypes.First(type =>
             contract.FindPreferredProperty(type.Properties) is not null);
-        var picker = new ResultBindingPickerViewModel(
+        var picker = new ValueReferencePickerViewModel(
             [new SourceStepItem("detection", "Detection", resultType)], contract, true);
         var editor = new GeneratedStepEditorViewModel(
             new PredictMovementStepDefinition(),
@@ -3033,7 +3280,7 @@ public sealed class StepDefinitionCatalogTests
         var contract = StepInputContractRegistry.Get(typeof(KlickOnPointStep), "points")!;
         var resultType = StepResultMetadata.ResultTypes.First(type =>
             contract.FindPreferredProperty(type.Properties) is not null);
-        var picker = new ResultBindingPickerViewModel(
+        var picker = new ValueReferencePickerViewModel(
             [new SourceStepItem("prediction", "Prediction", resultType)], contract, true);
         var editor = new GeneratedStepEditorViewModel(
             new KlickOnPointStepDefinition(),

@@ -1,5 +1,6 @@
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
+using TaskAutomation.Steps.Definitions;
 
 namespace TaskAutomation.Tests.Jobs;
 
@@ -65,6 +66,34 @@ public sealed class JobValidationTests
 
     [Fact]
     public void ValidateJob_EmptyJob_IsValid() => Assert.True(JobValidation.ValidateJob(new Job()).IsValid);
+
+    [Fact]
+    public void ValidateJob_RejectsWrongTypeInsideStructuredBinding()
+    {
+        var step = new ActiveProcessStep();
+        var job = new Job { Steps = [step] };
+        JobVariableInputMigration.Migrate(job);
+        var invalidTitle = new LocalValue
+        {
+            OwnerStepId = step.Id,
+            InputPath = $"{ActiveProcessStepDefinition.ProcessTargetFieldId}.window_title_contains",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        job.LocalValues.Add(invalidTitle);
+        ValueBindingTree.Set(step.Inputs, invalidTitle.InputPath, new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = invalidTitle.Id.ToString("D")
+        });
+        Assert.True(BuiltInStepDefinitions.Instance.TryGetByType(typeof(ActiveProcessStep), out var definition));
+        ValueBindingTree.ApplySchemas(step.Inputs, definition.Descriptor.Fields);
+
+        var result = JobValidation.ValidateJob(job);
+
+        Assert.False(result.IsValid);
+        Assert.Contains("window_title_contains", Assert.Single(result.Steps, item => !item.IsValid).Error);
+    }
 
     [Fact]
     public void ValidateStep_DisabledInvalidStep_IsAllowed()

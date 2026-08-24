@@ -19,6 +19,13 @@ Step result behaviour is owned by the backend.
   `source_id`. The `step_result` provider encodes the stable step and property
   IDs in its versioned source ID. Legacy `source_step_id`, `property_id`, and
   `property_path` values remain readable for existing jobs.
+- Compound inputs persist a `ResultBinding` tree. A node may reference a complete
+  base value and override stable `members` or indexed `items`. Every compound
+  root uses a versioned `schema_id`; provider references are never embedded in
+  the variable's JSON value. Legacy dotted input keys are migrated into this tree.
+- `ValueBindingSchemaRegistry` owns the stable member IDs, item schemas, types,
+  cardinalities, and provider policies for compound values. Validation and runtime
+  materialization traverse the same tree recursively.
 - Every non-step provider exposes typed `ValueProviderSourceDescriptor`
   metadata to editors and implements `IRuntimeValueProvider` for resolution.
   Compatibility is decided by the same input-contract shapes used for step

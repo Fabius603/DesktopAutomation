@@ -15,10 +15,17 @@
                                ItemsSource="{Binding SelectionTree}"
                                IsRichPreview="True"
                                DisplayText="{Binding SelectedPropertyName}"
+                               InlineText="{Binding SelectedInlineText}"
                                PreviewText="{Binding SelectedPreviewValue}"
                                SourceText="{Binding SelectedPreviewSource}"
                                ContextText="{Binding PickerContextText}"
-                               SecondaryText="{Binding SelectedPreviewType}"/>
+                               SecondaryText="{Binding SelectedPreviewType}"
+                               ToolTipValue="{Binding SelectedTooltipValue}"
+                               ToolTipDescription="{Binding SelectedTooltipDescription}"
+                               SearchText="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               ExpectedTypeText="{Binding ExpectedTypeText}"
+                               CreateCommand="{Binding CreateJobVariableCommand}"
+                               ShowCreateAction="{Binding ShowCreateVariableAction}"/>
 
         <Button Grid.Column="1"
                 Width="30" Height="30"

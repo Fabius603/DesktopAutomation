@@ -104,6 +104,7 @@ internal static class StepDescriptorDraftValidator
                 case StepValueKind.Boolean:
                     _ = value.GetValue<bool>(); return true;
                 case StepValueKind.Text:
+                case StepValueKind.DateTime:
                 case StepValueKind.MultilineText:
                 case StepValueKind.FilePath:
                 case StepValueKind.DirectoryPath:

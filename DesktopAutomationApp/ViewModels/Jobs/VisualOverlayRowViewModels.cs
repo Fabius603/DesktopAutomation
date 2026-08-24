@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Nodes;
 using System.Windows.Input;
 using System.Windows.Media;
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps;
 
@@ -24,6 +26,12 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
         _owner = owner;
         Source = new ValueReferencePickerViewModel(
             sources, inputContract, false, variables, providerSources, pickerContext);
+        SourceField = new GeneratedStepFieldViewModel(
+            new StepFieldDescriptor("detection_result", string.Empty, StepValueKind.ResultBinding,
+                Required: true, AllowsDirectValue: false),
+            null,
+            inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
+                JsonValue.Create(string.Empty), Source));
         Source.PropertyChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
         if (binding is not null) Source.Load(binding);
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
@@ -32,6 +40,7 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
     }
 
     public ValueReferencePickerViewModel Source { get; }
+    public GeneratedStepFieldViewModel SourceField { get; }
     public ICommand RemoveCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
@@ -58,6 +67,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     private int _offsetY;
     private int _durationMs = 5000;
     private bool _clearOnJobEnd = true;
+    private readonly string _inputKeyPrefix;
 
     public TextOverlayRowViewModel(
         ObservableCollection<TextOverlayRowViewModel> owner,
@@ -67,9 +77,12 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         TextResultOverlaySettings? settings = null,
-        ValueReferencePickerContext? pickerContext = null)
+        ValueReferencePickerContext? pickerContext = null,
+        string inputKeyPrefix = "overlay.text_results.0",
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
     {
         _owner = owner;
+        _inputKeyPrefix = inputKeyPrefix;
         Source = new ValueReferencePickerViewModel(
             sources, inputContract, false, variables, providerSources, pickerContext);
         Source.PropertyChanged += (_, _) => OnChange(nameof(Source));
@@ -86,6 +99,40 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
             _clearOnJobEnd = settings.ClearOnJobEnd;
             Source.Load(settings.Result);
         }
+        if (nestedInputResolver is not null)
+        {
+            TextSourceField = CreateNestedField("result", StepValueKind.Text,
+                JsonValue.Create(string.Empty), null, nestedInputResolver);
+            if (settings?.Result.IsConfigured == true)
+                TextSourceField.InputReferenceEditor!.Picker.Load(settings.Result);
+            FontSizeField = CreateNestedField("font_size", StepValueKind.Number,
+                JsonValue.Create(_fontSize), null, nestedInputResolver);
+            FontColorField = CreateNestedField("font_color", StepValueKind.Color,
+                JsonValue.Create($"#{_fontColor.R:X2}{_fontColor.G:X2}{_fontColor.B:X2}"), null, nestedInputResolver);
+            OpacityField = CreateNestedField("opacity", StepValueKind.Number,
+                JsonValue.Create(_opacity), StepEditorHints.Percentage, nestedInputResolver);
+            DesktopIndexField = CreateNestedField("desktop_index", StepValueKind.Integer,
+                JsonValue.Create(_desktopIndex), StepEditorHints.MonitorPicker, nestedInputResolver);
+            OffsetXField = CreateNestedField("offset_x", StepValueKind.Integer,
+                JsonValue.Create(_offsetX), null, nestedInputResolver);
+            OffsetYField = CreateNestedField("offset_y", StepValueKind.Integer,
+                JsonValue.Create(_offsetY), null, nestedInputResolver);
+            DurationField = CreateNestedField("duration_ms", StepValueKind.Duration,
+                JsonValue.Create(_durationMs), null, nestedInputResolver);
+            ClearOnJobEndField = CreateNestedField("clear_on_job_end", StepValueKind.Boolean,
+                JsonValue.Create(_clearOnJobEnd), null, nestedInputResolver);
+            foreach (var field in NestedFields)
+                field.PropertyChanged += (_, _) => OnChange();
+        }
+        else
+        {
+            TextSourceField = new GeneratedStepFieldViewModel(
+                new StepFieldDescriptor("text_result", string.Empty, StepValueKind.ResultBinding,
+                    Required: true, AllowsDirectValue: false),
+                null,
+                inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
+                    JsonValue.Create(string.Empty), Source));
+        }
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
         MoveUpCommand = new RelayCommand(() => Move(-1));
         MoveDownCommand = new RelayCommand(() => Move(1));
@@ -93,23 +140,39 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     }
 
     public ValueReferencePickerViewModel Source { get; }
+    public GeneratedStepFieldViewModel? TextSourceField { get; }
     public ICommand RemoveCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
     public ICommand ChooseMonitorCommand { get; }
-    public float FontSize { get => _fontSize; set { _fontSize = value; OnChange(); } }
-    public Color FontColor { get => _fontColor; set { _fontColor = value; OnChange(); } }
-    public float Opacity { get => _opacity; set { _opacity = value; OnChange(); } }
-    public int DesktopIndex { get => _desktopIndex; set { _desktopIndex = value; OnChange(); } }
-    public int OffsetX { get => _offsetX; set { _offsetX = value; OnChange(); } }
-    public int OffsetY { get => _offsetY; set { _offsetY = value; OnChange(); } }
-    public int DurationMs { get => _durationMs; set { _durationMs = value; OnChange(); } }
-    public bool ClearOnJobEnd { get => _clearOnJobEnd; set { _clearOnJobEnd = value; OnChange(); } }
+    public GeneratedStepFieldViewModel? FontSizeField { get; }
+    public GeneratedStepFieldViewModel? FontColorField { get; }
+    public GeneratedStepFieldViewModel? OpacityField { get; }
+    public GeneratedStepFieldViewModel? DesktopIndexField { get; }
+    public GeneratedStepFieldViewModel? OffsetXField { get; }
+    public GeneratedStepFieldViewModel? OffsetYField { get; }
+    public GeneratedStepFieldViewModel? DurationField { get; }
+    public GeneratedStepFieldViewModel? ClearOnJobEndField { get; }
+    private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
+        new[] { TextSourceField, FontSizeField, FontColorField, OpacityField, DesktopIndexField,
+            OffsetXField, OffsetYField, DurationField, ClearOnJobEndField }
+            .OfType<GeneratedStepFieldViewModel>();
+    public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields
+        .Where(field => !ReferenceEquals(field, TextSourceField)).ToDictionary(
+        field => field.Descriptor.Id, field => field.InputReferenceEditor!.Picker.ToBinding(), StringComparer.Ordinal);
+    public float FontSize { get => (float)(FontSizeField?.NumberValue ?? _fontSize); set { if (FontSizeField is not null) FontSizeField.NumberValue = value; _fontSize = value; OnChange(); } }
+    public Color FontColor { get => FontColorField?.ColorValue ?? _fontColor; set { if (FontColorField is not null) FontColorField.ColorValue = value; _fontColor = value; OnChange(); } }
+    public float Opacity { get => (float)(OpacityField?.NumberValue ?? _opacity); set { if (OpacityField is not null) OpacityField.NumberValue = value; _opacity = value; OnChange(); } }
+    public int DesktopIndex { get => DesktopIndexField?.IntegerValue ?? _desktopIndex; set { if (DesktopIndexField is not null) DesktopIndexField.IntegerValue = value; _desktopIndex = value; OnChange(); } }
+    public int OffsetX { get => OffsetXField?.IntegerValue ?? _offsetX; set { if (OffsetXField is not null) OffsetXField.IntegerValue = value; _offsetX = value; OnChange(); } }
+    public int OffsetY { get => OffsetYField?.IntegerValue ?? _offsetY; set { if (OffsetYField is not null) OffsetYField.IntegerValue = value; _offsetY = value; OnChange(); } }
+    public int DurationMs { get => DurationField?.IntegerValue ?? _durationMs; set { if (DurationField is not null) DurationField.IntegerValue = value; _durationMs = value; OnChange(); } }
+    public bool ClearOnJobEnd { get => ClearOnJobEndField?.BooleanValue ?? _clearOnJobEnd; set { if (ClearOnJobEndField is not null) ClearOnJobEndField.BooleanValue = value; _clearOnJobEnd = value; OnChange(); } }
 
     public TextResultOverlaySettings ToSettings() => new()
     {
         Id = _id,
-        Result = Source.ToBinding(),
+        Result = TextSourceField?.InputReferenceEditor?.Picker.ToBinding() ?? Source.ToBinding(),
         FontSize = FontSize,
         FontColor = $"#{FontColor.R:X2}{FontColor.G:X2}{FontColor.B:X2}",
         Opacity = Opacity,
@@ -134,4 +197,18 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
 
     private static Color ParseColor(string value)
         => WpfColorParser.TryParse(value, out var color) ? color : Colors.White;
+
+    private GeneratedStepFieldViewModel CreateNestedField(
+        string memberId,
+        StepValueKind kind,
+        JsonNode? value,
+        string? editorHint,
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel> resolver)
+    {
+        var key = $"{_inputKeyPrefix}.{memberId}";
+        var descriptor = new StepFieldDescriptor(key, string.Empty, kind,
+            DefaultValue: value?.DeepClone(), EditorHint: editorHint);
+        return new GeneratedStepFieldViewModel(descriptor, value?.DeepClone(),
+            inputReferenceEditor: resolver(key, kind, value));
+    }
 }

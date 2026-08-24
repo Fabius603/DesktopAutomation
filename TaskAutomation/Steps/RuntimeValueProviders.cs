@@ -50,19 +50,21 @@ internal sealed class RuntimeValueProviderRegistry : IDisposable
     }
 }
 
-internal sealed class JobVariableRuntimeValueProvider : IRuntimeValueProvider, IDisposable
+internal sealed class StoredValueRuntimeValueProvider : IRuntimeValueProvider, IDisposable
 {
     private readonly IReadOnlyDictionary<Guid, JobVariable> _variables;
     private readonly Dictionary<Guid, object?> _values = [];
+    private readonly string _providerId;
 
-    public JobVariableRuntimeValueProvider(IEnumerable<JobVariable> variables)
+    public StoredValueRuntimeValueProvider(string providerId, IEnumerable<JobVariable> variables)
     {
+        _providerId = providerId;
         _variables = variables.Where(variable => variable.Id != Guid.Empty)
             .GroupBy(variable => variable.Id)
             .ToDictionary(group => group.Key, group => group.Last());
     }
 
-    public string ProviderId => ValueProviderIds.JobVariable;
+    public string ProviderId => _providerId;
 
     public RuntimeValueReadResult Read(string sourceId)
     {
@@ -112,7 +114,8 @@ internal sealed class JobVariableRuntimeValueProvider : IRuntimeValueProvider, I
         ResultValueKind.Boolean => variable.Value?.GetValue<bool>(),
         ResultValueKind.Integer => variable.Value?.GetValue<int>(),
         ResultValueKind.Number => variable.Value?.GetValue<double>(),
-        ResultValueKind.Text or ResultValueKind.Enum => variable.Value?.GetValue<string>(),
+        ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath =>
+            variable.Value?.GetValue<string>(),
         ResultValueKind.DateTime => variable.Value?.GetValue<DateTime>(),
         ResultValueKind.Point => variable.Cardinality == ResultCardinality.Collection
             ? variable.Value?.Deserialize<PixelPoint[]>()
@@ -129,9 +132,41 @@ internal sealed class JobVariableRuntimeValueProvider : IRuntimeValueProvider, I
         ResultValueKind.ProcessReference => variable.Cardinality == ResultCardinality.Collection
             ? variable.Value?.Deserialize<RuntimeProcessReference[]>()
             : variable.Value?.Deserialize<RuntimeProcessReference>(),
-        ResultValueKind.ResultObject => variable.Value?.DeepClone(),
+        ResultValueKind.ResultObject or ResultValueKind.JobReference or ResultValueKind.MacroReference
+            => variable.Value?.DeepClone(),
         _ => variable.Value?.Deserialize<object>()
     };
+}
+
+internal sealed class StepResultRuntimeValueProvider(Func<string, StepResultBase?> resultReader)
+    : IRuntimeValueProvider
+{
+    public string ProviderId => ValueProviderIds.StepResult;
+
+    public RuntimeValueReadResult Read(string sourceId)
+    {
+        if (!StepResultSourceIdCodec.TryParse(sourceId, out var source))
+            return new(RuntimeValueReadStatus.SourceUnavailable,
+                Error: "Die Step-Ergebnisreferenz ist ungültig.");
+        var result = resultReader(source.StepId);
+        if (result is null || !result.WasExecuted)
+            return new(RuntimeValueReadStatus.SourceUnavailable,
+                Error: $"Der Quell-Step '{source.StepId}' wurde noch nicht ausgeführt.");
+        if (!StepResultMetadata.TryGetProperty(
+                result.GetType(), source.PropertyId, source.PropertyId, out var property)
+            || !StepResultMetadata.TryReadValue(result, property, out var value))
+            return new(RuntimeValueReadStatus.SourceUnavailable,
+                Error: $"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
+        return new(RuntimeValueReadStatus.Success,
+            new ValueProviderSourceDescriptor(
+                ProviderId,
+                sourceId,
+                property.DisplayName,
+                property.Description,
+                property.DataType,
+                property.Cardinality),
+            value);
+    }
 }
 
 internal sealed class SecretRuntimeValueProvider : IRuntimeValueProvider

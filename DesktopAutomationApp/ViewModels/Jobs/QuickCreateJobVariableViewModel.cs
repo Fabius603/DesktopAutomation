@@ -32,7 +32,7 @@ public sealed class QuickCreateJobVariableViewModel : ViewModelBase
             Cardinality = contract.AcceptedShapes[0].Cardinalities.FirstOrDefault(ResultCardinality.Single),
             Value = DefaultValue(supported[0])
         };
-        Editor = new JobVariableEditorViewModel(Variable, () => { });
+        Editor = new JobVariableEditorViewModel(Variable, _ => { });
         _typeOptions = Editor.KindOptions.Where(option => supported.Contains(option.Kind)).ToArray();
     }
 
@@ -73,11 +73,12 @@ public sealed class QuickCreateJobVariableViewModel : ViewModelBase
 
     private static JsonNode? DefaultValue(ResultValueKind kind) => kind switch
     {
-        ResultValueKind.Text or ResultValueKind.Enum => JsonValue.Create(string.Empty),
+        ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.FilePath => JsonValue.Create(string.Empty),
         ResultValueKind.Boolean => JsonValue.Create(false),
         ResultValueKind.Integer => JsonValue.Create(0),
         ResultValueKind.Number => JsonValue.Create(0d),
         ResultValueKind.DateTime => JsonValue.Create(DateTime.Now),
+        ResultValueKind.Color => JsonValue.Create("#FFFFFF"),
         ResultValueKind.Point => new JsonObject { ["x"] = 0, ["y"] = 0 },
         ResultValueKind.Rectangle => new JsonObject
             { ["x"] = 0, ["y"] = 0, ["width"] = 0, ["height"] = 0 },

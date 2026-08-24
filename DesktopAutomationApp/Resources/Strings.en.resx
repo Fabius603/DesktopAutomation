@@ -3008,11 +3008,15 @@ Error code: {3}</value>
   <data name="Settings.Credentials.Kind.BearerToken" xml:space="preserve"><value>Bearer token</value></data>
   <data name="Settings.Credentials.Kind.UsernamePassword" xml:space="preserve"><value>Username and password</value></data>
   <data name="Ui.ValueReference.JobVariables" xml:space="preserve"><value>Job variables</value></data>
+  <data name="Ui.ValueReference.DirectValue" xml:space="preserve"><value>Direct value</value></data>
   <data name="Ui.ValueReference.ResultVariables" xml:space="preserve"><value>Result variables</value></data>
   <data name="Ui.ValueReference.SelectVariable" xml:space="preserve"><value>Select variable</value></data>
   <data name="Ui.ValueReference.Search" xml:space="preserve"><value>Search variables …</value></data>
+  <data name="Ui.ValueReference.ExpectedType" xml:space="preserve"><value>Expected: {0}</value></data>
+  <data name="Ui.ValueReference.ToolTip.Value" xml:space="preserve"><value>Value</value></data>
   <data name="Ui.ValueReference.EmptyValue" xml:space="preserve"><value>No value</value></data>
   <data name="Ui.ValueReference.Missing" xml:space="preserve"><value>Variable no longer available</value></data>
+  <data name="Ui.ValueReference.Missing.ToolTip" xml:space="preserve"><value>The saved selection is no longer available. Select a new compatible variable.</value></data>
   <data name="Ui.ValueReference.Invalid" xml:space="preserve"><value>Invalid reference</value></data>
   <data name="Ui.ValueReference.Empty.JobVariables" xml:space="preserve"><value>No compatible job variable available.</value></data>
   <data name="Ui.ValueReference.Empty.ResultVariables" xml:space="preserve"><value>No compatible result variable available.</value></data>
@@ -3063,28 +3067,57 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Delete.InUseTitle" xml:space="preserve"><value>Variable is in use</value></data>
   <data name="Ui.Job.Variables.Delete.InUse" xml:space="preserve"><value>The variable “{0}” cannot be deleted because it is used by {1} reference(s): {2}</value></data>
   <data name="Ui.Job.Variables.Type.Text" xml:space="preserve"><value>Text</value></data>
-  <data name="Ui.Job.Variables.Type.Boolean" xml:space="preserve"><value>Yes/No</value></data>
+  <data name="Ui.Job.Variables.Type.Boolean" xml:space="preserve"><value>Boolean</value></data>
   <data name="Ui.Job.Variables.Type.Integer" xml:space="preserve"><value>Integer</value></data>
   <data name="Ui.Job.Variables.Type.Number" xml:space="preserve"><value>Number</value></data>
-  <data name="Ui.Job.Variables.Type.DateTime" xml:space="preserve"><value>Date</value></data>
+  <data name="Ui.Job.Variables.Type.DateTime" xml:space="preserve"><value>Date and time</value></data>
   <data name="Ui.Job.Variables.Type.Point" xml:space="preserve"><value>Point</value></data>
-  <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Region</value></data>
+  <data name="Ui.Job.Variables.Type.Rectangle" xml:space="preserve"><value>Rectangle</value></data>
   <data name="Ui.Job.Variables.Type.Image" xml:space="preserve"><value>Image</value></data>
+  <data name="Ui.Job.Variables.Type.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Ui.Job.Variables.Type.FilePath" xml:space="preserve"><value>File path</value></data>
+  <data name="Ui.Job.Variables.Type.JobReference" xml:space="preserve"><value>Job reference</value></data>
+  <data name="Ui.Job.Variables.Type.MacroReference" xml:space="preserve"><value>Macro reference</value></data>
   <data name="Ui.Job.Variables.ImagePath" xml:space="preserve"><value>Path to image file</value></data>
   <data name="Ui.Job.Variables.Scope.StepValues" xml:space="preserve"><value>Step values</value></data>
   <data name="Ui.Job.Variables.Scope.Shared" xml:space="preserve"><value>Shared job variables</value></data>
   <data name="Ui.Job.Variables.Usage.One" xml:space="preserve"><value>{0} usage</value></data>
   <data name="Ui.Job.Variables.Usage.Many" xml:space="preserve"><value>{0} usages</value></data>
   <data name="Ui.Job.Variables.Usage.Warning" xml:space="preserve"><value>Changes to this value affect every usage.</value></data>
-  <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Search by name, value, description, or step …</value></data>
+  <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Search variables …</value></data>
   <data name="Ui.Job.Variables.Filter.Shared" xml:space="preserve"><value>Shared</value></data>
   <data name="Ui.Job.Variables.Filter.StepValues" xml:space="preserve"><value>Step values</value></data>
   <data name="Ui.Job.Variables.Filter.Used" xml:space="preserve"><value>Used</value></data>
   <data name="Ui.Job.Variables.Filter.Unused" xml:space="preserve"><value>Unused</value></data>
+  <data name="Ui.Job.Variables.Filter.Title" xml:space="preserve"><value>Filter variables</value></data>
+  <data name="Ui.Job.Variables.Filter.Scope" xml:space="preserve"><value>Scope</value></data>
+  <data name="Ui.Job.Variables.Filter.Usage" xml:space="preserve"><value>Usage</value></data>
+  <data name="Ui.Job.Variables.Filter.Type" xml:space="preserve"><value>Variable type</value></data>
+  <data name="Ui.Job.Variables.Filter.AllTypes" xml:space="preserve"><value>All types</value></data>
+  <data name="Ui.Job.Variables.Filter.Reset" xml:space="preserve"><value>Reset filters</value></data>
   <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>No values match this search and filter.</value></data>
   <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Duplicate variable</value></data>
   <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Copy</value></data>
   <data name="Ui.Job.Variables.PromoteToShared" xml:space="preserve"><value>Use as shared variable</value></data>
+  <data name="Ui.Job.Variables.SelectHint" xml:space="preserve"><value>Select a variable on the left to edit it.</value></data>
+  <data name="Ui.Job.Variables.Usage.Title" xml:space="preserve"><value>Usages</value></data>
+  <data name="Ui.Job.Variables.Usage.None" xml:space="preserve"><value>This variable is not currently used by any step.</value></data>
+  <data name="Ui.Job.Variables.Usage.Open" xml:space="preserve"><value>Show in job</value></data>
+  <data name="Ui.Job.Variables.Delete.Action" xml:space="preserve"><value>Delete</value></data>
+  <data name="Ui.Job.Variables.Image.Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Ui.Job.Variables.Image.Select" xml:space="preserve"><value>Select image file</value></data>
+  <data name="Ui.Job.Variables.Image.Filter" xml:space="preserve"><value>Image files|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All files|*.*</value></data>
+  <data name="Ui.Job.Variables.Image.Empty" xml:space="preserve"><value>No image file selected yet.</value></data>
+  <data name="Ui.Job.Variables.Image.Available" xml:space="preserve"><value>Image file found.</value></data>
+  <data name="Ui.Job.Variables.Image.Missing" xml:space="preserve"><value>The image file was not found or cannot be read.</value></data>
+  <data name="Ui.Job.Variables.FilePath.Watermark" xml:space="preserve"><value>Path to a file</value></data>
+  <data name="Ui.Job.Variables.FilePath.Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Ui.Job.Variables.FilePath.Select" xml:space="preserve"><value>Select file</value></data>
+  <data name="Ui.Job.Variables.FilePath.Filter" xml:space="preserve"><value>All files|*.*</value></data>
+  <data name="Step.ResultValueType.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Step.ResultValueType.FilePath" xml:space="preserve"><value>File path</value></data>
+  <data name="Ui.Job.Steps.ResultType.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Ui.Job.Steps.ResultType.FilePath" xml:space="preserve"><value>File path</value></data>
   <data name="Ui.Job.StepInput.UseVariable" xml:space="preserve"><value>Use variable</value></data>
   <data name="Ui.Job.StepInput.UseDirectValue" xml:space="preserve"><value>Enter directly</value></data>
   <data name="Ui.ValueReference.Recommended" xml:space="preserve"><value>Recommended</value></data>

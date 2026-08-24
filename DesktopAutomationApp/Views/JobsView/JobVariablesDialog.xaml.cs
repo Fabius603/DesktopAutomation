@@ -1,5 +1,6 @@
 using MahApps.Metro.Controls;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace DesktopAutomationApp.Views;
 
@@ -12,6 +13,13 @@ public partial class JobVariablesDialog : MetroWindow
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void FilterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { ContextMenu: { } menu } button) return;
+        menu.PlacementTarget = button;
+        menu.IsOpen = true;
+    }
 
     private void CenterOnOwnerOnce()
     {

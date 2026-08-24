@@ -6,7 +6,7 @@ using TaskAutomation.Steps.Definitions;
 
 namespace TaskAutomation.Jobs;
 
-/// <summary>Converts legacy literal step settings into typed job variables without losing old files.</summary>
+/// <summary>Converts legacy literal step settings into private, typed local values without losing old files.</summary>
 public static class JobVariableInputMigration
 {
     public static bool Migrate(Job job, IStepDefinitionCatalog? catalog = null)
@@ -14,7 +14,8 @@ public static class JobVariableInputMigration
         ArgumentNullException.ThrowIfNull(job);
         catalog ??= BuiltInStepDefinitions.Instance;
         job.Variables ??= [];
-        var changed = false;
+        job.LocalValues ??= [];
+        var changed = MoveLegacyStepValues(job);
         foreach (var step in job.EnumerateAllSteps())
         {
             step.Inputs ??= new Dictionary<string, ResultBinding>(StringComparer.Ordinal);
@@ -35,21 +36,23 @@ public static class JobVariableInputMigration
                     var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
                     var shape = contract?.AcceptedShapes.FirstOrDefault();
                     if (contract?.AllowsDirectValue != true) continue;
-                    var placeholder = new JobVariable
+                    var placeholder = new LocalValue
                     {
-                        Name = UniqueName(job.Variables, $"{definition.Descriptor.TypeId}_{field.Id}"),
+                        Name = UniqueName(job.LocalValues, $"{definition.Descriptor.TypeId}_{field.Id}"),
                         Description = $"{definition.Descriptor.TypeId}.{field.Id}",
                         Scope = JobVariableScope.StepValue,
+                        OwnerStepId = step.Id,
+                        InputPath = field.Id,
                         ValueKind = shape?.ValueKind ?? ResultValueKind.ResultObject,
                         Cardinality = shape?.Cardinalities.FirstOrDefault(ResultCardinality.Single)
                                       ?? ResultCardinality.Single,
                         Value = LegacyDirectValue(step, field)?.DeepClone()
                                 ?? field.DefaultValue?.DeepClone()
                     };
-                    job.Variables.Add(placeholder);
+                    job.LocalValues.Add(placeholder);
                     step.Inputs[field.Id] = new ResultBinding
                     {
-                        ProviderId = ValueProviderIds.JobVariable,
+                        ProviderId = ValueProviderIds.LocalValue,
                         SourceId = placeholder.Id.ToString("D")
                     };
                     changed = true;
@@ -57,26 +60,31 @@ public static class JobVariableInputMigration
                 }
                 if (step.Inputs.TryGetValue(field.Id, out var existing) && existing.IsConfigured) continue;
                 var value = draft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue;
-                var variable = new JobVariable
+                var variable = new LocalValue
                 {
-                    Name = UniqueName(job.Variables, $"{definition.Descriptor.TypeId}_{field.Id}"),
+                    Name = UniqueName(job.LocalValues, $"{definition.Descriptor.TypeId}_{field.Id}"),
                     Description = $"{definition.Descriptor.TypeId}.{field.Id}",
                     Scope = JobVariableScope.StepValue,
-                    ValueKind = MapKind(field.ValueKind),
+                    OwnerStepId = step.Id,
+                    InputPath = field.Id,
+                    ValueKind = MapKind(field),
                     Cardinality = field.ValueKind == StepValueKind.Collection
                         ? ResultCardinality.Collection
                         : ResultCardinality.Single,
                     Value = value?.DeepClone()
                 };
-                job.Variables.Add(variable);
+                job.LocalValues.Add(variable);
                 step.Inputs[field.Id] = new ResultBinding
                 {
-                    ProviderId = ValueProviderIds.JobVariable,
+                    ProviderId = ValueProviderIds.LocalValue,
                     SourceId = variable.Id.ToString("D")
                 };
                 changed = true;
             }
+            changed |= ValueBindingTree.Normalize(step.Inputs, definition.Descriptor.Fields);
         }
+        if (job.Variables.RemoveAll(variable => variable.Scope == JobVariableScope.StepValue) > 0)
+            changed = true;
         if (job.FormatVersion < Job.CurrentFormatVersion)
         {
             job.FormatVersion = Job.CurrentFormatVersion;
@@ -90,11 +98,21 @@ public static class JobVariableInputMigration
         StepValueKind.Boolean => ResultValueKind.Boolean,
         StepValueKind.Integer or StepValueKind.Duration => ResultValueKind.Integer,
         StepValueKind.Number => ResultValueKind.Number,
+        StepValueKind.DateTime => ResultValueKind.DateTime,
+        StepValueKind.Color => ResultValueKind.Color,
+        StepValueKind.FilePath => ResultValueKind.FilePath,
         StepValueKind.Enum => ResultValueKind.Enum,
         StepValueKind.Point => ResultValueKind.Point,
         StepValueKind.Rectangle => ResultValueKind.Rectangle,
         StepValueKind.Object or StepValueKind.Collection => ResultValueKind.ResultObject,
         _ => ResultValueKind.Text
+    };
+
+    public static ResultValueKind MapKind(StepFieldDescriptor field) => field.EditorHint switch
+    {
+        StepEditorHints.JobPicker => ResultValueKind.JobReference,
+        StepEditorHints.MacroPicker => ResultValueKind.MacroReference,
+        _ => MapKind(field.ValueKind)
     };
 
     private static bool MigrateLegacyAliases(JobStep step)
@@ -118,6 +136,47 @@ public static class JobVariableInputMigration
             }
         }
         return changed;
+    }
+
+    private static bool MoveLegacyStepValues(Job job)
+    {
+        var changed = false;
+        foreach (var usage in ValueReferenceUsageInspector.Find(job))
+        {
+            var reference = usage.Reference;
+            if (!string.Equals(reference.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+                || !Guid.TryParse(reference.SourceId, out var variableId))
+                continue;
+            var variable = job.Variables.FirstOrDefault(candidate =>
+                candidate.Id == variableId && candidate.Scope == JobVariableScope.StepValue);
+            if (variable is null) continue;
+            var local = new LocalValue
+            {
+                Id = job.LocalValues.Any(candidate => candidate.Id == variable.Id)
+                    ? Guid.NewGuid()
+                    : variable.Id,
+                Name = variable.Name,
+                Description = variable.Description,
+                Scope = JobVariableScope.StepValue,
+                ValueKind = variable.ValueKind,
+                Cardinality = variable.Cardinality,
+                Value = variable.Value?.DeepClone(),
+                OwnerStepId = usage.Step.Id,
+                InputPath = ResolveInputPath(usage)
+            };
+            job.LocalValues.Add(local);
+            reference.ProviderId = ValueProviderIds.LocalValue;
+            reference.SourceId = local.Id.ToString("D");
+            changed = true;
+        }
+        return changed;
+    }
+
+    private static string ResolveInputPath(ValueReferenceUsage usage)
+    {
+        var input = usage.Step.Inputs.FirstOrDefault(candidate =>
+            ReferenceEquals(candidate.Value, usage.Reference));
+        return string.IsNullOrEmpty(input.Key) ? usage.Path : input.Key;
     }
 
     private static JsonNode? LegacyDirectValue(JobStep step, StepFieldDescriptor field) => step switch
