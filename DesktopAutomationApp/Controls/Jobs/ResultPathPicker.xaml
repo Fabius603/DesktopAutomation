@@ -6,111 +6,9 @@
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              Height="34" MaxHeight="34" VerticalAlignment="Top">
-    <UserControl.Resources>
-        <Style x:Key="PickerToggleStyle" TargetType="ToggleButton">
-            <Setter Property="MinHeight" Value="34"/>
-            <Setter Property="Padding" Value="9,0"/>
-            <Setter Property="Background" Value="{DynamicResource App.Brush.WindowBackground}"/>
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="ToolTipService.InitialShowDelay" Value="350"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border x:Name="ToggleBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5"
-                                SnapsToDevicePixels="True">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ToggleBorder" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="ToggleBorder" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                                <Setter TargetName="ToggleBorder" Property="CornerRadius" Value="5,5,0,0"/>
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ToggleBorder" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PickerTreeItemStyle" TargetType="TreeViewItem"
-               BasedOn="{StaticResource {x:Type TreeViewItem}}">
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,1"/>
-            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=OneTime}"/>
-        </Style>
-
-        <Style x:Key="PickerTreeRowStyle" TargetType="Button">
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Padding" Value="7,2"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="ToolTipService.InitialShowDelay" Value="450"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="RowBorder" Background="{TemplateBinding Background}" CornerRadius="5">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsSelectable}" Value="True">
-                    <Setter Property="MinHeight" Value="32"/>
-                    <Setter Property="Padding" Value="8,2"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                </DataTrigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.58"/>
-                    <Setter Property="Cursor" Value="Arrow"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <ToggleButton x:Name="DropDownToggle"
-                      Style="{StaticResource PickerToggleStyle}"
+                      Style="{StaticResource ReferencePickerField}"
                       Height="34" MaxHeight="34" VerticalAlignment="Top"
                       Tag="{Binding ElementName=Root}"
                       PreviewMouseLeftButtonDown="DropDownToggle_PreviewMouseLeftButtonDown"
@@ -209,20 +107,44 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding InlineText, ElementName=Root}"
-                               MinWidth="48" MaxWidth="170"
-                               FontSize="12" FontWeight="SemiBold"
-                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Margin="9,0,10,0"
-                               Text="{Binding PreviewText, ElementName=Root}"
-                               FontSize="11" FontWeight="Normal"
-                               Foreground="{DynamicResource App.Brush.TextSecondary}"
-                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    <Border Grid.Column="2" Padding="5,1"
-                            Background="{DynamicResource App.Brush.Surface}" CornerRadius="3"
-                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding PreviewText, ElementName=Root}"
+                               MinWidth="48" MaxWidth="210"
+                               FontSize="13" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PreviewText, ElementName=Root}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding InlineText, ElementName=Root}"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Margin" Value="9,0,10,0"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="Normal"/>
+                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PreviewText, ElementName=Root}" Value="">
+                                        <Setter Property="Margin" Value="0,0,10,0"/>
+                                        <Setter Property="FontSize" Value="13"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Border Grid.Column="2">
                         <Border.Style>
-                            <Style TargetType="Border">
+                            <Style TargetType="Border" BasedOn="{StaticResource ReferencePickerTypeBadge}">
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding SecondaryText, ElementName=Root}" Value="">
@@ -232,7 +154,7 @@
                             </Style>
                         </Border.Style>
                         <TextBlock Text="{Binding SecondaryText, ElementName=Root}"
-                                   FontSize="9" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                   FontSize="10" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                     </Border>
                     <TextBlock Grid.Column="3" Margin="8,0,0,0" MaxWidth="125"
                                Text="{Binding SourceText, ElementName=Root}"
@@ -281,19 +203,13 @@
                Closed="SelectionPopup_Closed"
                PlacementTarget="{Binding ElementName=DropDownToggle}"
                Placement="Bottom"
-               VerticalOffset="-1"
-               StaysOpen="True"
+               VerticalOffset="4"
+               StaysOpen="False"
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border Width="{Binding ActualWidth, ElementName=DropDownToggle}"
-                    MinWidth="460" MaxWidth="620" MaxHeight="440"
-                    Background="{DynamicResource App.Brush.Surface}"
-                    BorderBrush="{DynamicResource App.Brush.Accent}"
-                    BorderThickness="1"
-                    CornerRadius="0,0,7,7">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.28" Color="Black"/>
-                </Border.Effect>
+                    MinWidth="400" MaxWidth="620" MaxHeight="440"
+                    Style="{StaticResource ReferencePickerPopup}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -323,11 +239,9 @@
                                  mah:TextBoxHelper.UseFloatingWatermark="False"/>
                     </Grid>
 
-                    <Border Grid.Row="1" Height="1" Background="{DynamicResource App.Brush.BorderSubtle}"/>
-
-                    <TreeView Grid.Row="2" Margin="5"
+                    <TreeView Grid.Row="2" Margin="5,1,5,5"
                               ItemsSource="{Binding ItemsSource, ElementName=Root}"
-                              ItemContainerStyle="{StaticResource PickerTreeItemStyle}"
+                              ItemContainerStyle="{StaticResource ReferencePickerTreeItem}"
                               Background="Transparent" BorderThickness="0" Padding="0"
                               MaxHeight="306"
                               ScrollViewer.CanContentScroll="True"
@@ -337,7 +251,7 @@
                               VirtualizingPanel.VirtualizationMode="Recycling">
                         <TreeView.ItemTemplate>
                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                <Button Style="{StaticResource PickerTreeRowStyle}"
+                                <Button Style="{StaticResource ReferencePickerRow}"
                                         Command="{Binding SelectCommand}"
                                         IsEnabled="{Binding IsEnabled}"
                                         Click="TreeNode_Click">
@@ -369,51 +283,62 @@
                                     </Button.ToolTip>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Grid>
+                                        <Border Width="3" Margin="0,5,0,5" CornerRadius="2"
+                                                Background="{DynamicResource App.Brush.SelectionBorder}"
+                                                Visibility="{Binding IsSelected, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Grid Grid.Column="1" Margin="7,0,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock MinWidth="40" MaxWidth="160"
+                                            <TextBlock MinWidth="40" MaxWidth="200"
+                                                       Text="{Binding ValueText}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding HasValueText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <TextBlock Grid.Column="1" Margin="9,0,10,0"
                                                        Text="{Binding DisplayName}"
                                                        TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="FontSize" Value="12"/>
+                                                        <Setter Property="FontWeight" Value="Normal"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsSelectable}" Value="True">
-                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            <DataTrigger Binding="{Binding HasValueText}" Value="True">
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
                                                             </DataTrigger>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsSelectable}" Value="True"/>
+                                                                    <Condition Binding="{Binding HasValueText}" Value="False"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            </MultiDataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                            <Border Grid.Column="1" Width="13" Height="13" Margin="9,0,6,0" CornerRadius="2"
+                                            <Border Grid.Column="2" Width="13" Height="13" Margin="0,0,6,0" CornerRadius="2"
                                                     Background="{Binding ColorPreview}"
                                                     BorderBrush="{DynamicResource App.Brush.BorderStrong}" BorderThickness="1"
                                                     Visibility="{Binding HasColorPreview, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                            <TextBlock Grid.Column="2" Margin="9,0,10,0"
-                                                       Text="{Binding ValueText}" FontSize="11"
-                                                       FontWeight="Normal"
-                                                       Foreground="{DynamicResource App.Brush.TextSecondary}"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"
-                                                       Visibility="{Binding HasValueText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                         </Grid>
-                                        <Border Grid.Column="1" Margin="10,0,0,0" Padding="6,2"
-                                                Background="{DynamicResource App.Brush.WindowBackground}" CornerRadius="3"
-                                                VerticalAlignment="Center"
+                                        <Border Grid.Column="2" Margin="10,0,0,0"
+                                                Style="{StaticResource ReferencePickerTypeBadge}"
                                                 Visibility="{Binding HasSecondaryText, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="{Binding SecondaryText}" FontSize="9"
+                                            <TextBlock Text="{Binding SecondaryText}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                                         </Border>
-                                        <TextBlock Grid.Column="2" Margin="8,0,0,0" MaxWidth="125"
+                                        <TextBlock Grid.Column="3" Margin="8,0,0,0" MaxWidth="125"
                                                    Text="{Binding SourceText}"
                                                    FontSize="9" Foreground="{DynamicResource App.Brush.TextMuted}"
                                                    TextTrimming="CharacterEllipsis"
@@ -438,8 +363,7 @@
                             </Style>
                         </Border.Style>
                         <Button Command="{Binding CreateCommand, ElementName=Root}"
-                                HorizontalContentAlignment="Left"
-                                Padding="9,7" Background="Transparent" BorderThickness="0">
+                                Style="{StaticResource ReferencePickerFooterButton}">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="Plus" Width="16" Height="16" Margin="0,0,8,0"
                                                             Foreground="{DynamicResource App.Brush.Accent}"/>

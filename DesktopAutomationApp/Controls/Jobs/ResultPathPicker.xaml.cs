@@ -225,7 +225,7 @@ public partial class ResultPathPicker : UserControl
     private void TreeNode_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: ConditionSelectionNode node } button) return;
-        if (node.IsSelectable) return;
+        if (node.IsSelectable || !node.HasChildren) return;
 
         var item = VisualTreeHelperExtensions.GetAncestor<TreeViewItem>(button);
         if (item is not null) item.IsExpanded = !item.IsExpanded;

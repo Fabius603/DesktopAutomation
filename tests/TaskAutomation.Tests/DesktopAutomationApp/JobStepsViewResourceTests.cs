@@ -71,7 +71,7 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void ResultPathPicker_ClosesWhenHiddenAndKeepsItsNormalHeight()
+    public void ResultPathPicker_ClosesWhenHiddenOrClickedOutsideAndKeepsItsNormalHeight()
     {
         var root = RepositoryRoot();
         var xaml = File.ReadAllText(Path.Combine(
@@ -80,6 +80,7 @@ public sealed class JobStepsViewResourceTests
             root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml.cs"));
 
         Assert.Contains("Height=\"34\" MaxHeight=\"34\" VerticalAlignment=\"Top\"", xaml);
+        Assert.Contains("StaysOpen=\"False\"", xaml);
         Assert.Contains("IsVisibleChanged += OnIsVisibleChanged", code);
         Assert.Contains("if (e.NewValue is false) SelectionPopup.IsOpen = false;", code);
     }

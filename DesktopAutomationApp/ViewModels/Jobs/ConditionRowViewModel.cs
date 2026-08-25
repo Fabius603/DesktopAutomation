@@ -66,6 +66,7 @@ public sealed class ConditionSelectionNode : INotifyPropertyChanged
     public bool HasValueText => !string.IsNullOrWhiteSpace(ValueText);
     public bool HasFullValueText => !string.IsNullOrWhiteSpace(FullValueText);
     public bool HasColorPreview => !string.IsNullOrWhiteSpace(ColorPreview);
+    public bool HasChildren => Children.Count > 0;
     public bool IsSelectable => IsEnabled && SelectCommand is not null;
 
     public void UpdateSelection(string? selectionKey)
