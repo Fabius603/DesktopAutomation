@@ -109,7 +109,12 @@ internal sealed class StoredValueRuntimeValueProvider : IRuntimeValueProvider, I
         return value;
     }
 
-    private static object? ReadValue(JobVariable variable) => variable.ValueKind switch
+    private static object? ReadValue(JobVariable variable) => JobVariableRuntimeValueReader.Read(variable);
+}
+
+public static class JobVariableRuntimeValueReader
+{
+    public static object? Read(JobVariable variable) => variable.ValueKind switch
     {
         ResultValueKind.Boolean => variable.Value?.GetValue<bool>(),
         ResultValueKind.Integer => variable.Value?.GetValue<int>(),

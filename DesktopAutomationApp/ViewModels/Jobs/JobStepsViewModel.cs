@@ -214,6 +214,7 @@ namespace DesktopAutomationApp.ViewModels
         public IReadOnlyList<JobVariableEditorViewModel> FilteredStepJobVariables =>
             FilteredJobVariables.Where(variable => variable.IsStepValue).ToArray();
         public IReadOnlyList<JobVariable> Variables => Job.Variables;
+        public IReadOnlyList<LocalValue> LocalValues => Job.LocalValues;
         public IReadOnlyList<ValueProviderSourceDescriptor> ProviderSources => _providerSources;
         public IReadOnlyList<JobStep> AllJobSteps => _allJobStepsSnapshot;
         public bool HasJobVariables => JobVariables.Count > 0;

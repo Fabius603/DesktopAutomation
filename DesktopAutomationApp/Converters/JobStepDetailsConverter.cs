@@ -17,7 +17,13 @@ public sealed record StepDetailItem(
     public bool HasSourceLabel => !string.IsNullOrWhiteSpace(SourceLabel);
     public bool HasUsageText => !string.IsNullOrWhiteSpace(UsageText);
 }
-public sealed record StepDetailGroup(string Title, IReadOnlyList<StepDetailItem> Items);
+public sealed record StepDetailGroup(
+    string Title,
+    IReadOnlyList<StepDetailItem> Items,
+    bool IsExpandedByDefault = true)
+{
+    public bool IsAdvanced => !IsExpandedByDefault;
+}
 public sealed record StepResultPropertyDetails(
     string Name,
     string TypeName,
@@ -36,6 +42,7 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
     private IEnumerable? _cacheSteps;
     private IReadOnlyList<JobVariable>? _cacheVariables;
     private IReadOnlyList<ValueProviderSourceDescriptor>? _cacheProviderSources;
+    private IReadOnlyList<LocalValue>? _cacheLocalValues;
     private Dictionary<JobStep, JobStepDetails> _cache =
         new(ReferenceEqualityComparer.Instance);
 
@@ -50,19 +57,25 @@ public sealed class JobStepDetailsConverter : IMultiValueConverter
         var providerSources = values.Length > 4
             ? values[4] as IReadOnlyList<ValueProviderSourceDescriptor>
             : null;
+        var localValues = values.Length > 5
+            ? values[5] as IReadOnlyList<LocalValue>
+            : null;
         if (!ReferenceEquals(steps, _cacheSteps)
             || !ReferenceEquals(variables, _cacheVariables)
             || !ReferenceEquals(providerSources, _cacheProviderSources)
+            || !ReferenceEquals(localValues, _cacheLocalValues)
             || version != _cacheVersion)
         {
             _cache = new Dictionary<JobStep, JobStepDetails>(ReferenceEqualityComparer.Instance);
             _cacheSteps = steps;
             _cacheVariables = variables;
             _cacheProviderSources = providerSources;
+            _cacheLocalValues = localValues;
             _cacheVersion = version;
         }
         if (!_cache.TryGetValue(step, out var details))
-            _cache[step] = details = Provider.GetDetails(step, steps, variables, providerSources);
+            _cache[step] = details = Provider.GetDetails(
+                step, steps, variables, providerSources, localValues);
         return details;
     }
 

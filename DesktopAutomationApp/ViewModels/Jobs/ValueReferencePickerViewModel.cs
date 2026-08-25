@@ -239,12 +239,14 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public string SelectedPreviewValue => _missingReference is not null
         ? string.Empty
         : _selectedProviderSource is not null
-            ? ProviderPreviewValue(_selectedProviderSource)
+            ? _selectedProviderProperty is not null
+                ? ProviderPropertyPreviewValue(_selectedProviderSource, _selectedProviderProperty)
+                : ProviderPreviewValue(_selectedProviderSource)
             : string.Empty;
     public string SelectedPreviewSource => _missingReference is not null
         ? Loc.Get("Ui.ValueReference.Missing")
         : _selectedProviderSource is not null
-            ? ProviderLabel(_selectedProviderSource.ProviderId)
+            ? ProviderSourceText(_selectedProviderSource)
             : _selectedSource?.DisplayName ?? string.Empty;
     public string SelectedPreviewType => _missingReference is not null
         ? Loc.Get("Ui.ValueReference.Invalid")
@@ -255,11 +257,11 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             : _selectedProperty is null
                 ? string.Empty
                 : _formatter.Type(_selectedProperty.DataType, _selectedProperty.Cardinality);
-    public string SelectedInlineText => string.IsNullOrWhiteSpace(SelectedPreviewValue)
-        ? SelectedPropertyName
-        : $"{SelectedPropertyName} · {SelectedPreviewValue}";
+    public string SelectedInlineText => SelectedPropertyName;
     public string SelectedTooltipValue => _missingReference is not null
         ? string.Empty
+        : _selectedProviderSource is not null && _selectedProviderProperty is not null
+            ? ProviderPropertyFullValue(_selectedProviderSource, _selectedProviderProperty)
         : SelectedJobVariable is { } variable
             ? _formatter.FullValue(variable)
             : _selectedSource is not null && _selectedProperty is not null
@@ -522,9 +524,9 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
                 selectCommand: new RelayCommand(() => Select(source, node.Property)),
                 secondaryText: _formatter.Type(node.Property.DataType, node.Property.Cardinality),
                 description: node.Property.Description,
-                icon: TypeIcon(node.Property.DataType),
-                sourceText: source.Name,
-                isSelected: IsSelected(source, node.Property));
+                isSelected: IsSelected(source, node.Property),
+                valueText: ProviderPropertyPreviewValue(source, node.Property),
+                fullValueText: ProviderPropertyFullValue(source, node.Property));
             if (children.Count == 0) return current;
             children.Insert(0, current);
         }
@@ -650,6 +652,42 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _providerSources.Add(descriptor);
         RebuildTree();
         Select(descriptor);
+    }
+
+    private string ProviderPropertyPreviewValue(
+        ValueProviderSourceDescriptor source,
+        ResultPropertyDescriptor property) =>
+        TryReadProviderProperty(source, property, out var value)
+            ? _formatter.CompactValue(value, property.DataType, property.Cardinality)
+            : Loc.Get("Ui.ValueReference.EmptyValue");
+
+    private string ProviderPropertyFullValue(
+        ValueProviderSourceDescriptor source,
+        ResultPropertyDescriptor property) =>
+        TryReadProviderProperty(source, property, out var value)
+            ? _formatter.FullValue(value, property.DataType, property.Cardinality)
+            : Loc.Get("Ui.ValueReference.EmptyValue");
+
+    private bool TryReadProviderProperty(
+        ValueProviderSourceDescriptor source,
+        ResultPropertyDescriptor property,
+        out object? value)
+    {
+        value = null;
+        if (!_jobVariables.TryGetValue(source.SourceId, out var variable)) return false;
+        try
+        {
+            var runtimeValue = JobVariableRuntimeValueReader.Read(variable);
+            return runtimeValue is not null
+                   && ResultBindingResolver.TryReadPath(runtimeValue, property.Name, out value);
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException
+            or InvalidOperationException
+            or FormatException
+            or ArgumentException)
+        {
+            return false;
+        }
     }
 
     private void CreateSecret()

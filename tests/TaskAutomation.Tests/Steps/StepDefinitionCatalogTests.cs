@@ -653,10 +653,114 @@ public sealed class StepDefinitionCatalogTests
             new[] { variable });
 
         var item = Assert.Single(details.Groups.SelectMany(group => group.Items),
-            item => item.Value.Contains(variable.Name));
-        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), item.SourceLabel);
-        Assert.Equal(Loc.Format("Ui.Job.Steps.DetailsUsageCount", 1), item.UsageText);
+            item => item.SourceLabel?.Contains(variable.Name) == true);
+        Assert.Contains("Hello", item.Value);
+        Assert.DoesNotContain(variable.Name, item.Value);
+        Assert.Contains(Loc.Get("Ui.Job.Variables.Scope.Shared"), item.SourceLabel);
+        Assert.Null(item.UsageText);
         Assert.False(item.IsWarning);
+    }
+
+    [Fact]
+    public void DetailsProvider_RendersLocalValueWithoutInternalProviderName()
+    {
+        var local = new LocalValue
+        {
+            Name = "show_text_text_result",
+            ValueKind = ResultValueKind.Text,
+            Value = JsonValue.Create("Hello from the step")
+        };
+        var step = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.LocalValue,
+                    SourceId = local.Id.ToString("D")
+                }
+            }
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step,
+            new JobStep[] { step },
+            [],
+            [ValueProviderSourceDescriptor.FromVariable(local)],
+            [local]);
+
+        var item = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.Value.Contains("Hello from the step"));
+        Assert.Null(item.SourceLabel);
+        Assert.DoesNotContain(ValueProviderIds.LocalValue, item.Value);
+        Assert.DoesNotContain(local.Name, item.Value);
+    }
+
+    [Fact]
+    public void DetailsProvider_RendersSelectedVariablePropertyValueAsPrimaryText()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Area",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Rectangle,
+            Value = JsonNode.Parse("""{"x":10,"y":20,"width":300,"height":200}""")
+        };
+        var step = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextSource = ShowTextSource.TaskResult,
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.JobVariable,
+                    SourceId = variable.Id.ToString("D"),
+                    ValuePath = "Center.X"
+                }
+            }
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step, new JobStep[] { step }, [variable]);
+
+        var item = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.SourceLabel?.Contains(variable.Name) == true);
+        Assert.Equal("160", item.Value);
+        Assert.Contains("›", item.SourceLabel);
+        Assert.DoesNotContain("width", item.Value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DetailsProvider_LocalizesDirectEnumValuesAndCollapsesAdvancedGroup()
+    {
+        var local = new LocalValue
+        {
+            Name = "start_process_window_mode",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create(nameof(StartProcessWindowMode.ApplicationDefault))
+        };
+        var step = new StartProcessStep();
+        step.Inputs[StartProcessStepDefinition.WindowModeFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = local.Id.ToString("D")
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step,
+            new JobStep[] { step },
+            [],
+            [ValueProviderSourceDescriptor.FromVariable(local)],
+            [local]);
+
+        var advanced = Assert.Single(details.Groups,
+            group => group.Title == Loc.Get("Ui.Job.Steps.DetailsAdvanced"));
+        Assert.False(advanced.IsExpandedByDefault);
+        var windowMode = Assert.Single(advanced.Items,
+            item => item.Name == Loc.Get("Ui.Step.Settings.WindowMode"));
+        Assert.Equal(Loc.Get("Enum.StartProcessWindowMode.ApplicationDefault"), windowMode.Value);
+        Assert.DoesNotContain(nameof(StartProcessWindowMode.ApplicationDefault), windowMode.Value);
     }
 
     [Fact]
@@ -2762,9 +2866,9 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(string.IsNullOrEmpty(binding.PropertyId));
         Assert.Equal(variable.Name, picker.SelectedPropertyName);
         Assert.Contains("x: 10", picker.SelectedPreviewValue);
-        Assert.StartsWith($"{variable.Name} · ", picker.SelectedInlineText);
+        Assert.Equal(variable.Name, picker.SelectedInlineText);
         Assert.Contains("x: 10", picker.SelectedTooltipValue);
-        Assert.Equal(Loc.Get("Ui.ValueReference.JobVariables"), picker.SelectedPreviewSource);
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), picker.SelectedPreviewSource);
         Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
         var selectedNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
         Assert.True(selectedNode.IsSelected);
@@ -2803,6 +2907,13 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal("X", binding.ValuePath);
         Assert.Contains("Target", picker.SelectedPropertyName);
         Assert.Contains("X", picker.SelectedPropertyName);
+        Assert.Equal("10", xNode.ValueText);
+        Assert.Equal("10", xNode.FullValueText);
+        Assert.Equal("10", picker.SelectedPreviewValue);
+        Assert.Equal(picker.SelectedPropertyName, picker.SelectedInlineText);
+        Assert.Equal("10", picker.SelectedTooltipValue);
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), picker.SelectedPreviewSource);
+        Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
 
         var reloaded = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
         reloaded.Load(binding);
@@ -2813,6 +2924,38 @@ public sealed class StepDefinitionCatalogTests
         var options = new JsonSerializerOptions();
         JobJsonSerialization.Configure(options);
         Assert.Contains("\"value_path\":\"X\"", JsonSerializer.Serialize(binding, options));
+    }
+
+    [Fact]
+    public void ValueReferencePicker_ShowsRuntimeValueForNestedJobVariableProperty()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Window area",
+            ValueKind = ResultValueKind.Rectangle,
+            Value = new JsonObject { ["x"] = 120, ["y"] = 80, ["width"] = 640, ["height"] = 480 }
+        };
+        var contract = new StepInputDescriptor(
+            "coordinate", true, MissingValuePolicy.FailStep, CollectionConsumptionMode.FirstValue,
+            new AcceptedResultShape(ResultValueKind.Integer, ResultCardinality.Single))
+        {
+            AllowedProviderIds = new HashSet<string> { ValueProviderIds.JobVariable }
+        };
+        var picker = new ValueReferencePickerViewModel([], contract, selectDefault: false, variables: [variable]);
+        picker.UseJobVariableCommand.Execute(null);
+
+        var variableNode = picker.SelectionTree.Single(node => node.DisplayName == variable.Name);
+        var centerNode = variableNode.Children.Single(node => node.DisplayName == "Center");
+        var centerXNode = centerNode.Children.Single(node => node.DisplayName == "X");
+        centerXNode.SelectCommand!.Execute(null);
+
+        Assert.Equal("440", centerXNode.ValueText);
+        Assert.Equal("440", picker.SelectedPreviewValue);
+        Assert.Equal(picker.SelectedPropertyName, picker.SelectedInlineText);
+        Assert.DoesNotContain("120", picker.SelectedPreviewValue);
+        Assert.Contains(variable.Name, picker.SelectedInlineText);
+        Assert.Equal("Center.X", picker.ToBinding().ValuePath);
     }
 
     [Fact]
@@ -2892,6 +3035,30 @@ public sealed class StepDefinitionCatalogTests
 
         picker.SearchText = "3";
         Assert.Equal("Retries", Assert.Single(picker.SelectionTree).DisplayName);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_ShowsQuotedTextBesideVariableName()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Greeting",
+            ValueKind = ResultValueKind.Text,
+            Value = JsonValue.Create("Hello world")
+        };
+        var contract = StepInputContractRegistry.Get(typeof(ShowTextStep), "text")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false, [variable]);
+        picker.UseJobVariableCommand.Execute(null);
+
+        var node = Assert.Single(picker.SelectionTree);
+        node.SelectCommand!.Execute(null);
+
+        Assert.Equal("Greeting", picker.SelectedInlineText);
+        Assert.Equal("“Hello world”", picker.SelectedPreviewValue);
+        Assert.Equal("“Hello world”", node.ValueText);
+        Assert.Equal(Loc.Get("Ui.Job.Variables.Scope.Shared"), picker.SelectedPreviewSource);
+        Assert.False(string.IsNullOrWhiteSpace(picker.SelectedPreviewType));
     }
 
     [Fact]

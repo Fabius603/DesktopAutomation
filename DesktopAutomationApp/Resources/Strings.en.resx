@@ -2024,6 +2024,7 @@ Error code: {3}</value>
     <value>Show details</value>
   </data>
   <data name="Ui.Job.Steps.DetailsSources" xml:space="preserve"><value>Sources and dependencies</value></data>
+  <data name="Ui.Job.Steps.DetailsInputs" xml:space="preserve"><value>Inputs</value></data>
   <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Detection</value></data>
   <data name="Ui.Job.Steps.DetailsRoi" xml:space="preserve"><value>Image region (ROI)</value></data>
   <data name="Ui.Job.Steps.DetailsGeneral" xml:space="preserve"><value>General</value></data>
@@ -2031,6 +2032,7 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.DetailsEditStep" xml:space="preserve"><value>Edit step</value></data>
   <data name="Ui.Job.Steps.DetailsManageVariables" xml:space="preserve"><value>Manage variables</value></data>
   <data name="Ui.Job.Steps.DetailsSourceMissing" xml:space="preserve"><value>Source missing</value></data>
+  <data name="Ui.Job.Steps.DetailsVariableOrigin" xml:space="preserve"><value>Variable “{0}” · {1}</value></data>
   <data name="Ui.Job.Steps.DetailsUsageCount" xml:space="preserve"><value>Used in {0} place(s)</value></data>
   <data name="Ui.Job.Steps.DetailsAdvanced" xml:space="preserve"><value>Advanced</value></data>
   <data name="Ui.Job.Steps.DetailsReturnValue" xml:space="preserve"><value>Return value and properties</value></data>
