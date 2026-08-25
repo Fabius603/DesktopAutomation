@@ -143,6 +143,10 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 && field.ScreenPointPickerOptions is null)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has no screen-point picker options.");
+            if (field.ScreenPointPickerOptions is { } screenPointOptions
+                && StepInputContractRegistry.Get(definition.StepType, screenPointOptions.WholeValueInputContractId) is null)
+                throw new InvalidOperationException(
+                    $"{definition.StepType.Name} field '{field.Id}' references an unknown point input contract.");
         }
 
         var knownFields = fieldIds;
@@ -186,10 +190,17 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 case TaskAutomation.Contracts.Steps.StepPointFieldPairDescriptor pointPair:
                     Own(pointPair.XFieldId);
                     Own(pointPair.YFieldId);
+                    if (pointPair.SourceFieldId is { } sourceFieldId) Own(sourceFieldId);
+                    if (pointPair.ReferenceFieldId is { } referenceFieldId) Own(referenceFieldId);
                     if (pointPair.XFieldId == pointPair.YFieldId
                         || fieldsById[pointPair.XFieldId].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Integer
                         || fieldsById[pointPair.YFieldId].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Integer)
                         throw Invalid("uses an invalid point field pair");
+                    if ((pointPair.SourceFieldId is null) != (pointPair.ReferenceFieldId is null)
+                        || pointPair.SourceFieldId is { } sourceId
+                        && (fieldsById[sourceId].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.Enum
+                            || fieldsById[pointPair.ReferenceFieldId!].ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding))
+                        throw Invalid("uses an invalid point source pair");
                     break;
                 case TaskAutomation.Contracts.Steps.StepChoiceGroupDescriptor group:
                     Own(group.SelectionFieldId);

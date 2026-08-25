@@ -594,6 +594,8 @@ namespace TaskAutomation.Jobs
             get => new(OriginX, OriginY);
             set { OriginX = value.X; OriginY = value.Y; }
         }
+        [JsonPropertyName("origin_source")]
+        public ResultBinding OriginSource { get; set; } = new();
         [JsonPropertyName("origin_monitor_index")]
         public int OriginMonitorIndex { get; set; } = 0;
         [JsonPropertyName("origin_coordinate_space")]

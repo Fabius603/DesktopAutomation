@@ -125,6 +125,49 @@ public sealed class KlickOnPoint3DStepHandlerTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_UsesReferencedPointAsOriginWithoutCoordinateSpaceFiltering()
+    {
+        var macroExecutor = new RecordingMakroExecutor();
+        var context = new PipelineContextStub { MakroExecutor = macroExecutor };
+        context.Results.Set<TemplateMatchingStep>(new TemplateMatchingResult
+        {
+            WasExecuted = true,
+            Found = true,
+            Point = new PixelPoint(130, 75),
+            Confidence = 0.9,
+            SourceCaptureIsFresh = true
+        }, "target");
+        context.Results.Set<ColorDetectionStep>(new ColorDetectionResult
+        {
+            WasExecuted = true,
+            Found = true,
+            Point = new PixelPoint(100, 50),
+            Confidence = 0.9,
+            SourceCaptureIsFresh = true
+        }, "origin");
+        var step = new KlickOnPoint3DStep
+        {
+            Settings = new KlickOnPoint3DSettings
+            {
+                OriginMonitorIndex = 99,
+                OriginCoordinateSpace = KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                OriginSource = new ResultBinding { SourceStepId = "origin", PropertyPath = "Point" },
+                PointsSource = new ResultBinding { SourceStepId = "target", PropertyPath = "Point" },
+                MovementFactorX = 1,
+                MovementFactorY = 1,
+                ClickType = "none"
+            }
+        };
+
+        var result = Assert.IsType<KlickOnPoint3DResult>(
+            await new KlickOnPoint3DStepHandler().ExecuteAsync(step, context, default));
+
+        Assert.True(result.Success);
+        Assert.Equal(30, result.DeltaX);
+        Assert.Equal(25, result.DeltaY);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_MissingPointDoesNotReportDeltas()
     {
         var result = Assert.IsType<KlickOnPoint3DResult>(

@@ -405,6 +405,7 @@ namespace DesktopAutomationApp.ViewModels
                     Settings = new TerminateProcessSettings { Target = legacyTerminate.Settings.Target }
                 };
                 _selectedType = "TerminateProcess";
+                GeneratedEditor = null;
                 GeneratedEditor = CreateGeneratedEditor(terminateDefinition, migrated);
                 OnChange(nameof(SelectedType));
                 OnChange(string.Empty);
@@ -413,6 +414,7 @@ namespace DesktopAutomationApp.ViewModels
             if (!_stepDefinitionCatalog.TryGetByType(step.GetType(), out var definition))
                 return false;
             _selectedType = TrimStepSuffix(step.GetType().Name);
+            GeneratedEditor = null;
             GeneratedEditor = CreateGeneratedEditor(definition, step);
             OnChange(nameof(SelectedType));
             OnChange(string.Empty);
@@ -422,6 +424,7 @@ namespace DesktopAutomationApp.ViewModels
         private void SetGeneratedEditor(string selectedType)
         {
             _draftStepVariables.Clear();
+            GeneratedEditor = null;
             GeneratedEditor = _stepDefinitionCatalog.TryGetByName(selectedType, out var definition)
                 ? CreateGeneratedEditor(definition)
                 : null;
@@ -745,10 +748,18 @@ namespace DesktopAutomationApp.ViewModels
 
         private int GetVariableUsageCount(Guid variableId)
         {
-            var job = new Job { Steps = _allJobSteps.ToList() };
+            var steps = _allJobSteps.ToList();
+            if (GeneratedEditor?.CreateUsageSnapshot() is { } draftStep)
+            {
+                var existingIndex = steps.FindIndex(step => step.Id == draftStep.Id);
+                if (existingIndex >= 0) steps[existingIndex] = draftStep;
+                else steps.Add(draftStep);
+            }
+            var job = new Job { Steps = steps };
             var sourceId = variableId.ToString("D");
-            return ValueReferenceUsageInspector.Find(job, ValueProviderIds.LocalValue, sourceId).Count
-                   + ValueReferenceUsageInspector.Find(job, ValueProviderIds.JobVariable, sourceId).Count;
+            return ValueReferenceUsageInspector.Find(job).Count(usage =>
+                string.Equals(usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase)
+                && usage.Reference.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable);
         }
 
         private JobVariable DetachStepValue(JobVariable source, string stepName, string fieldName)
@@ -862,16 +873,22 @@ namespace DesktopAutomationApp.ViewModels
             IStepDefinition definition,
             StepFieldDescriptor field,
             System.Text.Json.Nodes.JsonNode? value,
-            IReadOnlyDictionary<string, ResultBinding>? inputs) =>
-            field.EditorHint == StepEditorHints.ScreenPointPicker
-                ? new GeneratedScreenPointEditorViewModel(
-                    value,
-                    NormalizeScreenPoint,
-                    SelectMonitorForGeneratedEditor,
-                    CaptureGeneratedScreenPointAsync,
-                    field.Id,
-                    (key, kind, literal) => ResolveNestedInputReference(definition, field, key, kind, literal, inputs))
-                : null;
+            IReadOnlyDictionary<string, ResultBinding>? inputs)
+        {
+            if (field.EditorHint != StepEditorHints.ScreenPointPicker) return null;
+            var contractId = field.ScreenPointPickerOptions?.WholeValueInputContractId ?? "origin";
+            var contract = StepInputContractRegistry.Get(definition.StepType, contractId)
+                ?? throw new InvalidOperationException(
+                    $"Eingabevertrag '{contractId}' für {definition.StepType.Name} fehlt.");
+            return new GeneratedScreenPointEditorViewModel(
+                value,
+                CreateValueReferencePicker(definition, field, contract, false),
+                NormalizeScreenPoint,
+                SelectMonitorForGeneratedEditor,
+                CaptureGeneratedScreenPointAsync,
+                field.Id,
+                (key, kind, literal) => ResolveNestedInputReference(definition, field, key, kind, literal, inputs));
+        }
 
         private GeneratedUserChoiceOptionsEditorViewModel? ResolveGeneratedUserChoiceOptions(
             IStepDefinition definition,

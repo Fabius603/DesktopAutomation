@@ -32,7 +32,7 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
             null,
             inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
                 JsonValue.Create(string.Empty), Source));
-        Source.PropertyChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
+        Source.ReferenceChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
         if (binding is not null) Source.Load(binding);
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
         MoveUpCommand = new RelayCommand(() => Move(-1));
@@ -85,7 +85,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         _inputKeyPrefix = inputKeyPrefix;
         Source = new ValueReferencePickerViewModel(
             sources, inputContract, false, variables, providerSources, pickerContext);
-        Source.PropertyChanged += (_, _) => OnChange(nameof(Source));
+        Source.ReferenceChanged += (_, _) => OnChange(nameof(Source));
         if (settings is not null)
         {
             _id = settings.Id == Guid.Empty ? Guid.NewGuid() : settings.Id;
@@ -122,7 +122,12 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
             ClearOnJobEndField = CreateNestedField("clear_on_job_end", StepValueKind.Boolean,
                 JsonValue.Create(_clearOnJobEnd), null, nestedInputResolver);
             foreach (var field in NestedFields)
-                field.PropertyChanged += (_, _) => OnChange();
+                field.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName is nameof(GeneratedStepFieldViewModel.InputText)
+                        or nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+                        OnChange();
+                };
         }
         else
         {

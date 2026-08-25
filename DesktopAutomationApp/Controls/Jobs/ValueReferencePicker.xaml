@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             MaxHeight="34" VerticalAlignment="Top"
              PreviewKeyDown="OnPreviewKeyDown">
     <Grid>
         <Grid.ColumnDefinitions>

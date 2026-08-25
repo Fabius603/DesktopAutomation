@@ -759,6 +759,9 @@
   <data name="Ui.Step.Settings.ReferencePointTolerance" xml:space="preserve">
     <value>Reference point and tolerance</value>
   </data>
+  <data name="Ui.Step.Settings.ReferencePoint" xml:space="preserve">
+    <value>Reference point</value>
+  </data>
   <data name="Ui.Step.Settings.ReferenceSource" xml:space="preserve">
     <value>Reference source</value>
   </data>
@@ -3133,7 +3136,9 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Inline.EditEverywhere" xml:space="preserve"><value>Change everywhere</value></data>
   <data name="Ui.Job.Variables.Inline.EditOnlyHere" xml:space="preserve"><value>Change only here</value></data>
   <data name="Ui.Job.StepInput.Source.ToolTip" xml:space="preserve"><value>Select value source</value></data>
+  <data name="Ui.Job.StepInput.Source.WholeValueToolTip" xml:space="preserve"><value>Select source for the entire value</value></data>
   <data name="Ui.Job.StepInput.Source.Direct" xml:space="preserve"><value>Direct value</value></data>
+  <data name="Ui.Job.StepInput.Source.IndividualValues" xml:space="preserve"><value>Individual values</value></data>
   <data name="Ui.Job.StepInput.Source.JobVariable" xml:space="preserve"><value>Job variable</value></data>
   <data name="Ui.Job.StepInput.Source.StepResult" xml:space="preserve"><value>Step result</value></data>
   <data name="Ui.Job.StepInput.Source.Secret" xml:space="preserve"><value>Secret</value></data>

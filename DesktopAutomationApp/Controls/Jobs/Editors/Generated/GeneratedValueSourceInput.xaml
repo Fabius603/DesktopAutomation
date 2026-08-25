@@ -4,6 +4,12 @@
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <UserControl.Resources>
+        <DataTemplate x:Key="TextFieldTemplate">
+            <TextBox MinWidth="0" HorizontalAlignment="Stretch"
+                     Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
+        </DataTemplate>
+    </UserControl.Resources>
     <Grid x:Name="InputValueHost">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>

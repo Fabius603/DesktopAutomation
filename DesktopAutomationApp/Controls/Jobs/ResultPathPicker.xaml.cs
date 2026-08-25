@@ -65,6 +65,7 @@ public partial class ResultPathPicker : UserControl
         InitializeComponent();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+        IsVisibleChanged += OnIsVisibleChanged;
         PreviewKeyDown += OnPreviewKeyDown;
         SizeChanged += OnSizeChanged;
     }
@@ -187,6 +188,11 @@ public partial class ResultPathPicker : UserControl
         _ownerWindow = null;
         _ancestorScrollViewer = null;
         SelectionPopup.IsOpen = false;
+    }
+
+    private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is false) SelectionPopup.IsOpen = false;
     }
 
     private void OnAncestorScrollChanged(object sender, ScrollChangedEventArgs e)

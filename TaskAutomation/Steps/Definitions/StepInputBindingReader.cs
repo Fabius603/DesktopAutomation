@@ -33,6 +33,13 @@ internal static class StepInputBindingReader
                 foreach (var point in Deserialize<List<StepPointEntryValue>>(value) ?? [])
                     if (point.Source == "JobResult") Add(result, pointsContract, Deserialize<ResultBinding>(point.PointsSource));
             }
+            else if (field.EditorHint == StepEditorHints.ScreenPointPicker
+                     && field.ScreenPointPickerOptions is { } screenPointOptions)
+            {
+                var point = Deserialize<StepScreenPointSelectionValue>(value);
+                Add(result, screenPointOptions.WholeValueInputContractId,
+                    Deserialize<ResultBinding>(point?.PointSource));
+            }
             else if (field.RoiPickerOptions is { } roiOptions)
             {
                 var roi = Deserialize<StepRoiSelectionValue>(value);

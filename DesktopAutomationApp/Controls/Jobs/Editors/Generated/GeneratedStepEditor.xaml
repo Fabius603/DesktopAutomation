@@ -91,7 +91,21 @@
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="ProcessTargetFieldTemplate">
-            <ContentControl Content="{Binding ProcessTargetEditor.ManualSourceContent}"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Grid x:Name="ProcessTargetValueHost">
+                    <Border Style="{StaticResource CompoundValueSourceGroup}"
+                            Visibility="{Binding ProcessTargetEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ContentControl Content="{Binding ProcessTargetEditor.ManualSourceContent}"
+                                        HorizontalContentAlignment="Stretch"/>
+                    </Border>
+                    <jobs:ValueReferencePicker DataContext="{Binding ProcessTargetEditor.WholeValueSource.Picker}"
+                                               Visibility="{Binding DataContext.ProcessTargetEditor.WholeValueSource.UsesReference, ElementName=ProcessTargetValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
+                <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                                                              VerticalAlignment="Center"
+                                                              DataContext="{Binding ProcessTargetEditor.WholeValueSource}"/>
+            </Grid>
         </DataTemplate>
         <DataTemplate x:Key="FileFieldTemplate">
             <shared:PathPickerField PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -227,8 +241,8 @@
             <windows:WindowsCapabilityPicker DataContext="{Binding WindowsCapabilityEditor.Picker}"/>
         </DataTemplate>
         <DataTemplate x:Key="ScreenPointFieldTemplate">
-            <Border Style="{StaticResource GeometryCard}">
-                <StackPanel>
+            <StackPanel>
+                <StackPanel Visibility="{Binding ScreenPointEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel Margin="0,0,0,10">
                         <Button DockPanel.Dock="Right"
                                 Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
@@ -239,12 +253,25 @@
                     </DockPanel>
                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Monitor}" Style="{StaticResource GeometryFieldLabel}"/>
                     <generated:GeneratedValueSourceInput DataContext="{Binding ScreenPointEditor.MonitorField}" Margin="0,0,0,10"/>
-                    <UniformGrid Columns="2">
-                        <StackPanel Margin="0,0,4,0"><TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryFieldLabel}"/><generated:GeneratedValueSourceInput DataContext="{Binding ScreenPointEditor.XField}"/></StackPanel>
-                        <StackPanel Margin="4,0,0,0"><TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryFieldLabel}"/><generated:GeneratedValueSourceInput DataContext="{Binding ScreenPointEditor.YField}"/></StackPanel>
-                    </UniformGrid>
                 </StackPanel>
-            </Border>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Grid x:Name="ScreenPointValueHost">
+                        <Border Style="{StaticResource CompoundValueSourceGroup}"
+                                Visibility="{Binding ScreenPointEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <geometry:ResponsiveGeometryPanel Grid.IsSharedSizeScope="True">
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/><generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding ScreenPointEditor.XField}"/></Grid>
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/><generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding ScreenPointEditor.YField}"/></Grid>
+                            </geometry:ResponsiveGeometryPanel>
+                        </Border>
+                        <jobs:ValueReferencePicker DataContext="{Binding ScreenPointEditor.WholeValueSource.Picker}"
+                                                   Visibility="{Binding DataContext.ScreenPointEditor.WholeValueSource.UsesReference, ElementName=ScreenPointValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </Grid>
+                    <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                                                                  VerticalAlignment="Center"
+                                                                  DataContext="{Binding ScreenPointEditor.WholeValueSource}"/>
+                </Grid>
+            </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
             <StackPanel>
@@ -335,7 +362,7 @@
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="GeneratedFieldTemplate">
-            <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch"
+            <Grid x:Name="GeneratedFieldHost" Margin="0,0,0,12" HorizontalAlignment="Stretch"
                   Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="165"/>
@@ -368,18 +395,45 @@
             <ContentControl Content="{Binding Field}" ContentTemplate="{StaticResource GeneratedFieldTemplate}"/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepPointFieldPairViewModel}">
-            <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch">
+            <Grid x:Name="PointPairHost" Margin="0,0,0,12" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Width="153" Margin="0,6,12,0"
-                           Text="{Binding Label}"
-                           Style="{StaticResource StepFieldLabel}"
-                           Visibility="{Binding HasLabel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                <geometry:GeometryValueEditor Grid.Column="1"
-                                              X="{Binding XField.IntegerValue, Mode=TwoWay}"
-                                              Y="{Binding YField.IntegerValue, Mode=TwoWay}"/>
+                <Grid Width="153" Margin="0,0,12,0">
+                    <TextBlock Margin="0,6,0,0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource StepFieldLabel}"
+                               Visibility="{Binding HasLabel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
+                <Grid Grid.Column="1">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Grid x:Name="PointPairValueHost">
+                        <Border Style="{StaticResource CompoundValueSourceGroup}"
+                                Visibility="{Binding WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <geometry:ResponsiveGeometryPanel Grid.IsSharedSizeScope="True">
+                                <geometry:ResponsiveGeometryPanel.Style>
+                                    <Style TargetType="geometry:ResponsiveGeometryPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="Margin" Value="0"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding WholeValueSource.UsesReference}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </geometry:ResponsiveGeometryPanel.Style>
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Common.XCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/><generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding XField}"/></Grid>
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="GeometryLabel"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Common.YCoordinate}" Style="{StaticResource GeometryInlineFieldLabel}"/><generated:GeneratedValueSourceInput Grid.Column="1" DataContext="{Binding YField}"/></Grid>
+                            </geometry:ResponsiveGeometryPanel>
+                        </Border>
+                        <jobs:ValueReferencePicker DataContext="{Binding WholeValueSource.Picker}"
+                                                   Visibility="{Binding DataContext.WholeValueSource.UsesReference, ElementName=PointPairValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </Grid>
+                    <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                                                                  VerticalAlignment="Center"
+                                                                  DataContext="{Binding WholeValueSource}"/>
+                </Grid>
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepChoiceGroupViewModel}">

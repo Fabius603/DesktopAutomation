@@ -1,0 +1,34 @@
+<UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Generated.GeneratedWholeValueSourceSelector"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             VerticalAlignment="Top">
+    <Grid>
+        <Button Width="34" Height="30"
+                Padding="0" Style="{StaticResource ButtonSecondary}"
+                VerticalAlignment="Top"
+                ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.WholeValueToolTip}"
+                Click="OpenValueSourceMenu_Click">
+            <Button.ContextMenu>
+                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.IndividualValues}"
+                              Command="{Binding UseIndividualValuesCommand}"
+                              IsCheckable="True" IsChecked="{Binding UsesIndividualValues, Mode=OneWay}"/>
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.JobVariable}"
+                              Command="{Binding UseJobVariableCommand}"
+                              IsCheckable="True" IsChecked="{Binding UsesJobVariable, Mode=OneWay}"
+                              Visibility="{Binding Picker.CanUseJobVariables, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <MenuItem Header="{loc:Translate Key=Ui.Job.StepInput.Source.StepResult}"
+                              Command="{Binding UseStepResultCommand}"
+                              IsCheckable="True" IsChecked="{Binding UsesStepResult, Mode=OneWay}"
+                              Visibility="{Binding Picker.CanUseStepResults, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            <iconPacks:PackIconMaterial Kind="RhombusOutline" Width="15" Height="15"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Foreground="{DynamicResource App.Brush.Accent}"/>
+        </Button>
+    </Grid>
+</UserControl>

@@ -82,7 +82,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void PointComparison_KeepsLegacyReferenceSourceOutsideTheEditor()
+    public void PointComparison_UsesTheReferenceSourceInsideThePointEditor()
     {
         var definition = new PointComparisonStepDefinition();
         var field = definition.Descriptor.Fields.Single(candidate =>
@@ -91,10 +91,9 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Null(field.EditorHint);
         Assert.Equal(2, field.Options?.Count);
-        Assert.DoesNotContain(offset.EditorNodes!, node => node is StepChoiceGroupDescriptor);
-        Assert.DoesNotContain(offset.EditorNodes!.OfType<StepFieldNodeDescriptor>(), node =>
-            node.FieldId is PointComparisonStepDefinition.ReferenceSourceFieldId
-                or PointComparisonStepDefinition.ReferencePointsFieldId);
+        var point = Assert.IsType<StepPointFieldPairDescriptor>(offset.EditorNodes![0]);
+        Assert.Equal(PointComparisonStepDefinition.ReferenceSourceFieldId, point.SourceFieldId);
+        Assert.Equal(PointComparisonStepDefinition.ReferencePointsFieldId, point.ReferenceFieldId);
     }
 
     [Fact]
@@ -126,17 +125,36 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void PointComparison_ShowsReferenceCoordinatesWithoutAReferenceSourceChoice()
+    public void PointComparison_ShowsOneWholePointSourceOrTheReferenceCoordinates()
     {
-        var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition());
-        var nodes = editor.Sections.Single(section => section.Descriptor.Id == "offset").Nodes;
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "PointComparison";
+        var nodes = viewModel.GeneratedEditor!.Sections.Single(section => section.Descriptor.Id == "offset").Nodes;
 
         var manualPoint = Assert.IsType<GeneratedStepPointFieldPairViewModel>(
             nodes[0]);
         Assert.Equal(PointComparisonStepDefinition.ReferenceXFieldId, manualPoint.XField.Descriptor.Id);
         Assert.Equal(PointComparisonStepDefinition.ReferenceYFieldId, manualPoint.YField.Descriptor.Id);
-        Assert.False(manualPoint.HasLabel);
-        Assert.DoesNotContain(nodes, node => node is GeneratedStepChoiceGroupViewModel);
+        Assert.True(manualPoint.HasLabel);
+        Assert.NotEmpty(manualPoint.Label);
+        Assert.NotNull(manualPoint.WholeValueSource);
+        Assert.True(manualPoint.WholeValueSource!.ShowsIndividualValues);
+
+        manualPoint.WholeValueSource.UseStepResultCommand.Execute(null);
+        Assert.False(manualPoint.WholeValueSource.ShowsIndividualValues);
+        Assert.True(manualPoint.WholeValueSource.UsesStepResult);
+        Assert.False(manualPoint.WholeValueSource.UsesJobVariable);
+        Assert.False(manualPoint.WholeValueSource.UsesIndividualValues);
+        manualPoint.WholeValueSource.UseIndividualValuesCommand.Execute(null);
+        Assert.True(manualPoint.WholeValueSource.ShowsIndividualValues);
+        Assert.False(manualPoint.WholeValueSource.UsesStepResult);
+        Assert.False(manualPoint.WholeValueSource.UsesJobVariable);
+        manualPoint.WholeValueSource.UseJobVariableCommand.Execute(null);
+        Assert.True(manualPoint.WholeValueSource.UsesJobVariable);
+        Assert.False(manualPoint.WholeValueSource.UsesStepResult);
+        Assert.False(manualPoint.WholeValueSource.UsesIndividualValues);
     }
 
     [Fact]
@@ -2583,6 +2601,31 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void ProcessTargetEditor_WritesEitherWholeReferenceOrIndividualSources()
+    {
+        var nestedBinding = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = Guid.NewGuid().ToString("D")
+        };
+        var contract = StepInputContractRegistry.Get(typeof(ActiveProcessStep), "process")!;
+        var editor = new GeneratedProcessTargetEditorViewModel(
+            value: null,
+            new ValueReferencePickerViewModel([], contract, false),
+            [],
+            nestedInputResolver: (_, _, _) => new GeneratedResultBindingEditorViewModel(
+                JsonSerializer.SerializeToNode(nestedBinding),
+                new ValueReferencePickerViewModel([], contract, true)));
+
+        Assert.All(editor.InputBindings.Values, binding => Assert.True(binding.IsConfigured));
+
+        editor.WholeValueSource.UsesReference = true;
+
+        Assert.False(editor.WholeValueSource.ShowsIndividualValues);
+        Assert.All(editor.InputBindings.Values, binding => Assert.False(binding.IsConfigured));
+    }
+
+    [Fact]
     public void ProcessTargetEditor_RoundTripsWindowTitleInsideSharedSelector()
     {
         var definition = new ActiveProcessStepDefinition();
@@ -2642,7 +2685,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void ProcessTargetEditor_ClearsWindowTitleWhenUsingProcessReference()
+    public void ProcessTargetEditor_PreservesManualFallbackWhenReferenceIsNotConfigured()
     {
         var editor = new GeneratedProcessTargetEditorViewModel(
             value: null,
@@ -2657,8 +2700,8 @@ public sealed class StepDefinitionCatalogTests
 
         var value = editor.ToValue();
 
-        Assert.Empty(value.ProcessName);
-        Assert.Empty(value.WindowTitleContains);
+        Assert.Equal("notepad", value.ProcessName);
+        Assert.Equal("Editor", value.WindowTitleContains);
     }
 
     [Fact]
@@ -3116,6 +3159,215 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void ValueReferencePicker_RaisesOneSemanticChangePerSelection()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Retries",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(3)
+        };
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false, [variable]);
+        picker.UseJobVariableCommand.Execute(null);
+        var editor = new GeneratedResultBindingEditorViewModel(null, picker);
+        var changes = 0;
+        editor.Changed += () => changes++;
+
+        picker.SelectionTree.Single(node => node.DisplayName == variable.Name).SelectCommand!.Execute(null);
+
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_CachesUsageCountAndRefreshesValueWithoutRebuildingSelection()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.StepValue,
+            Name = "Timeout · Duration",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1000)
+        };
+        var usageChecks = 0;
+        var contract = StepInputContractRegistry.ForField(
+            new TimeoutStepDefinition().Descriptor.Fields.Single());
+        var picker = new ValueReferencePickerViewModel(
+            [], contract, false, [variable], context: new ValueReferencePickerContext(
+                "Timeout", "Duration", GetVariableUsageCount: _ =>
+                {
+                    usageChecks++;
+                    return 2;
+                }));
+        var semanticChanges = 0;
+        picker.ReferenceChanged += (_, _) => semanticChanges++;
+
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        });
+        var selectionTree = picker.SelectionTree;
+        Assert.Equal(2, picker.SelectedVariableUsageCount);
+        Assert.Equal(2, picker.SelectedVariableUsageCount);
+
+        picker.RefreshSelectedValue();
+
+        Assert.Equal(1, usageChecks);
+        Assert.Equal(1, semanticChanges);
+        Assert.Same(selectionTree, picker.SelectionTree);
+    }
+
+    [Fact]
+    public void ValueReferencePicker_UpdatesSelectionWithoutReplacingTree()
+    {
+        var first = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "First",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1)
+        };
+        var second = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Second",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(2)
+        };
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false, [first, second]);
+        picker.UseJobVariableCommand.Execute(null);
+        var tree = picker.SelectionTree;
+        var firstNode = tree.Single(node => node.DisplayName == first.Name);
+        var secondNode = tree.Single(node => node.DisplayName == second.Name);
+
+        firstNode.SelectCommand!.Execute(null);
+        secondNode.SelectCommand!.Execute(null);
+
+        Assert.Same(tree, picker.SelectionTree);
+        Assert.False(firstNode.IsSelected);
+        Assert.True(secondNode.IsSelected);
+    }
+
+    [Fact]
+    public void GeneratedInputReference_RefreshesInlineEditStateWithoutSemanticChange()
+    {
+        var variable = new JobVariable
+        {
+            Scope = JobVariableScope.StepValue,
+            Name = "Timeout Â· Duration",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1000)
+        };
+        var descriptor = new TimeoutStepDefinition().Descriptor.Fields.Single();
+        var picker = new ValueReferencePickerViewModel(
+            [], StepInputContractRegistry.ForField(descriptor), false, [variable],
+            context: new ValueReferencePickerContext(
+                "Timeout", "Duration", GetVariableUsageCount: _ => 2));
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        });
+        var bindingEditor = new GeneratedResultBindingEditorViewModel(null, picker);
+        var field = new GeneratedStepFieldViewModel(
+            descriptor, JsonValue.Create(1000), inputReferenceEditor: bindingEditor);
+        var semanticChanges = 0;
+        bindingEditor.Changed += () => semanticChanges++;
+
+        picker.EditEverywhereCommand.Execute(null);
+
+        Assert.False(field.RequiresInlineEditChoice);
+        Assert.True(field.CanEditInlineStepValue);
+        Assert.Equal(0, semanticChanges);
+    }
+
+    [Fact]
+    public void WholeValueSource_IgnoresRepeatedIndividualModeSelection()
+    {
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false);
+        var source = new GeneratedWholeValueSourceViewModel(picker, usesReference: false);
+        var sourceChanges = 0;
+        var referenceChanges = 0;
+        source.Changed += () => sourceChanges++;
+        picker.ReferenceChanged += (_, _) => referenceChanges++;
+
+        source.UsesReference = false;
+        source.UseIndividualValuesCommand.Execute(null);
+
+        Assert.Equal(0, sourceChanges);
+        Assert.Equal(0, referenceChanges);
+    }
+
+    [Fact]
+    public void RoiEnabled_DoesNotChangeValuesOrWholeValueSource()
+    {
+        var contract = StepInputContractRegistry.Get(typeof(DynamicRoiStep), "padding")!;
+        var picker = new ValueReferencePickerViewModel([], contract, false);
+        var editor = new GeneratedRoiEditorViewModel(
+            JsonSerializer.SerializeToNode(new StepRoiSelectionValue(false, 10, 20, 300, 200, null)),
+            picker);
+        editor.UseDynamicRoi = true;
+
+        editor.IsRoiEnabled = true;
+
+        Assert.True(editor.IsRoiEnabled);
+        Assert.True(editor.UseDynamicRoi);
+        Assert.Equal(10, editor.X);
+        Assert.Equal(20, editor.Y);
+        Assert.Equal(300, editor.RoiWidth);
+        Assert.Equal(200, editor.RoiHeight);
+    }
+
+    [Fact]
+    public void GeneratedEditor_UsageSnapshotContainsCurrentReferenceAndExistingStepId()
+    {
+        var first = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "First delay",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(1000)
+        };
+        var second = new JobVariable
+        {
+            Scope = JobVariableScope.Shared,
+            Name = "Second delay",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(2000)
+        };
+        var definition = new TimeoutStepDefinition();
+        var existing = new TimeoutStep();
+        existing.Inputs[TimeoutStepDefinition.DelayFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = first.Id.ToString("D")
+        };
+        var editor = new GeneratedStepEditorViewModel(
+            definition,
+            existing,
+            inputReferenceResolver: (field, binding) =>
+            {
+                var picker = new ValueReferencePickerViewModel(
+                    [], StepInputContractRegistry.ForField(field), false, [first, second]);
+                return new GeneratedResultBindingEditorViewModel(
+                    JsonSerializer.SerializeToNode(binding), picker);
+            });
+        var picker = editor.Fields.Single().InputReferenceEditor!.Picker;
+
+        picker.SelectionTree.Single(node => node.DisplayName == second.Name).SelectCommand!.Execute(null);
+        var snapshot = editor.CreateUsageSnapshot();
+
+        Assert.NotNull(snapshot);
+        Assert.Equal(existing.Id, snapshot!.Id);
+        Assert.Equal(second.Id.ToString("D"),
+            snapshot.Inputs[TimeoutStepDefinition.DelayFieldId].SourceId);
+    }
+
+    [Fact]
     public void ValueReferencePicker_DetachesMultiplyUsedStepValueForCurrentField()
     {
         var variable = new JobVariable
@@ -3333,7 +3585,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void CalculatedPointAndOverlayInputs_DoNotOfferJobVariables()
+    public void PointAndOverlayInputs_OfferCompatibleJobVariables()
     {
         var pointVariable = new JobVariable
         {
@@ -3343,10 +3595,11 @@ public sealed class StepDefinitionCatalogTests
             Value = new System.Text.Json.Nodes.JsonObject { ["x"] = 10, ["y"] = 20 }
         };
         var pointEditor = new GeneratedPointEntryListEditorViewModel(null, [], [pointVariable]);
-        var pointSource = Assert.Single(pointEditor.Points).PointsSource;
-        Assert.False(pointSource.CanUseJobVariables);
+        var pointEntry = Assert.Single(pointEditor.Points);
+        var pointSource = pointEntry.PointsSource;
+        Assert.True(pointSource.CanUseJobVariables);
         Assert.False(pointSource.CanUseSecrets);
-        Assert.False(pointSource.ToBinding().IsConfigured);
+        Assert.True(pointEntry.WholeValueSource.UsesIndividualValues);
 
         var detectionContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "detections")!;
         var textContract = StepInputContractRegistry.Get(typeof(ShowOnDesktopStep), "text")!;

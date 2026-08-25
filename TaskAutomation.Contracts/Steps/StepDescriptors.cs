@@ -147,13 +147,16 @@ public sealed record StepScreenPointSelectionValue(
     [property: JsonPropertyName("monitor_index")] int MonitorIndex,
     [property: JsonPropertyName("x")] int X,
     [property: JsonPropertyName("y")] int Y,
-    [property: JsonPropertyName("coordinate_space")] string CoordinateSpace)
+    [property: JsonPropertyName("coordinate_space")] string CoordinateSpace,
+    [property: JsonPropertyName("point_source")] JsonNode? PointSource = null)
 {
     [JsonIgnore]
     public PixelPoint Position => new(X, Y);
 }
 
-public sealed record StepScreenPointPickerOptions(bool DefaultToPrimaryMonitorCenter = false);
+public sealed record StepScreenPointPickerOptions(
+    bool DefaultToPrimaryMonitorCenter = false,
+    string WholeValueInputContractId = "origin");
 
 public abstract record StepEditorNodeDescriptor;
 
@@ -162,7 +165,9 @@ public sealed record StepFieldNodeDescriptor(string FieldId) : StepEditorNodeDes
 public sealed record StepPointFieldPairDescriptor(
     string XFieldId,
     string YFieldId,
-    string? LabelKey = null) : StepEditorNodeDescriptor;
+    string? LabelKey = null,
+    string? SourceFieldId = null,
+    string? ReferenceFieldId = null) : StepEditorNodeDescriptor;
 
 public sealed record StepChoiceBranchDescriptor(
     string Value,

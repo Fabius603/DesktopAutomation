@@ -4,7 +4,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
-             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Height="34" MaxHeight="34" VerticalAlignment="Top">
     <UserControl.Resources>
         <Style x:Key="PickerToggleStyle" TargetType="ToggleButton">
             <Setter Property="MinHeight" Value="34"/>
@@ -110,6 +111,7 @@
     <Grid>
         <ToggleButton x:Name="DropDownToggle"
                       Style="{StaticResource PickerToggleStyle}"
+                      Height="34" MaxHeight="34" VerticalAlignment="Top"
                       Tag="{Binding ElementName=Root}"
                       PreviewMouseLeftButtonDown="DropDownToggle_PreviewMouseLeftButtonDown"
                       IsChecked="{Binding IsOpen, ElementName=SelectionPopup, Mode=TwoWay}">
@@ -315,7 +317,7 @@
                                    FontSize="10" Foreground="{DynamicResource App.Brush.TextSecondary}"
                                    VerticalAlignment="Center"/>
                         <TextBox x:Name="SearchBox" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,9,0,0"
-                                 Text="{Binding SearchText, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Text="{Binding SearchText, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                  PreviewKeyDown="OnPreviewKeyDown"
                                  mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.ValueReference.Search}"
                                  mah:TextBoxHelper.UseFloatingWatermark="False"/>
@@ -328,8 +330,11 @@
                               ItemContainerStyle="{StaticResource PickerTreeItemStyle}"
                               Background="Transparent" BorderThickness="0" Padding="0"
                               MaxHeight="306"
+                              ScrollViewer.CanContentScroll="True"
                               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
                         <TreeView.ItemTemplate>
                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                 <Button Style="{StaticResource PickerTreeRowStyle}"

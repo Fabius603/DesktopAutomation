@@ -26,19 +26,20 @@ namespace DesktopAutomationApp.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
 
         public ValueReferencePickerViewModel PointsSource { get; }
+        public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
 
         private PointEntrySource _source = PointEntrySource.Manual;
 
         public bool IsManual
         {
             get => _source == PointEntrySource.Manual;
-            set { if (value) Source = PointEntrySource.Manual; }
+            set { if (value) WholeValueSource.UsesReference = false; }
         }
 
         public bool IsJobResult
         {
             get => _source == PointEntrySource.JobResult;
-            set => Source = value ? PointEntrySource.JobResult : PointEntrySource.Manual;
+            set => WholeValueSource.UsesReference = value;
         }
 
         public PointEntrySource Source
@@ -61,7 +62,7 @@ namespace DesktopAutomationApp.ViewModels
             set
             {
                 if (value is not null && Enum.TryParse<PointEntrySource>(value.Value, out var source))
-                    Source = source;
+                    WholeValueSource.UsesReference = source != PointEntrySource.Manual;
             }
         }
 
@@ -96,16 +97,24 @@ namespace DesktopAutomationApp.ViewModels
             PointsSource = new ValueReferencePickerViewModel(detectionSteps,
                 StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true,
                 variables, providerSources, pickerContext);
+            WholeValueSource = new GeneratedWholeValueSourceViewModel(PointsSource, false);
+            WholeValueSource.Changed += () =>
+            {
+                Source = WholeValueSource.UsesReference
+                    ? PointEntrySource.JobResult
+                    : PointEntrySource.Manual;
+                OnChange(string.Empty);
+            };
             _source = PointEntrySource.Manual;
             RemoveCommand            = new RelayCommand(() => owner.Remove(this));
         }
 
         public PointEntry ToPointEntry() => new PointEntry
         {
-            Source                = _source,
+            Source                = WholeValueSource.UsesReference ? PointEntrySource.JobResult : PointEntrySource.Manual,
             ManualX               = ManualX,
             ManualY               = ManualY,
-            PointsSource = PointsSource.ToBinding()
+            PointsSource = WholeValueSource.ToBinding()
         };
 
         public void ConfigureNestedInputs(
@@ -114,8 +123,17 @@ namespace DesktopAutomationApp.ViewModels
         {
             ManualXField = CreateNestedField($"{keyPrefix}.manual_x", _manualX, resolver);
             ManualYField = CreateNestedField($"{keyPrefix}.manual_y", _manualY, resolver);
+            ManualXField.PropertyChanged += (_, args) => ClearWholeValueForSemanticFieldChange(args);
+            ManualYField.PropertyChanged += (_, args) => ClearWholeValueForSemanticFieldChange(args);
             OnChange(nameof(ManualXField));
             OnChange(nameof(ManualYField));
+        }
+
+        private void ClearWholeValueForSemanticFieldChange(PropertyChangedEventArgs args)
+        {
+            if (args.PropertyName is nameof(GeneratedStepFieldViewModel.InputText)
+                or nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+                WholeValueSource.UsesReference = false;
         }
 
         private static GeneratedStepFieldViewModel CreateNestedField(
@@ -132,12 +150,12 @@ namespace DesktopAutomationApp.ViewModels
 
         public void LoadFrom(PointEntry e)
         {
-            Source = e.Source;
+            WholeValueSource.Load(e.PointsSource, e.Source != PointEntrySource.Manual);
+            Source = WholeValueSource.UsesReference ? PointEntrySource.JobResult : PointEntrySource.Manual;
             _manualX = e.ManualX;
             OnChange(nameof(ManualX));
             _manualY = e.ManualY;
             OnChange(nameof(ManualY));
-            PointsSource.Load(e.PointsSource);
         }
     }
 }

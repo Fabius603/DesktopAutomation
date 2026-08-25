@@ -9,6 +9,7 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Makros;
 using Microsoft.Extensions.Logging;
 using ImageHelperMethods;
+using TaskAutomation.Contracts.Geometry;
 using Point = System.Drawing.Point;
 
 namespace TaskAutomation.Steps
@@ -61,7 +62,7 @@ namespace TaskAutomation.Steps
                 selectedPoint.X + step.Settings.OffsetX,
                 selectedPoint.Y + step.Settings.OffsetY);
 
-            var globalOrigin = ResolveGlobalOrigin(step.Settings);
+            var globalOrigin = ResolveGlobalOrigin(step.Settings, ctx.Results);
             var delta = new Point(target.X - globalOrigin.X, target.Y - globalOrigin.Y);
             var appliedDelta = ApplyMovementFactors(
                 delta,
@@ -104,6 +105,18 @@ namespace TaskAutomation.Steps
 
             var monitorBounds = ScreenHelper.GetDesktopBounds(settings.OriginMonitorIndex);
             return ResolveGlobalOrigin(settings, monitorBounds);
+        }
+
+        internal static Point ResolveGlobalOrigin(KlickOnPoint3DSettings settings, IJobResultStore results)
+        {
+            if (settings.OriginSource.IsConfigured)
+            {
+                var resolved = ResultBindingResolver.Resolve<PixelPoint>(results, settings.OriginSource);
+                if (!resolved.IsSuccess)
+                    throw new InvalidOperationException(resolved.Error ?? "The origin point could not be resolved.");
+                return new Point(resolved.FirstOrDefault.X, resolved.FirstOrDefault.Y);
+            }
+            return ResolveGlobalOrigin(settings);
         }
 
         internal static Point ResolveGlobalOrigin(

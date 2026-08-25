@@ -39,7 +39,7 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
                 VisibleWhen: OffsetMode),
             new(ReferenceYFieldId, "Ui.Step.Settings.Y", StepValueKind.Integer, DefaultValue: JsonValue.Create(0), Order: 5,
                 VisibleWhen: OffsetMode),
-            new(ReferencePointsFieldId, "Ui.Step.Settings.PointSource", StepValueKind.ResultBinding, Required: true,
+            new(ReferencePointsFieldId, "Ui.Step.Settings.PointSource", StepValueKind.ResultBinding,
                 EditorHint: StepEditorHints.ValueReferencePicker, Order: 6, InputContractId: "points",
                 VisibleWhen: OffsetMode),
             new(OffsetXFieldId, "Ui.Step.Settings.XOffsetPixels", StepValueKind.Integer, DefaultValue: JsonValue.Create(10),
@@ -54,9 +54,10 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         ],
         new([
                 new("general", "Ui.Step.Settings.BasicSettings", [ModeFieldId, MatchRequirementFieldId, PointsFieldId]),
-                new("offset", "Ui.Step.Settings.ReferencePointTolerance", [ReferenceXFieldId,
-                    ReferenceYFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
-                    [new StepPointFieldPairDescriptor(ReferenceXFieldId, ReferenceYFieldId),
+                new("offset", "Ui.Step.Settings.ReferencePointTolerance", [ReferenceSourceFieldId,
+                    ReferenceXFieldId, ReferenceYFieldId, ReferencePointsFieldId, OffsetXFieldId, OffsetYFieldId], 1, EditorNodes:
+                    [new StepPointFieldPairDescriptor(ReferenceXFieldId, ReferenceYFieldId, "Ui.Step.Settings.ReferencePoint",
+                        SourceFieldId: ReferenceSourceFieldId, ReferenceFieldId: ReferencePointsFieldId),
                      new StepFieldNodeDescriptor(OffsetXFieldId),
                      new StepFieldNodeDescriptor(OffsetYFieldId)]),
                 new("expression", "Ui.Step.Settings.AxisExpressions", [CombineModeFieldId, ExpressionsFieldId], 2)
@@ -134,6 +135,9 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
             if (expressions.Count == 0 || expressions.Any(expression => expression.Axis is not ("X" or "Y")
                     || !Enum.TryParse<PointAxisOperator>(expression.Operator, out _))) return [Invalid(ExpressionsFieldId)];
         }
+        else if (DefinitionValueReader.String(draft, ReferenceSourceFieldId) != "Manual"
+                 && !DefinitionValueReader.Binding(draft, ReferencePointsFieldId).IsConfigured)
+            return [Invalid(ReferencePointsFieldId)];
         return [];
     }
 

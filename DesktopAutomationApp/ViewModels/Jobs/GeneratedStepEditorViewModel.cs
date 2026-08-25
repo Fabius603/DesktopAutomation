@@ -108,10 +108,7 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
                 .Select(section => new GeneratedStepEditorSectionViewModel(
                     section,
                     section.FieldIds.Select(fieldId => fieldsById[fieldId]).ToArray(),
-                    inputReferenceResolver is null
-                        ? BuildEditorNodes(section, fieldsById)
-                        : section.FieldIds.Select(fieldId =>
-                            (GeneratedStepEditorNodeViewModel)new GeneratedStepFieldNodeViewModel(fieldsById[fieldId])).ToArray())));
+                    BuildEditorNodes(section, fieldsById))));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -137,12 +134,22 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
 
     public bool TryCreateStep(out JobStep? step)
     {
+        var success = TryBuildStep(validate: true, out step, out var error);
+        ValidationError = error;
+        return success;
+    }
+
+    public JobStep? CreateUsageSnapshot() =>
+        TryBuildStep(validate: false, out var step, out _) ? step : null;
+
+    private bool TryBuildStep(bool validate, out JobStep? step, out string? error)
+    {
         var draft = _baseDraft.Clone();
         foreach (var field in Fields.Where(field => _editableFieldIds.Contains(field.Descriptor.Id)))
         {
             if (!field.TryWriteValue(draft, out var inputError))
             {
-                ValidationError = inputError;
+                error = inputError;
                 step = null;
                 return false;
             }
@@ -150,20 +157,28 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
 
         var referencedFields = Fields.Where(field => field.InputReferenceEditor is not null)
             .Select(field => field.Descriptor.Id).ToHashSet(StringComparer.Ordinal);
-        var issue = _definition.ValidateDraft(draft)
-            .FirstOrDefault(candidate => candidate.Severity == StepValidationSeverity.Error
-                                         && (candidate.FieldId is null || !referencedFields.Contains(candidate.FieldId)));
+        var issue = validate
+            ? _definition.ValidateDraft(draft)
+                .FirstOrDefault(candidate => candidate.Severity == StepValidationSeverity.Error
+                                             && (candidate.FieldId is null || !referencedFields.Contains(candidate.FieldId)))
+            : null;
         if (issue is not null)
         {
-            ValidationError = FormatIssue(issue);
+            error = FormatIssue(issue);
             step = null;
             return false;
         }
 
-        ValidationError = null;
+        error = null;
         step = _definition.ApplyDraft(draft);
         foreach (var field in Fields.Where(field => field.InputReferenceEditor is not null))
             step.Inputs[field.Descriptor.Id] = field.InputReferenceEditor!.Picker.ToBinding();
+        foreach (var pair in Sections.SelectMany(section => FindPointPairs(section.Nodes))
+                     .Where(pair => pair.WholeValueSource?.UsesReference == true))
+        {
+            step.Inputs[pair.XField.Descriptor.Id] = new ResultBinding();
+            step.Inputs[pair.YField.Descriptor.Id] = new ResultBinding();
+        }
         foreach (var composite in Fields.SelectMany(CompositeInputEditors))
             foreach (var (key, binding) in composite.InputBindings)
                 ValueBindingTree.Set(step.Inputs, key, binding);
@@ -175,6 +190,19 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             step.IsBreakpoint = _existingStep.IsBreakpoint;
         }
         return true;
+    }
+
+    private static IEnumerable<GeneratedStepPointFieldPairViewModel> FindPointPairs(
+        IEnumerable<GeneratedStepEditorNodeViewModel> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (node is GeneratedStepPointFieldPairViewModel pair)
+                yield return pair;
+            if (node is GeneratedStepChoiceGroupViewModel group)
+                foreach (var nested in group.Branches.SelectMany(branch => FindPointPairs(branch.Children)))
+                    yield return nested;
+        }
     }
 
     private static IEnumerable<IGeneratedCompositeInputEditor> CompositeInputEditors(GeneratedStepFieldViewModel field)
@@ -190,6 +218,20 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
 
     private void OnFieldChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(GeneratedStepFieldViewModel.IsInlineStepValue)
+            or nameof(GeneratedStepFieldViewModel.UsesExternalInputReference)
+            or nameof(GeneratedStepFieldViewModel.CanEditInlineStepValue)
+            or nameof(GeneratedStepFieldViewModel.RequiresInlineEditChoice)
+            or nameof(GeneratedStepFieldViewModel.ShowsDirectInput)
+            or nameof(GeneratedStepFieldViewModel.ShowsInputSourcePicker)
+            or nameof(GeneratedStepFieldViewModel.BooleanValue)
+            or nameof(GeneratedStepFieldViewModel.IntegerValue)
+            or nameof(GeneratedStepFieldViewModel.NumberValue)
+            or nameof(GeneratedStepFieldViewModel.DateTimeValue)
+            or nameof(GeneratedStepFieldViewModel.ColorValue)
+            or nameof(GeneratedStepFieldViewModel.FilePreview)
+            or nameof(GeneratedStepFieldViewModel.HasFilePreview))
+            return;
         ValidationError = null;
         RefreshVisibility();
         Changed?.Invoke();
@@ -267,7 +309,9 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         StepFieldNodeDescriptor field => new GeneratedStepFieldNodeViewModel(fieldsById[field.FieldId]),
         StepPointFieldPairDescriptor pair => new GeneratedStepPointFieldPairViewModel(
             fieldsById[pair.XFieldId], fieldsById[pair.YFieldId],
-            string.IsNullOrWhiteSpace(pair.LabelKey) ? string.Empty : Loc.Get(pair.LabelKey)),
+            string.IsNullOrWhiteSpace(pair.LabelKey) ? string.Empty : Loc.Get(pair.LabelKey),
+            string.IsNullOrWhiteSpace(pair.SourceFieldId) ? null : fieldsById[pair.SourceFieldId],
+            string.IsNullOrWhiteSpace(pair.ReferenceFieldId) ? null : fieldsById[pair.ReferenceFieldId]),
         StepChoiceGroupDescriptor group => new GeneratedStepChoiceGroupViewModel(
             fieldsById[group.SelectionFieldId],
             group.Branches.Select(branch => new GeneratedStepChoiceBranchViewModel(
@@ -314,12 +358,42 @@ public sealed class GeneratedStepFieldNodeViewModel(GeneratedStepFieldViewModel 
 public sealed class GeneratedStepPointFieldPairViewModel(
     GeneratedStepFieldViewModel xField,
     GeneratedStepFieldViewModel yField,
-    string label) : GeneratedStepEditorNodeViewModel
+    string label,
+    GeneratedStepFieldViewModel? sourceField = null,
+    GeneratedStepFieldViewModel? referenceField = null) : GeneratedStepEditorNodeViewModel
 {
     public GeneratedStepFieldViewModel XField { get; } = xField;
     public GeneratedStepFieldViewModel YField { get; } = yField;
     public string Label { get; } = label;
     public bool HasLabel => !string.IsNullOrWhiteSpace(Label);
+    public GeneratedWholeValueSourceViewModel? WholeValueSource { get; } = CreateWholeValueSource(
+        xField, yField, sourceField, referenceField);
+    public bool HasWholeValueSource => WholeValueSource is not null;
+
+    private static GeneratedWholeValueSourceViewModel? CreateWholeValueSource(
+        GeneratedStepFieldViewModel x,
+        GeneratedStepFieldViewModel y,
+        GeneratedStepFieldViewModel? source,
+        GeneratedStepFieldViewModel? reference)
+    {
+        if (source is null || reference?.InputReferenceEditor is null) return null;
+        var whole = new GeneratedWholeValueSourceViewModel(
+            reference.InputReferenceEditor.Picker,
+            !string.Equals(source.InputText, "Manual", StringComparison.OrdinalIgnoreCase));
+        whole.Changed += () => source.InputText = whole.UsesReference ? "JobResult" : "Manual";
+        x.PropertyChanged += (_, args) => ClearWholeValueForSemanticFieldChange(whole, args);
+        y.PropertyChanged += (_, args) => ClearWholeValueForSemanticFieldChange(whole, args);
+        return whole;
+    }
+
+    private static void ClearWholeValueForSemanticFieldChange(
+        GeneratedWholeValueSourceViewModel whole,
+        PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName is nameof(GeneratedStepFieldViewModel.InputText)
+            or nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+            whole.UsesReference = false;
+    }
 }
 
 public sealed class GeneratedStepChoiceBranchViewModel(
@@ -425,7 +499,10 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             ResultBindingEditor.Changed += OnResultBindingChanged;
         InputReferenceEditor = inputReferenceEditor;
         if (InputReferenceEditor is not null)
+        {
             InputReferenceEditor.Changed += OnInputReferenceChanged;
+            InputReferenceEditor.DisplayStateChanged += OnInputReferenceDisplayStateChanged;
+        }
         CameraEditor = cameraEditor;
         if (CameraEditor is not null)
             CameraEditor.Changed += OnCameraChanged;
@@ -526,6 +603,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public GeneratedUserChoiceOptionsEditorViewModel? UserChoiceOptionsEditor { get; }
     public GeneratedPointEntryListEditorViewModel? PointEntryListEditor { get; }
     public GeneratedAxisExpressionListEditorViewModel? AxisExpressionListEditor { get; }
+    public GeneratedWholeValueSourceViewModel? WholeValueSource =>
+        ProcessTargetEditor?.WholeValueSource
+        ?? RoiEditor?.WholeValueSource
+        ?? ScreenPointEditor?.WholeValueSource;
+    public bool HasWholeValueSource => WholeValueSource is not null;
     public string Label => Loc.Get(Descriptor.LabelKey);
     public string Description => string.IsNullOrWhiteSpace(Descriptor.DescriptionKey)
         ? string.Empty
@@ -982,6 +1064,12 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         NotifyInputMode();
     }
 
+    private void OnInputReferenceDisplayStateChanged()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanEditInlineStepValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RequiresInlineEditChoice)));
+    }
+
     private void NotifyInputMode()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsDirectInput)));
@@ -997,7 +1085,9 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             InputReferenceEditor.Picker.RefreshSelectedValue();
             return;
         }
-        _inputText = FormatValue(variable.Value, EffectiveValueKind);
+        var formattedValue = FormatValue(variable.Value, EffectiveValueKind);
+        if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)) return;
+        _inputText = formattedValue;
         _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
             string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
@@ -1272,6 +1362,7 @@ public sealed class GeneratedScreenPointEditorViewModel : INotifyPropertyChanged
 
     public GeneratedScreenPointEditorViewModel(
         JsonNode? value,
+        ValueReferencePickerViewModel pointSource,
         Func<StepScreenPointSelectionValue, StepScreenPointSelectionValue> normalize,
         Func<int?> selectMonitor,
         Func<Task<StepScreenPointSelectionValue?>> capturePoint,
@@ -1285,12 +1376,25 @@ public sealed class GeneratedScreenPointEditorViewModel : INotifyPropertyChanged
         _monitorIndex = selection.MonitorIndex;
         _x = selection.X;
         _y = selection.Y;
+        ResultBinding pointBinding;
+        try { pointBinding = selection.PointSource?.Deserialize<ResultBinding>() ?? new ResultBinding(); }
+        catch (JsonException) { pointBinding = new ResultBinding(); }
+        pointSource.Load(pointBinding);
+        WholeValueSource = new GeneratedWholeValueSourceViewModel(pointSource, pointBinding.IsConfigured);
+        WholeValueSource.Changed += () => Changed?.Invoke();
         if (nestedInputResolver is not null)
         {
             MonitorField = CreateNestedField($"{inputKeyPrefix}.monitor_index", _monitorIndex, nestedInputResolver);
             XField = CreateNestedField($"{inputKeyPrefix}.x", _x, nestedInputResolver);
             YField = CreateNestedField($"{inputKeyPrefix}.y", _y, nestedInputResolver);
-            foreach (var field in NestedFields) field.PropertyChanged += (_, _) => Changed?.Invoke();
+            foreach (var field in NestedFields) field.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName is not nameof(GeneratedStepFieldViewModel.InputText)
+                    and not nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+                    return;
+                WholeValueSource.UsesReference = false;
+                Changed?.Invoke();
+            };
         }
         _selectMonitor = selectMonitor;
         _capturePoint = capturePoint;
@@ -1305,15 +1409,21 @@ public sealed class GeneratedScreenPointEditorViewModel : INotifyPropertyChanged
     public GeneratedStepFieldViewModel? MonitorField { get; }
     public GeneratedStepFieldViewModel? XField { get; }
     public GeneratedStepFieldViewModel? YField { get; }
+    public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { MonitorField, XField, YField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
-        field => field.Descriptor.Id, field => field.InputReferenceEditor!.Picker.ToBinding(), StringComparer.Ordinal);
+        field => field.Descriptor.Id,
+        field => WholeValueSource.UsesReference
+            ? new ResultBinding()
+            : field.InputReferenceEditor!.Picker.ToBinding(),
+        StringComparer.Ordinal);
     public int MonitorIndex { get => MonitorField?.IntegerValue ?? _monitorIndex; set { if (MonitorField is not null) MonitorField.IntegerValue = value; Set(ref _monitorIndex, value); } }
     public int X { get => XField?.IntegerValue ?? _x; set { if (XField is not null) XField.IntegerValue = value; Set(ref _x, value); } }
     public int Y { get => YField?.IntegerValue ?? _y; set { if (YField is not null) YField.IntegerValue = value; Set(ref _y, value); } }
     public JsonNode? ToNode() => JsonSerializer.SerializeToNode(new StepScreenPointSelectionValue(
-        MonitorIndex, X, Y, KlickOnPoint3DSettings.MonitorLocalCoordinates));
+        MonitorIndex, X, Y, KlickOnPoint3DSettings.MonitorLocalCoordinates,
+        JsonSerializer.SerializeToNode(WholeValueSource.ToBinding())));
 
     private void SelectMonitor()
     {
@@ -1441,9 +1551,13 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
         .SelectMany((point, index) => new[]
         {
             new KeyValuePair<string, ResultBinding>($"{_inputKeyPrefix}.{index}.manual_x",
-                point.ManualXField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding()),
+                point.WholeValueSource.UsesReference
+                    ? new ResultBinding()
+                    : point.ManualXField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding()),
             new KeyValuePair<string, ResultBinding>($"{_inputKeyPrefix}.{index}.manual_y",
-                point.ManualYField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding())
+                point.WholeValueSource.UsesReference
+                    ? new ResultBinding()
+                    : point.ManualYField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding())
         }).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
     public JsonNode? ToNode() => JsonSerializer.SerializeToNode(Points.Select(point =>
     {
@@ -1470,11 +1584,12 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
     }
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.OldItems is not null) foreach (PointEntryViewModel item in e.OldItems) { item.PropertyChanged -= ItemChanged; item.PointsSource.PropertyChanged -= ItemChanged; }
-        if (e.NewItems is not null) foreach (PointEntryViewModel item in e.NewItems) { item.PropertyChanged += ItemChanged; item.PointsSource.PropertyChanged += ItemChanged; }
+        if (e.OldItems is not null) foreach (PointEntryViewModel item in e.OldItems) { item.PropertyChanged -= ItemChanged; item.PointsSource.ReferenceChanged -= ReferenceItemChanged; }
+        if (e.NewItems is not null) foreach (PointEntryViewModel item in e.NewItems) { item.PropertyChanged += ItemChanged; item.PointsSource.ReferenceChanged += ReferenceItemChanged; }
         Changed?.Invoke();
     }
     private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Changed?.Invoke();
+    private void ReferenceItemChanged(object? sender, EventArgs e) => Changed?.Invoke();
 }
 
 public sealed class GeneratedAxisExpressionListEditorViewModel : IGeneratedValueEditor
@@ -1550,13 +1665,24 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
                 JsonValue.Create(_width), nestedInputResolver);
             HeightField = CreateNestedField($"{inputKeyPrefix}.height", StepValueKind.Integer,
                 JsonValue.Create(_height), nestedInputResolver);
-            foreach (var field in NestedFields) field.PropertyChanged += (_, _) => Changed?.Invoke();
+            foreach (var field in NestedFields) field.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName is not nameof(GeneratedStepFieldViewModel.InputText)
+                    and not nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+                    return;
+                if (!ReferenceEquals(field, EnabledField)) DisableDynamicRoi();
+                Changed?.Invoke();
+            };
         }
         try { DetectionDynamicRoiSource.Load(selection.DynamicSource?.Deserialize<ResultBinding>() ?? new ResultBinding()); }
         catch (JsonException) { DetectionDynamicRoiSource.Load(new ResultBinding()); }
         _useDynamicRoi = DetectionDynamicRoiSource.IsConfigured;
-        DetectionDynamicRoiSource.PropertyChanged += (_, _) =>
+        WholeValueSource = new GeneratedWholeValueSourceViewModel(
+            DetectionDynamicRoiSource, _useDynamicRoi);
+        WholeValueSource.Changed += () =>
         {
+            _useDynamicRoi = WholeValueSource.UsesReference;
+            PropertyChanged?.Invoke(this, new(nameof(UseDynamicRoi)));
             PropertyChanged?.Invoke(this, new(nameof(HasSelectedDynamicRoi)));
             Changed?.Invoke();
         };
@@ -1565,6 +1691,7 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? Changed;
     public ValueReferencePickerViewModel DetectionDynamicRoiSource { get; }
+    public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
     public GeneratedStepFieldViewModel? EnabledField { get; }
     public GeneratedStepFieldViewModel? XField { get; }
     public GeneratedStepFieldViewModel? YField { get; }
@@ -1573,10 +1700,14 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { EnabledField, XField, YField, WidthField, HeightField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
-        field => field.Descriptor.Id, field => field.InputReferenceEditor!.Picker.ToBinding(), StringComparer.Ordinal);
+        field => field.Descriptor.Id,
+        field => ReferenceEquals(field, EnabledField) || WholeValueSource.UsesReference
+            ? new ResultBinding()
+            : field.InputReferenceEditor!.Picker.ToBinding(),
+        StringComparer.Ordinal);
     public bool HasSelectedDynamicRoi => UseDynamicRoi && DetectionDynamicRoiSource.IsConfigured;
 
-    public bool IsRoiEnabled { get => EnabledField?.BooleanValue ?? _isRoiEnabled; set { DisableDynamicRoi(); if (EnabledField is not null) EnabledField.BooleanValue = value; Set(ref _isRoiEnabled, value, nameof(IsRoiEnabled)); } }
+    public bool IsRoiEnabled { get => EnabledField?.BooleanValue ?? _isRoiEnabled; set { if (EnabledField is not null) EnabledField.BooleanValue = value; Set(ref _isRoiEnabled, value, nameof(IsRoiEnabled)); } }
     public bool UseDynamicRoi
     {
         get => _useDynamicRoi;
@@ -1584,6 +1715,7 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
         {
             if (_useDynamicRoi == value) return;
             _useDynamicRoi = value;
+            WholeValueSource.UsesReference = value;
             PropertyChanged?.Invoke(this, new(nameof(UseDynamicRoi)));
             PropertyChanged?.Invoke(this, new(nameof(HasSelectedDynamicRoi)));
             Changed?.Invoke();
@@ -1596,7 +1728,7 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
 
     public StepRoiSelectionValue ToValue() => new(
         IsRoiEnabled, X, Y, RoiWidth, RoiHeight,
-        JsonSerializer.SerializeToNode(UseDynamicRoi ? DetectionDynamicRoiSource.ToBinding() : new ResultBinding()));
+        JsonSerializer.SerializeToNode(WholeValueSource.ToBinding()));
 
     private void DisableDynamicRoi()
     {
@@ -1669,14 +1801,14 @@ public sealed class GeneratedYoloEditorViewModel : INotifyPropertyChanged, IGene
             {
                 if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputText))
                     Model = ModelField.InputText;
-                else
+                else if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
                     Changed?.Invoke();
             };
             ClassField.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputText))
                     ClassName = ClassField.InputText;
-                else
+                else if (args.PropertyName == nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
                     Changed?.Invoke();
             };
         }
@@ -1802,11 +1934,143 @@ public sealed class GeneratedResultBindingEditorViewModel
         Picker = picker;
         try { Picker.Load(value?.Deserialize<ResultBinding>() ?? new ResultBinding()); }
         catch (JsonException) { Picker.Load(new ResultBinding()); }
-        Picker.PropertyChanged += (_, _) => Changed?.Invoke();
+        Picker.ReferenceChanged += (_, _) => Changed?.Invoke();
+        Picker.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ValueReferencePickerViewModel.RequiresInlineEditChoice))
+                DisplayStateChanged?.Invoke();
+        };
     }
 
     public event Action? Changed;
+    public event Action? DisplayStateChanged;
     public ValueReferencePickerViewModel Picker { get; }
+}
+
+public enum WholeValueInputMode
+{
+    IndividualValues,
+    JobVariable,
+    StepResult
+}
+
+public sealed class GeneratedWholeValueSourceViewModel : INotifyPropertyChanged
+{
+    private WholeValueInputMode _mode;
+    private bool _updatingMode;
+
+    public GeneratedWholeValueSourceViewModel(ValueReferencePickerViewModel picker, bool usesReference)
+    {
+        Picker = picker;
+        _mode = ResolveMode(picker.ToBinding(), usesReference && picker.IsConfigured);
+        UseIndividualValuesCommand = new RelayCommand(() => SelectMode(WholeValueInputMode.IndividualValues));
+        UseJobVariableCommand = new RelayCommand(
+            () => SelectMode(WholeValueInputMode.JobVariable),
+            () => Picker.CanUseJobVariables);
+        UseStepResultCommand = new RelayCommand(
+            () => SelectMode(WholeValueInputMode.StepResult),
+            () => Picker.CanUseStepResults);
+        Picker.ReferenceChanged += (_, _) =>
+        {
+            if (!_updatingMode)
+                Changed?.Invoke();
+        };
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public event Action? Changed;
+    public ValueReferencePickerViewModel Picker { get; }
+    public ICommand UseIndividualValuesCommand { get; }
+    public ICommand UseJobVariableCommand { get; }
+    public ICommand UseStepResultCommand { get; }
+    public WholeValueInputMode Mode => _mode;
+    public bool UsesIndividualValues => Mode == WholeValueInputMode.IndividualValues;
+    public bool UsesJobVariable => Mode == WholeValueInputMode.JobVariable;
+    public bool UsesStepResult => Mode == WholeValueInputMode.StepResult;
+    public bool ShowsIndividualValues => UsesIndividualValues;
+
+    public bool UsesReference
+    {
+        get => !UsesIndividualValues;
+        set
+        {
+            if (!value)
+            {
+                if (UsesIndividualValues) return;
+                SelectMode(WholeValueInputMode.IndividualValues);
+            }
+            else if (!UsesReference)
+                SelectMode(Picker.ActiveSourceKind switch
+                {
+                    StepInputSourceKind.StepResult when Picker.CanUseStepResults => WholeValueInputMode.StepResult,
+                    StepInputSourceKind.JobVariable when Picker.CanUseJobVariables => WholeValueInputMode.JobVariable,
+                    _ when Picker.CanUseJobVariables => WholeValueInputMode.JobVariable,
+                    _ => WholeValueInputMode.StepResult
+                });
+        }
+    }
+
+    public ResultBinding ToBinding() => UsesReference ? Picker.ToBinding() : new ResultBinding();
+
+    public void Load(ResultBinding binding, bool usesReference)
+    {
+        _updatingMode = true;
+        try
+        {
+            Picker.Load(binding);
+            _mode = ResolveMode(binding, usesReference && binding.IsConfigured);
+        }
+        finally
+        {
+            _updatingMode = false;
+        }
+        NotifyModeChanged();
+    }
+
+    private void SelectMode(WholeValueInputMode mode)
+    {
+        if (mode == WholeValueInputMode.JobVariable && !Picker.CanUseJobVariables) return;
+        if (mode == WholeValueInputMode.StepResult && !Picker.CanUseStepResults) return;
+        if (_mode == mode) return;
+        _mode = mode;
+        _updatingMode = true;
+        try
+        {
+            if (mode == WholeValueInputMode.IndividualValues)
+            {
+                if (Picker.ClearCommand.CanExecute(null)) Picker.ClearCommand.Execute(null);
+            }
+            else
+            {
+                Picker.SelectSourceKind(mode == WholeValueInputMode.JobVariable
+                    ? StepInputSourceKind.JobVariable
+                    : StepInputSourceKind.StepResult);
+            }
+        }
+        finally
+        {
+            _updatingMode = false;
+        }
+        NotifyModeChanged();
+    }
+
+    private void NotifyModeChanged()
+    {
+        PropertyChanged?.Invoke(this, new(nameof(Mode)));
+        PropertyChanged?.Invoke(this, new(nameof(UsesReference)));
+        PropertyChanged?.Invoke(this, new(nameof(UsesIndividualValues)));
+        PropertyChanged?.Invoke(this, new(nameof(UsesJobVariable)));
+        PropertyChanged?.Invoke(this, new(nameof(UsesStepResult)));
+        PropertyChanged?.Invoke(this, new(nameof(ShowsIndividualValues)));
+        Changed?.Invoke();
+    }
+
+    private static WholeValueInputMode ResolveMode(ResultBinding binding, bool usesReference) =>
+        !usesReference
+            ? WholeValueInputMode.IndividualValues
+            : binding.ProviderId == ValueProviderIds.StepResult || !string.IsNullOrWhiteSpace(binding.SourceStepId)
+                ? WholeValueInputMode.StepResult
+                : WholeValueInputMode.JobVariable;
 }
 
 public interface IGeneratedCompositeInputEditor
@@ -1846,6 +2110,15 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
         var binding = ReadBinding(selector.ProcessSource);
         Picker.Load(binding);
         _useProcessReference = binding.IsConfigured;
+        WholeValueSource = new GeneratedWholeValueSourceViewModel(Picker, _useProcessReference);
+        WholeValueSource.Changed += () =>
+        {
+            _useProcessReference = WholeValueSource.UsesReference;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UseProcessReference)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceOption)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceContent)));
+            Changed?.Invoke();
+        };
         _processName = useExecutablePath || !string.IsNullOrWhiteSpace(selector.ProcessName)
             ? selector.ProcessName
             : Path.GetFileNameWithoutExtension(selector.ExecutablePath);
@@ -1860,13 +2133,13 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
             WindowTitleField = CreateNestedTextField($"{inputKeyPrefix}.window_title_contains", _windowTitleContains, nestedInputResolver);
             foreach (var field in NestedFields) field.PropertyChanged += NestedFieldChanged;
         }
-        Picker.PropertyChanged += (_, _) => Changed?.Invoke();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action? Changed;
 
     public ValueReferencePickerViewModel Picker { get; }
+    public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
     public GeneratedStepFieldViewModel? ProcessNameField { get; }
     public GeneratedStepFieldViewModel? ExecutablePathField { get; }
     public GeneratedStepFieldViewModel? WindowTitleField { get; }
@@ -1874,7 +2147,9 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
         new[] { ProcessNameField, ExecutablePathField, WindowTitleField }.OfType<GeneratedStepFieldViewModel>();
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
         field => field.Descriptor.Id,
-        field => field.InputReferenceEditor!.Picker.ToBinding(),
+        field => WholeValueSource.UsesReference
+            ? new ResultBinding()
+            : field.InputReferenceEditor!.Picker.ToBinding(),
         StringComparer.Ordinal);
     public IEnumerable<string> ProcessNames { get; }
     public GeneratedProcessTargetContentViewModel ManualSourceContent { get; }
@@ -1889,6 +2164,7 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
         {
             if (_useProcessReference == value) return;
             _useProcessReference = value;
+            WholeValueSource.UsesReference = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UseProcessReference)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceOption)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSourceContent)));
@@ -1946,10 +2222,10 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
     }
 
     public StepProcessSelectorValue ToValue() => new(
-        JsonSerializer.SerializeToNode(UseProcessReference ? Picker.ToBinding() : new ResultBinding()),
-        UseProcessReference || _useExecutablePath ? string.Empty : ProcessName,
-        UseProcessReference || !_useExecutablePath ? string.Empty : _executablePath,
-        UseProcessReference ? string.Empty : WindowTitleContains);
+        JsonSerializer.SerializeToNode(WholeValueSource.ToBinding()),
+        _useExecutablePath ? string.Empty : ProcessName,
+        _useExecutablePath ? _executablePath : string.Empty,
+        WindowTitleContains);
 
     private static GeneratedStepFieldViewModel CreateNestedTextField(
         string key,
@@ -1976,6 +2252,9 @@ public sealed class GeneratedProcessTargetEditorViewModel : INotifyPropertyChang
 
     private void NestedFieldChanged(object? sender, PropertyChangedEventArgs args)
     {
+        if (args.PropertyName is not nameof(GeneratedStepFieldViewModel.InputText)
+            and not nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+            return;
         UseProcessReference = false;
         Changed?.Invoke();
     }

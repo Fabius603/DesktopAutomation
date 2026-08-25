@@ -16,14 +16,16 @@ public sealed record SourceStepItem(string StepId, string DisplayName, ResultTyp
 public sealed record EnumConditionOption(string Value, string DisplayName);
 public sealed record EditorChoiceOptionViewModel(string Value, string Label);
 
-public sealed class ConditionSelectionNode
+public sealed class ConditionSelectionNode : INotifyPropertyChanged
 {
+    private bool _isSelected;
+
     public ConditionSelectionNode(string displayName, IReadOnlyList<ConditionSelectionNode>? children = null,
         ICommand? selectCommand = null, string? secondaryText = null,
         string? description = null, PackIconMaterialKind? icon = null,
         bool isEnabled = true, bool isExpanded = false, string? sourceText = null,
         bool isSelected = false, string? valueText = null, string? fullValueText = null,
-        string? colorPreview = null)
+        string? colorPreview = null, string? selectionKey = null)
     {
         DisplayName = displayName;
         Children = children ?? [];
@@ -34,11 +36,14 @@ public sealed class ConditionSelectionNode
         IsEnabled = isEnabled;
         IsExpanded = isExpanded;
         SourceText = sourceText;
-        IsSelected = isSelected;
+        _isSelected = isSelected;
         ValueText = valueText;
         FullValueText = fullValueText;
         ColorPreview = colorPreview;
+        SelectionKey = selectionKey;
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string DisplayName { get; }
     public IReadOnlyList<ConditionSelectionNode> Children { get; }
@@ -50,7 +55,8 @@ public sealed class ConditionSelectionNode
     public bool IsEnabled { get; }
     public bool IsExpanded { get; }
     public string? SourceText { get; }
-    public bool IsSelected { get; }
+    public bool IsSelected => _isSelected;
+    public string? SelectionKey { get; }
     public string? ValueText { get; }
     public string? FullValueText { get; }
     public string? ColorPreview { get; }
@@ -61,6 +67,19 @@ public sealed class ConditionSelectionNode
     public bool HasFullValueText => !string.IsNullOrWhiteSpace(FullValueText);
     public bool HasColorPreview => !string.IsNullOrWhiteSpace(ColorPreview);
     public bool IsSelectable => IsEnabled && SelectCommand is not null;
+
+    public void UpdateSelection(string? selectionKey)
+    {
+        var isSelected = SelectionKey is not null
+                         && string.Equals(SelectionKey, selectionKey, StringComparison.Ordinal);
+        if (_isSelected != isSelected)
+        {
+            _isSelected = isSelected;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+        foreach (var child in Children)
+            child.UpdateSelection(selectionKey);
+    }
 }
 
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
@@ -282,7 +301,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             null,
             inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
                 JsonValue.Create(string.Empty), SourcePicker));
-        SourcePicker.PropertyChanged += (_, _) => SyncSourceFromPicker();
+        SourcePicker.ReferenceChanged += (_, _) => SyncSourceFromPicker();
         SelectionTree = BuildSelectionTree(sources, _availableVariables);
         owner.CollectionChanged += OnOwnerCollectionChanged;
         var firstSource = sources.FirstOrDefault();

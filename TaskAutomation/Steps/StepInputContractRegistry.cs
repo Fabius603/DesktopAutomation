@@ -101,10 +101,10 @@ public static class StepInputContractRegistry
 
     private static readonly Dictionary<Type, StepInputDescriptor[]> Contracts = new()
     {
-        [typeof(TemplateMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
-        [typeof(ColorDetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
-        [typeof(YOLODetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
-        [typeof(KeyPointMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), Optional("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(TemplateMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(ColorDetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(YOLODetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(KeyPointMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(PredictMovementStep)] = [Required("points", CollectionConsumptionMode.AllValues, Points)],
         [typeof(KlickOnPointStep)] = [Required("points", CollectionConsumptionMode.FirstValue, Points) with
         {
@@ -115,7 +115,7 @@ public static class StepInputContractRegistry
         {
             AllowedProviderIds = ReusableValueProviders,
             AllowsDirectValue = true
-        }],
+        }, OptionalReusable("origin", CollectionConsumptionMode.FirstValue, Points)],
         [typeof(DynamicRoiStep)] = [
             Required("bounds", CollectionConsumptionMode.FirstValue, Rectangles),
             Required("padding", CollectionConsumptionMode.FirstValue, Integer) with
@@ -138,12 +138,12 @@ public static class StepInputContractRegistry
             Required("image", CollectionConsumptionMode.NotApplicable, Image),
             OptionalReusable("detections", CollectionConsumptionMode.AllValues, Detections, Rectangles, Points),
             OptionalReusable("text", CollectionConsumptionMode.AllValues, DisplayableText)],
-        [typeof(ActiveProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(StartProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(TerminateProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(FocusProcessStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(ActiveWindowStep)] = [Optional("process", CollectionConsumptionMode.NotApplicable, Process)],
-        [typeof(PointComparisonStep)] = [Optional("points", CollectionConsumptionMode.AllValues, Points)],
+        [typeof(ActiveProcessStep)] = [OptionalReusable("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(StartProcessStep)] = [OptionalReusable("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(TerminateProcessStep)] = [OptionalReusable("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(FocusProcessStep)] = [OptionalReusable("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(ActiveWindowStep)] = [OptionalReusable("process", CollectionConsumptionMode.NotApplicable, Process)],
+        [typeof(PointComparisonStep)] = [OptionalReusable("points", CollectionConsumptionMode.AllValues, Points)],
         [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText) with
         {
             AllowedProviderIds = ReusableValueProviders,

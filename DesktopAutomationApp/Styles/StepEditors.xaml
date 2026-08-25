@@ -144,6 +144,13 @@
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
+    <Style x:Key="CompoundValueSourceGroup" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="7"/>
+        <Setter Property="Padding" Value="10,8"/>
+    </Style>
     <Style x:Key="GeometrySectionHeader" TargetType="TextBlock">
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="FontSize" Value="11"/>
@@ -159,6 +166,12 @@
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+    </Style>
+    <Style x:Key="GeometryInlineFieldLabel" TargetType="TextBlock"
+           BasedOn="{StaticResource GeometryFieldLabel}">
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     <Style x:Key="GeometryNumberInput" TargetType="TextBox"
            BasedOn="{StaticResource {x:Type TextBox}}">

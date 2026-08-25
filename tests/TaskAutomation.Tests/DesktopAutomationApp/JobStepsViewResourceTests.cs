@@ -3,6 +3,88 @@ namespace TaskAutomation.Tests.DesktopAutomationApp;
 public sealed class JobStepsViewResourceTests
 {
     [Fact]
+    public void WholeValueEditors_PlaceSourceActionAfterGroupedValue()
+    {
+        var root = RepositoryRoot();
+        var selectorXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedWholeValueSourceSelector.xaml"));
+        var generatedEditorXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedStepEditor.xaml"));
+        var roiXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Roi", "RoiEditor.xaml"));
+        var pointEntryXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Analysis",
+            "PointEntryEditor.xaml"));
+        var stylesXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Styles", "StepEditors.xaml"));
+
+        Assert.DoesNotContain("<CheckBox", selectorXaml);
+        Assert.DoesNotContain("ValueReferencePicker", selectorXaml);
+        Assert.Contains("Ui.Job.StepInput.Source.WholeValueToolTip", selectorXaml);
+        Assert.Contains("UseIndividualValuesCommand", selectorXaml);
+        Assert.Contains("DataContext=\"{Binding WholeValueSource}\"", generatedEditorXaml);
+        Assert.Contains("DataContext=\"{Binding WholeValueSource.Picker}\"", generatedEditorXaml);
+        Assert.Contains("ElementName=ProcessTargetValueHost", generatedEditorXaml);
+        Assert.Contains("ElementName=ScreenPointValueHost", generatedEditorXaml);
+        Assert.Contains("ElementName=PointPairValueHost", generatedEditorXaml);
+        Assert.Contains("CompoundValueSourceGroup", generatedEditorXaml);
+        Assert.Contains("x:Key=\"CompoundValueSourceGroup\"", stylesXaml);
+
+        var processTemplateIndex = generatedEditorXaml.IndexOf(
+            "<DataTemplate x:Key=\"ProcessTargetFieldTemplate\">", StringComparison.Ordinal);
+        var processGroupIndex = generatedEditorXaml.IndexOf(
+            "Style=\"{StaticResource CompoundValueSourceGroup}\"", processTemplateIndex, StringComparison.Ordinal);
+        var processCriteriaIndex = generatedEditorXaml.IndexOf(
+            "Content=\"{Binding ProcessTargetEditor.ManualSourceContent}\"", processGroupIndex, StringComparison.Ordinal);
+        var processSourceIndex = generatedEditorXaml.IndexOf(
+            "<generated:GeneratedWholeValueSourceSelector", processCriteriaIndex, StringComparison.Ordinal);
+        Assert.True(processTemplateIndex >= 0 && processTemplateIndex < processGroupIndex);
+        Assert.True(processGroupIndex < processCriteriaIndex && processCriteriaIndex < processSourceIndex);
+
+        var pointGroupIndex = pointEntryXaml.IndexOf("CompoundValueSourceGroup", StringComparison.Ordinal);
+        var pointValuesIndex = pointEntryXaml.IndexOf("ResponsiveGeometryPanel", StringComparison.Ordinal);
+        var pointSourceIndex = pointEntryXaml.IndexOf(
+            "<generated:GeneratedWholeValueSourceSelector", StringComparison.Ordinal);
+        Assert.True(pointGroupIndex >= 0 && pointGroupIndex < pointValuesIndex);
+        Assert.True(pointValuesIndex < pointSourceIndex);
+        Assert.Contains(
+            "Visibility=\"{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root",
+            pointEntryXaml);
+
+        var enableIndex = roiXaml.IndexOf("Ui.Step.Settings.EnableROI", StringComparison.Ordinal);
+        var valuesIndex = roiXaml.IndexOf("WholeValueSource.ShowsIndividualValues", StringComparison.Ordinal);
+        var pickerIndex = roiXaml.IndexOf("WholeValueSource.Picker", StringComparison.Ordinal);
+        var wholeSourceIndex = roiXaml.IndexOf("GeneratedWholeValueSourceSelector", StringComparison.Ordinal);
+        var captureIndex = roiXaml.IndexOf("Ui.Step.Settings.Capture", StringComparison.Ordinal);
+        Assert.True(enableIndex >= 0 && enableIndex < valuesIndex);
+        Assert.True(valuesIndex < pickerIndex && pickerIndex < wholeSourceIndex);
+        Assert.True(wholeSourceIndex < captureIndex);
+        Assert.Contains("CompoundValueSourceGroup", roiXaml);
+        Assert.Contains(
+            "Visibility=\"{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root",
+            roiXaml);
+        Assert.DoesNotContain(
+            "<Grid Visibility=\"{Binding IsRoiEnabled, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}\">",
+            roiXaml);
+    }
+
+    [Fact]
+    public void ResultPathPicker_ClosesWhenHiddenAndKeepsItsNormalHeight()
+    {
+        var root = RepositoryRoot();
+        var xaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml"));
+        var code = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml.cs"));
+
+        Assert.Contains("Height=\"34\" MaxHeight=\"34\" VerticalAlignment=\"Top\"", xaml);
+        Assert.Contains("IsVisibleChanged += OnIsVisibleChanged", code);
+        Assert.Contains("if (e.NewValue is false) SelectionPopup.IsOpen = false;", code);
+    }
+
+    [Fact]
     public void ChoiceGroupEditor_UsesInstanceLocalArbitrarySelection()
     {
         var root = RepositoryRoot();

@@ -64,7 +64,8 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         var draft = new StepDraft(Descriptor.TypeId);
         draft.Values[PointsSourceFieldId] = JsonSerializer.SerializeToNode(s.PointsSource);
         draft.Values[OriginFieldId] = JsonSerializer.SerializeToNode(new StepScreenPointSelectionValue(
-            s.OriginMonitorIndex, s.OriginX, s.OriginY, s.OriginCoordinateSpace));
+            s.OriginMonitorIndex, s.OriginX, s.OriginY, s.OriginCoordinateSpace,
+            JsonSerializer.SerializeToNode(s.OriginSource)));
         draft.Values[ClickTypeFieldId] = JsonValue.Create(s.ClickType);
         draft.Values[MovementFactorXFieldId] = JsonValue.Create(s.EffectiveMovementFactorX);
         draft.Values[MovementFactorYFieldId] = JsonValue.Create(s.EffectiveMovementFactorY);
@@ -83,6 +84,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         s.OriginMonitorIndex = origin.MonitorIndex;
         s.OriginPoint = origin.Position;
         s.OriginCoordinateSpace = origin.CoordinateSpace;
+        s.OriginSource = ReadBinding(origin.PointSource);
         s.LegacyMovementFactor = null;
         s.MovementFactorX = DefinitionValueReader.Number(draft, MovementFactorXFieldId);
         s.MovementFactorY = DefinitionValueReader.Number(draft, MovementFactorYFieldId);
@@ -104,6 +106,12 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
     {
         try { return draft.Values.GetValueOrDefault(OriginFieldId)?.Deserialize<StepScreenPointSelectionValue>() ?? new(0, 0, 0, KlickOnPoint3DSettings.MonitorLocalCoordinates); }
         catch (JsonException) { return new(0, 0, 0, KlickOnPoint3DSettings.MonitorLocalCoordinates); }
+    }
+
+    private static ResultBinding ReadBinding(JsonNode? value)
+    {
+        try { return value?.Deserialize<ResultBinding>() ?? new ResultBinding(); }
+        catch (JsonException) { return new ResultBinding(); }
     }
 
     private static StepValidationIssue Invalid(string fieldId) => new("StepValidation.Invalid", fieldId);

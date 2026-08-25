@@ -276,11 +276,11 @@ public sealed class JobStepDetailsProvider
         if (string.Equals(field.EditorHint, StepEditorHints.WindowsCapabilityPicker, StringComparison.Ordinal))
             return FormatWindowsCapabilitySelection(value);
         if (string.Equals(field.EditorHint, StepEditorHints.ScreenPointPicker, StringComparison.Ordinal))
-            return FormatScreenPoint(value);
+            return FormatScreenPoint(value, steps, variables, providerSources);
         if (string.Equals(field.EditorHint, StepEditorHints.UserChoiceOptions, StringComparison.Ordinal))
             return FormatUserChoiceOptions(value);
         if (string.Equals(field.EditorHint, StepEditorHints.PointEntryList, StringComparison.Ordinal))
-            return FormatPointEntries(value);
+            return FormatPointEntries(value, steps, variables, providerSources);
         if (string.Equals(field.EditorHint, StepEditorHints.AxisExpressionList, StringComparison.Ordinal))
             return FormatAxisExpressions(value);
         if (field.ValueKind == StepValueKind.ResultBinding)
@@ -345,13 +345,20 @@ public sealed class JobStepDetailsProvider
         return false;
     }
 
-    private static string FormatScreenPoint(JsonNode value)
+    private static string FormatScreenPoint(
+        JsonNode value,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
         try
         {
             var point = value.Deserialize<StepScreenPointSelectionValue>();
-            return point is null ? value.ToJsonString() : Loc.Format(
-                "Ui.Step.Generated.ScreenPoint", point.MonitorIndex + 1, point.X, point.Y);
+            if (point is null) return value.ToJsonString();
+            var binding = point.PointSource?.Deserialize<ResultBinding>();
+            return binding?.IsConfigured == true
+                ? FormatBinding(binding, steps, variables, providerSources)
+                : Loc.Format("Ui.Step.Generated.ScreenPoint", point.MonitorIndex + 1, point.X, point.Y);
         }
         catch (JsonException) { return value.ToJsonString(); }
     }
@@ -366,12 +373,22 @@ public sealed class JobStepDetailsProvider
         catch (JsonException) { return value.ToJsonString(); }
     }
 
-    private static string FormatPointEntries(JsonNode value)
+    private static string FormatPointEntries(
+        JsonNode value,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
         try
         {
             var points = value.Deserialize<List<StepPointEntryValue>>() ?? [];
-            return Loc.Format("Ui.Step.Generated.PointCount", points.Count);
+            return string.Join(", ", points.Select(point =>
+            {
+                var binding = point.PointsSource?.Deserialize<ResultBinding>();
+                return point.Source != "Manual" && binding?.IsConfigured == true
+                    ? FormatBinding(binding, steps, variables, providerSources)
+                    : $"({point.ManualX.ToString(CultureInfo.CurrentCulture)}, {point.ManualY.ToString(CultureInfo.CurrentCulture)})";
+            }));
         }
         catch (JsonException) { return value.ToJsonString(); }
     }
