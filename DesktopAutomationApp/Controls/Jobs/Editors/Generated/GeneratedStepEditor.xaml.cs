@@ -8,7 +8,7 @@ public partial class GeneratedStepEditor : UserControl
 {
     public GeneratedStepEditor() => InitializeComponent();
 
-    private void OpenValueSourceMenu_Click(object sender, RoutedEventArgs e)
+    private void OpenButtonContextMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { ContextMenu: { } menu } button) return;
         menu.PlacementTarget = button;
@@ -28,6 +28,7 @@ public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
         var key = field switch
         {
             { UsesInputReference: true } when !IgnoreInputReference => "InputReferenceFieldTemplate",
+            { UsesSingleLineText: true } => "SingleLineTextFieldTemplate",
             { UsesEmojiText: true } => "EmojiTextFieldTemplate",
             { UsesMultilineTextInput: true } => "MultilineTextFieldTemplate",
             { IsBoolean: true } => "BooleanFieldTemplate",

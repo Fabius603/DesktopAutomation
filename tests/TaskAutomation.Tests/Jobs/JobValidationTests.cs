@@ -7,6 +7,121 @@ namespace TaskAutomation.Tests.Jobs;
 public sealed class JobValidationTests
 {
     [Fact]
+    public void ValidateJob_RejectsInvalidKnownLocalValue()
+    {
+        var local = new LocalValue
+        {
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(-1)
+        };
+        var step = new TimeoutStep();
+        step.Inputs[TimeoutStepDefinition.DelayFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = local.Id.ToString("D")
+        };
+
+        var result = JobValidation.ValidateJob(new Job { Steps = [step], LocalValues = [local] });
+
+        Assert.False(result.IsValid);
+        Assert.False(Assert.Single(result.Steps).IsValid);
+    }
+
+    [Fact]
+    public void ValidateJob_AcceptsCompatibleVariableSubproperty()
+    {
+        var rectangle = new JobVariable
+        {
+            Name = "Bereich",
+            ValueKind = ResultValueKind.Rectangle,
+            Value = System.Text.Json.JsonSerializer.SerializeToNode(
+                new TaskAutomation.Contracts.Geometry.PixelRegion(250, 20, 30, 40))
+        };
+        var step = new TimeoutStep();
+        step.Inputs[TimeoutStepDefinition.DelayFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = rectangle.Id.ToString("D"),
+            ValuePath = "X"
+        };
+
+        var result = JobValidation.ValidateJob(new Job { Steps = [step], Variables = [rectangle] });
+
+        Assert.True(result.IsValid, Assert.Single(result.Steps).Error);
+    }
+
+    [Fact]
+    public void ValidateJob_RejectsMissingEmbeddedProcessReference()
+    {
+        var step = new ActiveProcessStep
+        {
+            Settings = new()
+            {
+                Target = new()
+                {
+                    ProcessSource = new ResultBinding
+                    {
+                        ProviderId = ValueProviderIds.JobVariable,
+                        SourceId = Guid.NewGuid().ToString("D")
+                    }
+                }
+            }
+        };
+
+        var result = JobValidation.ValidateJob(new Job { Steps = [step] });
+
+        Assert.False(result.IsValid);
+        Assert.Contains("nicht vorhandene Wertquelle", Assert.Single(result.Steps).Error);
+    }
+
+    [Fact]
+    public void ValidateJob_RejectsStoredValueWhosePayloadDoesNotMatchItsDeclaredType()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Delay",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create("not-an-integer")
+        };
+        var step = new TimeoutStep();
+        step.Inputs[TimeoutStepDefinition.DelayFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        };
+
+        var result = JobValidation.ValidateJob(new Job { Steps = [step], Variables = [variable] });
+
+        Assert.False(result.IsValid);
+        Assert.Contains("keinen gültigen Wert", Assert.Single(result.Steps).Error);
+    }
+
+    [Fact]
+    public void ValidateJob_IgnoresReferencesInInactiveFields()
+    {
+        var step = new StartProcessStep
+        {
+            Settings = new()
+            {
+                Action = StartProcessAction.Start,
+                ExecutablePath = "notepad.exe",
+                Target = new()
+                {
+                    ProcessSource = new ResultBinding
+                    {
+                        ProviderId = ValueProviderIds.JobVariable,
+                        SourceId = Guid.NewGuid().ToString("D")
+                    }
+                }
+            }
+        };
+
+        var result = JobValidation.ValidateJob(new Job { Steps = [step] });
+
+        Assert.True(result.IsValid, Assert.Single(result.Steps).Error);
+    }
+
+    [Fact]
     public void ValidateCandidate_AcceptsDynamicRoiPaddingFromIntegerVariable()
     {
         var padding = new JobVariable

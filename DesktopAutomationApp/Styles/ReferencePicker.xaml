@@ -35,7 +35,8 @@
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="FieldBorder" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                            <Setter TargetName="FieldBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+                            <Setter TargetName="FieldBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                            <Setter TargetName="FieldBorder" Property="BorderThickness" Value="2"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="FieldBorder" Property="Opacity" Value="0.72"/>

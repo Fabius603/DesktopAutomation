@@ -122,14 +122,16 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
             var name = DefinitionValueReader.String(draft, NewNameFieldId);
             if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
                 || !string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal))
-                return [new("StepValidation.Invalid", NewNameFieldId)];
+                return [new("StepValidation.Invalid", NewNameFieldId,
+                    DependencyFieldIds: [OperationFieldId, NewNameFieldId])];
         }
         if (operation == FileSystemOperation.Delete)
         {
             var filter = DefinitionValueReader.String(draft, FilterFieldId);
             if (filter.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Any(value => value.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) >= 0))
-                return [new("StepValidation.Invalid", FilterFieldId)];
+                return [new("StepValidation.Invalid", FilterFieldId,
+                    DependencyFieldIds: [OperationFieldId, FilterFieldId])];
         }
         return [];
     }

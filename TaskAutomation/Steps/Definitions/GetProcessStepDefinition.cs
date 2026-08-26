@@ -78,7 +78,8 @@ public sealed class GetProcessStepDefinition : StepDefinition<GetProcessStep>
     {
         if (string.IsNullOrWhiteSpace(DefinitionValueReader.String(draft, ProcessNameFieldId))
             && string.IsNullOrWhiteSpace(DefinitionValueReader.String(draft, ExecutablePathFieldId)))
-            return [new("StepValidation.Invalid", null)];
+            return [new("StepValidation.Invalid", null,
+                DependencyFieldIds: [ProcessNameFieldId, ExecutablePathFieldId])];
         return [];
     }
 }

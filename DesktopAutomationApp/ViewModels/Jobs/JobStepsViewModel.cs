@@ -896,14 +896,10 @@ namespace DesktopAutomationApp.ViewModels
         private void UpdateVariableUsage(JobVariableEditorViewModel editor)
         {
             var allSteps = AllSteps().ToArray();
-            var usages = ValueReferenceUsageInspector.Find(
+            var logicalUsages = ValueReferenceUsageInspector.FindLogical(
                 new Job { StartSteps = _startSteps.ToList(), Steps = _runSteps.ToList(), EndSteps = _endSteps.ToList() },
                 ValueProviderIds.JobVariable,
                 editor.Id.ToString("D"));
-            var logicalUsages = usages
-                .GroupBy(usage => (usage.Step.Id, Path: NormalizeVariableUsagePath(usage.Path)))
-                .Select(group => group.OrderByDescending(usage => usage.Path.Contains(".Inputs[", StringComparison.Ordinal)).First())
-                .ToArray();
             var usageItems = logicalUsages
                 .Select(usage => new JobVariableUsageViewModel(
                     usage.Step,
@@ -914,7 +910,7 @@ namespace DesktopAutomationApp.ViewModels
             var summary = string.Join(Environment.NewLine, usageItems
                 .Select(usage => usage.StepName)
                 .Distinct(StringComparer.CurrentCultureIgnoreCase));
-            editor.SetUsage(logicalUsages.Length, summary, usageItems);
+            editor.SetUsage(logicalUsages.Count, summary, usageItems);
         }
 
         private void RefreshVariableUsages()
@@ -1043,18 +1039,6 @@ namespace DesktopAutomationApp.ViewModels
 
             var leaf = usage.Path.Split('.', '[', ']').LastOrDefault(part => !string.IsNullOrWhiteSpace(part));
             return StepLocalization.PropertyPath(leaf ?? usage.Path);
-        }
-
-        private static string NormalizeVariableUsagePath(string path)
-        {
-            var inputIndex = path.IndexOf(".Inputs[", StringComparison.Ordinal);
-            var settingsIndex = path.IndexOf(".Settings.", StringComparison.Ordinal);
-            var logicalPath = inputIndex >= 0
-                ? path[(inputIndex + ".Inputs[".Length)..]
-                : settingsIndex >= 0
-                    ? path[(settingsIndex + ".Settings.".Length)..]
-                    : path;
-            return new string(logicalPath.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
         }
 
         private void NavigateToVariableUsage(JobVariableUsageViewModel? usage)

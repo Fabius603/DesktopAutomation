@@ -6,43 +6,61 @@ namespace TaskAutomation.Steps.Definitions;
 
 internal static class StepDescriptorDraftValidator
 {
-    public static IReadOnlyList<StepValidationIssue> Validate(StepDescriptor descriptor, StepDraft draft)
+    public static IReadOnlyList<StepValidationIssue> Validate(
+        StepDescriptor descriptor,
+        StepDraft draft,
+        StepValidationContext context)
     {
+        var issues = new List<StepValidationIssue>();
         var fieldsById = descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
         var activeFields = StepEditorActivity.GetActiveFieldIds(
             descriptor,
-            fieldId => TryGetStringValue(draft, fieldId, out var value) ? value : null,
-            fieldId => IsVisible(fieldsById[fieldId], draft));
+            fieldId => context.IsResolved(fieldId) && TryGetStringValue(draft, fieldId, out var value) ? value : null,
+            fieldId => CanDetermineVisibility(fieldsById[fieldId], context)
+                       && IsVisible(fieldsById[fieldId], draft));
         foreach (var field in descriptor.Fields.Where(field =>
                      activeFields.Contains(field.Id) && IsVisible(field, draft)))
         {
+            if (!context.IsResolved(field.Id) || !CanDetermineVisibility(field, context))
+                continue;
             draft.Values.TryGetValue(field.Id, out var value);
             if (field.Required && IsEmpty(field, value))
-                return [new("StepValidation.Required", field.Id)];
+            {
+                issues.Add(new("StepValidation.Required", field.Id));
+                continue;
+            }
             if (value is null)
                 continue;
             if (!TryReadComparable(field.ValueKind, value, out var number, out var text, out var length))
-                return [new(TypeError(field.ValueKind), field.Id)];
+            {
+                issues.Add(new(TypeError(field.ValueKind), field.Id));
+                continue;
+            }
 
             var constraints = field.Constraints;
             if (constraints?.AllowedValues is { Count: > 0 }
                 && (text is null || !constraints.AllowedValues.Contains(text, StringComparer.Ordinal)))
-                return [new("StepValidation.Invalid", field.Id)];
+                issues.Add(new("StepValidation.Invalid", field.Id));
             if (constraints?.Minimum is { } minimum && number is { } numeric && numeric < minimum)
-                return [new("StepValidation.Minimum", field.Id,
-                    Arguments: new Dictionary<string, object?> { ["minimum"] = minimum })];
+                issues.Add(new("StepValidation.Minimum", field.Id,
+                    Arguments: new Dictionary<string, object?> { ["minimum"] = minimum }));
             if (constraints?.Maximum is { } maximum && number is { } numericMaximum && numericMaximum > maximum)
-                return [new("StepValidation.Maximum", field.Id,
-                    Arguments: new Dictionary<string, object?> { ["maximum"] = maximum })];
+                issues.Add(new("StepValidation.Maximum", field.Id,
+                    Arguments: new Dictionary<string, object?> { ["maximum"] = maximum }));
             if (constraints?.MinimumLength is { } minimumLength && length is { } actualMinimum && actualMinimum < minimumLength)
-                return [new("StepValidation.Minimum", field.Id,
-                    Arguments: new Dictionary<string, object?> { ["minimum"] = minimumLength })];
+                issues.Add(new("StepValidation.Minimum", field.Id,
+                    Arguments: new Dictionary<string, object?> { ["minimum"] = minimumLength }));
             if (constraints?.MaximumLength is { } maximumLength && length is { } actualMaximum && actualMaximum > maximumLength)
-                return [new("StepValidation.Maximum", field.Id,
-                    Arguments: new Dictionary<string, object?> { ["maximum"] = maximumLength })];
+                issues.Add(new("StepValidation.Maximum", field.Id,
+                    Arguments: new Dictionary<string, object?> { ["maximum"] = maximumLength }));
         }
-        return [];
+        return issues;
     }
+
+    private static bool CanDetermineVisibility(StepFieldDescriptor field, StepValidationContext context) =>
+        (field.VisibleWhen is null || context.IsResolved(field.VisibleWhen.FieldId))
+        && (field.VisibleWhenAll is not { Count: > 0 } rules
+            || rules.All(rule => context.IsResolved(rule.FieldId)));
 
     internal static bool IsVisible(StepFieldDescriptor field, StepDraft draft) =>
         (field.VisibleWhen is null || RuleMatches(field.VisibleWhen, draft))

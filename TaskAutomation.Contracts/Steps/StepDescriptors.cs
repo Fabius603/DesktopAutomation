@@ -29,10 +29,12 @@ public enum StepKnownDirectory { Documents, Pictures, Videos, Desktop }
 public enum StepFilePickerKind { Any, Image, Script, Executable }
 public enum StepSummaryValueFormat { Default, ShortText, DurationMilliseconds, FileName, BooleanBadge }
 public enum StepValidationSeverity { Error, Warning }
+public enum StepValidationPhase { Authoring, Runtime }
 public enum StepWindowsCapabilityPickerMode { StateQuery, SettingChange }
 
 public static class StepEditorHints
 {
+    public const string SingleLineText = "single-line-text";
     public const string MonitorPicker = "monitor-picker";
     public const string FilePicker = "file-picker";
     public const string DirectoryPicker = "directory-picker";
@@ -61,7 +63,7 @@ public static class StepEditorHints
 
     private static readonly HashSet<string> Known =
     [
-        MonitorPicker, FilePicker, DirectoryPicker, FileOrFolderPicker, CameraPicker, VisualOverlay,
+        SingleLineText, MonitorPicker, FilePicker, DirectoryPicker, FileOrFolderPicker, CameraPicker, VisualOverlay,
         ProcessNameSuggestions, ExecutablePathSuggestions, StartProgramPicker, MacroPicker, JobPicker,
         ProcessTargetPicker, ExecutableProcessTargetPicker, ResultBindingPicker, ValueReferencePicker, Percentage, RoiPicker,
         YoloPicker, ConditionEditor, WindowsCapabilityPicker, ScreenPointPicker, UserChoiceOptions,
@@ -276,4 +278,32 @@ public sealed record StepValidationIssue(
     string Code,
     string? FieldId,
     StepValidationSeverity Severity = StepValidationSeverity.Error,
-    IReadOnlyDictionary<string, object?>? Arguments = null);
+    IReadOnlyDictionary<string, object?>? Arguments = null,
+    IReadOnlyList<string>? DependencyFieldIds = null);
+
+public sealed record StepValidationContext(
+    StepValidationPhase Phase,
+    IReadOnlySet<string> UnresolvedPaths)
+{
+    public static StepValidationContext FullyResolved(StepValidationPhase phase = StepValidationPhase.Authoring) =>
+        new(phase, new HashSet<string>(StringComparer.Ordinal));
+
+    public bool HasUnresolvedValues => UnresolvedPaths.Count > 0;
+
+    public bool IsResolved(string fieldId) =>
+        !UnresolvedPaths.Any(path =>
+            string.Equals(path, fieldId, StringComparison.Ordinal)
+            || path.StartsWith(fieldId + ".", StringComparison.Ordinal));
+
+    public bool CanEvaluate(StepValidationIssue issue)
+    {
+        var dependencies = issue.DependencyFieldIds is { Count: > 0 }
+            ? issue.DependencyFieldIds
+            : issue.FieldId is { Length: > 0 } fieldId
+                ? [fieldId]
+                : null;
+        return dependencies is null
+            ? !HasUnresolvedValues
+            : dependencies.All(IsResolved);
+    }
+}

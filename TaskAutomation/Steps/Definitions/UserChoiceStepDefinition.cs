@@ -16,9 +16,10 @@ public sealed class UserChoiceStepDefinition : StepDefinition<UserChoiceStep>
     public override StepDescriptor Descriptor { get; } = new(
         "user_choice", "AblaufSteuern", "Step.Type.UserChoice", "Step.Description.UserChoice", "user-choice",
         [
-            new(TitleFieldId, "Ui.UserChoice.Title", StepValueKind.Text, DefaultValue: JsonValue.Create(""), Order: 0),
-            new(QuestionFieldId, "Ui.UserChoice.Question", StepValueKind.MultilineText, DefaultValue: JsonValue.Create(""), EditorHint: StepEditorHints.EmojiText, Order: 1),
-            new(DescriptionFieldId, "Ui.UserChoice.Description", StepValueKind.MultilineText, DefaultValue: JsonValue.Create(""), EditorHint: StepEditorHints.EmojiText, Order: 2),
+            new(TitleFieldId, "Ui.UserChoice.Title", StepValueKind.Text, DefaultValue: JsonValue.Create(""),
+                EditorHint: StepEditorHints.SingleLineText, Order: 0),
+            new(QuestionFieldId, "Ui.UserChoice.Question", StepValueKind.MultilineText, DefaultValue: JsonValue.Create(""), Order: 1),
+            new(DescriptionFieldId, "Ui.UserChoice.Description", StepValueKind.MultilineText, DefaultValue: JsonValue.Create(""), Order: 2),
             new(DesktopIndexFieldId, "Ui.Step.Settings.DesktopIndex", StepValueKind.Integer, DefaultValue: JsonValue.Create(0),
                 EditorHint: StepEditorHints.MonitorPicker, Constraints: new(Minimum: 0), Order: 3),
             new(OptionsFieldId, "Ui.UserChoice.Answers", StepValueKind.Collection, true,

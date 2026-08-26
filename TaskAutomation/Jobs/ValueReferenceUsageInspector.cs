@@ -20,6 +20,28 @@ public static class ValueReferenceUsageInspector
                         && string.Equals(usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase))
         .ToArray();
 
+    public static IReadOnlyList<ValueReferenceUsage> FindLogical(
+        Job job,
+        string providerId,
+        string sourceId) => FindLogical(job, [providerId], sourceId);
+
+    public static IReadOnlyList<ValueReferenceUsage> FindLogical(
+        Job job,
+        IReadOnlyCollection<string> providerIds,
+        string sourceId)
+    {
+        var acceptedProviders = providerIds.ToHashSet(StringComparer.Ordinal);
+        return Find(job)
+            .Where(usage => acceptedProviders.Contains(usage.Reference.ProviderId)
+                            && string.Equals(
+                                usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(usage => (usage.Step.Id, Path: NormalizeUsagePath(usage.Path)))
+            .Select(group => group
+                .OrderByDescending(usage => usage.Path.Contains(".Inputs[", StringComparison.Ordinal))
+                .First())
+            .ToArray();
+    }
+
     public static int Count(
         IEnumerable<JobStep> steps,
         string providerId,
@@ -33,6 +55,21 @@ public static class ValueReferenceUsageInspector
         var visited = new HashSet<object>(ReferenceEqualityComparer.Instance);
         Visit(step, step.GetType().Name, result, visited);
         return result;
+    }
+
+    private static string NormalizeUsagePath(string path)
+    {
+        var inputIndex = path.IndexOf(".Inputs[", StringComparison.Ordinal);
+        var settingsIndex = path.IndexOf(".Settings.", StringComparison.Ordinal);
+        var logicalPath = inputIndex >= 0
+            ? path[(inputIndex + ".Inputs[".Length)..]
+            : settingsIndex >= 0
+                ? path[(settingsIndex + ".Settings.".Length)..]
+                : path;
+        return new string(logicalPath
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray());
     }
 
     private static void Visit(

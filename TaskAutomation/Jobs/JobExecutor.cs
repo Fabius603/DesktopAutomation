@@ -1823,10 +1823,9 @@ namespace TaskAutomation.Jobs
             out object? value,
             out bool wasExecuted)
         {
-            if (binding.HasProviderReference
-                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+            if (binding.HasProviderReference)
             {
-                var providerValue = results.ReadProvider(binding.ProviderId, binding.SourceId);
+                var providerValue = ValueReferenceResolver.Resolve(results, binding);
                 descriptor = providerValue.Descriptor?.ToResultProperty()!;
                 value = providerValue.Value;
                 wasExecuted = true;

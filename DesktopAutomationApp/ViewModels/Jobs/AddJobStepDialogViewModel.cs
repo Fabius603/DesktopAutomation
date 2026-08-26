@@ -757,9 +757,10 @@ namespace DesktopAutomationApp.ViewModels
             }
             var job = new Job { Steps = steps };
             var sourceId = variableId.ToString("D");
-            return ValueReferenceUsageInspector.Find(job).Count(usage =>
-                string.Equals(usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase)
-                && usage.Reference.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable);
+            return ValueReferenceUsageInspector.FindLogical(
+                job,
+                [ValueProviderIds.LocalValue, ValueProviderIds.JobVariable],
+                sourceId).Count;
         }
 
         private JobVariable DetachStepValue(JobVariable source, string stepName, string fieldName)

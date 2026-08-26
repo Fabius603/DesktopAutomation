@@ -145,8 +145,23 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
     private bool TryBuildStep(bool validate, out JobStep? step, out string? error)
     {
         var draft = _baseDraft.Clone();
+        var incompleteNodeLabel = Sections
+            .SelectMany(section => FindIncompleteReferenceLabels(section.Nodes))
+            .FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(incompleteNodeLabel))
+        {
+            error = Loc.Format("Ui.Step.Generated.Validation.Required", incompleteNodeLabel);
+            step = null;
+            return false;
+        }
         foreach (var field in Fields.Where(field => _editableFieldIds.Contains(field.Descriptor.Id)))
         {
+            if (field.IsVisible && CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
+            {
+                error = Loc.Format("Ui.Step.Generated.Validation.Required", field.Label);
+                step = null;
+                return false;
+            }
             if (!field.TryWriteValue(draft, out var inputError))
             {
                 error = inputError;
@@ -155,12 +170,12 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             }
         }
 
-        var referencedFields = Fields.Where(field => field.InputReferenceEditor is not null)
-            .Select(field => field.Descriptor.Id).ToHashSet(StringComparer.Ordinal);
+        var unresolvedPaths = GetUnresolvedAuthoringPaths();
         var issue = validate
-            ? _definition.ValidateDraft(draft)
-                .FirstOrDefault(candidate => candidate.Severity == StepValidationSeverity.Error
-                                             && (candidate.FieldId is null || !referencedFields.Contains(candidate.FieldId)))
+            ? _definition.ValidateDraft(
+                    draft,
+                    new StepValidationContext(StepValidationPhase.Authoring, unresolvedPaths))
+                .FirstOrDefault(candidate => candidate.Severity == StepValidationSeverity.Error)
             : null;
         if (issue is not null)
         {
@@ -192,6 +207,36 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private IReadOnlySet<string> GetUnresolvedAuthoringPaths()
+    {
+        var unresolved = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var field in Fields)
+        {
+            if (field.InputReferenceEditor is not null
+                && field.Descriptor.ValueKind != StepValueKind.ResultBinding
+                && field.UsesExternalInputReference)
+                unresolved.Add(field.Descriptor.Id);
+            if (field.WholeValueSource?.UsesReference == true)
+                unresolved.Add(field.Descriptor.Id);
+            foreach (var composite in CompositeInputEditors(field))
+                foreach (var (path, binding) in composite.InputBindings)
+                    if (binding.IsConfigured && !IsAuthoringResolved(binding))
+                        unresolved.Add(path);
+        }
+        return unresolved;
+    }
+
+    private static bool IsAuthoringResolved(ResultBinding binding)
+    {
+        if (binding.HasProviderReference
+            && !string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
+            return false;
+        if (binding.TryGetStepResult(out _))
+            return false;
+        return (binding.Members?.Values.All(IsAuthoringResolved) ?? true)
+               && (binding.Items?.All(IsAuthoringResolved) ?? true);
+    }
+
     private static IEnumerable<GeneratedStepPointFieldPairViewModel> FindPointPairs(
         IEnumerable<GeneratedStepEditorNodeViewModel> nodes)
     {
@@ -205,6 +250,31 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         }
     }
 
+    private static IEnumerable<string> FindIncompleteReferenceLabels(
+        IEnumerable<GeneratedStepEditorNodeViewModel> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (node is GeneratedStepFieldNodeViewModel { Field.IsVisible: true } fieldNode
+                && IsIncomplete(fieldNode.Field))
+                yield return fieldNode.Field.Label;
+            if (node is GeneratedStepPointFieldPairViewModel { XField.IsVisible: true } pair)
+            {
+                if (pair.WholeValueSource is { UsesReference: true, Picker.IsConfigured: false })
+                    yield return pair.Label;
+                else
+                {
+                    if (IsIncomplete(pair.XField)) yield return pair.XField.Label;
+                    if (IsIncomplete(pair.YField)) yield return pair.YField.Label;
+                }
+            }
+            if (node is GeneratedStepChoiceGroupViewModel group)
+                foreach (var label in FindIncompleteReferenceLabels(
+                             group.Branches.SelectMany(branch => branch.Children)))
+                    yield return label;
+        }
+    }
+
     private static IEnumerable<IGeneratedCompositeInputEditor> CompositeInputEditors(GeneratedStepFieldViewModel field)
     {
         if (field.ProcessTargetEditor is IGeneratedCompositeInputEditor process) yield return process;
@@ -215,6 +285,39 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         if (field.UserChoiceOptionsEditor is IGeneratedCompositeInputEditor choices) yield return choices;
         if (field.VisualOverlayEditor is IGeneratedCompositeInputEditor overlay) yield return overlay;
     }
+
+    private static bool HasIncompleteReferenceSelection(IGeneratedCompositeInputEditor editor) => editor switch
+    {
+        GeneratedScreenPointEditorViewModel screenPoint => screenPoint.WholeValueSource.UsesReference
+            ? !screenPoint.WholeValueSource.Picker.IsConfigured
+            : IsIncomplete(screenPoint.MonitorField) || IsIncomplete(screenPoint.XField) || IsIncomplete(screenPoint.YField),
+        GeneratedUserChoiceOptionsEditorViewModel choices => choices.Options.Any(option =>
+            IsIncomplete(option.LabelField) || IsIncomplete(option.ValueField)),
+        GeneratedPointEntryListEditorViewModel points => points.Points.Any(point => point.WholeValueSource.UsesReference
+            ? !point.PointsSource.IsConfigured
+            : IsIncomplete(point.ManualXField) || IsIncomplete(point.ManualYField)),
+        GeneratedRoiEditorViewModel roi => roi.WholeValueSource.UsesReference
+            ? !roi.DetectionDynamicRoiSource.IsConfigured
+            : IsIncomplete(roi.XField) || IsIncomplete(roi.YField)
+              || IsIncomplete(roi.WidthField) || IsIncomplete(roi.HeightField),
+        GeneratedYoloEditorViewModel yolo => IsIncomplete(yolo.ModelField) || IsIncomplete(yolo.ClassField),
+        GeneratedProcessTargetEditorViewModel process => process.WholeValueSource.UsesReference
+            ? !process.Picker.IsConfigured
+            : IsIncomplete(process.ProcessNameField) || IsIncomplete(process.ExecutablePathField)
+              || IsIncomplete(process.WindowTitleField),
+        GeneratedVisualOverlayEditorViewModel overlay =>
+            overlay.OverlayDetectionRows.Any(row => IsIncomplete(row.SourceField))
+            || overlay.OverlayTextRows.Any(row =>
+                IsIncomplete(row.TextSourceField) || IsIncomplete(row.FontSizeField)
+                || IsIncomplete(row.FontColorField) || IsIncomplete(row.OpacityField)
+                || IsIncomplete(row.DesktopIndexField) || IsIncomplete(row.OffsetXField)
+                || IsIncomplete(row.OffsetYField) || IsIncomplete(row.DurationField)
+                || IsIncomplete(row.ClearOnJobEndField)),
+        _ => false
+    };
+
+    private static bool IsIncomplete(GeneratedStepFieldViewModel? field) =>
+        field is { ShowsInputSourcePicker: true, InputReferenceEditor.Picker.IsConfigured: false };
 
     private void OnFieldChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -733,6 +836,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool UsesUserChoiceOptions => Descriptor.EditorHint == StepEditorHints.UserChoiceOptions;
     public bool UsesPointEntryList => Descriptor.EditorHint == StepEditorHints.PointEntryList;
     public bool UsesAxisExpressionList => Descriptor.EditorHint == StepEditorHints.AxisExpressionList;
+    public bool UsesSingleLineText => Descriptor.EditorHint == StepEditorHints.SingleLineText;
     public bool UsesEmojiText => Descriptor.EditorHint == StepEditorHints.EmojiText;
     public bool UsesColorPicker => EffectiveValueKind == StepValueKind.Color;
     public bool UsesMultilineTextInput => EffectiveValueKind == StepValueKind.MultilineText && !UsesEmojiText;
@@ -741,7 +845,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         && !UsesVisualOverlay && !UsesRoiPicker && !UsesYoloPicker && !UsesConditionEditor
         && !UsesWindowsCapabilityPicker
         && !UsesScreenPointPicker && !UsesUserChoiceOptions && !UsesPointEntryList && !UsesAxisExpressionList
-        && !UsesEmojiText
+        && !UsesSingleLineText && !UsesEmojiText
         && !UsesSuggestions && !UsesSuggestionFilePicker && !UsesChoicePicker
         && !UsesProcessTargetPicker && !UsesEnumPicker && !UsesValueReferencePicker
         && !UsesPercentagePicker;
@@ -855,11 +959,17 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         {
             if (!InputReferenceEditor.Picker.IsConfigured)
             {
-                error = Loc.Format("Ui.Step.Generated.Validation.Required", Label);
-                return false;
+                if (Descriptor.Required && IsVisible)
+                {
+                    error = Loc.Format("Ui.Step.Generated.Validation.Required", Label);
+                    return false;
+                }
+                return true;
             }
-            if (InputReferenceEditor.Picker.IsStepValue
-                && Descriptor.ValueKind != StepValueKind.ResultBinding)
+            if (Descriptor.ValueKind == StepValueKind.ResultBinding)
+                draft.Values[Descriptor.Id] = JsonSerializer.SerializeToNode(
+                    InputReferenceEditor.Picker.ToBinding());
+            else if (InputReferenceEditor.Picker.IsStepValue)
                 draft.Values[Descriptor.Id] = CurrentDirectValue();
             return true;
         }
@@ -880,7 +990,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         }
         if (UsesValueReferencePicker && ResultBindingEditor is not null)
         {
-            if (Descriptor.Required && !ResultBindingEditor.Picker.IsConfigured)
+            if (Descriptor.Required && IsVisible && !ResultBindingEditor.Picker.IsConfigured)
             {
                 error = Loc.Format("Ui.Step.Generated.Validation.Required", Label);
                 return false;

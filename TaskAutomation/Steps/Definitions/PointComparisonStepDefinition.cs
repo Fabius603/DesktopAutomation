@@ -128,16 +128,18 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
     {
         var mode = Enum.Parse<PointComparisonMode>(DefinitionValueReader.String(draft, ModeFieldId));
         var points = ReadPoints(draft);
-        if (points.Count == 0 || points.Any(point => point.Source != "Manual" && !ReadBinding(point.PointsSource).IsConfigured)) return [Invalid(PointsFieldId)];
+        if (points.Count == 0 || points.Any(point => point.Source != "Manual" && !ReadBinding(point.PointsSource).IsConfigured))
+            return [Invalid(PointsFieldId, PointsFieldId)];
         if (mode != PointComparisonMode.Offset)
         {
             var expressions = ReadExpressions(draft);
             if (expressions.Count == 0 || expressions.Any(expression => expression.Axis is not ("X" or "Y")
-                    || !Enum.TryParse<PointAxisOperator>(expression.Operator, out _))) return [Invalid(ExpressionsFieldId)];
+                    || !Enum.TryParse<PointAxisOperator>(expression.Operator, out _)))
+                return [Invalid(ExpressionsFieldId, ModeFieldId, ExpressionsFieldId)];
         }
         else if (DefinitionValueReader.String(draft, ReferenceSourceFieldId) != "Manual"
                  && !DefinitionValueReader.Binding(draft, ReferencePointsFieldId).IsConfigured)
-            return [Invalid(ReferencePointsFieldId)];
+            return [Invalid(ReferencePointsFieldId, ModeFieldId, ReferenceSourceFieldId, ReferencePointsFieldId)];
         return [];
     }
 
@@ -164,5 +166,6 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
     {
         try { return draft.Values.GetValueOrDefault(ExpressionsFieldId)?.Deserialize<List<StepAxisExpressionValue>>() ?? []; } catch (JsonException) { return []; }
     }
-    private static StepValidationIssue Invalid(string fieldId) => new("StepValidation.Invalid", fieldId);
+    private static StepValidationIssue Invalid(string fieldId, params string[] dependencies) =>
+        new("StepValidation.Invalid", fieldId, DependencyFieldIds: dependencies);
 }

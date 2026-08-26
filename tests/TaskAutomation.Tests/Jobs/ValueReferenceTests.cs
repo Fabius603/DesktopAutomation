@@ -150,4 +150,55 @@ public sealed class ValueReferenceTests
         Assert.Same(step, usage.Step);
         Assert.Contains("delay", usage.Path);
     }
+
+    [Fact]
+    public void LogicalUsageInspector_DeduplicatesSettingsAndInputRepresentation()
+    {
+        var variableId = Guid.NewGuid().ToString("D");
+        var step = new ShowTextStep
+        {
+            Settings = new ShowTextSettings
+            {
+                TextResult = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.LocalValue,
+                    SourceId = variableId
+                }
+            }
+        };
+        step.Inputs["text_result"] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = variableId
+        };
+
+        var job = new Job { Steps = [step] };
+
+        Assert.Equal(2, ValueReferenceUsageInspector.Find(
+            job, ValueProviderIds.LocalValue, variableId).Count);
+        Assert.Single(ValueReferenceUsageInspector.FindLogical(
+            job, ValueProviderIds.LocalValue, variableId));
+    }
+
+    [Fact]
+    public void LogicalUsageInspector_KeepsDistinctInputsSeparate()
+    {
+        var variableId = Guid.NewGuid().ToString("D");
+        var step = new TimeoutStep();
+        step.Inputs["delay"] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = variableId
+        };
+        step.Inputs["fallback_delay"] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = variableId
+        };
+
+        var usages = ValueReferenceUsageInspector.FindLogical(
+            new Job { Steps = [step] }, ValueProviderIds.LocalValue, variableId);
+
+        Assert.Equal(2, usages.Count);
+    }
 }

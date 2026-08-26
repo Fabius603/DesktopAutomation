@@ -142,9 +142,11 @@ public sealed class StartProcessStepDefinition : StepDefinition<StartProcessStep
         if (string.Equals(action, nameof(StartProcessAction.Terminate), StringComparison.OrdinalIgnoreCase))
             return ProcessSelectorDraft.IsConfigured(draft, ProcessTargetFieldId)
                 ? []
-                : [new("StepValidation.Required", ProcessTargetFieldId)];
+                : [new("StepValidation.Required", ProcessTargetFieldId,
+                    DependencyFieldIds: [ActionFieldId, ProcessTargetFieldId])];
         if (!ExecutablePathResolver.CanResolve(DefinitionValueReader.String(draft, ExecutablePathFieldId)))
-            return [new("StepValidation.Required", ExecutablePathFieldId)];
+            return [new("StepValidation.Required", ExecutablePathFieldId,
+                DependencyFieldIds: [ActionFieldId, ExecutablePathFieldId])];
         return [];
     }
 }

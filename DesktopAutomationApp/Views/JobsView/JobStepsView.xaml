@@ -357,6 +357,23 @@
                     </MultiDataTrigger>
                 </Style.Triggers>
             </Style>
+            <Style x:Key="JobStepBreakpointButtonStyle"
+                   TargetType="Button"
+                   BasedOn="{StaticResource ButtonIcon}">
+                <Setter Property="Width" Value="24"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="Margin" Value="0,0,6,0"/>
+                <Setter Property="Visibility" Value="Hidden"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                 Value="True">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsBreakpoint}" Value="True">
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
             <DataTemplate x:Key="JobStepSectionCompactCardTemplate">
                 <Border Margin="0,0,0,6" Padding="12,9" CornerRadius="6" BorderThickness="1"
                         ToolTip="{Binding DebugDetails}">
@@ -380,7 +397,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Style="{StaticResource ButtonIcon}" Width="24" Height="24" Margin="0,0,6,0"
+                        <Button Grid.Column="0" Style="{StaticResource JobStepBreakpointButtonStyle}"
                                 Command="{Binding DataContext.ToggleBreakpointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CommandParameter="{Binding}" ToolTip="{loc:Translate Key=Ui.Job.Debug.ToggleBreakpoint}">
                             <iconPacks:PackIconMaterial Width="13" Height="13">
@@ -774,6 +791,7 @@
                                 <!-- Compact card: overview first, full template only on demand. -->
                                 <Grid Grid.Column="1" Grid.ColumnSpan="2" Margin="10,7,8,7">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
@@ -782,7 +800,15 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <Button Grid.Column="0" Style="{StaticResource JobStepBreakpointButtonStyle}"
+                                        Command="{Binding DataContext.ToggleBreakpointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" ToolTip="{loc:Translate Key=Ui.Job.Debug.ToggleBreakpoint}">
+                                    <iconPacks:PackIconMaterial Width="13" Height="13">
+                                        <iconPacks:PackIconMaterial.Style><Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="CircleOutline"/><Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/><Style.Triggers><DataTrigger Binding="{Binding IsBreakpoint}" Value="True"><Setter Property="Kind" Value="Circle"/><Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/></DataTrigger></Style.Triggers></Style></iconPacks:PackIconMaterial.Style>
+                                    </iconPacks:PackIconMaterial>
+                                </Button>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
                                             <Style.Triggers>
@@ -795,19 +821,11 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="0"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Style="{StaticResource ButtonIcon}" Width="24" Height="24" Margin="0,0,6,0"
-                                                Command="{Binding DataContext.ToggleBreakpointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}" ToolTip="{loc:Translate Key=Ui.Job.Debug.ToggleBreakpoint}">
-                                            <iconPacks:PackIconMaterial Width="13" Height="13">
-                                                <iconPacks:PackIconMaterial.Style><Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="CircleOutline"/><Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/><Style.Triggers><DataTrigger Binding="{Binding IsBreakpoint}" Value="True"><Setter Property="Kind" Value="Circle"/><Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/></DataTrigger></Style.Triggers></Style></iconPacks:PackIconMaterial.Style>
-                                            </iconPacks:PackIconMaterial>
-                                        </Button>
-                                        <TextBlock Grid.Column="1"
+                                        <TextBlock Grid.Column="0"
                                                    FontWeight="Bold"
                                                    FontSize="13"
                                                    VerticalAlignment="Center"
@@ -820,13 +838,13 @@
                                                 </MultiBinding>
                                             </TextBlock.Text>
                                         </TextBlock>
-                                        <TextBlock Grid.Column="3"
+                                        <TextBlock Grid.Column="2"
                                                    Text="{Binding Converter={StaticResource StepDisplayNameConverter}}"
                                                    FontWeight="SemiBold"
                                                    FontSize="14"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <iconPacks:PackIconMaterial Grid.Column="4" Kind="AlertCircleOutline"
+                                        <iconPacks:PackIconMaterial Grid.Column="3" Kind="AlertCircleOutline"
                                                                     Width="16" Height="16" Margin="8,0,0,0"
                                                                     Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
                                                                     ToolTip="{Binding ValidationError}"
@@ -845,7 +863,7 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1"
+                                <StackPanel Grid.Column="2"
                                             Orientation="Horizontal"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"

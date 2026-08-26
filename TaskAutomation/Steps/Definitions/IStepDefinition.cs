@@ -12,6 +12,7 @@ public interface IStepDefinition
     StepDraft CreateDraft(JobStep? step = null);
     JobStep ApplyDraft(StepDraft draft, JobStep? existingStep = null);
     IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft);
+    IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft, StepValidationContext context);
     IReadOnlyList<StepInputBinding> GetInputBindings(JobStep step);
 }
 
@@ -25,10 +26,21 @@ public abstract class StepDefinition<TStep> : IStepDefinition where TStep : JobS
     protected abstract void Apply(StepDraft draft, TStep step);
     protected abstract IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft);
 
-    public IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft)
+    public IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft) =>
+        ValidateDraft(draft, StepValidationContext.FullyResolved());
+
+    public IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft, StepValidationContext context)
     {
-        var descriptorIssues = StepDescriptorDraftValidator.Validate(Descriptor, draft);
-        return descriptorIssues.Count > 0 ? descriptorIssues : ValidateCustomDraft(draft);
+        ArgumentNullException.ThrowIfNull(context);
+        var descriptorIssues = StepDescriptorDraftValidator.Validate(Descriptor, draft, context);
+        var fieldsWithDescriptorErrors = descriptorIssues
+            .Where(issue => issue.Severity == StepValidationSeverity.Error && issue.FieldId is not null)
+            .Select(issue => issue.FieldId!)
+            .ToHashSet(StringComparer.Ordinal);
+        var customIssues = ValidateCustomDraft(draft)
+            .Where(context.CanEvaluate)
+            .Where(issue => issue.FieldId is null || !fieldsWithDescriptorErrors.Contains(issue.FieldId));
+        return descriptorIssues.Concat(customIssues).ToArray();
     }
 
     public IReadOnlyList<StepInputBinding> GetInputBindings(JobStep step) =>

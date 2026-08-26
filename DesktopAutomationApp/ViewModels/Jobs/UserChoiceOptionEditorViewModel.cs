@@ -81,7 +81,7 @@ public sealed class UserChoiceOptionEditorViewModel : INotifyPropertyChanged
     {
         var node = JsonValue.Create(value);
         var descriptor = new StepFieldDescriptor(key, string.Empty, StepValueKind.Text,
-            DefaultValue: node, EditorHint: StepEditorHints.EmojiText);
+            DefaultValue: node);
         return new GeneratedStepFieldViewModel(descriptor, node,
             inputReferenceEditor: resolver(key, StepValueKind.Text, node));
     }

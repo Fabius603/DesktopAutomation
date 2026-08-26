@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps.Definitions;
 
@@ -10,14 +11,14 @@ internal static class StepInputMaterializer
 {
     public static JobStep Materialize(JobStep source, IJobResultStore results, IStepDefinitionCatalog? catalog = null)
     {
-        if (source.Inputs is not { Count: > 0 }) return source;
         catalog ??= BuiltInStepDefinitions.Instance;
         if (!catalog.TryGetByType(source.GetType(), out var definition)) return source;
 
         var sourceDraft = definition.CreateDraft(source);
+        var activeFields = StepActiveFieldResolver.GetActiveFieldIds(definition, sourceDraft);
         var resolvedValues = new Dictionary<string, JsonNode?>(StringComparer.Ordinal);
         var changed = false;
-        foreach (var field in definition.Descriptor.Fields)
+        foreach (var field in definition.Descriptor.Fields.Where(field => activeFields.Contains(field.Id)))
         {
             if (!source.Inputs.TryGetValue(field.Id, out var reference) || !reference.IsConfigured) continue;
             JsonNode? resolved;
@@ -27,7 +28,7 @@ internal static class StepInputMaterializer
             }
             else
             {
-                resolved = ResolveNode(results, reference);
+                resolved = ResolveNode(results, reference, sourceDraft.Values.GetValueOrDefault(field.Id));
             }
             resolvedValues[field.Id] = resolved;
             changed |= !JsonNode.DeepEquals(sourceDraft.Values.GetValueOrDefault(field.Id), resolved);
@@ -37,61 +38,31 @@ internal static class StepInputMaterializer
             if (!reference.IsConfigured) continue;
             var separator = key.IndexOf('.');
             var fieldId = key[..separator];
-            if (!definition.Descriptor.Fields.Any(field => field.Id == fieldId)) continue;
+            if (!activeFields.Contains(fieldId)) continue;
             var root = (resolvedValues.GetValueOrDefault(fieldId)
                         ?? sourceDraft.Values.GetValueOrDefault(fieldId))?.DeepClone();
             if (root is null) continue;
-            var value = Resolve(results, reference);
-            var resolved = value switch
-            {
-                null => null,
-                JsonNode node => node.DeepClone(),
-                _ => JsonSerializer.SerializeToNode(value, value.GetType())
-            };
-            if (!TrySetNestedValue(root, key[(separator + 1)..], resolved)) continue;
+            var resolved = ValueReferenceResolver.ToJsonNode(Resolve(results, reference));
+            if (!StepDraftValueOverlay.TrySet(root, key[(separator + 1)..], resolved))
+                throw new InvalidOperationException($"Die Step-Eingabe '{key}' konnte nicht in den Zielwert eingesetzt werden.");
             resolvedValues[fieldId] = root;
             changed = true;
         }
-        if (!changed) return source;
-        var clone = Clone(source);
+        var clone = changed ? Clone(source) : source;
         var draft = definition.CreateDraft(clone);
         foreach (var (fieldId, value) in resolvedValues)
             draft.Values[fieldId] = value?.DeepClone();
-        return definition.ApplyDraft(draft, clone);
-    }
-
-    private static bool TrySetNestedValue(JsonNode root, string path, JsonNode? value)
-    {
-        var current = root;
-        var segments = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        for (var index = 0; index < segments.Length; index++)
-        {
-            if (current is JsonArray arrayValue
-                && int.TryParse(segments[index], out var arrayIndex)
-                && arrayIndex >= 0 && arrayIndex < arrayValue.Count)
-            {
-                if (index == segments.Length - 1)
-                {
-                    arrayValue[arrayIndex] = value?.DeepClone();
-                    return true;
-                }
-                if (arrayValue[arrayIndex] is not { } arrayChild) return false;
-                current = arrayChild;
-                continue;
-            }
-            if (current is not JsonObject objectValue) return false;
-            var property = objectValue.FirstOrDefault(candidate =>
-                Normalize(candidate.Key) == Normalize(segments[index])).Key;
-            if (string.IsNullOrEmpty(property)) return false;
-            if (index == segments.Length - 1)
-            {
-                objectValue[property] = value?.DeepClone();
-                return true;
-            }
-            if (objectValue[property] is not { } child) return false;
-            current = child;
-        }
-        return false;
+        var issues = definition.ValidateDraft(
+                draft,
+                StepValidationContext.FullyResolved(StepValidationPhase.Runtime))
+            .Where(candidate => candidate.Severity == StepValidationSeverity.Error)
+            .ToArray();
+        if (issues.Length > 0)
+            throw new InvalidOperationException(
+                $"Die aufgelösten Step-Eingaben sind ungültig: {string.Join(", ", issues.Select(issue => $"{issue.FieldId ?? definition.Descriptor.TypeId} ({issue.Code})"))}.");
+        var materialized = changed ? definition.ApplyDraft(draft, clone) : source;
+        ValidateRuntimeBindings(definition, materialized, results);
+        return materialized;
     }
 
     private static string Normalize(string value) =>
@@ -99,21 +70,10 @@ internal static class StepInputMaterializer
 
     private static object? Resolve(IJobResultStore results, ResultBinding reference)
     {
-        if (reference.HasProviderReference)
-        {
-            var read = results.ReadProvider(reference.ProviderId, reference.SourceId);
-            if (!read.IsSuccess)
-                throw new InvalidOperationException(read.Error ?? "Die Step-Eingabe konnte nicht aufgelöst werden.");
-            return read.Value;
-        }
-        if (!reference.TryGetStepResult(out var source))
-            throw new InvalidOperationException("Die Step-Eingabe enthält keine gültige Referenz.");
-        var result = results.GetRaw(source.StepId)
-            ?? throw new InvalidOperationException($"Der Quell-Step '{source.StepId}' wurde noch nicht ausgeführt.");
-        if (!StepResultMetadata.TryGetProperty(result.GetType(), source.PropertyId, source.PropertyId, out var property)
-            || !StepResultMetadata.TryReadValue(result, property, out var value))
-            throw new InvalidOperationException($"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
-        return value;
+        var read = ValueReferenceResolver.Resolve(results, reference);
+        if (!read.IsSuccess)
+            throw new InvalidOperationException(read.Error ?? "Die Step-Eingabe konnte nicht aufgelöst werden.");
+        return read.Value;
     }
 
     private static JsonNode? ResolveNode(
@@ -155,6 +115,23 @@ internal static class StepInputMaterializer
                 arrayValue[index] = ResolveNode(results, binding.Items[index], arrayValue[index]);
         }
         return resolved;
+    }
+
+    private static void ValidateRuntimeBindings(
+        IStepDefinition definition,
+        JobStep step,
+        IJobResultStore results)
+    {
+        foreach (var input in definition.GetInputBindings(step))
+        {
+            var contract = StepInputContractRegistry.Get(step.GetType(), input.ContractId)
+                ?? throw new InvalidOperationException($"Für die Eingabe '{input.ContractId}' fehlt der Backend-Vertrag.");
+            var resolved = ValueReferenceResolver.Resolve(results, input.Binding);
+            if (!resolved.IsSuccess)
+                throw new InvalidOperationException(resolved.Error ?? $"Die Eingabe '{input.ContractId}' konnte nicht aufgelöst werden.");
+            if (resolved.Descriptor is not { } descriptor || !contract.Accepts(descriptor.ToResultProperty()))
+                throw new InvalidOperationException($"Die aufgelöste Eingabe '{input.ContractId}' besitzt nicht den erwarteten Typ.");
+        }
     }
 
     private static JobStep Clone(JobStep source)

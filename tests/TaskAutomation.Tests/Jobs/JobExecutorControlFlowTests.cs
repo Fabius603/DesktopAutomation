@@ -78,6 +78,43 @@ public sealed class JobExecutorControlFlowTests
     }
 
     [Fact]
+    public async Task ExecuteJob_ConditionReadsSelectedVariableSubproperty()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Area",
+            ValueKind = ResultValueKind.Rectangle,
+            Value = System.Text.Json.JsonSerializer.SerializeToNode(
+                new TaskAutomation.Contracts.Geometry.PixelRegion(7, 8, 9, 10))
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            ValuePath = "X",
+            Operator = ConditionOperator.Equals,
+            ComparisonValue = "7"
+        };
+        var job = new Job
+        {
+            Name = "compound variable condition",
+            Variables = [variable],
+            Steps =
+            [
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("matched"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["matched"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
     public async Task ExecuteJob_ConditionComparesAgainstPrivateLocalValue()
     {
         var actual = new JobVariable

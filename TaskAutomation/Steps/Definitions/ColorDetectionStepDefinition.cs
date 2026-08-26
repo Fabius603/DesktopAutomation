@@ -89,7 +89,8 @@ public sealed class ColorDetectionStepDefinition : StepDefinition<ColorDetection
         if (color.Length != 7 || color[0] != '#' || !int.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out _))
             return [new("StepValidation.Invalid", ColorFieldId)];
         return DefinitionValueReader.Integer(draft, MaxSizeFieldId) < DefinitionValueReader.Integer(draft, MinSizeFieldId)
-            ? [new("StepValidation.Invalid", MaxSizeFieldId)] : [];
+            ? [new("StepValidation.Invalid", MaxSizeFieldId,
+                DependencyFieldIds: [MinSizeFieldId, MaxSizeFieldId])] : [];
     }
 
     private static StepFieldDescriptor PositiveInteger(string id, string labelKey, int defaultValue, int order) => new(

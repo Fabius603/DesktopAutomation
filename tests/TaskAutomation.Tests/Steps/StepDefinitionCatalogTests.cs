@@ -158,6 +158,41 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void PointComparison_CanBeCreatedWithoutOptionalReferenceSource()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "PointComparison";
+
+        Assert.True(viewModel.GeneratedEditor!.TryCreateStep(out var created),
+            viewModel.GeneratedEditor.ValidationError);
+        Assert.IsType<PointComparisonStep>(created);
+    }
+
+    [Fact]
+    public void PointComparison_CannotBeCreatedWhileVisibleVariablePickerHasNoSelection()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "PointComparison";
+        var point = Assert.IsType<GeneratedStepPointFieldPairViewModel>(
+            viewModel.GeneratedEditor!.Sections.Single(section => section.Descriptor.Id == "offset").Nodes[0]);
+
+        point.WholeValueSource!.UseJobVariableCommand.Execute(null);
+
+        Assert.False(viewModel.GeneratedEditor.TryCreateStep(out var created));
+        Assert.Null(created);
+        Assert.NotEmpty(viewModel.GeneratedEditor.ValidationError);
+
+        point.WholeValueSource.UseIndividualValuesCommand.Execute(null);
+
+        Assert.True(viewModel.GeneratedEditor.TryCreateStep(out created),
+            viewModel.GeneratedEditor.ValidationError);
+    }
+
+    [Fact]
     public void ShowTextDefinition_RequiresItsUnifiedTextBinding()
     {
         var definition = new ShowTextStepDefinition();
@@ -1809,6 +1844,14 @@ public sealed class StepDefinitionCatalogTests
     public void UserChoiceDefinition_PreservesStableOptionIdsAndRejectsDuplicates()
     {
         var definition = new UserChoiceStepDefinition();
+        var title = definition.Descriptor.Fields.Single(field =>
+            field.Id == UserChoiceStepDefinition.TitleFieldId);
+        Assert.Equal(StepValueKind.Text, title.ValueKind);
+        Assert.Equal(StepEditorHints.SingleLineText, title.EditorHint);
+        Assert.Null(definition.Descriptor.Fields.Single(field =>
+            field.Id == UserChoiceStepDefinition.QuestionFieldId).EditorHint);
+        Assert.Null(definition.Descriptor.Fields.Single(field =>
+            field.Id == UserChoiceStepDefinition.DescriptionFieldId).EditorHint);
         var existing = new UserChoiceStep
         {
             Settings = new UserChoiceSettings
@@ -2418,6 +2461,23 @@ public sealed class StepDefinitionCatalogTests
 
         field.InputText = "-1";
         Assert.False(editor.TryCreateStep(out created));
+        Assert.Null(created);
+        Assert.NotNull(editor.ValidationError);
+    }
+
+    [Fact]
+    public void AddStepDialog_ValidatesDirectTimeoutThroughVariableInputPath()
+    {
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]), [], cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "Timeout";
+        var editor = Assert.IsType<GeneratedStepEditorViewModel>(viewModel.GeneratedEditor);
+        var field = Assert.Single(editor.Fields);
+
+        field.InputText = "-1";
+
+        Assert.True(field.InputReferenceEditor!.Picker.IsStepValue);
+        Assert.False(editor.TryCreateStep(out var created));
         Assert.Null(created);
         Assert.NotNull(editor.ValidationError);
     }
@@ -3933,6 +3993,8 @@ public sealed class StepDefinitionCatalogTests
         public StepDraft CreateDraft(JobStep? step = null) => inner.CreateDraft(step);
         public JobStep ApplyDraft(StepDraft draft, JobStep? existingStep = null) => inner.ApplyDraft(draft, existingStep);
         public IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft) => inner.ValidateDraft(draft);
+        public IReadOnlyList<StepValidationIssue> ValidateDraft(StepDraft draft, StepValidationContext context) =>
+            inner.ValidateDraft(draft, context);
         public IReadOnlyList<StepInputBinding> GetInputBindings(JobStep step) => inner.GetInputBindings(step);
     }
 }
