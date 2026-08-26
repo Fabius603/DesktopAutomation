@@ -869,6 +869,57 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void DetailsProvider_RendersDirectConditionValueAsReadableConditionRows()
+    {
+        var source = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings { Title = "Choose mode" }
+        };
+        var settings = new IfConditionSettings
+        {
+            MatchMode = ConditionMatchMode.All,
+            Conditions =
+            [
+                new StepCondition
+                {
+                    SourceStepId = source.Id,
+                    PropertyPath = "SelectedValue",
+                    Operator = ConditionOperator.Equals,
+                    ComparisonValue = "automatic"
+                }
+            ]
+        };
+        var directValue = new LocalValue
+        {
+            Name = "if_conditions",
+            ValueKind = ResultValueKind.ResultObject,
+            Value = JsonSerializer.SerializeToNode(settings)
+        };
+        var step = new IfStep { Id = "if" };
+        step.Inputs[IfStepDefinition.ConditionsFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = directValue.Id.ToString("D")
+        };
+
+        var details = new JobStepDetailsProvider().GetDetails(
+            step,
+            new JobStep[] { source, step },
+            [],
+            [ValueProviderSourceDescriptor.FromVariable(directValue)],
+            [directValue]);
+
+        var items = details.Groups.SelectMany(group => group.Items).ToArray();
+        Assert.Contains(items, item => item.Name == Loc.Get("Ui.Step.Settings.ConditionMatchMode")
+                                      && item.Value == Loc.Get("Ui.Step.Settings.AllAND"));
+        var condition = Assert.Single(items, item => item.Name.Contains("1.", StringComparison.Ordinal));
+        Assert.Contains("automatic", condition.Value);
+        Assert.DoesNotContain("source_step_id", condition.Value, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("{", condition.Value);
+    }
+
+    [Fact]
     public void VisualOverlayDefinitions_DeclarePortableCapabilitiesAndContracts()
     {
         var imageOptions = Assert.Single(new ShowImageStepDefinition().Descriptor.Fields,
@@ -2027,6 +2078,99 @@ public sealed class StepDefinitionCatalogTests
         var condition = Assert.Single(Assert.IsType<IfStep>(created).Settings.Conditions);
         Assert.Equal(variable.Id.ToString("D"), condition.SourceId);
         Assert.Equal("X", condition.ValuePath);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_RejectsAnInvalidComparisonBeforeCreatingTheStep()
+    {
+        var numberProperty = StepResultMetadata.ResultTypes
+            .SelectMany(type => type.Properties)
+            .First(property => property.DataType == ResultValueKind.Number
+                               && property.Cardinality == ResultCardinality.Single);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [numberProperty]));
+        GeneratedConditionEditorViewModel? conditionEditor = null;
+        var editor = new GeneratedStepEditorViewModel(
+            new IfStepDefinition(),
+            conditionResolver: (_, value) => conditionEditor =
+                new GeneratedConditionEditorViewModel(value, [source]));
+        var row = Assert.Single(conditionEditor!.Conditions);
+        row.SelectedOperator = ConditionOperator.Equals;
+        row.ComparisonNumber = null;
+
+        Assert.False(row.IsValid);
+        Assert.False(editor.TryCreateStep(out var created));
+        Assert.Null(created);
+        Assert.NotEmpty(editor.ValidationError);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_SynchronizesTheStoredDirectValueWhenSaving()
+    {
+        var sourceStep = new TemplateMatchingStep { Id = "source" };
+        var source = new SourceStepItem(
+            sourceStep.Id,
+            "Source",
+            StepResultMetadata.GetResultTypeForStep(sourceStep)!);
+        var storedValue = new LocalValue
+        {
+            Name = "If conditions",
+            ValueKind = ResultValueKind.ResultObject,
+            Value = JsonSerializer.SerializeToNode(new IfConditionSettings())
+        };
+        var comparisonValue = new LocalValue
+        {
+            Name = "Comparison value",
+            ValueKind = ResultValueKind.Boolean,
+            Value = JsonValue.Create(false)
+        };
+        GeneratedConditionEditorViewModel? conditionEditor = null;
+        var editor = new GeneratedStepEditorViewModel(
+            new IfStepDefinition(),
+            conditionResolver: (_, value) => conditionEditor =
+                new GeneratedConditionEditorViewModel(
+                    value,
+                    [source],
+                    nestedInputResolver: (_, kind, literal) =>
+                    {
+                        comparisonValue.Value = literal?.DeepClone() ?? JsonValue.Create(false);
+                        var descriptor = new StepFieldDescriptor(
+                            "comparison", string.Empty, kind, DefaultValue: literal);
+                        var picker = new ValueReferencePickerViewModel(
+                            [], StepInputContractRegistry.ForField(descriptor), false, [comparisonValue]);
+                        return new GeneratedResultBindingEditorViewModel(
+                            JsonSerializer.SerializeToNode(new ResultBinding
+                            {
+                                ProviderId = ValueProviderIds.LocalValue,
+                                SourceId = comparisonValue.Id.ToString("D")
+                            }),
+                            picker);
+                    }),
+            inputReferenceResolver: (field, _) =>
+            {
+                var binding = new ResultBinding
+                {
+                    ProviderId = ValueProviderIds.LocalValue,
+                    SourceId = storedValue.Id.ToString("D")
+                };
+                var picker = new ValueReferencePickerViewModel(
+                    [], StepInputContractRegistry.ForField(field), false, [storedValue]);
+                return new GeneratedResultBindingEditorViewModel(
+                    JsonSerializer.SerializeToNode(binding), picker);
+            });
+
+        Assert.Single(conditionEditor!.Conditions);
+        Assert.True(editor.TryCreateStep(out var created), editor.ValidationError);
+        Assert.IsType<IfStep>(created);
+        var persisted = storedValue.Value!.Deserialize<IfConditionSettings>();
+        Assert.NotNull(persisted);
+        Assert.Single(persisted.Conditions);
+        Assert.Equal("source", persisted.Conditions[0].SourceStepId);
+        Assert.Equal(comparisonValue.Id.ToString("D"),
+            persisted.Conditions[0].EffectiveComparison.SourceId);
+        var validation = JobValidation.ValidateCandidate(
+            [sourceStep], created, [sourceStep, created!], [storedValue, comparisonValue]);
+        Assert.True(validation.IsValid, validation.Error);
     }
 
     [Fact]

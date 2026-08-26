@@ -28,6 +28,13 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
+    <!-- Ruhige Abschnittskarte für Einstellungsseiten: Typografie statt dekorativer Icons. -->
+    <Style x:Key="SettingsSectionCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+        <Setter Property="BorderThickness" Value="3,0,0,0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="Padding" Value="16,14"/>
+    </Style>
+
     <!-- Tabellenkarte ohne inneren Abstand, damit Header und Zeilen eine Fläche bilden -->
     <Style x:Key="TableCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
         <Setter Property="Padding" Value="0"/>

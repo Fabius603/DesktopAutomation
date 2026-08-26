@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using DesktopAutomationApp.Localization;
-using MahApps.Metro.IconPacks;
 
 namespace DesktopAutomationApp.ViewModels;
 
@@ -18,10 +17,10 @@ public sealed class SettingsViewModel : ViewModelBase
     {
         Sections =
         [
-            new("settings.general", "Settings.Navigation.General", PackIconMaterialKind.CogOutline, general),
-            new("settings.credentials", "Settings.Navigation.Credentials", PackIconMaterialKind.KeyVariant, credentials),
-            new("settings.models", "Settings.Navigation.Models", PackIconMaterialKind.Download, models),
-            new("settings.updates", "Settings.Navigation.Updates", PackIconMaterialKind.Update, updates)
+            new("settings.general", "Settings.Navigation.General", general),
+            new("settings.credentials", "Settings.Navigation.Credentials", credentials),
+            new("settings.models", "Settings.Navigation.Models", models),
+            new("settings.updates", "Settings.Navigation.Updates", updates)
         ];
         _selectedSection = Sections[0];
         localization.CultureChanged += (_, _) =>
@@ -58,12 +57,10 @@ public sealed class SettingsViewModel : ViewModelBase
 public sealed class SettingsSectionItem(
     string id,
     string labelKey,
-    PackIconMaterialKind icon,
     object content) : INotifyPropertyChanged
 {
     public string Id { get; } = id;
     public string LabelKey { get; } = labelKey;
-    public PackIconMaterialKind Icon { get; } = icon;
     public object Content { get; } = content;
     public string DisplayName => Loc.Get(LabelKey);
 

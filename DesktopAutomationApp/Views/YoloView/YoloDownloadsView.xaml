@@ -24,19 +24,13 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource ButtonSecondary}"
                         Command="{Binding AddLocalModelCommand}"
-                        Margin="0,0,8,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Yolo.AddONNXFile}" VerticalAlignment="Center"/>
-                    </StackPanel>
+                        Margin="0,0,8,0"
+                        Content="{loc:Translate Key=Ui.Yolo.AddONNXFile}">
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}"
                         Command="{Binding RefreshCommand}"
-                        Margin="0,0,8,0">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Refresh" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Common.Refresh}" VerticalAlignment="Center"/>
-                    </StackPanel>
+                        Margin="0,0,8,0"
+                        Content="{loc:Translate Key=Ui.Common.Refresh}">
                 </Button>
                 <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}">
                     <StackPanel Orientation="Horizontal">
@@ -112,21 +106,15 @@
                                                 Command="{Binding DataContext.DownloadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,8,0"
-                                                Visibility="{Binding IsInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <iconPacks:PackIconMaterial Kind="Download" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="{loc:Translate Key=Ui.Yolo.Download}" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                                Content="{loc:Translate Key=Ui.Yolo.Download}">
                                         </Button>
 
                                         <Button Style="{StaticResource ButtonDanger}"
                                                 Command="{Binding DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}"
-                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <iconPacks:PackIconMaterial Kind="Delete" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="{loc:Translate Key=Ui.Yolo.Uninstall}" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                                Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
+                                                Content="{loc:Translate Key=Ui.Yolo.Uninstall}">
                                         </Button>
                                     </StackPanel>
 

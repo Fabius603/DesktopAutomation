@@ -21,20 +21,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="VariableDateTimeInputStyle" TargetType="mah:DateTimePicker"
-               BasedOn="{StaticResource {x:Type mah:DateTimePicker}}">
-            <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
-            <Setter Property="MinHeight" Value="34"/>
-            <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
-            <Style.Triggers>
-                <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+               BasedOn="{StaticResource AppDateTimePickerStyle}"/>
     </UserControl.Resources>
     <Grid>
         <TextBox Text="{Binding TextValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

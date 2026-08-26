@@ -144,6 +144,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             OnChange();
             RefreshOperators();
             RefreshComparisonChoices();
+            EnsureDefaultComparisonValue();
             RefreshComparisonField();
             OnChange(nameof(SelectedPath));
         }
@@ -303,10 +304,15 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
                 JsonValue.Create(string.Empty), SourcePicker));
         SourcePicker.ReferenceChanged += (_, _) => SyncSourceFromPicker();
-        SelectionTree = BuildSelectionTree(sources, _availableVariables);
+        SelectionTree = BuildSelectionTree(sources, _availableVariables, IsConditionProperty);
         owner.CollectionChanged += OnOwnerCollectionChanged;
-        var firstSource = sources.FirstOrDefault();
-        var firstProperty = firstSource?.ResultType.Properties.FirstOrDefault();
+        var firstSelection = sources
+            .SelectMany(source => source.ResultType.Properties
+                .Where(IsConditionProperty)
+                .Select(property => (Source: source, Property: property)))
+            .FirstOrDefault();
+        var firstSource = firstSelection.Source;
+        var firstProperty = firstSelection.Property;
         if (firstSource is not null && firstProperty is not null)
         {
             SelectPath(firstSource, firstProperty);
@@ -478,6 +484,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             or ResultValueKind.Number or ResultValueKind.Text or ResultValueKind.DateTime
             or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath;
 
+    private static bool IsConditionProperty(ResultPropertyDescriptor property) =>
+        property.Cardinality != ResultCardinality.Collection
+        && property.DataType is ResultValueKind.Boolean or ResultValueKind.Integer
+            or ResultValueKind.Number or ResultValueKind.Text or ResultValueKind.DateTime
+            or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath;
+
     private ResultPropertyDescriptor Describe(ValueProviderSourceDescriptor variable, string? valuePath = null) =>
         !string.IsNullOrWhiteSpace(valuePath)
         && _jobVariables.TryGetValue(variable.SourceId, out var jobVariable)
@@ -590,6 +602,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             _ => StepValueKind.Text
         };
         literal ??= GetLiteralComparisonValue();
+        literal ??= DefaultComparisonValue(SelectedProperty);
         var node = literal is null ? null : JsonValue.Create(literal);
         if (kind == StepValueKind.Integer && int.TryParse(literal, out var integer)) node = JsonValue.Create(integer);
         if (kind == StepValueKind.Number && double.TryParse(literal,
@@ -610,6 +623,40 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         field.PropertyChanged += (_, _) => { NotifyValidation(); OnChange(nameof(ComparisonKind)); };
         ComparisonField = field;
         OnChange(nameof(IsComparisonValueValid));
+    }
+
+    private static string? DefaultComparisonValue(ResultPropertyDescriptor property) => property.DataType switch
+    {
+        ResultValueKind.Boolean => bool.FalseString,
+        ResultValueKind.Integer => "0",
+        ResultValueKind.Number => "0",
+        ResultValueKind.DateTime => DateTime.Now.ToUniversalTime().ToString("O"),
+        ResultValueKind.Enum => property.EnumValues?.FirstOrDefault(),
+        ResultValueKind.Text => string.Empty,
+        ResultValueKind.Color => "#FFFFFF",
+        ResultValueKind.FilePath => string.Empty,
+        _ => null
+    };
+
+    private void EnsureDefaultComparisonValue()
+    {
+        if (SelectedProperty is null) return;
+        switch (SelectedProperty.DataType)
+        {
+            case ResultValueKind.Boolean:
+                _comparisonBoolean ??= false;
+                break;
+            case ResultValueKind.Integer:
+            case ResultValueKind.Number:
+                _comparisonNumber ??= 0;
+                break;
+            case ResultValueKind.DateTime:
+                _comparisonDate ??= DateTime.Now;
+                break;
+            case ResultValueKind.Enum:
+                _comparisonEnum ??= SelectedProperty.EnumValues?.FirstOrDefault();
+                break;
+        }
     }
 
     public void LoadFrom(StepCondition condition)

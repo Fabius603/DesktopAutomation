@@ -955,6 +955,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool TryWriteValue(StepDraft draft, out string? error)
     {
         error = null;
+        if (UsesConditionEditor && ConditionEditor is { IsValid: false })
+        {
+            error = Loc.Get("Ui.Step.Generated.Validation.Invalid");
+            return false;
+        }
         if (InputReferenceEditor is not null)
         {
             if (!InputReferenceEditor.Picker.IsConfigured)
@@ -970,7 +975,15 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                 draft.Values[Descriptor.Id] = JsonSerializer.SerializeToNode(
                     InputReferenceEditor.Picker.ToBinding());
             else if (InputReferenceEditor.Picker.IsStepValue)
-                draft.Values[Descriptor.Id] = CurrentDirectValue();
+            {
+                var directValue = CurrentDirectValue();
+                draft.Values[Descriptor.Id] = directValue?.DeepClone();
+                if (InputReferenceEditor.Picker.SelectedJobVariable is { } variable)
+                {
+                    variable.Value = directValue?.DeepClone();
+                    InputReferenceEditor.Picker.RefreshSelectedValue();
+                }
+            }
             return true;
         }
         if (UsesChoicePicker)
@@ -1375,6 +1388,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
 
     public ObservableCollection<ConditionRowViewModel> Conditions { get; } = [];
     public ICommand AddCommand { get; }
+    public bool IsValid => Conditions.Count > 0 && Conditions.All(condition => condition.IsValid);
 
     public bool IsAll
     {
@@ -1418,10 +1432,15 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
         if (e.NewItems is not null)
             foreach (ConditionRowViewModel row in e.NewItems)
                 row.PropertyChanged += OnConditionChanged;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsValid)));
         Changed?.Invoke();
     }
 
-    private void OnConditionChanged(object? sender, PropertyChangedEventArgs e) => Changed?.Invoke();
+    private void OnConditionChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsValid)));
+        Changed?.Invoke();
+    }
 }
 
 public sealed class GeneratedWindowsCapabilityEditorViewModel

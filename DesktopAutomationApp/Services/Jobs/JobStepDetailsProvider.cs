@@ -192,6 +192,8 @@ public sealed class JobStepDetailsProvider
             if (!fields.TryGetValue(fieldId, out var field)) continue;
             if (step.Inputs.TryGetValue(fieldId, out var input) && input.IsConfigured)
             {
+                if (TryAddBoundEditorDetails(field, input, target, steps, variables))
+                    continue;
                 target.Add((field.Advanced ? "advanced" : "inputs", CreateBindingDetailItem(
                     Loc.Get(field.LabelKey), input, steps, variables, providerSources, field)));
                 continue;
@@ -233,6 +235,31 @@ public sealed class JobStepDetailsProvider
                 Loc.Get(field.LabelKey),
                 FormatDefinitionValue(field, value, steps, variables, providerSources))));
         }
+    }
+
+    private static bool TryAddBoundEditorDetails(
+        StepFieldDescriptor field,
+        ResultBinding binding,
+        List<(string Group, StepDetailItem Item)> target,
+        IEnumerable? steps,
+        IReadOnlyList<JobVariable>? variables)
+    {
+        if (!string.Equals(field.EditorHint, StepEditorHints.ConditionEditor, StringComparison.Ordinal)
+            || !string.IsNullOrWhiteSpace(binding.ValuePath)
+            || binding.ProviderId is not (ValueProviderIds.LocalValue or ValueProviderIds.JobVariable)
+            || !Guid.TryParse(binding.SourceId, out var variableId)
+            || variables?.FirstOrDefault(candidate => candidate.Id == variableId)?.Value is not { } value)
+            return false;
+
+        try
+        {
+            var settings = value.Deserialize<IfConditionSettings>();
+            if (settings is null) return false;
+            AddConditions(settings, target, steps, variables);
+            return true;
+        }
+        catch (JsonException) { return false; }
+        catch (InvalidOperationException) { return false; }
     }
 
     private static bool IsDefinitionFieldVisible(StepFieldDescriptor field, StepDraft draft)
@@ -838,7 +865,8 @@ public sealed class JobStepDetailsProvider
         {
             var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
             if (variable is null) return Loc.Get("Ui.Job.Steps.SourceUnavailable");
-            var variableValue = FormatVariableValue(variable, binding.ValuePath);
+            var variableValue = FormatVariableValue(
+                variable, binding.ValuePath, null, steps, variables, providerSources);
             if (variable is LocalValue || variable.Scope == JobVariableScope.StepValue)
                 return variableValue;
             var reference = string.IsNullOrWhiteSpace(binding.ValuePath)
@@ -889,7 +917,8 @@ public sealed class JobStepDetailsProvider
             if (variable is null)
                 return new StepDetailItem(name, Loc.Get("Ui.Job.Steps.SourceUnavailable"),
                     Loc.Get("Ui.Job.Steps.DetailsSourceMissing"), IsWarning: true);
-            var variableValue = FormatVariableValue(variable, binding.ValuePath, field);
+            var variableValue = FormatVariableValue(
+                variable, binding.ValuePath, field, steps, variables, providerSources);
             var isLocal = variable is LocalValue
                           || string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
                           || variable.Scope == JobVariableScope.StepValue;
@@ -944,15 +973,17 @@ public sealed class JobStepDetailsProvider
     private static string FormatVariableValue(
         JobVariable variable,
         string? valuePath,
-        StepFieldDescriptor? field = null)
+        StepFieldDescriptor? field = null,
+        IEnumerable? steps = null,
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
         if (string.IsNullOrWhiteSpace(valuePath))
         {
             if (field is not null
-                && variable.ValueKind == ResultValueKind.Enum
-                && variable.Value is JsonValue enumValue
-                && enumValue.TryGetValue<string>(out var option))
-                return FormatDefinitionOption(field, option);
+                && field.ValueKind != StepValueKind.ResultBinding
+                && variable.Value is { } value)
+                return FormatDefinitionValue(field, value, steps, variables, providerSources);
             return ValueReferenceDisplayFormatter.Instance.CompactValue(variable);
         }
 

@@ -45,7 +45,8 @@
                       IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </DataTemplate>
         <DataTemplate x:Key="DateTimeFieldTemplate">
-            <mah:DateTimePicker SelectedDateTime="{Binding DateTimeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <mah:DateTimePicker Style="{StaticResource AppDateTimePickerStyle}"
+                                SelectedDateTime="{Binding DateTimeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"/>
         </DataTemplate>
         <DataTemplate x:Key="SuggestionsFieldTemplate">
@@ -360,16 +361,29 @@
                     <ColumnDefinition Width="165"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0">
+                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0"
+                            Visibility="{Binding UsesConditionEditor, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding Label}" Style="{StaticResource StepFieldLabel}"/>
                     <TextBlock Text="{Binding Description}"
                                Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
                 </StackPanel>
-                <ContentControl Grid.Column="1" Content="{Binding}"
+                <ContentControl Content="{Binding}"
                                 HorizontalContentAlignment="Stretch"
-                                ContentTemplateSelector="{StaticResource GeneratedStepFieldTemplateSelector}"/>
+                                ContentTemplateSelector="{StaticResource GeneratedStepFieldTemplateSelector}">
+                    <ContentControl.Style>
+                        <Style TargetType="ContentControl">
+                            <Setter Property="Grid.Column" Value="1"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UsesConditionEditor}" Value="True">
+                                    <Setter Property="Grid.Column" Value="0"/>
+                                    <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContentControl.Style>
+                </ContentControl>
             </Grid>
         </DataTemplate>
         <DataTemplate x:Key="ChoiceBranchHeaderTemplate">

@@ -155,6 +155,26 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
+    public void DateTimeInputs_UseTheSharedApplicationStyle()
+    {
+        var root = RepositoryRoot();
+        var controlsXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Styles", "Controls.xaml"));
+        var generatedEditorXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedStepEditor.xaml"));
+        var variableEditorXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "JobVariableValueEditor.xaml"));
+        var automationEditorXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Views", "AutomationsView", "AutomationDetailView.xaml"));
+
+        Assert.Contains("x:Key=\"AppDateTimePickerStyle\"", controlsXaml);
+        Assert.Contains("Style=\"{StaticResource AppDateTimePickerStyle}\"", generatedEditorXaml);
+        Assert.Contains("BasedOn=\"{StaticResource AppDateTimePickerStyle}\"", variableEditorXaml);
+        Assert.Contains("Style=\"{StaticResource AppDateTimePickerStyle}\"", automationEditorXaml);
+    }
+
+    [Fact]
     public void StepFieldLabels_WrapInsideTheirLabelColumn()
     {
         var stylesXaml = File.ReadAllText(Path.Combine(
@@ -216,7 +236,15 @@ public sealed class JobStepsViewResourceTests
     {
         var root = RepositoryRoot();
         var file = Path.Combine(root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml");
-        Assert.Contains("GeneratedValueSourceInput", File.ReadAllText(file));
+        var xaml = File.ReadAllText(file);
+        var generatedXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedStepEditor.xaml"));
+        Assert.Contains("GeneratedValueSourceInput", xaml);
+        Assert.Contains("x:Name=\"ConditionComparisonGrid\"", xaml);
+        Assert.Contains("A condition reads from left to right", xaml);
+        Assert.Contains("Visibility=\"{Binding UsesConditionEditor, Converter={StaticResource InverseBooleanToVisibilityConverter}}\"", generatedXaml);
+        Assert.Contains("<Setter Property=\"Grid.ColumnSpan\" Value=\"2\"/>", generatedXaml);
     }
 
     [Fact]

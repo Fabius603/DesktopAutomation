@@ -194,6 +194,7 @@
                             <TextBlock Grid.Row="3" Text="{loc:Translate Key=Ui.Automation.Details.Execution}" VerticalAlignment="Center" Margin="0,10,0,0"
                                        Visibility="{Binding EditedAutomation.IsOnceAtTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <mah:DateTimePicker Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Width="230" HorizontalAlignment="Left"
+                                                Style="{StaticResource AppDateTimePickerStyle}"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateFormat="Short" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="RunAt|Required" SelectedDateTime="{Binding EditedAutomation.RunAt, Mode=TwoWay}"
@@ -203,7 +204,8 @@
                                        Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
                                         Visibility="{Binding EditedAutomation.IsScheduleTrigger, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="ScheduleTime|Required" SelectedTimeFormat="Short" IsClockVisible="False"
+                                <mah:TimePicker Style="{StaticResource AppTimePickerStyle}"
+                                                LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="ScheduleTime|Required" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateTime="{Binding EditedAutomation.ScheduleTime, Mode=TwoWay}"
                                                 Width="150" HorizontalAlignment="Left"/>
@@ -490,11 +492,13 @@
                             </StackPanel>
                             <TextBlock Grid.Row="2" Text="{loc:Translate Key=Ui.Automation.Details.ActiveFrom}" VerticalAlignment="Center" Margin="0,10,0,0"/>
                             <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
-                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledFrom|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
+                                <mah:TimePicker Style="{StaticResource AppTimePickerStyle}"
+                                                LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledFrom|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateTime="{Binding EditedAutomation.EnabledFrom, Mode=TwoWay}" Width="150"/>
                                 <TextBlock Text="{loc:Translate Key=Ui.Automation.Details.ActiveUntil}" VerticalAlignment="Center" Margin="14,0,8,0"/>
-                                <mah:TimePicker LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledUntil|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
+                                <mah:TimePicker Style="{StaticResource AppTimePickerStyle}"
+                                                LostKeyboardFocus="Picker_LostKeyboardFocus" Tag="EnabledUntil|Optional" SelectedTimeFormat="Short" IsClockVisible="False"
                                                 Culture="{Binding Source={x:Static loc:LocalizationService.Instance}, Path=CurrentCulture}"
                                                 SelectedDateTime="{Binding EditedAutomation.EnabledUntil, Mode=TwoWay}" Width="150"
                                                 ToolTip="{loc:Translate Key=Ui.Automation.Details.TimeWindowsSpanningMidnightAreSupported}"/>

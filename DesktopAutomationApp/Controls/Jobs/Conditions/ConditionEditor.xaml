@@ -95,14 +95,24 @@
                                     </Button>
                                 </Grid>
 
-                                <!-- Step/property, operator and value deliberately form one vertical flow. -->
-                                <StackPanel>
+                                <!-- A condition reads from left to right: source, operator, comparison value. -->
+                                <Grid x:Name="ConditionComparisonGrid">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="5*" MinWidth="150"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="3*" MinWidth="115"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="5*" MinWidth="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.IfEditor.ResultPath}"
                                                Style="{StaticResource ConditionFieldLabel}"/>
                                     <generated:GeneratedValueSourceInput DataContext="{Binding SourceField}"/>
+                                    </StackPanel>
 
+                                    <StackPanel Grid.Column="2">
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Operator}"
-                                               Style="{StaticResource ConditionFieldLabel}" Margin="0,12,0,4"/>
+                                               Style="{StaticResource ConditionFieldLabel}"/>
                                     <ComboBox ItemsSource="{Binding AvailableOperators}"
                                               SelectedItem="{Binding SelectedOperator}"
                                               Height="36">
@@ -113,8 +123,9 @@
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
+                                    </StackPanel>
 
-                                    <StackPanel Margin="0,12,0,0"
+                                    <StackPanel Grid.Column="4"
                                                 Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}"
                                                    Style="{StaticResource ConditionFieldLabel}"/>
@@ -134,7 +145,7 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </StackPanel>
-                                </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
