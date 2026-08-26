@@ -168,11 +168,32 @@ namespace DesktopAutomationApp.Views
         private void StepsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is not ListBox list
-                || ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) is not ListBoxItem item)
+                || e.OriginalSource is not DependencyObject source
+                || ItemsControl.ContainerFromElement(list, source) is not ListBoxItem item
+                || FindVisualChild<Grid>(item, "StepCardLayout") is not { } layout)
                 return;
+
+            var point = e.GetPosition(layout);
+            var isInteractiveControl = FindVisualAncestor<ButtonBase>(source, item) is not null;
+            if (!ShouldToggleDetails(point, layout.ActualWidth, layout.RowDefinitions[0].ActualHeight, isInteractiveControl))
+                return;
+
             var toggle = FindVisualChild<ToggleButton>(item, "DetailsToggle");
             if (toggle is not null) toggle.IsChecked = toggle.IsChecked != true;
             e.Handled = true;
+        }
+
+        internal static bool ShouldToggleDetails(
+            Point point,
+            double headerWidth,
+            double headerHeight,
+            bool isInteractiveControl)
+        {
+            return !isInteractiveControl
+                && point.X >= 0
+                && point.X <= headerWidth
+                && point.Y >= 0
+                && point.Y <= headerHeight;
         }
 
         private void StepsList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -348,6 +369,23 @@ namespace DesktopAutomationApp.Views
                 if (child is T match && match.Name == name) return match;
                 var nested = FindVisualChild<T>(child, name);
                 if (nested is not null) return nested;
+            }
+            return null;
+        }
+
+        private static T? FindVisualAncestor<T>(DependencyObject? child, DependencyObject stopAt)
+            where T : DependencyObject
+        {
+            var current = child;
+            while (current is not null && !ReferenceEquals(current, stopAt))
+            {
+                if (current is T match) return match;
+                current = current switch
+                {
+                    Visual or System.Windows.Media.Media3D.Visual3D => VisualTreeHelper.GetParent(current),
+                    FrameworkContentElement contentElement => contentElement.Parent,
+                    _ => LogicalTreeHelper.GetParent(current)
+                };
             }
             return null;
         }

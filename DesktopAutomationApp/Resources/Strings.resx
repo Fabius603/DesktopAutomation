@@ -2605,7 +2605,6 @@ Fehlercode: {3}</value>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorMessage" xml:space="preserve"><value>Fehlerbeschreibung; bei erfolgreicher Abfrage leer.</value></data>
   <data name="Ui.Job.Steps.Unsaved" xml:space="preserve"><value>Ungespeichert</value></data>
   <data name="Ui.Macro.Steps.Unsaved" xml:space="preserve"><value>Ungespeichert</value></data>
-  <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Job bearbeiten</value></data>
   <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job wird ausgeführt</value></data>
   <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} ausgewählt</value></data>
   <data name="Ui.Macro.Steps.SelectedCount" xml:space="preserve"><value>{0} Steps ausgewählt</value></data>

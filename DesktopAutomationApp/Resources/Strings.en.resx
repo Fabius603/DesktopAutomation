@@ -2501,7 +2501,6 @@ Error code: {3}</value>
   <data name="Step.ResultPropertyDescription.WindowsStateQueryResult.ErrorMessage" xml:space="preserve"><value>Error details; empty after a successful query.</value></data>
   <data name="Ui.Job.Steps.Unsaved" xml:space="preserve"><value>Unsaved</value></data>
   <data name="Ui.Macro.Steps.Unsaved" xml:space="preserve"><value>Unsaved</value></data>
-  <data name="Ui.Job.Steps.EditContext" xml:space="preserve"><value>Edit job</value></data>
   <data name="Ui.Job.Steps.JobRunning" xml:space="preserve"><value>Job is running</value></data>
   <data name="Ui.Job.Steps.SelectedCount" xml:space="preserve"><value>{0} selected</value></data>
   <data name="Ui.Macro.Steps.SelectedCount" xml:space="preserve"><value>{0} steps selected</value></data>

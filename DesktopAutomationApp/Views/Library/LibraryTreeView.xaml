@@ -55,17 +55,6 @@
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
 
-        <Style x:Key="LibraryStatusBadge" TargetType="Border">
-            <Setter Property="Padding" Value="7,2"/>
-            <Setter Property="CornerRadius" Value="9"/>
-            <Setter Property="Margin" Value="7,0,0,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-        <Style x:Key="LibraryBadgeText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="10"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -127,9 +116,9 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" Background="{DynamicResource App.Brush.WindowBackground}">
+                <Grid Grid.Row="1" Background="Transparent">
                     <ListBox x:Name="LibraryNodes" ItemsSource="{Binding VisibleNodes}"
-                             Padding="6"
+                             Padding="8"
                              BorderThickness="0"
                              Background="Transparent"
                              AllowDrop="True"
@@ -160,7 +149,8 @@
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="9,8"
+                                <Border MinHeight="42"
+                                        Padding="9,6"
                                         Margin="2,1"
                                         BorderThickness="{Binding DropBorderThickness}"
                                         CornerRadius="7"
@@ -174,10 +164,6 @@
                                             <Setter Property="ContextMenu" Value="{StaticResource LibraryItemContextMenu}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
-                                                    <Setter Property="Margin" Value="2,4,2,2"/>
-                                                    <Setter Property="Padding" Value="9,9"/>
                                                     <Setter Property="ContextMenu" Value="{StaticResource LibraryFolderContextMenu}"/>
                                                 </DataTrigger>
                                                 <MultiDataTrigger>
@@ -209,33 +195,27 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="{Binding Indent}"/>
-                                            <ColumnDefinition Width="22"/>
-                                            <ColumnDefinition Width="26"/>
+                                            <ColumnDefinition Width="20"/>
+                                            <ColumnDefinition Width="24"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <Border Grid.Column="0"
-                                                Width="1"
-                                                Margin="0,0,8,0"
-                                                HorizontalAlignment="Right"
-                                                Background="{DynamicResource App.Brush.BorderSubtle}"
-                                                Visibility="{Binding HasParent, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
                                         <iconPacks:PackIconMaterial Grid.Column="1"
-                                                                    Width="15" Height="15"
-                                                                    VerticalAlignment="Center"
-                                                                    Foreground="{DynamicResource App.Brush.TextMuted}">
+                                                                    Width="14" Height="14"
+                                                                    VerticalAlignment="Center">
                                             <iconPacks:PackIconMaterial.Style>
                                                 <Style TargetType="iconPacks:PackIconMaterial">
                                                     <Setter Property="Kind" Value="ChevronRight"/>
                                                     <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsFolder}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsExpanded}" Value="True">
                                                             <Setter Property="Kind" Value="ChevronDown"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -243,29 +223,19 @@
                                         </iconPacks:PackIconMaterial>
 
                                         <Border Grid.Column="2"
-                                                Width="24" Height="24"
-                                                CornerRadius="6"
+                                                Width="22" Height="22"
                                                 VerticalAlignment="Center">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="Transparent"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                            <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <iconPacks:PackIconMaterial Width="16" Height="16"
+                                            <iconPacks:PackIconMaterial Width="17" Height="17"
                                                                         HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center"
-                                                                        Foreground="{DynamicResource App.Brush.Accent}">
+                                                                        VerticalAlignment="Center">
                                                 <iconPacks:PackIconMaterial.Style>
                                                     <Style TargetType="iconPacks:PackIconMaterial">
                                                         <Setter Property="Kind" Value="FileDocumentOutline"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsFolder}" Value="True">
                                                                 <Setter Property="Kind" Value="Folder"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
                                                             </DataTrigger>
                                                             <MultiDataTrigger>
                                                                 <MultiDataTrigger.Conditions>
@@ -280,46 +250,28 @@
                                             </iconPacks:PackIconMaterial>
                                         </Border>
 
-                                        <StackPanel Grid.Column="3" Margin="8,0,12,0" VerticalAlignment="Center">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding Name}"
-                                                           VerticalAlignment="Center"
-                                                           FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Border Style="{StaticResource LibraryStatusBadge}"
-                                                            Background="{DynamicResource App.Brush.AccentSubtle}"
-                                                            Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBlock Text="{loc:Translate Key=Ui.Library.Running}"
-                                                                   Style="{StaticResource LibraryBadgeText}"
-                                                                   Foreground="{DynamicResource App.Brush.Accent}"/>
-                                                    </Border>
-                                                    <Border Style="{StaticResource LibraryStatusBadge}"
-                                                            Background="{DynamicResource App.Brush.SurfaceHover}"
-                                                            Visibility="{Binding IsUnavailable, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <TextBlock Text="{loc:Translate Key=Ui.Library.Inactive}"
-                                                                   Style="{StaticResource LibraryBadgeText}"
-                                                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Grid>
-                                            <TextBlock Text="{Binding Subtitle}"
-                                                       Margin="0,2,0,0"
-                                                       FontSize="11"
-                                                       Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Visibility="{Binding HasSubtitle, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="3" Text="{Binding Name}"
+                                                   Margin="8,0,12,0"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontWeight" Value="Normal"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
 
                                         <Border Grid.Column="4"
                                                 MinWidth="26"
                                                 Padding="7,2"
                                                 CornerRadius="9"
-                                                Background="{DynamicResource App.Brush.AccentSubtle}"
+                                                Background="{DynamicResource App.Brush.SurfaceHover}"
                                                 VerticalAlignment="Center"
                                                 ToolTip="{loc:Translate Key=Ui.Library.ContainedItems}"
                                                 Visibility="{Binding IsFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -327,7 +279,7 @@
                                                        HorizontalAlignment="Center"
                                                        FontSize="10"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource App.Brush.Accent}"/>
+                                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                         </Border>
 
                                         <StackPanel Grid.Column="4" Orientation="Horizontal">
@@ -361,8 +313,8 @@
                                                     ToolTip="{loc:Translate Key=Ui.Common.Open}">
                                                 <iconPacks:PackIconMaterial Kind="OpenInNew" Width="14" Height="14"/>
                                             </Button>
-                                            <Button Style="{StaticResource ButtonTablePrimary}"
-                                                    Margin="6,0,0,0"
+                                            <Button Style="{StaticResource ButtonIcon}"
+                                                    Width="30" Height="30" Margin="2,0,0,0"
                                                     Command="{Binding DataContext.ExecuteNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="{loc:Translate Key=Ui.Library.ExecuteOrStop}">
@@ -370,9 +322,11 @@
                                                     <iconPacks:PackIconMaterial.Style>
                                                         <Style TargetType="iconPacks:PackIconMaterial">
                                                             <Setter Property="Kind" Value="Play"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsRunning}" Value="True">
                                                                     <Setter Property="Kind" Value="Stop"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
