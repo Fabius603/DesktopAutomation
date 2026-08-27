@@ -75,7 +75,10 @@
                 </ListBox>
             </Border>
 
-            <ContentControl Grid.Column="2" Content="{Binding SelectedSection.Content}"/>
+            <ContentControl Grid.Column="2"
+                            MaxWidth="1100"
+                            HorizontalAlignment="Stretch"
+                            Content="{Binding SelectedSection.Content}"/>
         </Grid>
     </Grid>
 </UserControl>

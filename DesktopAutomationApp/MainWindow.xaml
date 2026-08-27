@@ -136,6 +136,19 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Sekundäres Ziel bleibt unabhängig von der Hauptnavigation am unteren Rand. -->
+                <Button DockPanel.Dock="Bottom"
+                        Command="{Binding ShowSettings}"
+                        Tag="SettingsViewModel"
+                        Margin="0,0,0,8"
+                        Style="{DynamicResource SidebarNavButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="CogOutline" Width="18" Height="18"
+                                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <TextBlock Text="{loc:Translate Navigation.Settings}" VerticalAlignment="Center" FontSize="14"/>
+                    </StackPanel>
+                </Button>
+
                 <!-- Navigation -->
                 <StackPanel Margin="0,0,0,0">
                     <!-- Start -->
@@ -196,15 +209,6 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Command="{Binding ShowSettings}"
-                            Tag="SettingsViewModel"
-                            Style="{DynamicResource SidebarNavButton}">
-                        <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="CogOutline" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Navigation.Settings}" VerticalAlignment="Center" FontSize="14"/>
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
             </DockPanel>
         </Border>

@@ -140,6 +140,55 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
+    public void StepDetailsAdvancedHeader_UsesAFullWidthHitTarget()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        var styleStart = xaml.IndexOf(
+            "<Style x:Key=\"StepDetailsExpanderStyle\"", StringComparison.Ordinal);
+        var styleEnd = xaml.IndexOf("</Style>", styleStart, StringComparison.Ordinal);
+        var style = xaml[styleStart..styleEnd];
+
+        Assert.Contains("MinHeight=\"32\"", style);
+        Assert.Contains("HorizontalAlignment=\"Stretch\"", style);
+        Assert.Contains("Background=\"Transparent\"", style);
+        Assert.Contains("<Border Background=\"{TemplateBinding Background}\"", style);
+        Assert.Contains("Padding=\"{TemplateBinding Padding}\"", style);
+    }
+
+    [Fact]
+    public void ReturnValueRows_ToggleChildrenAcrossTheFullRow()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        var styleStart = xaml.IndexOf(
+            "<Style x:Key=\"StepResultTreeItemStyle\"", StringComparison.Ordinal);
+        var styleEnd = xaml.IndexOf(
+            "<Style x:Key=\"JobStepSectionExpanderStyle\"", styleStart, StringComparison.Ordinal);
+        var style = xaml[styleStart..styleEnd];
+
+        Assert.Contains("x:Name=\"ResultRowToggle\"", style);
+        Assert.Contains("Grid.Row=\"0\" Grid.ColumnSpan=\"2\"", style);
+        Assert.Contains("HorizontalAlignment=\"Stretch\"", style);
+        Assert.Contains("IsChecked=\"{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}\"", style);
+        Assert.Contains("<Trigger Property=\"HasItems\" Value=\"False\">", style);
+        Assert.Contains("Property=\"IsHitTestVisible\" Value=\"False\"", style);
+    }
+
+    [Fact]
+    public void ReturnValueRows_UseTheInputValueFontSize()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        var templateStart = xaml.IndexOf(
+            "<HierarchicalDataTemplate x:Key=\"StepResultPropertyTemplate\"", StringComparison.Ordinal);
+        var templateEnd = xaml.IndexOf("</HierarchicalDataTemplate>", templateStart, StringComparison.Ordinal);
+        var template = xaml[templateStart..templateEnd];
+
+        Assert.Contains("TextElement.FontSize=\"14\"", template);
+    }
+
+    [Fact]
     public void GeneratedStepEditor_UsesReadOnlyExpansionBindingAndStretchedLayout()
     {
         var editorXaml = File.ReadAllText(Path.Combine(

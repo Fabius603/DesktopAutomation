@@ -63,7 +63,7 @@
                         <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
                     </MultiBinding>
                 </DataTrigger.Binding>
-                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -74,13 +74,13 @@
                                         Width="3" CornerRadius="0,2,2,0"
                                         Background="{DynamicResource App.Brush.Accent}"/>
                                 <Border x:Name="ContentBorder"
-                                        Background="{DynamicResource App.Brush.SelectionBackground}"
+                                        Background="{DynamicResource App.Brush.SurfaceHover}"
                                         CornerRadius="8"
                                         Margin="8,0,8,0"
                                         Padding="12,0">
                                     <ContentPresenter VerticalAlignment="Center"
                                                       HorizontalAlignment="Left"
-                                                      TextBlock.Foreground="{DynamicResource App.Brush.Accent}"/>
+                                                      TextBlock.Foreground="{DynamicResource App.Brush.TextPrimary}"/>
                                 </Border>
                             </Grid>
                             <ControlTemplate.Triggers>

@@ -9,12 +9,12 @@
         <Setter Property="Margin" Value="0"/>
     </Style>
 
-    <!-- Standard-Karte mit abgerundeten Ecken und dezenter Elevation -->
+    <!-- Ruhige Standardfläche; erhöhte Flächen bleiben interaktiven Elementen vorbehalten. -->
     <Style x:Key="CardBorderStyle" TargetType="Border">
-        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.Surface}"/>
         <Setter Property="Padding" Value="16"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -28,10 +28,10 @@
         <Setter Property="SnapsToDevicePixels" Value="True"/>
     </Style>
 
-    <!-- Ruhige Abschnittskarte für Einstellungsseiten: Typografie statt dekorativer Icons. -->
+    <!-- Abschnittskarte für Einstellungsseiten ohne konkurrierenden Akzentstreifen. -->
     <Style x:Key="SettingsSectionCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
-        <Setter Property="BorderThickness" Value="3,0,0,0"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
         <Setter Property="Padding" Value="16,14"/>
     </Style>
 

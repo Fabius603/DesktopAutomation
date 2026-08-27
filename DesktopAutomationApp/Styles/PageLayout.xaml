@@ -3,7 +3,7 @@
 
     <!-- ═══ Page Header — Einheitlicher Kopfbereich für alle Views ═══ -->
     <Style x:Key="PageHeaderBorder" TargetType="Border">
-        <Setter Property="Margin" Value="0,0,0,16"/>
+        <Setter Property="Margin" Value="0,0,0,20"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="Transparent"/>
     </Style>
@@ -20,7 +20,7 @@
 
     <!-- ═══ Badge / Count Anzeige ═══ -->
     <Style x:Key="CountBadge" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
         <Setter Property="CornerRadius" Value="10"/>
         <Setter Property="Padding" Value="8,2"/>
         <Setter Property="VerticalAlignment" Value="Center"/>

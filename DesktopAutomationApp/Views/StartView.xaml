@@ -65,7 +65,7 @@
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="12"/>
                             <TextBlock Text="{Binding TotalJobCount}" HorizontalAlignment="Center"
                                        FontSize="28" FontWeight="Bold" Margin="0,4,0,0"
-                                       Foreground="{DynamicResource App.Brush.Accent}"/>
+                                       Foreground="{DynamicResource App.Brush.TextPrimary}"/>
                             <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Total}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                         </StackPanel>
@@ -78,7 +78,7 @@
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="12"/>
                             <TextBlock Text="{Binding TotalMakroCount}" HorizontalAlignment="Center"
                                        FontSize="28" FontWeight="Bold" Margin="0,4,0,0"
-                                       Foreground="{DynamicResource App.Brush.Accent}"/>
+                                       Foreground="{DynamicResource App.Brush.TextPrimary}"/>
                             <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Total}" HorizontalAlignment="Center"
                                        Foreground="{DynamicResource App.Brush.TextMuted}" FontSize="11"/>
                         </StackPanel>
