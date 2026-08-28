@@ -6,39 +6,46 @@
                  xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  WindowStartupLocation="CenterOwner"
-                 Width="1120" Height="760"
-                 MinWidth="880" MinHeight="600"
-                 Title="{loc:Translate Key=Ui.Job.Variables.DialogTitle}"
-                 ResizeMode="CanResize" ShowInTaskbar="False"
+                 Width="1040" Height="700"
+                 MinWidth="860" MinHeight="560"
+                  Title="{loc:Translate Key=Ui.Job.Variables.DialogTitle}"
+                  ResizeMode="CanResize" ShowInTaskbar="False"
+                  Closing="Window_Closing"
+                 PreviewKeyDown="Window_PreviewKeyDown"
                  Style="{StaticResource DialogWindowStyle}">
+    <mah:MetroWindow.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control" Command="{x:Static ApplicationCommands.Find}"/>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding AddVariableCommand}"/>
+        <KeyBinding Key="D" Modifiers="Control" Command="{Binding DuplicateVariableCommand}"
+                    CommandParameter="{Binding SelectedJobVariable}"/>
+        <KeyBinding Key="Escape" Command="{x:Static ApplicationCommands.Close}"/>
+    </mah:MetroWindow.InputBindings>
+    <mah:MetroWindow.CommandBindings>
+        <CommandBinding Command="{x:Static ApplicationCommands.Find}" Executed="Find_Executed"/>
+        <CommandBinding Command="{x:Static ApplicationCommands.Close}" Executed="Close_Executed"/>
+    </mah:MetroWindow.CommandBindings>
     <mah:MetroWindow.Resources>
-        <CollectionViewSource x:Key="GroupedVariables" Source="{Binding FilteredJobVariables}">
-            <CollectionViewSource.GroupDescriptions>
-                <PropertyGroupDescription PropertyName="ScopeLabel"/>
-            </CollectionViewSource.GroupDescriptions>
-        </CollectionViewSource>
-
         <Style x:Key="VariableListItemStyle" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,0,0,7"/>
+            <Setter Property="Margin" Value="0,1"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Card" Padding="12,10" CornerRadius="7"
-                                Background="{DynamicResource App.Brush.SurfaceHover}"
-                                BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
+                        <Border x:Name="Row" Padding="10,7" CornerRadius="5"
+                                Background="Transparent" BorderThickness="1"
+                                BorderBrush="Transparent">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Card" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                                <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -46,179 +53,112 @@
             </Setter>
         </Style>
 
-        <Style x:Key="FilterChipStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="8,3,3,3"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
-        </Style>
     </mah:MetroWindow.Resources>
 
-    <Grid Margin="20">
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Background="{DynamicResource App.Brush.Surface}"
-                BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                BorderThickness="1" CornerRadius="10"
-                Padding="18,14" Margin="0,0,0,14">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Border Width="42" Height="42" CornerRadius="8"
-                        Background="{DynamicResource App.Brush.AccentSubtle}"
-                        Margin="0,0,14,0">
-                    <iconPacks:PackIconMaterial Kind="CodeBraces" Width="21" Height="21"
-                                                Foreground="{DynamicResource App.Brush.Accent}"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.DialogTitle}"
-                               FontSize="19" FontWeight="SemiBold"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.DialogDescription}"
-                               Foreground="{DynamicResource App.Brush.TextMuted}"
-                               TextWrapping="Wrap" Margin="0,3,12,0"/>
+        <Grid Margin="2,0,2,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.DialogTitle}"
+                           FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.DialogDescription}"
+                           Foreground="{DynamicResource App.Brush.TextMuted}"
+                           Margin="0,3,16,0" TextWrapping="Wrap"/>
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding AddVariableCommand}"
+                    Style="{StaticResource ButtonPrimary}" VerticalAlignment="Center"
+                    ToolTip="{loc:Translate Key=Ui.Job.Variables.Shortcut.Add}">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="Plus" Width="15" Height="15" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Add}"/>
                 </StackPanel>
-                <Button Grid.Column="2" Command="{Binding AddVariableCommand}"
-                        Style="{StaticResource ButtonPrimary}" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="Plus" Width="15" Height="15" Margin="0,0,6,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Add}"/>
-                    </StackPanel>
-                </Button>
-            </Grid>
-        </Border>
+            </Button>
+        </Grid>
 
         <Border Grid.Row="1" Background="{DynamicResource App.Brush.Surface}"
                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                BorderThickness="1" CornerRadius="10" ClipToBounds="True">
+                BorderThickness="1" CornerRadius="8" ClipToBounds="True">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="350"/>
+                    <ColumnDefinition Width="310"/>
                     <ColumnDefinition Width="1"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Grid Margin="14">
+                <Grid Margin="12">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Grid>
+
+                    <Grid Margin="0,0,0,7">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding VariableSearchText, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox x:Name="VariableSearchBox"
+                                 Text="{Binding VariableSearchText, UpdateSourceTrigger=PropertyChanged}"
                                  mah:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Job.Variables.Search}"
-                                 mah:TextBoxHelper.UseFloatingWatermark="False" Margin="0,0,8,0"/>
-                        <Button x:Name="FilterButton" Grid.Column="1" Click="FilterButton_Click"
-                                Style="{StaticResource ButtonSecondary}" MinWidth="40"
-                                ToolTip="{loc:Translate Key=Ui.Job.Variables.Filter.Title}">
-                            <StackPanel Orientation="Horizontal">
-                                <iconPacks:PackIconMaterial Kind="FilterVariant" Width="16" Height="16"/>
-                                <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="8"
-                                        Background="{DynamicResource App.Brush.AccentSubtle}"
-                                        Visibility="{Binding HasActiveVariableFilters, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <TextBlock Text="{Binding ActiveVariableFilterCount}" FontSize="10"
-                                               Foreground="{DynamicResource App.Brush.Accent}"/>
-                                </Border>
-                            </StackPanel>
+                                 ToolTip="{loc:Translate Key=Ui.Job.Variables.Shortcut.Search}"
+                                 mah:TextBoxHelper.UseFloatingWatermark="False"/>
+                        <Button x:Name="FilterButton" Grid.Column="1" Click="MenuButton_Click" Margin="7,0,0,0"
+                                Style="{StaticResource ButtonIcon}" Width="32" Height="30"
+                                ToolTip="{loc:Translate Key=Ui.Job.Variables.Filter.Type}">
+                            <Grid>
+                                <iconPacks:PackIconMaterial Kind="FilterVariant" Width="15" Height="15"/>
+                                <Ellipse Width="6" Height="6" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                         Fill="{DynamicResource App.Brush.Accent}"
+                                         Visibility="{Binding HasTypeVariableFilter, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
                             <Button.ContextMenu>
                                 <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Scope}" StaysOpenOnClick="True">
-                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Shared}" IsCheckable="True"
-                                                  IsChecked="{Binding ShowSharedVariables}" StaysOpenOnClick="True"/>
-                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.StepValues}" IsCheckable="True"
-                                                  IsChecked="{Binding ShowStepValues}" StaysOpenOnClick="True"/>
-                                    </MenuItem>
-                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Usage}" StaysOpenOnClick="True">
-                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Used}" IsCheckable="True"
-                                                  IsChecked="{Binding ShowUsedVariables}" StaysOpenOnClick="True"/>
-                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Unused}" IsCheckable="True"
-                                                  IsChecked="{Binding ShowUnusedVariables}" StaysOpenOnClick="True"/>
-                                    </MenuItem>
-                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Type}" StaysOpenOnClick="True">
-                                        <ComboBox ItemsSource="{Binding VariableTypeFilterOptions}"
-                                                  SelectedItem="{Binding SelectedVariableTypeFilter}"
-                                                  DisplayMemberPath="DisplayName" Width="180" Margin="8,5"/>
-                                    </MenuItem>
-                                    <Separator/>
-                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Filter.Reset}"
-                                              Command="{Binding ResetVariableFiltersCommand}"/>
+                                    <ComboBox ItemsSource="{Binding VariableTypeFilterOptions}"
+                                              SelectedItem="{Binding SelectedVariableTypeFilter}"
+                                              DisplayMemberPath="DisplayName" Width="190" Margin="8"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
                     </Grid>
 
-                    <WrapPanel Grid.Row="1" Margin="0,9,0,3"
-                               Visibility="{Binding HasActiveVariableFilters, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Style="{StaticResource FilterChipStyle}"
-                                Visibility="{Binding HasScopeVariableFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding ScopeVariableFilterLabel}" VerticalAlignment="Center"/>
-                                <Button Style="{StaticResource ButtonIcon}" Width="22" Height="22" Margin="4,0,0,0"
-                                        Command="{Binding ResetVariableScopeFilterCommand}">
-                                    <iconPacks:PackIconMaterial Kind="Close" Width="12" Height="12"/>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource FilterChipStyle}"
-                                Visibility="{Binding HasUsageVariableFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding UsageVariableFilterLabel}" VerticalAlignment="Center"/>
-                                <Button Style="{StaticResource ButtonIcon}" Width="22" Height="22" Margin="4,0,0,0"
-                                        Command="{Binding ResetVariableUsageFilterCommand}">
-                                    <iconPacks:PackIconMaterial Kind="Close" Width="12" Height="12"/>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource FilterChipStyle}"
-                                Visibility="{Binding HasTypeVariableFilter, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding SelectedVariableTypeFilter.DisplayName}" VerticalAlignment="Center"/>
-                                <Button Style="{StaticResource ButtonIcon}" Width="22" Height="22" Margin="4,0,0,0"
-                                        Command="{Binding ResetVariableTypeFilterCommand}">
-                                    <iconPacks:PackIconMaterial Kind="Close" Width="12" Height="12"/>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                    </WrapPanel>
-
-                    <Grid Grid.Row="2" Margin="0,9,0,0">
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Empty}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"
+                    <Grid Grid.Row="1">
+                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Empty}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource App.Brush.TextMuted}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   MaxWidth="280" TextAlignment="Center"
-                                   Visibility="{Binding HasJobVariables, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                   MaxWidth="250" TextAlignment="Center"
+                                   Visibility="{Binding HasEmptyVariableView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.EmptyFilter}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   MaxWidth="280" TextAlignment="Center"
+                                   MaxWidth="250" TextAlignment="Center"
                                    Visibility="{Binding HasEmptyVariableFilterResult, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <ListBox ItemsSource="{Binding Source={StaticResource GroupedVariables}}"
+                        <ListBox ItemsSource="{Binding FilteredJobVariables}"
                                  SelectedItem="{Binding SelectedJobVariable, Mode=TwoWay}"
                                  ItemContainerStyle="{StaticResource VariableListItemStyle}"
                                  Background="Transparent" BorderThickness="0"
+                                 PreviewMouseRightButtonDown="VariableList_PreviewMouseRightButtonDown"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.GroupStyle>
-                                <GroupStyle>
-                                    <GroupStyle.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Name}" Margin="2,8,0,7"
-                                                       FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                        </DataTemplate>
-                                    </GroupStyle.HeaderTemplate>
-                                </GroupStyle>
-                            </ListBox.GroupStyle>
+                            <ListBox.ContextMenu>
+                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Duplicate}"
+                                              InputGestureText="Ctrl+D"
+                                              Command="{Binding DuplicateVariableCommand}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <Separator/>
+                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Delete.Action}"
+                                              InputGestureText="Del"
+                                              Command="{Binding DeleteVariableCommand}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid>
@@ -230,17 +170,23 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding CompactValue}" FontSize="15" FontWeight="SemiBold"
+                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
                                                    TextTrimming="CharacterEllipsis" Margin="0,0,8,2"/>
-                                        <Border Grid.Column="1" Padding="7,2" CornerRadius="8"
+                                        <Border Grid.Column="1" Padding="6,1" CornerRadius="7"
                                                 Background="{DynamicResource App.Brush.AccentSubtle}" VerticalAlignment="Top">
                                             <TextBlock Text="{Binding TypeDisplayName}" FontSize="10"
                                                        Foreground="{DynamicResource App.Brush.Accent}"/>
                                         </Border>
-                                        <TextBlock Grid.Row="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UsageText}" Margin="8,0,0,0"
-                                                   FontSize="10" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                        <TextBlock Grid.Row="1" Text="{Binding CompactValue}" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UsageText}"
+                                                   FontSize="10" Foreground="{DynamicResource App.Brush.TextMuted}"
+                                                   VerticalAlignment="Center"/>
+                                        <Ellipse Grid.Column="1" Width="7" Height="7" HorizontalAlignment="Right"
+                                                 VerticalAlignment="Top" Margin="0,-2,-2,0"
+                                                 Fill="{DynamicResource App.Brush.Accent}"
+                                                 ToolTip="{loc:Translate Key=Ui.Job.Variables.Draft.Changed}"
+                                                 Visibility="{Binding IsDirty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -251,20 +197,18 @@
                 <Border Grid.Column="1" Background="{DynamicResource App.Brush.CardBorder}"/>
 
                 <Grid Grid.Column="2">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="{Binding HasSelectedJobVariable, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.SelectHint}"
-                                   Foreground="{DynamicResource App.Brush.TextMuted}" TextAlignment="Center"/>
-                    </StackPanel>
+                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.SelectHint}"
+                               Foreground="{DynamicResource App.Brush.TextMuted}" TextAlignment="Center"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding HasSelectedJobVariable, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 
                     <ContentControl Content="{Binding SelectedJobVariable}"
                                     Visibility="{Binding HasSelectedJobVariable, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate>
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                    <Grid Margin="24,20,24,24">
+                                    <Grid Margin="22,18,22,22">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
@@ -274,9 +218,10 @@
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="190"/>
+                                                <ColumnDefinition Width="170"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Margin="0,0,16,0">
+                                            <StackPanel Margin="0,0,14,0">
                                                 <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Name}" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsShared}"/>
                                             </StackPanel>
@@ -284,96 +229,108 @@
                                                 <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Type}" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                                 <ComboBox ItemsSource="{Binding KindOptions}"
                                                           SelectedItem="{Binding SelectedKind, Mode=TwoWay}"
-                                                          IsEnabled="{Binding IsShared}" DisplayMemberPath="DisplayName"/>
+                                                          IsEnabled="{Binding CanChangeKind}" DisplayMemberPath="DisplayName">
+                                                    <ComboBox.Style>
+                                                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="ToolTip" Value="{loc:Translate Key=Ui.Job.Variables.Type.Locked}"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ComboBox.Style>
+                                                </ComboBox>
                                             </StackPanel>
+                                            <Button Grid.Column="2" Margin="8,19,0,0" Width="32" Height="32"
+                                                    Style="{StaticResource ButtonIcon}" Click="MenuButton_Click"
+                                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                    ToolTip="{loc:Translate Key=Ui.Job.Variables.Actions}">
+                                                <iconPacks:PackIconMaterial Kind="DotsVertical" Width="17" Height="17"/>
+                                                <Button.ContextMenu>
+                                                    <ContextMenu DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}">
+                                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Duplicate}"
+                                                                  InputGestureText="Ctrl+D"
+                                                                  Command="{Binding Tag.DuplicateVariableCommand}"
+                                                                  CommandParameter="{Binding DataContext}"/>
+                                                        <Separator/>
+                                                        <MenuItem Header="{loc:Translate Key=Ui.Job.Variables.Delete.Action}"
+                                                                  InputGestureText="Del"
+                                                                  Command="{Binding Tag.DeleteVariableCommand}"
+                                                                  CommandParameter="{Binding DataContext}"/>
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                            </Button>
                                         </Grid>
 
-                                        <StackPanel Grid.Row="1" Margin="0,18,0,0">
+                                        <StackPanel Grid.Row="1" Margin="0,16,0,0">
                                             <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Value}" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                             <jobs:JobVariableValueEditor/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Row="2" Margin="0,18,0,0">
-                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Description}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Description.Optional}" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                             <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                                                     AcceptsReturn="True" MinHeight="58" TextWrapping="Wrap"/>
+                                                     AcceptsReturn="True" MinHeight="52" TextWrapping="Wrap"/>
                                         </StackPanel>
 
-                                        <Border Grid.Row="3" Margin="0,22,0,0" Padding="14" CornerRadius="8"
-                                                Background="{DynamicResource App.Brush.SurfaceHover}"
-                                                BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
-                                            <StackPanel>
-                                                <Grid>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.Title}" FontWeight="SemiBold"/>
-                                                    <TextBlock Text="{Binding UsageText}" HorizontalAlignment="Right"
-                                                               Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                                </Grid>
-                                                <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.None}"
-                                                           Margin="0,9,0,0" Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                           Visibility="{Binding IsUsed, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                                                <ItemsControl ItemsSource="{Binding UsageItems}" Margin="0,7,0,0">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Button HorizontalContentAlignment="Stretch" Margin="0,2,0,0" Padding="9,7"
-                                                                    Style="{StaticResource ButtonSecondary}"
+                                        <StackPanel Grid.Row="3" Margin="0,20,0,0">
+                                            <Border Height="1" Background="{DynamicResource App.Brush.CardBorder}" Margin="0,0,0,13"/>
+                                            <Grid>
+                                                <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.Title}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding UsageText}" HorizontalAlignment="Right"
+                                                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                            </Grid>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.None}"
+                                                       Margin="0,8,0,0" Foreground="{DynamicResource App.Brush.TextMuted}"
+                                                       Visibility="{Binding IsUsed, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                            <ListBox ItemsSource="{Binding UsageItems}" Margin="0,6,0,0"
+                                                     Background="Transparent" BorderThickness="0"
+                                                     SelectedItem="{Binding DataContext.SelectedVariableUsage, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}, Mode=TwoWay}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="7,5">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding StepName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock Text="{Binding InputName}" Margin="7,0,0,0" TextTrimming="CharacterEllipsis"
+                                                                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                                            </StackPanel>
+                                                            <Button Grid.Column="1" Style="{StaticResource ButtonIcon}" Width="26" Height="24"
                                                                     Command="{Binding DataContext.OpenVariableUsageCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
                                                                     CommandParameter="{Binding}"
                                                                     ToolTip="{loc:Translate Key=Ui.Job.Variables.Usage.Open}">
-                                                                <Grid>
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <StackPanel>
-                                                                        <TextBlock Text="{Binding StepName}" FontWeight="SemiBold" TextAlignment="Left"/>
-                                                                        <TextBlock Text="{Binding InputName}" Margin="0,2,0,0" TextAlignment="Left"
-                                                                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                                                                    </StackPanel>
-                                                                    <iconPacks:PackIconMaterial Grid.Column="1" Kind="ArrowRight" Width="15" Height="15"
-                                                                                              VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                                                </Grid>
+                                                                <iconPacks:PackIconMaterial Kind="ArrowRight" Width="14" Height="14"/>
                                                             </Button>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                                <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="6"
-                                                        Background="{DynamicResource App.Brush.AccentSubtle}"
-                                                        Visibility="{Binding HasMultipleUsages, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <iconPacks:PackIconMaterial Kind="InformationOutline" Width="15" Height="15"
-                                                                                    Foreground="{DynamicResource App.Brush.Accent}" Margin="0,1,8,0"/>
-                                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.Warning}" TextWrapping="Wrap"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Grid Grid.Row="4" Margin="0,20,0,0">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource ButtonSecondary}"
-                                                        Command="{Binding DataContext.DuplicateVariableCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
-                                                        CommandParameter="{Binding}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <iconPacks:PackIconMaterial Kind="ContentCopy" Width="15" Height="15" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Duplicate}"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button Margin="8,0,0,0" Style="{StaticResource ButtonSecondary}"
-                                                        Visibility="{Binding IsStepValue, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                        Command="{Binding DataContext.PromoteVariableCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
-                                                        CommandParameter="{Binding}">
-                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.PromoteToShared}"/>
-                                                </Button>
-                                            </StackPanel>
-                                            <Button HorizontalAlignment="Right" Style="{StaticResource ButtonDanger}"
-                                                    Command="{Binding DataContext.DeleteVariableCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
-                                                    CommandParameter="{Binding}">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <iconPacks:PackIconMaterial Kind="DeleteOutline" Width="15" Height="15" Margin="0,0,6,0"/>
-                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Delete.Action}"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.Warning}"
+                                                       Margin="1,8,0,0" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource App.Brush.TextMuted}"
+                                                       Visibility="{Binding HasMultipleUsages, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <Border Margin="0,9,0,0" Padding="10,8" CornerRadius="5"
+                                                    Background="{DynamicResource App.Brush.SurfaceHover}"
+                                                    Visibility="{Binding HasMultipleUsages, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Usage.DetachHint}"
+                                                               VerticalAlignment="Center" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,12,0"/>
+                                                    <Button Grid.Column="1"
+                                                            Command="{Binding DataContext.ApplyVariableToSelectedUsageCommand, RelativeSource={RelativeSource AncestorType=mah:MetroWindow}}"
+                                                            Content="{loc:Translate Key=Ui.Job.Variables.Usage.Detach}"
+                                                            Style="{StaticResource ButtonSecondary}"
+                                                            ToolTip="{loc:Translate Key=Ui.Job.Variables.Draft.SelectUsageHint}"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
                                     </Grid>
                                 </ScrollViewer>
                             </DataTemplate>
@@ -383,10 +340,30 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,14,0,0">
-            <Button HorizontalAlignment="Right" MinWidth="100" IsDefault="True" IsCancel="True"
-                    Style="{StaticResource ButtonPrimary}" Click="Close_Click"
-                    Content="{loc:Translate Key=Ui.Common.Close}"/>
+        <Grid Grid.Row="2" Margin="2,12,2,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse Width="7" Height="7" Margin="0,0,7,0"
+                         Fill="{DynamicResource App.Brush.Accent}"
+                         Visibility="{Binding HasVariableDraftChanges, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <TextBlock Text="{Binding VariableDraftStatusText}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Command="{Binding DiscardVariableChangesCommand}"
+                        Content="{loc:Translate Key=Ui.Job.Variables.Draft.Discard}"
+                        Style="{StaticResource ButtonSecondary}" Margin="0,0,8,0"/>
+                <Button Command="{Binding ApplyAllVariableChangesCommand}"
+                        Content="{loc:Translate Key=Ui.Job.Variables.Draft.ApplyAll}"
+                        Style="{StaticResource ButtonSecondary}" Margin="0,0,8,0"
+                        Visibility="{Binding ShowApplyAllVariableChanges, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Command="{Binding ApplySelectedVariableCommand}"
+                        Content="{loc:Translate Key=Ui.Job.Variables.Draft.ApplySelected}"
+                        Style="{StaticResource ButtonPrimary}"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </mah:MetroWindow>

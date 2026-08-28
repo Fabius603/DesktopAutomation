@@ -336,7 +336,127 @@ public sealed class JobStepsViewModelExecutionTests
     }
 
     [Fact]
-    public void VariableView_FiltersByScopeUsageAndSearchesUsingStepName()
+    public void VariableDraft_DoesNotMutateJobUntilSelectedVariableIsApplied()
+    {
+        var variable = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [variable] });
+        viewModel.BeginVariableDraftSession();
+        var editor = Assert.Single(viewModel.JobVariables);
+        viewModel.SelectedJobVariable = editor;
+
+        editor.TextValue = "Draft";
+
+        Assert.Equal("Hello", variable.Value!.GetValue<string>());
+        Assert.True(editor.IsDirty);
+        Assert.True(viewModel.HasVariableDraftChanges);
+        Assert.Equal(1, viewModel.VariableDraftChangeCount);
+        Assert.False(viewModel.ShowApplyAllVariableChanges);
+
+        viewModel.ApplySelectedVariableCommand.Execute(null);
+
+        Assert.Equal("Draft", variable.Value!.GetValue<string>());
+        Assert.False(editor.IsDirty);
+        Assert.False(viewModel.HasVariableDraftChanges);
+    }
+
+    [Fact]
+    public void VariableDraft_CanApplyAllChangedVariablesTogether()
+    {
+        var first = new JobVariable { Name = "First", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("one") };
+        var second = new JobVariable { Name = "Second", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("two") };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [first, second] });
+        viewModel.BeginVariableDraftSession();
+
+        viewModel.JobVariables.Single(variable => variable.Id == first.Id).TextValue = "changed one";
+        viewModel.JobVariables.Single(variable => variable.Id == second.Id).TextValue = "changed two";
+        Assert.Equal(2, viewModel.VariableDraftChangeCount);
+        Assert.True(viewModel.ShowApplyAllVariableChanges);
+        viewModel.ApplyAllVariableChangesCommand.Execute(null);
+
+        Assert.Equal("changed one", first.Value!.GetValue<string>());
+        Assert.Equal("changed two", second.Value!.GetValue<string>());
+        Assert.False(viewModel.HasVariableDraftChanges);
+    }
+
+    [Fact]
+    public async Task VariableDraft_StagesCreationAndDeletionUntilApplyAll()
+    {
+        var existing = new JobVariable { Name = "Existing", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("value") };
+        var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [existing] });
+        viewModel.BeginVariableDraftSession();
+
+        viewModel.AddVariableCommand.Execute(null);
+        Assert.Single(viewModel.Job.Variables);
+        Assert.Equal(2, viewModel.JobVariables.Count);
+
+        var existingEditor = viewModel.JobVariables.Single(variable => variable.Id == existing.Id);
+        var delete = Assert.IsType<AsyncRelayCommand<JobVariableEditorViewModel?>>(viewModel.DeleteVariableCommand);
+        delete.Execute(existingEditor);
+        while (delete.IsExecuting) await Task.Yield();
+
+        Assert.Contains(viewModel.Job.Variables, variable => variable.Id == existing.Id);
+        Assert.DoesNotContain(viewModel.JobVariables, variable => variable.Id == existing.Id);
+
+        viewModel.ApplyAllVariableChangesCommand.Execute(null);
+
+        Assert.DoesNotContain(viewModel.Job.Variables, variable => variable.Id == existing.Id);
+        Assert.Single(viewModel.Job.Variables);
+    }
+
+    [Fact]
+    public void VariableDraft_OnlyThisUsageCreatesDetachedVariable()
+    {
+        var variable = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
+        var firstReference = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        };
+        var secondReference = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D")
+        };
+        var firstStep = new ShowTextStep { Settings = new ShowTextSettings
+        {
+            TextSource = ShowTextSource.TaskResult,
+            TextResult = firstReference
+        } };
+        var secondStep = new ShowTextStep { Settings = new ShowTextSettings
+        {
+            TextSource = ShowTextSource.TaskResult,
+            TextResult = secondReference
+        } };
+        var viewModel = CreateViewModel(new Job
+        {
+            Name = "Variables", Variables = [variable], Steps = [firstStep, secondStep]
+        });
+        viewModel.BeginVariableDraftSession();
+        var editor = Assert.Single(viewModel.JobVariables);
+        viewModel.SelectedJobVariable = editor;
+        var selectedUsage = editor.UsageItems.Single(usage => ReferenceEquals(usage.Step, firstStep));
+        var remainingUsage = editor.UsageItems.Single(usage => ReferenceEquals(usage.Step, secondStep));
+        viewModel.SelectedVariableUsage = selectedUsage;
+        Assert.True(viewModel.ApplyVariableToSelectedUsageCommand.CanExecute(null));
+        editor.TextValue = "Only here";
+
+        viewModel.ApplyVariableToSelectedUsageCommand.Execute(null);
+
+        Assert.Equal("Hello", variable.Value!.GetValue<string>());
+        Assert.Equal(variable.Id.ToString("D"), remainingUsage.Reference.SourceId);
+        Assert.NotEqual(variable.Id.ToString("D"), selectedUsage.Reference.SourceId);
+        var detached = Assert.Single(viewModel.Job.Variables,
+            candidate => candidate.Id.ToString("D") == selectedUsage.Reference.SourceId);
+        Assert.Equal("Only here", detached.Value!.GetValue<string>());
+    }
+
+    [Fact]
+    public void VariableView_FiltersOnlyByTypeAndSearchesUsingStepName()
     {
         var used = new JobVariable { Name = "Greeting", Scope = JobVariableScope.Shared,
             ValueKind = ResultValueKind.Text, Value = System.Text.Json.Nodes.JsonValue.Create("Hello") };
@@ -349,11 +469,10 @@ public sealed class JobStepsViewModelExecutionTests
         } };
         var viewModel = CreateViewModel(new Job { Name = "Variables", Variables = [used, unused], Steps = [step] });
 
-        viewModel.ShowUnusedVariables = false;
-        Assert.All(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => Assert.True(candidate.IsUsed));
-        Assert.DoesNotContain(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == unused.Id);
+        Assert.Equal(2, viewModel.FilteredJobVariables.Count);
+        Assert.False(viewModel.JobVariables.Single(candidate => candidate.Id == used.Id).CanChangeKind);
+        Assert.True(viewModel.JobVariables.Single(candidate => candidate.Id == unused.Id).CanChangeKind);
 
-        viewModel.ShowUnusedVariables = true;
         viewModel.VariableSearchText = viewModel.JobVariables.Single(candidate => candidate.Id == used.Id).UsageSteps.Single();
         Assert.Contains(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>(), candidate => candidate.Id == used.Id);
 
@@ -368,7 +487,7 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.Equal(unused.Id, Assert.Single(viewModel.FilteredJobVariables.Cast<JobVariableEditorViewModel>()).Id);
         Assert.True(viewModel.HasTypeVariableFilter);
 
-        viewModel.ResetVariableFiltersCommand.Execute(null);
+        viewModel.SelectedVariableTypeFilter = viewModel.VariableTypeFilterOptions[0];
         Assert.Equal(2, viewModel.FilteredJobVariables.Count);
         Assert.False(viewModel.HasActiveVariableFilters);
     }

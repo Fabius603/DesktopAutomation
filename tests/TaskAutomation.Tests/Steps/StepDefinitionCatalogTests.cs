@@ -3959,7 +3959,7 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
-    public void JobVariableEditor_StoresColorFilePathAndFullTimestampValues()
+    public void JobVariableEditor_StoresBooleanColorFilePathAndFullTimestampValues()
     {
         var variable = new JobVariable
         {
@@ -3970,6 +3970,12 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Equal(14, editor.DateTimeValue.Hour);
         Assert.Equal(35, editor.DateTimeValue.Minute);
+
+        editor.SelectedKind = editor.KindOptions.Single(option => option.Kind == ResultValueKind.Boolean);
+        Assert.Equal(2, editor.BooleanOptions.Count);
+        editor.SelectedBooleanOption = editor.BooleanOptions.Single(option => option.Value);
+        Assert.True(editor.BooleanValue);
+        Assert.True(variable.Value!.GetValue<bool>());
 
         editor.SelectedKind = editor.KindOptions.Single(option => option.Kind == ResultValueKind.Color);
         editor.ColorValue = System.Windows.Media.Color.FromRgb(0x12, 0xAB, 0xEF);

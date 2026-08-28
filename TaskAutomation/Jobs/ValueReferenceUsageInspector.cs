@@ -35,7 +35,7 @@ public static class ValueReferenceUsageInspector
             .Where(usage => acceptedProviders.Contains(usage.Reference.ProviderId)
                             && string.Equals(
                                 usage.Reference.SourceId, sourceId, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(usage => (usage.Step.Id, Path: NormalizeUsagePath(usage.Path)))
+            .GroupBy(usage => (usage.Step.Id, Path: NormalizeLogicalPath(usage.Path)))
             .Select(group => group
                 .OrderByDescending(usage => usage.Path.Contains(".Inputs[", StringComparison.Ordinal))
                 .First())
@@ -53,7 +53,7 @@ public static class ValueReferenceUsageInspector
             .GroupBy(usage => (
                 SourceId: usage.Reference.SourceId,
                 usage.Step.Id,
-                Path: NormalizeUsagePath(usage.Path)),
+                Path: NormalizeLogicalPath(usage.Path)),
                 new LogicalUsageKeyComparer())
             .Select(group => group.Key.SourceId)
             .GroupBy(sourceId => sourceId, StringComparer.OrdinalIgnoreCase)
@@ -75,7 +75,7 @@ public static class ValueReferenceUsageInspector
         return result;
     }
 
-    private static string NormalizeUsagePath(string path)
+    public static string NormalizeLogicalPath(string path)
     {
         var inputIndex = path.IndexOf(".Inputs[", StringComparison.Ordinal);
         var settingsIndex = path.IndexOf(".Settings.", StringComparison.Ordinal);

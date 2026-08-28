@@ -3155,6 +3155,8 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.DialogTitle" xml:space="preserve"><value>Job Variablen</value></data>
   <data name="Ui.Job.Variables.DialogDescription" xml:space="preserve"><value>Zentrale Werte für diesen Job verwalten und in mehreren Steps wiederverwenden.</value></data>
   <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>Variable hinzufügen</value></data>
+  <data name="Ui.Job.Variables.Shortcut.Add" xml:space="preserve"><value>Variable hinzufügen (Strg+N)</value></data>
+  <data name="Ui.Job.Variables.Shortcut.Search" xml:space="preserve"><value>Variablen durchsuchen (Strg+F)</value></data>
   <data name="Ui.Job.Variables.Empty" xml:space="preserve"><value>Noch keine Variablen vorhanden. Lege zentrale Werte an, die du in mehreren Steps verwenden kannst.</value></data>
   <data name="Ui.Job.Variables.Name" xml:space="preserve"><value>Name</value></data>
   <data name="Ui.Job.Variables.Type.Object" xml:space="preserve"><value>Zusammengesetzter Wert</value></data>
@@ -3162,9 +3164,12 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Type.Detection" xml:space="preserve"><value>Erkennung</value></data>
   <data name="Ui.Job.Variables.Type.Process" xml:space="preserve"><value>Prozessreferenz</value></data>
   <data name="Ui.Job.Variables.Description" xml:space="preserve"><value>Beschreibung</value></data>
+  <data name="Ui.Job.Variables.Description.Optional" xml:space="preserve"><value>Beschreibung (optional)</value></data>
   <data name="Ui.Job.Variables.Type" xml:space="preserve"><value>Typ</value></data>
+  <data name="Ui.Job.Variables.Type.Locked" xml:space="preserve"><value>Der Typ kann nicht geändert werden, solange die Variable verwendet wird.</value></data>
   <data name="Ui.Job.Variables.Value" xml:space="preserve"><value>Wert</value></data>
-  <data name="Ui.Job.Variables.BooleanValue" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="Ui.Job.Variables.Boolean.True" xml:space="preserve"><value>Wahr</value></data>
+  <data name="Ui.Job.Variables.Boolean.False" xml:space="preserve"><value>Falsch</value></data>
   <data name="Ui.Job.Variables.Width" xml:space="preserve"><value>Breite</value></data>
   <data name="Ui.Job.Variables.Height" xml:space="preserve"><value>Höhe</value></data>
   <data name="Ui.Job.Variables.X" xml:space="preserve"><value>X</value></data>
@@ -3193,16 +3198,8 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Usage.Many" xml:space="preserve"><value>{0} Verwendungen</value></data>
   <data name="Ui.Job.Variables.Usage.Warning" xml:space="preserve"><value>Änderungen an diesem Wert wirken sich auf alle Verwendungen aus.</value></data>
   <data name="Ui.Job.Variables.Search" xml:space="preserve"><value>Variablen durchsuchen …</value></data>
-  <data name="Ui.Job.Variables.Filter.Shared" xml:space="preserve"><value>Gemeinsam</value></data>
-  <data name="Ui.Job.Variables.Filter.StepValues" xml:space="preserve"><value>Step-Werte</value></data>
-  <data name="Ui.Job.Variables.Filter.Used" xml:space="preserve"><value>Verwendet</value></data>
-  <data name="Ui.Job.Variables.Filter.Unused" xml:space="preserve"><value>Ungenutzt</value></data>
-  <data name="Ui.Job.Variables.Filter.Title" xml:space="preserve"><value>Variablen filtern</value></data>
-  <data name="Ui.Job.Variables.Filter.Scope" xml:space="preserve"><value>Bereich</value></data>
-  <data name="Ui.Job.Variables.Filter.Usage" xml:space="preserve"><value>Verwendung</value></data>
   <data name="Ui.Job.Variables.Filter.Type" xml:space="preserve"><value>Variablentyp</value></data>
   <data name="Ui.Job.Variables.Filter.AllTypes" xml:space="preserve"><value>Alle Typen</value></data>
-  <data name="Ui.Job.Variables.Filter.Reset" xml:space="preserve"><value>Filter zurücksetzen</value></data>
   <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>Für diese Suche und Filter wurden keine Werte gefunden.</value></data>
   <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Variable duplizieren</value></data>
   <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Kopie</value></data>
@@ -3211,7 +3208,21 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Usage.Title" xml:space="preserve"><value>Verwendungen</value></data>
   <data name="Ui.Job.Variables.Usage.None" xml:space="preserve"><value>Diese Variable wird momentan in keinem Step verwendet.</value></data>
   <data name="Ui.Job.Variables.Usage.Open" xml:space="preserve"><value>Im Job anzeigen</value></data>
+  <data name="Ui.Job.Variables.Draft.Changed" xml:space="preserve"><value>Noch nicht übernommene Änderungen</value></data>
+  <data name="Ui.Job.Variables.Draft.Discard" xml:space="preserve"><value>Änderungen verwerfen</value></data>
+  <data name="Ui.Job.Variables.Draft.ApplySelected" xml:space="preserve"><value>Diese Variable übernehmen</value></data>
+  <data name="Ui.Job.Variables.Draft.ApplyAll" xml:space="preserve"><value>Alle übernehmen</value></data>
+  <data name="Ui.Job.Variables.Draft.SelectUsageHint" xml:space="preserve"><value>Wähle zuerst eine Verwendung aus. Dabei wird für dieses Feld eine eigene Variable angelegt.</value></data>
+  <data name="Ui.Job.Variables.Draft.Status.None" xml:space="preserve"><value>Keine offenen Änderungen</value></data>
+  <data name="Ui.Job.Variables.Draft.Status.One" xml:space="preserve"><value>1 nicht übernommene Änderung</value></data>
+  <data name="Ui.Job.Variables.Draft.Status.Many" xml:space="preserve"><value>{0} nicht übernommene Änderungen</value></data>
+  <data name="Ui.Job.Variables.Usage.Detach" xml:space="preserve"><value>Eigene Variable anlegen</value></data>
+  <data name="Ui.Job.Variables.Usage.DetachHint" xml:space="preserve"><value>Wähle eine Verwendung aus, um sie vom gemeinsamen Wert zu lösen.</value></data>
+  <data name="Ui.Job.Variables.Close.Title" xml:space="preserve"><value>Variablenänderungen</value></data>
+  <data name="Ui.Job.Variables.Close.Message" xml:space="preserve"><value>Es gibt noch nicht übernommene Variablenänderungen. Mit Ja werden alle übernommen, mit Nein verworfen.</value></data>
+  <data name="Ui.Job.Variables.Validation.Title" xml:space="preserve"><value>Variable kann nicht übernommen werden</value></data>
   <data name="Ui.Job.Variables.Delete.Action" xml:space="preserve"><value>Löschen</value></data>
+  <data name="Ui.Job.Variables.Actions" xml:space="preserve"><value>Weitere Aktionen</value></data>
   <data name="Ui.Job.Variables.Image.Browse" xml:space="preserve"><value>Auswählen</value></data>
   <data name="Ui.Job.Variables.Image.Select" xml:space="preserve"><value>Bilddatei auswählen</value></data>
   <data name="Ui.Job.Variables.Image.Filter" xml:space="preserve"><value>Bilddateien|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|Alle Dateien|*.*</value></data>

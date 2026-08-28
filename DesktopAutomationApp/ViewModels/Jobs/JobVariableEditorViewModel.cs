@@ -27,10 +27,14 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
 
     private readonly Action<string?> _changed;
     private bool _loading;
+    private JobVariable _committedModel;
+    private bool _isDraftSessionActive;
+    private bool _isNewDraft;
 
     public JobVariableEditorViewModel(JobVariable model, Action<string?> changed)
     {
         Model = model;
+        _committedModel = model;
         _changed = changed;
         KindOptions =
         [
@@ -46,21 +50,27 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         ];
         if (!SupportedKinds.Contains(Model.ValueKind))
             KindOptions = [.. KindOptions, LegacyKindOption(Model.ValueKind)];
+        BooleanOptions =
+        [
+            new(true, "Ui.Job.Variables.Boolean.True"),
+            new(false, "Ui.Job.Variables.Boolean.False")
+        ];
         BrowseImageCommand = new RelayCommand(BrowseImage);
         BrowseFileCommand = new RelayCommand(BrowseFile);
         LoadValue();
     }
 
-    public JobVariable Model { get; }
+    public JobVariable Model { get; private set; }
+    public JobVariable CommittedModel => _committedModel;
+    public bool IsDraftSessionActive => _isDraftSessionActive;
+    public bool IsNewDraft => _isNewDraft;
+    public bool IsDirty => _isNewDraft || !VariablesMatch(Model, _committedModel);
     public IReadOnlyList<JobVariableKindOption> KindOptions { get; }
+    public IReadOnlyList<JobVariableBooleanOption> BooleanOptions { get; }
     public ICommand BrowseImageCommand { get; }
     public ICommand BrowseFileCommand { get; }
     public Guid Id => Model.Id;
-    public bool IsStepValue => Model.Scope == JobVariableScope.StepValue;
     public bool IsShared => Model.Scope == JobVariableScope.Shared;
-    public string ScopeLabel => Loc.Get(IsStepValue
-        ? "Ui.Job.Variables.Scope.StepValues"
-        : "Ui.Job.Variables.Scope.Shared");
     public int UsageCount { get; private set; }
     public string UsageText => Loc.Format(
         UsageCount == 1 ? "Ui.Job.Variables.Usage.One" : "Ui.Job.Variables.Usage.Many",
@@ -70,9 +80,46 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     public IReadOnlyList<JobVariableUsageViewModel> UsageItems { get; private set; } = [];
     public bool HasMultipleUsages => UsageCount > 1;
     public bool IsUsed => UsageCount > 0;
+    public bool CanChangeKind => IsShared && !IsUsed;
     public string SearchValue => ValueReferenceDisplayFormatter.Instance.CompactValue(Model);
     public string CompactValue => SearchValue;
     public string TypeDisplayName => SelectedKind.DisplayName;
+
+    public void BeginDraftSession(bool isNew = false)
+    {
+        if (_isDraftSessionActive) return;
+        _committedModel = Model;
+        Model = CloneVariable(Model);
+        _isDraftSessionActive = true;
+        _isNewDraft = isNew;
+        ReloadModelState();
+    }
+
+    public void AcceptDraft()
+    {
+        if (!_isDraftSessionActive) return;
+        CopyVariable(Model, _committedModel);
+        _isNewDraft = false;
+        Model = CloneVariable(_committedModel);
+        ReloadModelState();
+    }
+
+    public void DiscardDraft()
+    {
+        if (!_isDraftSessionActive) return;
+        _isNewDraft = false;
+        Model = CloneVariable(_committedModel);
+        ReloadModelState();
+    }
+
+    public void EndDraftSession()
+    {
+        if (!_isDraftSessionActive) return;
+        Model = _committedModel;
+        _isDraftSessionActive = false;
+        _isNewDraft = false;
+        ReloadModelState();
+    }
 
     public void SetUsage(int count, string summary, IReadOnlyList<JobVariableUsageViewModel>? usages = null)
     {
@@ -85,18 +132,9 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(UsageSummary));
         OnPropertyChanged(nameof(HasMultipleUsages));
         OnPropertyChanged(nameof(IsUsed));
+        OnPropertyChanged(nameof(CanChangeKind));
         OnPropertyChanged(nameof(UsageSteps));
         OnPropertyChanged(nameof(UsageItems));
-    }
-
-    public void PromoteToShared()
-    {
-        if (Model.Scope == JobVariableScope.Shared) return;
-        Model.Scope = JobVariableScope.Shared;
-        OnPropertyChanged(nameof(IsStepValue));
-        OnPropertyChanged(nameof(IsShared));
-        OnPropertyChanged(nameof(ScopeLabel));
-        Changed(nameof(IsShared));
     }
 
     public string Name
@@ -142,7 +180,24 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     private string _textValue = string.Empty;
     public string TextValue { get => _textValue; set { if (UpdateProperty(ref _textValue, value)) StoreValue(JsonValue.Create(value)); } }
     private bool _booleanValue;
-    public bool BooleanValue { get => _booleanValue; set { if (UpdateProperty(ref _booleanValue, value)) StoreValue(JsonValue.Create(value)); } }
+    public bool BooleanValue
+    {
+        get => _booleanValue;
+        set
+        {
+            if (!UpdateProperty(ref _booleanValue, value)) return;
+            OnPropertyChanged(nameof(SelectedBooleanOption));
+            StoreValue(JsonValue.Create(value));
+        }
+    }
+    public JobVariableBooleanOption SelectedBooleanOption
+    {
+        get => BooleanOptions.First(option => option.Value == BooleanValue);
+        set
+        {
+            if (value is not null) BooleanValue = value.Value;
+        }
+    }
     private int _integerValue;
     public int IntegerValue { get => _integerValue; set { if (UpdateProperty(ref _integerValue, value)) StoreValue(JsonValue.Create(value)); } }
     private double _numberValue;
@@ -261,6 +316,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         }
         OnPropertyChanged(nameof(TextValue));
         OnPropertyChanged(nameof(BooleanValue));
+        OnPropertyChanged(nameof(SelectedBooleanOption));
         OnPropertyChanged(nameof(IntegerValue));
         OnPropertyChanged(nameof(NumberValue));
         OnPropertyChanged(nameof(DateTimeValue));
@@ -323,8 +379,56 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(Description));
         OnPropertyChanged(nameof(SearchValue));
         OnPropertyChanged(nameof(CompactValue));
+        OnPropertyChanged(nameof(IsDirty));
         _changed(propertyName);
     }
+
+    private void ReloadModelState()
+    {
+        LoadValue();
+        OnPropertyChanged(nameof(Model));
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(Description));
+        OnPropertyChanged(nameof(SelectedKind));
+        OnPropertyChanged(nameof(SelectedKindValue));
+        OnPropertyChanged(nameof(TypeDisplayName));
+        OnPropertyChanged(nameof(SearchValue));
+        OnPropertyChanged(nameof(CompactValue));
+        OnPropertyChanged(nameof(IsDirty));
+        OnPropertyChanged(nameof(IsNewDraft));
+        NotifyKindVisibility();
+    }
+
+    private static JobVariable CloneVariable(JobVariable source) => new()
+    {
+        Id = source.Id,
+        Name = source.Name,
+        Description = source.Description,
+        Scope = source.Scope,
+        ValueKind = source.ValueKind,
+        Cardinality = source.Cardinality,
+        Value = source.Value?.DeepClone()
+    };
+
+    private static void CopyVariable(JobVariable source, JobVariable target)
+    {
+        target.Id = source.Id;
+        target.Name = source.Name;
+        target.Description = source.Description;
+        target.Scope = source.Scope;
+        target.ValueKind = source.ValueKind;
+        target.Cardinality = source.Cardinality;
+        target.Value = source.Value?.DeepClone();
+    }
+
+    private static bool VariablesMatch(JobVariable left, JobVariable right) =>
+        left.Id == right.Id
+        && left.Name == right.Name
+        && left.Description == right.Description
+        && left.Scope == right.Scope
+        && left.ValueKind == right.ValueKind
+        && left.Cardinality == right.Cardinality
+        && string.Equals(left.Value?.ToJsonString(), right.Value?.ToJsonString(), StringComparison.Ordinal);
 
     private void BrowseImage()
     {
@@ -394,6 +498,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
 
 public sealed record JobVariableUsageViewModel(
     JobStep Step,
+    ValueReference Reference,
     string StepName,
     string InputName,
     string SearchText);
@@ -407,5 +512,11 @@ public sealed class JobVariableKindOption(ResultValueKind kind, string labelKey)
 public sealed class JobVariableTypeFilterOption(ResultValueKind? kind, string labelKey)
 {
     public ResultValueKind? Kind { get; } = kind;
+    public string DisplayName => Loc.Get(labelKey);
+}
+
+public sealed class JobVariableBooleanOption(bool value, string labelKey)
+{
+    public bool Value { get; } = value;
     public string DisplayName => Loc.Get(labelKey);
 }

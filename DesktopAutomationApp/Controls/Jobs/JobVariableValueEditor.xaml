@@ -11,6 +11,9 @@
             <Setter Property="MinHeight" Value="34"/>
             <Setter Property="Padding" Value="8,6"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HideUpDownButtons" Value="True"/>
+            <Setter Property="TextAlignment" Value="Left"/>
+            <Setter Property="ChangeValueOnTextChanged" Value="True"/>
             <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
             <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
@@ -26,9 +29,10 @@
     <Grid>
         <TextBox Text="{Binding TextValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  Visibility="{Binding IsText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-        <CheckBox IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   Content="{loc:Translate Key=Ui.Job.Variables.BooleanValue}"
-                   Visibility="{Binding IsBoolean, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <ComboBox ItemsSource="{Binding BooleanOptions}"
+                  SelectedItem="{Binding SelectedBooleanOption, Mode=TwoWay}"
+                  DisplayMemberPath="DisplayName"
+                  Visibility="{Binding IsBoolean, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         <mah:NumericUpDown Value="{Binding IntegerValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             NumericInputMode="Numbers" Interval="1" Style="{StaticResource VariableNumericInputStyle}"
                             Visibility="{Binding IsInteger, Converter={StaticResource BooleanToVisibilityConverter}}"/>
