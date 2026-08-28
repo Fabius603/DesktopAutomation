@@ -381,6 +381,123 @@ public sealed class JobExecutorControlFlowTests
         Assert.False(evaluation.BranchExecuted);
     }
 
+    [Fact]
+    public async Task ExecuteJob_DoesNotMatchElseIfFromDefaultResultOfSkippedStep()
+    {
+        var enabled = new JobVariable
+        {
+            Name = "Enabled",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(false)
+        };
+        var skippedSource = new WindowsStateQueryStep
+        {
+            Id = "skipped-audio",
+            Settings = new() { QueryType = "audio.volume" }
+        };
+        var job = new Job
+        {
+            Name = "skipped condition source",
+            Variables = [enabled],
+            Steps =
+            [
+                new IfStep
+                {
+                    Settings = new()
+                    {
+                        Conditions =
+                        [
+                            new StepCondition
+                            {
+                                ProviderId = ValueProviderIds.JobVariable,
+                                SourceId = enabled.Id.ToString("D"),
+                                Operator = ConditionOperator.IsTrue
+                            }
+                        ]
+                    }
+                },
+                skippedSource,
+                new ElseIfStep
+                {
+                    Settings = new()
+                    {
+                        Conditions =
+                        [
+                            new StepCondition
+                            {
+                                SourceStepId = skippedSource.Id,
+                                PropertyPath = "IsMuted",
+                                Operator = ConditionOperator.IsFalse
+                            }
+                        ]
+                    }
+                },
+                Text("default-result-branch"),
+                new ElseStep(),
+                Text("fallback"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["fallback"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
+    public async Task Debugger_ShortCircuitsRemainingAnyConditions()
+    {
+        var audio = new WindowsStateQueryStep
+        {
+            Id = "audio",
+            Settings = new() { QueryType = "audio.volume" }
+        };
+        var ifStep = new IfStep
+        {
+            Id = "if",
+            Settings = new()
+            {
+                MatchMode = ConditionMatchMode.Any,
+                Conditions =
+                [
+                    new StepCondition
+                    {
+                        SourceStepId = audio.Id,
+                        PropertyPath = "IsMuted",
+                        Operator = ConditionOperator.IsTrue
+                    },
+                    new StepCondition
+                    {
+                        SourceStepId = audio.Id,
+                        PropertyPath = "IsMuted",
+                        Operator = ConditionOperator.IsFalse
+                    }
+                ]
+            }
+        };
+        var job = new Job
+        {
+            Name = "short circuit",
+            Steps = [audio, ifStep, Text("matched"), new EndIfStep()]
+        };
+        var builder = new JobExecutorTestBuilder()
+            .WithJobs(job)
+            .WithWindowsStates(new AudioVolumeQueryResult { IsMuted = true });
+        using var executor = await builder.BuildAsync();
+        using var cancellation = new JobExecutionCancellation(CancellationToken.None);
+        var session = new JobDebugSession(Guid.NewGuid(), job);
+
+        var execution = executor.ExecuteJob(job.Id, JobStartContext.Unknown, cancellation, session);
+        session.Continue();
+        await execution;
+
+        var evaluation = session.GetSnapshot(ifStep.Id)!.ConditionEvaluation!;
+        Assert.Equal(ConditionDebugState.Met, evaluation.Conditions[0].State);
+        Assert.Equal(ConditionDebugState.NotEvaluated, evaluation.Conditions[1].State);
+    }
+
     private static IfConditionSettings Settings(ConditionOperator op) => new() { Conditions = [new StepCondition
         { SourceStepId = "audio", PropertyPath = "IsMuted", Operator = op }] };
     private static ShowTextStep Text(string text) => new() { Settings = new() { Text = text, ClearOnJobEnd = false } };

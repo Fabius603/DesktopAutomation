@@ -19,6 +19,11 @@
     <UserControl.Resources>
         <generated:GeneratedStepFieldTemplateSelector x:Key="GeneratedStepFieldTemplateSelector"/>
         <generated:GeneratedStepFieldTemplateSelector x:Key="InlineStepValueTemplateSelector" IgnoreInputReference="True"/>
+        <Style x:Key="VirtualizedCompoundEditorItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter>
+        </Style>
         <DataTemplate x:Key="TextFieldTemplate">
             <TextBox MinWidth="220" HorizontalAlignment="Stretch"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
@@ -282,8 +287,11 @@
         </DataTemplate>
         <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding UserChoiceOptionsEditor.Options}">
-                    <ItemsControl.ItemTemplate><DataTemplate>
+                <ListBox ItemsSource="{Binding UserChoiceOptionsEditor.Options}" MaxHeight="560"
+                         BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                         ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
+                    <ListBox.ItemTemplate><DataTemplate>
                         <Border Style="{StaticResource GeometryCard}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -321,8 +329,8 @@
                                 </Button>
                             </Grid>
                         </Border>
-                    </DataTemplate></ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
                 <Button Content="{loc:Translate Key=Ui.UserChoice.AddAnswer}"
                         Command="{Binding UserChoiceOptionsEditor.AddCommand}"
                         Style="{StaticResource ButtonSecondary}"
@@ -334,9 +342,12 @@
         </DataTemplate>
         <DataTemplate x:Key="PointEntryListFieldTemplate">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding PointEntryListEditor.Points}">
-                    <ItemsControl.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ListBox ItemsSource="{Binding PointEntryListEditor.Points}" MaxHeight="560"
+                         BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                         ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
+                    <ListBox.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
                 <Button Content="{loc:Translate Key=Ui.Step.Settings.AddPoint}"
                         Command="{Binding PointEntryListEditor.AddCommand}"
                         Style="{StaticResource ButtonSecondary}"
@@ -345,9 +356,12 @@
         </DataTemplate>
         <DataTemplate x:Key="AxisExpressionListFieldTemplate">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding AxisExpressionListEditor.Expressions}">
-                    <ItemsControl.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ListBox ItemsSource="{Binding AxisExpressionListEditor.Expressions}" MaxHeight="560"
+                         BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                         ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
+                    <ListBox.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
                 <Button Content="{loc:Translate Key=Ui.Step.Settings.AddExpression}"
                         Command="{Binding AxisExpressionListEditor.AddCommand}"
                         Style="{StaticResource ButtonSecondary}"

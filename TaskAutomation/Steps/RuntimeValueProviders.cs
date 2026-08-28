@@ -118,7 +118,7 @@ public static class JobVariableRuntimeValueReader
     {
         ResultValueKind.Boolean => variable.Value?.GetValue<bool>(),
         ResultValueKind.Integer => variable.Value?.GetValue<int>(),
-        ResultValueKind.Number => variable.Value?.GetValue<double>(),
+        ResultValueKind.Number => variable.Value?.Deserialize<double>(),
         ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath =>
             variable.Value?.GetValue<string>(),
         ResultValueKind.DateTime => variable.Value?.GetValue<DateTime>(),

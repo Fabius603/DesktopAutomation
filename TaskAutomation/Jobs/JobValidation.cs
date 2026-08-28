@@ -133,17 +133,19 @@ public static class JobValidation
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
     {
-        if (!step.IsEnabled)
+        if (!step.IsEnabled && step.CanBeDisabled)
             return new(step, true, null);
 
         var index = IndexOf(steps, step);
         var errors = new List<string>();
         errors.AddRange(ValidateResultBindings(steps, index, step, variables ?? [], providerSources ?? []));
         errors.AddRange(ValidateValues(step, variables ?? []));
-        if (step is IfStep ifStep && ValidateConditions(steps, index, ifStep.Settings.Conditions, variables ?? [], providerSources ?? []) is { } ifError)
-            errors.Add(ifError);
-        if (step is ElseIfStep elseIfStep && ValidateConditions(steps, index, elseIfStep.Settings.Conditions, variables ?? [], providerSources ?? []) is { } elseIfError)
-            errors.Add(elseIfError);
+        if (step is IfStep or ElseIfStep)
+        {
+            var settings = ReadEffectiveConditionSettings(step, variables ?? []);
+            errors.AddRange(ValidateConditions(
+                steps, index, settings?.Conditions, variables ?? [], providerSources ?? []));
+        }
 
         return errors.Count == 0
             ? new(step, true, null, [])
@@ -226,43 +228,97 @@ public static class JobValidation
         return ValueReferenceResolver.TryReadVariable(variable, binding.ValuePath, out value, out _);
     }
 
-    private static string? ValidateConditions(
+    private static IfConditionSettings? ReadEffectiveConditionSettings(
+        JobStep step,
+        IReadOnlyList<JobVariable> variables)
+    {
+        if (!BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
+            return step switch
+            {
+                IfStep condition => condition.Settings,
+                ElseIfStep condition => condition.Settings,
+                _ => null
+            };
+        var draft = definition.CreateDraft(step);
+        SupplyLegacyValuesForUnifiedFields(step, draft);
+        var overlay = OverlayKnownInputValues(step, definition, draft, variables);
+        return overlay.Error is null ? ConditionStepDefinitionSupport.ReadSettings(draft) : null;
+    }
+
+    private static IReadOnlyList<string> ValidateConditions(
         IReadOnlyList<JobStep> steps,
         int conditionStepIndex,
-        IEnumerable<StepCondition> conditions,
+        IEnumerable<StepCondition>? conditions,
         IReadOnlyList<JobVariable> variables,
         IReadOnlyList<ValueProviderSourceDescriptor> providerSources)
     {
+        if (conditions is null) return ["Die Bedingungen besitzen kein gültiges Format."];
+        var errors = new List<string>();
+        var sourceSteps = steps.Take(Math.Max(0, conditionStepIndex))
+            .Where(step => step.IsEnabled && !string.IsNullOrWhiteSpace(step.Id))
+            .GroupBy(step => step.Id, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var conditionIndex = 0;
         foreach (var condition in conditions)
         {
+            conditionIndex++;
+            if (condition is null)
+            {
+                errors.Add($"Bedingung {conditionIndex} besitzt kein gültiges Format.");
+                continue;
+            }
             var property = ResolveConditionProperty(
-                steps, conditionStepIndex, variables, providerSources, condition);
-            if (property is null) return "Eine Bedingung verweist nicht auf eine gültige Referenz.";
+                sourceSteps, variables, providerSources, condition);
+            if (property is null)
+            {
+                errors.Add($"Bedingung {conditionIndex} verweist nicht auf eine gültige Referenz.");
+                continue;
+            }
+            if (property.Cardinality == ResultCardinality.Collection)
+            {
+                errors.Add($"Bedingung {conditionIndex} benötigt einen einzelnen Wert statt einer Sammlung.");
+                continue;
+            }
             if (!ConditionRules.IsOperatorAllowed(property.DataType, condition.Operator))
-                return "Der Operator passt nicht zum Datentyp der ausgewählten Eigenschaft.";
+            {
+                errors.Add($"In Bedingung {conditionIndex} passt der Operator nicht zum Datentyp der ausgewählten Eigenschaft.");
+                continue;
+            }
             if (!ConditionRules.RequiresComparisonValue(condition.Operator)) continue;
 
             var comparison = condition.EffectiveComparison;
+            if (!Enum.IsDefined(comparison.Kind))
+            {
+                errors.Add($"Bedingung {conditionIndex} verwendet eine unbekannte Vergleichsart.");
+                continue;
+            }
             if (comparison.Kind == ComparisonOperandKind.Literal)
             {
                 if (!ConditionRules.IsComparisonValueValid(property, condition.Operator, comparison.Value))
-                    return "Der Vergleichswert besitzt nicht den erwarteten Datentyp.";
+                    errors.Add($"Der Vergleichswert in Bedingung {conditionIndex} besitzt nicht den erwarteten Datentyp.");
                 continue;
             }
 
             var comparisonProperty = ResolveConditionProperty(
-                steps, conditionStepIndex, variables, providerSources, comparison);
+                sourceSteps, variables, providerSources, comparison);
             if (comparisonProperty is null)
-                return "Die ausgewählte Vergleichsreferenz existiert nicht mehr.";
+            {
+                errors.Add($"Die ausgewählte Vergleichsreferenz in Bedingung {conditionIndex} existiert nicht mehr.");
+                continue;
+            }
+            if (comparisonProperty.Cardinality == ResultCardinality.Collection)
+            {
+                errors.Add($"Die Vergleichsreferenz in Bedingung {conditionIndex} muss einen einzelnen Wert liefern.");
+                continue;
+            }
             if (!StepResultMetadata.AreComparable(property, comparisonProperty))
-                return "Beide Vergleichswerte müssen denselben Datentyp besitzen.";
+                errors.Add($"Beide Vergleichswerte in Bedingung {conditionIndex} müssen denselben Datentyp besitzen.");
         }
-        return null;
+        return errors;
     }
 
     private static ResultPropertyDescriptor? ResolveConditionProperty(
-        IReadOnlyList<JobStep> steps,
-        int conditionStepIndex,
+        IReadOnlyDictionary<string, JobStep> sourceSteps,
         IReadOnlyList<JobVariable> variables,
         IReadOnlyList<ValueProviderSourceDescriptor> providerSources,
         ResultBinding binding)
@@ -270,14 +326,17 @@ public static class JobValidation
         if (binding.HasProviderReference
             && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
         {
+            if (binding.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+                && Guid.TryParse(binding.SourceId, out var storedValueId)
+                && variables.FirstOrDefault(variable => variable.Id == storedValueId) is { } storedValue
+                && !TryValidateStoredValue(storedValue, binding.ValuePath, out _))
+                return null;
             var providerSource = ResolveProviderSource(variables, providerSources, binding);
             return providerSource is { IsSensitive: false }
                 ? providerSource.ToResultProperty()
                 : null;
         }
-        var source = steps.Take(conditionStepIndex)
-            .FirstOrDefault(step => step.Id == binding.SourceStepId && step.IsEnabled);
-        return source is null
+        return !sourceSteps.TryGetValue(binding.SourceStepId, out var source)
             ? null
             : FindProperty(StepResultMetadata.GetResultTypeForStep(source), binding.PropertyId, binding.PropertyPath);
     }
@@ -376,7 +435,8 @@ public static class JobValidation
         }
 
         var source = steps.Take(Math.Max(0, consumerIndex))
-            .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
+            .FirstOrDefault(candidate => string.Equals(
+                candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
         if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
         var resultType = StepResultMetadata.GetResultTypeForStep(source);
         if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
@@ -482,7 +542,8 @@ public static class JobValidation
                 if (expected.AllowedProviderIds?.Contains(ValueProviderIds.StepResult) == false)
                     return $"Step-Ergebnisse sind für '{path}' nicht erlaubt.";
                 var sourceStep = steps.Take(Math.Max(0, consumerIndex))
-                    .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
+                    .FirstOrDefault(candidate => string.Equals(
+                        candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
                 if (sourceStep is null)
                     return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
                 var resultType = StepResultMetadata.GetResultTypeForStep(sourceStep);
@@ -554,7 +615,8 @@ public static class JobValidation
                 continue;
             }
             var source = steps.Take(Math.Max(0, consumerIndex))
-                .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId && candidate.IsEnabled);
+                .FirstOrDefault(candidate => string.Equals(
+                    candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
             if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
             var resultType = StepResultMetadata.GetResultTypeForStep(source);
             if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))

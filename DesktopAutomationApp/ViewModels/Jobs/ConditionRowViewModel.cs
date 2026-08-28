@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Input;
 using DesktopAutomationApp.Localization;
@@ -89,13 +90,46 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
     private GeneratedStepFieldViewModel? _comparisonField;
     private bool _loadingSourcePicker;
+    private int _semanticChangeDeferral;
+    private bool _semanticChangePending;
+    private string? _lastNotifiedSemanticState;
+    private IReadOnlyList<ConditionSelectionNode>? _selectionTree;
+    private IReadOnlyList<ConditionSelectionNode>? _comparisonSelectionTree;
     public IReadOnlyList<EditorChoiceOptionViewModel> ComparisonSourceOptions { get; } =
     [
         new("Literal", Loc.Get("Ui.Step.IfEditor.LiteralValue")),
         new("JobResult", Loc.Get("Ui.Step.IfEditor.JobResultValue"))
     ];
     public event PropertyChangedEventHandler? PropertyChanged;
+    public event Action? Changed;
     private void OnChange([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new(p));
+    private void NotifySemanticChange()
+    {
+        if (_semanticChangeDeferral > 0)
+        {
+            _semanticChangePending = true;
+            return;
+        }
+        var state = $"{JsonSerializer.Serialize(ToCondition())}\n{ComparisonField?.InputText}";
+        if (string.Equals(_lastNotifiedSemanticState, state, StringComparison.Ordinal)) return;
+        _lastNotifiedSemanticState = state;
+        Changed?.Invoke();
+    }
+
+    private void RunSemanticUpdate(Action update)
+    {
+        _semanticChangeDeferral++;
+        try { update(); }
+        finally
+        {
+            _semanticChangeDeferral--;
+            if (_semanticChangeDeferral == 0 && _semanticChangePending)
+            {
+                _semanticChangePending = false;
+                NotifySemanticChange();
+            }
+        }
+    }
     private void NotifyInput()
     {
         OnChange(nameof(ShowComparisonValue));
@@ -120,8 +154,15 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
 
     public ICommand RemoveCommand { get; }
-    public IReadOnlyList<ConditionSelectionNode> SelectionTree { get; }
-    public IReadOnlyList<ConditionSelectionNode> ComparisonSelectionTree { get; private set; } = [];
+    public IReadOnlyList<ConditionSelectionNode> SelectionTree => _selectionTree ??=
+        BuildSelectionTree(_availableSourceSteps, _availableVariables, IsConditionProperty);
+    public IReadOnlyList<ConditionSelectionNode> ComparisonSelectionTree => _comparisonSelectionTree ??=
+        SelectedProperty is null
+            ? []
+            : BuildSelectionTree(_availableSourceSteps, _availableVariables,
+                property => StepResultMetadata.AreComparable(SelectedProperty, property),
+                SelectComparisonPath,
+                SelectComparisonVariable);
     public ObservableCollection<ConditionOperator> AvailableOperators { get; } = [];
     public ValueReferencePickerViewModel SourcePicker { get; }
     public GeneratedStepFieldViewModel SourceField { get; }
@@ -132,7 +173,18 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
 
     private SourceStepItem? _selectedSourceStep;
-    public SourceStepItem? SelectedSourceStep { get => _selectedSourceStep; private set { _selectedSourceStep = value; OnChange(); OnChange(nameof(SelectedPath)); } }
+    public SourceStepItem? SelectedSourceStep
+    {
+        get => _selectedSourceStep;
+        private set
+        {
+            if (Equals(_selectedSourceStep, value)) return;
+            _selectedSourceStep = value;
+            OnChange();
+            OnChange(nameof(SelectedPath));
+            NotifySemanticChange();
+        }
+    }
     private ValueProviderSourceDescriptor? _selectedSourceVariable;
     private ResultPropertyDescriptor? _selectedProperty;
     public ResultPropertyDescriptor? SelectedProperty
@@ -140,6 +192,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         get => _selectedProperty;
         private set
         {
+            if (Equals(_selectedProperty, value)) return;
             _selectedProperty = value;
             OnChange();
             RefreshOperators();
@@ -147,26 +200,38 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             EnsureDefaultComparisonValue();
             RefreshComparisonField();
             OnChange(nameof(SelectedPath));
+            NotifySemanticChange();
         }
     }
     private ConditionOperator _selectedOperator;
-    public ConditionOperator SelectedOperator { get => _selectedOperator; set { _selectedOperator = value; OnChange(); NotifyInput(); } }
+    public ConditionOperator SelectedOperator
+    {
+        get => _selectedOperator;
+        set
+        {
+            if (_selectedOperator == value) return;
+            _selectedOperator = value;
+            OnChange();
+            NotifyInput();
+            NotifySemanticChange();
+        }
+    }
 
     private string _comparisonValue = "";
-    public string ComparisonValue { get => _comparisonValue; set { _comparisonValue = value; OnChange(); NotifyValidation(); } }
+    public string ComparisonValue { get => _comparisonValue; set { if (_comparisonValue == value) return; _comparisonValue = value; OnChange(); NotifyValidation(); NotifySemanticChange(); } }
     private double? _comparisonNumber;
     public double? ComparisonNumber
     {
         get => _comparisonNumber;
-        set { _comparisonNumber = IsIntegerValue && value.HasValue ? Math.Round(value.Value) : value; OnChange(); NotifyValidation(); }
+        set { var normalized = IsIntegerValue && value.HasValue ? Math.Round(value.Value) : value; if (_comparisonNumber == normalized) return; _comparisonNumber = normalized; OnChange(); NotifyValidation(); NotifySemanticChange(); }
     }
     private DateTime? _comparisonDate;
-    public DateTime? ComparisonDate { get => _comparisonDate; set { _comparisonDate = value; OnChange(); NotifyValidation(); } }
+    public DateTime? ComparisonDate { get => _comparisonDate; set { if (_comparisonDate == value) return; _comparisonDate = value; OnChange(); NotifyValidation(); NotifySemanticChange(); } }
     private bool? _comparisonBoolean;
-    public bool? ComparisonBoolean { get => _comparisonBoolean; set { _comparisonBoolean = value; OnChange(); NotifyValidation(); } }
+    public bool? ComparisonBoolean { get => _comparisonBoolean; set { if (_comparisonBoolean == value) return; _comparisonBoolean = value; OnChange(); NotifyValidation(); NotifySemanticChange(); } }
     public IReadOnlyList<bool> BooleanValues { get; } = [true, false];
     private string? _comparisonEnum;
-    public string? ComparisonEnum { get => _comparisonEnum; set { _comparisonEnum = value; OnChange(); NotifyValidation(); } }
+    public string? ComparisonEnum { get => _comparisonEnum; set { if (_comparisonEnum == value) return; _comparisonEnum = value; OnChange(); NotifyValidation(); NotifySemanticChange(); } }
     public IReadOnlyList<string> EnumValues => SelectedProperty?.EnumValues ?? [];
     public IReadOnlyList<EnumConditionOption> EnumOptions => (SelectedProperty?.EnumValues ?? [])
         .Select(value =>
@@ -190,6 +255,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             OnChange(); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
             OnChange(nameof(SelectedComparisonSourceOption));
             NotifyInput();
+            NotifySemanticChange();
         }
     }
     public bool ComparisonIsLiteral
@@ -204,7 +270,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
     public EditorChoiceOptionViewModel SelectedComparisonSourceOption
     {
-        get => ComparisonSourceOptions.First(option => option.Value == ComparisonKind.ToString());
+        get => ComparisonSourceOptions.FirstOrDefault(option => option.Value == ComparisonKind.ToString())
+               ?? ComparisonSourceOptions[0];
         set
         {
             if (value is not null && Enum.TryParse<ComparisonOperandKind>(value.Value, out var kind))
@@ -216,14 +283,22 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public SourceStepItem? SelectedComparisonSourceStep
     {
         get => _selectedComparisonSourceStep;
-        private set { _selectedComparisonSourceStep = value; OnChange(); OnChange(nameof(ComparisonPath)); NotifyValidation(); }
+        private set
+        {
+            if (Equals(_selectedComparisonSourceStep, value)) return;
+            _selectedComparisonSourceStep = value;
+            OnChange();
+            OnChange(nameof(ComparisonPath));
+            NotifyValidation();
+            NotifySemanticChange();
+        }
     }
     private ValueProviderSourceDescriptor? _selectedComparisonVariable;
     private ResultPropertyDescriptor? _selectedComparisonProperty;
     public ResultPropertyDescriptor? SelectedComparisonProperty
     {
         get => _selectedComparisonProperty;
-        private set { _selectedComparisonProperty = value; OnChange(); OnChange(nameof(ComparisonPath)); NotifyValidation(); }
+        private set { if (Equals(_selectedComparisonProperty, value)) return; _selectedComparisonProperty = value; OnChange(); OnChange(nameof(ComparisonPath)); NotifyValidation(); NotifySemanticChange(); }
     }
 
     public bool ShowComparisonValue => ConditionRules.RequiresComparisonValue(SelectedOperator);
@@ -280,7 +355,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         string comparisonInputKey = "conditions.0.comparison",
-        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _owner = owner;
         _comparisonInputKey = comparisonInputKey;
@@ -295,8 +371,11 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             .Concat(providerSources ?? [])
             .DistinctBy(source => (source.ProviderId, source.SourceId))
             .ToArray();
-        SourcePicker = new ValueReferencePickerViewModel(
-            sources, CreateConditionSourceContract(), false, variables, _availableVariables);
+        SourcePicker = sourceCatalog is null
+            ? new ValueReferencePickerViewModel(
+                sources, CreateConditionSourceContract(), false, variables, _availableVariables)
+            : new ValueReferencePickerViewModel(
+                sourceCatalog, CreateConditionSourceContract(), false);
         SourceField = new GeneratedStepFieldViewModel(
             new StepFieldDescriptor("condition_source", string.Empty, StepValueKind.ResultBinding,
                 Required: true, AllowsDirectValue: false),
@@ -304,7 +383,6 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
                 JsonValue.Create(string.Empty), SourcePicker));
         SourcePicker.ReferenceChanged += (_, _) => SyncSourceFromPicker();
-        SelectionTree = BuildSelectionTree(sources, _availableVariables, IsConditionProperty);
         owner.CollectionChanged += OnOwnerCollectionChanged;
         var firstSelection = sources
             .SelectMany(source => source.ResultType.Properties
@@ -315,12 +393,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         var firstProperty = firstSelection.Property;
         if (firstSource is not null && firstProperty is not null)
         {
-            SelectPath(firstSource, firstProperty);
             SourcePicker.Load(ResultBinding.ForStepResult(firstSource.StepId, firstProperty.StableId));
         }
         else if (_availableVariables.FirstOrDefault(IsConditionValue) is { } firstVariable)
         {
-            SelectVariable(firstVariable, Describe(firstVariable));
             SourcePicker.Load(new ResultBinding { ProviderId = firstVariable.ProviderId, SourceId = firstVariable.SourceId });
         }
     }
@@ -342,22 +418,26 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private void SyncSourceFromPicker()
     {
         if (_loadingSourcePicker || !SourcePicker.IsConfigured) return;
-        var binding = SourcePicker.ToBinding();
-        if (binding.HasProviderReference
-            && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
-            && _availableVariables.FirstOrDefault(source =>
-                string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
-                && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
+        RunSemanticUpdate(() =>
         {
-            SelectVariable(variable, Describe(variable, binding.ValuePath));
-            return;
-        }
-        var source = _availableSourceSteps.FirstOrDefault(item => item.StepId == binding.SourceStepId);
-        var property = source?.ResultType.Properties.FirstOrDefault(item =>
-            item.StableId.Equals(binding.PropertyId, StringComparison.OrdinalIgnoreCase)
-            || item.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
-        if (source is not null && property is not null)
-            SelectPath(source, property);
+            var binding = SourcePicker.ToBinding();
+            if (binding.HasProviderReference
+                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+                && _availableVariables.FirstOrDefault(source =>
+                    string.Equals(source.ProviderId, binding.ProviderId, StringComparison.Ordinal)
+                    && string.Equals(source.SourceId, binding.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
+            {
+                SelectVariable(variable, Describe(variable, binding.ValuePath));
+                return;
+            }
+            var source = _availableSourceSteps.FirstOrDefault(item =>
+                string.Equals(item.StepId, binding.SourceStepId, StringComparison.OrdinalIgnoreCase));
+            var property = source?.ResultType.Properties.FirstOrDefault(item =>
+                item.StableId.Equals(binding.PropertyId, StringComparison.OrdinalIgnoreCase)
+                || item.Name.Equals(binding.PropertyPath, StringComparison.OrdinalIgnoreCase));
+            if (source is not null && property is not null)
+                SelectPath(source, property);
+        });
     }
 
     private void OnOwnerCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -432,40 +512,47 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
 
     private void SelectPath(SourceStepItem source, ResultPropertyDescriptor property)
     {
-        _selectedSourceVariable = null;
-        SelectedSourceStep = source;
-        SelectedProperty = property;
+        RunSemanticUpdate(() =>
+        {
+            _selectedSourceVariable = null;
+            SelectedSourceStep = source;
+            SelectedProperty = property;
+        });
     }
 
     private void SelectVariable(ValueProviderSourceDescriptor variable, ResultPropertyDescriptor property)
     {
-        _selectedSourceVariable = variable;
-        SelectedSourceStep = VariableSource(variable, property);
-        SelectedProperty = property;
+        RunSemanticUpdate(() =>
+        {
+            _selectedSourceVariable = variable;
+            SelectedSourceStep = VariableSource(variable, property);
+            SelectedProperty = property;
+        });
     }
 
     private void SelectComparisonPath(SourceStepItem source, ResultPropertyDescriptor property)
     {
-        _selectedComparisonVariable = null;
-        SelectedComparisonSourceStep = source;
-        SelectedComparisonProperty = property;
+        RunSemanticUpdate(() =>
+        {
+            _selectedComparisonVariable = null;
+            SelectedComparisonSourceStep = source;
+            SelectedComparisonProperty = property;
+        });
     }
 
     private void SelectComparisonVariable(ValueProviderSourceDescriptor variable, ResultPropertyDescriptor property)
     {
-        _selectedComparisonVariable = variable;
-        SelectedComparisonSourceStep = VariableSource(variable, property);
-        SelectedComparisonProperty = property;
+        RunSemanticUpdate(() =>
+        {
+            _selectedComparisonVariable = variable;
+            SelectedComparisonSourceStep = VariableSource(variable, property);
+            SelectedComparisonProperty = property;
+        });
     }
 
     private void RefreshComparisonChoices()
     {
-        ComparisonSelectionTree = SelectedProperty is null
-            ? []
-            : BuildSelectionTree(_availableSourceSteps, _availableVariables,
-                property => StepResultMetadata.AreComparable(SelectedProperty, property),
-                SelectComparisonPath,
-                SelectComparisonVariable);
+        _comparisonSelectionTree = null;
         OnChange(nameof(ComparisonSelectionTree));
 
         if (SelectedProperty is null || SelectedComparisonProperty is not null
@@ -566,11 +653,23 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
 
     private string? GetLiteralComparisonValue()
     {
-        if (SelectedProperty is null || !ShowComparisonValue || !ComparisonIsLiteral) return null;
+        if (SelectedProperty is null || !ShowComparisonValue) return null;
+        var comparisonPicker = ComparisonField?.InputReferenceEditor?.Picker;
+        if (!ComparisonIsLiteral && comparisonPicker?.IsStepValue != true) return null;
         if (ComparisonField is not null)
-            return ComparisonField.Descriptor.ValueKind == StepValueKind.DateTime
-                ? ComparisonField.DateTimeValue?.ToUniversalTime().ToString("O")
-                : ComparisonField.InputText;
+        {
+            if (string.IsNullOrWhiteSpace(ComparisonField.InputText)
+                && ComparisonField.Descriptor.ValueKind is not StepValueKind.Text and not StepValueKind.FilePath)
+                return null;
+            return ComparisonField.Descriptor.ValueKind switch
+            {
+                StepValueKind.Integer => ComparisonField.IntegerValue.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                StepValueKind.Number => ComparisonField.NumberValue.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+                StepValueKind.DateTime => ComparisonField.DateTimeValue?.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+                StepValueKind.Boolean => ComparisonField.BooleanValue.ToString(),
+                _ => ComparisonField.InputText
+            };
+        }
         object? editorValue = SelectedProperty.DataType switch
         {
             ResultValueKind.Number or ResultValueKind.Integer => ComparisonNumber,
@@ -620,7 +719,17 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             inputReferenceEditor: _nestedInputResolver(_comparisonInputKey, kind, node));
         if (binding?.IsConfigured == true)
             field.InputReferenceEditor!.Picker.Load(binding);
-        field.PropertyChanged += (_, _) => { NotifyValidation(); OnChange(nameof(ComparisonKind)); };
+        field.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName is nameof(GeneratedStepFieldViewModel.InputText)
+                or nameof(GeneratedStepFieldViewModel.SelectedEnumOption)
+                or nameof(GeneratedStepFieldViewModel.InputReferenceEditor))
+            {
+                NotifyValidation();
+                OnChange(nameof(ComparisonKind));
+                NotifySemanticChange();
+            }
+        };
         ComparisonField = field;
         OnChange(nameof(IsComparisonValueValid));
     }
@@ -661,9 +770,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
 
     public void LoadFrom(StepCondition condition)
     {
-        _loadingSourcePicker = true;
-        try { SourcePicker.Load(condition); }
-        finally { _loadingSourcePicker = false; }
+        _semanticChangeDeferral++;
+        try
+        {
+            _loadingSourcePicker = true;
+            try { SourcePicker.Load(condition); }
+            finally { _loadingSourcePicker = false; }
         if (condition.HasProviderReference
             && !string.Equals(condition.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
             && _availableVariables.FirstOrDefault(variable =>
@@ -676,7 +788,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         }
         else
         {
-            _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == condition.SourceStepId);
+            _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s =>
+                string.Equals(s.StepId, condition.SourceStepId, StringComparison.OrdinalIgnoreCase));
             _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p =>
                 (!string.IsNullOrWhiteSpace(condition.PropertyId)
                  && p.StableId.Equals(condition.PropertyId, StringComparison.OrdinalIgnoreCase))
@@ -694,14 +807,6 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             case ConditionOperator.IsFalse:
                 editorOperator = ConditionOperator.Equals;
                 comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.FalseString };
-                break;
-            case ConditionOperator.IsEmpty:
-                editorOperator = ConditionOperator.Equals;
-                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = string.Empty };
-                break;
-            case ConditionOperator.IsNotEmpty:
-                editorOperator = ConditionOperator.NotEquals;
-                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = string.Empty };
                 break;
         }
         if (AvailableOperators.Contains(editorOperator))
@@ -734,7 +839,8 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             }
             else
             {
-                _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s => s.StepId == comparison.SourceStepId);
+                _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s =>
+                    string.Equals(s.StepId, comparison.SourceStepId, StringComparison.OrdinalIgnoreCase));
                 _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
                     .FirstOrDefault(p =>
                         ((!string.IsNullOrWhiteSpace(comparison.PropertyId)
@@ -750,6 +856,12 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(ComparisonEnum)); OnChange(nameof(EnumValues)); OnChange(nameof(EnumOptions)); OnChange(nameof(SelectedPath));
         OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
         OnChange(nameof(SelectedComparisonSourceStep)); OnChange(nameof(SelectedComparisonProperty)); OnChange(nameof(ComparisonPath)); NotifyInput();
+        }
+        finally
+        {
+            _semanticChangeDeferral--;
+            _semanticChangePending = false;
+        }
     }
 
     private void RefreshOperators()

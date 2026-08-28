@@ -7,6 +7,13 @@
              xmlns:geometry="clr-namespace:DesktopAutomationApp.Controls.Jobs.Geometry"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:shared="clr-namespace:DesktopAutomationApp.Controls.Jobs.Shared">
+    <UserControl.Resources>
+        <Style x:Key="VirtualizedOverlayItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </UserControl.Resources>
     <StackPanel Margin="0,12,0,0">
         <DockPanel Margin="0,0,0,8" LastChildFill="False">
             <TextBlock Text="{loc:Translate Key=Ui.Step.Overlay.Detections}"
@@ -16,8 +23,11 @@
                     Command="{Binding AddOverlayDetectionCommand}"
                     Style="{StaticResource ButtonSecondary}"/>
         </DockPanel>
-        <ItemsControl ItemsSource="{Binding OverlayDetectionRows}">
-            <ItemsControl.ItemTemplate>
+        <ListBox ItemsSource="{Binding OverlayDetectionRows}" MaxHeight="560"
+                 BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                 ItemContainerStyle="{StaticResource VirtualizedOverlayItem}">
+            <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource GeometryCard}">
                         <Grid>
@@ -34,8 +44,8 @@
                         </Grid>
                     </Border>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <DockPanel Margin="0,8,0,8" LastChildFill="False">
             <TextBlock Text="{loc:Translate Key=Ui.Step.Overlay.TextResults}"
@@ -45,8 +55,11 @@
                     Command="{Binding AddOverlayTextCommand}"
                     Style="{StaticResource ButtonSecondary}"/>
         </DockPanel>
-        <ItemsControl ItemsSource="{Binding OverlayTextRows}">
-            <ItemsControl.ItemTemplate>
+        <ListBox ItemsSource="{Binding OverlayTextRows}" MaxHeight="560"
+                 BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                 ItemContainerStyle="{StaticResource VirtualizedOverlayItem}">
+            <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource GeometryCard}">
                         <StackPanel>
@@ -110,7 +123,7 @@
                         </StackPanel>
                     </Border>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </StackPanel>
 </UserControl>

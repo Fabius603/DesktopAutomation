@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using DesktopAutomationApp.Converters;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services.Jobs;
 using DesktopAutomationApp.ViewModels;
@@ -15,6 +16,36 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class StepDefinitionCatalogTests
 {
+    [Fact]
+    public void ConditionDisplay_FormatsLocalTimestampComparisonAsLiteral()
+    {
+        var timestamp = new LocalValue
+        {
+            Name = "Comparison timestamp",
+            ValueKind = ResultValueKind.DateTime,
+            Value = JsonValue.Create(new DateTime(2026, 8, 24, 14, 35, 12))
+        };
+        var source = new FileSystemOperationStep { Id = "source" };
+        var condition = new StepCondition
+        {
+            SourceStepId = source.Id,
+            PropertyPath = "CompletedAtUtc",
+            Operator = ConditionOperator.GreaterThan,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = timestamp.Id.ToString("D")
+            }
+        };
+
+        var text = ConditionDisplayFormatter.Format(condition, new JobStep[] { source }, [timestamp]);
+
+        Assert.Contains(Loc.Get("Ui.Step.IfEditor.LiteralValue"), text);
+        Assert.DoesNotContain(Loc.Get("Step.Unknown"), text);
+        Assert.DoesNotContain(timestamp.Name, text);
+    }
+
     [Fact]
     public void FileSystemEditor_UsesSingleDirectoryFieldsWithoutSourceModeDropdowns()
     {
@@ -2102,6 +2133,208 @@ public sealed class StepDefinitionCatalogTests
         Assert.False(editor.TryCreateStep(out var created));
         Assert.Null(created);
         Assert.NotEmpty(editor.ValidationError);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_AcceptsLocalizedDecimalInput()
+    {
+        var property = StepResultMetadata.ResultTypes
+            .SelectMany(type => type.Properties)
+            .First(candidate => candidate.DataType == ResultValueKind.Number
+                                && candidate.Cardinality != ResultCardinality.Collection);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [property]));
+        var storedValue = new LocalValue
+        {
+            Name = "Comparison",
+            ValueKind = ResultValueKind.Number,
+            Value = JsonValue.Create(0d)
+        };
+        var previousCulture = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture =
+                System.Globalization.CultureInfo.GetCultureInfo("de-DE");
+            var editor = new GeneratedConditionEditorViewModel(
+                null,
+                [source],
+                nestedInputResolver: (_, kind, literal) =>
+                {
+                    var descriptor = new StepFieldDescriptor(
+                        "comparison", string.Empty, kind, DefaultValue: literal);
+                    var picker = new ValueReferencePickerViewModel(
+                        [], StepInputContractRegistry.ForField(descriptor), false, [storedValue]);
+                    return new GeneratedResultBindingEditorViewModel(
+                        JsonSerializer.SerializeToNode(new ResultBinding
+                        {
+                            ProviderId = ValueProviderIds.LocalValue,
+                            SourceId = storedValue.Id.ToString("D")
+                        }),
+                        picker);
+                });
+            var row = Assert.Single(editor.Conditions);
+            row.SelectedOperator = ConditionOperator.Equals;
+
+            row.ComparisonField!.NumberValue = 1.25;
+
+            Assert.Equal("1,25", row.ComparisonField.InputText);
+            Assert.True(row.IsValid, row.ComparisonValueValidationError);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_AcceptsLoadedZeroFromLocalComparisonValue()
+    {
+        var property = StepResultMetadata.ResultTypes
+            .SelectMany(type => type.Properties)
+            .First(candidate => candidate.DataType == ResultValueKind.Integer
+                                && candidate.Cardinality != ResultCardinality.Collection);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [property]));
+        var storedValue = new LocalValue
+        {
+            Name = "Comparison",
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create(0)
+        };
+        var settings = new IfConditionSettings
+        {
+            Conditions =
+            [
+                new StepCondition
+                {
+                    ProviderId = ValueProviderIds.StepResult,
+                    SourceId = StepResultSourceIdCodec.Create("source", property.StableId),
+                    Operator = ConditionOperator.Equals,
+                    Comparison = new ComparisonOperand
+                    {
+                        Kind = ComparisonOperandKind.JobResult,
+                        ProviderId = ValueProviderIds.LocalValue,
+                        SourceId = storedValue.Id.ToString("D")
+                    }
+                }
+            ]
+        };
+
+        var editor = new GeneratedConditionEditorViewModel(
+            JsonSerializer.SerializeToNode(settings),
+            [source],
+            nestedInputResolver: (_, kind, literal) =>
+            {
+                var descriptor = new StepFieldDescriptor(
+                    "comparison", string.Empty, kind, DefaultValue: literal);
+                var picker = new ValueReferencePickerViewModel(
+                    [], StepInputContractRegistry.ForField(descriptor), false, [storedValue]);
+                return new GeneratedResultBindingEditorViewModel(
+                    JsonSerializer.SerializeToNode(settings.Conditions[0].Comparison), picker);
+            });
+
+        var row = Assert.Single(editor.Conditions);
+        Assert.Equal("0", row.ComparisonField!.InputText);
+        Assert.True(row.IsValid, row.ComparisonValueValidationError);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_PreservesIsEmptyOperatorWhenEditing()
+    {
+        var property = StepResultMetadata.ResultTypes
+            .SelectMany(type => type.Properties)
+            .First(candidate => candidate.DataType == ResultValueKind.Text
+                                && candidate.Cardinality != ResultCardinality.Collection);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [property]));
+        var editor = new GeneratedConditionEditorViewModel(
+            JsonSerializer.SerializeToNode(new IfConditionSettings
+            {
+                Conditions =
+                [
+                    new StepCondition
+                    {
+                        SourceStepId = source.StepId,
+                        PropertyId = property.StableId,
+                        PropertyPath = property.Name,
+                        Operator = ConditionOperator.IsEmpty
+                    }
+                ]
+            }),
+            [source]);
+
+        var saved = Assert.Single(editor.ToValue().Conditions);
+
+        Assert.Equal(ConditionOperator.IsEmpty, saved.Operator);
+        Assert.Null(saved.Comparison);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_RaisesOneSemanticChangeForSourceSelection()
+    {
+        var resultType = StepResultMetadata.ResultTypes.First(type => type.Properties.Any());
+        var first = new SourceStepItem("first", "First", resultType);
+        var second = new SourceStepItem("second", "Second", resultType);
+        var editor = new GeneratedConditionEditorViewModel(null, [first, second]);
+        var row = Assert.Single(editor.Conditions);
+        var property = resultType.Properties.First(candidate =>
+            candidate.Cardinality != ResultCardinality.Collection
+            && ConditionRules.GetOperators(candidate.DataType).Count > 0);
+        var changes = 0;
+        editor.Changed += () => changes++;
+
+        row.SourcePicker.Load(ResultBinding.ForStepResult(second.StepId, property.StableId));
+
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_RaisesOneSemanticChangeForComparisonSelection()
+    {
+        var property = new ResultPropertyDescriptor("Flag", "Flag", ResultValueKind.Boolean);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [property]));
+        var first = new LocalValue
+        {
+            Name = "First",
+            ValueKind = ResultValueKind.Boolean,
+            Value = JsonValue.Create(false)
+        };
+        var second = new LocalValue
+        {
+            Name = "Second",
+            ValueKind = ResultValueKind.Boolean,
+            Value = JsonValue.Create(true)
+        };
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [source],
+            nestedInputResolver: (_, kind, literal) =>
+            {
+                var descriptor = new StepFieldDescriptor(
+                    "comparison", string.Empty, kind, DefaultValue: literal);
+                var picker = new ValueReferencePickerViewModel(
+                    [], StepInputContractRegistry.ForField(descriptor), false, [first, second]);
+                return new GeneratedResultBindingEditorViewModel(
+                    JsonSerializer.SerializeToNode(new ResultBinding
+                    {
+                        ProviderId = ValueProviderIds.LocalValue,
+                        SourceId = first.Id.ToString("D")
+                    }),
+                    picker);
+            });
+        var row = Assert.Single(editor.Conditions);
+        var changes = 0;
+        editor.Changed += () => changes++;
+
+        row.ComparisonField!.InputReferenceEditor!.Picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = second.Id.ToString("D")
+        });
+
+        Assert.Equal(1, changes);
+        Assert.Equal(second.Id.ToString("D"), editor.ToValue().Conditions[0].EffectiveComparison.SourceId);
     }
 
     [Fact]

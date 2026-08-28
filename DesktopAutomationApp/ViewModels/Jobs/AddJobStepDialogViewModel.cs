@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DesktopAutomationApp.Services.Preview;
 using DesktopAutomationApp.Services;
 using DesktopAutomationApp.Views;
@@ -31,6 +32,11 @@ namespace DesktopAutomationApp.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
         private int _notificationDeferral;
         private bool _notificationPending;
+        private bool _candidateIsValid;
+        private bool _refreshingCandidateValidation;
+        private DispatcherTimer? _candidateValidationTimer;
+        private bool _candidateValidationPending;
+        private IReadOnlyDictionary<string, int>? _variableUsageCounts;
 
         private void OnChange([CallerMemberName] string? p = null)
         {
@@ -82,6 +88,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyList<JobStep> _precedingSteps;
         private readonly IReadOnlyList<JobStep> _allJobSteps;
         private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
+        private readonly ValueReferenceSourceCatalog _valueReferenceSources;
         private readonly IReadOnlyList<JobVariable> _jobVariables;
         private readonly IReadOnlyList<LocalValue> _localValues;
         private readonly List<ValueProviderSourceDescriptor> _providerSources;
@@ -140,6 +147,8 @@ namespace DesktopAutomationApp.ViewModels
                 (_ctx.AllMakros?.Values ?? Enumerable.Empty<Makro>())
                 .OrderBy(makro => makro.Name));
             _conditionSourceSteps = preparedSources?.Conditions ?? BuildConditionSourceCatalog(precedingSteps);
+            _valueReferenceSources = new ValueReferenceSourceCatalog(
+                _conditionSourceSteps, CurrentVariables(), _providerSources);
             ConfirmCommand = new RelayCommand(Confirm, CanConfirm);
             CancelCommand = new RelayCommand(() => RequestClose?.Invoke(false));
             BrowseGeneratedFileCommand = new RelayCommand<GeneratedStepFieldViewModel?>(BrowseGeneratedFile);
@@ -221,7 +230,8 @@ namespace DesktopAutomationApp.ViewModels
 
         private void Confirm()
         {
-            CreateStep();
+            RefreshCandidateValidation();
+            if (!_candidateIsValid) return;
             var localInputs = CreatedStep is null
                 ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 : ValueBindingTree.EnumerateReferences(CreatedStep.Inputs)
@@ -246,20 +256,62 @@ namespace DesktopAutomationApp.ViewModels
 
         private bool CanConfirm()
         {
-            CreateStep();
-            if (GeneratedEditor?.ValidationError is { Length: > 0 } generatedError)
+            return _candidateValidationPending || _candidateIsValid;
+        }
+
+        private void RefreshCandidateValidation()
+        {
+            if (_refreshingCandidateValidation) return;
+            _candidateValidationTimer?.Stop();
+            _candidateValidationPending = false;
+            _refreshingCandidateValidation = true;
+            try
             {
-                _validationError = generatedError;
+                CreateStep();
+                if (GeneratedEditor?.ValidationError is { Length: > 0 } generatedError)
+                {
+                    _validationError = generatedError;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
+                    _candidateIsValid = false;
+                    RaiseConfirmCanExecuteChanged();
+                    return;
+                }
+                var result = JobValidation.ValidateCandidate(
+                    _precedingSteps, CreatedStep, _allJobSteps, CurrentVariables(), _providerSources);
+                _validationError = result.Error;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
-                return false;
+                _candidateIsValid = result.IsValid;
+                RaiseConfirmCanExecuteChanged();
             }
-            var result = JobValidation.ValidateCandidate(
-                _precedingSteps, CreatedStep, _allJobSteps, CurrentVariables(), _providerSources);
-            _validationError = result.Error;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
-            return result.IsValid;
+            finally
+            {
+                _refreshingCandidateValidation = false;
+            }
+        }
+
+        private void ScheduleCandidateValidation()
+        {
+            _candidateValidationTimer ??= CreateCandidateValidationTimer();
+            _candidateValidationTimer.Stop();
+            _candidateValidationPending = true;
+            _candidateValidationTimer.Start();
+            RaiseConfirmCanExecuteChanged();
+        }
+
+        private DispatcherTimer CreateCandidateValidationTimer()
+        {
+            var timer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(120)
+            };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                RefreshCandidateValidation();
+            };
+            return timer;
         }
 
         private string? _validationError;
@@ -394,6 +446,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool TryLoadGeneratedStep(JobStep step)
         {
             _draftStepVariables.Clear();
+            _valueReferenceSources.Reset(CurrentVariables(), _providerSources);
             if (step is StartProcessStep { Settings.Action: StartProcessAction.Terminate } legacyTerminate
                 && _stepDefinitionCatalog.TryGetByType(typeof(TerminateProcessStep), out var terminateDefinition))
             {
@@ -416,6 +469,7 @@ namespace DesktopAutomationApp.ViewModels
             _selectedType = TrimStepSuffix(step.GetType().Name);
             GeneratedEditor = null;
             GeneratedEditor = CreateGeneratedEditor(definition, step);
+            RefreshCandidateValidation();
             OnChange(nameof(SelectedType));
             OnChange(string.Empty);
             return true;
@@ -425,9 +479,11 @@ namespace DesktopAutomationApp.ViewModels
         {
             _draftStepVariables.Clear();
             GeneratedEditor = null;
+            _valueReferenceSources.Reset(CurrentVariables(), _providerSources);
             GeneratedEditor = _stepDefinitionCatalog.TryGetByName(selectedType, out var definition)
                 ? CreateGeneratedEditor(definition)
                 : null;
+            RefreshCandidateValidation();
         }
 
         private GeneratedStepEditorViewModel CreateGeneratedEditor(
@@ -502,6 +558,8 @@ namespace DesktopAutomationApp.ViewModels
                 Value = field.DefaultValue?.DeepClone()
             };
             _draftStepVariables.Add(variable);
+            _valueReferenceSources.AddVariable(variable);
+            _variableUsageCounts = null;
             return variable;
         }
 
@@ -594,7 +652,7 @@ namespace DesktopAutomationApp.ViewModels
                 };
             }
             var picker = new ValueReferencePickerViewModel(
-                _conditionSourceSteps, contract, false, CurrentVariables(), _providerSources, context);
+                _valueReferenceSources, contract, false, context);
             return new GeneratedResultBindingEditorViewModel(JsonSerializer.SerializeToNode(binding), picker);
         }
 
@@ -616,6 +674,8 @@ namespace DesktopAutomationApp.ViewModels
                 Value = literal?.DeepClone()
             };
             _draftStepVariables.Add(variable);
+            _valueReferenceSources.AddVariable(variable);
+            _variableUsageCounts = null;
             return variable;
         }
 
@@ -691,7 +751,8 @@ namespace DesktopAutomationApp.ViewModels
                 CreateValueReferenceContext(definition, field),
                 field.Id,
                 (key, kind, literal) => ResolveNestedInputReference(
-                    definition, field, key, kind, literal, inputs));
+                    definition, field, key, kind, literal, inputs),
+                _valueReferenceSources);
         }
 
         private GeneratedRoiEditorViewModel? ResolveGeneratedRoi(
@@ -722,11 +783,9 @@ namespace DesktopAutomationApp.ViewModels
             bool selectDefault)
         {
             return new ValueReferencePickerViewModel(
-                _conditionSourceSteps,
+                _valueReferenceSources,
                 contract,
                 selectDefault,
-                CurrentVariables(),
-                _providerSources,
                 CreateValueReferenceContext(definition, field));
         }
 
@@ -748,19 +807,21 @@ namespace DesktopAutomationApp.ViewModels
 
         private int GetVariableUsageCount(Guid variableId)
         {
-            var steps = _allJobSteps.ToList();
-            if (GeneratedEditor?.CreateUsageSnapshot() is { } draftStep)
+            if (_variableUsageCounts is null)
             {
-                var existingIndex = steps.FindIndex(step => step.Id == draftStep.Id);
-                if (existingIndex >= 0) steps[existingIndex] = draftStep;
-                else steps.Add(draftStep);
+                var steps = _allJobSteps.ToList();
+                if (GeneratedEditor?.CreateUsageSnapshot() is { } draftStep)
+                {
+                    var existingIndex = steps.FindIndex(step => step.Id == draftStep.Id);
+                    if (existingIndex >= 0) steps[existingIndex] = draftStep;
+                    else steps.Add(draftStep);
+                }
+                _variableUsageCounts = ValueReferenceUsageInspector.CountLogicalBySource(
+                    new Job { Steps = steps },
+                    [ValueProviderIds.LocalValue, ValueProviderIds.JobVariable]);
             }
-            var job = new Job { Steps = steps };
             var sourceId = variableId.ToString("D");
-            return ValueReferenceUsageInspector.FindLogical(
-                job,
-                [ValueProviderIds.LocalValue, ValueProviderIds.JobVariable],
-                sourceId).Count;
+            return _variableUsageCounts.GetValueOrDefault(sourceId);
         }
 
         private JobVariable DetachStepValue(JobVariable source, string stepName, string fieldName)
@@ -780,6 +841,8 @@ namespace DesktopAutomationApp.ViewModels
                 Value = source.Value?.DeepClone()
             };
             _draftStepVariables.Add(detached);
+            _valueReferenceSources.AddVariable(detached);
+            _variableUsageCounts = null;
             return detached;
         }
 
@@ -856,7 +919,8 @@ namespace DesktopAutomationApp.ViewModels
                     _providerSources.Where(source => !source.IsSensitive).ToArray(),
                     field.Id,
                     (key, kind, literal) => ResolveNestedInputReference(
-                        definition, field, key, kind, literal, inputs))
+                        definition, field, key, kind, literal, inputs),
+                    _valueReferenceSources)
                 : null;
 
         private static GeneratedWindowsCapabilityEditorViewModel? ResolveGeneratedWindowsCapability(
@@ -919,7 +983,8 @@ namespace DesktopAutomationApp.ViewModels
                             Loc.Get("Step.Type.PointComparison"),
                             Loc.Get(field.LabelKey))),
                     field.Id,
-                    (key, kind, literal) => ResolveNestedInputReference(definition, field, key, kind, literal, inputs))
+                    (key, kind, literal) => ResolveNestedInputReference(definition, field, key, kind, literal, inputs),
+                    _valueReferenceSources)
                 : null;
 
         private static GeneratedAxisExpressionListEditorViewModel? ResolveGeneratedAxisExpressionList(
@@ -979,7 +1044,12 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        private void OnGeneratedEditorChanged() => OnChange(nameof(GeneratedEditor));
+        private void OnGeneratedEditorChanged()
+        {
+            _variableUsageCounts = null;
+            ScheduleCandidateValidation();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedEditor)));
+        }
 
         private static string TrimStepSuffix(string name) =>
             name.EndsWith("Step", StringComparison.Ordinal) ? name[..^4] : name;

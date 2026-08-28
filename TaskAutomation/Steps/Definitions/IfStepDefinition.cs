@@ -65,11 +65,13 @@ internal static class ConditionStepDefinitionSupport
     public static IReadOnlyList<StepValidationIssue> Validate(StepDraft draft)
     {
         var settings = ReadSettings(draft);
-        if (!Enum.IsDefined(settings.MatchMode) || settings.Conditions.Count == 0)
+        if (!Enum.IsDefined(settings.MatchMode) || settings.Conditions is not { Count: > 0 })
             return [new("StepValidation.Required", IfStepDefinition.ConditionsFieldId)];
         if (settings.Conditions.Any(condition =>
-                !condition.IsConfigured
-                || !Enum.IsDefined(condition.Operator)))
+                condition is null
+                || !condition.IsConfigured
+                || !Enum.IsDefined(condition.Operator)
+                || condition.Comparison is { } comparison && !Enum.IsDefined(comparison.Kind)))
             return [new("StepValidation.Invalid", IfStepDefinition.ConditionsFieldId)];
         return [];
     }

@@ -13,6 +13,7 @@ public partial class ResultPathPicker : UserControl
     private ScrollViewer? _ancestorScrollViewer;
     private bool _repositionPending;
     private Window? _ownerWindow;
+    public event EventHandler? DropDownOpened;
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
         nameof(ItemsSource), typeof(IEnumerable), typeof(ResultPathPicker));
@@ -247,6 +248,7 @@ public partial class ResultPathPicker : UserControl
 
     private void SelectionPopup_Opened(object? sender, EventArgs e)
     {
+        DropDownOpened?.Invoke(this, EventArgs.Empty);
         _ownerWindow ??= Window.GetWindow(this);
         if (_ownerWindow is not null)
         {

@@ -42,6 +42,24 @@ public static class ValueReferenceUsageInspector
             .ToArray();
     }
 
+    public static IReadOnlyDictionary<string, int> CountLogicalBySource(
+        Job job,
+        IReadOnlyCollection<string> providerIds)
+    {
+        var acceptedProviders = providerIds.ToHashSet(StringComparer.Ordinal);
+        return Find(job)
+            .Where(usage => acceptedProviders.Contains(usage.Reference.ProviderId)
+                            && !string.IsNullOrWhiteSpace(usage.Reference.SourceId))
+            .GroupBy(usage => (
+                SourceId: usage.Reference.SourceId,
+                usage.Step.Id,
+                Path: NormalizeUsagePath(usage.Path)),
+                new LogicalUsageKeyComparer())
+            .Select(group => group.Key.SourceId)
+            .GroupBy(sourceId => sourceId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+    }
+
     public static int Count(
         IEnumerable<JobStep> steps,
         string providerId,
@@ -70,6 +88,21 @@ public static class ValueReferenceUsageInspector
             .Where(char.IsLetterOrDigit)
             .Select(char.ToLowerInvariant)
             .ToArray());
+    }
+
+    private sealed class LogicalUsageKeyComparer : IEqualityComparer<(string SourceId, string Id, string Path)>
+    {
+        public bool Equals(
+            (string SourceId, string Id, string Path) left,
+            (string SourceId, string Id, string Path) right) =>
+            string.Equals(left.SourceId, right.SourceId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(left.Id, right.Id, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(left.Path, right.Path, StringComparison.Ordinal);
+
+        public int GetHashCode((string SourceId, string Id, string Path) value) => HashCode.Combine(
+            StringComparer.OrdinalIgnoreCase.GetHashCode(value.SourceId),
+            StringComparer.OrdinalIgnoreCase.GetHashCode(value.Id),
+            StringComparer.Ordinal.GetHashCode(value.Path));
     }
 
     private static void Visit(

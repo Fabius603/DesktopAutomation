@@ -48,7 +48,9 @@ namespace DesktopAutomationApp.Converters
 
             var operatorText = OperatorText(conditionOperator);
             var operandText = operand.Kind == ComparisonOperandKind.JobResult
-                ? $"{Loc.Get("Ui.Step.IfEditor.JobResultValue")}: {FormatReference(operand, stepMap, variables)}"
+                ? TryFormatStoredLiteral(operand, variables, out var storedLiteral)
+                    ? $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {storedLiteral}"
+                    : $"{Loc.Get("Ui.Step.IfEditor.JobResultValue")}: {FormatReference(operand, stepMap, variables)}"
                 : $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(operand.Value, ResolvePropertyType(condition, stepMap, variables))}";
             return $"{source} {operatorText} {operandText}";
         }
@@ -58,17 +60,18 @@ namespace DesktopAutomationApp.Converters
             IList? steps,
             IReadOnlyList<JobVariable>? variables = null)
         {
-            if (settings.Conditions.Count == 0)
+            var conditions = settings?.Conditions?.Where(condition => condition is not null).ToList() ?? [];
+            if (conditions.Count == 0)
                 return Loc.Get("Ui.Job.Condition.NoConditions");
-            if (settings.Conditions.Count == 1)
-                return Format(settings.Conditions[0], steps, variables);
+            if (conditions.Count == 1)
+                return Format(conditions[0], steps, variables);
 
             var mode = settings.MatchMode == ConditionMatchMode.All
                 ? Loc.Get("Ui.Job.Condition.AllBadge")
                 : Loc.Get("Ui.Job.Condition.AnyBadge");
-            var first = Format(settings.Conditions[0], steps, variables);
-            return $"{mode} · {Loc.Format("Ui.Job.Condition.Count", settings.Conditions.Count)} · "
-                   + $"{first} · {Loc.Format("Ui.Job.Condition.More", settings.Conditions.Count - 1)}";
+            var first = Format(conditions[0], steps, variables);
+            return $"{mode} · {Loc.Format("Ui.Job.Condition.Count", conditions.Count)} · "
+                   + $"{first} · {Loc.Format("Ui.Job.Condition.More", conditions.Count - 1)}";
         }
 
         private static string FormatReference(
@@ -76,13 +79,20 @@ namespace DesktopAutomationApp.Converters
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap,
             IReadOnlyList<JobVariable>? variables)
         {
-            if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            if (binding.ProviderId is ValueProviderIds.JobVariable or ValueProviderIds.LocalValue
                 && Guid.TryParse(binding.SourceId, out var variableId))
             {
                 var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
                 var name = variable?.Name ?? Loc.Get("Ui.Job.Steps.SourceUnavailable");
-                return $"{Loc.Get("Ui.ValueReference.JobVariables")} → {name}";
+                var sourceName = string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+                    ? Loc.Get("Ui.Step.IfEditor.LiteralValue")
+                    : Loc.Get("Ui.ValueReference.JobVariables");
+                return $"{sourceName} → {name}";
             }
+
+            if (binding.HasProviderReference
+                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
+                return $"{binding.ProviderId} → {binding.SourceId}";
 
             var source = ResolveStep(binding.SourceStepId, stepMap);
             return $"{source} → {ResolvePropertyName(binding, stepMap)}";
@@ -100,7 +110,7 @@ namespace DesktopAutomationApp.Converters
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap,
             IReadOnlyList<JobVariable>? variables)
         {
-            if (string.Equals(binding.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
+            if (binding.ProviderId is ValueProviderIds.JobVariable or ValueProviderIds.LocalValue
                 && Guid.TryParse(binding.SourceId, out var variableId))
                 return variables?.FirstOrDefault(candidate => candidate.Id == variableId)?.ValueKind;
 
@@ -141,6 +151,40 @@ namespace DesktopAutomationApp.Converters
             if (propertyType == ResultValueKind.Boolean && bool.TryParse(value, out var boolean))
                 return boolean ? "true" : "false";
             return value;
+        }
+
+        private static bool TryFormatStoredLiteral(
+            ResultBinding binding,
+            IReadOnlyList<JobVariable>? variables,
+            out string value)
+        {
+            value = string.Empty;
+            if (!string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+                || !Guid.TryParse(binding.SourceId, out var variableId)
+                || variables?.FirstOrDefault(candidate => candidate.Id == variableId) is not { } variable)
+                return false;
+            try
+            {
+                object? stored = JobVariableRuntimeValueReader.Read(variable);
+                if (!string.IsNullOrWhiteSpace(binding.ValuePath)
+                    && !ResultBindingResolver.TryReadPath(stored, binding.ValuePath, out stored))
+                    return false;
+                value = stored switch
+                {
+                    null => "?",
+                    DateTime dateTime => dateTime.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
+                    bool boolean => boolean ? "true" : "false",
+                    IFormattable formattable => formattable.ToString(null, CultureInfo.CurrentCulture),
+                    _ => stored.ToString() ?? "?"
+                };
+                return true;
+            }
+            catch (Exception exception) when (exception is InvalidOperationException
+                or FormatException
+                or System.Text.Json.JsonException)
+            {
+                return false;
+            }
         }
 
         private static string OperatorText(ConditionOperator conditionOperator) => conditionOperator switch

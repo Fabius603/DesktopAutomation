@@ -92,11 +92,14 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyList<SourceStepItem> detectionSteps,
             IReadOnlyList<JobVariable>? variables = null,
             IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
-            ValueReferencePickerContext? pickerContext = null)
+            ValueReferencePickerContext? pickerContext = null,
+            ValueReferenceSourceCatalog? sourceCatalog = null)
         {
-            PointsSource = new ValueReferencePickerViewModel(detectionSteps,
-                StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!, true,
-                variables, providerSources, pickerContext);
+            var contract = StepInputContractRegistry.Get(typeof(PointComparisonStep), "points")!;
+            PointsSource = sourceCatalog is null
+                ? new ValueReferencePickerViewModel(
+                    detectionSteps, contract, true, variables, providerSources, pickerContext)
+                : new ValueReferencePickerViewModel(sourceCatalog, contract, true, pickerContext);
             WholeValueSource = new GeneratedWholeValueSourceViewModel(PointsSource, false);
             WholeValueSource.Changed += () =>
             {

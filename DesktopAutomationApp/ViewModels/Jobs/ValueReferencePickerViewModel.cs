@@ -27,6 +27,51 @@ public enum StepInputSourceKind
     Secret,
     ExternalProvider
 }
+
+public sealed class ValueReferenceSourceCatalog
+{
+    internal IReadOnlyList<SourceStepItem> Sources { get; }
+    internal Dictionary<string, JobVariable> JobVariables { get; } =
+        new(StringComparer.OrdinalIgnoreCase);
+    internal List<ValueProviderSourceDescriptor> ProviderSources { get; } = [];
+
+    public ValueReferenceSourceCatalog(
+        IReadOnlyList<SourceStepItem> sources,
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null)
+    {
+        Sources = sources.Where(source => !string.IsNullOrWhiteSpace(source.StepId)).ToArray();
+        Reset(variables, providerSources);
+    }
+
+    public void Reset(
+        IReadOnlyList<JobVariable>? variables,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
+    {
+        JobVariables.Clear();
+        foreach (var variable in variables ?? [])
+            if (variable.Id != Guid.Empty)
+                JobVariables[variable.Id.ToString("D")] = variable;
+        ProviderSources.Clear();
+        ProviderSources.AddRange(JobVariables.Values.Select(ValueProviderSourceDescriptor.FromVariable)
+            .Concat(providerSources ?? [])
+            .Where(source => !string.IsNullOrWhiteSpace(source.ProviderId)
+                             && !string.IsNullOrWhiteSpace(source.SourceId))
+            .DistinctBy(source => (source.ProviderId, source.SourceId)));
+    }
+
+    public void AddVariable(JobVariable variable)
+    {
+        if (variable.Id == Guid.Empty) return;
+        var sourceId = variable.Id.ToString("D");
+        JobVariables[sourceId] = variable;
+        ProviderSources.RemoveAll(source =>
+            source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+            && string.Equals(source.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
+        ProviderSources.Add(ValueProviderSourceDescriptor.FromVariable(variable));
+    }
+}
+
 public class ValueReferencePickerViewModel : INotifyPropertyChanged
 {
     private readonly IReadOnlyList<SourceStepItem> _sources;
@@ -52,6 +97,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     private StepInputSourceKind _activeSourceKind = StepInputSourceKind.Direct;
     private StepInputSourceKind _selectionTreeSourceKind = StepInputSourceKind.Direct;
     private bool _selectionTreeDirty;
+    private bool _selectionTreeInitialized;
 
     public ValueReferencePickerViewModel(
         IReadOnlyList<SourceStepItem> sources,
@@ -61,20 +107,24 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         ValueReferencePickerContext? context = null,
         IValueReferenceDisplayFormatter? formatter = null)
+        : this(new ValueReferenceSourceCatalog(sources, variables, providerSources),
+            contract, selectDefault, context, formatter)
     {
-        var availableVariables = (variables ?? []).Where(variable => variable.Id != Guid.Empty).ToArray();
-        _sources = sources.Where(source => !string.IsNullOrWhiteSpace(source.StepId)).ToArray();
+    }
+
+    public ValueReferencePickerViewModel(
+        ValueReferenceSourceCatalog sourceCatalog,
+        StepInputDescriptor contract,
+        bool selectDefault = true,
+        ValueReferencePickerContext? context = null,
+        IValueReferenceDisplayFormatter? formatter = null)
+    {
+        _sources = sourceCatalog.Sources;
         _contract = contract;
         _context = context;
         _formatter = formatter ?? ValueReferenceDisplayFormatter.Instance;
-        _jobVariables = availableVariables.ToDictionary(
-            variable => variable.Id.ToString("D"), variable => variable, StringComparer.OrdinalIgnoreCase);
-        _providerSources = availableVariables.Select(ValueProviderSourceDescriptor.FromVariable)
-            .Concat(providerSources ?? [])
-            .Where(source => !string.IsNullOrWhiteSpace(source.ProviderId)
-                             && !string.IsNullOrWhiteSpace(source.SourceId))
-            .DistinctBy(source => (source.ProviderId, source.SourceId))
-            .ToList();
+        _jobVariables = sourceCatalog.JobVariables;
+        _providerSources = sourceCatalog.ProviderSources;
         ClearCommand = new RelayCommand(Clear);
         CreateJobVariableCommand = new RelayCommand(CreateJobVariable, () => CanCreateJobVariable);
         ToggleIncompatibleCommand = new RelayCommand(() => ShowIncompatible = !ShowIncompatible);
@@ -95,7 +145,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             () => CanUseExternalProviders);
         CreateSecretCommand = new RelayCommand(CreateSecret, () => CanCreateSecret);
         SetActiveSourceKind(DefaultSourceKind());
-        RebuildTree();
+        _selectionTreeDirty = true;
         if (selectDefault)
         {
             var source = contract.AllowsProvider(ValueProviderIds.StepResult)
@@ -110,7 +160,23 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? ReferenceChanged;
-    public IReadOnlyList<ConditionSelectionNode> SelectionTree => _selectionTree;
+    public IReadOnlyList<ConditionSelectionNode> SelectionTree
+    {
+        get
+        {
+            EnsureSelectionTree();
+            return _selectionTree;
+        }
+    }
+    public IReadOnlyList<ConditionSelectionNode> VisibleSelectionTree => _selectionTree;
+
+    public void EnsureSelectionTree()
+    {
+        if (_selectionTreeInitialized && !_selectionTreeDirty
+            && _selectionTreeSourceKind == ActiveSourceKind) return;
+        _selectionTreeInitialized = true;
+        RebuildTree();
+    }
     public ICommand ClearCommand { get; }
     public ICommand CreateJobVariableCommand { get; }
     public ICommand ToggleIncompatibleCommand { get; }
@@ -207,7 +273,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             _showIncompatible = value;
             OnChange();
             OnChange(nameof(IncompatibleText));
-            RebuildTree();
+            if (_selectionTreeInitialized) RebuildTree();
         }
     }
 
@@ -219,7 +285,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             if (_searchText == value) return;
             _searchText = value ?? string.Empty;
             OnChange();
-            RebuildTree();
+            if (_selectionTreeInitialized) RebuildTree();
         }
     }
 
@@ -373,6 +439,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         _selectionTreeSourceKind = ActiveSourceKind;
         _selectionTreeDirty = false;
         OnChange(nameof(SelectionTree));
+        OnChange(nameof(VisibleSelectionTree));
     }
 
     private IReadOnlyList<ConditionSelectionNode> CreateProviderEntries(
@@ -782,7 +849,9 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
 
     private void NotifySelection()
     {
-        if (_selectionTreeDirty || _selectionTreeSourceKind != ActiveSourceKind)
+        if (!_selectionTreeInitialized)
+            _selectionTreeDirty = true;
+        else if (_selectionTreeDirty || _selectionTreeSourceKind != ActiveSourceKind)
             RebuildTree();
         else
             foreach (var node in _selectionTree)

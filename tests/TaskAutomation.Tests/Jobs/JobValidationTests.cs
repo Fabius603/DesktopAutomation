@@ -499,6 +499,119 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateJob_UsesPersistedConditionInputInsteadOfStaleStepSettings()
+    {
+        var source = AudioStep("audio");
+        var settings = new IfConditionSettings
+        {
+            Conditions = [Condition(source.Id, "IsMuted", ConditionOperator.IsTrue)]
+        };
+        var stored = new LocalValue
+        {
+            Name = "Conditions",
+            ValueKind = ResultValueKind.ResultObject,
+            Value = System.Text.Json.JsonSerializer.SerializeToNode(settings)
+        };
+        var step = new IfStep();
+        step.Inputs[IfStepDefinition.ConditionsFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = stored.Id.ToString("D")
+        };
+
+        var result = JobValidation.ValidateJob(new Job
+        {
+            Steps = [source, step, new EndIfStep()],
+            LocalValues = [stored]
+        });
+
+        Assert.True(result.IsValid, string.Join(Environment.NewLine,
+            result.Steps.Where(item => !item.IsValid).Select(item => item.Error)));
+    }
+
+    [Fact]
+    public void ValidateStep_RejectsDisabledInvalidControlFlowStep()
+    {
+        var step = new IfStep { IsEnabled = false };
+
+        Assert.False(JobValidation.ValidateStep([step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_AcceptsStepReferenceWithDifferentIdCasing()
+    {
+        var source = AudioStep("Audio");
+        var step = new IfStep
+        {
+            Settings = new() { Conditions = [Condition("audio", "IsMuted", ConditionOperator.IsTrue)] }
+        };
+
+        Assert.True(JobValidation.ValidateStep([source, step], step).IsValid);
+    }
+
+    [Fact]
+    public void ValidateStep_RejectsCollectionConditionProperty()
+    {
+        var source = new YOLODetectionStep { Id = "detections" };
+        var property = StepResultMetadata.GetResultTypeForStep(source)!.Properties
+            .First(candidate => candidate.Cardinality == ResultCardinality.Collection);
+        var condition = new StepCondition
+        {
+            SourceStepId = source.Id,
+            PropertyId = property.StableId,
+            PropertyPath = property.Name,
+            Operator = ConditionOperator.Equals,
+            ComparisonValue = "value"
+        };
+        var step = new IfStep { Settings = new() { Conditions = [condition] } };
+
+        var result = JobValidation.ValidateStep([source, step], step);
+
+        Assert.False(result.IsValid);
+        Assert.Contains("Sammlung", result.Error);
+    }
+
+    [Fact]
+    public void ValidateStep_RejectsUnknownComparisonKind()
+    {
+        var source = AudioStep("audio");
+        var condition = Condition(source.Id, "IsMuted", ConditionOperator.Equals);
+        condition.Comparison = new ComparisonOperand
+        {
+            Kind = (ComparisonOperandKind)999,
+            Value = bool.TrueString
+        };
+        var step = new IfStep { Settings = new() { Conditions = [condition] } };
+
+        var result = JobValidation.ValidateStep([source, step], step);
+
+        Assert.False(result.IsValid);
+        Assert.Contains("Vergleichsart", result.Error);
+    }
+
+    [Fact]
+    public void ValidateStep_ReportsEveryInvalidCondition()
+    {
+        var step = new IfStep
+        {
+            Settings = new()
+            {
+                Conditions =
+                [
+                    Condition("missing-1", "Value", ConditionOperator.Equals),
+                    Condition("missing-2", "Value", ConditionOperator.Equals)
+                ]
+            }
+        };
+
+        var result = JobValidation.ValidateStep([step], step);
+
+        Assert.False(result.IsValid);
+        Assert.Contains("Bedingung 1", result.Error);
+        Assert.Contains("Bedingung 2", result.Error);
+    }
+
+    [Fact]
     public void RemoveInvalidSourceSelections_RemovesMissingButPreservesTemporarilyInvalidReferences()
     {
         var source = AudioStep("audio");

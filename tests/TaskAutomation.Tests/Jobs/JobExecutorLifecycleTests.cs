@@ -1,5 +1,6 @@
 using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
+using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
 
 namespace TaskAutomation.Tests.Jobs;
@@ -18,6 +19,46 @@ public sealed class JobExecutorLifecycleTests
         var completion = Assert.Single(builder.Logs.Completions);
         Assert.True(completion.Success);
         Assert.False(completion.Cancelled);
+    }
+
+    [Fact]
+    public async Task ExecuteJob_UsesConditionControlFlowInStartAndEndPhases()
+    {
+        var enabled = new JobVariable
+        {
+            Name = "Enabled",
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        JobStep[] Conditional(string text) =>
+        [
+            new IfStep
+            {
+                Settings = new IfConditionSettings
+                {
+                    Conditions =
+                    [
+                        new StepCondition
+                        {
+                            ProviderId = ValueProviderIds.JobVariable,
+                            SourceId = enabled.Id.ToString("D"),
+                            Operator = ConditionOperator.IsTrue
+                        }
+                    ]
+                }
+            },
+            Text(text),
+            new EndIfStep()
+        ];
+
+        var job = Job("conditional phases", Conditional("start"), [Text("run")], Conditional("end"));
+        job.Variables = [enabled];
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+        using var executor = await builder.BuildAsync();
+
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["start", "run", "end"], builder.Overlay.TextCalls.Select(call => call.Text));
     }
 
     [Fact]

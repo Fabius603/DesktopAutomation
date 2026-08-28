@@ -21,11 +21,14 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         ResultBinding? binding = null,
-        ValueReferencePickerContext? pickerContext = null)
+        ValueReferencePickerContext? pickerContext = null,
+        ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _owner = owner;
-        Source = new ValueReferencePickerViewModel(
-            sources, inputContract, false, variables, providerSources, pickerContext);
+        Source = sourceCatalog is null
+            ? new ValueReferencePickerViewModel(
+                sources, inputContract, false, variables, providerSources, pickerContext)
+            : new ValueReferencePickerViewModel(sourceCatalog, inputContract, false, pickerContext);
         SourceField = new GeneratedStepFieldViewModel(
             new StepFieldDescriptor("detection_result", string.Empty, StepValueKind.ResultBinding,
                 Required: true, AllowsDirectValue: false),
@@ -79,12 +82,15 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         TextResultOverlaySettings? settings = null,
         ValueReferencePickerContext? pickerContext = null,
         string inputKeyPrefix = "overlay.text_results.0",
-        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null)
+        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _owner = owner;
         _inputKeyPrefix = inputKeyPrefix;
-        Source = new ValueReferencePickerViewModel(
-            sources, inputContract, false, variables, providerSources, pickerContext);
+        Source = sourceCatalog is null
+            ? new ValueReferencePickerViewModel(
+                sources, inputContract, false, variables, providerSources, pickerContext)
+            : new ValueReferencePickerViewModel(sourceCatalog, inputContract, false, pickerContext);
         Source.ReferenceChanged += (_, _) => OnChange(nameof(Source));
         if (settings is not null)
         {
@@ -165,14 +171,14 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields
         .Where(field => !ReferenceEquals(field, TextSourceField)).ToDictionary(
         field => field.Descriptor.Id, field => field.InputReferenceEditor!.Picker.ToBinding(), StringComparer.Ordinal);
-    public float FontSize { get => (float)(FontSizeField?.NumberValue ?? _fontSize); set { if (FontSizeField is not null) FontSizeField.NumberValue = value; _fontSize = value; OnChange(); } }
-    public Color FontColor { get => FontColorField?.ColorValue ?? _fontColor; set { if (FontColorField is not null) FontColorField.ColorValue = value; _fontColor = value; OnChange(); } }
-    public float Opacity { get => (float)(OpacityField?.NumberValue ?? _opacity); set { if (OpacityField is not null) OpacityField.NumberValue = value; _opacity = value; OnChange(); } }
-    public int DesktopIndex { get => DesktopIndexField?.IntegerValue ?? _desktopIndex; set { if (DesktopIndexField is not null) DesktopIndexField.IntegerValue = value; _desktopIndex = value; OnChange(); } }
-    public int OffsetX { get => OffsetXField?.IntegerValue ?? _offsetX; set { if (OffsetXField is not null) OffsetXField.IntegerValue = value; _offsetX = value; OnChange(); } }
-    public int OffsetY { get => OffsetYField?.IntegerValue ?? _offsetY; set { if (OffsetYField is not null) OffsetYField.IntegerValue = value; _offsetY = value; OnChange(); } }
-    public int DurationMs { get => DurationField?.IntegerValue ?? _durationMs; set { if (DurationField is not null) DurationField.IntegerValue = value; _durationMs = value; OnChange(); } }
-    public bool ClearOnJobEnd { get => ClearOnJobEndField?.BooleanValue ?? _clearOnJobEnd; set { if (ClearOnJobEndField is not null) ClearOnJobEndField.BooleanValue = value; _clearOnJobEnd = value; OnChange(); } }
+    public float FontSize { get => (float)(FontSizeField?.NumberValue ?? _fontSize); set { if (FontSizeField is not null) { FontSizeField.NumberValue = value; _fontSize = value; } else if (_fontSize != value) { _fontSize = value; OnChange(); } } }
+    public Color FontColor { get => FontColorField?.ColorValue ?? _fontColor; set { if (FontColorField is not null) { FontColorField.ColorValue = value; _fontColor = value; } else if (_fontColor != value) { _fontColor = value; OnChange(); } } }
+    public float Opacity { get => (float)(OpacityField?.NumberValue ?? _opacity); set { if (OpacityField is not null) { OpacityField.NumberValue = value; _opacity = value; } else if (_opacity != value) { _opacity = value; OnChange(); } } }
+    public int DesktopIndex { get => DesktopIndexField?.IntegerValue ?? _desktopIndex; set { if (DesktopIndexField is not null) { DesktopIndexField.IntegerValue = value; _desktopIndex = value; } else if (_desktopIndex != value) { _desktopIndex = value; OnChange(); } } }
+    public int OffsetX { get => OffsetXField?.IntegerValue ?? _offsetX; set { if (OffsetXField is not null) { OffsetXField.IntegerValue = value; _offsetX = value; } else if (_offsetX != value) { _offsetX = value; OnChange(); } } }
+    public int OffsetY { get => OffsetYField?.IntegerValue ?? _offsetY; set { if (OffsetYField is not null) { OffsetYField.IntegerValue = value; _offsetY = value; } else if (_offsetY != value) { _offsetY = value; OnChange(); } } }
+    public int DurationMs { get => DurationField?.IntegerValue ?? _durationMs; set { if (DurationField is not null) { DurationField.IntegerValue = value; _durationMs = value; } else if (_durationMs != value) { _durationMs = value; OnChange(); } } }
+    public bool ClearOnJobEnd { get => ClearOnJobEndField?.BooleanValue ?? _clearOnJobEnd; set { if (ClearOnJobEndField is not null) { ClearOnJobEndField.BooleanValue = value; _clearOnJobEnd = value; } else if (_clearOnJobEnd != value) { _clearOnJobEnd = value; OnChange(); } } }
 
     public TextResultOverlaySettings ToSettings() => new()
     {

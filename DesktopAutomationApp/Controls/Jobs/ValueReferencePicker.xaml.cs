@@ -6,7 +6,15 @@ namespace DesktopAutomationApp.Controls.Jobs;
 
 public partial class ValueReferencePicker : UserControl
 {
-    public ValueReferencePicker() => InitializeComponent();
+    public ValueReferencePicker()
+    {
+        InitializeComponent();
+        PathPicker.DropDownOpened += (_, _) =>
+        {
+            if (DataContext is ValueReferencePickerViewModel viewModel)
+                viewModel.EnsureSelectionTree();
+        };
+    }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {

@@ -7,7 +7,7 @@
              PreviewKeyDown="OnPreviewKeyDown">
     <Grid>
         <jobs:ResultPathPicker x:Name="PathPicker"
-                               ItemsSource="{Binding SelectionTree}"
+                               ItemsSource="{Binding VisibleSelectionTree}"
                                IsRichPreview="True"
                                DisplayText="{Binding SelectedPropertyName}"
                                InlineText="{Binding SelectedInlineText}"

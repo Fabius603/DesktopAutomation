@@ -540,97 +540,10 @@ namespace TaskAutomation.Jobs
                             await debugSession.BeforeStepAsync(step, "Hauptphase", ct, BuildStepStartDetails(step, "Hauptphase", iteration)).ConfigureAwait(false);
 
                         // ── Control-flow steps: handle without executing ────────
-                        if (step is IfStep ifStep)
+                        if (ProcessConditionControlFlow(
+                                step, branchStack, pipelineCtx.Results, conditionSources) is { } transition)
                         {
-                            ifStep = (IfStep)StepInputMaterializer.Materialize(ifStep, pipelineCtx.Results);
-                            var evaluation = parentActive
-                                ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
-                                : NotEvaluated(ifStep.Settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
-                            bool condMet = parentActive && evaluation.IsMatch;
-                            _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
-                                condMet ? "IF-Zweig wird ausgeführt." : "IF-Zweig wird übersprungen.",
-                                evaluation.Details,
-                                stepId: step.Id, stepType: step.GetType().Name);
-                            branchStack.Push(new BranchFrame(parentActive, condMet, condMet));
-                            debugSession?.MarkCompleted(step, evaluation.Details, conditionEvaluation: evaluation.DebugEvaluation);
-                            continue;
-                        }
-
-                        if (step is ElseIfStep elseIfStep)
-                        {
-                            elseIfStep = (ElseIfStep)StepInputMaterializer.Materialize(elseIfStep, pipelineCtx.Results);
-                            ConditionEvaluation? debugEvaluation = null;
-                            if (branchStack.Count > 0)
-                            {
-                                var top = branchStack.Pop();
-                                if (top.ParentActive && !top.AnyMatched)
-                                {
-                                    var evaluation = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results, conditionSources);
-                                    debugEvaluation = evaluation;
-                                    bool condMet = evaluation.IsMatch;
-                                    _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
-                                        condMet ? "ELSE-IF-Zweig wird ausgeführt." : "ELSE-IF-Zweig wird übersprungen.",
-                                        evaluation.Details,
-                                        stepId: step.Id, stepType: step.GetType().Name);
-                                    branchStack.Push(new BranchFrame(top.ParentActive, condMet, condMet));
-                                }
-                                else
-                                {
-                                    // A branch already matched or parent inactive – skip this branch.
-                                    var reason = !top.ParentActive
-                                        ? "Nicht ausgewertet: Der übergeordnete Bedingungszweig ist inaktiv."
-                                        : "Nicht ausgewertet: Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
-                                    debugEvaluation = NotEvaluated(elseIfStep.Settings, reason.Replace("Nicht ausgewertet: ", string.Empty));
-                                    _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
-                                        "ELSE-IF-Zweig wird übersprungen.", reason,
-                                        stepId: step.Id, stepType: step.GetType().Name);
-                                    branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
-                                }
-                            }
-                            else
-                            {
-                                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning,
-                                    "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
-                                    stepId: step.Id, stepType: step.GetType().Name);
-                            }
-                            debugSession?.MarkCompleted(
-                                step,
-                                debugEvaluation?.Details,
-                                conditionEvaluation: debugEvaluation?.DebugEvaluation);
-                            continue;
-                        }
-
-                        if (step is ElseStep)
-                        {
-                            if (branchStack.Count > 0)
-                            {
-                                var top = branchStack.Pop();
-                                bool executeElse = top.ParentActive && !top.AnyMatched;
-                                var details = executeElse
-                                    ? "Kein vorheriger IF-/ELSE-IF-Zweig wurde erfüllt."
-                                    : !top.ParentActive
-                                        ? "Der übergeordnete Bedingungszweig ist inaktiv."
-                                        : "Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
-                                _executionLogService.Write(executionLog, ExecutionLogLevel.Information,
-                                    executeElse ? "ELSE-Zweig wird ausgeführt." : "ELSE-Zweig wird übersprungen.",
-                                    details, stepId: step.Id, stepType: step.GetType().Name);
-                                branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
-                            }
-                            else
-                            {
-                                _executionLogService.Write(executionLog, ExecutionLogLevel.Warning,
-                                    "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
-                                    stepId: step.Id, stepType: step.GetType().Name);
-                            }
-                            debugSession?.MarkCompleted(step);
-                            continue;
-                        }
-
-                        if (step is EndIfStep)
-                        {
-                            if (branchStack.Count > 0)
-                                branchStack.Pop();
-                            debugSession?.MarkCompleted(step);
+                            CompleteConditionControlFlow(executionLog, debugSession, step, transition);
                             continue;
                         }
 
@@ -943,114 +856,11 @@ namespace TaskAutomation.Jobs
                     && step is (IfStep or ElseIfStep or ElseStep or EndIfStep))
                     await debugSession.BeforeStepAsync(step, phaseName, ct, BuildStepStartDetails(step, phaseName, null)).ConfigureAwait(false);
 
-                if (step is IfStep ifStep)
+                if (ProcessConditionControlFlow(
+                        step, branchStack, pipelineCtx.Results, conditionSources) is { } transition)
                 {
-                    ifStep = (IfStep)StepInputMaterializer.Materialize(ifStep, pipelineCtx.Results);
-                    var evaluation = parentActive
-                        ? EvaluateCondition(ifStep.Settings, pipelineCtx.Results, conditionSources)
-                        : NotEvaluated(ifStep.Settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
-                    bool conditionMet = parentActive && evaluation.IsMatch;
-                    _executionLogService.Write(
-                        pipelineCtx.ExecutionLogSession,
-                        ExecutionLogLevel.Information,
-                        conditionMet ? "IF-Zweig wird ausgeführt." : "IF-Zweig wird übersprungen.",
-                        evaluation.Details,
-                        stepId: step.Id,
-                        stepType: step.GetType().Name);
-                    branchStack.Push(new BranchFrame(parentActive, conditionMet, conditionMet));
-                    debugSession?.MarkCompleted(step, evaluation.Details, conditionEvaluation: evaluation.DebugEvaluation);
-                    continue;
-                }
-
-                if (step is ElseIfStep elseIfStep)
-                {
-                    elseIfStep = (ElseIfStep)StepInputMaterializer.Materialize(elseIfStep, pipelineCtx.Results);
-                    ConditionEvaluation? debugEvaluation = null;
-                    if (branchStack.Count == 0)
-                    {
-                        _executionLogService.Write(
-                            pipelineCtx.ExecutionLogSession,
-                            ExecutionLogLevel.Warning,
-                            "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
-                            stepId: step.Id,
-                            stepType: step.GetType().Name);
-                        debugSession?.MarkSkipped(step, "ELSE-IF steht außerhalb eines IF-Blocks.");
-                        continue;
-                    }
-
-                    var top = branchStack.Pop();
-                    if (top.ParentActive && !top.AnyMatched)
-                    {
-                        var evaluation = EvaluateCondition(elseIfStep.Settings, pipelineCtx.Results, conditionSources);
-                        debugEvaluation = evaluation;
-                        bool conditionMet = evaluation.IsMatch;
-                        _executionLogService.Write(
-                            pipelineCtx.ExecutionLogSession,
-                            ExecutionLogLevel.Information,
-                            conditionMet ? "ELSE-IF-Zweig wird ausgeführt." : "ELSE-IF-Zweig wird übersprungen.",
-                            evaluation.Details,
-                            stepId: step.Id,
-                            stepType: step.GetType().Name);
-                        branchStack.Push(new BranchFrame(top.ParentActive, conditionMet, conditionMet));
-                    }
-                    else
-                    {
-                        var reason = !top.ParentActive
-                            ? "Der übergeordnete Bedingungszweig ist inaktiv."
-                            : "Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
-                        debugEvaluation = NotEvaluated(elseIfStep.Settings, reason);
-                        branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
-                    }
-                    debugSession?.MarkCompleted(
-                        step,
-                        debugEvaluation?.Details,
-                        conditionEvaluation: debugEvaluation?.DebugEvaluation);
-                    continue;
-                }
-
-                if (step is ElseStep)
-                {
-                    if (branchStack.Count == 0)
-                    {
-                        _executionLogService.Write(
-                            pipelineCtx.ExecutionLogSession,
-                            ExecutionLogLevel.Warning,
-                            "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
-                            stepId: step.Id,
-                            stepType: step.GetType().Name);
-                        debugSession?.MarkSkipped(step, "ELSE steht außerhalb eines IF-Blocks.");
-                        continue;
-                    }
-
-                    var top = branchStack.Pop();
-                    bool executeElse = top.ParentActive && !top.AnyMatched;
-                    branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
-                    debugSession?.MarkCompleted(step, executeElse ? "ELSE-Zweig aktiv." : "ELSE-Zweig inaktiv.");
-                    continue;
-                }
-
-                if (step is EndIfStep)
-                {
-                    if (branchStack.Count > 0)
-                    {
-                        branchStack.Pop();
-                        _executionLogService.Write(
-                            pipelineCtx.ExecutionLogSession,
-                            ExecutionLogLevel.Debug,
-                            "IF-Block beendet.",
-                            stepId: step.Id,
-                            stepType: step.GetType().Name);
-                    }
-                    else
-                    {
-                        _executionLogService.Write(
-                            pipelineCtx.ExecutionLogSession,
-                            ExecutionLogLevel.Warning,
-                            "ENDIF steht außerhalb eines IF-Blocks.",
-                            stepId: step.Id,
-                            stepType: step.GetType().Name);
-                    }
-                    debugSession?.MarkCompleted(step);
+                    CompleteConditionControlFlow(
+                        pipelineCtx.ExecutionLogSession, debugSession, step, transition);
                     continue;
                 }
 
@@ -1529,6 +1339,132 @@ namespace TaskAutomation.Jobs
             }
         }
 
+        private sealed record ConditionControlFlowTransition(
+            ExecutionLogLevel LogLevel,
+            string Message,
+            string? Details = null,
+            ConditionEvaluation? Evaluation = null,
+            bool MarkSkipped = false);
+
+        private ConditionControlFlowTransition? ProcessConditionControlFlow(
+            JobStep step,
+            Stack<BranchFrame> branchStack,
+            IJobResultStore results,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
+        {
+            var parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
+            if (step is IfStep configuredIf)
+            {
+                var materialized = (IfStep)StepInputMaterializer.Materialize(configuredIf, results);
+                var settings = materialized.Settings ?? new IfConditionSettings();
+                var evaluation = parentActive
+                    ? EvaluateCondition(settings, results, conditionSources)
+                    : NotEvaluated(settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
+                var conditionMet = parentActive && evaluation.IsMatch;
+                branchStack.Push(new BranchFrame(parentActive, conditionMet, conditionMet));
+                return new ConditionControlFlowTransition(
+                    ExecutionLogLevel.Information,
+                    conditionMet ? "IF-Zweig wird ausgeführt." : "IF-Zweig wird übersprungen.",
+                    evaluation.Details,
+                    evaluation);
+            }
+
+            if (step is ElseIfStep configuredElseIf)
+            {
+                var materialized = (ElseIfStep)StepInputMaterializer.Materialize(configuredElseIf, results);
+                var settings = materialized.Settings ?? new IfConditionSettings();
+                if (branchStack.Count == 0)
+                    return new ConditionControlFlowTransition(
+                        ExecutionLogLevel.Warning,
+                        "ELSE-IF steht außerhalb eines IF-Blocks und wird übersprungen.",
+                        MarkSkipped: true);
+
+                var top = branchStack.Pop();
+                if (top.ParentActive && !top.AnyMatched)
+                {
+                    var evaluation = EvaluateCondition(settings, results, conditionSources);
+                    branchStack.Push(new BranchFrame(top.ParentActive, evaluation.IsMatch, evaluation.IsMatch));
+                    return new ConditionControlFlowTransition(
+                        ExecutionLogLevel.Information,
+                        evaluation.IsMatch
+                            ? "ELSE-IF-Zweig wird ausgeführt."
+                            : "ELSE-IF-Zweig wird übersprungen.",
+                        evaluation.Details,
+                        evaluation);
+                }
+
+                var reason = !top.ParentActive
+                    ? "Der übergeordnete Bedingungszweig ist inaktiv."
+                    : "Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
+                var skippedEvaluation = NotEvaluated(settings, reason);
+                branchStack.Push(new BranchFrame(top.ParentActive, top.AnyMatched, false));
+                return new ConditionControlFlowTransition(
+                    ExecutionLogLevel.Information,
+                    "ELSE-IF-Zweig wird übersprungen.",
+                    skippedEvaluation.Details,
+                    skippedEvaluation);
+            }
+
+            if (step is ElseStep)
+            {
+                if (branchStack.Count == 0)
+                    return new ConditionControlFlowTransition(
+                        ExecutionLogLevel.Warning,
+                        "ELSE steht außerhalb eines IF-Blocks und wird übersprungen.",
+                        MarkSkipped: true);
+
+                var top = branchStack.Pop();
+                var executeElse = top.ParentActive && !top.AnyMatched;
+                var details = executeElse
+                    ? "Kein vorheriger IF-/ELSE-IF-Zweig wurde erfüllt."
+                    : !top.ParentActive
+                        ? "Der übergeordnete Bedingungszweig ist inaktiv."
+                        : "Ein vorheriger IF-/ELSE-IF-Zweig wurde bereits ausgeführt.";
+                branchStack.Push(new BranchFrame(top.ParentActive, true, executeElse));
+                return new ConditionControlFlowTransition(
+                    ExecutionLogLevel.Information,
+                    executeElse ? "ELSE-Zweig wird ausgeführt." : "ELSE-Zweig wird übersprungen.",
+                    details);
+            }
+
+            if (step is EndIfStep)
+            {
+                if (branchStack.Count == 0)
+                    return new ConditionControlFlowTransition(
+                        ExecutionLogLevel.Warning,
+                        "ENDIF steht außerhalb eines IF-Blocks.",
+                        MarkSkipped: true);
+                branchStack.Pop();
+                return new ConditionControlFlowTransition(
+                    ExecutionLogLevel.Debug,
+                    "IF-Block beendet.");
+            }
+
+            return null;
+        }
+
+        private void CompleteConditionControlFlow(
+            ExecutionLogSession executionLog,
+            JobDebugSession? debugSession,
+            JobStep step,
+            ConditionControlFlowTransition transition)
+        {
+            _executionLogService.Write(
+                executionLog,
+                transition.LogLevel,
+                transition.Message,
+                transition.Details,
+                stepId: step.Id,
+                stepType: step.GetType().Name);
+            if (transition.MarkSkipped)
+                debugSession?.MarkSkipped(step, transition.Message);
+            else
+                debugSession?.MarkCompleted(
+                    step,
+                    transition.Details,
+                    conditionEvaluation: transition.Evaluation?.DebugEvaluation);
+        }
+
         private sealed record ConditionEvaluation(
             bool IsMatch,
             string Details,
@@ -1550,7 +1486,8 @@ namespace TaskAutomation.Jobs
             IJobResultStore results,
             IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
         {
-            if (settings.Conditions.Count == 0)
+            var conditions = settings?.Conditions ?? [];
+            if (conditions.Count == 0)
                 return new ConditionEvaluation(
                     false,
                     "Keine Bedingungen konfiguriert.",
@@ -1561,12 +1498,40 @@ namespace TaskAutomation.Jobs
                         false,
                         "Keine Bedingungen konfiguriert."));
 
-            var evaluations = settings.Conditions
-                .Select((condition, index) => (Index: index + 1, Evaluation: EvaluateSingleCondition(condition, results, conditionSources)))
-                .ToArray();
-            var isMatch = settings.MatchMode == ConditionMatchMode.All
-                ? evaluations.All(item => item.Evaluation.IsMatch)
-                : evaluations.Any(item => item.Evaluation.IsMatch);
+            var evaluations = new List<(int Index, SingleConditionEvaluation Evaluation)>(conditions.Count);
+            var isAll = settings.MatchMode == ConditionMatchMode.All;
+            var isMatch = isAll;
+            var resultDecided = false;
+            for (var index = 0; index < conditions.Count; index++)
+            {
+                SingleConditionEvaluation evaluation;
+                if (resultDecided)
+                {
+                    const string reason = "Das Gesamtergebnis steht bereits fest.";
+                    evaluation = new SingleConditionEvaluation(
+                        false,
+                        $"NICHT AUSGEWERTET — {reason}",
+                        null,
+                        null,
+                        ConditionDebugState.NotEvaluated,
+                        reason);
+                }
+                else
+                {
+                    evaluation = EvaluateSingleCondition(conditions[index], results, conditionSources);
+                    if (isAll)
+                    {
+                        isMatch &= evaluation.IsMatch;
+                        resultDecided = !evaluation.IsMatch;
+                    }
+                    else
+                    {
+                        isMatch |= evaluation.IsMatch;
+                        resultDecided = evaluation.IsMatch;
+                    }
+                }
+                evaluations.Add((index + 1, evaluation));
+            }
             var mode = settings.MatchMode == ConditionMatchMode.All ? "ALLE (AND)" : "MINDESTENS EINE (OR)";
             var lines = new List<string> { $"Verknüpfung: {mode}" };
             lines.AddRange(evaluations.Select(item => $"{item.Index}. {item.Evaluation.Details}"));
@@ -1575,7 +1540,7 @@ namespace TaskAutomation.Jobs
             {
                 var evaluation = item.Evaluation;
                 return new ConditionDebugItem(
-                    settings.Conditions[index],
+                    conditions[index],
                     evaluation.State,
                     evaluation.ActualValue,
                     evaluation.ExpectedValue,
@@ -1622,10 +1587,10 @@ namespace TaskAutomation.Jobs
             if (!condition.IsConfigured)
                 return Unavailable("Die Wertreferenz der Bedingung fehlt.");
 
-            var leftName = FormatValueReference(condition, results, conditionSources);
             if (!TryReadReferenceValue(results, condition, conditionSources,
                     out var descriptor, out var value, out var leftWasExecuted))
-                return Unavailable($"{leftName}: Wert ist nicht verfügbar.");
+                return Unavailable($"{FormatValueReference(condition, conditionSources)}: Wert ist nicht verfügbar.");
+            var leftName = FormatValueReference(condition, conditionSources, descriptor);
             var leftStatus = leftWasExecuted ? string.Empty : " (Standardwert; Step wurde nicht ausgeführt)";
 
             if (condition.Operator == ConditionOperator.IsEmpty)
@@ -1659,12 +1624,12 @@ namespace TaskAutomation.Jobs
             }
             else
             {
-                var rightName = FormatValueReference(comparison, results, conditionSources);
                 if (!TryReadReferenceValue(results, comparison, conditionSources,
                         out var rightDescriptor, out expected, out var rightWasExecuted))
                     return Unavailable(
-                        $"{rightName}: Vergleichswert ist nicht verfügbar.",
+                        $"{FormatValueReference(comparison, conditionSources)}: Vergleichswert ist nicht verfügbar.",
                         FormatLogValue(value));
+                var rightName = FormatValueReference(comparison, conditionSources, rightDescriptor);
                 if (!StepResultMetadata.AreComparable(descriptor, rightDescriptor))
                     return Unavailable(
                         $"Datentypen stimmen nicht überein: {descriptor.DataType} und {rightDescriptor.DataType}.",
@@ -1729,17 +1694,18 @@ namespace TaskAutomation.Jobs
 
         private static string FormatValueReference(
             ResultBinding binding,
-            IJobResultStore results,
-            IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
+            ResultPropertyDescriptor? descriptor = null)
         {
             if (binding.HasProviderReference
                 && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
-            {
-                var providerValue = results.ReadProvider(binding.ProviderId, binding.SourceId);
-                if (providerValue.Descriptor is { } providerSource)
-                    return $"{providerSource.ProviderId} → {providerSource.Name}";
-            }
-            return FormatResultReference(binding.SourceStepId, binding.PropertyPath, conditionSources);
+                return descriptor is null
+                    ? $"{binding.ProviderId} → {binding.SourceId}"
+                    : $"{binding.ProviderId} → {descriptor.DisplayName}";
+            return FormatResultReference(
+                binding.SourceStepId,
+                string.IsNullOrWhiteSpace(binding.PropertyPath) ? binding.PropertyId : binding.PropertyPath,
+                conditionSources);
         }
 
         private static string FormatConditionOperator(ConditionOperator conditionOperator) => conditionOperator switch
@@ -1795,12 +1761,8 @@ namespace TaskAutomation.Jobs
                 || (string.IsNullOrWhiteSpace(propertyId) && string.IsNullOrWhiteSpace(propertyPath)))
                 return false;
             var result = results.GetRaw(sourceStepId);
-            if (result is null
-                && conditionSources.TryGetValue(sourceStepId, out var source)
-                && !string.IsNullOrWhiteSpace(source.ResultTypeName))
-                result = StepResultMetadata.CreateDefaultResult(source.ResultTypeName);
             wasExecuted = result?.WasExecuted == true;
-            if (result is null)
+            if (result is null || !wasExecuted)
                 return false;
             if (conditionSources.TryGetValue(sourceStepId, out var configuredSource)
                 && configuredSource.ResultType is not null)
