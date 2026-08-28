@@ -294,6 +294,26 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
+    public void GeneratedValueSourceInput_ResolvesVisibilityFromItsOwnFieldModel()
+    {
+        var reusableInputXaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedValueSourceInput.xaml"));
+        var generatedEditorXaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated",
+            "GeneratedStepEditor.xaml"));
+
+        Assert.Contains(
+            "DataContext.ShowsInputSourcePicker, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}",
+            reusableInputXaml);
+        Assert.DoesNotContain("DataContext.ShowsInputSourcePicker, ElementName=InputValueHost", reusableInputXaml);
+        Assert.Contains(
+            "<Grid Visibility=\"{Binding ShowsInputSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}\">",
+            generatedEditorXaml);
+        Assert.DoesNotContain("DataContext.ShowsInputSourcePicker, ElementName=InputValueHost", generatedEditorXaml);
+    }
+
+    [Fact]
     public void GeneratedStepEditor_ResolvesDialogCommandsThroughItsAncestor()
     {
         var xaml = File.ReadAllText(Path.Combine(

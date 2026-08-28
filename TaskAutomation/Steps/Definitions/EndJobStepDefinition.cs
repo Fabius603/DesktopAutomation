@@ -60,12 +60,6 @@ public sealed class EndJobStepDefinition : StepDefinition<EndJobStep>
         skipEndSteps = false;
         if (!draft.Values.TryGetValue(SkipEndStepsFieldId, out var value) || value is null)
             return true;
-        try
-        {
-            skipEndSteps = value.GetValue<bool>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryBoolean(value, out skipEndSteps);
     }
 }

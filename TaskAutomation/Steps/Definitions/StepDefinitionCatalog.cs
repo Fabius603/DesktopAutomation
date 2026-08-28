@@ -237,16 +237,14 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
 
         static bool TryReadString(System.Text.Json.Nodes.JsonNode value, out string text)
         {
-            try
+            if (value is System.Text.Json.Nodes.JsonValue jsonValue
+                && jsonValue.TryGetValue<string>(out var result))
             {
-                text = value.GetValue<string>();
+                text = result;
                 return true;
             }
-            catch (InvalidOperationException)
-            {
-                text = string.Empty;
-                return false;
-            }
+            text = string.Empty;
+            return false;
         }
     }
 

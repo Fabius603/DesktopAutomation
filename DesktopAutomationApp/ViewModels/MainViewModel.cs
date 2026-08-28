@@ -350,7 +350,9 @@ namespace DesktopAutomationApp.ViewModels
                 // wirklichen Abschluss gewartet, damit der Balken niemals zu früh fertig ist.
                 while (NavigationProgress < 92)
                 {
-                    await Task.Delay(70, cancellationToken);
+                    await Task.Delay(70);
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
                     var remaining = 92 - NavigationProgress;
                     NavigationProgress = Math.Min(92, NavigationProgress + Math.Max(0.5, remaining * 0.09));
                 }

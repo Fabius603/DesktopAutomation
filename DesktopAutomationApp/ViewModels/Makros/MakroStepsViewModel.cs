@@ -852,15 +852,15 @@ namespace DesktopAutomationApp.ViewModels
             MacroEditState current,
             CancellationToken cancellationToken) => Task.Run(() =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return false;
             if (Serialize(baseline.Steps) != Serialize(current.Steps)) return false;
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return false;
             if (Serialize(baseline.Groups) != Serialize(current.Groups)) return false;
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return false;
             if (Serialize(baseline.RecordingSettings) != Serialize(current.RecordingSettings)) return false;
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return false;
             return Serialize(baseline.RecordedEnvironment) == Serialize(current.RecordedEnvironment);
-        }, cancellationToken);
+        });
 
         private static string Serialize<T>(T value)
             => System.Text.Json.JsonSerializer.Serialize(value, JsonOptions.Default);

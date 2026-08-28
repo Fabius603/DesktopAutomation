@@ -76,13 +76,7 @@ public sealed class DesktopDuplicationStepDefinition : StepDefinition<DesktopDup
         desktopIndex = 0;
         if (!draft.Values.TryGetValue(DesktopIndexFieldId, out var value) || value is null)
             return false;
-        try
-        {
-            desktopIndex = value.GetValue<int>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryInteger(value, out desktopIndex);
     }
 
     private static bool TryGetCaptureCursor(StepDraft draft, out bool captureCursor)
@@ -90,12 +84,6 @@ public sealed class DesktopDuplicationStepDefinition : StepDefinition<DesktopDup
         captureCursor = false;
         if (!draft.Values.TryGetValue(CaptureCursorFieldId, out var value) || value is null)
             return true;
-        try
-        {
-            captureCursor = value.GetValue<bool>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryBoolean(value, out captureCursor);
     }
 }

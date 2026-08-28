@@ -150,8 +150,9 @@
                     <ContentControl Content="{Binding}"
                                     ContentTemplateSelector="{StaticResource InlineStepValueTemplateSelector}"
                                     Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
-                                               Visibility="{Binding DataContext.ShowsInputSourcePicker, ElementName=InputValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Grid Visibility="{Binding ShowsInputSourcePicker, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"/>
+                    </Grid>
                     <Border Padding="10,8" CornerRadius="6"
                             Background="{DynamicResource App.Brush.AccentSubtle}"
                             Visibility="{Binding RequiresInlineEditChoice, Converter={StaticResource BooleanToVisibilityConverter}}">

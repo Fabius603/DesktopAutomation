@@ -58,12 +58,6 @@ public sealed class TimeoutStepDefinition : StepDefinition<TimeoutStep>
         delay = 0;
         if (!draft.Values.TryGetValue(DelayFieldId, out var value) || value is null)
             return false;
-        try
-        {
-            delay = value.GetValue<int>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryInteger(value, out delay);
     }
 }

@@ -773,10 +773,11 @@ namespace DesktopAutomationApp.ViewModels
                 return false;
 
             var baselineSerialized = await JobStepsSnapshotService.SerializeAsync(
-                baseline.StartSteps, baseline.RunSteps, baseline.EndSteps, cancellationToken).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
+                baseline.StartSteps, baseline.RunSteps, baseline.EndSteps).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested) return false;
             var currentSerialized = await JobStepsSnapshotService.SerializeAsync(
-                current.StartSteps, current.RunSteps, current.EndSteps, cancellationToken).ConfigureAwait(false);
+                current.StartSteps, current.RunSteps, current.EndSteps).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested) return false;
             if (baselineSerialized != currentSerialized) return false;
 
             var baselineVariables = JsonSerializer.Serialize(baseline.Variables);

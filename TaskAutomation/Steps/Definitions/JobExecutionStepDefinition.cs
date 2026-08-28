@@ -81,12 +81,6 @@ public sealed class JobExecutionStepDefinition : StepDefinition<JobExecutionStep
         result = true;
         if (!draft.Values.TryGetValue(fieldId, out var value) || value is null)
             return true;
-        try
-        {
-            result = value.GetValue<bool>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryBoolean(value, out result);
     }
 }

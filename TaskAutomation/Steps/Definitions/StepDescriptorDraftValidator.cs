@@ -71,15 +71,12 @@ internal static class StepDescriptorDraftValidator
         value = string.Empty;
         if (!draft.Values.TryGetValue(fieldId, out var node) || node is null)
             return false;
-        try
+        if (node is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var text))
         {
-            value = node.GetValue<string>();
+            value = text;
             return true;
         }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
+        return false;
     }
 
     private static bool RuleMatches(StepVisibilityRule rule, StepDraft draft)
@@ -108,39 +105,44 @@ internal static class StepDescriptorDraftValidator
         StepValueKind kind, JsonNode value, out decimal? number, out string? text, out int? length)
     {
         number = null; text = null; length = null;
-        try
+        switch (kind)
         {
-            switch (kind)
-            {
-                case StepValueKind.Integer:
-                case StepValueKind.Duration:
-                    number = value.GetValue<int>(); return true;
-                case StepValueKind.Number:
-                    var numeric = value.Deserialize<double>();
-                    if (!double.IsFinite(numeric)) return false;
-                    number = (decimal)numeric; return true;
-                case StepValueKind.Boolean:
-                    _ = value.GetValue<bool>(); return true;
-                case StepValueKind.Text:
-                case StepValueKind.DateTime:
-                case StepValueKind.MultilineText:
-                case StepValueKind.FilePath:
-                case StepValueKind.DirectoryPath:
-                case StepValueKind.Color:
-                case StepValueKind.Enum:
-                    text = value.GetValue<string>(); length = text.Length; return true;
-                case StepValueKind.Collection:
-                    if (value is not JsonArray array) return false;
-                    length = array.Count; return true;
-                case StepValueKind.ResultBinding:
-                    return TryDeserialize<TaskAutomation.Jobs.ResultBinding>(value, out _);
-                default:
-                    return true;
-            }
-        }
-        catch (Exception exception) when (exception is InvalidOperationException or FormatException or OverflowException)
-        {
-            return false;
+            case StepValueKind.Integer:
+            case StepValueKind.Duration:
+                if (value is not JsonValue integerValue) return false;
+                if (integerValue.TryGetValue<int>(out var integer)) { number = integer; return true; }
+                if (integerValue.TryGetValue<long>(out var longInteger)
+                    && longInteger is >= int.MinValue and <= int.MaxValue)
+                { number = longInteger; return true; }
+                return false;
+            case StepValueKind.Number:
+                if (value is not JsonValue numberValue) return false;
+                if (numberValue.TryGetValue<decimal>(out var decimalNumber)) { number = decimalNumber; return true; }
+                if (numberValue.TryGetValue<double>(out var floatingPoint) && double.IsFinite(floatingPoint))
+                { number = (decimal)floatingPoint; return true; }
+                if (numberValue.TryGetValue<float>(out var singlePrecision) && float.IsFinite(singlePrecision))
+                { number = (decimal)singlePrecision; return true; }
+                if (numberValue.TryGetValue<long>(out var wholeNumber)) { number = wholeNumber; return true; }
+                return false;
+            case StepValueKind.Boolean:
+                return value is JsonValue booleanValue && booleanValue.TryGetValue<bool>(out _);
+            case StepValueKind.Text:
+            case StepValueKind.DateTime:
+            case StepValueKind.MultilineText:
+            case StepValueKind.FilePath:
+            case StepValueKind.DirectoryPath:
+            case StepValueKind.Color:
+            case StepValueKind.Enum:
+                if (!TryGetString(value, out text)) return false;
+                length = text.Length;
+                return true;
+            case StepValueKind.Collection:
+                if (value is not JsonArray array) return false;
+                length = array.Count; return true;
+            case StepValueKind.ResultBinding:
+                return TryDeserialize<TaskAutomation.Jobs.ResultBinding>(value, out _);
+            default:
+                return true;
         }
     }
 
@@ -153,8 +155,10 @@ internal static class StepDescriptorDraftValidator
 
     private static bool TryGetString(JsonNode value, out string text)
     {
-        try { text = value.GetValue<string>(); return true; }
-        catch (InvalidOperationException) { text = string.Empty; return false; }
+        if (value is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var result))
+        { text = result; return true; }
+        text = string.Empty;
+        return false;
     }
 
     private static bool TryDeserialize<T>(JsonNode value, out T result) where T : class, new()

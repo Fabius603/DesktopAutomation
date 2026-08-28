@@ -93,10 +93,15 @@ internal sealed class EditorChangeTracker<TState> : IDisposable
         try
         {
             if (_debounce > TimeSpan.Zero)
-                await Task.Delay(_debounce, cancellationToken).ConfigureAwait(false);
+            {
+                await Task.Delay(_debounce).ConfigureAwait(false);
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+            }
 
             var statesMatch = await _equalsAsync(baseline, current, cancellationToken).ConfigureAwait(false);
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested)
+                return;
             await PublishAsync(!statesMatch, revision).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

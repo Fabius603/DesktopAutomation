@@ -58,12 +58,6 @@ public sealed class BlockInputStepDefinition : StepDefinition<BlockInputStep>
         timeout = 0;
         if (!draft.Values.TryGetValue(SafetyTimeoutFieldId, out var value) || value is null)
             return false;
-        try
-        {
-            timeout = value.GetValue<int>();
-            return true;
-        }
-        catch (InvalidOperationException) { return false; }
-        catch (FormatException) { return false; }
+        return DefinitionValueReader.TryInteger(value, out timeout);
     }
 }

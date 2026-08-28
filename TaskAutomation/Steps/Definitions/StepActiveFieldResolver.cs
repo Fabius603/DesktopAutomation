@@ -15,8 +15,8 @@ internal static class StepActiveFieldResolver
 
     private static string? TryGetString(StepDraft draft, string fieldId)
     {
-        if (!draft.Values.TryGetValue(fieldId, out var value) || value is null) return null;
-        try { return value.GetValue<string>(); }
-        catch (InvalidOperationException) { return null; }
+        return draft.Values.TryGetValue(fieldId, out var value)
+               && value is System.Text.Json.Nodes.JsonValue jsonValue
+               && jsonValue.TryGetValue<string>(out var text) ? text : null;
     }
 }

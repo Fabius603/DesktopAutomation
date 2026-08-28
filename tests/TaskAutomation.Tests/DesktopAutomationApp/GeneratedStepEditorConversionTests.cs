@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Windows.Media;
 using DesktopAutomationApp.ViewModels;
 using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Jobs;
 using TaskAutomation.Steps.Definitions;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
@@ -42,21 +43,26 @@ public sealed class GeneratedStepEditorConversionTests
     }
 
     [Fact]
-    public void InitializingGeneratedEditor_DoesNotUseHandledConversionExceptions()
+    public void InitializingEveryBuiltInGeneratedEditor_DoesNotUseHandledConversionExceptions()
     {
-        var exceptions = new ConcurrentQueue<Exception>();
+        var exceptions = new ConcurrentQueue<string>();
+        string? currentStep = null;
         EventHandler<FirstChanceExceptionEventArgs> handler = (_, args) =>
         {
             if (args.Exception is JsonException or InvalidOperationException or FormatException
                 && args.Exception.StackTrace?.Contains(
                     nameof(GeneratedStepEditorViewModel), StringComparison.Ordinal) == true)
-                exceptions.Enqueue(args.Exception);
+                exceptions.Enqueue($"{currentStep}: {args.Exception.GetType().Name}: {args.Exception.Message}");
         };
 
         AppDomain.CurrentDomain.FirstChanceException += handler;
         try
         {
-            _ = new GeneratedStepEditorViewModel(new ShowTextStepDefinition());
+            foreach (var definition in BuiltInStepDefinitions.Instance.Definitions)
+            {
+                currentStep = definition.StepType.Name;
+                _ = new GeneratedStepEditorViewModel(definition);
+            }
         }
         finally
         {
@@ -86,6 +92,66 @@ public sealed class GeneratedStepEditorConversionTests
         {
             Assert.Null(field.FilePreview);
             Assert.False(field.HasFilePreview);
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.FirstChanceException -= handler;
+        }
+
+        Assert.Empty(exceptions);
+    }
+
+    [Fact]
+    public async Task SupersededEditorComparisons_DoNotThrowCancellationExceptions()
+    {
+        var exceptions = new ConcurrentQueue<Exception>();
+        EventHandler<FirstChanceExceptionEventArgs> handler = (_, args) =>
+        {
+            if (args.Exception is TaskCanceledException
+                && args.Exception.StackTrace?.Contains(nameof(EditorChangeTracker<int>), StringComparison.Ordinal) == true)
+                exceptions.Enqueue(args.Exception);
+        };
+        using var tracker = new EditorChangeTracker<int>(
+            0, static (left, right, _) => Task.FromResult(left == right), _ => { },
+            TimeSpan.FromMilliseconds(20));
+
+        AppDomain.CurrentDomain.FirstChanceException += handler;
+        try
+        {
+            tracker.Evaluate(1);
+            tracker.Evaluate(2);
+            await tracker.WhenIdleAsync();
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.FirstChanceException -= handler;
+        }
+
+        Assert.Empty(exceptions);
+    }
+
+    [Fact]
+    public void InvalidPersistedVariableValue_IsResetWithoutJsonTypeException()
+    {
+        var exceptions = new ConcurrentQueue<Exception>();
+        EventHandler<FirstChanceExceptionEventArgs> handler = (_, args) =>
+        {
+            if (args.Exception is InvalidOperationException
+                && args.Exception.StackTrace?.Contains(nameof(JobVariableEditorViewModel), StringComparison.Ordinal) == true)
+                exceptions.Enqueue(args.Exception);
+        };
+        var variable = new JobVariable
+        {
+            ValueKind = ResultValueKind.Integer,
+            Value = JsonValue.Create("not-an-integer")
+        };
+
+        AppDomain.CurrentDomain.FirstChanceException += handler;
+        try
+        {
+            var editor = new JobVariableEditorViewModel(variable, _ => { });
+            Assert.Equal(0, editor.IntegerValue);
+            Assert.Equal(0, variable.Value!.GetValue<int>());
         }
         finally
         {

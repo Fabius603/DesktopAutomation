@@ -20,7 +20,7 @@
                             ContentTemplateSelector="{DynamicResource InlineStepValueTemplateSelector}"
                             Visibility="{Binding ShowsDirectInput, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
-                                       Visibility="{Binding DataContext.ShowsInputSourcePicker, ElementName=InputValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                       Visibility="{Binding DataContext.ShowsInputSourcePicker, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
         <Button Grid.Column="1" Width="34" MinHeight="30" Margin="5,0,0,0"
                 Padding="0" Style="{StaticResource ButtonSecondary}"

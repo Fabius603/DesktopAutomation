@@ -288,27 +288,28 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         _loading = true;
         try
         {
-            _textValue = IsText ? Model.Value?.GetValue<string>() ?? string.Empty : string.Empty;
-            _booleanValue = IsBoolean && (Model.Value?.GetValue<bool>() ?? false);
-            _integerValue = IsInteger ? Model.Value?.GetValue<int>() ?? 0 : 0;
-            _numberValue = IsNumber ? Model.Value?.GetValue<double>() ?? 0 : 0;
-            _dateTimeValue = IsDateTime ? Model.Value?.GetValue<DateTime>() ?? DateTime.Now : DateTime.Now;
-            _colorValue = IsColor && WpfColorParser.TryParse(Model.Value?.GetValue<string>(), out var color)
+            var valid = true;
+            _textValue = IsText ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
+            _booleanValue = IsBoolean && ReadBoolean(Model.Value, false, ref valid);
+            _integerValue = IsInteger ? ReadInteger(Model.Value, 0, ref valid) : 0;
+            _numberValue = IsNumber ? ReadNumber(Model.Value, 0, ref valid) : 0;
+            _dateTimeValue = IsDateTime ? ReadDateTime(Model.Value, DateTime.Now, ref valid) : DateTime.Now;
+            _colorValue = IsColor && WpfColorParser.TryParse(ReadString(Model.Value, string.Empty, ref valid), out var color)
                 ? color
                 : Colors.White;
-            _filePath = IsFilePath ? Model.Value?.GetValue<string>() ?? string.Empty : string.Empty;
-            _imagePath = IsImage ? Model.Value?.GetValue<string>() ?? string.Empty : string.Empty;
+            _filePath = IsFilePath ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
+            _imagePath = IsImage ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
             _jsonValue = IsResultObject ? Model.Value?.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) ?? "null" : string.Empty;
-            _x = IsPoint || IsRectangle ? Model.Value?["x"]?.GetValue<int>() ?? 0 : 0;
-            _y = IsPoint || IsRectangle ? Model.Value?["y"]?.GetValue<int>() ?? 0 : 0;
-            _width = IsRectangle ? Model.Value?["width"]?.GetValue<int>() ?? 0 : 0;
-            _height = IsRectangle ? Model.Value?["height"]?.GetValue<int>() ?? 0 : 0;
-        }
-        catch (InvalidOperationException)
-        {
-            SetDefaultValue();
-            LoadValue();
-            return;
+            _x = IsPoint || IsRectangle ? ReadInteger(Model.Value?["x"], 0, ref valid) : 0;
+            _y = IsPoint || IsRectangle ? ReadInteger(Model.Value?["y"], 0, ref valid) : 0;
+            _width = IsRectangle ? ReadInteger(Model.Value?["width"], 0, ref valid) : 0;
+            _height = IsRectangle ? ReadInteger(Model.Value?["height"], 0, ref valid) : 0;
+            if (!valid)
+            {
+                SetDefaultValue();
+                LoadValue();
+                return;
+            }
         }
         finally
         {
@@ -329,6 +330,52 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(Width));
         OnPropertyChanged(nameof(Height));
         RefreshImagePreview();
+    }
+
+    private static string ReadString(JsonNode? node, string fallback, ref bool valid)
+    {
+        if (node is JsonValue value && value.TryGetValue<string>(out var result)) return result;
+        valid = false;
+        return fallback;
+    }
+
+    private static bool ReadBoolean(JsonNode? node, bool fallback, ref bool valid)
+    {
+        if (node is JsonValue value && value.TryGetValue<bool>(out var result)) return result;
+        valid = false;
+        return fallback;
+    }
+
+    private static int ReadInteger(JsonNode? node, int fallback, ref bool valid)
+    {
+        if (node is JsonValue value)
+        {
+            if (value.TryGetValue<int>(out var result)) return result;
+            if (value.TryGetValue<long>(out var longResult)
+                && longResult is >= int.MinValue and <= int.MaxValue) return (int)longResult;
+        }
+        valid = false;
+        return fallback;
+    }
+
+    private static double ReadNumber(JsonNode? node, double fallback, ref bool valid)
+    {
+        if (node is JsonValue value)
+        {
+            if (value.TryGetValue<double>(out var result)) return result;
+            if (value.TryGetValue<float>(out var floatResult)) return floatResult;
+            if (value.TryGetValue<decimal>(out var decimalResult)) return (double)decimalResult;
+            if (value.TryGetValue<long>(out var integerResult)) return integerResult;
+        }
+        valid = false;
+        return fallback;
+    }
+
+    private static DateTime ReadDateTime(JsonNode? node, DateTime fallback, ref bool valid)
+    {
+        if (node is JsonValue value && value.TryGetValue<DateTime>(out var result)) return result;
+        valid = false;
+        return fallback;
     }
 
     private void SetDefaultValue()
