@@ -12,7 +12,8 @@
                       Height="34" MaxHeight="34" VerticalAlignment="Top"
                       Tag="{Binding ElementName=Root}"
                       PreviewMouseLeftButtonDown="DropDownToggle_PreviewMouseLeftButtonDown"
-                      IsChecked="{Binding IsOpen, ElementName=SelectionPopup, Mode=TwoWay}">
+                      Click="DropDownToggle_Click"
+                      IsChecked="{Binding IsOpen, ElementName=SelectionPopup, Mode=OneWay}">
             <ToggleButton.ToolTip>
                 <ToolTip MaxWidth="430"
                          DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
@@ -328,7 +329,7 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                             <Border Grid.Column="2" Width="13" Height="13" Margin="0,0,6,0" CornerRadius="2"
-                                                    Background="{Binding ColorPreview}"
+                                                    Background="{Binding ColorPreview, TargetNullValue=Transparent, FallbackValue=Transparent}"
                                                     BorderBrush="{DynamicResource App.Brush.BorderStrong}" BorderThickness="1"
                                                     Visibility="{Binding HasColorPreview, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                         </Grid>

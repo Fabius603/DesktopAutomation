@@ -58,7 +58,8 @@ public sealed class ShowTextStepDefinition : StepDefinition<ShowTextStep>
                       OffsetXFieldId, OffsetYFieldId, "Ui.Step.Settings.Position")])],
             [new(TextResultFieldId, StepSummaryValueFormat.ShortText), new(DesktopFieldId)],
             [TextResultFieldId, DesktopFieldId, FontSizeFieldId, FontColorFieldId,
-                OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId]));
+                OpacityFieldId, DurationFieldId, ClearOnEndFieldId, OffsetXFieldId, OffsetYFieldId]),
+        IsSelectable: false);
 
     public override ShowTextStep CreateDefaultStep() => new()
     {

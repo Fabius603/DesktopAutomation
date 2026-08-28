@@ -184,13 +184,9 @@
                             </MultiDataTrigger.Conditions>
                             <Setter TargetName="RowBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
                         </MultiDataTrigger>
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
-                                <Condition Binding="{Binding DataContext.IsSelectable, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
-                            </MultiDataTrigger.Conditions>
+                        <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource App.Brush.SurfacePressed}"/>
-                        </MultiDataTrigger>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -256,7 +256,8 @@ public sealed record StepDescriptor(
     string DescriptionKey,
     string? IconKey,
     IReadOnlyList<StepFieldDescriptor> Fields,
-    StepPresentationDescriptor Presentation);
+    StepPresentationDescriptor Presentation,
+    bool IsSelectable = true);
 
 public sealed class StepDraft
 {

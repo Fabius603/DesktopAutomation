@@ -516,16 +516,6 @@ public sealed class StepDefinitionCatalogTests
             Assert.False(path.InputReferenceEditor.Picker.CanUseSecrets);
         }
 
-        viewModel.SelectedType = "ShowText";
-        var displayText = viewModel.GeneratedEditor!.Fields.Single(field =>
-            field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
-        Assert.True(displayText.InputReferenceEditor!.Picker.IsDirectSource);
-        Assert.False(displayText.UsesValueReferencePicker);
-        Assert.True(displayText.UsesTextInput);
-        Assert.True(displayText.InputReferenceEditor.Picker.CanUseJobVariables);
-        Assert.True(displayText.InputReferenceEditor.Picker.CanUseStepResults);
-        Assert.False(displayText.InputReferenceEditor.Picker.CanUseSecrets);
-
         viewModel.SelectedType = "YOLODetection";
         var yolo = viewModel.GeneratedEditor!.Fields.Single(field => field.YoloEditor is not null).YoloEditor!;
         foreach (var field in new[] { yolo.ModelField!, yolo.ClassField! })
@@ -638,6 +628,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.DoesNotContain(items, item => item.Name == "ElseIf");
         Assert.DoesNotContain(items, item => item.Name == "Else");
         Assert.DoesNotContain(items, item => item.Name == "EndIf");
+        Assert.DoesNotContain(items, item => item.Name == "ShowText");
         Assert.Single(items, item => item.Name == "ShowOnDesktop");
     }
 
@@ -4075,6 +4066,10 @@ public sealed class StepDefinitionCatalogTests
         Assert.True(text.InputReferenceEditor.Picker.CanUseJobVariables);
         Assert.True(text.InputReferenceEditor.Picker.CanUseStepResults);
         Assert.True(text.ShowsInputSourceSelector);
+        Assert.True(text.InputReferenceEditor.Picker.IsDirectSource);
+        Assert.True(text.IsInlineStepValue);
+        Assert.True(text.ShowsDirectInput);
+        Assert.False(text.ShowsInputSourcePicker);
     }
 
     [Fact]
@@ -4194,43 +4189,6 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(FileSystemOperation.Move, move.Settings.Operation);
         Assert.Equal(@"C:\Source", move.Settings.SourcePath);
         Assert.Equal(@"C:\Target", move.Settings.TargetPath);
-    }
-
-    [Fact]
-    public void AddStepDialog_CreatesShowTextFromUnifiedDirectTextField()
-    {
-        var createdVariables = new List<JobVariable>();
-        var viewModel = new AddJobStepDialogViewModel(
-            new ControllableJobExecutor([]), [],
-            cameraCaptureService: new CameraDefinitionTestService(),
-            jobVariableCreated: createdVariables.Add);
-        viewModel.SelectedType = "ShowText";
-        var editor = viewModel.GeneratedEditor!;
-        var text = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.TextResultFieldId);
-        var color = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.FontColorFieldId);
-        var monitor = editor.Fields.Single(field => field.Descriptor.Id == ShowTextStepDefinition.DesktopFieldId);
-
-        Assert.True(text.ShowsDirectInput);
-        Assert.True(text.InputReferenceEditor!.Picker.CanUseJobVariables);
-        Assert.True(text.InputReferenceEditor.Picker.CanUseStepResults);
-        Assert.False(text.InputReferenceEditor.Picker.CanUseSecrets);
-        Assert.True(color.UsesColorPicker);
-        Assert.True(monitor.UsesMonitorPicker);
-        text.InputText = "First line\nSecond line";
-        color.ColorValue = System.Windows.Media.Color.FromRgb(0x12, 0x34, 0x56);
-        monitor.IntegerValue = 1;
-
-        viewModel.ConfirmCommand.Execute(null);
-        var showText = Assert.IsType<ShowTextStep>(viewModel.CreatedStep);
-        var textVariable = Assert.Single(createdVariables, variable =>
-            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.TextResultFieldId].SourceId);
-        var colorVariable = Assert.Single(createdVariables, variable =>
-            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.FontColorFieldId].SourceId);
-        var monitorVariable = Assert.Single(createdVariables, variable =>
-            variable.Id.ToString("D") == showText.Inputs[ShowTextStepDefinition.DesktopFieldId].SourceId);
-        Assert.Equal("First line\nSecond line", textVariable.Value!.GetValue<string>());
-        Assert.Equal("#123456", colorVariable.Value!.GetValue<string>());
-        Assert.Equal(1, monitorVariable.Value!.GetValue<int>());
     }
 
     [Fact]

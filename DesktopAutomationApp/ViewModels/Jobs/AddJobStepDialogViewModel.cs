@@ -358,7 +358,8 @@ namespace DesktopAutomationApp.ViewModels
         internal static ListCollectionView CreateStepTypeItems(IStepDefinitionCatalog stepDefinitionCatalog)
         {
             var items = stepDefinitionCatalog.Definitions
-                .Where(definition => definition.StepType != typeof(ElseIfStep)
+                .Where(definition => definition.Descriptor.IsSelectable
+                                     && definition.StepType != typeof(ElseIfStep)
                                      && definition.StepType != typeof(ElseStep)
                                      && definition.StepType != typeof(EndIfStep))
                 .Select(definition => new StepTypeItem(

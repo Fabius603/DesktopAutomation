@@ -12,7 +12,6 @@ public partial class ResultPathPicker : UserControl
 {
     private ScrollViewer? _ancestorScrollViewer;
     private bool _repositionPending;
-    private Window? _ownerWindow;
     public event EventHandler? DropDownOpened;
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
@@ -163,10 +162,11 @@ public partial class ResultPathPicker : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        if (_ancestorScrollViewer != null)
+            _ancestorScrollViewer.ScrollChanged -= OnAncestorScrollChanged;
         _ancestorScrollViewer = VisualTreeHelperExtensions.GetAncestor<ScrollViewer>(this);
         if (_ancestorScrollViewer != null)
             _ancestorScrollViewer.ScrollChanged += OnAncestorScrollChanged;
-        _ownerWindow = Window.GetWindow(this);
         UpdatePreviewDensity(ActualWidth);
     }
 
@@ -185,8 +185,6 @@ public partial class ResultPathPicker : UserControl
     {
         if (_ancestorScrollViewer != null)
             _ancestorScrollViewer.ScrollChanged -= OnAncestorScrollChanged;
-        DetachOwnerWindowHandlers();
-        _ownerWindow = null;
         _ancestorScrollViewer = null;
         SelectionPopup.IsOpen = false;
     }
@@ -204,12 +202,11 @@ public partial class ResultPathPicker : UserControl
         {
             _repositionPending = false;
             if (!SelectionPopup.IsOpen || _ancestorScrollViewer == null || !IsLoaded) return;
+            if (!_ancestorScrollViewer.IsAncestorOf(DropDownToggle)) return;
 
             var position = DropDownToggle.TranslatePoint(new Point(), _ancestorScrollViewer);
-            var targetBounds = new Rect(position, DropDownToggle.RenderSize);
-            var viewportBounds = new Rect(
-                0, 0, _ancestorScrollViewer.ViewportWidth, _ancestorScrollViewer.ViewportHeight);
-            if (!targetBounds.IntersectsWith(viewportBounds))
+            if (!IsTargetInsideViewport(
+                    position, DropDownToggle.RenderSize, _ancestorScrollViewer.RenderSize))
             {
                 SelectionPopup.IsOpen = false;
                 return;
@@ -240,30 +237,37 @@ public partial class ResultPathPicker : UserControl
         e.Handled = true;
     }
 
+    private void DropDownToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (!SelectionPopup.IsOpen) SelectionPopup.IsOpen = true;
+    }
+
     private void SelectionPopup_Closed(object? sender, EventArgs e)
     {
-        DetachOwnerWindowHandlers();
         DropDownToggle.IsChecked = false;
     }
 
     private void SelectionPopup_Opened(object? sender, EventArgs e)
     {
         DropDownOpened?.Invoke(this, EventArgs.Empty);
-        _ownerWindow ??= Window.GetWindow(this);
-        if (_ownerWindow is not null)
+        Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () =>
         {
-            _ownerWindow.Deactivated -= OwnerWindow_Deactivated;
-            _ownerWindow.Deactivated += OwnerWindow_Deactivated;
-        }
-        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => SearchBox.Focus());
+            if (SelectionPopup.IsOpen)
+                SearchBox.Focus();
+        });
     }
 
-    private void OwnerWindow_Deactivated(object? sender, EventArgs e) => SelectionPopup.IsOpen = false;
-
-    private void DetachOwnerWindowHandlers()
+    internal static bool IsTargetInsideViewport(
+        Point targetPosition,
+        Size targetSize,
+        Size viewportSize)
     {
-        if (_ownerWindow is null) return;
-        _ownerWindow.Deactivated -= OwnerWindow_Deactivated;
+        // ScrollViewer.ViewportWidth/ViewportHeight use item units when logical
+        // scrolling is enabled (for example inside the virtualized overlay lists).
+        // Positions and RenderSize are always device-independent pixels.
+        if (viewportSize.Width <= 0 || viewportSize.Height <= 0) return true;
+        return new Rect(targetPosition, targetSize)
+            .IntersectsWith(new Rect(new Point(), viewportSize));
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)

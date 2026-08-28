@@ -81,8 +81,46 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("Height=\"34\" MaxHeight=\"34\" VerticalAlignment=\"Top\"", xaml);
         Assert.Contains("StaysOpen=\"False\"", xaml);
+        Assert.Contains("IsChecked=\"{Binding IsOpen, ElementName=SelectionPopup, Mode=OneWay}\"", xaml);
+        Assert.Contains("Click=\"DropDownToggle_Click\"", xaml);
         Assert.Contains("IsVisibleChanged += OnIsVisibleChanged", code);
         Assert.Contains("if (e.NewValue is false) SelectionPopup.IsOpen = false;", code);
+        Assert.Contains("if (!SelectionPopup.IsOpen) return;", code);
+        Assert.Contains("if (!SelectionPopup.IsOpen) SelectionPopup.IsOpen = true;", code);
+        Assert.Contains("DispatcherPriority.ContextIdle", code);
+        Assert.Contains("if (SelectionPopup.IsOpen)", code);
+        Assert.DoesNotContain("OwnerWindow_Deactivated", code);
+        Assert.DoesNotContain(".Deactivated +=", code);
+    }
+
+    [Fact]
+    public void ResultPathPicker_DoesNotBindPressedStateOrNullColorsThroughBrushConversion()
+    {
+        var root = RepositoryRoot();
+        var xaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml"));
+        var styles = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Styles", "ReferencePicker.xaml"));
+
+        Assert.DoesNotContain(
+            "Binding IsPressed, RelativeSource={RelativeSource TemplatedParent}", styles);
+        Assert.Contains("<Trigger Property=\"IsPressed\" Value=\"True\">", styles);
+        Assert.Contains(
+            "Background=\"{Binding ColorPreview, TargetNullValue=Transparent, FallbackValue=Transparent}\"",
+            xaml);
+    }
+
+    [Fact]
+    public void ResultPathPicker_UsesPixelViewportForNestedVirtualizedLists()
+    {
+        Assert.True(global::DesktopAutomationApp.Controls.Jobs.ResultPathPicker.IsTargetInsideViewport(
+            new System.Windows.Point(12, 48),
+            new System.Windows.Size(420, 34),
+            new System.Windows.Size(500, 120)));
+        Assert.False(global::DesktopAutomationApp.Controls.Jobs.ResultPathPicker.IsTargetInsideViewport(
+            new System.Windows.Point(12, 121),
+            new System.Windows.Size(420, 34),
+            new System.Windows.Size(500, 120)));
     }
 
     [Fact]

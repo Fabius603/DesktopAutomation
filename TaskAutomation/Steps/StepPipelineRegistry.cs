@@ -43,7 +43,7 @@ public static class StepPipelineRegistry
             [typeof(WindowsStateQueryStep)] = new(typeof(WindowsStateQueryResult), true, "Windows-Zustand abfragen"),
             [typeof(WindowsSettingChangeStep)] = new(typeof(WindowsSettingChangeResult), DisplayName: "Windows-Einstellung ändern"),
             [typeof(ShowImageStep)] = new(typeof(ShowImageResult), DisplayName: "Bild anzeigen"),
-            [typeof(ShowOnDesktopStep)] = new(typeof(ShowOnDesktopResult), DisplayName: "Erkennungsergebnis auf Desktop anzeigen"),
+            [typeof(ShowOnDesktopStep)] = new(typeof(ShowOnDesktopResult), DisplayName: "Auf Desktop anzeigen"),
             [typeof(VideoCreationStep)] = new(typeof(VideoCreationResult), DisplayName: "Video erstellen"),
             [typeof(SaveImageStep)] = new(typeof(SaveImageResult), true, "Bild speichern"),
             [typeof(IfStep)] = new(null, DisplayName: "If"),
