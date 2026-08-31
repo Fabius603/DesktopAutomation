@@ -58,6 +58,25 @@ public sealed class JobExecutorErrorAndSubJobTests
         }
     }
 
+    [Fact]
+    public void JobValidationErrorLocalizer_UsesApplicationLanguage()
+    {
+        var previousCulture = LocalizationService.Instance.CurrentCulture.Name;
+        try
+        {
+            LocalizationService.Instance.SetCulture("en-US");
+
+            var error = JobValidationErrorLocalizer.Localize(
+                "Für die Eingabe 'roi.enabled' wurde keine Variable ausgewählt.");
+
+            Assert.Equal("Select a value for “roi.enabled”.", error);
+        }
+        finally
+        {
+            LocalizationService.Instance.SetCulture(previousCulture);
+        }
+    }
+
     [Theory]
     [InlineData(typeof(DirectoryNotFoundException), StepErrorKind.DirectoryNotFound, "STEP_DIRECTORY_NOT_FOUND")]
     [InlineData(typeof(UnauthorizedAccessException), StepErrorKind.AccessDenied, "STEP_ACCESS_DENIED")]

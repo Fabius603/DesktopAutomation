@@ -102,6 +102,7 @@ public static class StepInputContractRegistry
     private static readonly Dictionary<Type, StepInputDescriptor[]> Contracts = new()
     {
         [typeof(TemplateMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
+        [typeof(OcrStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(ColorDetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(YOLODetectionStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],
         [typeof(KeyPointMatchingStep)] = [Required("image", CollectionConsumptionMode.NotApplicable, Image), OptionalReusable("dynamicRoi", CollectionConsumptionMode.FirstValue, Rectangles)],

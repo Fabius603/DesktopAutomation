@@ -8,6 +8,27 @@ namespace TaskAutomation.Tests.Jobs;
 public sealed class JobExecutorLifecycleTests
 {
     [Fact]
+    public async Task ExecuteJob_RecordingBorderFollowsEachExecutedCaptureMonitor()
+    {
+        var job = new Job
+        {
+            Name = "capture monitors",
+            Steps =
+            [
+                new DesktopDuplicationStep { Settings = new() { DesktopIdx = 2 } },
+                new DesktopDuplicationStep { Settings = new() { DesktopIdx = 1 } }
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+        using var executor = await builder.BuildAsync();
+
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal([2, 1], builder.RecordingIndicator.StartedMonitorIndices);
+        Assert.False(builder.RecordingIndicator.IsRunning);
+    }
+
+    [Fact]
     public async Task ExecuteJob_RunsStartMainAndEndPhasesInOrder()
     {
         var job = Job("phases", start: [Text("start")], run: [Text("run")], end: [Text("end")]);

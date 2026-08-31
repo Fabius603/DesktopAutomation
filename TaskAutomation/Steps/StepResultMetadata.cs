@@ -213,7 +213,10 @@ public static class StepResultMetadata
 
     public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
         left.DataType == right.DataType
-        && (left.DataType != ResultValueKind.Enum || left.EnumTypeName == right.EnumTypeName)
+        && (left.DataType != ResultValueKind.Enum
+            || string.IsNullOrWhiteSpace(left.EnumTypeName)
+            || string.IsNullOrWhiteSpace(right.EnumTypeName)
+            || string.Equals(left.EnumTypeName, right.EnumTypeName, StringComparison.Ordinal))
         && (left.Cardinality == ResultCardinality.Collection)
             == (right.Cardinality == ResultCardinality.Collection);
 
@@ -307,7 +310,7 @@ public static class StepResultMetadata
 
             yield return Property($"{path}.Count", ResultValueKind.Integer, false, ResultCardinality.Single,
                 stableId: $"{stableId}.count");
-            if (itemType == typeof(DetectionItem) || itemType == typeof(RuntimeProcessReference))
+            if (itemType is not null && HasResultProperties(itemType))
                 foreach (var child in itemType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                              .Where(property => property.CanRead && !IsHidden(itemType, property)))
                 {
@@ -358,6 +361,10 @@ public static class StepResultMetadata
             .Where(interfaceProperty => interfaceProperty is not null)
             .Select(interfaceProperty => interfaceProperty!.GetCustomAttribute<ResultPropertyAttribute>(inherit: true))
             .FirstOrDefault(attribute => attribute is not null);
+
+    private static bool HasResultProperties(Type type) => type
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Any(property => property.CanRead && GetResultPropertyAttribute(type, property) is not null);
 
     private static bool TryGetCollectionItemType(Type type, out Type? itemType)
     {

@@ -507,6 +507,12 @@
   <data name="Ui.Step.Settings.ImageSource" xml:space="preserve">
     <value>Bildquelle</value>
   </data>
+  <data name="Ui.Step.Settings.OcrLanguages" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Ui.Step.Settings.OcrLayout" xml:space="preserve">
+    <value>Textanordnung</value>
+  </data>
   <data name="Ui.Step.Settings.SavePath" xml:space="preserve">
     <value>Speicherpfad</value>
   </data>
@@ -572,6 +578,9 @@
   </data>
   <data name="Ui.Step.Generated.Validation.Required" xml:space="preserve">
     <value>„{0}“ muss ausgefüllt werden.</value>
+  </data>
+  <data name="Ui.Job.Validation.InputRequired" xml:space="preserve">
+    <value>Für die Eingabe „{0}“ muss ein Wert ausgewählt werden.</value>
   </data>
   <data name="Ui.Step.Generated.Validation.Integer" xml:space="preserve">
     <value>„{0}“ muss eine ganze Zahl sein.</value>
@@ -1563,6 +1572,9 @@ Fehlercode: {3}</value>
   <data name="Step.Type.TemplateMatching" xml:space="preserve">
     <value>Bildvorlage erkennen</value>
   </data>
+  <data name="Step.Type.Ocr" xml:space="preserve">
+    <value>Text erkennen</value>
+  </data>
   <data name="Step.Type.ColorDetection" xml:space="preserve">
     <value>Farberkennung</value>
   </data>
@@ -1646,6 +1658,9 @@ Fehlercode: {3}</value>
   </data>
   <data name="Step.Description.TemplateMatching" xml:space="preserve">
     <value>Vergleicht eine Bildvorlage mit der ausgewählten Bildquelle.</value>
+  </data>
+  <data name="Step.Description.Ocr" xml:space="preserve">
+    <value>Erkennt Text in einer Bildquelle und stellt Text sowie Wortpositionen bereit.</value>
   </data>
   <data name="Step.Description.ColorDetection" xml:space="preserve">
     <value>Erkennt eine bestimmte Farbe in einer Bildquelle.</value>
@@ -1784,6 +1799,32 @@ Fehlercode: {3}</value>
   <data name="Step.ResultProperty.Image" xml:space="preserve">
     <value>Bild</value>
   </data>
+  <data name="Step.ResultProperty.OcrResult.Text" xml:space="preserve"><value>Erkannter Text</value></data>
+  <data name="Step.ResultProperty.OcrResult.Found" xml:space="preserve"><value>Text gefunden</value></data>
+  <data name="Step.ResultProperty.OcrResult.Confidence" xml:space="preserve"><value>Durchschnittliche Erkennungsqualität</value></data>
+  <data name="Step.ResultProperty.OcrResult.MinimumConfidence" xml:space="preserve"><value>Niedrigste Wortqualität</value></data>
+  <data name="Step.ResultProperty.OcrResult.BoundingBox" xml:space="preserve"><value>Erkannter Bereich</value></data>
+  <data name="Step.ResultProperty.OcrResult.LineCount" xml:space="preserve"><value>Anzahl Zeilen</value></data>
+  <data name="Step.ResultProperty.OcrResult.WordCount" xml:space="preserve"><value>Anzahl Wörter</value></data>
+  <data name="Step.ResultProperty.OcrResult.Lines" xml:space="preserve"><value>Erkannte Zeilen</value></data>
+  <data name="Step.ResultProperty.OcrResult.Lines[].Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Step.ResultProperty.OcrResult.Lines[].Confidence" xml:space="preserve"><value>Erkennungsqualität</value></data>
+  <data name="Step.ResultProperty.OcrResult.Lines[].BoundingBox" xml:space="preserve"><value>Bereich</value></data>
+  <data name="Step.ResultProperty.OcrResult.Lines[].Position" xml:space="preserve"><value>Position</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words" xml:space="preserve"><value>Erkannte Wörter</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words[].Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words[].Confidence" xml:space="preserve"><value>Erkennungsqualität</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words[].BoundingBox" xml:space="preserve"><value>Bereich</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words[].Position" xml:space="preserve"><value>Position</value></data>
+  <data name="Step.ResultProperty.OcrResult.Words[].LinePosition" xml:space="preserve"><value>Zeilenposition</value></data>
+  <data name="Enum.OcrLanguage.deu" xml:space="preserve"><value>Deutsch</value></data>
+  <data name="Enum.OcrLanguage.eng" xml:space="preserve"><value>Englisch</value></data>
+  <data name="Enum.OcrLanguage.deu+eng" xml:space="preserve"><value>Deutsch und Englisch</value></data>
+  <data name="Enum.OcrPageLayout.Automatic" xml:space="preserve"><value>Automatisch</value></data>
+  <data name="Enum.OcrPageLayout.TextBlock" xml:space="preserve"><value>Textblock</value></data>
+  <data name="Enum.OcrPageLayout.TextLine" xml:space="preserve"><value>Textzeile</value></data>
+  <data name="Enum.OcrPageLayout.SingleWord" xml:space="preserve"><value>Einzelnes Wort</value></data>
+  <data name="Enum.OcrPageLayout.SparseText" xml:space="preserve"><value>Verteilter Text</value></data>
   <data name="Step.ResultValueType.Boolean" xml:space="preserve"><value>Wahrheitswert</value></data>
   <data name="Step.ResultValueType.Integer" xml:space="preserve"><value>Ganzzahl</value></data>
   <data name="Step.ResultValueType.Number" xml:space="preserve"><value>Zahl</value></data>

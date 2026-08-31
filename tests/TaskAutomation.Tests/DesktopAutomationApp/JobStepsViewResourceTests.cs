@@ -314,6 +314,19 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
+    public void VisualOverlayEditor_UsesNonVirtualizedRowHostsForReferencePickers()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Output",
+            "VisualOverlayEditor.xaml"));
+
+        Assert.Contains("<ItemsControl ItemsSource=\"{Binding OverlayDetectionRows}\">", xaml);
+        Assert.Contains("<ItemsControl ItemsSource=\"{Binding OverlayTextRows}\">", xaml);
+        Assert.DoesNotContain("VirtualizedOverlayItem", xaml);
+        Assert.DoesNotContain("<ListBox ItemsSource=\"{Binding Overlay", xaml);
+    }
+
+    [Fact]
     public void GeneratedStepEditor_ResolvesDialogCommandsThroughItsAncestor()
     {
         var xaml = File.ReadAllText(Path.Combine(

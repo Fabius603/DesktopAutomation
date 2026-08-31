@@ -151,6 +151,63 @@ public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResu
     public static readonly TemplateMatchingResult Default = new();
 }
 
+public sealed record OcrWordResult
+{
+    [ResultProperty("text")]
+    public string Text { get; init; } = string.Empty;
+    [ResultProperty("confidence")]
+    public double Confidence { get; init; }
+    [ResultProperty("bounding_box")]
+    public PixelRegion BoundingBox { get; init; }
+    [ResultProperty("position")]
+    public int Position { get; init; }
+    [ResultProperty("line_position")]
+    public int LinePosition { get; init; }
+}
+
+public sealed record OcrLineResult
+{
+    [ResultProperty("text")]
+    public string Text { get; init; } = string.Empty;
+    [ResultProperty("confidence")]
+    public double Confidence { get; init; }
+    [ResultProperty("bounding_box")]
+    public PixelRegion BoundingBox { get; init; }
+    [ResultProperty("position")]
+    public int Position { get; init; }
+}
+
+public sealed record OcrResult : StepResultBase
+{
+    [ResultProperty("found")]
+    public bool Found { get; init; }
+    [ResultProperty("text")]
+    public string Text { get; init; } = string.Empty;
+    [ResultProperty("confidence")]
+    public double Confidence { get; init; }
+    [ResultProperty("minimum_confidence")]
+    public double MinimumConfidence { get; init; }
+    [ResultProperty("bounding_box")]
+    public PixelRegion? BoundingBox { get; init; }
+    [ResultProperty("line_count")]
+    public int LineCount { get; init; }
+    [ResultProperty("word_count")]
+    public int WordCount { get; init; }
+    [ResultProperty("lines")]
+    public IReadOnlyList<OcrLineResult> Lines { get; init; } = Array.Empty<OcrLineResult>();
+    [ResultProperty("words")]
+    public IReadOnlyList<OcrWordResult> Words { get; init; } = Array.Empty<OcrWordResult>();
+    [ResultProperty("applied_roi")]
+    public PixelRegion? AppliedRoi { get; init; }
+    [ResultProperty("used_dynamic_roi")]
+    public bool UsedDynamicRoi { get; init; }
+    [ResultProperty("source_capture_is_fresh")]
+    public bool SourceCaptureIsFresh { get; init; } = true;
+    [ResultProperty("source_capture_timestamp_utc")]
+    public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public static readonly OcrResult Default = new();
+}
+
 public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
 {
     public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }

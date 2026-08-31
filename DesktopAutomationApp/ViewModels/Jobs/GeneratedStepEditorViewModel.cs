@@ -43,7 +43,8 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         Func<StepFieldDescriptor, JsonNode?, GeneratedUserChoiceOptionsEditorViewModel?>? userChoiceOptionsResolver = null,
         Func<StepFieldDescriptor, JsonNode?, GeneratedPointEntryListEditorViewModel?>? pointEntryListResolver = null,
         Func<StepFieldDescriptor, JsonNode?, GeneratedAxisExpressionListEditorViewModel?>? axisExpressionListResolver = null,
-        Func<StepFieldDescriptor, ResultBinding?, GeneratedResultBindingEditorViewModel?>? inputReferenceResolver = null)
+        Func<StepFieldDescriptor, ResultBinding?, GeneratedResultBindingEditorViewModel?>? inputReferenceResolver = null,
+        Func<StepFieldDescriptor, JsonNode?, JsonNode?>? initialValueResolver = null)
     {
         _definition = definition;
         _existingStep = step;
@@ -54,40 +55,29 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         Fields = new ObservableCollection<GeneratedStepFieldViewModel>(
             definition.Descriptor.Fields
                 .OrderBy(field => field.Order)
-                .Select(field => new GeneratedStepFieldViewModel(
-                    field,
-                    _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue,
-                    suggestionResolver?.Invoke(field),
-                    choiceResolver?.Invoke(field),
-                    processTargetResolver?.Invoke(
+                .Select(field =>
+                {
+                    var fallback = _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue;
+                    var value = initialValueResolver?.Invoke(field, fallback) ?? fallback;
+                    return new GeneratedStepFieldViewModel(
                         field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    resultBindingResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    cameraResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    visualOverlayResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    roiResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    yoloResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    conditionResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    windowsCapabilityResolver?.Invoke(
-                        field,
-                        _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    screenPointResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    userChoiceOptionsResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    pointEntryListResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    axisExpressionListResolver?.Invoke(field, _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue),
-                    inputReferenceResolver?.Invoke(field, step?.Inputs?.GetValueOrDefault(field.Id)))));
+                        value,
+                        suggestionResolver?.Invoke(field),
+                        choiceResolver?.Invoke(field),
+                        processTargetResolver?.Invoke(field, value),
+                        resultBindingResolver?.Invoke(field, value),
+                        cameraResolver?.Invoke(field, value),
+                        visualOverlayResolver?.Invoke(field, value),
+                        roiResolver?.Invoke(field, value),
+                        yoloResolver?.Invoke(field, value),
+                        conditionResolver?.Invoke(field, value),
+                        windowsCapabilityResolver?.Invoke(field, value),
+                        screenPointResolver?.Invoke(field, value),
+                        userChoiceOptionsResolver?.Invoke(field, value),
+                        pointEntryListResolver?.Invoke(field, value),
+                        axisExpressionListResolver?.Invoke(field, value),
+                        inputReferenceResolver?.Invoke(field, step?.Inputs?.GetValueOrDefault(field.Id)));
+                }));
         var fieldsById = Fields.ToDictionary(field => field.Descriptor.Id, StringComparer.Ordinal);
         foreach (var field in Fields.Where(field => field.YoloEditor is not null))
         {
@@ -557,6 +547,9 @@ public sealed class GeneratedStepChoiceGroupViewModel : GeneratedStepEditorNodeV
 
 public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
 {
+    public const string BooleanDropdownEditorHint = "condition-boolean-dropdown";
+    public const string ConditionEnumDirectValueEditorHint = "condition-enum-direct-value";
+
     private string _inputText;
     private GeneratedStepChoiceOptionViewModel? _selectedChoice;
     private GeneratedStepEnumOptionViewModel? _selectedEnumOption;
@@ -593,7 +586,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         EnumOptions = new ObservableCollection<GeneratedStepEnumOptionViewModel>(
             (descriptor.Options ?? []).Select(option => new GeneratedStepEnumOptionViewModel(
                 option.Value,
-                Loc.Get(option.LabelKey))));
+                option.DisplayName ?? Loc.Get(option.LabelKey))));
         ProcessTargetEditor = processTargetEditor;
         if (ProcessTargetEditor is not null)
             ProcessTargetEditor.Changed += OnProcessTargetChanged;
@@ -678,6 +671,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public ObservableCollection<string> Suggestions { get; }
     public ObservableCollection<GeneratedStepChoiceOptionViewModel> Choices { get; }
     public ObservableCollection<GeneratedStepEnumOptionViewModel> EnumOptions { get; }
+    public IReadOnlyList<GeneratedStepBooleanOptionViewModel> BooleanOptions { get; } =
+    [
+        new(true, "Ui.Job.Variables.Boolean.True"),
+        new(false, "Ui.Job.Variables.Boolean.False")
+    ];
     public GeneratedProcessTargetEditorViewModel? ProcessTargetEditor { get; }
     public GeneratedResultBindingEditorViewModel? ResultBindingEditor { get; }
     public GeneratedResultBindingEditorViewModel? InputReferenceEditor { get; }
@@ -695,7 +693,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
                                             && InputReferenceEditor?.Picker.RequiresInlineEditChoice == true;
     public bool ShowsDirectInput => IsInlineStepValue;
     public bool ShowsInputSourcePicker => !IsInlineStepValue;
-    public bool ShowsInputSourceSelector => InputReferenceEditor?.Picker.CanSwitchSource == true;
+    public bool ShowsInputSourceSelector => InputReferenceEditor?.Picker.CanSwitchSource == true
+        && (!UsesConditionEnumDirectValue || InputReferenceEditor.Picker.IsStepValue == false);
     public GeneratedCameraEditorViewModel? CameraEditor { get; }
     public GeneratedVisualOverlayEditorViewModel? VisualOverlayEditor { get; }
     public GeneratedRoiEditorViewModel? RoiEditor { get; }
@@ -722,6 +721,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             ? MapDirectValueKind(variable.ValueKind)
             : Descriptor.ValueKind;
     public bool IsBoolean => EffectiveValueKind == StepValueKind.Boolean;
+    public bool UsesBooleanDropdown => IsBoolean
+        && string.Equals(Descriptor.EditorHint, BooleanDropdownEditorHint, StringComparison.Ordinal);
     public bool UsesDateTimePicker => EffectiveValueKind == StepValueKind.DateTime;
     public bool UsesMonitorPicker => string.Equals(
         Descriptor.EditorHint,
@@ -789,6 +790,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         StepEditorHints.ExecutableProcessTargetPicker,
         StringComparison.Ordinal);
     public bool UsesEnumPicker => EffectiveValueKind == StepValueKind.Enum;
+    public bool UsesConditionEnumDirectValue => UsesEnumPicker
+        && string.Equals(Descriptor.EditorHint, ConditionEnumDirectValueEditorHint, StringComparison.Ordinal);
     public bool UsesValueReferencePicker => !IsInlineStepValue && (string.Equals(
         Descriptor.EditorHint,
         StepEditorHints.ResultBindingPicker,
@@ -900,6 +903,16 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         set => InputText = value.ToString(CultureInfo.InvariantCulture);
     }
 
+    public GeneratedStepBooleanOptionViewModel SelectedBooleanOption
+    {
+        get => BooleanOptions.First(option => option.Value == BooleanValue);
+        set
+        {
+            if (value is not null)
+                BooleanValue = value.Value;
+        }
+    }
+
     public int IntegerValue
     {
         get => int.TryParse(_inputText, NumberStyles.Integer, CultureInfo.CurrentCulture, out var value)
@@ -940,7 +953,10 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
             if (IsBoolean)
+            {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBooleanOption)));
+            }
             if (EffectiveValueKind is StepValueKind.Integer or StepValueKind.Duration)
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
             if (EffectiveValueKind == StepValueKind.Number)
@@ -1197,6 +1213,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsDirectInput)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsInputSourcePicker)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowsInputSourceSelector)));
     }
 
     private void LoadInlineStepValue()
@@ -1209,12 +1226,25 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             return;
         }
         var formattedValue = FormatValue(variable.Value, EffectiveValueKind);
-        if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)) return;
+        var selectedEnumOption = EnumOptions.FirstOrDefault(option =>
+            string.Equals(option.Value, formattedValue, StringComparison.OrdinalIgnoreCase));
+        if (selectedEnumOption is null && Descriptor.Required && UsesEnumPicker)
+        {
+            selectedEnumOption = EnumOptions.FirstOrDefault();
+            if (selectedEnumOption is not null)
+            {
+                formattedValue = selectedEnumOption.Value;
+                variable.Value = JsonValue.Create(selectedEnumOption.Value);
+                InputReferenceEditor.Picker.RefreshSelectedValue();
+            }
+        }
+        if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)
+            && ReferenceEquals(_selectedEnumOption, selectedEnumOption)) return;
         _inputText = formattedValue;
-        _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
-            string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
+        _selectedEnumOption = selectedEnumOption;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBooleanOption)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumberValue)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
@@ -1341,6 +1371,11 @@ public sealed record GeneratedStepChoiceOptionViewModel(StepReferenceValue Value
 }
 
 public sealed record GeneratedStepEnumOptionViewModel(string Value, string Label);
+public sealed class GeneratedStepBooleanOptionViewModel(bool value, string labelKey)
+{
+    public bool Value { get; } = value;
+    public string Label => Loc.Get(labelKey);
+}
 
 public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
 {
@@ -1837,12 +1872,14 @@ public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGener
     public GeneratedStepFieldViewModel? HeightField { get; }
     private IEnumerable<GeneratedStepFieldViewModel> NestedFields =>
         new[] { EnabledField, XField, YField, WidthField, HeightField }.OfType<GeneratedStepFieldViewModel>();
-    public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields.ToDictionary(
-        field => field.Descriptor.Id,
-        field => ReferenceEquals(field, EnabledField) || WholeValueSource.UsesReference
-            ? new ResultBinding()
-            : field.InputReferenceEditor!.Picker.ToBinding(),
-        StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, ResultBinding> InputBindings => NestedFields
+        .Where(field => !ReferenceEquals(field, EnabledField))
+        .ToDictionary(
+            field => field.Descriptor.Id,
+            field => WholeValueSource.UsesReference
+                ? new ResultBinding()
+                : field.InputReferenceEditor!.Picker.ToBinding(),
+            StringComparer.Ordinal);
     public bool HasSelectedDynamicRoi => UseDynamicRoi && DetectionDynamicRoiSource.IsConfigured;
 
     public bool IsRoiEnabled { get => EnabledField?.BooleanValue ?? _isRoiEnabled; set { if (EnabledField is not null) { EnabledField.BooleanValue = value; _isRoiEnabled = value; PropertyChanged?.Invoke(this, new(nameof(IsRoiEnabled))); } else Set(ref _isRoiEnabled, value, nameof(IsRoiEnabled)); } }

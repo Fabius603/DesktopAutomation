@@ -279,7 +279,7 @@ namespace DesktopAutomationApp.ViewModels
                 }
                 var result = JobValidation.ValidateCandidate(
                     _precedingSteps, CreatedStep, _allJobSteps, CurrentVariables(), _providerSources);
-                _validationError = result.Error;
+                _validationError = JobValidationErrorLocalizer.Localize(result.Error);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
                 _candidateIsValid = result.IsValid;
@@ -507,7 +507,8 @@ namespace DesktopAutomationApp.ViewModels
                 (field, value) => ResolveGeneratedUserChoiceOptions(definition, field, value, step?.Inputs),
                 (field, value) => ResolveGeneratedPointEntryList(definition, field, value, step?.Inputs),
                 ResolveGeneratedAxisExpressionList,
-                (field, binding) => ResolveGeneratedInputReference(definition, field, binding));
+                (field, binding) => ResolveGeneratedInputReference(definition, field, binding),
+                (field, fallback) => ResolveStoredFieldValue(field.Id, fallback, step?.Inputs));
 
         private GeneratedResultBindingEditorViewModel? ResolveGeneratedInputReference(
             IStepDefinition definition,
@@ -754,6 +755,21 @@ namespace DesktopAutomationApp.ViewModels
                 (key, kind, literal) => ResolveNestedInputReference(
                     definition, field, key, kind, literal, inputs),
                 _valueReferenceSources);
+        }
+
+        private JsonNode? ResolveStoredFieldValue(
+            string fieldId,
+            JsonNode? fallback,
+            IReadOnlyDictionary<string, ResultBinding>? inputs)
+        {
+            if (inputs?.GetValueOrDefault(fieldId) is not { } binding
+                || binding.ProviderId != ValueProviderIds.LocalValue
+                || !string.IsNullOrWhiteSpace(binding.ValuePath)
+                || !Guid.TryParse(binding.SourceId, out var variableId))
+                return fallback;
+
+            return CurrentVariables().FirstOrDefault(variable => variable.Id == variableId)?.Value?.DeepClone()
+                   ?? fallback;
         }
 
         private GeneratedRoiEditorViewModel? ResolveGeneratedRoi(

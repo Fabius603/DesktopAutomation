@@ -147,6 +147,18 @@ public sealed class StepResultMetadataTests
         Assert.False(StepResultMetadata.AreComparable(scalar, collection));
         Assert.False(StepResultMetadata.AreComparable(scalar,
             new ResultPropertyDescriptor("c", "c", ResultValueKind.Number)));
+
+        var typedEnum = new ResultPropertyDescriptor(
+            "mode", "mode", ResultValueKind.Enum, EnumTypeName: "ChoiceMode");
+        var sameEnum = new ResultPropertyDescriptor(
+            "other", "other", ResultValueKind.Enum, EnumTypeName: "ChoiceMode");
+        var differentEnum = new ResultPropertyDescriptor(
+            "other", "other", ResultValueKind.Enum, EnumTypeName: "WindowMode");
+        var untypedEnum = new ResultPropertyDescriptor("value", "value", ResultValueKind.Enum);
+        Assert.True(StepResultMetadata.AreComparable(typedEnum, sameEnum));
+        Assert.False(StepResultMetadata.AreComparable(typedEnum, differentEnum));
+        Assert.True(StepResultMetadata.AreComparable(typedEnum, untypedEnum));
+        Assert.True(StepResultMetadata.AreComparable(untypedEnum, typedEnum));
     }
 
     [Fact]

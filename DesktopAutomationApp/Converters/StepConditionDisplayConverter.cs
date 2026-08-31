@@ -47,11 +47,12 @@ namespace DesktopAutomationApp.Converters
             }
 
             var operatorText = OperatorText(conditionOperator);
+            var sourceProperty = ResolveProperty(condition, stepMap, variables);
             var operandText = operand.Kind == ComparisonOperandKind.JobResult
                 ? TryFormatStoredLiteral(operand, variables, out var storedLiteral)
-                    ? $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {storedLiteral}"
+                    ? $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(storedLiteral, sourceProperty)}"
                     : $"{Loc.Get("Ui.Step.IfEditor.JobResultValue")}: {FormatReference(operand, stepMap, variables)}"
-                : $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(operand.Value, ResolvePropertyType(condition, stepMap, variables))}";
+                : $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(operand.Value, sourceProperty)}";
             return $"{source} {operatorText} {operandText}";
         }
 
@@ -105,21 +106,22 @@ namespace DesktopAutomationApp.Converters
                 ? entry.Name
                 : string.IsNullOrWhiteSpace(stepId) ? Loc.Get("Step.Unknown") : stepId;
 
-        private static ResultValueKind? ResolvePropertyType(
+        private static ResultPropertyDescriptor? ResolveProperty(
             ResultBinding binding,
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap,
             IReadOnlyList<JobVariable>? variables)
         {
             if (binding.ProviderId is ValueProviderIds.JobVariable or ValueProviderIds.LocalValue
-                && Guid.TryParse(binding.SourceId, out var variableId))
-                return variables?.FirstOrDefault(candidate => candidate.Id == variableId)?.ValueKind;
+                && Guid.TryParse(binding.SourceId, out var variableId)
+                && variables?.FirstOrDefault(candidate => candidate.Id == variableId) is { } variable)
+                return new ResultPropertyDescriptor(variable.Name, variable.Name, variable.ValueKind);
 
             if (!stepMap.TryGetValue(binding.SourceStepId, out var source)) return null;
             var resultType = StepResultMetadata.GetResultTypeForStep(source.Step);
             return resultType is not null
                    && StepResultMetadata.TryGetProperty(
                        resultType, binding.PropertyId, binding.PropertyPath, out var property)
-                ? property.DataType
+                ? property
                 : null;
         }
 
@@ -143,13 +145,16 @@ namespace DesktopAutomationApp.Converters
             return string.IsNullOrWhiteSpace(localized) ? Loc.Get("Common.Value") : localized;
         }
 
-        private static string FormatLiteral(string? value, ResultValueKind? propertyType)
+        private static string FormatLiteral(string? value, ResultPropertyDescriptor? property)
         {
             if (value is null) return "?";
-            if (propertyType == ResultValueKind.Text)
+            if (property?.DataType == ResultValueKind.Text)
                 return $"\"{value}\"";
-            if (propertyType == ResultValueKind.Boolean && bool.TryParse(value, out var boolean))
+            if (property?.DataType == ResultValueKind.Boolean && bool.TryParse(value, out var boolean))
                 return boolean ? "true" : "false";
+            if (property?.DataType == ResultValueKind.Enum
+                && property.EnumDisplayNames?.TryGetValue(value, out var displayName) == true)
+                return displayName;
             return value;
         }
 

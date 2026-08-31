@@ -124,6 +124,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IPreciseDelayService, WindowsPreciseDelayService>();
                     services.AddSingleton<IDesktopCaptureService, DesktopCaptureService>();
                     services.AddSingleton<ICameraCaptureService, CameraCaptureService>();
+                    services.AddSingleton<IOcrService, TesseractOcrService>();
                     services.AddSingleton<IMakroExecutor, MakroExecutor>();
                     services.AddSingleton<IInputController, WindowsInputController>();
                     services.AddSingleton<IScriptExecutor, ScriptExecutor>();

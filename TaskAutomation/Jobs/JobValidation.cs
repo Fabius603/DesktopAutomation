@@ -311,10 +311,29 @@ public static class JobValidation
                 errors.Add($"Die Vergleichsreferenz in Bedingung {conditionIndex} muss einen einzelnen Wert liefern.");
                 continue;
             }
-            if (!StepResultMetadata.AreComparable(property, comparisonProperty))
+            if (!StepResultMetadata.AreComparable(property, comparisonProperty)
+                && !IsLegacyDirectEnumComparison(property, comparisonProperty, comparison, variables))
                 errors.Add($"Beide Vergleichswerte in Bedingung {conditionIndex} müssen denselben Datentyp besitzen.");
         }
         return errors;
+    }
+
+    private static bool IsLegacyDirectEnumComparison(
+        ResultPropertyDescriptor property,
+        ResultPropertyDescriptor comparisonProperty,
+        ResultBinding comparison,
+        IReadOnlyList<JobVariable> variables)
+    {
+        if (property.DataType != ResultValueKind.Enum
+            || comparisonProperty.DataType != ResultValueKind.Text
+            || !string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+            || !Guid.TryParse(comparison.SourceId, out var valueId)
+            || variables.FirstOrDefault(variable => variable.Id == valueId) is not LocalValue local
+            || local.Value is not System.Text.Json.Nodes.JsonValue jsonValue
+            || !jsonValue.TryGetValue<string>(out var value))
+            return false;
+
+        return ConditionRules.IsComparisonValueValid(property, ConditionOperator.Equals, value);
     }
 
     private static ResultPropertyDescriptor? ResolveConditionProperty(
@@ -523,7 +542,9 @@ public static class JobValidation
         IReadOnlyList<ValueProviderSourceDescriptor> providerSources,
         string path)
     {
-        if (!binding.IsConfigured) return $"Für die Eingabe '{path}' wurde keine Variable ausgewählt.";
+        // Missing members use the value stored in the step settings. Older editors also
+        // persisted empty placeholders for direct members such as roi.enabled.
+        if (!binding.IsConfigured) return null;
         if (binding.HasProviderReference || binding.TryGetStepResult(out _))
         {
             if (binding.HasProviderReference

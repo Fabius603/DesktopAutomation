@@ -194,10 +194,11 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         {
             if (Equals(_selectedProperty, value)) return;
             _selectedProperty = value;
+            ComparisonField = null;
+            ResetComparisonValueForSelectedProperty();
             OnChange();
             RefreshOperators();
             RefreshComparisonChoices();
-            EnsureDefaultComparisonValue();
             RefreshComparisonField();
             OnChange(nameof(SelectedPath));
             NotifySemanticChange();
@@ -710,11 +711,23 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         if (kind == StepValueKind.Boolean && bool.TryParse(literal, out var boolean)) node = JsonValue.Create(boolean);
         var enumTypeName = SelectedProperty.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
         var options = kind == StepValueKind.Enum
-            ? (SelectedProperty.EnumValues ?? []).Select(value => new StepFieldOptionDescriptor(
-                value, $"Enum.{enumTypeName}.{value}")).ToArray()
+            ? (SelectedProperty.EnumValues ?? []).Select(value =>
+            {
+                string? displayName = null;
+                SelectedProperty.EnumDisplayNames?.TryGetValue(value, out displayName);
+                return new StepFieldOptionDescriptor(
+                    value, $"Enum.{enumTypeName}.{value}", displayName);
+            }).ToArray()
             : null;
         var descriptor = new StepFieldDescriptor(_comparisonInputKey, string.Empty, kind,
-            Required: true, DefaultValue: node, Options: options);
+            Required: true, DefaultValue: node,
+            EditorHint: kind switch
+            {
+                StepValueKind.Boolean => GeneratedStepFieldViewModel.BooleanDropdownEditorHint,
+                StepValueKind.Enum => GeneratedStepFieldViewModel.ConditionEnumDirectValueEditorHint,
+                _ => null
+            },
+            Options: options);
         var field = new GeneratedStepFieldViewModel(descriptor, node,
             inputReferenceEditor: _nestedInputResolver(_comparisonInputKey, kind, node));
         if (binding?.IsConfigured == true)
@@ -737,7 +750,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     private static string? DefaultComparisonValue(ResultPropertyDescriptor property) => property.DataType switch
     {
         ResultValueKind.Boolean => bool.FalseString,
-        ResultValueKind.Integer => "0",
+        ResultValueKind.Integer => null,
         ResultValueKind.Number => "0",
         ResultValueKind.DateTime => DateTime.Now.ToUniversalTime().ToString("O"),
         ResultValueKind.Enum => property.EnumValues?.FirstOrDefault(),
@@ -747,23 +760,27 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _ => null
     };
 
-    private void EnsureDefaultComparisonValue()
+    private void ResetComparisonValueForSelectedProperty()
     {
+        _comparisonValue = string.Empty;
+        _comparisonNumber = null;
+        _comparisonDate = null;
+        _comparisonBoolean = null;
+        _comparisonEnum = null;
         if (SelectedProperty is null) return;
         switch (SelectedProperty.DataType)
         {
             case ResultValueKind.Boolean:
-                _comparisonBoolean ??= false;
+                _comparisonBoolean = false;
                 break;
-            case ResultValueKind.Integer:
             case ResultValueKind.Number:
-                _comparisonNumber ??= 0;
+                _comparisonNumber = 0;
                 break;
             case ResultValueKind.DateTime:
-                _comparisonDate ??= DateTime.Now;
+                _comparisonDate = DateTime.Now;
                 break;
             case ResultValueKind.Enum:
-                _comparisonEnum ??= SelectedProperty.EnumValues?.FirstOrDefault();
+                _comparisonEnum = SelectedProperty.EnumValues?.FirstOrDefault();
                 break;
         }
     }
@@ -869,7 +886,9 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         AvailableOperators.Clear();
         if (_selectedProperty is not null)
             foreach (var op in ConditionRules.GetOperators(_selectedProperty.DataType)) AvailableOperators.Add(op);
-        SelectedOperator = AvailableOperators.FirstOrDefault(); NotifyInput();
+        _selectedOperator = AvailableOperators.FirstOrDefault();
+        OnChange(nameof(SelectedOperator));
+        NotifyInput();
     }
 
 }

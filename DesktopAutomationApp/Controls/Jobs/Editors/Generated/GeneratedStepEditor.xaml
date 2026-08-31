@@ -49,6 +49,11 @@
             <CheckBox HorizontalAlignment="Left" VerticalAlignment="Center"
                       IsChecked="{Binding BooleanValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </DataTemplate>
+        <DataTemplate x:Key="BooleanDropdownFieldTemplate">
+            <ComboBox ItemsSource="{Binding BooleanOptions}"
+                      DisplayMemberPath="Label"
+                      SelectedItem="{Binding SelectedBooleanOption, Mode=TwoWay}"/>
+        </DataTemplate>
         <DataTemplate x:Key="DateTimeFieldTemplate">
             <mah:DateTimePicker Style="{StaticResource AppDateTimePickerStyle}"
                                 SelectedDateTime="{Binding DateTimeValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

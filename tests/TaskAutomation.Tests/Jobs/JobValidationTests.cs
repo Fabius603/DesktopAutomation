@@ -156,6 +156,55 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateCandidate_AcceptsRoiWithLegacyEmptyEnabledBinding()
+    {
+        var coordinate = new JobVariable
+        {
+            Name = "Coordinate",
+            ValueKind = ResultValueKind.Integer,
+            Value = System.Text.Json.Nodes.JsonValue.Create(10)
+        };
+        var capture = new DesktopDuplicationStep { Id = "capture" };
+        var step = new OcrStep
+        {
+            Id = "ocr",
+            Settings = new()
+            {
+                ImageSource = new ResultBinding
+                {
+                    SourceStepId = capture.Id,
+                    PropertyId = "image",
+                    PropertyPath = nameof(DesktopDuplicationResult.Image)
+                },
+                EnableROI = true,
+                ROI = new TaskAutomation.Contracts.Geometry.PixelRegion(0, 0, 10, 10)
+            }
+        };
+        step.Inputs["roi"] = new ResultBinding
+        {
+            SchemaId = ValueBindingSchemaRegistry.Roi,
+            Members = new Dictionary<string, ResultBinding>
+            {
+                ["enabled"] = new(),
+                ["x"] = LocalBinding(coordinate),
+                ["y"] = LocalBinding(coordinate),
+                ["width"] = LocalBinding(coordinate),
+                ["height"] = LocalBinding(coordinate)
+            }
+        };
+
+        var result = JobValidation.ValidateCandidate([capture], step, [capture, step], [coordinate]);
+
+        Assert.True(result.IsValid, result.Error);
+    }
+
+    private static ResultBinding LocalBinding(JobVariable variable) => new()
+    {
+        ProviderId = ValueProviderIds.JobVariable,
+        SourceId = variable.Id.ToString("D")
+    };
+
+    [Fact]
     public void ValidateJob_AcceptsConditionBackedByCompatibleJobVariable()
     {
         var variable = new JobVariable
@@ -177,6 +226,57 @@ public sealed class JobValidationTests
         };
 
         Assert.True(JobValidation.ValidateJob(job).IsValid);
+    }
+
+    [Fact]
+    public void ValidateJob_AcceptsLegacyTextTypedDirectEnumComparisonForUserChoiceOption()
+    {
+        var source = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test" }
+                ]
+            }
+        };
+        var comparison = new LocalValue
+        {
+            Name = "Selected choice",
+            ValueKind = ResultValueKind.Text,
+            Value = System.Text.Json.Nodes.JsonValue.Create("mode-prod")
+        };
+        var condition = new StepCondition
+        {
+            SourceStepId = source.Id,
+            PropertyId = "selected_option_id",
+            PropertyPath = nameof(UserChoiceResult.SelectedOptionId),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = comparison.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Steps =
+            [
+                source,
+                new IfStep { Settings = new IfConditionSettings { Conditions = [condition] } },
+                new EndIfStep()
+            ],
+            LocalValues = [comparison]
+        };
+
+        var validation = JobValidation.ValidateJob(job);
+
+        Assert.True(validation.IsValid, string.Join(Environment.NewLine,
+            validation.Steps.Where(step => !step.IsValid).Select(step => step.Error)));
     }
 
     [Fact]

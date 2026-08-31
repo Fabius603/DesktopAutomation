@@ -19,6 +19,7 @@ namespace TaskAutomation.Jobs
 
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
     [JsonDerivedType(typeof(TemplateMatchingStep), "template_matching")]
+    [JsonDerivedType(typeof(OcrStep), "ocr")]
     [JsonDerivedType(typeof(ColorDetectionStep), "color_detection")]
     [JsonDerivedType(typeof(PredictMovementStep), "predict_movement")]
     [JsonDerivedType(typeof(DesktopDuplicationStep), "desktop_duplication")]
@@ -165,6 +166,44 @@ namespace TaskAutomation.Jobs
 
         [JsonPropertyName("image_source")]
         public ResultBinding ImageSource { get; set; } = new();
+
+        [JsonPropertyName("dynamic_roi_source")]
+        public ResultBinding DynamicRoiSource { get; set; } = new();
+    }
+
+    // ---- OCR ----
+    public sealed class OcrStep : JobStep
+    {
+        [JsonPropertyName("settings")]
+        public OcrSettings Settings { get; set; } = new();
+    }
+
+    public enum OcrPageLayout
+    {
+        Automatic,
+        TextBlock,
+        TextLine,
+        SingleWord,
+        SparseText
+    }
+
+    public sealed class OcrSettings
+    {
+        [JsonPropertyName("image_source")]
+        public ResultBinding ImageSource { get; set; } = new();
+
+        [JsonPropertyName("languages")]
+        public string Languages { get; set; } = "deu+eng";
+
+        [JsonPropertyName("page_layout")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public OcrPageLayout PageLayout { get; set; } = OcrPageLayout.Automatic;
+
+        [JsonPropertyName("roi")]
+        public PixelRegion ROI { get; set; } = PixelRegion.Empty;
+
+        [JsonPropertyName("enable_roi")]
+        public bool EnableROI { get; set; }
 
         [JsonPropertyName("dynamic_roi_source")]
         public ResultBinding DynamicRoiSource { get; set; } = new();

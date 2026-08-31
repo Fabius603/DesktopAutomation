@@ -104,7 +104,7 @@ public sealed record StepVisibilityRule(
     JsonNode? EqualsValue = null,
     IReadOnlyList<JsonNode?>? AnyOfValues = null);
 
-public sealed record StepFieldOptionDescriptor(string Value, string LabelKey);
+public sealed record StepFieldOptionDescriptor(string Value, string LabelKey, string? DisplayName = null);
 
 public sealed record StepVisualOverlayEditorOptions(
     string DetectionInputContractId,

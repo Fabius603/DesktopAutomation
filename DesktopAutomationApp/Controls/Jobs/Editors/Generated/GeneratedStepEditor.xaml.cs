@@ -31,6 +31,7 @@ public sealed class GeneratedStepFieldTemplateSelector : DataTemplateSelector
             { UsesSingleLineText: true } => "SingleLineTextFieldTemplate",
             { UsesEmojiText: true } => "EmojiTextFieldTemplate",
             { UsesMultilineTextInput: true } => "MultilineTextFieldTemplate",
+            { UsesBooleanDropdown: true } => "BooleanDropdownFieldTemplate",
             { IsBoolean: true } => "BooleanFieldTemplate",
             { UsesDateTimePicker: true } => "DateTimeFieldTemplate",
             { UsesSuggestions: true } => "SuggestionsFieldTemplate",

@@ -43,6 +43,7 @@ namespace TaskAutomation.Jobs
         private readonly IYoloManager _yoloManager;
         private readonly IDesktopCaptureService _desktopCaptureService;
         private readonly ICameraCaptureService _cameraCaptureService;
+        private readonly IOcrService _ocrService;
         private readonly IExecutionLogService _executionLogService;
         private readonly ISecretStore? _secretStore;
         private bool _disposed = false;
@@ -120,6 +121,7 @@ namespace TaskAutomation.Jobs
             IDesktopResultOverlay desktopResultOverlay,
             IDesktopCaptureService desktopCaptureService,
             ICameraCaptureService cameraCaptureService,
+            IOcrService ocrService,
             IExecutionLogService executionLogService,
             IPreciseDelayService preciseDelayService,
             IWindowsSystemStateService windowsStateService,
@@ -139,6 +141,7 @@ namespace TaskAutomation.Jobs
             _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
             _cameraCaptureService = cameraCaptureService;
+            _ocrService = ocrService;
             _executionLogService = executionLogService;
             _secretStore = secretStore;
             _lazyLauncher = lazyLauncher ?? new Lazy<IJobLauncher>(() => null!);
@@ -148,6 +151,7 @@ namespace TaskAutomation.Jobs
             windowsSettingService ??= new WindowsSystemSettingService(
                 new WindowsCapabilityCatalog(), new DefaultWindowsSettingProvider());
             _stepHandlers[typeof(WindowsSettingChangeStep)] = new WindowsSettingChangeStepHandler(windowsSettingService);
+            _stepHandlers[typeof(OcrStep)] = new OcrStepHandler(_ocrService);
 
             _logger.LogInformation(
                 "JobExecutor initialisiert. Jobs: {Jobs}, Makros: {Makros}",
@@ -470,27 +474,6 @@ namespace TaskAutomation.Jobs
                 }
 
                 // ── Aufnahme-Overlay ──────────────────────────────────────────
-                if (desktopDuplicationStep != null && !_recordingOverlay.IsRunning)
-                {
-                    try
-                    {
-                        StartRecordingOverlay(new RecordingIndicatorOptions
-                        {
-                            MonitorIndex    = desktopDuplicationStep.Settings.DesktopIdx,
-                            Color           = new GameOverlay.Drawing.Color(255, 64, 64, 220),
-                            BorderThickness = 2f,
-                            Mode            = RecordingIndicatorMode.RedBorder,
-                            BadgeCorner     = Corner.TopRight,
-                            Label           = "REC"
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Fehler beim Starten des Aufnahme-Overlays: {Message}", ex.Message);
-                        throw;
-                    }
-                }
-
                 // Einmalige Startphase. Ein EndJob-Step beendet danach kontrolliert die Hauptphase.
                 cancellation.EnterStartPhase();
                 pipelineCtx.ResetResults();
@@ -967,6 +950,8 @@ namespace TaskAutomation.Jobs
                 }
 
                 var materializedStep = StepInputMaterializer.Materialize(step, ctx.Results);
+                if (materializedStep is DesktopDuplicationStep captureStep)
+                    StartRecordingOverlayFor(captureStep);
                 await handler.ExecuteAsync(materializedStep, ctx, ct);
 
                 stopwatch.Stop();
@@ -1013,6 +998,19 @@ namespace TaskAutomation.Jobs
             if (result is WindowsStateQueryResult { Status: not WindowsCapabilityStatus.Success })
                 return ExecutionLogLevel.Warning;
             return ExecutionLogLevel.Information;
+        }
+
+        private void StartRecordingOverlayFor(DesktopDuplicationStep step)
+        {
+            StartRecordingOverlay(new RecordingIndicatorOptions
+            {
+                MonitorIndex = step.Settings.DesktopIdx,
+                Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
+                BorderThickness = 2f,
+                Mode = RecordingIndicatorMode.RedBorder,
+                BadgeCorner = Corner.TopRight,
+                Label = "REC"
+            });
         }
 
         private static string BuildStepStartDetails(JobStep step, string phaseName, int? iteration)
@@ -1303,6 +1301,7 @@ namespace TaskAutomation.Jobs
             if (!_disposed)
             {
                 try { WindowsInputBlockController.Unblock(); } catch { /* best-effort */ }
+                try { _ocrService.Dispose(); } catch { /* best-effort */ }
                 _disposed = true;
             }
         }
@@ -1630,7 +1629,8 @@ namespace TaskAutomation.Jobs
                         $"{FormatValueReference(comparison, conditionSources)}: Vergleichswert ist nicht verfügbar.",
                         FormatLogValue(value));
                 var rightName = FormatValueReference(comparison, conditionSources, rightDescriptor);
-                if (!StepResultMetadata.AreComparable(descriptor, rightDescriptor))
+                if (!StepResultMetadata.AreComparable(descriptor, rightDescriptor)
+                    && !IsLegacyDirectEnumComparison(descriptor, rightDescriptor, comparison, expected))
                     return Unavailable(
                         $"Datentypen stimmen nicht überein: {descriptor.DataType} und {rightDescriptor.DataType}.",
                         FormatLogValue(value),
@@ -1643,6 +1643,17 @@ namespace TaskAutomation.Jobs
             return BuildSingleEvaluation(isMatch, leftName + leftStatus, descriptor, value,
                 FormatConditionOperator(condition.Operator), expectedText);
         }
+
+        private static bool IsLegacyDirectEnumComparison(
+            ResultPropertyDescriptor descriptor,
+            ResultPropertyDescriptor rightDescriptor,
+            ResultBinding comparison,
+            object? expected) =>
+            descriptor.DataType == ResultValueKind.Enum
+            && rightDescriptor.DataType == ResultValueKind.Text
+            && string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
+            && ConditionRules.IsComparisonValueValid(
+                descriptor, ConditionOperator.Equals, expected?.ToString());
 
         private static SingleConditionEvaluation BuildSingleEvaluation(
             bool isMatch,

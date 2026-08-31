@@ -2178,7 +2178,7 @@ namespace DesktopAutomationApp.ViewModels
             foreach (var result in validation.Steps)
             {
                 if (liveSteps.TryGetValue(result.Step.Id, out var liveStep))
-                    liveStep.SetValidationResult(result.IsValid, result.Error);
+                    liveStep.SetValidationResult(result.IsValid, JobValidationErrorLocalizer.Localize(result.Error));
             }
             NotifySectionStateChanged();
         }

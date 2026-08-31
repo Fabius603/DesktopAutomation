@@ -20,6 +20,7 @@ public static class StepPipelineRegistry
             [typeof(CameraCaptureStep)] = new(typeof(CameraCaptureResult), DisplayName: "Kameraaufnahme"),
             [typeof(FileSystemOperationStep)] = new(typeof(FileSystemOperationResult), true, "Datei oder Ordner bearbeiten"),
             [typeof(TemplateMatchingStep)] = new(typeof(TemplateMatchingResult), true, "Template Matching"),
+            [typeof(OcrStep)] = new(typeof(OcrResult), true, "Text erkennen"),
             [typeof(ColorDetectionStep)] = new(typeof(ColorDetectionResult), true, "Farberkennung"),
             [typeof(YOLODetectionStep)] = new(typeof(YOLODetectionResult), true, "YOLO-Erkennung"),
             [typeof(KeyPointMatchingStep)] = new(typeof(KeyPointMatchingResult), true, "KeyPoint Matching"),

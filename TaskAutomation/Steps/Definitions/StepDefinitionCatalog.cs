@@ -291,6 +291,7 @@ public static class BuiltInStepDefinitions
         new VideoCreationStepDefinition(),
         new SaveImageStepDefinition(),
         new TemplateMatchingStepDefinition(),
+        new OcrStepDefinition(),
         new ColorDetectionStepDefinition(),
         new YoloDetectionStepDefinition(),
         new KeyPointMatchingStepDefinition()

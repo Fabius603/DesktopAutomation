@@ -47,6 +47,58 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void ConditionDisplay_UsesUserChoiceLabelInsteadOfTheInternalOptionId()
+    {
+        var source = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production", Value = "prod" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test", Value = "test" }
+                ]
+            }
+        };
+        var comparison = new LocalValue
+        {
+            Name = "Selected choice",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("mode-prod")
+        };
+        var condition = new StepCondition
+        {
+            SourceStepId = source.Id,
+            PropertyId = "selected_option_id",
+            PropertyPath = nameof(UserChoiceResult.SelectedOptionId),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = comparison.Id.ToString("D")
+            }
+        };
+
+        var text = ConditionDisplayFormatter.Format(
+            condition, new JobStep[] { source }, [comparison]);
+        var ifStep = new IfStep
+        {
+            Settings = new IfConditionSettings { Conditions = [condition] }
+        };
+        var details = new JobStepDetailsProvider().GetDetails(
+            ifStep, new JobStep[] { source, ifStep }, [comparison]);
+        var detail = Assert.Single(details.Groups.SelectMany(group => group.Items),
+            item => item.Name.Contains("1.", StringComparison.Ordinal));
+
+        Assert.Contains("Production", text);
+        Assert.DoesNotContain("mode-prod", text);
+        Assert.Contains("Production", detail.Value);
+        Assert.DoesNotContain("mode-prod", detail.Value);
+    }
+
+    [Fact]
     public void FileSystemEditor_UsesSingleDirectoryFieldsWithoutSourceModeDropdowns()
     {
         var definition = new FileSystemOperationStepDefinition();
@@ -1873,7 +1925,7 @@ public sealed class StepDefinitionCatalogTests
             .ToArray();
 
         Assert.Equal(
-            ["timeout", "block_input", "unblock_input", "end_job", "continue_job", "desktop_duplication", "script_execution", "get_process", "makro_execution", "job_execution", "active_process", "active_window", "terminate_process", "focus_process", "start_process", "dynamic_roi", "predict_movement", "klick_on_point", "klick_on_point_3d", "file_system_operation", "show_text", "user_choice", "point_comparison", "if", "else_if", "windows_state_query", "windows_setting_change", "else", "end_if", "camera_capture", "show_image", "show_on_desktop", "video_creation", "save_image", "template_matching", "color_detection", "yolo_detection", "keypoint_matching"],
+            ["timeout", "block_input", "unblock_input", "end_job", "continue_job", "desktop_duplication", "script_execution", "get_process", "makro_execution", "job_execution", "active_process", "active_window", "terminate_process", "focus_process", "start_process", "dynamic_roi", "predict_movement", "klick_on_point", "klick_on_point_3d", "file_system_operation", "show_text", "user_choice", "point_comparison", "if", "else_if", "windows_state_query", "windows_setting_change", "else", "end_if", "camera_capture", "show_image", "show_on_desktop", "video_creation", "save_image", "template_matching", "ocr", "color_detection", "yolo_detection", "keypoint_matching"],
             typeIds);
     }
 
@@ -2040,6 +2092,152 @@ public sealed class StepDefinitionCatalogTests
         var ifStep = Assert.IsType<IfStep>(created);
         Assert.Equal(ConditionMatchMode.Any, ifStep.Settings.MatchMode);
         Assert.Equal("source", Assert.Single(ifStep.Settings.Conditions).SourceStepId);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_SelectingAPropertyResetsTheOperatorAndEditableValue()
+    {
+        var integer = new ResultPropertyDescriptor("Count", "Count", ResultValueKind.Integer);
+        var text = new ResultPropertyDescriptor("Text", "Text", ResultValueKind.Text);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [integer, text]));
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [source],
+            nestedInputResolver: CreateConditionComparisonEditor);
+        var row = Assert.Single(editor.Conditions);
+
+        Assert.Equal(ConditionOperator.Equals, row.SelectedOperator);
+        Assert.Equal(string.Empty, row.ComparisonField!.InputText);
+        row.ComparisonField.InputText = "42";
+        var changedProperties = new List<string?>();
+        row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        row.SourcePicker.Load(ResultBinding.ForStepResult(source.StepId, text.StableId));
+
+        Assert.Equal(ConditionOperator.Equals, row.SelectedOperator);
+        Assert.Contains(nameof(ConditionRowViewModel.SelectedOperator), changedProperties);
+        Assert.Equal(string.Empty, row.ComparisonField!.InputText);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_UsesATrueFalseDropdownForBooleanComparisons()
+    {
+        var property = new ResultPropertyDescriptor("Found", "Found", ResultValueKind.Boolean);
+        var source = new SourceStepItem(
+            "source", "Source", new ResultTypeDescriptor("Test", "Test", [property]));
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [source],
+            nestedInputResolver: CreateConditionComparisonEditor);
+        var field = Assert.Single(editor.Conditions).ComparisonField!;
+
+        Assert.True(field.UsesBooleanDropdown);
+        Assert.Equal([true, false], field.BooleanOptions.Select(option => option.Value));
+        field.SelectedBooleanOption = field.BooleanOptions[0];
+        Assert.Equal(bool.TrueString, field.InputText);
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_UsesUserChoiceLabelsForEnumOptions()
+    {
+        var sourceStep = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test" }
+                ]
+            }
+        };
+        var resultType = StepResultMetadata.GetResultTypeForStep(sourceStep)!;
+        var source = new SourceStepItem(sourceStep.Id, "Choice", resultType);
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [source],
+            nestedInputResolver: CreateConditionComparisonEditor);
+        var row = Assert.Single(editor.Conditions);
+
+        row.SourcePicker.Load(ResultBinding.ForStepResult(source.StepId, "selected_option_id"));
+
+        var field = row.ComparisonField!;
+        Assert.True(field.UsesEnumPicker);
+        Assert.True(field.UsesConditionEnumDirectValue);
+        Assert.True(field.ShowsDirectInput);
+        Assert.False(field.ShowsInputSourceSelector);
+        Assert.Equal(
+            [("mode-prod", "Production"), ("mode-test", "Test")],
+            field.EnumOptions.Select(option => (option.Value, option.Label)));
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_LoadsUserChoiceEnumOptionsForStoredCondition()
+    {
+        var sourceStep = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test" }
+                ]
+            }
+        };
+        var source = new SourceStepItem(
+            sourceStep.Id, "Choice", StepResultMetadata.GetResultTypeForStep(sourceStep)!);
+        var settings = new IfConditionSettings
+        {
+            Conditions =
+            [
+                new StepCondition
+                {
+                    SourceStepId = source.StepId,
+                    PropertyId = "selected_option_id",
+                    PropertyPath = nameof(UserChoiceResult.SelectedOptionId),
+                    Operator = ConditionOperator.Equals,
+                    Comparison = new ComparisonOperand { Value = "mode-test" }
+                }
+            ]
+        };
+
+        var editor = new GeneratedConditionEditorViewModel(
+            JsonSerializer.SerializeToNode(settings),
+            [source],
+            nestedInputResolver: CreateConditionComparisonEditor);
+        var field = Assert.Single(editor.Conditions).ComparisonField!;
+
+        Assert.Equal(
+            [("mode-prod", "Production"), ("mode-test", "Test")],
+            field.EnumOptions.Select(option => (option.Value, option.Label)));
+        Assert.Equal("mode-test", field.SelectedEnumOption?.Value);
+    }
+
+    private static GeneratedResultBindingEditorViewModel CreateConditionComparisonEditor(
+        string key,
+        StepValueKind kind,
+        JsonNode? literal)
+    {
+        var value = new LocalValue
+        {
+            Name = key,
+            ValueKind = JobVariableInputMigration.MapKind(kind),
+            Value = literal?.DeepClone()
+        };
+        var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
+        var picker = new ValueReferencePickerViewModel(
+            [], StepInputContractRegistry.ForField(descriptor), false, [value]);
+        return new GeneratedResultBindingEditorViewModel(
+            JsonSerializer.SerializeToNode(new ResultBinding
+            {
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = value.Id.ToString("D")
+            }),
+            picker);
     }
 
     [Fact]
@@ -3748,6 +3946,7 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal(20, editor.Y);
         Assert.Equal(300, editor.RoiWidth);
         Assert.Equal(200, editor.RoiHeight);
+        Assert.DoesNotContain("enabled", editor.InputBindings.Keys);
     }
 
     [Fact]
@@ -4073,6 +4272,226 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void AddStepDialog_EditLoadsVisualOverlayFromStoredLocalValue()
+    {
+        const string sourceStepId = "ocr-source";
+        var detection = ResultBinding.ForStepResult(sourceStepId, "words.bounding_box");
+        var storedOverlay = new LocalValue
+        {
+            OwnerStepId = "show-image",
+            InputPath = ShowImageStepDefinition.OverlayFieldId,
+            ValueKind = ResultValueKind.ResultObject,
+            Value = JsonSerializer.SerializeToNode(new VisualOverlaySettings
+            {
+                DetectionResults = [detection]
+            })
+        };
+        var existing = new ShowImageStep { Id = "show-image" };
+        existing.Inputs[ShowImageStepDefinition.OverlayFieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = storedOverlay.Id.ToString("D"),
+            SchemaId = ValueBindingSchemaRegistry.VisualOverlay
+        };
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [new OcrStep { Id = sourceStepId }],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: [storedOverlay]);
+
+        Assert.True(viewModel.TryLoadGeneratedStep(existing));
+
+        var overlay = viewModel.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == ShowImageStepDefinition.OverlayFieldId).VisualOverlayEditor!;
+        var row = Assert.Single(overlay.OverlayDetectionRows);
+        Assert.Equal(ValueProviderIds.StepResult, row.Source.ToBinding().ProviderId);
+        Assert.Equal(detection.SourceId, row.Source.ToBinding().SourceId);
+    }
+
+    [Fact]
+    public void GeneratedEditor_ResolvesInitialValueBeforeEverySpecializedResolver()
+    {
+        var observed = new List<JsonNode?>();
+        JsonNode? Capture(JsonNode? value)
+        {
+            observed.Add(value);
+            return value;
+        }
+
+        var editor = new GeneratedStepEditorViewModel(
+            new TimeoutStepDefinition(),
+            processTargetResolver: (_, value) => { Capture(value); return null; },
+            resultBindingResolver: (_, value) => { Capture(value); return null; },
+            cameraResolver: (_, value) => { Capture(value); return null; },
+            visualOverlayResolver: (_, value) => { Capture(value); return null; },
+            roiResolver: (_, value) => { Capture(value); return null; },
+            yoloResolver: (_, value) => { Capture(value); return null; },
+            conditionResolver: (_, value) => { Capture(value); return null; },
+            windowsCapabilityResolver: (_, value) => { Capture(value); return null; },
+            screenPointResolver: (_, value) => { Capture(value); return null; },
+            userChoiceOptionsResolver: (_, value) => { Capture(value); return null; },
+            pointEntryListResolver: (_, value) => { Capture(value); return null; },
+            axisExpressionListResolver: (_, value) => { Capture(value); return null; },
+            initialValueResolver: (_, _) => JsonValue.Create(73));
+
+        Assert.Equal(73, Assert.Single(editor.Fields).IntegerValue);
+        Assert.Equal(12, observed.Count);
+        Assert.All(observed, value => Assert.Equal(73, value!.GetValue<int>()));
+    }
+
+    [Fact]
+    public void AddStepDialog_EditLoadsConditionsAndOptionRowsFromStoredLocalValues()
+    {
+        var source = new OcrStep { Id = "ocr-source" };
+        var textSource = ResultBinding.ForStepResult(source.Id, "text");
+        var conditions = new IfConditionSettings
+        {
+            MatchMode = ConditionMatchMode.Any,
+            Conditions =
+            [
+                new StepCondition
+                {
+                    ProviderId = textSource.ProviderId,
+                    SourceId = textSource.SourceId,
+                    Operator = ConditionOperator.IsEmpty
+                },
+                new StepCondition
+                {
+                    ProviderId = textSource.ProviderId,
+                    SourceId = textSource.SourceId,
+                    Operator = ConditionOperator.IsNotEmpty
+                }
+            ]
+        };
+        var conditionEditor = LoadStoredField(
+            new IfStep { Id = "if-step" },
+            IfStepDefinition.ConditionsFieldId,
+            JsonSerializer.SerializeToNode(conditions),
+            precedingSteps: [source]).ConditionEditor!;
+
+        Assert.True(conditionEditor.IsAny);
+        Assert.Equal(
+            [ConditionOperator.IsEmpty, ConditionOperator.IsNotEmpty],
+            conditionEditor.Conditions.Select(row => row.SelectedOperator));
+
+        var options = new[]
+        {
+            new StepUserChoiceOptionValue("one", "First", "1"),
+            new StepUserChoiceOptionValue("two", "Second", "2"),
+            new StepUserChoiceOptionValue("three", "Third", "3")
+        };
+        var optionEditor = LoadStoredField(
+            new UserChoiceStep { Id = "choice-step" },
+            UserChoiceStepDefinition.OptionsFieldId,
+            JsonSerializer.SerializeToNode(options)).UserChoiceOptionsEditor!;
+
+        Assert.Equal(["one", "two", "three"], optionEditor.Options.Select(option => option.Id));
+        Assert.Equal(["First", "Second", "Third"], optionEditor.Options.Select(option => option.Label));
+        Assert.Equal(["1", "2", "3"], optionEditor.Options.Select(option => option.Value));
+    }
+
+    [Fact]
+    public async Task AddStepDialog_EditLoadsCameraAndJobChoiceFromStoredLocalValues()
+    {
+        var camera = LoadStoredField(
+            new CameraCaptureStep { Id = "camera-step" },
+            CameraCaptureStepDefinition.CameraFieldId,
+            JsonSerializer.SerializeToNode(new StepCameraSelectionValue(
+                "camera-1", "Test camera", CameraQualityMode.Specific.ToString(),
+                1280, 720, 25, "YUY2"))).CameraEditor!;
+
+        await camera.Initialization;
+        await camera.QualityLoading;
+        Assert.Equal("camera-1", camera.SelectedCamera?.Id);
+        Assert.Equal(CameraQualityMode.Specific, camera.SelectedQuality?.QualityMode);
+        Assert.Equal(1280, camera.SelectedQuality?.Mode?.Width);
+
+        var selectedJob = new Job { Id = Guid.NewGuid(), Name = "Stored child job" };
+        var jobField = LoadStoredField(
+            new JobExecutionStep { Id = "job-step" },
+            JobExecutionStepDefinition.JobFieldId,
+            JsonSerializer.SerializeToNode(new StepReferenceValue(
+                selectedJob.Id.ToString("D"), selectedJob.Name)),
+            executor: new ControllableJobExecutor([selectedJob]),
+            valueKind: ResultValueKind.JobReference);
+
+        Assert.Equal(selectedJob.Id.ToString("D"), jobField.SelectedChoice?.Value.Id);
+    }
+
+    [Fact]
+    public async Task AddStepDialog_EditLoadsRemainingSpecializedEditorsFromStoredLocalValues()
+    {
+        var processSource = ResultBinding.ForStepResult("process-source", "process");
+        var process = LoadStoredField(
+            new ActiveProcessStep { Id = "active-process" },
+            ActiveProcessStepDefinition.ProcessTargetFieldId,
+            JsonSerializer.SerializeToNode(new StepProcessSelectorValue(
+                JsonSerializer.SerializeToNode(processSource), "fallback", "", "Editor")))
+            .ProcessTargetEditor!;
+        Assert.True(process.UseProcessReference);
+        Assert.Equal(processSource.SourceId, process.WholeValueSource.ToBinding().SourceId);
+
+        var roi = LoadStoredField(
+            new TemplateMatchingStep { Id = "template" },
+            ImageDetectionStepDefinitionSupport.RoiFieldId,
+            JsonSerializer.SerializeToNode(new StepRoiSelectionValue(true, 11, 22, 333, 444, null)))
+            .RoiEditor!;
+        Assert.True(roi.IsRoiEnabled);
+        Assert.Equal((11, 22, 333, 444), (roi.X, roi.Y, roi.RoiWidth, roi.RoiHeight));
+
+        var pointSource = ResultBinding.ForStepResult("point-source", "point");
+        var origin = LoadStoredField(
+            new KlickOnPoint3DStep { Id = "click-3d" },
+            KlickOnPoint3DStepDefinition.OriginFieldId,
+            JsonSerializer.SerializeToNode(new StepScreenPointSelectionValue(
+                2, 123, 456, KlickOnPoint3DSettings.MonitorLocalCoordinates,
+                JsonSerializer.SerializeToNode(pointSource))))
+            .ScreenPointEditor!;
+        Assert.True(origin.WholeValueSource.UsesReference);
+        Assert.Equal(pointSource.SourceId, origin.WholeValueSource.ToBinding().SourceId);
+
+        var capability = LoadStoredField(
+            new WindowsSettingChangeStep { Id = "windows-setting" },
+            WindowsStateQueryStepDefinition.CapabilityFieldId,
+            JsonSerializer.SerializeToNode(new StepWindowsCapabilitySelectionValue(
+                "audio.master_volume", new Dictionary<string, string?> { ["value"] = "64" })))
+            .WindowsCapabilityEditor!;
+        Assert.Equal("audio.master_volume", capability.Picker.SelectedCapability?.Id);
+        Assert.Equal("64", capability.Picker.ToDictionary()["value"]);
+
+        var points = LoadStoredField(
+            new PointComparisonStep { Id = "point-comparison" },
+            PointComparisonStepDefinition.PointsFieldId,
+            JsonSerializer.SerializeToNode(new[]
+            {
+                new StepPointEntryValue("Manual", 10, 20, null),
+                new StepPointEntryValue("Manual", 30, 40, null)
+            })).PointEntryListEditor!;
+        Assert.Equal([(10, 20), (30, 40)], points.Points.Select(point => (point.ManualX, point.ManualY)));
+
+        var expressions = LoadStoredField(
+            new PointComparisonStep { Id = "expression-comparison" },
+            PointComparisonStepDefinition.ExpressionsFieldId,
+            JsonSerializer.SerializeToNode(new[]
+            {
+                new StepAxisExpressionValue("X", "GreaterThan", 5),
+                new StepAxisExpressionValue("Y", "LessThanOrEqual", 9)
+            })).AxisExpressionListEditor!;
+        Assert.Equal(
+            [("X", PointAxisOperator.GreaterThan, 5), ("Y", PointAxisOperator.LessThanOrEqual, 9)],
+            expressions.Expressions.Select(expression => (expression.Axis, expression.Operator, expression.Value)));
+
+        var yolo = LoadStoredField(
+            new YOLODetectionStep { Id = "yolo" },
+            YoloDetectionStepDefinition.SelectionFieldId,
+            JsonSerializer.SerializeToNode(new StepYoloSelectionValue("stored-model", "stored-class")))
+            .YoloEditor!;
+        await yolo.Initialization;
+        Assert.Equal("stored-model", yolo.Model);
+        Assert.Equal("stored-class", yolo.ClassName);
+    }
+
+    [Fact]
     public void VisualOverlayDefinition_PreservesProviderReferences()
     {
         var variableId = Guid.NewGuid();
@@ -4306,6 +4725,36 @@ public sealed class StepDefinitionCatalogTests
         SourceStepId = stepId,
         PropertyPath = propertyPath
     };
+
+    private static GeneratedStepFieldViewModel LoadStoredField(
+        JobStep step,
+        string fieldId,
+        JsonNode? value,
+        ControllableJobExecutor? executor = null,
+        IReadOnlyList<JobStep>? precedingSteps = null,
+        ResultValueKind valueKind = ResultValueKind.ResultObject)
+    {
+        var stored = new LocalValue
+        {
+            OwnerStepId = step.Id,
+            InputPath = fieldId,
+            ValueKind = valueKind,
+            Value = value
+        };
+        step.Inputs[fieldId] = new ResultBinding
+        {
+            ProviderId = ValueProviderIds.LocalValue,
+            SourceId = stored.Id.ToString("D")
+        };
+        var viewModel = new AddJobStepDialogViewModel(
+            executor ?? new ControllableJobExecutor([]),
+            precedingSteps ?? [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: [stored]);
+
+        Assert.True(viewModel.TryLoadGeneratedStep(step));
+        return viewModel.GeneratedEditor!.Fields.Single(field => field.Descriptor.Id == fieldId);
+    }
 
     private sealed class CameraDefinitionTestService : ICameraCaptureService
     {

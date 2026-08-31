@@ -70,7 +70,12 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
 internal sealed class NoOpRecordingIndicator : IRecordingIndicatorOverlay
 {
     public bool IsRunning { get; private set; }
-    public void Start(RecordingIndicatorOptions? options = null) => IsRunning = true;
+    public List<int> StartedMonitorIndices { get; } = [];
+    public void Start(RecordingIndicatorOptions? options = null)
+    {
+        StartedMonitorIndices.Add(options?.MonitorIndex ?? 0);
+        IsRunning = true;
+    }
     public void Stop() => IsRunning = false;
     public void Dispose() { }
 }
@@ -165,6 +170,17 @@ internal sealed class NoOpCameraCaptureService : ICameraCaptureService
         CameraCaptureOptions options,
         CancellationToken cancellationToken) =>
         Task.FromException<CameraCaptureFrame>(new InvalidOperationException("No camera configured."));
+
+    public void Dispose() { }
+}
+
+internal sealed class NoOpOcrService : IOcrService
+{
+    public Task<OcrRecognition> RecognizeAsync(
+        System.Drawing.Bitmap image,
+        OcrRecognitionOptions options,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(new OcrRecognition(string.Empty, 0, [], []));
 
     public void Dispose() { }
 }

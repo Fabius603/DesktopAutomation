@@ -25,6 +25,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Management" Version="10.0.9" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.0" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +35,13 @@
     <ProjectReference Include="..\ImageCapture\ImageCapture.csproj" />
     <ProjectReference Include="..\ImageDetection\ImageDetection.csproj" />
     <ProjectReference Include="..\ImageHelperMehods\ImageHelperMethods.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\Tessdata\*.traineddata">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>tessdata\%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>
