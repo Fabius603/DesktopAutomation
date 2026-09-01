@@ -61,6 +61,28 @@
         </Style.Triggers>
     </Style>
 
+    <!-- NumericUpDown — gleiche Darstellung wie die übrigen Eingabefelder -->
+    <Style x:Key="AppNumericUpDownStyle" TargetType="mah:NumericUpDown"
+           BasedOn="{StaticResource {x:Type mah:NumericUpDown}}">
+        <Setter Property="mah:ControlsHelper.CornerRadius" Value="4"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextDisabled}"/>
+                <Setter Property="Opacity" Value="0.72"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- TimePicker — gleiche Darstellung wie die übrigen Eingabefelder -->
     <Style x:Key="AppTimePickerStyle" TargetType="mah:TimePicker"
            BasedOn="{StaticResource {x:Type mah:TimePicker}}">

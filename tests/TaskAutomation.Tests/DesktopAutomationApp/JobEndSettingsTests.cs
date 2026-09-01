@@ -19,6 +19,7 @@ public sealed class JobEndSettingsTests
 
         Assert.Equal("Numbers", input.Attribute("NumericInputMode")?.Value);
         Assert.Equal("1", input.Attribute("Interval")?.Value);
+        Assert.Equal("{StaticResource AppNumericUpDownStyle}", input.Attribute("Style")?.Value);
         Assert.Contains("Mode=TwoWay", input.Attribute("Value")?.Value, StringComparison.Ordinal);
         Assert.Contains(
             "UpdateSourceTrigger=PropertyChanged",

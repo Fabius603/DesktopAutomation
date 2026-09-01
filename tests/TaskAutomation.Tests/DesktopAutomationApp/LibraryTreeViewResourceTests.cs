@@ -14,6 +14,17 @@ public sealed class LibraryTreeViewResourceTests
         Assert.DoesNotContain("Key=Ui.Library.Inactive", xaml);
     }
 
+    [Fact]
+    public void LibraryList_UsesTheSharedVerticalPixelScroller()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "Library", "LibraryTreeView.xaml"));
+
+        Assert.Contains("ScrollViewer.VerticalScrollBarVisibility=\"Auto\"", xaml);
+        Assert.Contains("ScrollViewer.HorizontalScrollBarVisibility=\"Disabled\"", xaml);
+        Assert.Contains("VirtualizingPanel.ScrollUnit=\"Pixel\"", xaml);
+    }
+
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

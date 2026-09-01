@@ -1221,6 +1221,7 @@
                                                        FontWeight="SemiBold" Margin="0,0,0,5"/>
                                             <DockPanel LastChildFill="False">
                                                 <mah:NumericUpDown Width="90"
+                                                                   Style="{StaticResource AppNumericUpDownStyle}"
                                                                    HorizontalContentAlignment="Right"
                                                                    Minimum="1"
                                                                    Maximum="3600"
