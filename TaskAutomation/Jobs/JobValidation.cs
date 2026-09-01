@@ -325,7 +325,9 @@ public static class JobValidation
         IReadOnlyList<JobVariable> variables)
     {
         if (property.DataType != ResultValueKind.Enum
-            || comparisonProperty.DataType != ResultValueKind.Text
+            || comparisonProperty.DataType is not (ResultValueKind.Text or ResultValueKind.Enum)
+            || comparisonProperty.DataType == ResultValueKind.Enum
+            && !string.IsNullOrWhiteSpace(comparisonProperty.EnumTypeName)
             || !string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
             || !Guid.TryParse(comparison.SourceId, out var valueId)
             || variables.FirstOrDefault(variable => variable.Id == valueId) is not LocalValue local

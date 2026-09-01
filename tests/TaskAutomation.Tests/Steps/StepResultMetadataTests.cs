@@ -92,6 +92,20 @@ public sealed class StepResultMetadataTests
     }
 
     [Fact]
+    public void EveryStaticEnumResultProperty_ExposesItsValues()
+    {
+        var enumProperties = StepResultMetadata.ResultTypes
+            .SelectMany(resultType => resultType.Properties.Select(property => (resultType.TypeName, Property: property)))
+            .Where(item => item.Property.DataType == ResultValueKind.Enum)
+            .ToArray();
+
+        Assert.NotEmpty(enumProperties);
+        Assert.All(enumProperties, item =>
+            Assert.True(item.Property.EnumValues is { Count: > 0 },
+                $"{item.TypeName}.{item.Property.Name} has no enum values."));
+    }
+
+    [Fact]
     public void TryReadValue_ReadsScalarAndCollectionCount()
     {
         var result = new NetworkConnectivityQueryResult { Count = 2, Items = ["a", "b"] };

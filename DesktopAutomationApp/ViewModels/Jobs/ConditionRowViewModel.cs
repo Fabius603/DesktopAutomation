@@ -87,7 +87,7 @@ public sealed class ConditionSelectionNode : INotifyPropertyChanged
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
 {
     private readonly string _comparisonInputKey;
-    private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
+    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
     private GeneratedStepFieldViewModel? _comparisonField;
     private bool _loadingSourcePicker;
     private int _semanticChangeDeferral;
@@ -330,9 +330,11 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     });
     public bool IsComparisonValueValid => SelectedProperty is not null &&
         (!ShowComparisonValue || (ComparisonField?.InputReferenceEditor?.Picker is { } picker
-            ? picker.IsConfigured && (!picker.IsStepValue
-                || ConditionRules.IsComparisonValueValid(
-                    SelectedProperty, SelectedOperator, GetLiteralComparisonValue()))
+            ? picker.IsConfigured && (picker.IsStepValue
+                ? ConditionRules.IsComparisonValueValid(
+                    SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
+                : picker.SelectedResultProperty is { } comparisonProperty
+                  && StepResultMetadata.AreComparable(SelectedProperty, comparisonProperty))
             : ComparisonIsLiteral
             ? ConditionRules.IsComparisonValueValid(SelectedProperty, SelectedOperator, GetLiteralComparisonValue())
             : (SelectedComparisonSourceStep is not null || _selectedComparisonVariable is not null)
@@ -356,7 +358,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         string comparisonInputKey = "conditions.0.comparison",
-        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
         ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _owner = owner;
@@ -729,7 +731,9 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             },
             Options: options);
         var field = new GeneratedStepFieldViewModel(descriptor, node,
-            inputReferenceEditor: _nestedInputResolver(_comparisonInputKey, kind, node));
+            inputReferenceEditor: _nestedInputResolver(
+                _comparisonInputKey, kind, node,
+                kind == StepValueKind.Enum ? SelectedProperty : null));
         if (binding?.IsConfigured == true)
             field.InputReferenceEditor!.Picker.Load(binding);
         field.PropertyChanged += (_, args) =>

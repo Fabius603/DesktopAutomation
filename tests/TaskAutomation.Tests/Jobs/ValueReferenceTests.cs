@@ -73,6 +73,38 @@ public sealed class ValueReferenceTests
     }
 
     [Fact]
+    public void JobVariable_RoundTripsEnumMetadata()
+    {
+        var job = new Job
+        {
+            Variables =
+            [
+                new JobVariable
+                {
+                    Name = "Mode",
+                    Scope = JobVariableScope.Shared,
+                    ValueKind = ResultValueKind.Enum,
+                    Value = JsonValue.Create("mode-test"),
+                    EnumTypeName = "workflow.mode",
+                    EnumValues = ["mode-prod", "mode-test"],
+                    EnumDisplayNames = new Dictionary<string, string>
+                    {
+                        ["mode-prod"] = "Production",
+                        ["mode-test"] = "Test"
+                    }
+                }
+            ]
+        };
+
+        var restored = JsonSerializer.Deserialize<Job>(JsonSerializer.Serialize(job))!;
+        var variable = Assert.Single(restored.Variables);
+
+        Assert.Equal("workflow.mode", variable.EnumTypeName);
+        Assert.Equal(["mode-prod", "mode-test"], variable.EnumValues);
+        Assert.Equal("Test", variable.EnumDisplayNames!["mode-test"]);
+    }
+
+    [Fact]
     public void LegacyVariableWithoutScope_LoadsAsStepValue()
     {
         var variable = JsonSerializer.Deserialize<JobVariable>(

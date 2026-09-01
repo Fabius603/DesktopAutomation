@@ -229,6 +229,49 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateJob_RejectsComparisonBetweenDifferentEnumTypes()
+    {
+        var actual = new JobVariable
+        {
+            Name = "Workflow state",
+            ValueKind = ResultValueKind.Enum,
+            Value = System.Text.Json.Nodes.JsonValue.Create("Active"),
+            EnumTypeName = "workflow.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var expected = new JobVariable
+        {
+            Name = "Window state",
+            ValueKind = ResultValueKind.Enum,
+            Value = System.Text.Json.Nodes.JsonValue.Create("Active"),
+            EnumTypeName = "window.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = actual.Id.ToString("D"),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.JobVariable,
+                SourceId = expected.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Variables = [actual, expected],
+            Steps = [new IfStep { Settings = new() { Conditions = [condition] } }, new EndIfStep()]
+        };
+
+        var result = JobValidation.ValidateJob(job);
+
+        Assert.False(result.IsValid);
+        Assert.Contains("denselben Datentyp", result.Steps.Single(step => !step.IsValid).Error);
+    }
+
+    [Fact]
     public void ValidateJob_AcceptsLegacyTextTypedDirectEnumComparisonForUserChoiceOption()
     {
         var source = new UserChoiceStep

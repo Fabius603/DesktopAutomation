@@ -38,8 +38,11 @@ internal static class StepDescriptorDraftValidator
             }
 
             var constraints = field.Constraints;
-            if (constraints?.AllowedValues is { Count: > 0 }
-                && (text is null || !constraints.AllowedValues.Contains(text, StringComparer.Ordinal)))
+            var allowedValues = constraints?.AllowedValues is { Count: > 0 }
+                ? constraints.AllowedValues
+                : field.Options?.Select(option => option.Value).ToArray();
+            if (allowedValues is { Count: > 0 }
+                && (text is null || !allowedValues.Contains(text, StringComparer.Ordinal)))
                 issues.Add(new("StepValidation.Invalid", field.Id));
             if (constraints?.Minimum is { } minimum && number is { } numeric && numeric < minimum)
                 issues.Add(new("StepValidation.Minimum", field.Id,

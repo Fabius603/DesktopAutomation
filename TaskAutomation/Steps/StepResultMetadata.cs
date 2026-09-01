@@ -213,12 +213,22 @@ public static class StepResultMetadata
 
     public static bool AreComparable(ResultPropertyDescriptor left, ResultPropertyDescriptor right) =>
         left.DataType == right.DataType
-        && (left.DataType != ResultValueKind.Enum
-            || string.IsNullOrWhiteSpace(left.EnumTypeName)
-            || string.IsNullOrWhiteSpace(right.EnumTypeName)
-            || string.Equals(left.EnumTypeName, right.EnumTypeName, StringComparison.Ordinal))
+        && (left.DataType != ResultValueKind.Enum || AreComparableEnums(left, right))
         && (left.Cardinality == ResultCardinality.Collection)
             == (right.Cardinality == ResultCardinality.Collection);
+
+    private static bool AreComparableEnums(ResultPropertyDescriptor left, ResultPropertyDescriptor right)
+    {
+        if (!string.IsNullOrWhiteSpace(left.EnumTypeName)
+            && !string.IsNullOrWhiteSpace(right.EnumTypeName))
+            return string.Equals(left.EnumTypeName, right.EnumTypeName, StringComparison.Ordinal);
+        if (string.IsNullOrWhiteSpace(left.EnumTypeName)
+            != string.IsNullOrWhiteSpace(right.EnumTypeName))
+            return true;
+        return string.IsNullOrWhiteSpace(left.EnumTypeName)
+               && string.IsNullOrWhiteSpace(right.EnumTypeName)
+               && string.Equals(left.StableId, right.StableId, StringComparison.OrdinalIgnoreCase);
+    }
 
     public static bool TryReadValue(object result, ResultPropertyDescriptor property, out object? value)
     {

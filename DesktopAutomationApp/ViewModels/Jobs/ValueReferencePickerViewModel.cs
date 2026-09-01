@@ -232,6 +232,8 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public bool IsConfigured => _missingReference is not null
                                 || _selectedProviderSource is not null
                                 || _selectedSource is not null && _selectedProperty is not null;
+    public ResultPropertyDescriptor? SelectedResultProperty => _selectedProviderProperty
+        ?? (_selectedProviderSource is null ? _selectedProperty : _selectedProviderSource.ToResultProperty());
     public bool HasMissingReference => _missingReference is not null;
     public JobVariable? SelectedJobVariable =>
         _selectedProviderSource is not null
@@ -870,6 +872,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         OnChange(nameof(SelectedTooltipValue));
         OnChange(nameof(SelectedTooltipDescription));
         OnChange(nameof(IsConfigured));
+        OnChange(nameof(SelectedResultProperty));
         OnChange(nameof(HasMissingReference));
         OnChange(nameof(SelectedJobVariable));
         OnChange(nameof(IsStepValue));

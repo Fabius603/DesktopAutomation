@@ -583,10 +583,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             _inputText = ResolveSuggestedDirectory(directoryOptions);
         Suggestions = new ObservableCollection<string>(suggestions ?? []);
         Choices = new ObservableCollection<GeneratedStepChoiceOptionViewModel>(choices ?? []);
-        EnumOptions = new ObservableCollection<GeneratedStepEnumOptionViewModel>(
-            (descriptor.Options ?? []).Select(option => new GeneratedStepEnumOptionViewModel(
-                option.Value,
-                option.DisplayName ?? Loc.Get(option.LabelKey))));
+        EnumOptions = new ObservableCollection<GeneratedStepEnumOptionViewModel>(BuildEnumOptions(descriptor));
         ProcessTargetEditor = processTargetEditor;
         if (ProcessTargetEditor is not null)
             ProcessTargetEditor.Changed += OnProcessTargetChanged;
@@ -627,9 +624,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             ?? (Descriptor.Required && UsesChoicePicker ? Choices.FirstOrDefault() : null);
         if (_selectedChoice is not null)
             _inputText = JsonSerializer.SerializeToNode(_selectedChoice.Value)?.ToJsonString() ?? string.Empty;
+        EnsureEnumOption(_inputText);
         _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
             string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
-        if (_selectedEnumOption is null && descriptor.Required && UsesEnumPicker)
+        if (_selectedEnumOption is null && string.IsNullOrWhiteSpace(_inputText)
+            && descriptor.Required && UsesEnumPicker)
             _selectedEnumOption = EnumOptions.FirstOrDefault();
         if (_selectedEnumOption is not null)
             _inputText = _selectedEnumOption.Value;
@@ -663,6 +662,25 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(options.SuggestedSubfolder)
             ? path
             : Path.Combine(path, options.SuggestedSubfolder);
+    }
+
+    private static IEnumerable<GeneratedStepEnumOptionViewModel> BuildEnumOptions(
+        StepFieldDescriptor descriptor)
+    {
+        if (descriptor.Options is { Count: > 0 })
+            return descriptor.Options.Select(option => new GeneratedStepEnumOptionViewModel(
+                option.Value,
+                option.DisplayName ?? Loc.Get(option.LabelKey)));
+        return (descriptor.Constraints?.AllowedValues ?? [])
+            .Select(value => new GeneratedStepEnumOptionViewModel(value, value));
+    }
+
+    private void EnsureEnumOption(string? value)
+    {
+        if (!UsesEnumPicker || string.IsNullOrWhiteSpace(value)
+            || EnumOptions.Any(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase)))
+            return;
+        EnumOptions.Add(new GeneratedStepEnumOptionViewModel(value, value));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -1226,18 +1244,9 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             return;
         }
         var formattedValue = FormatValue(variable.Value, EffectiveValueKind);
+        EnsureEnumOption(formattedValue);
         var selectedEnumOption = EnumOptions.FirstOrDefault(option =>
             string.Equals(option.Value, formattedValue, StringComparison.OrdinalIgnoreCase));
-        if (selectedEnumOption is null && Descriptor.Required && UsesEnumPicker)
-        {
-            selectedEnumOption = EnumOptions.FirstOrDefault();
-            if (selectedEnumOption is not null)
-            {
-                formattedValue = selectedEnumOption.Value;
-                variable.Value = JsonValue.Create(selectedEnumOption.Value);
-                InputReferenceEditor.Picker.RefreshSelectedValue();
-            }
-        }
         if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)
             && ReferenceEquals(_selectedEnumOption, selectedEnumOption)) return;
         _inputText = formattedValue;
@@ -1384,7 +1393,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
     private readonly IReadOnlyList<JobVariable> _variables;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
     private readonly string _inputKeyPrefix;
-    private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
+    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
     private readonly ValueReferenceSourceCatalog? _sourceCatalog;
     private int _nextConditionKey;
 
@@ -1394,7 +1403,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         string inputKeyPrefix = "conditions",
-        Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
         ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _sources = sources;

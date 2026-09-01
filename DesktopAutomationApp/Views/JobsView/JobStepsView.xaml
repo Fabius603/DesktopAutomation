@@ -52,8 +52,8 @@
                     </Border.Style>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="180"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding Name}" Opacity="0.76" TextWrapping="Wrap"
                                    VerticalAlignment="Top" Margin="0,1,12,0"/>
@@ -72,14 +72,14 @@
                         Background="Transparent" ToolTip="{Binding Description}">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding Name}" Margin="0,0,12,0"
                                VerticalAlignment="Center" TextWrapping="Wrap"
                                Foreground="{DynamicResource App.Brush.TextSecondary}"/>
-                    <Border Grid.Column="1" HorizontalAlignment="Right" CornerRadius="9"
-                            Padding="7,2" MaxWidth="260">
+                    <Border Grid.Column="1" HorizontalAlignment="Stretch" CornerRadius="9"
+                            Padding="7,2">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
@@ -286,8 +286,8 @@
             <HierarchicalDataTemplate x:Key="StepResultPropertyTemplate" ItemsSource="{Binding Children}">
                 <Grid Margin="2,3" ToolTip="{Binding Description}" TextElement.FontSize="14">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="260"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="3*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding Name}" Opacity="0.7" TextWrapping="Wrap"
                                Foreground="{DynamicResource App.Brush.Text}"/>
@@ -788,12 +788,12 @@
         <!-- Drei Lebenszyklus-Bereiche des Jobs. -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="360"/>
+                <ColumnDefinition Width="3*" MinWidth="360"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition x:Name="DebugInspectorColumn">
                     <ColumnDefinition.Style>
                         <Style TargetType="ColumnDefinition">
-                            <Setter Property="Width" Value="360"/>
+                            <Setter Property="Width" Value="2*"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsDebugPanelVisible}" Value="False">
                                     <Setter Property="Width" Value="0"/>
@@ -981,8 +981,21 @@
                                                                     ToolTip="{Binding ValidationError}"
                                                                     Visibility="{Binding IsValid, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                                     </Grid>
-                                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0"
-                                                Visibility="{Binding Converter={StaticResource StepCanAddBranchesConverter}}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Converter={StaticResource StepCanAddBranchesConverter}}" Value="Visible"/>
+                                                            <Condition Binding="{Binding DataContext.IsDebugPanelVisible, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
                                         <Button Content="{loc:Translate Key=Ui.Job.Steps.AddElseIf}"
                                                 Command="{Binding DataContext.AddElseIfCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                 CommandParameter="{Binding}" Style="{StaticResource ButtonSecondary}"
@@ -999,56 +1012,53 @@
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
                                             Margin="8,0,0,0">
-                                    <!-- Aktivieren / Deaktivieren -->
-                                    <CheckBox
-                                        IsChecked="{Binding IsEnabled, Mode=OneWay}"
-                                        Command="{Binding DataContext.ToggleStepEnabledCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"
-                                        IsEnabled="{Binding DataContext.IsDebugActive, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanConverter}}"
-                                        Visibility="{Binding CanBeDisabled, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        ToolTip="{loc:Translate Key=Ui.Job.Steps.EnableDisableStep}"
-                                        VerticalAlignment="Center"
-                                        Margin="0,0,8,0"/>
-                                    <!-- Bearbeiten -->
-                                    <Button Style="{StaticResource ButtonIcon}"
-                                            Margin="0,0,6,0"
-                                            ToolTip="{loc:Translate Key=Ui.Common.EditStep}"
-                                            Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}">
-                                        <iconPacks:PackIconMaterial Kind="Pencil"/>
-                                    </Button>
-                                    <!-- Nach oben -->
-                                    <Button Style="{StaticResource ButtonIcon}" Margin="0,0,2,0"
-                                            ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
-                                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            Click="StepMoreButton_Click">
-                                        <iconPacks:PackIconMaterial Kind="DotsVertical"/>
-                                        <Button.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}"
-                                                          Command="{Binding PlacementTarget.Tag.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}"
-                                                          Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <Separator/>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToStart}"
-                                                          Command="{Binding PlacementTarget.Tag.MoveToStartSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToRun}"
-                                                          Command="{Binding PlacementTarget.Tag.MoveToRunSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToEnd}"
-                                                          Command="{Binding PlacementTarget.Tag.MoveToEndSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                          CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <Separator/>
-                                                <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
-                                                          Command="{Binding PlacementTarget.Tag.DeleteSelectedCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
-                                    </Button>
-                                    <!-- Nach unten -->
-                                    <!-- Löschen -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,2,0"
+                                                Visibility="{Binding DataContext.IsDebugPanelVisible, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                        <CheckBox
+                                            IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                            Command="{Binding DataContext.ToggleStepEnabledCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding CanBeDisabled, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            ToolTip="{loc:Translate Key=Ui.Job.Steps.EnableDisableStep}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,8,0"/>
+                                        <Button Style="{StaticResource ButtonIcon}"
+                                                Margin="0,0,6,0"
+                                                ToolTip="{loc:Translate Key=Ui.Common.EditStep}"
+                                                Command="{Binding DataContext.EditStepCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+                                            <iconPacks:PackIconMaterial Kind="Pencil"/>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonIcon}"
+                                                ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
+                                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                Click="StepMoreButton_Click">
+                                            <iconPacks:PackIconMaterial Kind="DotsVertical"/>
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}"
+                                                              Command="{Binding PlacementTarget.Tag.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}"
+                                                              Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToStart}"
+                                                              Command="{Binding PlacementTarget.Tag.MoveToStartSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToRun}"
+                                                              Command="{Binding PlacementTarget.Tag.MoveToRunSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.MoveToEnd}"
+                                                              Command="{Binding PlacementTarget.Tag.MoveToEndSectionCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <Separator/>
+                                                    <MenuItem Header="{loc:Translate Key=Ui.Job.Steps.DeleteStep}"
+                                                              Command="{Binding PlacementTarget.Tag.DeleteSelectedCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </StackPanel>
                                     <ToggleButton x:Name="DetailsToggle"
                                                   Style="{StaticResource JobStepDetailsToggleStyle}"
                                                   ToolTip="{loc:Translate Key=Ui.Job.Steps.ShowDetails}"
@@ -1056,7 +1066,7 @@
                                 </StackPanel>
 
                                 <Border Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,1" Padding="10"
-                                        BorderThickness="1,1,0,0"
+                                        BorderThickness="0,1,0,0"
                                         BorderBrush="{DynamicResource App.Brush.CardBorder}">
                                     <Border.Style>
                                         <Style TargetType="Border">
@@ -1257,7 +1267,7 @@
                           Background="Transparent" ResizeDirection="Columns"
                           Visibility="{Binding IsDebugPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-            <Border Grid.Column="2" MinWidth="320"
+            <Border Grid.Column="2" MinWidth="360"
                     Margin="0" Padding="16" CornerRadius="8"
                     Background="{DynamicResource App.Brush.CardBackground}"
                     BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1"

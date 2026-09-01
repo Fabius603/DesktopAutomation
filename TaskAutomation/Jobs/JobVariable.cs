@@ -34,6 +34,18 @@ public class JobVariable
 
     [JsonPropertyName("value")]
     public JsonNode? Value { get; set; }
+
+    [JsonPropertyName("enum_type_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? EnumTypeName { get; set; }
+
+    [JsonPropertyName("enum_values")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? EnumValues { get; set; }
+
+    [JsonPropertyName("enum_display_names")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? EnumDisplayNames { get; set; }
 }
 
 /// <summary>

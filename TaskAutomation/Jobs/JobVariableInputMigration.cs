@@ -58,7 +58,11 @@ public static class JobVariableInputMigration
                     changed = true;
                     continue;
                 }
-                if (step.Inputs.TryGetValue(field.Id, out var existing) && existing.IsConfigured) continue;
+                if (step.Inputs.TryGetValue(field.Id, out var existing) && existing.IsConfigured)
+                {
+                    changed |= EnrichEnumMetadata(job, existing, definition.Descriptor.TypeId, field);
+                    continue;
+                }
                 var value = draft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue;
                 var variable = new LocalValue
                 {
@@ -73,6 +77,7 @@ public static class JobVariableInputMigration
                         : ResultCardinality.Single,
                     Value = value?.DeepClone()
                 };
+                ApplyEnumMetadata(variable, definition.Descriptor.TypeId, field);
                 job.LocalValues.Add(variable);
                 step.Inputs[field.Id] = new ResultBinding
                 {
@@ -161,6 +166,11 @@ public static class JobVariableInputMigration
                 ValueKind = variable.ValueKind,
                 Cardinality = variable.Cardinality,
                 Value = variable.Value?.DeepClone(),
+                EnumTypeName = variable.EnumTypeName,
+                EnumValues = variable.EnumValues?.ToList(),
+                EnumDisplayNames = variable.EnumDisplayNames is null
+                    ? null
+                    : new Dictionary<string, string>(variable.EnumDisplayNames, StringComparer.Ordinal),
                 OwnerStepId = usage.Step.Id,
                 InputPath = ResolveInputPath(usage)
             };
@@ -170,6 +180,42 @@ public static class JobVariableInputMigration
             changed = true;
         }
         return changed;
+    }
+
+    private static bool EnrichEnumMetadata(
+        Job job,
+        ResultBinding binding,
+        string stepTypeId,
+        StepFieldDescriptor field)
+    {
+        if (field.ValueKind != StepValueKind.Enum
+            || binding.ProviderId is not (ValueProviderIds.LocalValue or ValueProviderIds.JobVariable)
+            || !Guid.TryParse(binding.SourceId, out var variableId))
+            return false;
+        var variable = job.LocalValues.Cast<JobVariable>().Concat(job.Variables)
+            .FirstOrDefault(candidate => candidate.Id == variableId);
+        if (variable is null) return false;
+        var previous = System.Text.Json.JsonSerializer.Serialize(variable);
+        ApplyEnumMetadata(variable, stepTypeId, field);
+        return !string.Equals(previous, System.Text.Json.JsonSerializer.Serialize(variable), StringComparison.Ordinal);
+    }
+
+    private static void ApplyEnumMetadata(
+        JobVariable variable,
+        string stepTypeId,
+        StepFieldDescriptor field)
+    {
+        if (field.ValueKind != StepValueKind.Enum || variable.ValueKind != ResultValueKind.Enum) return;
+        variable.EnumTypeName = $"{stepTypeId}.{field.Id}";
+        variable.EnumValues = (field.Options?.Select(option => option.Value)
+                               ?? field.Constraints?.AllowedValues
+                               ?? [])
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        variable.EnumDisplayNames = field.Options?
+            .Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
+            .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
+        if (variable.EnumDisplayNames is { Count: 0 }) variable.EnumDisplayNames = null;
     }
 
     private static string ResolveInputPath(ValueReferenceUsage usage)

@@ -86,6 +86,13 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 && field.Options.Select(option => option.Value).Distinct(StringComparer.Ordinal).Count() != field.Options.Count)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' contains duplicate option values.");
+            if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.Enum
+                && field.Options is { Count: > 0 } enumOptions
+                && field.Constraints?.AllowedValues is { Count: > 0 } allowedValues
+                && !enumOptions.Select(option => option.Value).ToHashSet(StringComparer.Ordinal)
+                    .SetEquals(allowedValues))
+                throw new InvalidOperationException(
+                    $"{definition.StepType.Name} field '{field.Id}' has inconsistent enum options and allowed values.");
             if (field.Constraints is { Minimum: { } minimum, Maximum: { } maximum } && minimum > maximum)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has inconsistent numeric constraints.");

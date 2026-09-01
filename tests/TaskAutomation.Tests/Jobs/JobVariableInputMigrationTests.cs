@@ -60,6 +60,15 @@ public sealed class JobVariableInputMigrationTests
                 Assert.Equal(field.Id, variable.InputPath);
                 if (field.ValueKind != TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding)
                     Assert.Equal(JobVariableInputMigration.MapKind(field), variable.ValueKind);
+                if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.Enum)
+                {
+                    Assert.Equal($"{definition.Descriptor.TypeId}.{field.Id}", variable.EnumTypeName);
+                    Assert.Equal(
+                        field.Options?.Select(option => option.Value)
+                        ?? field.Constraints?.AllowedValues
+                        ?? [],
+                        variable.EnumValues);
+                }
             });
             var variableCount = job.LocalValues.Count;
             Assert.False(JobVariableInputMigration.Migrate(job));

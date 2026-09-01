@@ -516,6 +516,13 @@ namespace DesktopAutomationApp.ViewModels
             ResultBinding? binding)
         {
             var contract = StepInputContractRegistry.Resolve(definition.StepType, field);
+            if (binding?.IsConfigured == true
+                && FindStoredVariable(binding) is { } storedVariable)
+            {
+                ApplyEnumMetadata(storedVariable, $"{definition.Descriptor.TypeId}.{field.Id}",
+                    field.Options, field.Constraints?.AllowedValues);
+                _valueReferenceSources.AddVariable(storedVariable);
+            }
             if (binding?.IsConfigured != true
                 && (field.ValueKind != StepValueKind.ResultBinding || contract.AllowsDirectValue))
             {
@@ -559,6 +566,8 @@ namespace DesktopAutomationApp.ViewModels
                                   : ResultCardinality.Single),
                 Value = field.DefaultValue?.DeepClone()
             };
+            ApplyEnumMetadata(variable, $"{definition.Descriptor.TypeId}.{field.Id}",
+                field.Options, field.Constraints?.AllowedValues);
             _draftStepVariables.Add(variable);
             _valueReferenceSources.AddVariable(variable);
             _variableUsageCounts = null;
@@ -568,6 +577,12 @@ namespace DesktopAutomationApp.ViewModels
         private IReadOnlyList<JobVariable> CurrentVariables() =>
             _jobVariables.Cast<JobVariable>().Concat(_localValues).Concat(_draftStepVariables)
                 .DistinctBy(variable => variable.Id).ToArray();
+
+        private JobVariable? FindStoredVariable(ResultBinding binding) =>
+            binding.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+            && Guid.TryParse(binding.SourceId, out var variableId)
+                ? CurrentVariables().FirstOrDefault(variable => variable.Id == variableId)
+                : null;
 
         private void CommitCreatedLocalValue(LocalValue variable)
         {
@@ -626,13 +641,15 @@ namespace DesktopAutomationApp.ViewModels
             string key,
             StepValueKind kind,
             JsonNode? literal,
-            IReadOnlyDictionary<string, ResultBinding>? inputs)
+            IReadOnlyDictionary<string, ResultBinding>? inputs,
+            ResultPropertyDescriptor? enumProperty = null)
         {
             var descriptor = new StepFieldDescriptor(key, owner.LabelKey, kind, DefaultValue: literal?.DeepClone());
             var contract = StepInputContractRegistry.ForField(descriptor);
             if (string.Equals(owner.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
                 contract = contract with { AllowedProviderIds = new HashSet<string>() };
-            JobVariable CreateStepValue() => CreateDraftNestedVariable(definition, owner, key, kind, literal);
+            JobVariable CreateStepValue() => CreateDraftNestedVariable(
+                definition, owner, key, kind, literal, enumProperty);
             var stepName = Loc.Get(definition.Descriptor.DisplayNameKey);
             var fieldName = NestedFieldName(key);
             var context = new ValueReferencePickerContext(
@@ -644,6 +661,14 @@ namespace DesktopAutomationApp.ViewModels
                 CreateStepValue,
                 CreateSecret);
             var binding = ValueBindingTree.Find(inputs, key);
+            if (kind == StepValueKind.Enum
+                && enumProperty is not null
+                && binding?.IsConfigured == true
+                && FindStoredVariable(binding) is { } storedVariable)
+            {
+                ApplyEnumMetadata(storedVariable, enumProperty);
+                _valueReferenceSources.AddVariable(storedVariable);
+            }
             if (binding?.IsConfigured != true)
             {
                 var variable = CreateStepValue();
@@ -663,7 +688,8 @@ namespace DesktopAutomationApp.ViewModels
             StepFieldDescriptor owner,
             string key,
             StepValueKind kind,
-            JsonNode? literal)
+            JsonNode? literal,
+            ResultPropertyDescriptor? enumProperty = null)
         {
             var nestedName = NestedFieldName(key);
             var variable = new LocalValue
@@ -675,6 +701,14 @@ namespace DesktopAutomationApp.ViewModels
                 Cardinality = ResultCardinality.Single,
                 Value = literal?.DeepClone()
             };
+            if (kind == StepValueKind.Enum && enumProperty is not null)
+            {
+                variable.EnumTypeName = enumProperty.EnumTypeName;
+                variable.EnumValues = enumProperty.EnumValues?.ToList();
+                variable.EnumDisplayNames = enumProperty.EnumDisplayNames is null
+                    ? null
+                    : new Dictionary<string, string>(enumProperty.EnumDisplayNames, StringComparer.Ordinal);
+            }
             _draftStepVariables.Add(variable);
             _valueReferenceSources.AddVariable(variable);
             _variableUsageCounts = null;
@@ -855,12 +889,46 @@ namespace DesktopAutomationApp.ViewModels
                 Scope = JobVariableScope.StepValue,
                 ValueKind = source.ValueKind,
                 Cardinality = source.Cardinality,
-                Value = source.Value?.DeepClone()
+                Value = source.Value?.DeepClone(),
+                EnumTypeName = source.EnumTypeName,
+                EnumValues = source.EnumValues?.ToList(),
+                EnumDisplayNames = source.EnumDisplayNames is null
+                    ? null
+                    : new Dictionary<string, string>(source.EnumDisplayNames, StringComparer.Ordinal)
             };
             _draftStepVariables.Add(detached);
             _valueReferenceSources.AddVariable(detached);
             _variableUsageCounts = null;
             return detached;
+        }
+
+        private static void ApplyEnumMetadata(
+            JobVariable variable,
+            string enumTypeName,
+            IReadOnlyList<StepFieldOptionDescriptor>? options,
+            IReadOnlyList<string>? allowedValues)
+        {
+            if (variable.ValueKind != ResultValueKind.Enum) return;
+            variable.EnumTypeName = enumTypeName;
+            variable.EnumValues = (options?.Select(option => option.Value)
+                                   ?? allowedValues
+                                   ?? [])
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            variable.EnumDisplayNames = options?
+                .Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
+                .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
+            if (variable.EnumDisplayNames is { Count: 0 }) variable.EnumDisplayNames = null;
+        }
+
+        private static void ApplyEnumMetadata(JobVariable variable, ResultPropertyDescriptor property)
+        {
+            if (variable.ValueKind != ResultValueKind.Enum) return;
+            variable.EnumTypeName = property.EnumTypeName;
+            variable.EnumValues = property.EnumValues?.ToList();
+            variable.EnumDisplayNames = property.EnumDisplayNames is null
+                ? null
+                : new Dictionary<string, string>(property.EnumDisplayNames, StringComparer.Ordinal);
         }
 
         private JobVariable? CreateJobVariable(
@@ -935,8 +1003,8 @@ namespace DesktopAutomationApp.ViewModels
                     _jobVariables,
                     _providerSources.Where(source => !source.IsSensitive).ToArray(),
                     field.Id,
-                    (key, kind, literal) => ResolveNestedInputReference(
-                        definition, field, key, kind, literal, inputs),
+                    (key, kind, literal, enumProperty) => ResolveNestedInputReference(
+                        definition, field, key, kind, literal, inputs, enumProperty),
                     _valueReferenceSources)
                 : null;
 

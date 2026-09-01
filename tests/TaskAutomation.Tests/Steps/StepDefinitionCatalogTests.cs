@@ -2217,16 +2217,160 @@ public sealed class StepDefinitionCatalogTests
         Assert.Equal("mode-test", field.SelectedEnumOption?.Value);
     }
 
+    [Fact]
+    public void GeneratedConditionEditor_UsesEnumMetadataFromJobVariable()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Mode",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("mode-test"),
+            EnumTypeName = "workflow.mode",
+            EnumValues = ["mode-prod", "mode-test"],
+            EnumDisplayNames = new Dictionary<string, string>
+            {
+                ["mode-prod"] = "Production",
+                ["mode-test"] = "Test"
+            }
+        };
+
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [],
+            [variable],
+            nestedInputResolver: CreateConditionComparisonEditor);
+        var row = Assert.Single(editor.Conditions);
+
+        Assert.Equal("workflow.mode", row.SelectedProperty?.EnumTypeName);
+        Assert.Equal(
+            [("mode-prod", "Production"), ("mode-test", "Test")],
+            row.ComparisonField!.EnumOptions.Select(option => (option.Value, option.Label)));
+        Assert.True(row.IsValid, row.ComparisonValueValidationError);
+    }
+
+    [Fact]
+    public void GeneratedEnumField_PreservesUnknownStoredValueUntilUserChangesIt()
+    {
+        var descriptor = new StepFieldDescriptor(
+            "mode", "Mode", StepValueKind.Enum, Required: true,
+            DefaultValue: JsonValue.Create("known"),
+            Constraints: new StepFieldConstraints(AllowedValues: ["known", "other"]),
+            Options:
+            [
+                new StepFieldOptionDescriptor("known", "Known", "Known"),
+                new StepFieldOptionDescriptor("other", "Other", "Other")
+            ]);
+        var stored = new LocalValue
+        {
+            Name = "Mode",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("removed")
+        };
+        var picker = new ValueReferencePickerViewModel(
+            [], StepInputContractRegistry.ForField(descriptor), false, [stored]);
+        var input = new GeneratedResultBindingEditorViewModel(
+            JsonSerializer.SerializeToNode(new ResultBinding
+            {
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = stored.Id.ToString("D")
+            }),
+            picker);
+
+        var field = new GeneratedStepFieldViewModel(
+            descriptor, JsonValue.Create("removed"), inputReferenceEditor: input);
+
+        Assert.Equal("removed", field.InputText);
+        Assert.Equal("removed", field.SelectedEnumOption?.Value);
+        Assert.Equal("removed", stored.Value!.GetValue<string>());
+    }
+
+    [Fact]
+    public void ValueProviderDescriptor_PreservesEnumSchemaAndSeparatesDifferentEnumTypes()
+    {
+        var first = new JobVariable
+        {
+            Name = "First",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("Active"),
+            EnumTypeName = "workflow.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var second = new JobVariable
+        {
+            Name = "Second",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("Active"),
+            EnumTypeName = "window.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+
+        var firstProperty = ValueProviderSourceDescriptor.FromVariable(first).ToResultProperty();
+        var secondProperty = ValueProviderSourceDescriptor.FromVariable(second).ToResultProperty();
+
+        Assert.Equal(["Active", "Inactive"], firstProperty.EnumValues);
+        Assert.False(StepResultMetadata.AreComparable(firstProperty, secondProperty));
+    }
+
+    [Fact]
+    public void GeneratedConditionEditor_RejectsComparisonReferenceWithDifferentEnumType()
+    {
+        var actual = new JobVariable
+        {
+            Name = "Workflow state",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("Active"),
+            EnumTypeName = "workflow.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var expected = new JobVariable
+        {
+            Name = "Window state",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("Active"),
+            EnumTypeName = "window.state",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var editor = new GeneratedConditionEditorViewModel(
+            null,
+            [],
+            [actual],
+            nestedInputResolver: (key, kind, literal, _) =>
+            {
+                var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
+                var picker = new ValueReferencePickerViewModel(
+                    [], StepInputContractRegistry.ForField(descriptor), false, [expected]);
+                return new GeneratedResultBindingEditorViewModel(
+                    JsonSerializer.SerializeToNode(new ResultBinding
+                    {
+                        ProviderId = ValueProviderIds.JobVariable,
+                        SourceId = expected.Id.ToString("D")
+                    }),
+                    picker);
+            });
+        var row = Assert.Single(editor.Conditions);
+
+        Assert.False(row.IsComparisonValueValid);
+        Assert.False(row.IsValid);
+    }
+
     private static GeneratedResultBindingEditorViewModel CreateConditionComparisonEditor(
         string key,
         StepValueKind kind,
-        JsonNode? literal)
+        JsonNode? literal,
+        ResultPropertyDescriptor? enumProperty)
     {
         var value = new LocalValue
         {
             Name = key,
             ValueKind = JobVariableInputMigration.MapKind(kind),
-            Value = literal?.DeepClone()
+            Value = literal?.DeepClone(),
+            EnumTypeName = enumProperty?.EnumTypeName,
+            EnumValues = enumProperty?.EnumValues?.ToList(),
+            EnumDisplayNames = enumProperty?.EnumDisplayNames is null
+                ? null
+                : new Dictionary<string, string>(enumProperty.EnumDisplayNames, StringComparer.Ordinal)
         };
         var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
         var picker = new ValueReferencePickerViewModel(
@@ -2347,7 +2491,7 @@ public sealed class StepDefinitionCatalogTests
             var editor = new GeneratedConditionEditorViewModel(
                 null,
                 [source],
-                nestedInputResolver: (_, kind, literal) =>
+                nestedInputResolver: (_, kind, literal, _) =>
                 {
                     var descriptor = new StepFieldDescriptor(
                         "comparison", string.Empty, kind, DefaultValue: literal);
@@ -2412,7 +2556,7 @@ public sealed class StepDefinitionCatalogTests
         var editor = new GeneratedConditionEditorViewModel(
             JsonSerializer.SerializeToNode(settings),
             [source],
-            nestedInputResolver: (_, kind, literal) =>
+            nestedInputResolver: (_, kind, literal, _) =>
             {
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
@@ -2498,7 +2642,7 @@ public sealed class StepDefinitionCatalogTests
         var editor = new GeneratedConditionEditorViewModel(
             null,
             [source],
-            nestedInputResolver: (_, kind, literal) =>
+            nestedInputResolver: (_, kind, literal, _) =>
             {
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
@@ -2553,7 +2697,7 @@ public sealed class StepDefinitionCatalogTests
                 new GeneratedConditionEditorViewModel(
                     value,
                     [source],
-                    nestedInputResolver: (_, kind, literal) =>
+                    nestedInputResolver: (_, kind, literal, _) =>
                     {
                         comparisonValue.Value = literal?.DeepClone() ?? JsonValue.Create(false);
                         var descriptor = new StepFieldDescriptor(

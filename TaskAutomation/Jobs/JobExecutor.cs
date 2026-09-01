@@ -1650,7 +1650,9 @@ namespace TaskAutomation.Jobs
             ResultBinding comparison,
             object? expected) =>
             descriptor.DataType == ResultValueKind.Enum
-            && rightDescriptor.DataType == ResultValueKind.Text
+            && rightDescriptor.DataType is ResultValueKind.Text or ResultValueKind.Enum
+            && (rightDescriptor.DataType != ResultValueKind.Enum
+                || string.IsNullOrWhiteSpace(rightDescriptor.EnumTypeName))
             && string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
             && ConditionRules.IsComparisonValueValid(
                 descriptor, ConditionOperator.Equals, expected?.ToString());
@@ -1796,6 +1798,16 @@ namespace TaskAutomation.Jobs
             out object? value,
             out bool wasExecuted)
         {
+            if (binding.TryGetStepResult(out var stepResult))
+                return TryReadResultValue(
+                    results,
+                    stepResult.StepId,
+                    stepResult.PropertyId,
+                    binding.PropertyPath,
+                    conditionSources,
+                    out descriptor,
+                    out value,
+                    out wasExecuted);
             if (binding.HasProviderReference)
             {
                 var providerValue = ValueReferenceResolver.Resolve(results, binding);

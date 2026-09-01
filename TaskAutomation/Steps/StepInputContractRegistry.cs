@@ -220,7 +220,8 @@ public static class StepInputContractRegistry
     private static bool IsDirectOnly(StepFieldDescriptor field) =>
         field.ValueKind is StepValueKind.Object or StepValueKind.Collection
         || field.ValueKind == StepValueKind.Enum
-           && field.Constraints?.AllowedValues is { Count: > 0 };
+           && (field.Constraints?.AllowedValues is { Count: > 0 }
+               || field.Options is { Count: > 0 });
 
     private static bool OwnsNestedInputContract(StepFieldDescriptor field) => field.EditorHint is
         StepEditorHints.ProcessTargetPicker or StepEditorHints.ExecutableProcessTargetPicker

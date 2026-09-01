@@ -166,6 +166,12 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         {
             if (value is null || Model.ValueKind == value.Kind) return;
             Model.ValueKind = value.Kind;
+            if (Model.ValueKind != ResultValueKind.Enum)
+            {
+                Model.EnumTypeName = null;
+                Model.EnumValues = null;
+                Model.EnumDisplayNames = null;
+            }
             Model.Cardinality = ResultCardinality.Single;
             SetDefaultValue();
             LoadValue();
@@ -454,7 +460,12 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         Scope = source.Scope,
         ValueKind = source.ValueKind,
         Cardinality = source.Cardinality,
-        Value = source.Value?.DeepClone()
+        Value = source.Value?.DeepClone(),
+        EnumTypeName = source.EnumTypeName,
+        EnumValues = source.EnumValues?.ToList(),
+        EnumDisplayNames = source.EnumDisplayNames is null
+            ? null
+            : new Dictionary<string, string>(source.EnumDisplayNames, StringComparer.Ordinal)
     };
 
     private static void CopyVariable(JobVariable source, JobVariable target)
@@ -466,6 +477,11 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         target.ValueKind = source.ValueKind;
         target.Cardinality = source.Cardinality;
         target.Value = source.Value?.DeepClone();
+        target.EnumTypeName = source.EnumTypeName;
+        target.EnumValues = source.EnumValues?.ToList();
+        target.EnumDisplayNames = source.EnumDisplayNames is null
+            ? null
+            : new Dictionary<string, string>(source.EnumDisplayNames, StringComparer.Ordinal);
     }
 
     private static bool VariablesMatch(JobVariable left, JobVariable right) =>
@@ -475,7 +491,16 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         && left.Scope == right.Scope
         && left.ValueKind == right.ValueKind
         && left.Cardinality == right.Cardinality
+        && left.EnumTypeName == right.EnumTypeName
+        && (left.EnumValues ?? []).SequenceEqual(right.EnumValues ?? [], StringComparer.Ordinal)
+        && DictionaryEquals(left.EnumDisplayNames, right.EnumDisplayNames)
         && string.Equals(left.Value?.ToJsonString(), right.Value?.ToJsonString(), StringComparison.Ordinal);
+
+    private static bool DictionaryEquals(
+        IReadOnlyDictionary<string, string>? left,
+        IReadOnlyDictionary<string, string>? right) =>
+        (left ?? new Dictionary<string, string>()).OrderBy(pair => pair.Key, StringComparer.Ordinal)
+        .SequenceEqual((right ?? new Dictionary<string, string>()).OrderBy(pair => pair.Key, StringComparer.Ordinal));
 
     private void BrowseImage()
     {

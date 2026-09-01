@@ -78,6 +78,43 @@ public sealed class JobExecutorControlFlowTests
     }
 
     [Fact]
+    public async Task ExecuteJob_ConditionComparesEnumJobVariableToLiteral()
+    {
+        var variable = new JobVariable
+        {
+            Name = "Mode",
+            ValueKind = ResultValueKind.Enum,
+            Value = System.Text.Json.Nodes.JsonValue.Create("Active"),
+            EnumTypeName = "workflow.mode",
+            EnumValues = ["Active", "Inactive"]
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = variable.Id.ToString("D"),
+            Operator = ConditionOperator.Equals,
+            ComparisonValue = "Active"
+        };
+        var job = new Job
+        {
+            Name = "enum variable condition",
+            Variables = [variable],
+            Steps =
+            [
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("matched"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job);
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["matched"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
     public async Task ExecuteJob_ConditionReadsSelectedVariableSubproperty()
     {
         var variable = new JobVariable
@@ -191,6 +228,64 @@ public sealed class JobExecutorControlFlowTests
         var job = new Job
         {
             Name = "choice branch",
+            Steps =
+            [
+                choice,
+                new IfStep { Settings = new() { Conditions = [condition] } },
+                Text("production"),
+                new ElseStep(),
+                Text("development"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder().WithJobs(job).WithUserChoice("prod-id");
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["production"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
+    public async Task ExecuteJob_UserChoiceEnumComparesToStoredDirectEnumValue()
+    {
+        var choice = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new()
+            {
+                Options =
+                [
+                    new() { Id = "dev-id", Label = "Development" },
+                    new() { Id = "prod-id", Label = "Production" }
+                ]
+            }
+        };
+        var expected = new LocalValue
+        {
+            Name = "If value",
+            Scope = JobVariableScope.StepValue,
+            ValueKind = ResultValueKind.Enum,
+            Value = System.Text.Json.Nodes.JsonValue.Create("prod-id"),
+            EnumTypeName = nameof(UserChoiceResult),
+            EnumValues = ["dev-id", "prod-id"]
+        };
+        var condition = new StepCondition
+        {
+            ProviderId = ValueProviderIds.StepResult,
+            SourceId = StepResultSourceIdCodec.Create(choice.Id, "selected_option_id"),
+            Operator = ConditionOperator.Equals,
+            Comparison = new()
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = expected.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Name = "choice enum branch",
+            LocalValues = [expected],
             Steps =
             [
                 choice,
