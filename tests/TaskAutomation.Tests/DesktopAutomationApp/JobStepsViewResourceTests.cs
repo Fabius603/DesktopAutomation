@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
 public sealed class JobStepsViewResourceTests
@@ -175,6 +177,26 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("<conv:StepNumberConverter x:Key=\"StepNumberConverter\"/>", xaml);
         Assert.Contains("<conv:StepDisplayNameConverter x:Key=\"StepDisplayNameConverter\"/>", xaml);
+    }
+
+    [Fact]
+    public void StepMoreMenus_DeleteTheirOwnStepInsteadOfTheCurrentSelection()
+    {
+        var document = XDocument.Load(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+        var deleteItems = document.Descendants(presentation + "MenuItem")
+            .Where(element => element.Attribute("Header")?.Value.Contains(
+                "Ui.Job.Steps.DeleteStep", StringComparison.Ordinal) == true)
+            .ToList();
+
+        Assert.Equal(2, deleteItems.Count);
+        Assert.All(deleteItems, item =>
+        {
+            Assert.Contains("DeleteStepCommand", item.Attribute("Command")?.Value, StringComparison.Ordinal);
+            Assert.Contains("PlacementTarget.DataContext", item.Attribute("CommandParameter")?.Value, StringComparison.Ordinal);
+        });
     }
 
     [Fact]
