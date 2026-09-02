@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using TaskAutomation.Jobs.ControlFlow;
 
 namespace TaskAutomation.Jobs
 {
@@ -33,6 +34,6 @@ namespace TaskAutomation.Jobs
             => (StartSteps ?? []).Concat(Steps ?? []).Concat(EndSteps ?? []);
 
         private static bool IsFlowControlStep(JobStep step)
-            => step is IfStep or ElseIfStep or ElseStep or EndIfStep;
+            => step is IControlFlowMarker;
     }
 }

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using OpenCvSharp;
 using TaskAutomation.Contracts.Geometry;
+using TaskAutomation.Jobs.ControlFlow;
 
 namespace TaskAutomation.Jobs
 {
@@ -783,30 +784,38 @@ namespace TaskAutomation.Jobs
         public List<StepCondition> Conditions { get; set; } = new();
     }
 
-    public sealed class IfStep : JobStep
+    public sealed class IfStep : JobStep, IControlFlowMarker
     {
         [JsonPropertyName("settings")]
         public IfConditionSettings Settings { get; set; } = new();
         public override bool CanBeDisabled => false;
+        [JsonIgnore] public ControlFlowBlockKind BlockKind => ControlFlowBlockKind.Conditional;
+        [JsonIgnore] public ControlFlowMarkerRole MarkerRole => ControlFlowMarkerRole.Start;
     }
 
-    public sealed class ElseIfStep : JobStep
+    public sealed class ElseIfStep : JobStep, IControlFlowMarker
     {
         [JsonPropertyName("settings")]
         public IfConditionSettings Settings { get; set; } = new();
         public override bool CanBeDisabled => false;
+        [JsonIgnore] public ControlFlowBlockKind BlockKind => ControlFlowBlockKind.Conditional;
+        [JsonIgnore] public ControlFlowMarkerRole MarkerRole => ControlFlowMarkerRole.Section;
     }
 
     /// <summary>Marks the start of the else block. No configuration needed.</summary>
-    public sealed class ElseStep : JobStep
+    public sealed class ElseStep : JobStep, IControlFlowMarker
     {
         public override bool CanBeDisabled => false;
+        [JsonIgnore] public ControlFlowBlockKind BlockKind => ControlFlowBlockKind.Conditional;
+        [JsonIgnore] public ControlFlowMarkerRole MarkerRole => ControlFlowMarkerRole.Section;
     }
 
     /// <summary>Marks the end of an if/elseif/else block. No configuration needed.</summary>
-    public sealed class EndIfStep : JobStep
+    public sealed class EndIfStep : JobStep, IControlFlowMarker
     {
         public override bool CanBeDisabled => false;
+        [JsonIgnore] public ControlFlowBlockKind BlockKind => ControlFlowBlockKind.Conditional;
+        [JsonIgnore] public ControlFlowMarkerRole MarkerRole => ControlFlowMarkerRole.End;
     }
 
     /// <summary>Immediately ends the current job when executed.</summary>

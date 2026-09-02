@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Jobs.ControlFlow;
 using TaskAutomation.Steps;
 using TaskAutomation.Steps.Definitions;
 
@@ -78,7 +79,7 @@ public static class JobValidation
         var executionOrder = precedingPhases.Concat(steps).ToList();
         var results = steps.Select(s => ValidateStep(
             executionOrder, s, variables: variables, providerSources: providerSources)).ToList();
-        var structureErrors = GetIfStructureErrors(steps);
+        var structureErrors = GetControlFlowStructureErrors(steps);
         results = results.Select(r => structureErrors.TryGetValue(r.Step, out var error)
             ? new StepValidationResult(r.Step, false, error) : r).ToList();
         return results;
@@ -92,38 +93,34 @@ public static class JobValidation
         return null;
     }
 
-    public static bool IsIfStructureAllowed(IReadOnlyList<JobStep> steps)
-        => GetIfStructureErrors(steps).Count == 0;
+    public static bool IsControlFlowStructureAllowed(IReadOnlyList<JobStep> steps)
+        => ControlFlowStructureAnalyzer.Analyze(steps).IsValid;
 
-    private static Dictionary<JobStep, string> GetIfStructureErrors(IReadOnlyList<JobStep> steps)
+    public static bool IsIfStructureAllowed(IReadOnlyList<JobStep> steps)
+        => IsControlFlowStructureAllowed(steps);
+
+    private static Dictionary<JobStep, string> GetControlFlowStructureErrors(IReadOnlyList<JobStep> steps)
     {
-        var errors = new Dictionary<JobStep, string>();
-        var blocks = new Stack<(IfStep Step, bool SeenElse)>();
-        foreach (var step in steps)
+        return ControlFlowStructureAnalyzer.Analyze(steps).Diagnostics
+            .GroupBy(diagnostic => diagnostic.Step)
+            .ToDictionary(
+                group => group.Key,
+                group => string.Join(Environment.NewLine, group.Select(FormatControlFlowDiagnostic)));
+    }
+
+    private static string FormatControlFlowDiagnostic(ControlFlowDiagnostic diagnostic)
+    {
+        return diagnostic.Code switch
         {
-            switch (step)
-            {
-                case IfStep current:
-                    if (blocks.Count > 0) errors[current] = "Verschachtelte If-Bloecke sind nicht erlaubt.";
-                    blocks.Push((current, false));
-                    break;
-                case ElseIfStep:
-                    if (blocks.Count == 0) errors[step] = "ElseIf besitzt keinen zugehoerigen If-Step.";
-                    else if (blocks.Peek().SeenElse) errors[step] = "ElseIf darf nicht hinter Else stehen.";
-                    break;
-                case ElseStep:
-                    if (blocks.Count == 0) errors[step] = "Else besitzt keinen zugehoerigen If-Step.";
-                    else if (blocks.Peek().SeenElse) errors[step] = "Der If-Block enthaelt mehr als einen Else-Step.";
-                    else { var block = blocks.Pop(); blocks.Push((block.Step, true)); }
-                    break;
-                case EndIfStep:
-                    if (blocks.Count == 0) errors[step] = "EndIf besitzt keinen zugehoerigen If-Step.";
-                    else blocks.Pop();
-                    break;
-            }
-        }
-        foreach (var block in blocks) errors[block.Step] = "Fuer diesen If-Step fehlt ein EndIf-Step.";
-        return errors;
+            ControlFlowDiagnosticCodes.OrphanSection when diagnostic.Step is ElseIfStep
+                => "ElseIf besitzt keinen zugehoerigen If-Step.",
+            ControlFlowDiagnosticCodes.OrphanSection => "Else besitzt keinen zugehoerigen If-Step.",
+            ControlFlowDiagnosticCodes.SectionAfterElse => "ElseIf darf nicht hinter Else stehen.",
+            ControlFlowDiagnosticCodes.DuplicateElse => "Der If-Block enthaelt mehr als einen Else-Step.",
+            ControlFlowDiagnosticCodes.OrphanEnd => "EndIf besitzt keinen zugehoerigen If-Step.",
+            ControlFlowDiagnosticCodes.MissingEnd => "Fuer diesen If-Step fehlt ein EndIf-Step.",
+            _ => diagnostic.Code
+        };
     }
 
     public static StepValidationResult ValidateStep(

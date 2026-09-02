@@ -2171,6 +2171,9 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Steps.ShowDetails" xml:space="preserve">
     <value>Details anzeigen</value>
   </data>
+  <data name="Ui.Job.Steps.EmptyBranchPlaceholder" xml:space="preserve">
+    <value>Step hier ablegen</value>
+  </data>
   <data name="Ui.Job.Steps.DetailsSources" xml:space="preserve"><value>Quellen und Abhängigkeiten</value></data>
   <data name="Ui.Job.Steps.DetailsInputs" xml:space="preserve"><value>Eingaben</value></data>
   <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Erkennung</value></data>

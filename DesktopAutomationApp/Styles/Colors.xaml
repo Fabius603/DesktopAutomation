@@ -30,6 +30,9 @@
     <Color x:Key="App.Color.SurfaceRaised">#FF25282F</Color>
     <Color x:Key="App.Color.SurfaceHover">#FF292D34</Color>
     <Color x:Key="App.Color.SurfacePressed">#FF30353D</Color>
+    <Color x:Key="App.Color.ControlFlowBlock">#FF2B3038</Color>
+    <Color x:Key="App.Color.ControlFlowBlockHover">#FF343B45</Color>
+    <Color x:Key="App.Color.ControlFlowBlockBorder">#FF555E6B</Color>
     <Color x:Key="App.Color.SidebarBackground">#FF14161A</Color>
     <Color x:Key="App.Color.CardBorder">#FF30343B</Color>
     <Color x:Key="App.Color.BorderSubtle">#FF30343B</Color>
@@ -42,6 +45,9 @@
     <SolidColorBrush x:Key="App.Brush.SurfaceRaised" Color="{DynamicResource App.Color.SurfaceRaised}" />
     <SolidColorBrush x:Key="App.Brush.SurfaceHover" Color="{DynamicResource App.Color.SurfaceHover}" />
     <SolidColorBrush x:Key="App.Brush.SurfacePressed" Color="{DynamicResource App.Color.SurfacePressed}" />
+    <SolidColorBrush x:Key="App.Brush.ControlFlowBlock" Color="{DynamicResource App.Color.ControlFlowBlock}" />
+    <SolidColorBrush x:Key="App.Brush.ControlFlowBlockHover" Color="{DynamicResource App.Color.ControlFlowBlockHover}" />
+    <SolidColorBrush x:Key="App.Brush.ControlFlowBlockBorder" Color="{DynamicResource App.Color.ControlFlowBlockBorder}" />
     <SolidColorBrush x:Key="App.Brush.SidebarBackground" Color="{DynamicResource App.Color.SidebarBackground}" />
     <SolidColorBrush x:Key="App.Brush.CardBorder" Color="{DynamicResource App.Color.CardBorder}" />
     <SolidColorBrush x:Key="App.Brush.BorderSubtle" Color="{DynamicResource App.Color.BorderSubtle}" />

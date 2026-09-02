@@ -27,6 +27,7 @@ using TaskAutomation.Logging;
 using TaskAutomation.Timing;
 using TaskAutomation.WindowsIntegration;
 using TaskAutomation.Security;
+using TaskAutomation.Jobs.ControlFlow;
 
 namespace TaskAutomation.Jobs
 {
@@ -519,7 +520,7 @@ namespace TaskAutomation.Jobs
 
                         if (debugSession != null
                             && step.IsEnabled
-                            && step is (IfStep or ElseIfStep or ElseStep or EndIfStep))
+                            && step is IControlFlowMarker)
                             await debugSession.BeforeStepAsync(step, "Hauptphase", ct, BuildStepStartDetails(step, "Hauptphase", iteration)).ConfigureAwait(false);
 
                         // ── Control-flow steps: handle without executing ────────
@@ -836,7 +837,7 @@ namespace TaskAutomation.Jobs
 
                 if (debugSession != null
                     && step.IsEnabled
-                    && step is (IfStep or ElseIfStep or ElseStep or EndIfStep))
+                    && step is IControlFlowMarker)
                     await debugSession.BeforeStepAsync(step, phaseName, ct, BuildStepStartDetails(step, phaseName, null)).ConfigureAwait(false);
 
                 if (ProcessConditionControlFlow(

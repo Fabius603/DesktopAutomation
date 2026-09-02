@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Text.Json;
 using TaskAutomation.Jobs;
+using TaskAutomation.Jobs.ControlFlow;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;
 using TaskAutomation.Steps.Definitions;
@@ -455,6 +456,8 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand MoveStepUpCommand { get; }
         public ICommand MoveStepDownCommand { get; }
         public ICommand ReorderStepCommand { get; }
+        public StepDragDrop.DragIndexResolver DragIndicesResolver { get; }
+        public StepDragDrop.PreviewValidator PreviewMoveValidator { get; }
         public ICommand DeleteStepCommand { get; }
         public ICommand DeleteSelectedCommand { get; }
         public ICommand UndoCommand { get; }
@@ -560,6 +563,8 @@ namespace DesktopAutomationApp.ViewModels
                 s => { var t = GetSingleSelection(s); return !IsDebugActive && !IsMutationBusy && t != null && t is not TaskAutomation.Jobs.ElseStep and not TaskAutomation.Jobs.EndIfStep; });
             MoveStepUpCommand = new AsyncRelayCommand<JobStep?>(s => MoveSelectionRelativeAsync(s, -1), s => !IsDebugActive && !IsMutationBusy && CanMoveSelectionRelative(s, -1));
             MoveStepDownCommand = new AsyncRelayCommand<JobStep?>(s => MoveSelectionRelativeAsync(s, +1), s => !IsDebugActive && !IsMutationBusy && CanMoveSelectionRelative(s, +1));
+            DragIndicesResolver = ResolveDragIndices;
+            PreviewMoveValidator = CanPreviewMove;
             ReorderStepCommand = new AsyncRelayCommand<StepDragDrop.MoveRequest>(MoveStepAsync, _ => !IsDebugActive && !IsMutationBusy);
             DeleteStepCommand = new AsyncRelayCommand<JobStep?>(DeleteStepAsync, s => !IsDebugActive && !IsMutationBusy && (s ?? SelectedStep) != null);
             DeleteSelectedCommand = new AsyncRelayCommand(DeleteSelectedAsync, () => !IsDebugActive && !IsMutationBusy && (SelectedSteps.Count > 0 || SelectedStep != null));
@@ -1677,7 +1682,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 foreach (var index in indices.ToArray())
                 {
-                    if (section[index] is not (IfStep or ElseIfStep or ElseStep or EndIfStep)) continue;
+                    if (section[index] is not IControlFlowMarker) continue;
                     var first = FindOwningIfIndex(section, index);
                     var last = first >= 0 ? FindMatchingEndIfIndex(section, first) : -1;
                     if (first < 0 || last < first) continue;
@@ -1821,14 +1826,6 @@ namespace DesktopAutomationApp.ViewModels
 
             if (result == true && vm.CreatedStep != null)
             {
-                // Prevent nesting: IfStep cannot be inside an existing block.
-                // Automatically advance to the next valid (non-nested) position.
-                if (vm.CreatedStep is TaskAutomation.Jobs.IfStep && CountOpenBlocksAt(insertIndex) > 0)
-                {
-                    while (insertIndex < _steps.Count && CountOpenBlocksAt(insertIndex) > 0)
-                        insertIndex++;
-                }
-
                 await RunMutationAsync(async () =>
                 {
                     await PushUndoAsync();
@@ -1960,51 +1957,19 @@ namespace DesktopAutomationApp.ViewModels
             reordered.RemoveAll(movingSet.Contains);
             var insertAt = reordered.IndexOf(anchor) + (delta > 0 ? 1 : 0);
             reordered.InsertRange(insertAt, moving);
-            return JobValidation.IsIfStructureAllowed(reordered) && !section.SequenceEqual(reordered);
+            return JobValidation.IsControlFlowStructureAllowed(reordered) && !section.SequenceEqual(reordered);
         }
 
         private async Task MoveStepAsync(StepDragDrop.MoveRequest? request)
         {
-            if (request is null) return;
-            if (request.Source is not ObservableRangeCollection<JobStep> source
-                || request.Target is not ObservableRangeCollection<JobStep> target
-                || !IsKnownSection(source)
-                || !IsKnownSection(target)
-                || request.SourceIndex < 0
-                || request.SourceIndex >= source.Count)
-                return;
-
-            var dragged = source[request.SourceIndex];
-            var moving = GetOrderedSelection(dragged, expandStructures: true);
-            if (moving.Count == 0 || moving.Any(step => !source.Contains(step))) return;
-            var movingIndices = moving.Select(source.IndexOf).OrderBy(index => index).ToList();
-            var first = movingIndices[0];
-            var last = movingIndices[^1];
-            int insertIndex = Math.Clamp(request.TargetIndex, 0, target.Count);
-
-            // Ein Drop innerhalb des gerade gezogenen Blocks verändert nichts.
-            if (ReferenceEquals(source, target)
-                && movingIndices.Contains(Math.Clamp(insertIndex, 0, Math.Max(0, source.Count - 1))))
-                return;
-
-            var sourceSimulation = source.ToList();
-            sourceSimulation.RemoveAll(moving.ToHashSet().Contains);
-
-            var targetSimulation = ReferenceEquals(source, target)
-                ? sourceSimulation
-                : target.ToList();
-
-            if (ReferenceEquals(source, target))
-                insertIndex -= movingIndices.Count(index => index < insertIndex);
-            insertIndex = Math.Clamp(insertIndex, 0, targetSimulation.Count);
-            targetSimulation.InsertRange(insertIndex, moving);
-
-            if (!JobValidation.IsIfStructureAllowed(sourceSimulation)
-                || !JobValidation.IsIfStructureAllowed(targetSimulation))
-                return;
-
-            if (ReferenceEquals(source, target)
-                && source.SequenceEqual(targetSimulation))
+            if (request is null
+                || !TryCreateMoveSimulation(
+                    request,
+                    out var source,
+                    out var target,
+                    out var moving,
+                    out var sourceSimulation,
+                    out var targetSimulation))
                 return;
 
             await RunMutationAsync(async () =>
@@ -2039,6 +2004,82 @@ namespace DesktopAutomationApp.ViewModels
             });
         }
 
+        private IReadOnlyList<int> ResolveDragIndices(StepDragDrop.DragStartRequest request)
+        {
+            if (request.Source is not ObservableRangeCollection<JobStep> source
+                || !IsKnownSection(source)
+                || request.SourceIndex < 0
+                || request.SourceIndex >= source.Count)
+                return request.SelectedIndices;
+
+            var moving = GetOrderedSelection(source[request.SourceIndex], expandStructures: true);
+            return moving.Select(source.IndexOf).Where(index => index >= 0).OrderBy(index => index).ToArray();
+        }
+
+        private bool CanPreviewMove(StepDragDrop.MoveRequest request)
+            => !IsDebugActive
+               && !IsMutationBusy
+               && TryCreateMoveSimulation(request, out _, out _, out _, out _, out _);
+
+        private bool TryCreateMoveSimulation(
+            StepDragDrop.MoveRequest request,
+            out ObservableRangeCollection<JobStep> source,
+            out ObservableRangeCollection<JobStep> target,
+            out List<JobStep> moving,
+            out List<JobStep> sourceSimulation,
+            out List<JobStep> targetSimulation)
+        {
+            source = null!;
+            target = null!;
+            moving = [];
+            sourceSimulation = [];
+            targetSimulation = [];
+            if (request.Source is not ObservableRangeCollection<JobStep> sourceCollection
+                || request.Target is not ObservableRangeCollection<JobStep> targetCollection
+                || !IsKnownSection(sourceCollection)
+                || !IsKnownSection(targetCollection)
+                || request.SourceIndex < 0
+                || request.SourceIndex >= sourceCollection.Count)
+                return false;
+
+            // Assign only after all type and section checks passed so callers receive a coherent simulation.
+            source = sourceCollection;
+            target = targetCollection;
+
+            var dragged = sourceCollection[request.SourceIndex];
+            moving = GetOrderedSelection(dragged, expandStructures: true);
+            if (moving.Count == 0 || moving.Any(step => !sourceCollection.Contains(step))) return false;
+            var movingIndices = moving.Select(sourceCollection.IndexOf).OrderBy(index => index).ToList();
+            int insertIndex = Math.Clamp(request.TargetIndex, 0, targetCollection.Count);
+
+            // Ein Drop innerhalb des gerade gezogenen Blocks verändert nichts.
+            if (ReferenceEquals(sourceCollection, targetCollection)
+                && movingIndices.Contains(Math.Clamp(insertIndex, 0, Math.Max(0, sourceCollection.Count - 1))))
+                return false;
+
+            sourceSimulation = sourceCollection.ToList();
+            sourceSimulation.RemoveAll(moving.ToHashSet().Contains);
+
+            targetSimulation = ReferenceEquals(sourceCollection, targetCollection)
+                ? sourceSimulation
+                : targetCollection.ToList();
+
+            if (ReferenceEquals(sourceCollection, targetCollection))
+                insertIndex -= movingIndices.Count(index => index < insertIndex);
+            insertIndex = Math.Clamp(insertIndex, 0, targetSimulation.Count);
+            targetSimulation.InsertRange(insertIndex, moving);
+
+            if (!JobValidation.IsControlFlowStructureAllowed(sourceSimulation)
+                || !JobValidation.IsControlFlowStructureAllowed(targetSimulation))
+                return false;
+
+            if (ReferenceEquals(sourceCollection, targetCollection)
+                && sourceCollection.SequenceEqual(targetSimulation))
+                return false;
+
+            return true;
+        }
+
         private bool CanMoveSelectionToSection(JobStep? step, ObservableRangeCollection<JobStep> target)
         {
             var moving = GetOrderedSelection(step, expandStructures: true);
@@ -2046,8 +2087,8 @@ namespace DesktopAutomationApp.ViewModels
                    && FindSection(moving[0]) is { } source
                    && moving.All(source.Contains)
                    && !ReferenceEquals(source, target)
-                   && JobValidation.IsIfStructureAllowed(source.Where(item => !moving.Contains(item)).ToList())
-                   && JobValidation.IsIfStructureAllowed(target.Concat(moving).ToList());
+                   && JobValidation.IsControlFlowStructureAllowed(source.Where(item => !moving.Contains(item)).ToList())
+                   && JobValidation.IsControlFlowStructureAllowed(target.Concat(moving).ToList());
         }
 
         private Task MoveSelectionToSectionAsync(JobStep? step, ObservableRangeCollection<JobStep> target)
@@ -2094,33 +2135,18 @@ namespace DesktopAutomationApp.ViewModels
 
         private static int FindOwningIfIndex(IReadOnlyList<JobStep> steps, int index)
         {
-            if (index >= 0 && index < steps.Count && steps[index] is IfStep) return index;
-            int depth = 0;
-            for (int i = index - 1; i >= 0; i--)
-            {
-                if (steps[i] is EndIfStep) depth++;
-                else if (steps[i] is IfStep)
-                {
-                    if (depth == 0) return i;
-                    depth--;
-                }
-            }
-            return -1;
+            if (index < 0 || index >= steps.Count) return -1;
+            return ControlFlowStructureAnalyzer.Analyze(steps)
+                .GetOwningBlock(index, ControlFlowBlockKind.Conditional)?.StartIndex ?? -1;
         }
 
         private static int FindMatchingEndIfIndex(IReadOnlyList<JobStep> steps, int ifIndex)
         {
-            int depth = 0;
-            for (int i = ifIndex + 1; i < steps.Count; i++)
-            {
-                if (steps[i] is IfStep) depth++;
-                else if (steps[i] is EndIfStep)
-                {
-                    if (depth == 0) return i;
-                    depth--;
-                }
-            }
-            return -1;
+            if (ifIndex < 0 || ifIndex >= steps.Count) return -1;
+            var structure = ControlFlowStructureAnalyzer.Analyze(steps);
+            var block = structure.GetBlockStartingAt(ifIndex)
+                        ?? structure.GetOwningBlock(ifIndex, ControlFlowBlockKind.Conditional);
+            return block?.EndIndex ?? -1;
         }
 
         private void ScheduleValidation()
@@ -2539,7 +2565,7 @@ namespace DesktopAutomationApp.ViewModels
             return clone;
         }
 
-        // ---------- If/ElseIf/Else helpers ----------
+        // ---------- Shared control-flow projection helpers ----------
 
         /// <summary>
         /// Scans backwards from <paramref name="fromIndex"/> to find the IfStep that owns the
@@ -2548,17 +2574,9 @@ namespace DesktopAutomationApp.ViewModels
         /// </summary>
         private int FindOwningIfStep(int fromIndex)
         {
-            int depth = 0;
-            for (int i = fromIndex - 1; i >= 0; i--)
-            {
-                if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth++;
-                else if (_steps[i] is TaskAutomation.Jobs.IfStep)
-                {
-                    if (depth == 0) return i;
-                    depth--;
-                }
-            }
-            return -1;
+            if (fromIndex < 0 || fromIndex >= _steps.Count) return -1;
+            return ControlFlowStructureAnalyzer.Analyze(_steps)
+                .GetOwningBlock(fromIndex, ControlFlowBlockKind.Conditional)?.StartIndex ?? -1;
         }
 
         /// <summary>
@@ -2568,14 +2586,9 @@ namespace DesktopAutomationApp.ViewModels
         /// </summary>
         private int FindInsertBeforeElseOrEndIf(int ifIdx, int endIfIdx)
         {
-            int depth = 0;
-            for (int i = ifIdx + 1; i < endIfIdx; i++)
-            {
-                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
-                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth--;
-                else if (_steps[i] is TaskAutomation.Jobs.ElseStep && depth == 0) return i;
-            }
-            return endIfIdx;
+            var block = ControlFlowStructureAnalyzer.Analyze(_steps).GetBlockStartingAt(ifIdx);
+            return block?.Sections.FirstOrDefault(section => section.Marker is ElseStep)?.MarkerIndex
+                   ?? endIfIdx;
         }
 
         /// <summary>
@@ -2590,69 +2603,13 @@ namespace DesktopAutomationApp.ViewModels
             var step = steps[from];
 
             // Regular steps cannot break the control-flow structure.
-            if (step is not (TaskAutomation.Jobs.IfStep     or
-                             TaskAutomation.Jobs.ElseIfStep or
-                             TaskAutomation.Jobs.ElseStep   or
-                             TaskAutomation.Jobs.EndIfStep))
+            if (step is not IControlFlowMarker)
                 return false;
 
             var sim = new System.Collections.Generic.List<JobStep>(steps);
             sim.RemoveAt(from);
             sim.Insert(to, step);
-            return !JobValidation.IsIfStructureAllowed(sim);
-        }
-
-        /// <summary>
-        /// Validates that every If-block in <paramref name="steps"/> obeys
-        /// If → ElseIf* → Else? → EndIf ordering (no ElseIf after Else, no orphaned markers).
-        /// </summary>
-#if false // Fachregel liegt in TaskAutomation.JobValidation.IsIfStructureAllowed.
-        private static bool IsValidIfStructure(System.Collections.Generic.IReadOnlyList<JobStep> steps)
-        {
-            // Each stack entry: true = an Else has already been seen in this block.
-            var seenElse = new System.Collections.Generic.Stack<bool>();
-            foreach (var s in steps)
-            {
-                if (s is TaskAutomation.Jobs.IfStep)
-                {
-                    if (seenElse.Count > 0) return false; // no nesting allowed
-                    seenElse.Push(false);
-                }
-                else if (s is TaskAutomation.Jobs.ElseIfStep)
-                {
-                    if (seenElse.Count == 0) return false; // no owning If
-                    if (seenElse.Peek()) return false;     // ElseIf after Else
-                }
-                else if (s is TaskAutomation.Jobs.ElseStep)
-                {
-                    if (seenElse.Count == 0) return false; // no owning If
-                    if (seenElse.Peek()) return false;     // duplicate Else
-                    seenElse.Pop();
-                    seenElse.Push(true);
-                }
-                else if (s is TaskAutomation.Jobs.EndIfStep)
-                {
-                    if (seenElse.Count == 0) return false; // no owning If
-                    seenElse.Pop();
-                }
-            }
-            return seenElse.Count == 0; // every If must be closed
-        }
-#endif
-
-        /// <summary>
-        /// Returns the number of currently open (unclosed) If-blocks at the given insert index.
-        /// Used to prevent nesting: returns > 0 when the position is inside an existing block.
-        /// </summary>
-        private int CountOpenBlocksAt(int insertIndex)
-        {
-            int depth = 0;
-            for (int i = 0; i < insertIndex && i < _steps.Count; i++)
-            {
-                if (_steps[i] is TaskAutomation.Jobs.IfStep)    depth++;
-                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep && depth > 0) depth--;
-            }
-            return depth;
+            return !JobValidation.IsControlFlowStructureAllowed(sim);
         }
 
         /// <summary>
@@ -2661,17 +2618,11 @@ namespace DesktopAutomationApp.ViewModels
         /// </summary>
         private int FindMatchingEndIf(int fromIndex)
         {
-            int depth = 0;
-            for (int i = fromIndex + 1; i < _steps.Count; i++)
-            {
-                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
-                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep)
-                {
-                    if (depth == 0) return i;
-                    depth--;
-                }
-            }
-            return -1;
+            if (fromIndex < 0 || fromIndex >= _steps.Count) return -1;
+            var structure = ControlFlowStructureAnalyzer.Analyze(_steps);
+            var block = structure.GetBlockStartingAt(fromIndex)
+                        ?? structure.GetOwningBlock(fromIndex, ControlFlowBlockKind.Conditional);
+            return block?.EndIndex ?? -1;
         }
 
         /// <summary>
@@ -2680,14 +2631,9 @@ namespace DesktopAutomationApp.ViewModels
         /// </summary>
         private bool HasElseInBlock(int fromIndex, int endIfIndex)
         {
-            int depth = 0;
-            for (int i = fromIndex + 1; i < endIfIndex; i++)
-            {
-                if (_steps[i] is TaskAutomation.Jobs.IfStep) depth++;
-                else if (_steps[i] is TaskAutomation.Jobs.EndIfStep) depth--;
-                else if (_steps[i] is TaskAutomation.Jobs.ElseStep && depth == 0) return true;
-            }
-            return false;
+            var block = ControlFlowStructureAnalyzer.Analyze(_steps).GetBlockStartingAt(fromIndex);
+            return block?.EndIndex == endIfIndex
+                   && block.Sections.Any(section => section.Marker is ElseStep);
         }
 
         private async Task AddElseIfAsync(JobStep? step)

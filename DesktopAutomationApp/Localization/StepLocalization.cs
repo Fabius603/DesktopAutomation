@@ -1,5 +1,6 @@
 using System.Collections;
 using TaskAutomation.Jobs;
+using TaskAutomation.Jobs.ControlFlow;
 using TaskAutomation.Steps;
 
 namespace DesktopAutomationApp.Localization;
@@ -107,7 +108,7 @@ public static class StepLocalization
         $"{Type(type)} ({Loc.Format("Step.Number", oneBasedIndex)})";
 
     public static bool IsNumbered(JobStep step) =>
-        step is not (IfStep or ElseIfStep or ElseStep or EndIfStep);
+        step is not IControlFlowMarker;
 
     public static int? DisplayNumber(IEnumerable? steps, JobStep target)
     {

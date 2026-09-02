@@ -113,6 +113,29 @@ New or changed job steps must follow the repository contracts:
   - `TaskAutomation/Steps/ADDING_A_JOB_STEP.md`
   - `TaskAutomation/Steps/RESULT_CONTRACTS.md`
 
+## Shared step and control-flow logic
+
+`DesktopAutomationApp` is a presentation layer. It must not own rules that determine
+what a job step means, whether it is valid, how it is persisted, or how it executes.
+
+- Put step models, defaults, input and result contracts, business validation,
+  reference materialization, backward-compatibility rules, and execution behavior in
+  `TaskAutomation` or a lower platform-neutral project.
+- Put control-flow structure, block matching, nesting rules, legal insertion and move
+  rules, and runtime transitions outside `DesktopAutomationApp`. Validation, execution,
+  and every frontend must consume the same shared implementation.
+- Keep only presentation and interaction concerns in `DesktopAutomationApp`, such as
+  XAML, editor state, focus, commands, visual formatting, localized labels, and mapping
+  shared diagnostic codes to localized messages.
+- Do not duplicate backend rules in view models or converters. A frontend may project
+  shared metadata for binding, but it must not independently reimplement the rule.
+- When changing an existing step, inspect the touched frontend code for business logic
+  and move that logic into the shared layer as part of the change when practical. Do
+  not perform unrelated repository-wide migrations solely for cleanup.
+- New steps and new control-flow constructs must follow this boundary from the start.
+- Shared logic must not depend on WPF types, `DesktopAutomationApp`, localized UI text,
+  dialogs, observable collections, or frontend services.
+
 ## Definition of done
 
 A change is complete only when:

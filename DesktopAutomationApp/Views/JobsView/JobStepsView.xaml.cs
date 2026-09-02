@@ -35,7 +35,11 @@ namespace DesktopAutomationApp.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             PreviewKeyDown += OnPreviewKeyDown;
+            PreviewMouseDown += OnPreviewMouseDown;
         }
+
+        private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) =>
+            CloseOpenStepDetailsPopups();
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -79,7 +83,6 @@ namespace DesktopAutomationApp.Views
             }
 
             if (AppShortcutGestures.Matches(e, AppShortcutGestures.AddStep)) Execute(_vm.AddStepCommand, null, e);
-            else if (AppShortcutGestures.Matches(e, AppShortcutGestures.EditStep)) Execute(_vm.EditStepCommand, _vm.SelectedStep, e);
             else if (AppShortcutGestures.Matches(e, AppShortcutGestures.DuplicateStep)) Execute(_vm.DuplicateStepCommand, null, e);
             else if (AppShortcutGestures.Matches(e, AppShortcutGestures.MoveUp)) Execute(_vm.MoveStepUpCommand, _vm.SelectedStep, e);
             else if (AppShortcutGestures.Matches(e, AppShortcutGestures.MoveDown)) Execute(_vm.MoveStepDownCommand, _vm.SelectedStep, e);
@@ -170,30 +173,34 @@ namespace DesktopAutomationApp.Views
             if (sender is not ListBox list
                 || e.OriginalSource is not DependencyObject source
                 || ItemsControl.ContainerFromElement(list, source) is not ListBoxItem item
-                || FindVisualChild<Grid>(item, "StepCardLayout") is not { } layout)
+                || item.DataContext is not JobStep step)
                 return;
 
-            var point = e.GetPosition(layout);
             var isInteractiveControl = FindVisualAncestor<ButtonBase>(source, item) is not null;
-            if (!ShouldToggleDetails(point, layout.ActualWidth, layout.RowDefinitions[0].ActualHeight, isInteractiveControl))
+            if (!ShouldOpenStepDetails(isInteractiveControl, step is not EndIfStep)
+                || FindVisualDescendant<Popup>(item) is not { } popup)
                 return;
 
-            var toggle = FindVisualChild<ToggleButton>(item, "DetailsToggle");
-            if (toggle is not null) toggle.IsChecked = toggle.IsChecked != true;
+            CloseOpenStepDetailsPopups(popup);
+            popup.IsOpen = true;
             e.Handled = true;
         }
 
-        internal static bool ShouldToggleDetails(
-            Point point,
-            double headerWidth,
-            double headerHeight,
-            bool isInteractiveControl)
+        internal static bool ShouldOpenStepDetails(bool isInteractiveControl, bool hasDetails) =>
+            !isInteractiveControl && hasDetails;
+
+        private void CloseOpenStepDetailsPopups(Popup? except = null)
         {
-            return !isInteractiveControl
-                && point.X >= 0
-                && point.X <= headerWidth
-                && point.Y >= 0
-                && point.Y <= headerHeight;
+            foreach (var list in AllStepLists())
+            {
+                for (var index = 0; index < list.Items.Count; index++)
+                {
+                    if (list.ItemContainerGenerator.ContainerFromIndex(index) is DependencyObject item
+                        && FindVisualDescendant<Popup>(item) is { } popup
+                        && !ReferenceEquals(popup, except))
+                        popup.IsOpen = false;
+                }
+            }
         }
 
         private void StepsList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -215,7 +222,6 @@ namespace DesktopAutomationApp.Views
             var count = multiple ? vm.SelectedSteps.Count : 1;
 
             var menu = new ContextMenu { PlacementTarget = item };
-            AddMenuItem(menu, Loc.Get("Ui.Common.Edit"), vm.EditStepCommand, step, Loc.Get("Shortcut.Enter"));
             if (step.CanBeDisabled)
                 AddMenuItem(menu, multiple
                     ? Loc.Format("Ui.Job.Steps.ToggleSelected", count)
@@ -361,18 +367,6 @@ namespace DesktopAutomationApp.Views
                 && point.Y >= 0 && point.Y <= header.ActualHeight;
         }
 
-        private static T? FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
-        {
-            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T match && match.Name == name) return match;
-                var nested = FindVisualChild<T>(child, name);
-                if (nested is not null) return nested;
-            }
-            return null;
-        }
-
         private static T? FindVisualAncestor<T>(DependencyObject? child, DependencyObject stopAt)
             where T : DependencyObject
         {
@@ -387,6 +381,19 @@ namespace DesktopAutomationApp.Views
                     _ => LogicalTreeHelper.GetParent(current)
                 };
             }
+            return null;
+        }
+
+        private static T? FindVisualDescendant<T>(DependencyObject parent)
+            where T : DependencyObject
+        {
+            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, index);
+                if (child is T match) return match;
+                if (FindVisualDescendant<T>(child) is { } descendant) return descendant;
+            }
+
             return null;
         }
     }

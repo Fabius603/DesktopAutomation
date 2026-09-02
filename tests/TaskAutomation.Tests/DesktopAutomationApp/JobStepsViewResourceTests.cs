@@ -336,6 +336,38 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
+    public void StepDetailsPopup_StaysOpenWhileItsContentIsUsed()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        var popupStart = xaml.IndexOf("<Popup x:Name=\"StepDetailsPopup\"", StringComparison.Ordinal);
+        var popupEnd = xaml.IndexOf('>', popupStart);
+
+        Assert.True(popupStart >= 0);
+        Assert.True(popupEnd > popupStart);
+        Assert.Contains("StaysOpen=\"True\"", xaml[popupStart..popupEnd], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ControlFlowContainers_UseConsistentSpacingAndANonCardPlaceholder()
+    {
+        var root = RepositoryRoot();
+        var converter = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Converters", "StepBlockBorderConverter.cs"));
+        var panel = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "ControlFlowBlockPanel.cs"));
+        var xaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+
+        Assert.Contains("layout.FirstInSection ? 8 : 4", converter, StringComparison.Ordinal);
+        Assert.Contains("layout.LastInSection ? 8 : 4", converter, StringComparison.Ordinal);
+        Assert.Contains("const double baseWidth = 358", panel, StringComparison.Ordinal);
+        Assert.DoesNotContain("PlaceholderBackground", panel, StringComparison.Ordinal);
+        Assert.DoesNotContain("PlaceholderBackground", xaml, StringComparison.Ordinal);
+        Assert.Contains("drawingContext.DrawLine(", panel, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void VisualOverlayEditor_UsesNonVirtualizedRowHostsForReferencePickers()
     {
         var xaml = File.ReadAllText(Path.Combine(

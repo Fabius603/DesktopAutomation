@@ -3,15 +3,18 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 
 namespace DesktopAutomationApp.Behaviors;
 
 /// <summary>
-/// Gemeinsames, layoutstabiles Drag-and-Drop fuer Step-Listen.
-/// Die Zielposition wird als Adorner gezeichnet; die Karten selbst werden erst beim Drop bewegt.
+/// Gemeinsames Drag-and-Drop fuer Step-Listen.
+/// Standardmaessig wird die Zielposition als Linie gezeichnet; optional ordnet eine Live-Vorschau
+/// die sichtbaren Karten an der gueltigen Zielposition an. Die Collections aendern sich erst beim Drop.
 /// </summary>
 public static class StepDragDrop
 {
@@ -26,6 +29,9 @@ public static class StepDragDrop
         bool InsertAfterTarget = false,
         IReadOnlyList<int>? SourceIndices = null);
     public sealed record DragPayload(IList Source, int SourceIndex, IReadOnlyList<int> SourceIndices);
+    public sealed record DragStartRequest(IList Source, int SourceIndex, IReadOnlyList<int> SelectedIndices);
+    public delegate IReadOnlyList<int> DragIndexResolver(DragStartRequest request);
+    public delegate bool PreviewValidator(MoveRequest request);
 
     public static readonly DependencyProperty MoveCommandProperty =
         DependencyProperty.RegisterAttached(
@@ -40,12 +46,74 @@ public static class StepDragDrop
     public static ICommand? GetMoveCommand(DependencyObject element)
         => element.GetValue(MoveCommandProperty) as ICommand;
 
+    public static readonly DependencyProperty IsLivePreviewEnabledProperty =
+        DependencyProperty.RegisterAttached(
+            "IsLivePreviewEnabled",
+            typeof(bool),
+            typeof(StepDragDrop),
+            new PropertyMetadata(false));
+
+    public static void SetIsLivePreviewEnabled(DependencyObject element, bool value)
+        => element.SetValue(IsLivePreviewEnabledProperty, value);
+
+    public static bool GetIsLivePreviewEnabled(DependencyObject element)
+        => (bool)element.GetValue(IsLivePreviewEnabledProperty);
+
+    public static readonly DependencyProperty DragIndicesResolverProperty =
+        DependencyProperty.RegisterAttached(
+            "DragIndicesResolver",
+            typeof(DragIndexResolver),
+            typeof(StepDragDrop),
+            new PropertyMetadata(null));
+
+    public static void SetDragIndicesResolver(DependencyObject element, DragIndexResolver? value)
+        => element.SetValue(DragIndicesResolverProperty, value);
+
+    public static DragIndexResolver? GetDragIndicesResolver(DependencyObject element)
+        => element.GetValue(DragIndicesResolverProperty) as DragIndexResolver;
+
+    public static readonly DependencyProperty PreviewMoveValidatorProperty =
+        DependencyProperty.RegisterAttached(
+            "PreviewMoveValidator",
+            typeof(PreviewValidator),
+            typeof(StepDragDrop),
+            new PropertyMetadata(null));
+
+    public static void SetPreviewMoveValidator(DependencyObject element, PreviewValidator? value)
+        => element.SetValue(PreviewMoveValidatorProperty, value);
+
+    public static PreviewValidator? GetPreviewMoveValidator(DependencyObject element)
+        => element.GetValue(PreviewMoveValidatorProperty) as PreviewValidator;
+
+    public static readonly DependencyProperty PreviewItemsProperty =
+        DependencyProperty.RegisterAttached(
+            "PreviewItems",
+            typeof(IList),
+            typeof(StepDragDrop),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    public static void SetPreviewItems(DependencyObject element, IList? value)
+        => element.SetValue(PreviewItemsProperty, value);
+
+    public static IList? GetPreviewItems(DependencyObject element)
+        => element.GetValue(PreviewItemsProperty) as IList;
+
     private static Point _dragStart;
     private static ListBox? _sourceList;
     private static int _sourceIndex = -1;
     private static bool _isDragging;
-    private static double _sourceOpacity = 1;
-    private static ListBoxItem? _sourceContainer;
+    private static DragPayload? _activePayload;
+    private static IReadOnlyList<PreviewImage> _previewImages = [];
+    private static readonly Dictionary<FrameworkElement, ElementVisualState> PreviewElementStates = [];
+    private static ListBox? _previewSizeOwner;
+    private static double _previewOwnerMinHeight;
+    private static LivePlacementAdorner? _livePreview;
+    private static ListBox? _livePreviewOwner;
+    private static int _livePreviewTargetIndex = -1;
+    private static IReadOnlyList<PreviewHitZone> _livePreviewHitZones = [];
+    private static ListCollectionView? _previewSortedView;
+    private static IComparer? _previewOriginalComparer;
+    private static ListBox? _previewProjectionOwner;
     private static ListBox? _indicatorOwner;
     private static InsertionAdorner? _indicator;
     private static int _targetIndex = -1;
@@ -90,7 +158,6 @@ public static class StepDragDrop
         _dragStart = e.GetPosition(list);
         _sourceIndex = list.ItemContainerGenerator.IndexFromContainer(container);
         _sourceList = _sourceIndex >= 0 ? list : null;
-        _sourceContainer = _sourceList == null ? null : container;
     }
 
     private static void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -114,15 +181,10 @@ public static class StepDragDrop
             return;
 
         _isDragging = true;
-        if (_sourceContainer != null)
-        {
-            _sourceOpacity = _sourceContainer.Opacity;
-            _sourceContainer.Opacity = 0.45;
-        }
 
         try
         {
-            var sourceIndices = list.SelectedItems.Contains(source[_sourceIndex])
+            IReadOnlyList<int> sourceIndices = list.SelectedItems.Contains(source[_sourceIndex])
                 ? list.SelectedItems.Cast<object>()
                     .Select(source.IndexOf)
                     .Where(index => index >= 0)
@@ -130,7 +192,27 @@ public static class StepDragDrop
                     .OrderBy(index => index)
                     .ToArray()
                 : [_sourceIndex];
-            var data = new DataObject(DataFormat, new DragPayload(source, _sourceIndex, sourceIndices));
+            if (GetDragIndicesResolver(list) is { } resolver)
+                sourceIndices = resolver(new DragStartRequest(source, _sourceIndex, sourceIndices));
+            sourceIndices = sourceIndices
+                .Where(index => index >= 0 && index < source.Count)
+                .Distinct()
+                .OrderBy(index => index)
+                .ToArray();
+            if (sourceIndices.Count == 0)
+                sourceIndices = [_sourceIndex];
+
+            _activePayload = new DragPayload(source, _sourceIndex, sourceIndices);
+            _previewImages = CapturePreviewImages(list, sourceIndices);
+            foreach (var index in sourceIndices)
+            {
+                if (list.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
+                    continue;
+                RememberVisualState(item);
+                item.Opacity = 0.45;
+            }
+
+            var data = new DataObject(DataFormat, _activePayload);
             DragDrop.DoDragDrop(list, data, DragDropEffects.Move);
         }
         finally
@@ -147,15 +229,30 @@ public static class StepDragDrop
         e.Effects = DragDropEffects.Move;
         e.Handled = true;
 
-        ScrollAtEdge(list, e);
-        var placement = GetInsertionPlacement(list, e.GetPosition(list));
-        _targetIndex = placement.Index;
-        ShowIndicator(list, placement.Y, list.Items.Count == 0);
+        var position = e.GetPosition(list);
+        var scrolled = ScrollAtEdge(list, e);
+        if (scrolled && ReferenceEquals(list, _livePreviewOwner))
+            ClearLivePreviewVisuals();
+
+        var placement = GetInsertionPlacement(list, position);
+        var targetIndex = TryGetLiveTargetIndex(list, position.Y, out var liveTargetIndex)
+            ? liveTargetIndex
+            : placement.Index;
+        _targetIndex = targetIndex;
+        if (GetIsLivePreviewEnabled(list))
+            e.Effects = ShowLivePreview(list, targetIndex) ? DragDropEffects.Move : DragDropEffects.None;
+        else
+        {
+            ClearLivePreviewVisuals();
+            ShowIndicator(list, placement.Y, list.Items.Count == 0);
+        }
     }
 
     private static void OnDragLeave(object sender, DragEventArgs e)
     {
-        if (sender is not ListBox list || !ReferenceEquals(list, _indicatorOwner))
+        if (sender is not ListBox list
+            || !ReferenceEquals(list, _indicatorOwner)
+               && !ReferenceEquals(list, _livePreview?.AdornedElement))
             return;
 
         var point = e.GetPosition(list);
@@ -163,7 +260,7 @@ public static class StepDragDrop
             && point.Y >= 0 && point.Y <= list.ActualHeight)
             return;
 
-        RemoveIndicator();
+        ClearTargetPreview();
     }
 
     private static void OnDrop(object sender, DragEventArgs e)
@@ -174,20 +271,24 @@ public static class StepDragDrop
             || GetMoveCommand(list) is not { } command)
             return;
 
-        var placement = GetInsertionPlacement(list, e.GetPosition(list));
+        var position = e.GetPosition(list);
+        var targetIndex = TryGetLiveTargetIndex(list, position.Y, out var liveTargetIndex)
+            ? liveTargetIndex
+            : GetInsertionPlacement(list, position).Index;
+        ClearLivePreviewVisuals();
         var dropTarget = GetDropTarget(list, e);
         var request = new MoveRequest(
             payload.Source,
             payload.SourceIndex,
             target,
-            placement.Index,
+            targetIndex,
             dropTarget.Item,
             dropTarget.InsertAfter,
             payload.SourceIndices);
         if (command.CanExecute(request))
             command.Execute(request);
 
-        RemoveIndicator();
+        ClearTargetPreview();
         e.Handled = true;
     }
 
@@ -210,7 +311,10 @@ public static class StepDragDrop
             return;
 
         _targetIndex = list.Items.Count;
-        ShowIndicator(list, GetEndInsertionY(list), list.Items.Count == 0);
+        if (GetIsLivePreviewEnabled(list))
+            ShowLivePreview(list, _targetIndex);
+        else
+            ShowIndicator(list, GetEndInsertionY(list), list.Items.Count == 0);
     }
 
     /// <summary>
@@ -222,16 +326,347 @@ public static class StepDragDrop
             return;
 
         _targetIndex = 0;
-        var insertionY = list.Items.Count == 0
-            ? Math.Max(1, list.ActualHeight / 2)
-            : GetInsertionPlacement(list, new Point(0, 0)).Y;
-        ShowIndicator(list, insertionY, list.Items.Count == 0);
+        if (GetIsLivePreviewEnabled(list))
+            ShowLivePreview(list, _targetIndex);
+        else
+        {
+            var insertionY = list.Items.Count == 0
+                ? Math.Max(1, list.ActualHeight / 2)
+                : GetInsertionPlacement(list, new Point(0, 0)).Y;
+            ShowIndicator(list, insertionY, list.Items.Count == 0);
+        }
     }
 
     public static void ClearTargetPreview(ListBox? list = null)
     {
-        if (list == null || ReferenceEquals(list, _indicatorOwner))
+        if (list == null || ReferenceEquals(list, _indicatorOwner) || ReferenceEquals(list, _livePreview?.AdornedElement))
+        {
+            ClearLivePreviewVisuals();
             RemoveIndicator();
+        }
+    }
+
+    internal static IReadOnlyList<int> BuildPreviewOrder(
+        int itemCount,
+        IReadOnlyList<int> movingIndices,
+        int targetIndex)
+    {
+        var moving = movingIndices
+            .Where(index => index >= 0 && index < itemCount)
+            .Distinct()
+            .OrderBy(index => index)
+            .ToArray();
+        var movingSet = moving.ToHashSet();
+        var remaining = Enumerable.Range(0, itemCount).Where(index => !movingSet.Contains(index)).ToList();
+        var insertAt = Math.Clamp(
+            targetIndex - moving.Count(index => index < targetIndex),
+            0,
+            remaining.Count);
+        remaining.InsertRange(insertAt, moving);
+        return remaining;
+    }
+
+    private static bool ShowLivePreview(ListBox targetList, int targetIndex)
+    {
+        if (_activePayload is not { } payload || targetList.ItemsSource is not IList target)
+            return false;
+
+        targetIndex = Math.Clamp(targetIndex, 0, target.Count);
+        if (ReferenceEquals(targetList, _livePreviewOwner) && targetIndex == _livePreviewTargetIndex)
+            return true;
+
+        ClearLivePreviewVisuals();
+
+        var request = new MoveRequest(
+            payload.Source,
+            payload.SourceIndex,
+            target,
+            targetIndex,
+            SourceIndices: payload.SourceIndices);
+        if (GetPreviewMoveValidator(targetList) is { } validator && !validator(request))
+            return false;
+
+        if (_sourceList == null || _previewImages.Count == 0)
+            return false;
+
+        if (ReferenceEquals(_sourceList, targetList))
+            ApplySameListPreview(targetList, payload.SourceIndices, targetIndex);
+        else
+            ApplyCrossListPreview(_sourceList, targetList, payload.SourceIndices, targetIndex);
+        _livePreviewOwner = targetList;
+        _livePreviewTargetIndex = targetIndex;
+        return true;
+    }
+
+    private static void ApplySameListPreview(ListBox list, IReadOnlyList<int> movingIndices, int targetIndex)
+    {
+        var order = BuildPreviewOrder(list.Items.Count, movingIndices, targetIndex);
+        if (list.ItemsSource is not IList source
+            || CollectionViewSource.GetDefaultView(source) is not ListCollectionView view)
+            return;
+
+        var projectedItems = order.Select(index => source[index]!).ToList();
+        _previewSortedView = view;
+        _previewOriginalComparer = view.CustomSort;
+        _previewProjectionOwner = list;
+        SetPreviewItems(list, projectedItems);
+        view.CustomSort = new PreviewOrderComparer(projectedItems);
+        view.Refresh();
+        list.UpdateLayout();
+
+        var movingSet = movingIndices.ToHashSet();
+        var hitZones = new List<PreviewHitZone>();
+        for (var visualIndex = 0; visualIndex < list.Items.Count; visualIndex++)
+        {
+            var projectedItem = list.Items[visualIndex];
+            var originalIndex = source.IndexOf(projectedItem);
+            if (originalIndex < 0
+                || list.ItemContainerGenerator.ContainerFromIndex(visualIndex) is not ListBoxItem item)
+                continue;
+            RememberVisualState(item);
+            var top = item.TranslatePoint(new Point(0, 0), list).Y;
+            var zoneBottom = top + Math.Max(item.ActualHeight, item.DesiredSize.Height);
+            if (!movingSet.Contains(originalIndex))
+            {
+                hitZones.Add(new PreviewHitZone(
+                    top,
+                    zoneBottom,
+                    originalIndex,
+                    originalIndex + 1,
+                    HoldsCurrentTarget: false));
+                continue;
+            }
+
+            item.Opacity = 0.62;
+            hitZones.Add(new PreviewHitZone(
+                top,
+                zoneBottom,
+                targetIndex,
+                targetIndex,
+                HoldsCurrentTarget: true));
+        }
+        _livePreviewHitZones = hitZones;
+    }
+
+    private static void ApplyCrossListPreview(
+        ListBox sourceList,
+        ListBox targetList,
+        IReadOnlyList<int> movingIndices,
+        int targetIndex)
+    {
+        CollapseSourcePreview(sourceList, movingIndices);
+
+        var insertionY = GetInsertionTop(targetList, targetIndex);
+        var previewHeight = _previewImages.Sum(image => image.SlotHeight);
+        for (var index = Math.Clamp(targetIndex, 0, targetList.Items.Count); index < targetList.Items.Count; index++)
+        {
+            if (targetList.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
+                continue;
+            RememberVisualState(item);
+            item.RenderTransform = new TranslateTransform(0, previewHeight);
+        }
+
+        _previewSizeOwner = targetList;
+        _previewOwnerMinHeight = targetList.MinHeight;
+        targetList.MinHeight = Math.Max(targetList.ActualHeight + previewHeight, targetList.MinHeight);
+
+        var placements = new List<PreviewPlacement>();
+        var hitZones = new List<PreviewHitZone>();
+        var y = insertionY;
+        foreach (var image in _previewImages)
+        {
+            placements.Add(new PreviewPlacement(image, y));
+            hitZones.Add(new PreviewHitZone(
+                y,
+                y + image.SlotHeight,
+                targetIndex,
+                targetIndex,
+                HoldsCurrentTarget: true));
+            y += image.SlotHeight;
+        }
+        for (var index = 0; index < targetList.Items.Count; index++)
+        {
+            if (targetList.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
+                continue;
+            var top = item.TranslatePoint(new Point(0, 0), targetList).Y;
+            hitZones.Add(new PreviewHitZone(
+                top,
+                top + Math.Max(item.ActualHeight, item.DesiredSize.Height),
+                index,
+                index + 1,
+                HoldsCurrentTarget: false));
+        }
+        _livePreviewHitZones = hitZones.OrderBy(zone => zone.Top).ToArray();
+        ShowLivePlacementAdorner(targetList, placements);
+    }
+
+    private static bool TryGetLiveTargetIndex(ListBox list, double pointerY, out int targetIndex)
+    {
+        targetIndex = -1;
+        if (!ReferenceEquals(list, _livePreviewOwner) || _livePreviewHitZones.Count == 0)
+            return false;
+
+        var zone = _livePreviewHitZones.FirstOrDefault(candidate =>
+            pointerY >= candidate.Top && pointerY <= candidate.Bottom);
+        if (zone == null)
+        {
+            if (pointerY < _livePreviewHitZones[0].Top)
+                targetIndex = 0;
+            else if (pointerY > _livePreviewHitZones[^1].Bottom)
+                targetIndex = list.Items.Count;
+            else
+                targetIndex = _livePreviewTargetIndex;
+            return true;
+        }
+
+        targetIndex = ResolvePreviewHitZoneTarget(
+            pointerY,
+            zone.Top,
+            zone.Bottom,
+            zone.BeforeIndex,
+            zone.AfterIndex,
+            zone.HoldsCurrentTarget,
+            _livePreviewTargetIndex);
+        return true;
+    }
+
+    internal static int ResolvePreviewHitZoneTarget(
+        double pointerY,
+        double top,
+        double bottom,
+        int beforeIndex,
+        int afterIndex,
+        bool holdsCurrentTarget,
+        int currentTargetIndex)
+        => holdsCurrentTarget
+            ? currentTargetIndex
+            : pointerY < (top + bottom) / 2
+                ? beforeIndex
+                : afterIndex;
+
+    private static void CollapseSourcePreview(ListBox sourceList, IReadOnlyList<int> movingIndices)
+    {
+        var movingSet = movingIndices.ToHashSet();
+        var slotTops = GetSlotTops(sourceList);
+        var remaining = Enumerable.Range(0, sourceList.Items.Count)
+            .Where(index => !movingSet.Contains(index))
+            .ToArray();
+        for (var visualIndex = 0; visualIndex < remaining.Length && visualIndex < slotTops.Count; visualIndex++)
+        {
+            var originalIndex = remaining[visualIndex];
+            if (sourceList.ItemContainerGenerator.ContainerFromIndex(originalIndex) is not ListBoxItem item)
+                continue;
+            RememberVisualState(item);
+            item.RenderTransform = new TranslateTransform(0, slotTops[visualIndex] - slotTops[originalIndex]);
+        }
+        foreach (var index in movingIndices)
+        {
+            if (sourceList.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
+                continue;
+            RememberVisualState(item);
+            item.Opacity = 0.08;
+        }
+    }
+
+    private static List<double> GetSlotTops(ListBox list)
+    {
+        var result = new List<double>(list.Items.Count);
+        for (var index = 0; index < list.Items.Count; index++)
+        {
+            if (list.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
+                return [];
+            result.Add(item.TranslatePoint(new Point(0, 0), list).Y);
+        }
+        return result;
+    }
+
+    private static double GetInsertionTop(ListBox list, int targetIndex)
+    {
+        if (targetIndex >= 0
+            && targetIndex < list.Items.Count
+            && list.ItemContainerGenerator.ContainerFromIndex(targetIndex) is ListBoxItem target)
+            return target.TranslatePoint(new Point(0, 0), list).Y;
+        if (list.Items.Count > 0
+            && list.ItemContainerGenerator.ContainerFromIndex(list.Items.Count - 1) is ListBoxItem last)
+            return last.TranslatePoint(new Point(0, last.ActualHeight), list).Y + last.Margin.Bottom;
+        return 4;
+    }
+
+    private static IReadOnlyList<PreviewImage> CapturePreviewImages(ListBox list, IReadOnlyList<int> indices)
+    {
+        var result = new List<PreviewImage>();
+        foreach (var index in indices)
+        {
+            if (list.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item
+                || item.ActualWidth <= 0
+                || item.ActualHeight <= 0)
+                continue;
+            var dpi = VisualTreeHelper.GetDpi(item);
+            var bitmap = new RenderTargetBitmap(
+                Math.Max(1, (int)Math.Ceiling(item.ActualWidth * dpi.DpiScaleX)),
+                Math.Max(1, (int)Math.Ceiling(item.ActualHeight * dpi.DpiScaleY)),
+                dpi.PixelsPerInchX,
+                dpi.PixelsPerInchY,
+                PixelFormats.Pbgra32);
+            bitmap.Render(item);
+            bitmap.Freeze();
+            result.Add(new PreviewImage(
+                bitmap,
+                new Size(item.ActualWidth, item.ActualHeight),
+                Math.Max(item.ActualHeight, item.DesiredSize.Height)));
+        }
+        return result;
+    }
+
+    private static void ShowLivePlacementAdorner(ListBox list, IReadOnlyList<PreviewPlacement> placements)
+    {
+        if (placements.Count == 0)
+            return;
+        var layer = AdornerLayer.GetAdornerLayer(list);
+        if (layer == null)
+            return;
+        _livePreview = new LivePlacementAdorner(list, placements);
+        layer.Add(_livePreview);
+    }
+
+    private static void RememberVisualState(FrameworkElement element)
+    {
+        if (!PreviewElementStates.ContainsKey(element))
+            PreviewElementStates[element] = new ElementVisualState(
+                element.Opacity,
+                element.RenderTransform,
+                Panel.GetZIndex(element));
+    }
+
+    private static void ClearLivePreviewVisuals()
+    {
+        if (_livePreview != null)
+            AdornerLayer.GetAdornerLayer(_livePreview.AdornedElement)?.Remove(_livePreview);
+        _livePreview = null;
+        foreach (var (element, state) in PreviewElementStates)
+        {
+            element.Opacity = state.Opacity;
+            element.RenderTransform = state.RenderTransform;
+            Panel.SetZIndex(element, state.ZIndex);
+        }
+        PreviewElementStates.Clear();
+        if (_previewSizeOwner != null)
+            _previewSizeOwner.MinHeight = _previewOwnerMinHeight;
+        _previewSizeOwner = null;
+        if (_previewProjectionOwner != null)
+            SetPreviewItems(_previewProjectionOwner, null);
+        if (_previewSortedView != null)
+        {
+            _previewSortedView.CustomSort = _previewOriginalComparer;
+            _previewSortedView.Refresh();
+        }
+        _previewProjectionOwner?.UpdateLayout();
+        _previewSortedView = null;
+        _previewOriginalComparer = null;
+        _previewProjectionOwner = null;
+        _livePreviewOwner = null;
+        _livePreviewTargetIndex = -1;
+        _livePreviewHitZones = [];
     }
 
     private static (int Index, double Y) GetInsertionPlacement(ListBox list, Point pointer)
@@ -316,11 +751,11 @@ public static class StepDragDrop
         _targetIndex = -1;
     }
 
-    private static void ScrollAtEdge(ListBox list, DragEventArgs e)
+    private static bool ScrollAtEdge(ListBox list, DragEventArgs e)
     {
         var scroller = FindScrollViewerForDrag(list);
         if (scroller == null)
-            return;
+            return false;
 
         var position = e.GetPosition(scroller);
         const double edge = 44;
@@ -331,7 +766,11 @@ public static class StepDragDrop
             scroller.ScrollToVerticalOffset(oldOffset + 14);
 
         if (Math.Abs(oldOffset - scroller.VerticalOffset) > 0.1)
+        {
             list.Dispatcher.BeginInvoke(() => _indicator?.InvalidateVisual());
+            return true;
+        }
+        return false;
     }
 
     private static ScrollViewer? FindScrollViewerForDrag(ListBox list)
@@ -373,17 +812,66 @@ public static class StepDragDrop
     private static void ResetPendingDrag()
     {
         _sourceList = null;
-        _sourceContainer = null;
         _sourceIndex = -1;
     }
 
     private static void CleanupDrag()
     {
-        if (_sourceContainer != null)
-            _sourceContainer.Opacity = _sourceOpacity;
+        ClearLivePreviewVisuals();
         RemoveIndicator();
+        _activePayload = null;
+        _previewImages = [];
         _isDragging = false;
         ResetPendingDrag();
+    }
+
+    private sealed record ElementVisualState(double Opacity, Transform RenderTransform, int ZIndex);
+    private sealed record PreviewImage(ImageSource Image, Size Size, double SlotHeight);
+    private sealed record PreviewPlacement(PreviewImage Image, double Y);
+    private sealed record PreviewHitZone(
+        double Top,
+        double Bottom,
+        int BeforeIndex,
+        int AfterIndex,
+        bool HoldsCurrentTarget);
+
+    private sealed class PreviewOrderComparer(IReadOnlyList<object> orderedItems) : IComparer
+    {
+        private readonly Dictionary<object, int> _rank = orderedItems
+            .Select((item, index) => (item, index))
+            .ToDictionary(pair => pair.item, pair => pair.index, ReferenceEqualityComparer.Instance);
+
+        public int Compare(object? x, object? y)
+        {
+            if (ReferenceEquals(x, y)) return 0;
+            var xRank = x != null && _rank.TryGetValue(x, out var left) ? left : int.MaxValue;
+            var yRank = y != null && _rank.TryGetValue(y, out var right) ? right : int.MaxValue;
+            return xRank.CompareTo(yRank);
+        }
+    }
+
+    private sealed class LivePlacementAdorner : Adorner
+    {
+        private readonly IReadOnlyList<PreviewPlacement> _placements;
+
+        public LivePlacementAdorner(UIElement adornedElement, IReadOnlyList<PreviewPlacement> placements)
+            : base(adornedElement)
+        {
+            _placements = placements;
+            IsHitTestVisible = false;
+        }
+
+        protected override void OnRender(DrawingContext drawingContext)
+        {
+            drawingContext.PushOpacity(0.62);
+            foreach (var placement in _placements)
+            {
+                drawingContext.DrawImage(
+                    placement.Image.Image,
+                    new Rect(new Point(0, placement.Y), placement.Image.Size));
+            }
+            drawingContext.Pop();
+        }
     }
 
     private sealed class InsertionAdorner : Adorner

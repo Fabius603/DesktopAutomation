@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using TaskAutomation.Jobs;
+using TaskAutomation.Jobs.ControlFlow;
 
 namespace DesktopAutomationApp.Converters
 {
@@ -21,7 +22,7 @@ namespace DesktopAutomationApp.Converters
     ///              (any other / null) → same as "border"
     ///
     /// Each If-group gets its own unique color cycling through the palette.
-    /// Nesting is not supported (and is prevented by the ViewModel).
+    /// Nested blocks use the shared control-flow projection and keep a constant indent per depth.
     /// Steps outside any block return Transparent.
     /// </summary>
     public sealed class StepBlockBorderConverter : IMultiValueConverter
@@ -97,22 +98,18 @@ namespace DesktopAutomationApp.Converters
         private static Dictionary<JobStep, int> BuildGroupIndexMap(IList steps)
         {
             var map = new Dictionary<JobStep, int>(steps.Count, ReferenceEqualityComparer.Instance);
-            int groupIndex = -1;
-            bool inBlock   = false;
+            var typedSteps = steps.Cast<object>().OfType<JobStep>().ToArray();
+            var structure = ControlFlowStructureAnalyzer.Analyze(typedSteps);
+            var groupByStart = structure.Blocks
+                .Select((block, index) => (block.StartIndex, index))
+                .ToDictionary(item => item.StartIndex, item => item.index);
 
-            foreach (var item in steps)
+            for (var index = 0; index < typedSteps.Length; index++)
             {
-                if (item is not JobStep s) continue;
-
-                if (s is IfStep) { groupIndex++; inBlock = true; }
-
-                int assigned = (s is IfStep or ElseIfStep or ElseStep or EndIfStep)
-                    ? groupIndex
-                    : (inBlock ? groupIndex : -1);
-
-                map[s] = assigned;
-
-                if (s is EndIfStep) inBlock = false;
+                var block = structure.GetOwningBlock(index);
+                map[typedSteps[index]] = block is not null && groupByStart.TryGetValue(block.StartIndex, out var group)
+                    ? group
+                    : -1;
             }
 
             return map;
@@ -126,16 +123,15 @@ namespace DesktopAutomationApp.Converters
         {
             if (values.Length < 2 || values[0] is not JobStep step || values[1] is not IList steps)
                 return DependencyProperty.UnsetValue;
-            var index = steps.IndexOf(step);
-            var inside = false;
-            for (var i = 0; i <= index && i < steps.Count; i++)
-            {
-                if (steps[i] is IfStep) inside = true;
-                if (i < index && steps[i] is EndIfStep) inside = false;
-            }
-            var start = step is IfStep;
-            var end = step is EndIfStep && inside;
-            var branchMarker = step is IfStep or ElseIfStep or ElseStep or EndIfStep;
+            var typedSteps = steps.Cast<object>().OfType<JobStep>().ToArray();
+            var index = Array.FindIndex(typedSteps, candidate => ReferenceEquals(candidate, step));
+            var block = index >= 0
+                ? ControlFlowStructureAnalyzer.Analyze(typedSteps).GetOwningBlock(index)
+                : null;
+            var inside = block is not null;
+            var start = block?.StartIndex == index;
+            var end = block?.EndIndex == index;
+            var branchMarker = step is IControlFlowMarker;
             var mode = parameter as string;
             if (!inside)
                 return mode switch { "margin" => new Thickness(0, 0, 10, 6), "border" => new Thickness(1), _ => new CornerRadius(8) };
@@ -151,7 +147,17 @@ namespace DesktopAutomationApp.Converters
 
     public sealed class StepBlockVisualConverter : IMultiValueConverter
     {
-        private sealed record Layout(bool InBlock, bool Start, bool End, bool Branch, bool Inner);
+        private sealed record Layout(
+            bool InBlock,
+            bool Start,
+            bool End,
+            bool Branch,
+            bool Inner,
+            bool FirstInSection,
+            bool LastInSection,
+            bool EmptySection,
+            int Depth,
+            double ContainerWidth);
         private int _cacheVersion = int.MinValue;
         private IList? _cacheCollection;
         private Dictionary<JobStep, Layout> _layout =
@@ -159,9 +165,14 @@ namespace DesktopAutomationApp.Converters
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values.Length < 2 || values[0] is not JobStep step || values[1] is not IList steps)
+            var usesPreviewProjection = values.Length >= 4;
+            var steps = usesPreviewProjection
+                ? values[1] as IList ?? values[2] as IList
+                : values.Length > 1 ? values[1] as IList : null;
+            if (values.Length < 2 || values[0] is not JobStep step || steps is null)
                 return DependencyProperty.UnsetValue;
-            var version = values.Length > 2 && values[2] is int value ? value : 0;
+            var versionIndex = usesPreviewProjection ? 3 : 2;
+            var version = values.Length > versionIndex && values[versionIndex] is int value ? value : 0;
             if (!ReferenceEquals(steps, _cacheCollection) || version != _cacheVersion)
                 RebuildCache(steps, version);
             if (!_layout.TryGetValue(step, out var layout))
@@ -172,18 +183,31 @@ namespace DesktopAutomationApp.Converters
             var end = layout.End;
             var branch = layout.Branch;
             var inner = layout.Inner;
+            var depthIndent = layout.Depth * 16d;
             return (parameter as string) switch
             {
-                // Keep the block connected internally, but separate its closing
-                // EndIf card from the following top-level step like a normal card.
-                "itemMargin" => new Thickness(0, 0, 10, end || !inBlock ? 7 : 0),
-                "frameBorder" => !inBlock ? new Thickness(0) : start ? new Thickness(1, 1, 1, 0) : end ? new Thickness(1, 0, 1, 1) : new Thickness(1, 0, 1, 0),
-                "frameCorner" => start ? new CornerRadius(9, 9, 0, 0) : end ? new CornerRadius(0, 0, 9, 9) : new CornerRadius(0),
-                "cardMargin" => inner ? new Thickness(12, 4, 12, 4) : new Thickness(0),
-                "cardBorder" => !inBlock || inner ? new Thickness(1) : branch ? new Thickness(0, 1, 0, 0) : new Thickness(0),
-                "cardCorner" => !inBlock ? new CornerRadius(8) : inner ? new CornerRadius(6) : start ? new CornerRadius(8, 8, 0, 0) : end ? new CornerRadius(0, 0, 8, 8) : new CornerRadius(0),
-                "frameBackground" => inBlock ? FindBrush("App.Brush.Surface") : Brushes.Transparent,
-                "cardBackground" => start || branch ? FindBrush("App.Brush.SurfaceHover") : FindBrush("App.Brush.Surface"),
+                // The left margin includes the 12 px C-shaped rail plus the shared 8 px gap.
+                "itemMargin" => new Thickness(0, 0, 10, layout.EmptySection ? 40 : end || !inBlock ? 7 : 0),
+                "frameMargin" => new Thickness(depthIndent, 0, 0, 0),
+                "frameWidth" => inBlock ? layout.ContainerWidth : 330d,
+                "cardWidth" => inBlock && !inner ? layout.ContainerWidth : 330d,
+                "cardHeight" => end ? 24d : inBlock && !inner ? 40d : 36d,
+                "contentVisibility" => end ? Visibility.Collapsed : Visibility.Visible,
+                "frameBorder" => new Thickness(0),
+                "frameCorner" => new CornerRadius(0),
+                "cardMargin" => inner
+                    ? new Thickness(
+                        20,
+                        layout.FirstInSection ? 8 : 4,
+                        8,
+                        layout.LastInSection ? 8 : 4)
+                    : new Thickness(0),
+                "cardBorder" => !inBlock || inner ? new Thickness(1) : new Thickness(0),
+                "cardCorner" => new CornerRadius(8),
+                "frameBackground" => Brushes.Transparent,
+                "cardBackground" => inBlock && !inner
+                    ? Brushes.Transparent
+                    : FindBrush("App.Brush.Surface"),
                 _ => DependencyProperty.UnsetValue
             };
         }
@@ -192,18 +216,43 @@ namespace DesktopAutomationApp.Converters
         {
             var layout = new Dictionary<JobStep, Layout>(
                 steps.Count, ReferenceEqualityComparer.Instance);
-            var inBlock = false;
-            foreach (var item in steps)
+            var typedSteps = steps.Cast<object>().OfType<JobStep>().ToArray();
+            var structure = ControlFlowStructureAnalyzer.Analyze(typedSteps);
+            for (var index = 0; index < typedSteps.Length; index++)
             {
-                if (item is not JobStep step) continue;
-                if (step is IfStep) inBlock = true;
-                var start = step is IfStep;
-                var end = step is EndIfStep && inBlock;
-                var branch = step is ElseIfStep or ElseStep;
+                var step = typedSteps[index];
+                var block = structure.GetOwningBlock(index);
+                var inBlock = block is not null;
+                var start = block?.StartIndex == index;
+                var end = block?.EndIndex == index;
+                var branch = step is IControlFlowMarker
+                             && !start
+                             && !end;
+                var section = block?.Sections
+                    .OrderBy(candidate => candidate.MarkerIndex)
+                    .LastOrDefault(candidate => candidate.MarkerIndex < index);
+                var nextSectionIndex = block?.Sections
+                    .Where(candidate => candidate.MarkerIndex > (section?.MarkerIndex ?? -1))
+                    .Select(candidate => candidate.MarkerIndex)
+                    .DefaultIfEmpty(block.EndIndex ?? typedSteps.Length)
+                    .Min() ?? typedSteps.Length;
+                var firstInSection = section is not null && index == section.MarkerIndex + 1;
+                var lastInSection = section is not null && index == nextSectionIndex - 1;
+                var containerWidth = block is null
+                    ? 330d
+                    : 358d + (structure.Blocks
+                        .Where(candidate => block.Contains(candidate.StartIndex, typedSteps.Length))
+                        .Select(candidate => candidate.Depth)
+                        .DefaultIfEmpty(block.Depth)
+                        .Max() - block.Depth) * 16d;
                 layout[step] = new Layout(
                     inBlock, start, end, branch,
-                    inBlock && !start && !end && !branch);
-                if (step is EndIfStep) inBlock = false;
+                    inBlock && !start && !end && !branch,
+                    firstInSection,
+                    lastInSection,
+                    block?.IsSectionEmpty(index, typedSteps.Length) == true,
+                    block?.Depth ?? 0,
+                    containerWidth);
             }
             _layout = layout;
             _cacheCollection = steps;

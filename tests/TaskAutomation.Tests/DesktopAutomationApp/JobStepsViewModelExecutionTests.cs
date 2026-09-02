@@ -1,4 +1,5 @@
 using DesktopAutomation.Application.Interfaces;
+using DesktopAutomationApp.Behaviors;
 using DesktopAutomationApp.ViewModels;
 using TaskAutomation.Jobs;
 using TaskAutomation.Steps.Definitions;
@@ -213,6 +214,43 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.Equal([conditional, body, endIf, selectedAfter], viewModel.StartSteps);
         Assert.Equal([untouchedBefore, untouchedAfter], viewModel.Steps);
         Assert.Equal(4, viewModel.SelectedStepCount);
+    }
+
+    [Fact]
+    public void DragPreview_ExpandsControlFlowBlocksAndRejectsTargetsInsideTheMovingBlock()
+    {
+        var before = new TimeoutStep();
+        var conditional = new IfStep();
+        var body = new TimeoutStep();
+        var endIf = new EndIfStep();
+        var after = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job
+        {
+            Name = "Drag preview",
+            Steps = [before, conditional, body, endIf, after]
+        });
+
+        viewModel.SetSelectedSteps([conditional], viewModel.Steps);
+        var expanded = viewModel.DragIndicesResolver(new StepDragDrop.DragStartRequest(
+            viewModel.Steps,
+            SourceIndex: 1,
+            SelectedIndices: [1]));
+
+        Assert.Equal([1, 2, 3], expanded);
+        Assert.True(viewModel.PreviewMoveValidator(new StepDragDrop.MoveRequest(
+            viewModel.Steps,
+            SourceIndex: 1,
+            Target: viewModel.Steps,
+            TargetIndex: 5,
+            SourceIndices: expanded)));
+
+        viewModel.SetSelectedSteps([conditional], viewModel.Steps);
+        Assert.False(viewModel.PreviewMoveValidator(new StepDragDrop.MoveRequest(
+            viewModel.Steps,
+            SourceIndex: 1,
+            Target: viewModel.Steps,
+            TargetIndex: 2,
+            SourceIndices: expanded)));
     }
 
     [Fact]

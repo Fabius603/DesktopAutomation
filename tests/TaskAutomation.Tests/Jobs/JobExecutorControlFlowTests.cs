@@ -335,6 +335,37 @@ public sealed class JobExecutorControlFlowTests
     }
 
     [Fact]
+    public async Task ExecuteJob_EvaluatesNestedConditionalInsideActiveParentBranch()
+    {
+        var audio = new WindowsStateQueryStep { Id = "audio", Settings = new() { QueryType = "audio.volume" } };
+        var job = new Job
+        {
+            Name = "nested conditions",
+            Steps =
+            [
+                audio,
+                new IfStep { Settings = Settings(ConditionOperator.IsTrue) },
+                new IfStep { Settings = Settings(ConditionOperator.IsFalse) },
+                Text("inner-if"),
+                new ElseStep(),
+                Text("inner-else"),
+                new EndIfStep(),
+                new ElseStep(),
+                Text("outer-else"),
+                new EndIfStep()
+            ]
+        };
+        var builder = new JobExecutorTestBuilder()
+            .WithJobs(job)
+            .WithWindowsStates(new AudioVolumeQueryResult { IsMuted = true });
+
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+
+        Assert.Equal(["inner-else"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
+    [Fact]
     public async Task ExecuteJob_WindowsSettingRunsOnlyInsideSelectedBranch()
     {
         var audio = new WindowsStateQueryStep

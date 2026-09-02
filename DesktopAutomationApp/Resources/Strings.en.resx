@@ -2067,6 +2067,9 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.ShowDetails" xml:space="preserve">
     <value>Show details</value>
   </data>
+  <data name="Ui.Job.Steps.EmptyBranchPlaceholder" xml:space="preserve">
+    <value>Drop step here</value>
+  </data>
   <data name="Ui.Job.Steps.DetailsSources" xml:space="preserve"><value>Sources and dependencies</value></data>
   <data name="Ui.Job.Steps.DetailsInputs" xml:space="preserve"><value>Inputs</value></data>
   <data name="Ui.Job.Steps.DetailsDetection" xml:space="preserve"><value>Detection</value></data>
