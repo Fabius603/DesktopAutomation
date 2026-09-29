@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using ControlzEx.Theming;
 using Microsoft.Win32;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 
 namespace DesktopAutomationApp.Theming;
 

@@ -36,7 +36,12 @@ public sealed class StartProcessStepDefinition : StepDefinition<StartProcessStep
             // intentionally not rendered; the UI exposes termination as its own step.
             new StepFieldDescriptor(ActionFieldId, "Ui.Step.Settings.Action", StepValueKind.Enum,
                 Required: true, DefaultValue: JsonValue.Create(nameof(StartProcessAction.Start)),
-                Constraints: new StepFieldConstraints(AllowedValues: Actions), Order: -2),
+                Constraints: new StepFieldConstraints(AllowedValues: Actions), Order: -2,
+                Options:
+                [
+                    new(nameof(StartProcessAction.Start), "Enum.StartProcessAction.Start"),
+                    new(nameof(StartProcessAction.Terminate), "Enum.StartProcessAction.Terminate")
+                ]),
             new StepFieldDescriptor(ProcessTargetFieldId, "Ui.Step.Settings.ProcessSource", StepValueKind.Object,
                 Required: true, EditorHint: StepEditorHints.ProcessTargetPicker, InputContractId: "process", Order: -1,
                 VisibleWhen: new StepVisibilityRule(ActionFieldId, JsonValue.Create(nameof(StartProcessAction.Terminate)))),
@@ -118,7 +123,7 @@ public sealed class StartProcessStepDefinition : StepDefinition<StartProcessStep
     protected override void Apply(StepDraft draft, StartProcessStep step)
     {
         var settings = step.Settings;
-        settings.Action = Enum.Parse<StartProcessAction>(DefinitionValueReader.String(draft, ActionFieldId));
+        settings.Action = DefinitionValueReader.Enum<StartProcessAction>(draft, ActionFieldId);
         if (settings.Action == StartProcessAction.Terminate)
         {
             ProcessSelectorDraft.Apply(draft, ProcessTargetFieldId, settings.Target);
@@ -130,16 +135,16 @@ public sealed class StartProcessStepDefinition : StepDefinition<StartProcessStep
         settings.WorkingDirectory = DefinitionValueReader.String(draft, WorkingDirectoryFieldId);
         settings.WaitForExit = DefinitionValueReader.Boolean(draft, WaitForExitFieldId);
         settings.MonitorIndex = DefinitionValueReader.Integer(draft, MonitorIndexFieldId);
-        settings.PlacementMode = Enum.Parse<StartProcessPlacementMode>(DefinitionValueReader.String(draft, PlacementModeFieldId));
+        settings.PlacementMode = DefinitionValueReader.Enum<StartProcessPlacementMode>(draft, PlacementModeFieldId);
         settings.OffsetX = DefinitionValueReader.Integer(draft, OffsetXFieldId);
         settings.OffsetY = DefinitionValueReader.Integer(draft, OffsetYFieldId);
-        settings.WindowMode = Enum.Parse<StartProcessWindowMode>(DefinitionValueReader.String(draft, WindowModeFieldId));
+        settings.WindowMode = DefinitionValueReader.Enum<StartProcessWindowMode>(draft, WindowModeFieldId);
     }
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)
     {
         var action = DefinitionValueReader.String(draft, ActionFieldId);
-        if (string.Equals(action, nameof(StartProcessAction.Terminate), StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(action, nameof(StartProcessAction.Terminate), StringComparison.Ordinal))
             return ProcessSelectorDraft.IsConfigured(draft, ProcessTargetFieldId)
                 ? []
                 : [new("StepValidation.Required", ProcessTargetFieldId,

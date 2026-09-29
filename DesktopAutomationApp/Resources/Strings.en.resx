@@ -615,6 +615,9 @@
   <data name="Ui.Step.Generated.Validation.Invalid" xml:space="preserve">
     <value>The step settings are invalid.</value>
   </data>
+  <data name="Ui.Step.Generated.Validation.UnknownEnum" xml:space="preserve">
+    <value>“{0}” contains the unsupported value “{1}”. Select a valid value.</value>
+  </data>
   <data name="Ui.Step.Generated.DurationMilliseconds" xml:space="preserve">
     <value>{0} ms</value>
   </data>
@@ -1256,6 +1259,9 @@
   </data>
   <data name="Validation.ActiveWindowPair" xml:space="preserve">
     <value>“Active from” and “Active until” must either both be set or both be empty.</value>
+  </data>
+  <data name="Validation.WindowsEventRequired" xml:space="preserve">
+    <value>Please select a Windows event.</value>
   </data>
   <data name="Automation.Hotkey.NotSet" xml:space="preserve">
     <value>Hotkey not set</value>
@@ -3199,4 +3205,21 @@ Error code: {3}</value>
   <data name="Ui.Job.StepInput.Source.Other" xml:space="preserve"><value>Other value source</value></data>
   <data name="Ui.Common.XCoordinate" xml:space="preserve"><value>X</value></data>
   <data name="Ui.Common.YCoordinate" xml:space="preserve"><value>Y</value></data>
+  <data name="Ui.Job.Steps.ValidationTitle" xml:space="preserve"><value>Job cannot be saved</value></data>
+  <data name="Ui.Job.Steps.Editor.Details" xml:space="preserve"><value>Settings</value></data>
+  <data name="Ui.Job.Steps.Editor.ReturnValue" xml:space="preserve"><value>Outputs</value></data>
+  <data name="Ui.Job.Steps.Editor.Debug" xml:space="preserve"><value>Debugging</value></data>
+  <data name="Ui.Job.Steps.Editor.DetailsTitle" xml:space="preserve"><value>Configure step</value></data>
+  <data name="Ui.Job.Steps.Editor.DetailsDescription" xml:space="preserve"><value>Edit the inputs and behavior of the selected step.</value></data>
+  <data name="Ui.Job.Steps.Editor.ReturnValueTitle" xml:space="preserve"><value>Available outputs</value></data>
+  <data name="Ui.Job.Steps.Editor.ReturnValueDescription" xml:space="preserve"><value>Values that can be used by later steps after execution.</value></data>
+  <data name="Ui.Job.Steps.Editor.DebugTitle" xml:space="preserve"><value>Debug information</value></data>
+  <data name="Ui.Job.Steps.Editor.DebugDescription" xml:space="preserve"><value>Current values and execution state of the selected step.</value></data>
+  <data name="Ui.Job.Steps.Editor.NoSelection" xml:space="preserve"><value>Select a step to view its settings.</value></data>
+  <data name="Ui.Job.Steps.Editor.MultipleSelection" xml:space="preserve"><value>Select exactly one step to edit it.</value></data>
+  <data name="Ui.Job.Steps.Editor.NoReturnValue" xml:space="preserve"><value>This step does not provide a return value.</value></data>
+  <data name="Ui.Job.Steps.Editor.NoDebugData" xml:space="preserve"><value>No debug data is available for this step yet.</value></data>
+  <data name="Ui.Job.Steps.TotalCount" xml:space="preserve"><value>{0} steps total</value></data>
+  <data name="Ui.Job.Steps.Picker.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Ui.Job.Steps.Editor.Active" xml:space="preserve"><value>Step active</value></data>
 </root>

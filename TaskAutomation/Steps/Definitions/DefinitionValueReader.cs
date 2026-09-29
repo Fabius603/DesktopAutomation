@@ -33,6 +33,19 @@ internal static class DefinitionValueReader
                && value.TryGetValue<string>(out var result) ? result : string.Empty;
     }
 
+    public static TEnum Enum<TEnum>(StepDraft draft, string id) where TEnum : struct, Enum
+    {
+        if (TryEnum<TEnum>(draft, id, out var result))
+            return result;
+        var token = String(draft, id);
+        throw new InvalidOperationException($"Field '{id}' contains unknown {typeof(TEnum).Name} token '{token}'.");
+    }
+
+    public static bool TryEnum<TEnum>(StepDraft draft, string id, out TEnum result)
+        where TEnum : struct, Enum =>
+        System.Enum.TryParse(String(draft, id), ignoreCase: false, out result)
+        && System.Enum.IsDefined(result);
+
     public static int Integer(StepDraft draft, string id)
     {
         return TryInteger(draft.Values.GetValueOrDefault(id), out var result) ? result : int.MinValue;

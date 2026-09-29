@@ -1,0 +1,49 @@
+using System.Text.Json;
+using Common.ApplicationData;
+
+namespace DesktopAutomation.Application.Settings;
+
+public sealed class UserPreferencesService : IUserPreferencesService
+{
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private readonly string _settingsPath;
+
+    public UserPreferences Current { get; private set; } = new();
+
+    public UserPreferencesService()
+        : this(AppPaths.SettingsFile)
+    {
+    }
+
+    public UserPreferencesService(string settingsPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(settingsPath);
+        _settingsPath = settingsPath;
+    }
+
+    public async Task LoadAsync()
+    {
+        try
+        {
+            if (!File.Exists(_settingsPath)) return;
+            await using var stream = File.OpenRead(_settingsPath);
+            Current = await JsonSerializer.DeserializeAsync<UserPreferences>(stream, JsonOptions)
+                      ?? new UserPreferences();
+            Current.ExpandedLibraryFolders ??= new Dictionary<string, List<Guid>>();
+        }
+        catch (JsonException)
+        {
+            Current = new UserPreferences();
+        }
+    }
+
+    public async Task SaveAsync()
+    {
+        var directory = Path.GetDirectoryName(_settingsPath)!;
+        Directory.CreateDirectory(directory);
+        var temporaryPath = _settingsPath + ".tmp";
+        await using (var stream = File.Create(temporaryPath))
+            await JsonSerializer.SerializeAsync(stream, Current, JsonOptions);
+        File.Move(temporaryPath, _settingsPath, true);
+    }
+}

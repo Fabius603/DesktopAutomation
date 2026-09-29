@@ -55,7 +55,7 @@
   </ItemGroup>
 
   <Target Name="ValidateLocalizationResources" BeforeTargets="BeforeBuild">
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Scripts\TestLocalizationResources.ps1&quot; -ProjectRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\eng\checks\localization.ps1&quot; -RepositoryRoot &quot;$(MSBuildProjectDirectory)\..&quot; -ArtifactsRoot &quot;$(MSBuildProjectDirectory)\..\artifacts\verify&quot;" />
   </Target>
 
 </Project>

@@ -100,11 +100,12 @@ internal static class WindowsCapabilityStepDefinitionSupport
         if (!supported)
             return [Invalid()];
 
+        if (!WindowsCapabilitySelectionRules.HasRequiredParameters(capability, value.Parameters))
+            return [Invalid()];
+
         foreach (var parameter in capability!.Parameters ?? [])
         {
             var parameterValue = ParameterValue(value, parameter.Name);
-            if (parameter.Required && string.IsNullOrWhiteSpace(parameterValue))
-                return [Invalid()];
             if (string.IsNullOrWhiteSpace(parameterValue)) continue;
             if (mode == StepWindowsCapabilityPickerMode.SettingChange
                 && parameter.Type == WindowsParameterType.Integer

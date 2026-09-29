@@ -73,8 +73,7 @@ public sealed class TemplateMatchingStepDefinition : StepDefinition<TemplateMatc
         s.EnableROI = roi.Enabled;
         s.ROI = roi.Roi;
         s.DynamicRoiSource = roi.DynamicSource;
-        s.TemplateMatchMode = Enum.TryParse<TemplateMatchModes>(DefinitionValueReader.String(draft, MatchModeFieldId), out var mode)
-            ? mode : TemplateMatchModes.CCoeffNormed;
+        s.TemplateMatchMode = DefinitionValueReader.Enum<TemplateMatchModes>(draft, MatchModeFieldId);
         s.MultiplePoints = DefinitionValueReader.Boolean(draft, MultiplePointsFieldId);
     }
 

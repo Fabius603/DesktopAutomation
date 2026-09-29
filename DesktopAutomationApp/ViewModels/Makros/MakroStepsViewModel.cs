@@ -183,9 +183,9 @@ namespace DesktopAutomationApp.ViewModels
             _dispatcher = dispatcher;
 
             var normalized = MakroGrouping.Normalize(makro.Befehle, makro.Gruppen);
-            makro.Gruppen = new ObservableCollection<MakroGruppe>(normalized.Groups.Select(CloneGroup));
-            _originalSteps = normalized.Commands.Select(CloneStep).ToList();
-            _originalGroups = makro.Gruppen.Select(CloneGroup).ToList();
+            makro.Gruppen = new ObservableCollection<MakroGruppe>(normalized.Groups.Select(MakroSnapshotService.CloneGroup));
+            _originalSteps = normalized.Commands.Select(MakroSnapshotService.CloneCommand).ToList();
+            _originalGroups = makro.Gruppen.Select(MakroSnapshotService.CloneGroup).ToList();
             _collapsedGroupIds.UnionWith(makro.Gruppen.Select(group => group.Id));
             _originalCollapsedGroupIds.UnionWith(_collapsedGroupIds);
             _originalRecordingSettings = makro.RecordingSettings.Clone();
@@ -196,7 +196,7 @@ namespace DesktopAutomationApp.ViewModels
                 isDirty => HasUnsavedChanges = isDirty,
                 TimeSpan.FromMilliseconds(60));
             _stepItems = new ObservableRangeCollection<MakroBefehl>();
-            _stepItems.ReplaceRange(_originalSteps.Select(CloneStep));
+            _stepItems.ReplaceRange(_originalSteps.Select(MakroSnapshotService.CloneCommand));
             makro.Befehle = _stepItems;
             Steps.CollectionChanged += (_, _) =>
             {
@@ -209,35 +209,35 @@ namespace DesktopAutomationApp.ViewModels
             };
             Groups.CollectionChanged += Groups_CollectionChanged;
 
-            BackCommand   = new RelayCommand(() => RequestBack?.Invoke());
-            SaveCommand   = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
+            BackCommand = new RelayCommand(() => RequestBack?.Invoke());
+            SaveCommand = new RelayCommand(async () => await SaveInternal(), () => HasUnsavedChanges);
             CancelCommand = new RelayCommand(async () => await ConfirmDiscardChangesAsync(), () => HasUnsavedChanges);
             RenameCommand = new RelayCommand(async () => await Rename());
             OpenFileCommand = new RelayCommand(OpenFileInExplorer);
 
-            AddStepCommand      = new RelayCommand(async () => await OpenAddStepDialog());
-            EditStepCommand     = new RelayCommand<MakroBefehl?>(s => EditStep(GetSingleSelection(s)), s => GetSingleSelection(s) != null);
-            MoveStepUpCommand   = new RelayCommand<MakroBefehl?>(s => MoveSelectionRelative(s, -1), s => CanMoveSelectionRelative(s, -1));
+            AddStepCommand = new RelayCommand(async () => await OpenAddStepDialog());
+            EditStepCommand = new RelayCommand<MakroBefehl?>(s => EditStep(GetSingleSelection(s)), s => GetSingleSelection(s) != null);
+            MoveStepUpCommand = new RelayCommand<MakroBefehl?>(s => MoveSelectionRelative(s, -1), s => CanMoveSelectionRelative(s, -1));
             MoveStepDownCommand = new RelayCommand<MakroBefehl?>(s => MoveSelectionRelative(s, +1), s => CanMoveSelectionRelative(s, +1));
-            ReorderStepCommand  = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep);
-            DeleteStepCommand     = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
+            ReorderStepCommand = new RelayCommand<StepDragDrop.MoveRequest>(MoveStep);
+            DeleteStepCommand = new RelayCommand<MakroBefehl?>(async s => await DeleteStepAsync(s), s => s != null);
             DeleteSelectedCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => SelectedSteps.Count > 0 || SelectedStep != null);
-            UndoCommand           = new RelayCommand(Undo, () => CanUndo);
-            RedoCommand           = new RelayCommand(Redo, () => CanRedo);
-            CopyCommand           = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
-            PasteCommand          = new RelayCommand(Paste, () => _clipboard.Count > 0);
-            DuplicateStepCommand  = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
-            CreateGroupCommand     = new RelayCommand(async () => await CreateGroupAsync(), () => IsSelectionContiguous(GetOrderedSelection()));
+            UndoCommand = new RelayCommand(Undo, () => CanUndo);
+            RedoCommand = new RelayCommand(Redo, () => CanRedo);
+            CopyCommand = new RelayCommand(CopySelected, () => SelectedSteps.Count > 0 || SelectedStep != null);
+            PasteCommand = new RelayCommand(Paste, () => _clipboard.Count > 0);
+            DuplicateStepCommand = new RelayCommand<MakroBefehl?>(DuplicateStep, s => s != null);
+            CreateGroupCommand = new RelayCommand(async () => await CreateGroupAsync(), () => IsSelectionContiguous(GetOrderedSelection()));
             RemoveFromGroupCommand = new RelayCommand(RemoveSelectedFromGroup, () => GetSelection().Any(s => s.HasGroup));
-            RenameGroupCommand     = new RelayCommand<string?>(async id => await RenameGroupAsync(id), id => FindGroup(id) != null);
-            DissolveGroupCommand   = new RelayCommand<string?>(DissolveGroup, id => FindGroup(id) != null);
-            ToggleGroupCommand     = new RelayCommand<string?>(ToggleGroup, id => FindGroup(id) != null);
+            RenameGroupCommand = new RelayCommand<string?>(async id => await RenameGroupAsync(id), id => FindGroup(id) != null);
+            DissolveGroupCommand = new RelayCommand<string?>(DissolveGroup, id => FindGroup(id) != null);
+            ToggleGroupCommand = new RelayCommand<string?>(ToggleGroup, id => FindGroup(id) != null);
 
-            RecordStepsCommand   = new RelayCommand(async () => await ToggleRecordAsync());
+            RecordStepsCommand = new RelayCommand(async () => await ToggleRecordAsync());
             OpenRecordingSettingsCommand = new RelayCommand(OpenRecordingSettings, () => !IsRecording);
 
             PreviewPlaybackCommand = new RelayCommand(() => ShowPlayback(), CanPreview);
-            PreviewStopCommand     = new RelayCommand(StopPreview, () => _overlay != null);
+            PreviewStopCommand = new RelayCommand(StopPreview, () => _overlay != null);
 
             StartMakroCommand = new RelayCommand(
                 () =>
@@ -246,7 +246,7 @@ namespace DesktopAutomationApp.ViewModels
                         _dispatcher.StartMakro(Makro.Id);
                 },
                 () => !IsMakroRunning && !HasUnsavedChanges);
-            StopMakroCommand  = new RelayCommand(() => _dispatcher.CancelMakro(Makro.Id), () => IsMakroRunning);
+            StopMakroCommand = new RelayCommand(() => _dispatcher.CancelMakro(Makro.Id), () => IsMakroRunning);
 
             _dispatcher.RunningMakrosChanged += OnRunningMakrosChanged;
             _hotkeys.RecordingHotkeyPressed += OnRecordingHotkeyPressed;
@@ -340,10 +340,10 @@ namespace DesktopAutomationApp.ViewModels
             _suppressDirtyTracking = true;
             try
             {
-                _stepItems.ReplaceRange(_originalSteps.Select(CloneStep));
+                _stepItems.ReplaceRange(_originalSteps.Select(MakroSnapshotService.CloneCommand));
                 Groups.CollectionChanged -= Groups_CollectionChanged;
                 Groups.Clear();
-                foreach (var group in _originalGroups.Select(CloneGroup))
+                foreach (var group in _originalGroups.Select(MakroSnapshotService.CloneGroup))
                     Groups.Add(group);
                 _collapsedGroupIds.Clear();
                 _collapsedGroupIds.UnionWith(_originalCollapsedGroupIds);
@@ -391,9 +391,9 @@ namespace DesktopAutomationApp.ViewModels
             await _makroAppService.SaveMakroAsync(Makro);
             // Update snapshot for future cancel
             _originalSteps.Clear();
-            _originalSteps.AddRange(Steps.Select(CloneStep));
+            _originalSteps.AddRange(Steps.Select(MakroSnapshotService.CloneCommand));
             _originalGroups.Clear();
-            _originalGroups.AddRange(Groups.Select(CloneGroup));
+            _originalGroups.AddRange(Groups.Select(MakroSnapshotService.CloneGroup));
             _originalCollapsedGroupIds.Clear();
             _originalCollapsedGroupIds.UnionWith(_collapsedGroupIds);
             _originalRecordingSettings = Makro.RecordingSettings.Clone();
@@ -745,7 +745,7 @@ namespace DesktopAutomationApp.ViewModels
 
             var clones = sources.Select(source =>
             {
-                var clone = CloneStep(source);
+                var clone = MakroSnapshotService.CloneCommand(source);
                 clone.Id = Guid.NewGuid().ToString();
                 if (source.GroupId is { } groupId && completeGroups.TryGetValue(groupId, out var copiedGroup))
                     clone.GroupId = copiedGroup.Id;
@@ -760,15 +760,6 @@ namespace DesktopAutomationApp.ViewModels
             NotifySelectionChanged();
             UpdateDirtyState();
         }
-
-        private static MakroBefehl CloneStep(MakroBefehl s)
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(s, JsonOptions.Default);
-            return System.Text.Json.JsonSerializer.Deserialize<MakroBefehl>(json, JsonOptions.Default)!;
-        }
-
-        private static MakroGruppe CloneGroup(MakroGruppe group)
-            => new() { Id = group.Id, Title = group.Title, IsAutomatic = group.IsAutomatic };
 
         // ---------- Undo / Redo ----------
         private void PushUndo()
@@ -799,16 +790,16 @@ namespace DesktopAutomationApp.ViewModels
 
         private MacroSnapshot CreateSnapshot()
             => new(
-                Steps.Select(CloneStep).ToList(),
-                Groups.Select(CloneGroup).ToList(),
+                Steps.Select(MakroSnapshotService.CloneCommand).ToList(),
+                Groups.Select(MakroSnapshotService.CloneGroup).ToList(),
                 new HashSet<string>(_collapsedGroupIds, StringComparer.Ordinal));
 
         private void RestoreSnapshot(MacroSnapshot snapshot)
         {
-            _stepItems.ReplaceRange(snapshot.Steps.Select(CloneStep));
+            _stepItems.ReplaceRange(snapshot.Steps.Select(MakroSnapshotService.CloneCommand));
             Groups.CollectionChanged -= Groups_CollectionChanged;
             Groups.Clear();
-            foreach (var group in snapshot.Groups.Select(CloneGroup)) Groups.Add(group);
+            foreach (var group in snapshot.Groups.Select(MakroSnapshotService.CloneGroup)) Groups.Add(group);
             _collapsedGroupIds.Clear();
             _collapsedGroupIds.UnionWith(snapshot.CollapsedGroupIds.Where(id => Groups.Any(group => group.Id == id)));
             Groups.CollectionChanged += Groups_CollectionChanged;
@@ -853,24 +844,21 @@ namespace DesktopAutomationApp.ViewModels
             CancellationToken cancellationToken) => Task.Run(() =>
         {
             if (cancellationToken.IsCancellationRequested) return false;
-            if (Serialize(baseline.Steps) != Serialize(current.Steps)) return false;
+            if (MakroSnapshotService.Serialize(baseline.Steps) != MakroSnapshotService.Serialize(current.Steps)) return false;
             if (cancellationToken.IsCancellationRequested) return false;
-            if (Serialize(baseline.Groups) != Serialize(current.Groups)) return false;
+            if (MakroSnapshotService.Serialize(baseline.Groups) != MakroSnapshotService.Serialize(current.Groups)) return false;
             if (cancellationToken.IsCancellationRequested) return false;
-            if (Serialize(baseline.RecordingSettings) != Serialize(current.RecordingSettings)) return false;
+            if (MakroSnapshotService.Serialize(baseline.RecordingSettings) != MakroSnapshotService.Serialize(current.RecordingSettings)) return false;
             if (cancellationToken.IsCancellationRequested) return false;
-            return Serialize(baseline.RecordedEnvironment) == Serialize(current.RecordedEnvironment);
+            return MakroSnapshotService.Serialize(baseline.RecordedEnvironment) == MakroSnapshotService.Serialize(current.RecordedEnvironment);
         });
-
-        private static string Serialize<T>(T value)
-            => System.Text.Json.JsonSerializer.Serialize(value, JsonOptions.Default);
 
         // ---------- Copy / Paste ----------
         private void CopySelected()
         {
             var sources = GetOrderedSelection();
             if (sources.Count == 0) return;
-            _clipboard = sources.Select(s => CloneStep(s)).ToList();
+            _clipboard = sources.Select(MakroSnapshotService.CloneCommand).ToList();
             InvalidateAllCommands();
         }
 
@@ -885,7 +873,7 @@ namespace DesktopAutomationApp.ViewModels
 
             var toInsert = _clipboard.Select(s =>
             {
-                var clone = CloneStep(s);
+                var clone = MakroSnapshotService.CloneCommand(s);
                 clone.Id = Guid.NewGuid().ToString();
                 return clone;
             }).ToList();
@@ -1328,28 +1316,28 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Command invalidation helper ----------
         private void InvalidateAllCommands()
         {
-            (SaveCommand            as RelayCommand)?.RaiseCanExecuteChanged();
-            (CancelCommand          as RelayCommand)?.RaiseCanExecuteChanged();
-            (StartMakroCommand      as RelayCommand)?.RaiseCanExecuteChanged();
-            (StopMakroCommand       as RelayCommand)?.RaiseCanExecuteChanged();
-            (RecordStepsCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CancelCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (StartMakroCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (StopMakroCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (RecordStepsCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PreviewPlaybackCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (PreviewStopCommand     as RelayCommand)?.RaiseCanExecuteChanged();
-            (EditStepCommand        as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
-            (MoveStepUpCommand      as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
-            (MoveStepDownCommand    as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
-            (DeleteStepCommand      as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
-            (DuplicateStepCommand   as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
-            (DeleteSelectedCommand  as RelayCommand)?.RaiseCanExecuteChanged();
-            (CopyCommand            as RelayCommand)?.RaiseCanExecuteChanged();
-            (PasteCommand           as RelayCommand)?.RaiseCanExecuteChanged();
-            (UndoCommand            as RelayCommand)?.RaiseCanExecuteChanged();
-            (RedoCommand            as RelayCommand)?.RaiseCanExecuteChanged();
-            (CreateGroupCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (PreviewStopCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (EditStepCommand as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (MoveStepUpCommand as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (MoveStepDownCommand as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DeleteStepCommand as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DuplicateStepCommand as RelayCommand<MakroBefehl?>)?.RaiseCanExecuteChanged();
+            (DeleteSelectedCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CopyCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (PasteCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (UndoCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (RedoCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (CreateGroupCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (RemoveFromGroupCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (RenameGroupCommand     as RelayCommand<string?>)?.RaiseCanExecuteChanged();
-            (DissolveGroupCommand   as RelayCommand<string?>)?.RaiseCanExecuteChanged();
-            (ToggleGroupCommand     as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (RenameGroupCommand as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (DissolveGroupCommand as RelayCommand<string?>)?.RaiseCanExecuteChanged();
+            (ToggleGroupCommand as RelayCommand<string?>)?.RaiseCanExecuteChanged();
             (OpenRecordingSettingsCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
     }
@@ -1369,14 +1357,4 @@ namespace DesktopAutomationApp.ViewModels
         MakroRecordedEnvironment? RecordedEnvironment);
     internal sealed record GroupPresentation(string Title, string Summary);
 
-    internal static class JsonOptions
-    {
-        public static readonly System.Text.Json.JsonSerializerOptions Default = new()
-        {
-            WriteIndented = false,
-            ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip,
-            AllowTrailingCommas = true,
-            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-        };
-    }
 }

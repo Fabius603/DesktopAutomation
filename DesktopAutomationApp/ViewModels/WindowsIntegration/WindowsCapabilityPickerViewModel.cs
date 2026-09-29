@@ -138,8 +138,8 @@ public sealed class WindowsCapabilityPickerViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IsValid => SelectedCapability is not null && Parameters.All(p =>
-        !p.Descriptor.Required || !string.IsNullOrWhiteSpace(p.Value));
+    public bool IsValid => WindowsCapabilitySelectionRules.HasRequiredParameters(
+        SelectedCapability, ToDictionary());
     public bool RequiresElevation => SelectedCapability?.Requirements?.RequiresElevation == true;
     public string SelectedCapabilityDescription => SelectedCapability is null
         ? string.Empty

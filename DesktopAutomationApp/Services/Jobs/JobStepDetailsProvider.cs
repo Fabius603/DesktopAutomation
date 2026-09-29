@@ -538,9 +538,9 @@ public sealed class JobStepDetailsProvider
 
     private static string FormatDefinitionOption(StepFieldDescriptor field, string value)
     {
-        var option = field.Options?.FirstOrDefault(candidate =>
-            string.Equals(candidate.Value, value, StringComparison.OrdinalIgnoreCase));
-        return option is null ? value : Loc.Get(option.LabelKey);
+        var option = StepEnumRules.GetOptions(field).FirstOrDefault(candidate =>
+            string.Equals(candidate.Value, value, StringComparison.Ordinal));
+        return option is null ? value : option.DisplayName ?? Loc.Get(option.LabelKey);
     }
 
     private static string FormatDefinitionBinding(

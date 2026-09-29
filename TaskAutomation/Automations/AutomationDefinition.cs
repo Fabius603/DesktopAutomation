@@ -78,7 +78,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("kind")]
         public abstract AutomationTriggerKind Kind { get; }
 
-        public abstract string GetDisplayText();
     }
 
     public sealed class HotkeyAutomationTrigger : AutomationTrigger
@@ -97,12 +96,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("delay_after_event")]
         public TimeSpan DelayAfterEvent { get; set; } = TimeSpan.Zero;
 
-        public override string GetDisplayText()
-            => VirtualKeyCode == 0
-                ? "Hotkey nicht gesetzt"
-                : HotkeyTextFormatter.Format(Modifiers, VirtualKeyCode)
-                  + (Debounce > TimeSpan.Zero ? $" · Mindestabstand {Debounce.TotalSeconds:0}s" : string.Empty)
-                  + (DelayAfterEvent > TimeSpan.Zero ? $" · nach {DelayAfterEvent.TotalSeconds:0}s" : string.Empty);
     }
 
     public sealed class OnceAtAutomationTrigger : AutomationTrigger
@@ -112,7 +105,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("run_at")]
         public DateTimeOffset RunAt { get; set; } = DateTimeOffset.Now.AddHours(1);
 
-        public override string GetDisplayText() => $"Einmalig am {RunAt:dd.MM.yyyy HH:mm}";
     }
 
     public sealed class ScheduleAutomationTrigger : AutomationTrigger
@@ -126,23 +118,6 @@ namespace TaskAutomation.Automations
         public HashSet<DayOfWeek> Days { get; set; } =
             new() { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
 
-        public override string GetDisplayText()
-        {
-            var days = Days.Count == 7 ? "täglich" : string.Join(", ", Days.Select(FormatDay));
-            return $"{days} um {TimeOfDay:HH:mm}";
-        }
-
-        private static string FormatDay(DayOfWeek day) => day switch
-        {
-            DayOfWeek.Monday => "Mo",
-            DayOfWeek.Tuesday => "Di",
-            DayOfWeek.Wednesday => "Mi",
-            DayOfWeek.Thursday => "Do",
-            DayOfWeek.Friday => "Fr",
-            DayOfWeek.Saturday => "Sa",
-            DayOfWeek.Sunday => "So",
-            _ => day.ToString()
-        };
     }
 
     public sealed class IntervalAutomationTrigger : AutomationTrigger
@@ -155,14 +130,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("start_immediately")]
         public bool StartImmediately { get; set; } = true;
 
-        public override string GetDisplayText() => $"Alle {FormatInterval(Interval)}";
-
-        private static string FormatInterval(TimeSpan interval)
-        {
-            if (interval.TotalHours >= 1 && interval.TotalHours % 1 == 0) return $"{interval.TotalHours:0} Stunden";
-            if (interval.TotalMinutes >= 1 && interval.TotalMinutes % 1 == 0) return $"{interval.TotalMinutes:0} Minuten";
-            return $"{Math.Max(1, interval.TotalSeconds):0} Sekunden";
-        }
     }
 
     public abstract class ProcessAutomationTrigger : AutomationTrigger
@@ -176,27 +143,18 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("delay_after_event")]
         public TimeSpan DelayAfterEvent { get; set; } = TimeSpan.Zero;
 
-        protected string FormatProcessText(string eventText)
-        {
-            var process = string.IsNullOrWhiteSpace(ProcessName) ? "App nicht gesetzt" : ProcessName;
-            var title = string.IsNullOrWhiteSpace(WindowTitleContains) ? string.Empty : $" · Titel enthält \"{WindowTitleContains}\"";
-            var delay = DelayAfterEvent > TimeSpan.Zero ? $" · nach {DelayAfterEvent.TotalSeconds:0}s" : string.Empty;
-            return $"{eventText}: {process}{title}{delay}";
-        }
     }
 
     public sealed class ProcessStartedAutomationTrigger : ProcessAutomationTrigger
     {
         public override AutomationTriggerKind Kind => AutomationTriggerKind.ProcessStarted;
 
-        public override string GetDisplayText() => FormatProcessText("App startet");
     }
 
     public sealed class ProcessExitedAutomationTrigger : ProcessAutomationTrigger
     {
         public override AutomationTriggerKind Kind => AutomationTriggerKind.ProcessExited;
 
-        public override string GetDisplayText() => FormatProcessText("App schließt");
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -224,7 +182,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("delay_after_event")]
         public TimeSpan DelayAfterEvent { get; set; } = TimeSpan.Zero;
 
-        public override string GetDisplayText() => $"Fenster {EventKind}: {ProcessName} {WindowTitleContains}".Trim();
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -255,7 +212,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("wait_until_ready")]
         public bool WaitUntilReady { get; set; } = true;
 
-        public override string GetDisplayText() => $"{EventKind}: {DirectoryPath} ({Filter})";
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -276,7 +232,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("event_kind")]
         public SystemAutomationEventKind EventKind { get; set; } = SystemAutomationEventKind.SessionLocked;
 
-        public override string GetDisplayText() => EventKind.ToString();
     }
 
     public sealed class WindowsEventAutomationTrigger : AutomationTrigger
@@ -295,7 +250,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("delay_after_event")]
         public TimeSpan DelayAfterEvent { get; set; }
 
-        public override string GetDisplayText() => EventType;
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -327,7 +281,6 @@ namespace TaskAutomation.Automations
         [JsonPropertyName("online_base_url")]
         public string OnlineBaseUrl { get; set; } = string.Empty;
 
-        public override string GetDisplayText() => $"Webhook ({NetworkMode})";
 
         public static string GenerateSecret() => Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
     }
@@ -347,15 +300,6 @@ namespace TaskAutomation.Automations
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public AutomationActionTarget ActionType { get; set; } = AutomationActionTarget.Job;
 
-        public string DisplayText
-        {
-            get
-            {
-                var type = ActionType == AutomationActionTarget.Makro ? "Makro" : "Job";
-                var name = string.IsNullOrWhiteSpace(Name) ? "nicht gesetzt" : Name;
-                return $"{type} \"{name}\"";
-            }
-        }
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]

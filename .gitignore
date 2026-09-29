@@ -367,6 +367,5 @@ FodyWeavers.xsd
 *.onnx
 
 # AI
-.agents/
 .codex-output/
 docs/superpowers

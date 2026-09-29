@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,6 +11,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -36,6 +37,55 @@ namespace DesktopAutomationApp.Views
             DataContextChanged += OnDataContextChanged;
             PreviewKeyDown += OnPreviewKeyDown;
             PreviewMouseDown += OnPreviewMouseDown;
+        }
+
+        private void SelectedJobStepTabs_Loaded(object sender, RoutedEventArgs e) =>
+            UpdateInspectorPageSelection(animate: false);
+
+        private void SelectedJobStepTabs_SizeChanged(object sender, SizeChangedEventArgs e) =>
+            UpdateInspectorPageSelection(animate: false);
+
+        private void SelectedJobStepTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!ReferenceEquals(e.OriginalSource, sender)) return;
+            UpdateInspectorPageSelection(animate: true);
+        }
+
+        private void UpdateInspectorPageSelection(bool animate)
+        {
+            if (!SelectedJobStepTabs.IsLoaded || SelectedJobStepTabs.Items.Count == 0) return;
+            if (SelectedJobStepTabs.Template.FindName("PART_InspectorHeaderTrack", SelectedJobStepTabs) is not FrameworkElement track
+                || SelectedJobStepTabs.Template.FindName("PART_InspectorSelectionPill", SelectedJobStepTabs) is not Border pill
+                || track.ActualWidth <= 0) return;
+
+            var segmentWidth = track.ActualWidth / SelectedJobStepTabs.Items.Count;
+            var target = Math.Max(0, SelectedJobStepTabs.SelectedIndex) * segmentWidth;
+            var transform = EnsureMutableTranslateTransform(pill.RenderTransform);
+            if (!ReferenceEquals(pill.RenderTransform, transform)) pill.RenderTransform = transform;
+            transform.BeginAnimation(TranslateTransform.XProperty, null);
+            if (!animate)
+            {
+                transform.X = target;
+                return;
+            }
+
+            var current = transform.X;
+            transform.X = target;
+            transform.BeginAnimation(
+                TranslateTransform.XProperty,
+                new DoubleAnimation(current, target, TimeSpan.FromMilliseconds(180))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.Stop
+                });
+        }
+
+        internal static TranslateTransform EnsureMutableTranslateTransform(Transform? transform)
+        {
+            if (transform is not TranslateTransform translateTransform) return new TranslateTransform();
+            return translateTransform.IsFrozen
+                ? translateTransform.CloneCurrentValue()
+                : translateTransform;
         }
 
         private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) =>

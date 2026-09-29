@@ -33,6 +33,7 @@ namespace DesktopAutomationApp.ViewModels
         private int _notificationDeferral;
         private bool _notificationPending;
         private bool _candidateIsValid;
+        private bool _isPickerOnly;
         private bool _refreshingCandidateValidation;
         private DispatcherTimer? _candidateValidationTimer;
         private bool _candidateValidationPending;
@@ -184,6 +185,18 @@ namespace DesktopAutomationApp.ViewModels
         // ----- Dialog-Interop -----
         public event Action<bool>? RequestClose; // true = OK, false = Cancel
 
+        public bool IsPickerOnly
+        {
+            get => _isPickerOnly;
+            set
+            {
+                if (_isPickerOnly == value) return;
+                _isPickerOnly = value;
+                OnChange();
+                RaiseConfirmCanExecuteChanged();
+            }
+        }
+
         /// <summary>Lädt optionale, dateisystembasierte Daten erst nach dem Anzeigen des Dialogs.</summary>
         public async Task InitializeAsync()
         {
@@ -230,33 +243,46 @@ namespace DesktopAutomationApp.ViewModels
 
         private void Confirm()
         {
+            if (IsPickerOnly)
+            {
+                CreatedStep = _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+                    ? definition.CreateDefault()
+                    : null;
+                if (CreatedStep is not null)
+                    RequestClose?.Invoke(true);
+                return;
+            }
+
             RefreshCandidateValidation();
             if (!_candidateIsValid) return;
-            var localInputs = CreatedStep is null
-                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                : ValueBindingTree.EnumerateReferences(CreatedStep.Inputs)
-                    .Where(input => string.Equals(
-                        input.Binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
-                    .ToDictionary(input => input.Binding.SourceId, input => input.Path, StringComparer.OrdinalIgnoreCase);
             if (CreatedStep is not null)
-                foreach (var usage in ValueReferenceUsageInspector.Find(new Job { Steps = [CreatedStep] })
-                             .Where(usage => string.Equals(
-                                 usage.Reference.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)))
-                    localInputs.TryAdd(usage.Reference.SourceId, usage.Path);
+                CommitDraftValues(CreatedStep);
+            RequestClose?.Invoke(true);
+        }
+
+        internal void CommitDraftValues(JobStep step)
+        {
+            var localInputs = ValueBindingTree.EnumerateReferences(step.Inputs)
+                .Where(input => string.Equals(
+                    input.Binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
+                .ToDictionary(input => input.Binding.SourceId, input => input.Path, StringComparer.OrdinalIgnoreCase);
+            foreach (var usage in ValueReferenceUsageInspector.Find(new Job { Steps = [step] })
+                         .Where(usage => string.Equals(
+                             usage.Reference.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)))
+                localInputs.TryAdd(usage.Reference.SourceId, usage.Path);
             foreach (var local in _draftStepVariables.OfType<LocalValue>()
                          .Where(value => localInputs.ContainsKey(value.Id.ToString("D"))).ToArray())
             {
-                local.OwnerStepId = CreatedStep!.Id;
+                local.OwnerStepId = step.Id;
                 local.InputPath = localInputs[local.Id.ToString("D")];
                 CommitCreatedLocalValue(local);
             }
             _draftStepVariables.Clear();
-            RequestClose?.Invoke(true);
         }
 
         private bool CanConfirm()
         {
-            return _candidateValidationPending || _candidateIsValid;
+            return IsPickerOnly || _candidateValidationPending || _candidateIsValid;
         }
 
         private void RefreshCandidateValidation()
@@ -519,8 +545,7 @@ namespace DesktopAutomationApp.ViewModels
             if (binding?.IsConfigured == true
                 && FindStoredVariable(binding) is { } storedVariable)
             {
-                ApplyEnumMetadata(storedVariable, $"{definition.Descriptor.TypeId}.{field.Id}",
-                    field.Options, field.Constraints?.AllowedValues);
+                ApplyEnumMetadata(storedVariable, $"{definition.Descriptor.TypeId}.{field.Id}", field);
                 _valueReferenceSources.AddVariable(storedVariable);
             }
             if (binding?.IsConfigured != true
@@ -566,8 +591,7 @@ namespace DesktopAutomationApp.ViewModels
                                   : ResultCardinality.Single),
                 Value = field.DefaultValue?.DeepClone()
             };
-            ApplyEnumMetadata(variable, $"{definition.Descriptor.TypeId}.{field.Id}",
-                field.Options, field.Constraints?.AllowedValues);
+            ApplyEnumMetadata(variable, $"{definition.Descriptor.TypeId}.{field.Id}", field);
             _draftStepVariables.Add(variable);
             _valueReferenceSources.AddVariable(variable);
             _variableUsageCounts = null;
@@ -905,17 +929,15 @@ namespace DesktopAutomationApp.ViewModels
         private static void ApplyEnumMetadata(
             JobVariable variable,
             string enumTypeName,
-            IReadOnlyList<StepFieldOptionDescriptor>? options,
-            IReadOnlyList<string>? allowedValues)
+            StepFieldDescriptor field)
         {
             if (variable.ValueKind != ResultValueKind.Enum) return;
             variable.EnumTypeName = enumTypeName;
-            variable.EnumValues = (options?.Select(option => option.Value)
-                                   ?? allowedValues
-                                   ?? [])
+            var options = StepEnumRules.GetOptions(field);
+            variable.EnumValues = options.Select(option => option.Value)
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
-            variable.EnumDisplayNames = options?
+            variable.EnumDisplayNames = options
                 .Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
                 .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
             if (variable.EnumDisplayNames is { Count: 0 }) variable.EnumDisplayNames = null;
@@ -1295,7 +1317,7 @@ namespace DesktopAutomationApp.ViewModels
                         {
                             selectedIndex = monitorIndex;
                             selectionMade = true;
-                            
+
                             // Close all overlays
                             foreach (var o in overlays)
                             {

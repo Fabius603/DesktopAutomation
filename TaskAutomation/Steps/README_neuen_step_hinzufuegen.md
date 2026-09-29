@@ -1,7 +1,7 @@
 # Neuen Job-Step hinzufügen
 
-Die vollständige, aktuelle Anleitung liegt in
-[`ADDING_A_JOB_STEP.md`](ADDING_A_JOB_STEP.md).
+Die vollständige, aktuelle Anleitung liegt im Repository-Skill
+[`add-job-step`](../../.agents/skills/add-job-step/SKILL.md).
 
 Sie beschreibt gemeinsam und ohne parallele Altpfade:
 

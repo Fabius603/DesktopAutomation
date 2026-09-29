@@ -60,8 +60,7 @@ public static class AutomationValidation
     {
         var capability = new WindowsCapabilityCatalog().Find(trigger.EventType);
         return capability?.SupportsEvents == true
-               && (capability.Parameters ?? []).All(parameter => !parameter.Required
-                   || trigger.Filters.TryGetValue(parameter.Name, out var value) && !string.IsNullOrWhiteSpace(value));
+               && WindowsCapabilitySelectionRules.HasRequiredParameters(capability, trigger.Filters);
     }
 
     private static bool ValidOnlineBaseUrl(string value) =>

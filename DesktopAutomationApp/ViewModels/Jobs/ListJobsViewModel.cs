@@ -13,7 +13,7 @@ using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Services;
 using DesktopAutomationApp.Localization;
 using DesktopAutomation.Application.Organization;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels
@@ -227,8 +227,8 @@ namespace DesktopAutomationApp.ViewModels
         private void InvalidateAllCommands()
         {
             (DeleteJobCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (OpenJobCommand   as RelayCommand<Job?>)?.RaiseCanExecuteChanged();
-            (StopJobCommand   as RelayCommand<object?>)?.RaiseCanExecuteChanged();
+            (OpenJobCommand as RelayCommand<Job?>)?.RaiseCanExecuteChanged();
+            (StopJobCommand as RelayCommand<object?>)?.RaiseCanExecuteChanged();
         }
 
         private LibraryItemDescriptor CreateLibraryDescriptor(Job job) => new()

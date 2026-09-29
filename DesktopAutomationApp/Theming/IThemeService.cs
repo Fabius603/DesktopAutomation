@@ -1,4 +1,4 @@
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 
 namespace DesktopAutomationApp.Theming;
 
@@ -8,4 +8,3 @@ public interface IThemeService
     event EventHandler? ThemeChanged;
     void Apply(AppThemeMode mode, string accent);
 }
-

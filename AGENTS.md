@@ -1,149 +1,56 @@
-# Repository instructions for Codex
+# Agent instructions
 
-## Release notes are mandatory
+DesktopAutomation is a Windows desktop application built with .NET 8. The main UI is WPF;
+Windows Forms is enabled only for specific interoperability needs. Business rules belong in
+`TaskAutomation` or a lower platform-neutral project, not in `DesktopAutomationApp`.
 
-`DesktopAutomationApp/Resources/ReleaseNotes.json` is the user-facing changelog and must
-always be maintained together with the implementation.
+## Authority and documentation
 
-For every user-facing feature, behavior change, performance improvement, or bug fix:
+Apply guidance in this order:
 
-1. Determine the current released version from Git `HEAD`, not from modified files in
-   the working tree. Read `<Version>` from
-   `git show HEAD:DesktopAutomationApp/DesktopAutomationApp.csproj`, increment its patch
-   component by exactly one, and use that version only for new release-note entries.
-   For example, if Git `HEAD` contains `1.5.6`, new release notes must use `1.5.7`.
-   Never append new changes to the version currently stored in Git `HEAD`, even if it
-   is also the newest entry in `ReleaseNotes.json`.
-2. Do not change `<Version>` in `DesktopAutomationApp/DesktopAutomationApp.csproj` as
-   part of normal feature or bug-fix work. The project version remains at the version
-   stored in Git `HEAD`. Increase it only when the user explicitly asks to prepare or
-   perform a release.
-3. Write both German (`de`) and English (`en`) text. Every change must be a short,
-   bullet-style statement that describes only the observable result for users.
-   Prefer one concise sentence. Before adding a bullet, inspect the complete current
-   unreleased version for an existing entry about the same user-facing outcome. Extend
-   or rewrite that entry instead of adding another one. Closely related features, fixes,
-   UI controls, and follow-up adjustments must be represented by one combined bullet,
-   even when they were implemented across different tasks or files.
-4. Use only the existing categories `Added`, `Changed`, and `Fixed`.
-5. Keep the newest version first. Preserve every older release entry, including its
-   date and sections, unchanged.
-6. During normal development, the newest release-note version must be exactly one patch
-   version higher than `<Version>` in Git `HEAD`. A mismatch is expected until an
-   explicit release task updates the project version.
-7. Before preparing a release, compare the repository against the previous release
-   commit or tag and ensure every user-facing change is represented. Include committed
-   changes and relevant uncommitted changes.
-8. Include only changes that users notice and are likely to care about. Do not mention
-   implementation details, architecture, internal contracts, migrations, logging
-   internals, tests, refactoring, or documentation. Omit minor technical corrections
-   that have no meaningful effect on normal use; do not add internal quality sections.
-   After every edit, review the entire unreleased block and merge or remove redundant,
-   overlapping, overly specific, or low-value entries. Release notes are a curated
-   summary for users, not a chronological record of completed development tasks.
-9. Validate the JSON and run the normal DesktopAutomationApp Release build. The build's
-   localization and embedded-resource checks must pass.
+1. The user's current request.
+2. This file and the applicable files in `.agents/instructions/`.
+3. Accepted, non-superseded records in `docs/decisions/`.
+4. Current descriptions in `docs/architecture/`.
+5. Dated snapshots in `docs/specs/`.
 
-When a task truly has no user-facing effect, explicitly state in the final handoff that
-no release-note update was required.
+Specifications are historical snapshots, not standing instructions. Before relying on one,
+ask the user whether it still applies. Do not silently rewrite an old specification; add a new
+dated specification instead. Decisions remain authoritative until a newer decision supersedes
+them.
 
-## Localization
+Start at `.agents/README.md`. Load only instructions and repository skills relevant to the task.
 
-Never add user-visible text directly in XAML or view models.
+## Required workflow
 
-Every new or changed UI text must be added to both:
+- Inspect `git status --short` before editing and preserve unrelated changes.
+- Before adding behavior, search for existing implementations and identify the single canonical
+  owner. Extend or refactor that owner instead of creating a second rule in a view model,
+  converter, code-behind file, handler, or service.
+- Define observable behavior and invariants before changing production code.
+- Add risk-based tests at the appropriate level; test behavior, not the current code path.
+- Keep persisted jobs, macros, automations, settings, and paths backward compatible unless the
+  user explicitly approves a migration.
+- Put all new or changed visible UI text in both localization resource files.
+- Update release notes only for user-visible outcomes; follow `.agents/instructions/release-process.md`.
+- Do not commit, stage, create branches, or push unless the user explicitly asks.
 
-- `DesktopAutomationApp/Resources/Strings.resx`
-- `DesktopAutomationApp/Resources/Strings.en.resx`
+## Mandatory completion gate
 
-German and English resource files must contain matching keys.
+After any repository change, run from the repository root:
 
-## Working tree safety
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\eng\verify.ps1 -Mode Full
+```
 
-The working tree may contain unrelated user changes.
+Do not report completion unless this command exits with code `0`. A skipped, unavailable, or
+failing required check is a blocker and must be reported. CI must call the same entrypoint.
 
-- Never reset, revert, overwrite, or reformat unrelated changes.
-- Inspect `git status --short` before editing.
-- When a target file already contains changes, modify only the required sections.
-- Do not create commits, branches, or stage files unless explicitly requested.
+## Core instructions
 
-## Tests
-
-Use risk-based regression coverage.
-
-- `TaskAutomation` tests belong in `tests/TaskAutomation.Tests`.
-- Runtime behavior changes and bug fixes require a regression test for the
-  observable behavior or the concrete failure mode.
-- Do not add a separate test for every modified method, property, XAML element,
-  or implementation detail.
-- Prefer extending an existing scenario or parameterized contract test over
-  creating a new test. Do not duplicate behavior already covered by an
-  equivalent higher-level or generic contract test.
-- Pure refactoring, styling, spacing, resource-key-preserving text changes, and
-  other changes without meaningful behavioral risk normally do not require a
-  new test.
-- Avoid tests that assert exact source-code or XAML fragments. Use them only
-  when no practical behavioral or structural test is available and the asserted
-  detail represents a deliberate, stable regression contract.
-- Cover success, failure, missing input, cancellation, skipped execution, and
-  backward compatibility only where they are relevant to the changed behavior.
-- A successful build alone is not sufficient for material runtime changes.
-
-## Persistence and backward compatibility
-
-Changes to serialized jobs, macros, automations, settings, or paths must remain backward
-compatible unless a migration is explicitly introduced.
-
-- Existing JSON files must continue to load.
-- New serialized properties require safe defaults.
-- Migrations must be best-effort, non-overwriting, and tolerate partial old state.
-- `Common.JsonRepository/AppPaths.cs` is the source of truth for application data paths.
-- Keep Velopack installation data separate from user data.
-
-## Job steps and result contracts
-
-New or changed job steps must follow the repository contracts:
-
-- Register the step in the pipeline registry.
-- Define a typed result contract when the step produces output.
-- Every selectable result property requires a stable property ID.
-- Keep legacy property paths readable for backward compatibility.
-- Update validation, localization, editor UI, details display, and tests together.
-- Follow:
-  - `TaskAutomation/Steps/ADDING_A_JOB_STEP.md`
-  - `TaskAutomation/Steps/RESULT_CONTRACTS.md`
-
-## Shared step and control-flow logic
-
-`DesktopAutomationApp` is a presentation layer. It must not own rules that determine
-what a job step means, whether it is valid, how it is persisted, or how it executes.
-
-- Put step models, defaults, input and result contracts, business validation,
-  reference materialization, backward-compatibility rules, and execution behavior in
-  `TaskAutomation` or a lower platform-neutral project.
-- Put control-flow structure, block matching, nesting rules, legal insertion and move
-  rules, and runtime transitions outside `DesktopAutomationApp`. Validation, execution,
-  and every frontend must consume the same shared implementation.
-- Keep only presentation and interaction concerns in `DesktopAutomationApp`, such as
-  XAML, editor state, focus, commands, visual formatting, localized labels, and mapping
-  shared diagnostic codes to localized messages.
-- Do not duplicate backend rules in view models or converters. A frontend may project
-  shared metadata for binding, but it must not independently reimplement the rule.
-- When changing an existing step, inspect the touched frontend code for business logic
-  and move that logic into the shared layer as part of the change when practical. Do
-  not perform unrelated repository-wide migrations solely for cleanup.
-- New steps and new control-flow constructs must follow this boundary from the start.
-- Shared logic must not depend on WPF types, `DesktopAutomationApp`, localized UI text,
-  dialogs, observable collections, or frontend services.
-
-## Definition of done
-
-A change is complete only when:
-
-- applicable risk-based regression coverage is present; when no test was added,
-  the final handoff explains why existing coverage or build validation is sufficient;
-- German and English localization are synchronized;
-- release notes are updated when behavior is user-visible;
-- backward compatibility was considered;
-- applicable tests and the Release build pass;
-- unrelated working-tree changes remain untouched.
+- Architecture and persistence: `.agents/instructions/architecture.md`
+- Architecture-boundary or deduplication work: `.agents/skills/maintain-architecture/SKILL.md`
+- Testing: `.agents/instructions/testing.md`
+- WPF and Windows desktop UI: `.agents/instructions/ui-desktop.md`
+- Localization: `.agents/instructions/localization.md`
+- Release notes and releases: `.agents/instructions/release-process.md`

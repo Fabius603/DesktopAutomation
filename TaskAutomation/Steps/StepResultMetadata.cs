@@ -224,10 +224,10 @@ public static class StepResultMetadata
             return string.Equals(left.EnumTypeName, right.EnumTypeName, StringComparison.Ordinal);
         if (string.IsNullOrWhiteSpace(left.EnumTypeName)
             != string.IsNullOrWhiteSpace(right.EnumTypeName))
-            return true;
+            return false;
         return string.IsNullOrWhiteSpace(left.EnumTypeName)
                && string.IsNullOrWhiteSpace(right.EnumTypeName)
-               && string.Equals(left.StableId, right.StableId, StringComparison.OrdinalIgnoreCase);
+               && string.Equals(left.StableId, right.StableId, StringComparison.Ordinal);
     }
 
     public static bool TryReadValue(object result, ResultPropertyDescriptor property, out object? value)
@@ -276,7 +276,7 @@ public static class StepResultMetadata
                 if (bool.TryParse(text, out var b)) { value = b; return true; }
                 return false;
             case ResultValueKind.Enum:
-                var enumValue = property.EnumValues?.FirstOrDefault(x => string.Equals(x, text, StringComparison.OrdinalIgnoreCase));
+                var enumValue = property.EnumValues?.FirstOrDefault(x => string.Equals(x, text, StringComparison.Ordinal));
                 if (enumValue is not null) { value = enumValue; return true; }
                 return false;
             default: value = text; return true;
@@ -349,8 +349,8 @@ public static class StepResultMetadata
         if (actual is not null && (actual == typeof(PixelPoint)
                                    || actual == typeof(PixelRegion)
                                    || actual == typeof(RuntimeProcessReference)))
-                foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                         .Where(property => property.CanRead && !IsHidden(actual, property)))
+            foreach (var child in actual.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                     .Where(property => property.CanRead && !IsHidden(actual, property)))
                 foreach (var descriptor in BuildProperty(
                              child.PropertyType,
                              $"{path}.{child.Name}",

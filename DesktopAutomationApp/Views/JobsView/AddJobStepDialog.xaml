@@ -25,7 +25,8 @@
                 Background="{DynamicResource App.Brush.Surface}"
                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
                 BorderThickness="1" CornerRadius="10"
-                Padding="18,14" Margin="0,0,0,14">
+                Padding="18,14" Margin="0,0,0,14"
+                Visibility="{Binding IsPickerOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -86,6 +87,7 @@
                                                    IsHitTestVisible="False"/>
                     </Grid>
                     <ListBox Grid.Row="2"
+                             AutomationProperties.AutomationId="JobStepTypePickerList"
                              ItemsSource="{Binding StepTypeItems}"
                              DisplayMemberPath="DisplayLabel"
                              SelectedValuePath="Name"
@@ -165,6 +167,7 @@
             </Border>
 
             <Border Grid.Column="1"
+                    AutomationProperties.AutomationId="JobStepPickerDescriptionPanel"
                     Background="{DynamicResource App.Brush.Surface}"
                     BorderBrush="{DynamicResource App.Brush.CardBorder}"
                     BorderThickness="1" CornerRadius="10">
@@ -173,7 +176,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Grid Margin="18,14">
+                    <Grid Margin="18,14"
+                          Visibility="{Binding IsPickerOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedStepDisplayName}"
                                        Foreground="{DynamicResource App.Brush.TextPrimary}"
@@ -185,7 +189,8 @@
                     </Grid>
                     <Border Grid.Row="1"
                             BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                            BorderThickness="0,1,0,0">
+                            BorderThickness="0,1,0,0"
+                            Visibility="{Binding IsPickerOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled"
                                       Padding="18,16">
@@ -194,6 +199,23 @@
                                             HorizontalContentAlignment="Stretch"/>
                         </ScrollViewer>
                     </Border>
+                    <Grid Grid.RowSpan="2" Margin="26,22"
+                          Visibility="{Binding IsPickerOnly, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{Binding SelectedStepDisplayName}"
+                                   FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource App.Brush.TextPrimary}"/>
+                        <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.Job.Steps.Picker.Description}"
+                                   Margin="0,22,0,7" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        <TextBlock Grid.Row="2" Text="{Binding StepTypeDescription}"
+                                   TextWrapping="Wrap" FontSize="14" LineHeight="21"
+                                   Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>
@@ -225,6 +247,7 @@
                             Click="Cancel_Click"
                             Style="{StaticResource ButtonSecondary}"/>
                     <Button Content="{Binding ConfirmButtonText}"
+                            AutomationProperties.AutomationId="ConfirmJobStepTypeButton"
                             IsDefault="True"
                             Command="{Binding ConfirmCommand}"
                             MinWidth="110"

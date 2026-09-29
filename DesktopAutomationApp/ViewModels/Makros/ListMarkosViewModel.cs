@@ -13,7 +13,7 @@ using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Localization;
 using DesktopAutomation.Application.Organization;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels
@@ -92,8 +92,8 @@ namespace DesktopAutomationApp.ViewModels
                 Loc.Get("Ui.Macro.List.NewMacro"));
             Library.RequestCreateItem += CreateNewMakroInFolderAsync;
 
-            SaveAllCommand   = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
-            NewMakroCommand  = new RelayCommand(CreateNewMakro);
+            SaveAllCommand = new RelayCommand(async () => await SaveAllAsync(), () => Items.Count > 0);
+            NewMakroCommand = new RelayCommand(CreateNewMakro);
             DeleteMakroCommand = new RelayCommand(async () => await DeleteSelectedAsync(), () => _selectedItems.Count > 0);
             OpenMakroCommand = new RelayCommand<Makro?>(m =>
             {
@@ -199,9 +199,9 @@ namespace DesktopAutomationApp.ViewModels
         // ---------- Command invalidation helper ----------
         private void InvalidateAllCommands()
         {
-            (SaveAllCommand     as RelayCommand)?.RaiseCanExecuteChanged();
+            (SaveAllCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (DeleteMakroCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            (OpenMakroCommand   as RelayCommand<Makro?>)?.RaiseCanExecuteChanged();
+            (OpenMakroCommand as RelayCommand<Makro?>)?.RaiseCanExecuteChanged();
         }
 
         private LibraryItemDescriptor CreateLibraryDescriptor(Makro makro) => new()

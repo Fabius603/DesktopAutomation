@@ -86,13 +86,24 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
                 && field.Options.Select(option => option.Value).Distinct(StringComparer.Ordinal).Count() != field.Options.Count)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' contains duplicate option values.");
-            if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.Enum
-                && field.Options is { Count: > 0 } enumOptions
-                && field.Constraints?.AllowedValues is { Count: > 0 } allowedValues
-                && !enumOptions.Select(option => option.Value).ToHashSet(StringComparer.Ordinal)
-                    .SetEquals(allowedValues))
-                throw new InvalidOperationException(
-                    $"{definition.StepType.Name} field '{field.Id}' has inconsistent enum options and allowed values.");
+            if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.Enum)
+            {
+                if (field.Options is not { Count: > 0 } enumOptions
+                    || enumOptions.Any(option => string.IsNullOrWhiteSpace(option.Value)))
+                    throw new InvalidOperationException(
+                        $"{definition.StepType.Name} enum field '{field.Id}' requires non-empty options.");
+                if (field.Constraints?.AllowedValues is { Count: > 0 } allowedValues
+                    && !enumOptions.Select(option => option.Value).ToHashSet(StringComparer.Ordinal)
+                        .SetEquals(allowedValues))
+                    throw new InvalidOperationException(
+                        $"{definition.StepType.Name} field '{field.Id}' has inconsistent enum options and allowed values.");
+                if (field.Required && field.DefaultValue is null)
+                    throw new InvalidOperationException(
+                        $"{definition.StepType.Name} required enum field '{field.Id}' requires an explicit default value.");
+                if (field.DefaultValue is not null && !StepEnumRules.TryReadDefaultToken(field, out _))
+                    throw new InvalidOperationException(
+                        $"{definition.StepType.Name} enum field '{field.Id}' has an unknown default value.");
+            }
             if (field.Constraints is { Minimum: { } minimum, Maximum: { } maximum } && minimum > maximum)
                 throw new InvalidOperationException(
                     $"{definition.StepType.Name} field '{field.Id}' has inconsistent numeric constraints.");

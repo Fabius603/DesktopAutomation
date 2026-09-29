@@ -8,7 +8,7 @@ using DesktopAutomationApp.Models;
 using DesktopAutomationApp.Localization;
 using Microsoft.Extensions.Logging;
 using DesktopAutomation.Application.Organization;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.ViewModels.Library;
 
 namespace DesktopAutomationApp.ViewModels

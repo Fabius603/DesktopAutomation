@@ -6,7 +6,7 @@ using System.Windows.Input;
 using DesktopAutomation.Application.Interfaces;
 using DesktopAutomation.Application.Organization;
 using DesktopAutomationApp.Localization;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 
 namespace DesktopAutomationApp.ViewModels.Library;
 

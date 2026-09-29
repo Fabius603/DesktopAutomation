@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "checks": [
+    { "name": "Repository structure", "script": "checks/repository.ps1" },
+    { "name": "Documentation", "script": "checks/documentation.ps1" },
+    { "name": "Agent skills", "script": "checks/skills.ps1" },
+    { "name": "Localization", "script": "checks/localization.ps1" },
+    { "name": "Release notes", "script": "checks/release-notes.ps1" },
+    { "name": "Restore", "script": "checks/restore.ps1" },
+    { "name": "Formatting", "script": "checks/format.ps1" },
+    { "name": "Release build", "script": "checks/build.ps1" },
+    { "name": "Unit tests", "script": "checks/unit-tests.ps1" },
+    { "name": "Contract tests", "script": "checks/contract-tests.ps1" },
+    { "name": "Architecture tests", "script": "checks/architecture-tests.ps1" },
+    { "name": "Integration tests", "script": "checks/integration-tests.ps1" },
+    { "name": "UI tests", "script": "checks/ui-tests.ps1" },
+    { "name": "End-to-end tests", "script": "checks/end-to-end-tests.ps1" }
+  ]
+}

@@ -207,9 +207,8 @@ public static class JobVariableInputMigration
     {
         if (field.ValueKind != StepValueKind.Enum || variable.ValueKind != ResultValueKind.Enum) return;
         variable.EnumTypeName = $"{stepTypeId}.{field.Id}";
-        variable.EnumValues = (field.Options?.Select(option => option.Value)
-                               ?? field.Constraints?.AllowedValues
-                               ?? [])
+        variable.EnumValues = StepEnumRules.GetOptions(field)
+            .Select(option => option.Value)
             .Distinct(StringComparer.Ordinal)
             .ToList();
         variable.EnumDisplayNames = field.Options?

@@ -39,14 +39,10 @@ public sealed class WindowsSystemSettingService : IWindowsSystemSettingService
                 change.SettingId, WindowsCapabilityStatus.Unsupported, "setting.unsupported",
                 "The selected Windows setting is not supported."));
 
-        var missing = (capability.Parameters ?? [])
-            .FirstOrDefault(parameter => parameter.Required
-                && (!change.Parameters.TryGetValue(parameter.Name, out var value)
-                    || string.IsNullOrWhiteSpace(value)));
-        if (missing is not null)
+        if (!WindowsCapabilitySelectionRules.HasRequiredParameters(capability, change.Parameters))
             return Task.FromResult(WindowsSettingChangeResult.Failed(
                 change.SettingId, WindowsCapabilityStatus.Failed, "setting.missing_parameter",
-                $"The required parameter '{missing.Name}' is missing."));
+                "A required setting parameter is missing."));
 
         return _provider.ChangeAsync(change, cancellationToken);
     }

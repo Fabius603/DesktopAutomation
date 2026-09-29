@@ -38,11 +38,12 @@ internal static class StepDescriptorDraftValidator
             }
 
             var constraints = field.Constraints;
-            var allowedValues = constraints?.AllowedValues is { Count: > 0 }
-                ? constraints.AllowedValues
-                : field.Options?.Select(option => option.Value).ToArray();
-            if (allowedValues is { Count: > 0 }
-                && (text is null || !allowedValues.Contains(text, StringComparer.Ordinal)))
+            var hasInvalidEnumToken = field.ValueKind == StepValueKind.Enum
+                                      && (text is null || !StepEnumRules.IsKnownToken(field, text));
+            var hasInvalidAllowedValue = field.ValueKind != StepValueKind.Enum
+                                         && constraints?.AllowedValues is { Count: > 0 } allowedValues
+                                         && (text is null || !allowedValues.Contains(text, StringComparer.Ordinal));
+            if (hasInvalidEnumToken || hasInvalidAllowedValue)
                 issues.Add(new("StepValidation.Invalid", field.Id));
             if (constraints?.Minimum is { } minimum && number is { } numeric && numeric < minimum)
                 issues.Add(new("StepValidation.Minimum", field.Id,

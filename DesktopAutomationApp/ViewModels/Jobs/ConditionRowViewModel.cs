@@ -757,7 +757,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         ResultValueKind.Integer => null,
         ResultValueKind.Number => "0",
         ResultValueKind.DateTime => DateTime.Now.ToUniversalTime().ToString("O"),
-        ResultValueKind.Enum => property.EnumValues?.FirstOrDefault(),
+        ResultValueKind.Enum => null,
         ResultValueKind.Text => string.Empty,
         ResultValueKind.Color => "#FFFFFF",
         ResultValueKind.FilePath => string.Empty,
@@ -784,7 +784,6 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 _comparisonDate = DateTime.Now;
                 break;
             case ResultValueKind.Enum:
-                _comparisonEnum = SelectedProperty.EnumValues?.FirstOrDefault();
                 break;
         }
     }
@@ -797,86 +796,86 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
             _loadingSourcePicker = true;
             try { SourcePicker.Load(condition); }
             finally { _loadingSourcePicker = false; }
-        if (condition.HasProviderReference
-            && !string.Equals(condition.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
-            && _availableVariables.FirstOrDefault(variable =>
-                string.Equals(variable.ProviderId, condition.ProviderId, StringComparison.Ordinal)
-                && string.Equals(variable.SourceId, condition.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
-        {
-            _selectedSourceVariable = variable;
-            _selectedProperty = Describe(variable, condition.ValuePath);
-            _selectedSourceStep = VariableSource(variable, _selectedProperty);
-        }
-        else
-        {
-            _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s =>
-                string.Equals(s.StepId, condition.SourceStepId, StringComparison.OrdinalIgnoreCase));
-            _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p =>
-                (!string.IsNullOrWhiteSpace(condition.PropertyId)
-                 && p.StableId.Equals(condition.PropertyId, StringComparison.OrdinalIgnoreCase))
-                || p.Name.Equals(condition.PropertyPath, StringComparison.OrdinalIgnoreCase));
-        }
-        RefreshOperators();
-        var comparison = condition.EffectiveComparison;
-        var editorOperator = condition.Operator;
-        switch (condition.Operator)
-        {
-            case ConditionOperator.IsTrue:
-                editorOperator = ConditionOperator.Equals;
-                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.TrueString };
-                break;
-            case ConditionOperator.IsFalse:
-                editorOperator = ConditionOperator.Equals;
-                comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.FalseString };
-                break;
-        }
-        if (AvailableOperators.Contains(editorOperator))
-            _selectedOperator = editorOperator;
-        _comparisonKind = comparison.Kind;
-        _comparisonValue = comparison.Value ?? "";
-        if (_selectedProperty is not null && StepResultMetadata.TryParseComparison(_selectedProperty, comparison.Value, out var parsed))
-        {
-            if (_selectedProperty.DataType is ResultValueKind.Number or ResultValueKind.Integer)
-                _comparisonNumber = Convert.ToDouble(parsed);
-            if (_selectedProperty.DataType == ResultValueKind.DateTime && parsed is DateTime date)
-                _comparisonDate = date.ToLocalTime();
-            if (_selectedProperty.DataType == ResultValueKind.Boolean && parsed is bool boolean)
-                _comparisonBoolean = boolean;
-            if (_selectedProperty.DataType == ResultValueKind.Enum)
-                _comparisonEnum = parsed?.ToString();
-        }
-        RefreshComparisonChoices();
-        if (comparison.Kind == ComparisonOperandKind.JobResult)
-        {
-            if (comparison.HasProviderReference
-                && !string.Equals(comparison.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
-                && _availableVariables.FirstOrDefault(item =>
-                    string.Equals(item.ProviderId, comparison.ProviderId, StringComparison.Ordinal)
-                    && string.Equals(item.SourceId, comparison.SourceId, StringComparison.OrdinalIgnoreCase)) is { } comparisonVariable)
+            if (condition.HasProviderReference
+                && !string.Equals(condition.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+                && _availableVariables.FirstOrDefault(variable =>
+                    string.Equals(variable.ProviderId, condition.ProviderId, StringComparison.Ordinal)
+                    && string.Equals(variable.SourceId, condition.SourceId, StringComparison.OrdinalIgnoreCase)) is { } variable)
             {
-                _selectedComparisonVariable = comparisonVariable;
-                _selectedComparisonProperty = Describe(comparisonVariable, comparison.ValuePath);
-                _selectedComparisonSourceStep = VariableSource(comparisonVariable, _selectedComparisonProperty);
+                _selectedSourceVariable = variable;
+                _selectedProperty = Describe(variable, condition.ValuePath);
+                _selectedSourceStep = VariableSource(variable, _selectedProperty);
             }
             else
             {
-                _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s =>
-                    string.Equals(s.StepId, comparison.SourceStepId, StringComparison.OrdinalIgnoreCase));
-                _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
-                    .FirstOrDefault(p =>
-                        ((!string.IsNullOrWhiteSpace(comparison.PropertyId)
-                          && p.StableId.Equals(comparison.PropertyId, StringComparison.OrdinalIgnoreCase))
-                         || p.Name.Equals(comparison.PropertyPath, StringComparison.OrdinalIgnoreCase))
-                        && _selectedProperty is not null
-                        && StepResultMetadata.AreComparable(_selectedProperty, p));
+                _selectedSourceStep = _availableSourceSteps.FirstOrDefault(s =>
+                    string.Equals(s.StepId, condition.SourceStepId, StringComparison.OrdinalIgnoreCase));
+                _selectedProperty = _selectedSourceStep?.ResultType.Properties.FirstOrDefault(p =>
+                    (!string.IsNullOrWhiteSpace(condition.PropertyId)
+                     && p.StableId.Equals(condition.PropertyId, StringComparison.OrdinalIgnoreCase))
+                    || p.Name.Equals(condition.PropertyPath, StringComparison.OrdinalIgnoreCase));
             }
-        }
-        RefreshComparisonField(comparison.Value,
-            comparison.Kind == ComparisonOperandKind.JobResult ? comparison : null);
-        OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
-        OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(ComparisonEnum)); OnChange(nameof(EnumValues)); OnChange(nameof(EnumOptions)); OnChange(nameof(SelectedPath));
-        OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
-        OnChange(nameof(SelectedComparisonSourceStep)); OnChange(nameof(SelectedComparisonProperty)); OnChange(nameof(ComparisonPath)); NotifyInput();
+            RefreshOperators();
+            var comparison = condition.EffectiveComparison;
+            var editorOperator = condition.Operator;
+            switch (condition.Operator)
+            {
+                case ConditionOperator.IsTrue:
+                    editorOperator = ConditionOperator.Equals;
+                    comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.TrueString };
+                    break;
+                case ConditionOperator.IsFalse:
+                    editorOperator = ConditionOperator.Equals;
+                    comparison = new ComparisonOperand { Kind = ComparisonOperandKind.Literal, Value = bool.FalseString };
+                    break;
+            }
+            if (AvailableOperators.Contains(editorOperator))
+                _selectedOperator = editorOperator;
+            _comparisonKind = comparison.Kind;
+            _comparisonValue = comparison.Value ?? "";
+            if (_selectedProperty is not null && StepResultMetadata.TryParseComparison(_selectedProperty, comparison.Value, out var parsed))
+            {
+                if (_selectedProperty.DataType is ResultValueKind.Number or ResultValueKind.Integer)
+                    _comparisonNumber = Convert.ToDouble(parsed);
+                if (_selectedProperty.DataType == ResultValueKind.DateTime && parsed is DateTime date)
+                    _comparisonDate = date.ToLocalTime();
+                if (_selectedProperty.DataType == ResultValueKind.Boolean && parsed is bool boolean)
+                    _comparisonBoolean = boolean;
+                if (_selectedProperty.DataType == ResultValueKind.Enum)
+                    _comparisonEnum = parsed?.ToString();
+            }
+            RefreshComparisonChoices();
+            if (comparison.Kind == ComparisonOperandKind.JobResult)
+            {
+                if (comparison.HasProviderReference
+                    && !string.Equals(comparison.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
+                    && _availableVariables.FirstOrDefault(item =>
+                        string.Equals(item.ProviderId, comparison.ProviderId, StringComparison.Ordinal)
+                        && string.Equals(item.SourceId, comparison.SourceId, StringComparison.OrdinalIgnoreCase)) is { } comparisonVariable)
+                {
+                    _selectedComparisonVariable = comparisonVariable;
+                    _selectedComparisonProperty = Describe(comparisonVariable, comparison.ValuePath);
+                    _selectedComparisonSourceStep = VariableSource(comparisonVariable, _selectedComparisonProperty);
+                }
+                else
+                {
+                    _selectedComparisonSourceStep = _availableSourceSteps.FirstOrDefault(s =>
+                        string.Equals(s.StepId, comparison.SourceStepId, StringComparison.OrdinalIgnoreCase));
+                    _selectedComparisonProperty = _selectedComparisonSourceStep?.ResultType.Properties
+                        .FirstOrDefault(p =>
+                            ((!string.IsNullOrWhiteSpace(comparison.PropertyId)
+                              && p.StableId.Equals(comparison.PropertyId, StringComparison.OrdinalIgnoreCase))
+                             || p.Name.Equals(comparison.PropertyPath, StringComparison.OrdinalIgnoreCase))
+                            && _selectedProperty is not null
+                            && StepResultMetadata.AreComparable(_selectedProperty, p));
+                }
+            }
+            RefreshComparisonField(comparison.Value,
+                comparison.Kind == ComparisonOperandKind.JobResult ? comparison : null);
+            OnChange(nameof(SelectedSourceStep)); OnChange(nameof(SelectedProperty)); OnChange(nameof(SelectedOperator));
+            OnChange(nameof(ComparisonValue)); OnChange(nameof(ComparisonNumber)); OnChange(nameof(ComparisonDate)); OnChange(nameof(ComparisonBoolean)); OnChange(nameof(ComparisonEnum)); OnChange(nameof(EnumValues)); OnChange(nameof(EnumOptions)); OnChange(nameof(SelectedPath));
+            OnChange(nameof(ComparisonKind)); OnChange(nameof(ComparisonIsLiteral)); OnChange(nameof(ComparisonIsJobResult));
+            OnChange(nameof(SelectedComparisonSourceStep)); OnChange(nameof(SelectedComparisonProperty)); OnChange(nameof(ComparisonPath)); NotifyInput();
         }
         finally
         {

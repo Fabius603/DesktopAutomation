@@ -4,10 +4,10 @@ Job-Steps werden nicht mehr mit einem eigenen XAML-Editor, `ShowXxx`-Properties,
 einem Fabrik-Switch oder einem `Prefill`-Fall in der Desktop-Anwendung eingebaut.
 Die fachliche Beschreibung eines Steps liegt vollständig in `TaskAutomation`.
 
-Die verbindliche Anleitung steht in:
+Die verbindliche Anleitung steht im Repository-Skill und in der Architektur-Dokumentation:
 
-- `TaskAutomation/Steps/ADDING_A_JOB_STEP.md`
-- `TaskAutomation/Steps/RESULT_CONTRACTS.md`
+- `.agents/skills/add-job-step/SKILL.md`
+- `docs/architecture/result-contracts.md`
 
 ## Verantwortlichkeiten
 

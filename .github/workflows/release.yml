@@ -68,33 +68,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Restore
+      - name: Verify repository
         if: steps.check.outputs.EXISTS == 'false'
-        run: dotnet restore DesktopAutomation.sln
+        shell: pwsh
+        run: .\eng\verify.ps1 -Mode Full
 
-      - name: Build tests
-        if: steps.check.outputs.EXISTS == 'false'
-        run: >
-          dotnet build tests/TaskAutomation.Tests/TaskAutomation.Tests.csproj
-          --configuration Release
-          --no-restore
-
-      - name: Test
-        if: steps.check.outputs.EXISTS == 'false'
-        run: >
-          dotnet test tests/TaskAutomation.Tests/TaskAutomation.Tests.csproj
-          --configuration Release
-          --no-build
-          --no-restore
-          --logger "trx;LogFileName=TaskAutomation.Tests.trx"
-          --results-directory TestResults
-
-      - name: Upload test results
+      - name: Upload verification results
         if: always() && steps.check.outputs.EXISTS == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: release-test-results
-          path: TestResults/**/*.trx
+          name: release-verification-results
+          path: artifacts/verify/**
           if-no-files-found: error
 
       - name: Publish self-contained (win-x64)

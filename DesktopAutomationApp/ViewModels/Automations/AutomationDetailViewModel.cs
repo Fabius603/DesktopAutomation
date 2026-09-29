@@ -122,7 +122,7 @@ namespace DesktopAutomationApp.ViewModels
         }
         public string HotkeyCaptureStatus => IsCapturingHotkey ? Loc.Get("Automation.Hotkey.CapturePrompt") : string.Empty;
         public string TriggerDescription => EditedAutomation.IsWindowsEventTrigger
-            ? WindowsEventPicker.SelectedCapability?.DisplayName ?? "Windows-Ereignis auswählen"
+            ? WindowsEventPicker.SelectedCapability?.DisplayName ?? Loc.Get("Validation.WindowsEventRequired")
             : Loc.Get($"Automation.Trigger.Description.{EditedAutomation.TriggerKind}");
 
         public ICommand BackCommand { get; }
@@ -416,45 +416,10 @@ namespace DesktopAutomationApp.ViewModels
             AutomationValidationError.WeekdayRequired => Loc.Get("Validation.WeekdayRequired"),
             AutomationValidationError.IntervalPositive => Loc.Get("Validation.IntervalPositive"),
             AutomationValidationError.ActiveWindowPair => Loc.Get("Validation.ActiveWindowPair"),
-            AutomationValidationError.WindowsEventRequired => "Bitte wähle ein Windows-Ereignis aus.",
+            AutomationValidationError.WindowsEventRequired => Loc.Get("Validation.WindowsEventRequired"),
             AutomationValidationError.WebhookConfigurationInvalid => Loc.Get("Validation.WebhookConfigurationInvalid"),
             _ => Loc.Get("Validation.Title")
         };
-
-#if false // Fachregeln liegen in TaskAutomation.AutomationValidation.
-        private string? ValidateEdited()
-        {
-            if (string.IsNullOrWhiteSpace(EditedAutomation.Name)) return Loc.Get("Validation.NameRequired");
-            if (SelectedAction == null) return Loc.Get("Validation.ActionRequired");
-            if (EditedAutomation.TriggerKind == AutomationTriggerKind.Hotkey && EditedAutomation.VirtualKeyCode == 0)
-                return Loc.Get("Validation.HotkeyRequired");
-            if (EditedAutomation.IsProcessTrigger && string.IsNullOrWhiteSpace(EditedAutomation.ProcessName))
-                return Loc.Get("Validation.ProcessNameRequired");
-            if (EditedAutomation.IsWindowEventTrigger
-                && string.IsNullOrWhiteSpace(EditedAutomation.ProcessName)
-                && string.IsNullOrWhiteSpace(EditedAutomation.WindowTitleContains))
-                return Loc.Get("Validation.WindowFilterRequired");
-            if (EditedAutomation.IsFileSystemEventTrigger)
-            {
-                if (string.IsNullOrWhiteSpace(EditedAutomation.FileSystemPath))
-                    return Loc.Get("Validation.FolderRequired");
-                var path = Environment.ExpandEnvironmentVariables(EditedAutomation.FileSystemPath.Trim());
-                if (!Directory.Exists(path))
-                    return Loc.Get("Validation.FolderNotFound");
-                if (string.IsNullOrWhiteSpace(EditedAutomation.FileSystemFilter))
-                    return Loc.Get("Validation.FileFilterRequired");
-            }
-            if (EditedAutomation.IsScheduleTrigger && !(EditedAutomation.Monday || EditedAutomation.Tuesday
-                || EditedAutomation.Wednesday || EditedAutomation.Thursday || EditedAutomation.Friday
-                || EditedAutomation.Saturday || EditedAutomation.Sunday))
-                return Loc.Get("Validation.WeekdayRequired");
-            if (EditedAutomation.IsIntervalTrigger && EditedAutomation.IntervalValue <= 0)
-                return Loc.Get("Validation.IntervalPositive");
-            if (EditedAutomation.EnabledFrom.HasValue != EditedAutomation.EnabledUntil.HasValue)
-                return Loc.Get("Validation.ActiveWindowPair");
-            return null;
-        }
-#endif
 
         private void OnEditedAutomationChanged(object? sender, PropertyChangedEventArgs e)
         {

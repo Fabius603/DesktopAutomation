@@ -57,7 +57,9 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
                 .OrderBy(field => field.Order)
                 .Select(field =>
                 {
-                    var fallback = _baseDraft.Values.GetValueOrDefault(field.Id) ?? field.DefaultValue;
+                    var fallback = _baseDraft.Values.TryGetValue(field.Id, out var persistedValue)
+                        ? persistedValue
+                        : field.DefaultValue;
                     var value = initialValueResolver?.Invoke(field, fallback) ?? fallback;
                     return new GeneratedStepFieldViewModel(
                         field,
@@ -128,6 +130,13 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         ValidationError = error;
         return success;
     }
+
+    /// <summary>
+    /// Materializes the current editor state for an inline job-step editing session.
+    /// Incomplete or invalid input remains in the editor and is exposed through
+    /// <see cref="ValidationError"/> instead of replacing the last valid job step.
+    /// </summary>
+    internal bool TryCreateWorkingStep(out JobStep? step) => TryCreateStep(out step);
 
     public JobStep? CreateUsageSnapshot() =>
         TryBuildStep(validate: false, out var step, out _) ? step : null;
@@ -398,22 +407,22 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
     private static GeneratedStepEditorNodeViewModel BuildEditorNode(
         StepEditorNodeDescriptor descriptor,
         IReadOnlyDictionary<string, GeneratedStepFieldViewModel> fieldsById) => descriptor switch
-    {
-        StepFieldNodeDescriptor field => new GeneratedStepFieldNodeViewModel(fieldsById[field.FieldId]),
-        StepPointFieldPairDescriptor pair => new GeneratedStepPointFieldPairViewModel(
-            fieldsById[pair.XFieldId], fieldsById[pair.YFieldId],
-            string.IsNullOrWhiteSpace(pair.LabelKey) ? string.Empty : Loc.Get(pair.LabelKey),
-            string.IsNullOrWhiteSpace(pair.SourceFieldId) ? null : fieldsById[pair.SourceFieldId],
-            string.IsNullOrWhiteSpace(pair.ReferenceFieldId) ? null : fieldsById[pair.ReferenceFieldId]),
-        StepChoiceGroupDescriptor group => new GeneratedStepChoiceGroupViewModel(
-            fieldsById[group.SelectionFieldId],
-            group.Branches.Select(branch => new GeneratedStepChoiceBranchViewModel(
-                branch.Value,
-                Loc.Get(branch.LabelKey),
-                branch.Children.Select(child => BuildEditorNode(child, fieldsById)).ToArray(),
-                string.IsNullOrWhiteSpace(branch.DescriptionKey) ? string.Empty : Loc.Get(branch.DescriptionKey))).ToArray()),
-        _ => throw new InvalidOperationException($"Unknown editor node '{descriptor.GetType().Name}'.")
-    };
+        {
+            StepFieldNodeDescriptor field => new GeneratedStepFieldNodeViewModel(fieldsById[field.FieldId]),
+            StepPointFieldPairDescriptor pair => new GeneratedStepPointFieldPairViewModel(
+                fieldsById[pair.XFieldId], fieldsById[pair.YFieldId],
+                string.IsNullOrWhiteSpace(pair.LabelKey) ? string.Empty : Loc.Get(pair.LabelKey),
+                string.IsNullOrWhiteSpace(pair.SourceFieldId) ? null : fieldsById[pair.SourceFieldId],
+                string.IsNullOrWhiteSpace(pair.ReferenceFieldId) ? null : fieldsById[pair.ReferenceFieldId]),
+            StepChoiceGroupDescriptor group => new GeneratedStepChoiceGroupViewModel(
+                fieldsById[group.SelectionFieldId],
+                group.Branches.Select(branch => new GeneratedStepChoiceBranchViewModel(
+                    branch.Value,
+                    Loc.Get(branch.LabelKey),
+                    branch.Children.Select(child => BuildEditorNode(child, fieldsById)).ToArray(),
+                    string.IsNullOrWhiteSpace(branch.DescriptionKey) ? string.Empty : Loc.Get(branch.DescriptionKey))).ToArray()),
+            _ => throw new InvalidOperationException($"Unknown editor node '{descriptor.GetType().Name}'.")
+        };
 }
 
 public sealed class GeneratedStepEditorSectionViewModel
@@ -514,7 +523,8 @@ public sealed class GeneratedStepChoiceGroupViewModel : GeneratedStepEditorNodeV
         Branches = branches;
         _selectionField.PropertyChanged += (_, args) =>
         {
-            if (args.PropertyName is nameof(GeneratedStepFieldViewModel.SelectedEnumOption)
+            if (args.PropertyName is nameof(GeneratedStepFieldViewModel.SelectedEnumValue)
+                or nameof(GeneratedStepFieldViewModel.SelectedEnumOption)
                 or nameof(GeneratedStepFieldViewModel.InputText))
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBranch)));
             if (args.PropertyName == nameof(GeneratedStepFieldViewModel.IsVisible))
@@ -530,16 +540,14 @@ public sealed class GeneratedStepChoiceGroupViewModel : GeneratedStepEditorNodeV
     public bool IsVisible => _selectionField.IsVisible;
     public IReadOnlyList<GeneratedStepChoiceBranchViewModel> Branches { get; }
 
-    public GeneratedStepChoiceBranchViewModel SelectedBranch
+    public GeneratedStepChoiceBranchViewModel? SelectedBranch
     {
         get => Branches.FirstOrDefault(branch =>
-                string.Equals(branch.Value, _selectionField.InputText, StringComparison.OrdinalIgnoreCase))
-            ?? Branches[0];
+            string.Equals(branch.Value, _selectionField.SelectedEnumValue, StringComparison.Ordinal));
         set
         {
             if (value is null || ReferenceEquals(SelectedBranch, value)) return;
-            _selectionField.SelectedEnumOption = _selectionField.EnumOptions.FirstOrDefault(option =>
-                string.Equals(option.Value, value.Value, StringComparison.Ordinal));
+            _selectionField.SelectedEnumValue = value.Value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBranch)));
         }
     }
@@ -552,7 +560,6 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
 
     private string _inputText;
     private GeneratedStepChoiceOptionViewModel? _selectedChoice;
-    private GeneratedStepEnumOptionViewModel? _selectedEnumOption;
     private bool _isVisible = true;
     private string? _filePreviewPath;
     private ImageSource? _filePreview;
@@ -583,7 +590,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             _inputText = ResolveSuggestedDirectory(directoryOptions);
         Suggestions = new ObservableCollection<string>(suggestions ?? []);
         Choices = new ObservableCollection<GeneratedStepChoiceOptionViewModel>(choices ?? []);
-        EnumOptions = new ObservableCollection<GeneratedStepEnumOptionViewModel>(BuildEnumOptions(descriptor));
+        EnumOptions = BuildEnumOptions(descriptor).ToArray();
         ProcessTargetEditor = processTargetEditor;
         if (ProcessTargetEditor is not null)
             ProcessTargetEditor.Changed += OnProcessTargetChanged;
@@ -624,14 +631,6 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             ?? (Descriptor.Required && UsesChoicePicker ? Choices.FirstOrDefault() : null);
         if (_selectedChoice is not null)
             _inputText = JsonSerializer.SerializeToNode(_selectedChoice.Value)?.ToJsonString() ?? string.Empty;
-        EnsureEnumOption(_inputText);
-        _selectedEnumOption = EnumOptions.FirstOrDefault(option =>
-            string.Equals(option.Value, _inputText, StringComparison.OrdinalIgnoreCase));
-        if (_selectedEnumOption is null && string.IsNullOrWhiteSpace(_inputText)
-            && descriptor.Required && UsesEnumPicker)
-            _selectedEnumOption = EnumOptions.FirstOrDefault();
-        if (_selectedEnumOption is not null)
-            _inputText = _selectedEnumOption.Value;
         LoadInlineStepValue();
         if (!SupportsDirectValue && InputReferenceEditor is not null && !InputReferenceEditor.Picker.IsConfigured)
             InputReferenceEditor.Picker.SelectSourceKind(StepInputSourceKind.StepResult);
@@ -667,28 +666,22 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     private static IEnumerable<GeneratedStepEnumOptionViewModel> BuildEnumOptions(
         StepFieldDescriptor descriptor)
     {
-        if (descriptor.Options is { Count: > 0 })
-            return descriptor.Options.Select(option => new GeneratedStepEnumOptionViewModel(
+        return StepEnumRules.GetOptions(descriptor)
+            .Select(option => new GeneratedStepEnumOptionViewModel(
                 option.Value,
                 option.DisplayName ?? Loc.Get(option.LabelKey)));
-        return (descriptor.Constraints?.AllowedValues ?? [])
-            .Select(value => new GeneratedStepEnumOptionViewModel(value, value));
     }
 
-    private void EnsureEnumOption(string? value)
-    {
-        if (!UsesEnumPicker || string.IsNullOrWhiteSpace(value)
-            || EnumOptions.Any(option => string.Equals(option.Value, value, StringComparison.OrdinalIgnoreCase)))
-            return;
-        EnumOptions.Add(new GeneratedStepEnumOptionViewModel(value, value));
-    }
+    private GeneratedStepEnumOptionViewModel? ResolveEnumOption(string? value) =>
+        EnumOptions.FirstOrDefault(option =>
+            string.Equals(option.Value, value, StringComparison.Ordinal));
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public StepFieldDescriptor Descriptor { get; }
     public ObservableCollection<string> Suggestions { get; }
     public ObservableCollection<GeneratedStepChoiceOptionViewModel> Choices { get; }
-    public ObservableCollection<GeneratedStepEnumOptionViewModel> EnumOptions { get; }
+    public IReadOnlyList<GeneratedStepEnumOptionViewModel> EnumOptions { get; }
     public IReadOnlyList<GeneratedStepBooleanOptionViewModel> BooleanOptions { get; } =
     [
         new(true, "Ui.Job.Variables.Boolean.True"),
@@ -872,23 +865,46 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         && !UsesPercentagePicker;
     public bool IsVisible => _isVisible;
 
-    public GeneratedStepEnumOptionViewModel? SelectedEnumOption
+    public string? SelectedEnumValue
     {
-        get => _selectedEnumOption;
+        get => ResolveEnumOption(_inputText)?.Value;
         set
         {
-            if (ReferenceEquals(_selectedEnumOption, value)) return;
-            _selectedEnumOption = value;
-            _inputText = value?.Value ?? string.Empty;
+            if (string.Equals(SelectedEnumValue, value, StringComparison.Ordinal)) return;
+            if (value is not null && !StepEnumRules.IsKnownToken(Descriptor, value)) return;
+            _inputText = value ?? string.Empty;
             StoreInlineStepValue();
             InvalidateFilePreview();
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
-            if (ShowsFilePreview)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilePreview)));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasFilePreview)));
-            }
+            NotifyEnumState();
+        }
+    }
+
+    public GeneratedStepEnumOptionViewModel? SelectedEnumOption
+    {
+        get => ResolveEnumOption(_inputText);
+        set => SelectedEnumValue = value?.Value;
+    }
+
+    public bool HasInvalidEnumValue => UsesEnumPicker
+                                       && !string.IsNullOrWhiteSpace(_inputText)
+                                       && SelectedEnumValue is null;
+    public string InvalidEnumValue => HasInvalidEnumValue ? _inputText : string.Empty;
+    public string EnumValidationMessage => HasInvalidEnumValue
+        ? Loc.Format("Ui.Step.Generated.Validation.UnknownEnum", Label, InvalidEnumValue)
+        : string.Empty;
+
+    private void NotifyEnumState()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasInvalidEnumValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InvalidEnumValue)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EnumValidationMessage)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
+        if (ShowsFilePreview)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilePreview)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasFilePreview)));
         }
     }
 
@@ -970,6 +986,8 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             StoreInlineStepValue();
             InvalidateFilePreview();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
+            if (UsesEnumPicker)
+                NotifyEnumState();
             if (IsBoolean)
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
@@ -989,6 +1007,11 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool TryWriteValue(StepDraft draft, out string? error)
     {
         error = null;
+        if (UsesEnumPicker && (!UsesInputReference || IsInlineStepValue) && HasInvalidEnumValue)
+        {
+            error = EnumValidationMessage;
+            return false;
+        }
         if (UsesConditionEditor && ConditionEditor is { IsValid: false })
         {
             error = Loc.Get("Ui.Step.Generated.Validation.Invalid");
@@ -1127,9 +1150,10 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
     public bool ValueEquals(JsonNode? expected)
     {
         if (expected is null) return string.IsNullOrWhiteSpace(InputText);
+        var comparison = UsesEnumPicker ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
         return expected is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var text)
-            ? string.Equals(InputText, text, StringComparison.OrdinalIgnoreCase)
-            : string.Equals(InputText, expected.ToJsonString(), StringComparison.OrdinalIgnoreCase);
+            ? string.Equals(InputText, text, comparison)
+            : string.Equals(InputText, expected.ToJsonString(), comparison);
     }
 
     public void SetVisibility(bool isVisible)
@@ -1244,19 +1268,14 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
             return;
         }
         var formattedValue = FormatValue(variable.Value, EffectiveValueKind);
-        EnsureEnumOption(formattedValue);
-        var selectedEnumOption = EnumOptions.FirstOrDefault(option =>
-            string.Equals(option.Value, formattedValue, StringComparison.OrdinalIgnoreCase));
-        if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)
-            && ReferenceEquals(_selectedEnumOption, selectedEnumOption)) return;
+        if (string.Equals(_inputText, formattedValue, StringComparison.Ordinal)) return;
         _inputText = formattedValue;
-        _selectedEnumOption = selectedEnumOption;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InputText)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BooleanValue)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedBooleanOption)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntegerValue)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NumberValue)));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedEnumOption)));
+        NotifyEnumState();
     }
 
     private void StoreInlineStepValue()
@@ -1757,7 +1776,9 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
             item.LoadFrom(new PointEntry
             {
                 Source = Enum.TryParse(value.Source, out PointEntrySource source) ? source : PointEntrySource.Manual,
-                ManualX = value.ManualX, ManualY = value.ManualY, PointsSource = binding
+                ManualX = value.ManualX,
+                ManualY = value.ManualY,
+                PointsSource = binding
             });
         }
         if (_nestedInputResolver is not null)

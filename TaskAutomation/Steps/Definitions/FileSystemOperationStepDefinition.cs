@@ -99,7 +99,7 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
     protected override void Apply(StepDraft draft, FileSystemOperationStep step)
     {
         var s = step.Settings;
-        s.Operation = EnumValue<FileSystemOperation>(draft, OperationFieldId);
+        s.Operation = DefinitionValueReader.Enum<FileSystemOperation>(draft, OperationFieldId);
         s.SourceMode = FileSystemPathSource.ExplicitPath;
         s.SourcePath = DefinitionValueReader.String(draft, SourcePathFieldId);
         s.SourceResult = new ResultBinding();
@@ -116,7 +116,8 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)
     {
-        var operation = Enum.Parse<FileSystemOperation>(DefinitionValueReader.String(draft, OperationFieldId));
+        if (!DefinitionValueReader.TryEnum<FileSystemOperation>(draft, OperationFieldId, out var operation))
+            return [];
         if (operation == FileSystemOperation.Rename)
         {
             var name = DefinitionValueReader.String(draft, NewNameFieldId);
@@ -146,6 +147,4 @@ public sealed class FileSystemOperationStepDefinition : StepDefinition<FileSyste
         new(id, label, StepValueKind.Enum, true, JsonValue.Create(defaultValue),
             EditorHint: editorHint, Constraints: new(AllowedValues: values), Order: order, Options: options,
             VisibleWhenAll: visibleWhenAll);
-    private static T EnumValue<T>(StepDraft draft, string id) where T : struct, Enum =>
-        Enum.TryParse<T>(DefinitionValueReader.String(draft, id), out var value) ? value : default;
 }

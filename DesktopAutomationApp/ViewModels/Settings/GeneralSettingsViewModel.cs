@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.Settings;
 using DesktopAutomationApp.Theming;
 using Microsoft.Extensions.Logging;

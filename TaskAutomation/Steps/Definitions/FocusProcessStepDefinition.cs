@@ -97,8 +97,8 @@ public sealed class FocusProcessStepDefinition : StepDefinition<FocusProcessStep
     protected override void Apply(StepDraft draft, FocusProcessStep step)
     {
         ProcessSelectorDraft.Apply(draft, ProcessTargetFieldId, step.Settings.Target);
-        step.Settings.Action = Enum.Parse<FocusProcessAction>(DefinitionValueReader.String(draft, ActionFieldId));
-        step.Settings.WindowMode = Enum.Parse<FocusProcessWindowMode>(DefinitionValueReader.String(draft, WindowModeFieldId));
+        step.Settings.Action = DefinitionValueReader.Enum<FocusProcessAction>(draft, ActionFieldId);
+        step.Settings.WindowMode = DefinitionValueReader.Enum<FocusProcessWindowMode>(draft, WindowModeFieldId);
     }
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)

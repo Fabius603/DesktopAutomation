@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Windows;
 using DesktopAutomationApp.Localization;
-using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.Views;
 using Microsoft.Extensions.Logging;
 

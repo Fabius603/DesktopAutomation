@@ -35,6 +35,7 @@ using DesktopAutomationApp.Infrastructure;
 using TaskAutomation.Logging;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Settings;
+using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.Theming;
 using Velopack;
 using TaskAutomation.Timing;

@@ -57,8 +57,7 @@ public sealed class OcrStepDefinition : StepDefinition<OcrStep>
         var settings = step.Settings;
         settings.ImageSource = DefinitionValueReader.Binding(draft, ImageDetectionStepDefinitionSupport.ImageSourceFieldId);
         settings.Languages = DefinitionValueReader.String(draft, LanguagesFieldId);
-        settings.PageLayout = Enum.TryParse<OcrPageLayout>(DefinitionValueReader.String(draft, LayoutFieldId), out var layout)
-            ? layout : OcrPageLayout.Automatic;
+        settings.PageLayout = DefinitionValueReader.Enum<OcrPageLayout>(draft, LayoutFieldId);
         var roi = ImageDetectionStepDefinitionSupport.ReadRoi(draft);
         settings.EnableROI = roi.Enabled;
         settings.ROI = roi.Roi;

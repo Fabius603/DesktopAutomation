@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\TestProject.props" />
+  <PropertyGroup>
+    <AssemblyName>DesktopAutomation.ContractTests</AssemblyName>
+  </PropertyGroup>
+</Project>

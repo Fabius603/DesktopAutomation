@@ -15,7 +15,8 @@
              xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
              xmlns:viewModels="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
-             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             MinWidth="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
     <UserControl.Resources>
         <generated:GeneratedStepFieldTemplateSelector x:Key="GeneratedStepFieldTemplateSelector"/>
         <generated:GeneratedStepFieldTemplateSelector x:Key="InlineStepValueTemplateSelector" IgnoreInputReference="True"/>
@@ -25,11 +26,11 @@
             <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter>
         </Style>
         <DataTemplate x:Key="TextFieldTemplate">
-            <TextBox MinWidth="220" HorizontalAlignment="Stretch"
+            <TextBox MinWidth="0" HorizontalAlignment="Stretch"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
         </DataTemplate>
         <DataTemplate x:Key="SingleLineTextFieldTemplate">
-            <TextBox Height="30" MinWidth="220" HorizontalAlignment="Stretch"
+            <TextBox Height="30" MinWidth="0" HorizontalAlignment="Stretch"
                      AcceptsReturn="False" TextWrapping="NoWrap"
                      VerticalContentAlignment="Center"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
@@ -80,9 +81,30 @@
                       SelectedItem="{Binding SelectedChoice, Mode=TwoWay}"/>
         </DataTemplate>
         <DataTemplate x:Key="EnumFieldTemplate">
-            <ComboBox MinWidth="220" HorizontalAlignment="Stretch"
-                      ItemsSource="{Binding EnumOptions}" DisplayMemberPath="Label"
-                      SelectedItem="{Binding SelectedEnumOption, Mode=TwoWay}"/>
+            <StackPanel MinWidth="0">
+                <ComboBox MinWidth="0" HorizontalAlignment="Stretch"
+                          AutomationProperties.AutomationId="GeneratedStepEnumPicker"
+                          ItemsSource="{Binding EnumOptions}"
+                          DisplayMemberPath="Label"
+                          SelectedValuePath="Value"
+                          TextSearch.TextPath="Label"
+                          SelectedValue="{Binding SelectedEnumValue, Mode=TwoWay}"/>
+                <TextBlock Margin="2,4,2,0"
+                           Foreground="{DynamicResource App.Brush.Danger}"
+                           Text="{Binding EnumValidationMessage}"
+                           TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasInvalidEnumValue}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="ProcessSourceOptionTemplate">
             <TextBlock Text="{Binding Label}" TextWrapping="Wrap"/>
@@ -218,7 +240,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <ComboBox ItemsSource="{Binding CameraEditor.Cameras}" SelectedItem="{Binding CameraEditor.SelectedCamera, Mode=TwoWay}"
-                              DisplayMemberPath="Name" MinWidth="220"/>
+                              DisplayMemberPath="Name" MinWidth="0" HorizontalAlignment="Stretch"/>
                     <Button Grid.Column="1" Command="{Binding CameraEditor.RefreshCommand}"
                             Content="{loc:Translate Key=Ui.Step.Camera.Refresh}" Margin="8,0,0,0"/>
                 </Grid>
@@ -227,7 +249,7 @@
                 <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}" Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
                 <ComboBox ItemsSource="{Binding CameraEditor.Qualities}" SelectedItem="{Binding CameraEditor.SelectedQuality, Mode=TwoWay}"
                           DisplayMemberPath="DisplayName" IsEnabled="{Binding CameraEditor.IsLoadingQualities, Converter={StaticResource InverseBooleanConverter}}"
-                          MinWidth="220" HorizontalAlignment="Left"/>
+                          MinWidth="0" HorizontalAlignment="Stretch"/>
                 <TextBlock Text="{Binding CameraEditor.QualityStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
                            TextWrapping="Wrap" Margin="0,4,0,0"/>
             </StackPanel>
@@ -377,12 +399,9 @@
         <DataTemplate x:Key="GeneratedFieldTemplate">
             <Grid x:Name="GeneratedFieldHost" Margin="0,0,0,12" HorizontalAlignment="Stretch"
                   Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="165"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0"
-                            Visibility="{Binding UsesConditionEditor, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <StackPanel VerticalAlignment="Top" Margin="0,0,0,6"
+                             Visibility="{Binding UsesConditionEditor, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding Label}" Style="{StaticResource StepFieldLabel}"/>
                     <TextBlock Text="{Binding Description}"
                                Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -390,15 +409,15 @@
                                FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
                 </StackPanel>
                 <ContentControl Content="{Binding}"
+                                Grid.Row="1"
                                 HorizontalContentAlignment="Stretch"
                                 ContentTemplateSelector="{StaticResource GeneratedStepFieldTemplateSelector}">
                     <ContentControl.Style>
                         <Style TargetType="ContentControl">
-                            <Setter Property="Grid.Column" Value="1"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding UsesConditionEditor}" Value="True">
-                                    <Setter Property="Grid.Column" Value="0"/>
-                                    <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                    <Setter Property="Grid.Row" Value="0"/>
+                                    <Setter Property="Grid.RowSpan" Value="2"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -465,18 +484,15 @@
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepChoiceGroupViewModel}">
             <Grid Margin="0,0,0,12" HorizontalAlignment="Stretch"
                   Visibility="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="165"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Top" Margin="0,0,12,0">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <StackPanel VerticalAlignment="Top" Margin="0,0,0,6">
                     <TextBlock Text="{Binding Label}" Style="{StaticResource StepFieldLabel}"/>
                     <TextBlock Text="{Binding Description}"
                                Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
                                Foreground="{DynamicResource App.Brush.TextMuted}"
                                FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"/>
                 </StackPanel>
-                <shared:ChoiceGroupEditor Grid.Column="1"
+                <shared:ChoiceGroupEditor Grid.Row="1"
                                           ItemsSource="{Binding Branches}"
                                           SelectedItem="{Binding SelectedBranch, Mode=TwoWay}"
                                           SelectedContent="{Binding SelectedBranch}"

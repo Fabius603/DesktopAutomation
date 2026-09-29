@@ -96,10 +96,10 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
 
     protected override void Apply(StepDraft draft, PointComparisonStep step)
     {
-        Enum.TryParse(DefinitionValueReader.String(draft, ModeFieldId), out PointComparisonMode mode);
-        Enum.TryParse(DefinitionValueReader.String(draft, MatchRequirementFieldId), out PointMatchRequirement requirement);
-        Enum.TryParse(DefinitionValueReader.String(draft, ReferenceSourceFieldId), out PointEntrySource referenceSource);
-        Enum.TryParse(DefinitionValueReader.String(draft, CombineModeFieldId), out ExpressionCombineMode combineMode);
+        var mode = DefinitionValueReader.Enum<PointComparisonMode>(draft, ModeFieldId);
+        var requirement = DefinitionValueReader.Enum<PointMatchRequirement>(draft, MatchRequirementFieldId);
+        var referenceSource = DefinitionValueReader.Enum<PointEntrySource>(draft, ReferenceSourceFieldId);
+        var combineMode = DefinitionValueReader.Enum<ExpressionCombineMode>(draft, CombineModeFieldId);
         step.Settings.Mode = mode;
         step.Settings.MatchRequirement = requirement;
         step.Settings.Points = ReadPoints(draft).Select(FromValue).ToList();
@@ -126,7 +126,8 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)
     {
-        var mode = Enum.Parse<PointComparisonMode>(DefinitionValueReader.String(draft, ModeFieldId));
+        if (!DefinitionValueReader.TryEnum<PointComparisonMode>(draft, ModeFieldId, out var mode))
+            return [];
         var points = ReadPoints(draft);
         if (points.Count == 0 || points.Any(point => point.Source != "Manual" && !ReadBinding(point.PointsSource).IsConfigured))
             return [Invalid(PointsFieldId, PointsFieldId)];
@@ -152,7 +153,8 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
     private static PointEntry FromValue(StepPointEntryValue value) => new()
     {
         Source = Enum.TryParse(value.Source, out PointEntrySource source) ? source : PointEntrySource.Manual,
-        ManualPoint = value.ManualPoint, PointsSource = ReadBinding(value.PointsSource)
+        ManualPoint = value.ManualPoint,
+        PointsSource = ReadBinding(value.PointsSource)
     };
     private static ResultBinding ReadBinding(JsonNode? value)
     {

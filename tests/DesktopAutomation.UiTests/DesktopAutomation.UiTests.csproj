@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\TestProject.props" />
+  <PropertyGroup>
+    <AssemblyName>DesktopAutomation.UiTests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\TestInfrastructure\TestDoubles\*.cs" Link="TestDoubles\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

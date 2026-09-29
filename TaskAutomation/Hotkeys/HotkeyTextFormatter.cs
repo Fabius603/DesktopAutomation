@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Input;
+using System.Windows.Forms;
 
 namespace TaskAutomation.Hotkeys
 {
@@ -49,7 +49,7 @@ namespace TaskAutomation.Hotkeys
             if (vk >= 0x70 && vk <= 0x7B)
                 return $"F{vk - 0x6F}";
 
-            var key = KeyInterop.KeyFromVirtualKey(unchecked((int)vk));
+            var key = (Keys)vk;
             var special = KeyToPrettyString(key);
             if (special is not null)
                 return special;
@@ -58,7 +58,7 @@ namespace TaskAutomation.Hotkeys
             if (!string.IsNullOrWhiteSpace(keyboardText))
                 return keyboardText.ToUpperInvariant();
 
-            if (key != Key.None)
+            if (Enum.IsDefined(key) && key != Keys.None)
                 return key.ToString();
 
             return $"0x{vk:X2}";
@@ -94,28 +94,28 @@ namespace TaskAutomation.Hotkeys
             return null;
         }
 
-        private static string? KeyToPrettyString(Key key) => key switch
+        private static string? KeyToPrettyString(Keys key) => key switch
         {
-            Key.Space => "Space",
-            Key.Return => "Enter",
-            Key.Escape => "Esc",
-            Key.Tab => "Tab",
-            Key.Back => "Backspace",
-            Key.Delete => "Delete",
-            Key.Insert => "Insert",
-            Key.Left => "Left",
-            Key.Right => "Right",
-            Key.Up => "Up",
-            Key.Down => "Down",
-            Key.Home => "Home",
-            Key.End => "End",
-            Key.PageUp => "Page Up",
-            Key.PageDown => "Page Down",
-            Key.PrintScreen => "Print Screen",
-            Key.Pause => "Pause",
-            Key.CapsLock => "Caps Lock",
-            Key.NumLock => "Num Lock",
-            Key.Scroll => "Scroll Lock",
+            Keys.Space => "Space",
+            Keys.Return => "Enter",
+            Keys.Escape => "Esc",
+            Keys.Tab => "Tab",
+            Keys.Back => "Backspace",
+            Keys.Delete => "Delete",
+            Keys.Insert => "Insert",
+            Keys.Left => "Left",
+            Keys.Right => "Right",
+            Keys.Up => "Up",
+            Keys.Down => "Down",
+            Keys.Home => "Home",
+            Keys.End => "End",
+            Keys.PageUp => "Page Up",
+            Keys.PageDown => "Page Down",
+            Keys.PrintScreen => "Print Screen",
+            Keys.Pause => "Pause",
+            Keys.CapsLock => "Caps Lock",
+            Keys.NumLock => "Num Lock",
+            Keys.Scroll => "Scroll Lock",
             _ => null
         };
     }

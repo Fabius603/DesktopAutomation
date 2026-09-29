@@ -10,6 +10,7 @@
              xmlns:behaviors="clr-namespace:DesktopAutomationApp.Behaviors"
              behaviors:ViewShortcutGuard.IsEnabled="True"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
+             xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
              xmlns:input="clr-namespace:DesktopAutomationApp.Input"
              mc:Ignorable="d"
              Style="{StaticResource ContentViewBase}">
@@ -36,6 +37,84 @@
             <conv:StepBlockVisualConverter x:Key="StepBlockVisualConverter"/>
             <conv:StepNumberConverter x:Key="StepNumberConverter"/>
             <conv:StepDisplayNameConverter x:Key="StepDisplayNameConverter"/>
+            <Style x:Key="InspectorPageTabItemStyle" TargetType="TabItem">
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabItem">
+                            <Border x:Name="TabHeaderBorder" Background="Transparent" Padding="8,9"
+                                    BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" Cursor="Hand">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  ContentSource="Header" RecognizesAccessKey="True"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter TargetName="TabHeaderBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.TextPrimary}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="InspectorPageTabControlStyle" TargetType="TabControl">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="ItemContainerStyle" Value="{StaticResource InspectorPageTabItemStyle}"/>
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabControl">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Background="{DynamicResource App.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource App.Brush.BorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8" Padding="3">
+                                    <Grid x:Name="PART_InspectorHeaderTrack" Height="40" ClipToBounds="True">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="PART_InspectorSelectionPill"
+                                                Grid.Column="0" HorizontalAlignment="Stretch" CornerRadius="6"
+                                                Background="{DynamicResource App.Brush.AccentSubtle}"
+                                                BorderBrush="{DynamicResource App.Brush.Accent}"
+                                                BorderThickness="1">
+                                            <Border.RenderTransform><TranslateTransform/></Border.RenderTransform>
+                                        </Border>
+                                        <ItemsPresenter Grid.ColumnSpan="3"/>
+                                    </Grid>
+                                </Border>
+                                <Border Grid.Row="1" Margin="0,12,0,0" Padding="12"
+                                        Background="{DynamicResource App.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource App.Brush.BorderSubtle}"
+                                        BorderThickness="1" CornerRadius="8">
+                                    <ContentPresenter ContentSource="SelectedContent"
+                                                      ContentTemplate="{TemplateBinding SelectedContentTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding SelectedContentTemplateSelector}"
+                                                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <DataTemplate x:Key="StepDetailItemTemplate">
                 <Border Padding="4,6" BorderBrush="{DynamicResource App.Brush.CardBorder}"
                         BorderThickness="0,0,0,1">
@@ -695,13 +774,21 @@
                                     <Border.Background><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBackground"><Binding/><Binding Path="(behaviors:StepDragDrop.PreviewItems)" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.Background>
                                     <Border.BorderThickness><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardBorder"><Binding/><Binding Path="(behaviors:StepDragDrop.PreviewItems)" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.BorderThickness>
                                     <Border.CornerRadius><MultiBinding Converter="{StaticResource StepBlockVisualConverter}" ConverterParameter="cardCorner"><Binding/><Binding Path="(behaviors:StepDragDrop.PreviewItems)" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListBox}"/><Binding Path="DataContext.StepsVersion" RelativeSource="{RelativeSource AncestorType=UserControl}"/></MultiBinding></Border.CornerRadius>
-                                    <ContentPresenter/>
+                                    <Grid>
+                                        <Border x:Name="SelectionOverlay"
+                                                Background="Transparent"
+                                                IsHitTestVisible="False"/>
+                                        <ContentPresenter/>
+                                    </Grid>
                                 </Border>
                             </Border>
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.BorderStrong}"/></Trigger>
-                                <Trigger Property="IsSelected" Value="True"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.BorderStrong}"/></Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                                    <Setter TargetName="SelectionOverlay" Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                </Trigger>
                                 <DataTrigger Binding="{Binding DebugState}" Value="{x:Static jobs:JobStepDebugState.Waiting}"><Setter TargetName="Card" Property="BorderBrush" Value="#FFFFC107"/><Setter TargetName="Card" Property="BorderThickness" Value="2"/></DataTrigger>
                                 <DataTrigger Binding="{Binding DebugState}" Value="{x:Static jobs:JobStepDebugState.Running}"><Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter TargetName="Card" Property="BorderThickness" Value="2"/></DataTrigger>
                                 <DataTrigger Binding="{Binding DebugState}" Value="{x:Static jobs:JobStepDebugState.Completed}"><Setter TargetName="Card" Property="BorderBrush" Value="#FF4CAF50"/></DataTrigger>
@@ -778,6 +865,27 @@
                             </StackPanel>
                         </Button>
                         <Border Style="{StaticResource ToolbarSeparator}"/>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding UndoCommand}"
+                                AutomationProperties.AutomationId="UndoJobStepChangeButton"
+                                ToolTip="{loc:Translate Key=Ui.Common.Undo}">
+                            <iconPacks:PackIconMaterial Kind="Undo" Width="14" Height="14"/>
+                        </Button>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding RedoCommand}" Margin="6,0,0,0"
+                                AutomationProperties.AutomationId="RedoJobStepChangeButton"
+                                ToolTip="{loc:Translate Key=Ui.Common.Redo}">
+                            <iconPacks:PackIconMaterial Kind="Redo" Width="14" Height="14"/>
+                        </Button>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding CopyCommand}" Margin="6,0,0,0"
+                                AutomationProperties.AutomationId="CopyJobStepsButton"
+                                ToolTip="{loc:Translate Key=Ui.Common.Copy}">
+                            <iconPacks:PackIconMaterial Kind="ContentCopy" Width="14" Height="14"/>
+                        </Button>
+                        <Button Style="{StaticResource ButtonSecondary}" Command="{Binding PasteCommand}" Margin="6,0,0,0"
+                                AutomationProperties.AutomationId="PasteJobStepsButton"
+                                ToolTip="{loc:Translate Key=Ui.Common.Paste}">
+                            <iconPacks:PackIconMaterial Kind="ContentPaste" Width="14" Height="14"/>
+                        </Button>
+                        <Border Style="{StaticResource ToolbarSeparator}"/>
                         <Button Style="{StaticResource ButtonSecondary}" Command="{Binding DebugJobCommand}"
                                 ToolTip="{loc:Translate Key=Ui.Job.Debug.StartTooltip}">
                             <StackPanel Orientation="Horizontal">
@@ -788,6 +896,38 @@
                         </Button>
                     </StackPanel>
                 </Grid>
+
+                <Border Margin="0,12,0,0" Padding="12,9" CornerRadius="7"
+                        AutomationProperties.AutomationId="JobStepsStatusBar"
+                        Background="{DynamicResource App.Brush.Surface}"
+                        BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <TextBlock Text="{Binding SelectedStepsSummary}"
+                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                            <Border Style="{StaticResource ToolbarSeparator}" Margin="10,0"/>
+                            <TextBlock Text="{Binding TotalStepsSummary}"
+                                       Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconMaterial Width="17" Height="17" Margin="0,0,8,0">
+                                <iconPacks:PackIconMaterial.Style>
+                                    <Style TargetType="iconPacks:PackIconMaterial">
+                                        <Setter Property="Kind" Value="CheckCircle"/>
+                                        <Setter Property="Foreground" Value="#2E9B55"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasValidationErrors}" Value="True">
+                                                <Setter Property="Kind" Value="AlertCircle"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </iconPacks:PackIconMaterial.Style>
+                            </iconPacks:PackIconMaterial>
+                            <TextBlock Text="{Binding ValidationSummary}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
         </StackPanel>
 
         <Border Grid.Row="1" Margin="0,0,0,12" Padding="12,10" CornerRadius="7"
@@ -841,23 +981,12 @@
         <!-- Drei Lebenszyklus-Bereiche des Jobs. -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" MinWidth="360"/>
+                <ColumnDefinition Width="2*" MinWidth="460"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition x:Name="DebugInspectorColumn">
-                    <ColumnDefinition.Style>
-                        <Style TargetType="ColumnDefinition">
-                            <Setter Property="Width" Value="2*"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDebugPanelVisible}" Value="False">
-                                    <Setter Property="Width" Value="0"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ColumnDefinition.Style>
-                </ColumnDefinition>
+                <ColumnDefinition x:Name="DebugInspectorColumn" Width="*" MinWidth="360"/>
             </Grid.ColumnDefinitions>
         <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="0">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
 
                 <Expander Style="{StaticResource JobStepSectionExpanderStyle}" AllowDrop="True"
@@ -1328,16 +1457,167 @@
         </Border>
             <GridSplitter Grid.Column="1" Width="6" Margin="6,0"
                           HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                          Background="Transparent" ResizeDirection="Columns"
-                          Visibility="{Binding IsDebugPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                          Background="Transparent" ResizeDirection="Columns"/>
 
             <Border Grid.Column="2" MinWidth="360"
                     Margin="0" Padding="16" CornerRadius="8"
+                    AutomationProperties.AutomationId="SelectedJobStepInspector"
                     Background="{DynamicResource App.Brush.CardBackground}"
-                    BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1"
-                    IsVisibleChanged="DebugInspector_IsVisibleChanged"
-                    Visibility="{Binding IsDebugPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
                 <Grid>
+                    <Grid Visibility="{Binding HasSingleSelectedStep, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="280">
+                            <iconPacks:PackIconMaterial Kind="CursorDefaultClickOutline" Width="28" Height="28"
+                                                        HorizontalAlignment="Center" Margin="0,0,0,12"
+                                                        Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.NoSelection}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.MultipleSelection}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{DynamicResource App.Brush.TextMuted}"
+                                       Visibility="{Binding HasMultipleSelectedSteps, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Visibility="{Binding HasSingleSelectedStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <DockPanel Margin="0,0,0,10">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource ButtonIcon}"
+                                    Command="{Binding EditStepCommand}" CommandParameter="{Binding SelectedStep}"
+                                    ToolTip="{loc:Translate Key=Ui.Common.Edit}">
+                                <iconPacks:PackIconMaterial Kind="DotsVertical" Width="16" Height="16"/>
+                            </Button>
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedStepDisplayName}" FontSize="18" FontWeight="SemiBold"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding SelectedStepNumber}" Margin="0,0,8,0"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                    <TextBlock Text="{Binding SelectedStepDescription}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DockPanel>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                            <CheckBox Content="{loc:Translate Key=Ui.Job.Steps.Editor.Active}"
+                                      AutomationProperties.AutomationId="SelectedJobStepEnabledToggle"
+                                      IsChecked="{Binding SelectedStep.IsEnabled, Mode=OneWay}"
+                                      Command="{Binding ToggleStepEnabledCommand}" CommandParameter="{Binding SelectedStep}"
+                                      Margin="0,0,20,0"/>
+                            <CheckBox Content="{loc:Translate Key=Ui.Job.Debug.ToggleBreakpoint}"
+                                      AutomationProperties.AutomationId="SelectedJobStepBreakpointToggle"
+                                      IsChecked="{Binding SelectedStep.IsBreakpoint, Mode=OneWay}"
+                                      Command="{Binding ToggleBreakpointCommand}" CommandParameter="{Binding SelectedStep}"/>
+                        </StackPanel>
+                        <TabControl x:Name="SelectedJobStepTabs" Grid.Row="2"
+                                    AutomationProperties.AutomationId="SelectedJobStepTabs"
+                                    Style="{StaticResource InspectorPageTabControlStyle}"
+                                    Loaded="SelectedJobStepTabs_Loaded"
+                                    SizeChanged="SelectedJobStepTabs_SizeChanged"
+                                    SelectionChanged="SelectedJobStepTabs_SelectionChanged">
+                            <TabItem Header="{loc:Translate Key=Ui.Job.Steps.Editor.Details}">
+                                <Grid>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.DetailsTitle}"
+                                                       FontSize="16" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.DetailsDescription}"
+                                                       Margin="0,2,0,14" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                            <TextBlock Text="{Binding InlineEditorValidationError}" TextWrapping="Wrap"
+                                                       Margin="0,0,0,10" Foreground="{DynamicResource App.Brush.Danger}"
+                                                       Visibility="{Binding HasInlineEditorError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            <ContentControl Content="{Binding SelectedStepEditor}"
+                                                            IsEnabled="{Binding IsDebugActive, Converter={StaticResource InverseBooleanConverter}}"
+                                                            HorizontalContentAlignment="Stretch">
+                                                <ContentControl.ContentTemplate>
+                                                    <DataTemplate><generated:GeneratedStepEditor/></DataTemplate>
+                                                </ContentControl.ContentTemplate>
+                                            </ContentControl>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Grid>
+                            </TabItem>
+                            <TabItem Header="{loc:Translate Key=Ui.Job.Steps.Editor.ReturnValue}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.ReturnValueTitle}"
+                                                   FontSize="16" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.ReturnValueDescription}"
+                                                   Margin="0,2,0,14" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                        <ContentControl>
+                                            <ContentControl.Content>
+                                                <MultiBinding Converter="{StaticResource JobStepDetailsConverter}">
+                                                    <Binding Path="SelectedStep"/>
+                                                    <Binding Path="AllJobSteps"/>
+                                                    <Binding Path="StepsVersion"/>
+                                                    <Binding Path="Variables"/>
+                                                    <Binding Path="ProviderSources"/>
+                                                    <Binding Path="LocalValues"/>
+                                                </MultiBinding>
+                                            </ContentControl.Content>
+                                            <ContentControl.ContentTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.NoReturnValue}"
+                                                                   TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers><DataTrigger Binding="{Binding Result}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TreeView ItemsSource="{Binding Result.Properties}" Background="Transparent" BorderThickness="0"
+                                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                                  ItemTemplate="{StaticResource StepResultPropertyTemplate}"
+                                                                  ItemContainerStyle="{StaticResource StepResultTreeItemStyle}"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="{loc:Translate Key=Ui.Job.Steps.Editor.Debug}">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.DebugTitle}"
+                                                   FontSize="16" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{loc:Translate Key=Ui.Job.Steps.Editor.DebugDescription}"
+                                                   Margin="0,2,0,14" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{loc:Translate Key=Ui.Job.Steps.Editor.NoDebugData}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource App.Brush.TextMuted}"
+                                               Visibility="{Binding HasSelectedDebugContext, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                                  Visibility="{Binding HasSelectedDebugContext, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <ItemsControl ItemsSource="{Binding SelectedDebugContextGroups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,0,0,12">
+                                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Status}" Margin="0,2,0,6" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                                                        <TreeView ItemsSource="{Binding Values}" Background="Transparent" BorderThickness="0"
+                                                                  ItemTemplate="{StaticResource DebugContextValueTemplate}"
+                                                                  ItemContainerStyle="{StaticResource DebugContextTreeItemStyle}"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                <Grid Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -1498,6 +1778,7 @@
                             </ItemsControl>
                         </ScrollViewer>
                     </Grid>
+                </Grid>
                 </Grid>
             </Border>
         </Grid>
