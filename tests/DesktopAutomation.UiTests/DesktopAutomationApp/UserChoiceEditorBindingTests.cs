@@ -16,6 +16,7 @@ public sealed class UserChoiceEditorBindingTests
             "GeneratedStepEditor.xaml"));
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace controls = "clr-namespace:DesktopAutomationApp.Controls";
         XNamespace generated = "clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated";
         XNamespace iconPacks = "http://metro.mahapps.com/winfx/xaml/iconpacks";
         var optionsTemplate = document.Descendants()
@@ -36,7 +37,8 @@ public sealed class UserChoiceEditorBindingTests
             button.Descendants(iconPacks + "PackIconMaterial")
                 .Any(icon => icon.Attribute("Kind")?.Value == "DotsVertical"));
         Assert.Equal("OpenButtonContextMenu_Click", menuButton.Attribute("Click")?.Value);
-        Assert.Equal("1", menuButton.Attribute("Grid.Column")?.Value);
+        Assert.Equal(controls + "ResponsiveActionPanel", menuButton.Parent?.Name);
+        Assert.Equal("Right", menuButton.Attribute("HorizontalAlignment")?.Value);
         Assert.Equal("Center", menuButton.Attribute("VerticalAlignment")?.Value);
         var menuCommands = menuButton.Descendants(presentation + "MenuItem")
             .Select(item => item.Attribute("Command")?.Value)

@@ -152,9 +152,8 @@ namespace DesktopAutomationApp.Converters
                 return $"\"{value}\"";
             if (property?.DataType == ResultValueKind.Boolean && bool.TryParse(value, out var boolean))
                 return boolean ? "true" : "false";
-            if (property?.DataType == ResultValueKind.Enum
-                && property.EnumDisplayNames?.TryGetValue(value, out var displayName) == true)
-                return displayName;
+            if (property?.DataType == ResultValueKind.Enum)
+                return EnumValueLocalization.ForResultValue(property, value);
             return value;
         }
 

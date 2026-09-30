@@ -89,9 +89,10 @@ public sealed class StepDefinitionCatalog : IStepDefinitionCatalog
             if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.Enum)
             {
                 if (field.Options is not { Count: > 0 } enumOptions
-                    || enumOptions.Any(option => string.IsNullOrWhiteSpace(option.Value)))
+                    || enumOptions.Any(option => string.IsNullOrWhiteSpace(option.Value)
+                                                 || string.IsNullOrWhiteSpace(option.LabelKey)))
                     throw new InvalidOperationException(
-                        $"{definition.StepType.Name} enum field '{field.Id}' requires non-empty options.");
+                        $"{definition.StepType.Name} enum field '{field.Id}' requires options with non-empty values and label keys.");
                 if (field.Constraints?.AllowedValues is { Count: > 0 } allowedValues
                     && !enumOptions.Select(option => option.Value).ToHashSet(StringComparer.Ordinal)
                         .SetEquals(allowedValues))

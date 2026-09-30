@@ -1,7 +1,8 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Shared.ChoiceGroupEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls">
     <UserControl.Resources>
         <Style x:Key="ChoiceGroupItemStyle" TargetType="ListBoxItem">
             <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
@@ -53,7 +54,10 @@
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Rows="1"/>
+                        <controls:ResponsiveColumnsPanel MinItemWidth="130"
+                                                         MaxColumns="3"
+                                                         HorizontalSpacing="0"
+                                                         VerticalSpacing="0"/>
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>

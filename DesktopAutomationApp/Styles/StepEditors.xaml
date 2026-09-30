@@ -144,6 +144,26 @@
         <Setter Property="Padding" Value="12,10"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
+    <Style x:Key="StepInspectorScrollBarStyle"
+           TargetType="{x:Type ScrollBar}"
+           BasedOn="{StaticResource {x:Type ScrollBar}}">
+        <Setter Property="Width" Value="7"/>
+        <Setter Property="MinWidth" Value="7"/>
+        <Setter Property="Margin" Value="4,0,0,0"/>
+        <Setter Property="Opacity" Value="0.48"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.82"/>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="Height" Value="7"/>
+                <Setter Property="MinHeight" Value="7"/>
+                <Setter Property="Margin" Value="0,4,0,0"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
     <Style x:Key="CompoundValueSourceGroup" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>

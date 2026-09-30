@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Resources;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using DesktopAutomationApp.Converters;
@@ -16,6 +18,72 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class StepDefinitionCatalogTests
 {
+    [Fact]
+    public void OptionalEnumField_AllowsAnEmptyValue()
+    {
+        var field = new StepFieldDescriptor(
+            "mode",
+            "Ui.Common.Value",
+            StepValueKind.Enum,
+            Required: false,
+            Options: [new StepFieldOptionDescriptor("known", "Ui.Common.Value")]);
+        var descriptor = new StepDescriptor(
+            "test", "test", "test", "test", null,
+            [field],
+            new StepPresentationDescriptor([], [], []));
+        var draft = new StepDraft(descriptor.TypeId);
+        draft.Values[field.Id] = JsonValue.Create(string.Empty);
+
+        var issues = StepDescriptorDraftValidator.Validate(
+            descriptor, draft, StepValidationContext.FullyResolved());
+
+        Assert.Empty(issues);
+    }
+
+    [Fact]
+    public void Catalog_RejectsEnumOptionsWithoutLabelKeys()
+    {
+        var field = new StepFieldDescriptor(
+            "mode",
+            "Ui.Common.Value",
+            StepValueKind.Enum,
+            Required: true,
+            DefaultValue: JsonValue.Create("known"),
+            Options: [new StepFieldOptionDescriptor("known", string.Empty)]);
+        var descriptor = new StepDescriptor(
+            "test", "test", "test", "test", null,
+            [field],
+            new StepPresentationDescriptor([], [], []));
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            new StepDefinitionCatalog(
+                [new DescriptorOverrideDefinition(new TimeoutStepDefinition(), descriptor)]));
+
+        Assert.Contains("label keys", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuiltInEnumOptions_HaveGermanAndEnglishLabels()
+    {
+        var resources = new ResourceManager(
+            "DesktopAutomationApp.Resources.Strings",
+            typeof(LocalizationService).Assembly);
+        var options = BuiltInStepDefinitions.Instance.Definitions
+            .SelectMany(definition => definition.Descriptor.Fields)
+            .Where(field => field.ValueKind == StepValueKind.Enum)
+            .SelectMany(field => field.Options ?? [])
+            .ToArray();
+
+        Assert.NotEmpty(options);
+        Assert.All(options, option =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(resources.GetString(
+                option.LabelKey, CultureInfo.GetCultureInfo("de-DE"))), option.LabelKey);
+            Assert.False(string.IsNullOrWhiteSpace(resources.GetString(
+                option.LabelKey, CultureInfo.GetCultureInfo("en-US"))), option.LabelKey);
+        });
+    }
+
     [Fact]
     public void ConditionDisplay_FormatsLocalTimestampComparisonAsLiteral()
     {
@@ -2197,6 +2265,144 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void UserChoiceResultContracts_UseStepSpecificEnumIdentities()
+    {
+        var first = new UserChoiceStep
+        {
+            Id = "choice-a",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "yes", Label = "Yes" },
+                    new UserChoiceOption { Id = "no", Label = "No" }
+                ]
+            }
+        };
+        var second = new UserChoiceStep
+        {
+            Id = "choice-b",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "red", Label = "Red" },
+                    new UserChoiceOption { Id = "blue", Label = "Blue" }
+                ]
+            }
+        };
+
+        var firstProperty = StepResultMetadata.GetResultTypeForStep(first)!.Properties.Single(property =>
+            property.StableId == "selected_option_id");
+        var secondProperty = StepResultMetadata.GetResultTypeForStep(second)!.Properties.Single(property =>
+            property.StableId == "selected_option_id");
+
+        Assert.NotEqual(firstProperty.EnumTypeName, secondProperty.EnumTypeName);
+        Assert.False(StepResultMetadata.AreComparable(firstProperty, secondProperty));
+    }
+
+    [Fact]
+    public void UserChoiceOptions_CreateTheEnumContractUsedByAStoredIfCondition()
+    {
+        var localValues = new List<LocalValue>();
+        var choiceDialog = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: localValues,
+            localValueCreated: localValues.Add);
+        choiceDialog.SelectedType = "UserChoice";
+        var optionEditor = choiceDialog.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == UserChoiceStepDefinition.OptionsFieldId).UserChoiceOptionsEditor!;
+        var firstId = optionEditor.Options[0].Id;
+        var secondId = optionEditor.Options[1].Id;
+        optionEditor.Options[0].LabelField!.InputText = "Production";
+        optionEditor.Options[0].ValueField!.InputText = "prod";
+        optionEditor.Options[1].LabelField!.InputText = "Test";
+        optionEditor.Options[1].ValueField!.InputText = "test";
+
+        Assert.True(choiceDialog.GeneratedEditor.TryCreateStep(out var createdChoice),
+            choiceDialog.GeneratedEditor.ValidationError);
+        var choice = Assert.IsType<UserChoiceStep>(createdChoice);
+        choiceDialog.CommitDraftValues(choice);
+
+        var resultProperty = StepResultMetadata.GetResultTypeForStep(choice)!.Properties.Single(property =>
+            property.StableId == "selected_option_id");
+        Assert.Equal([firstId, secondId], resultProperty.EnumValues);
+        Assert.Equal("Production", resultProperty.EnumDisplayNames![firstId]);
+        Assert.Equal("Test", resultProperty.EnumDisplayNames[secondId]);
+
+        var ifDialog = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [choice],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: localValues,
+            localValueCreated: localValues.Add);
+        ifDialog.SelectedType = "If";
+        var row = Assert.Single(Assert.Single(ifDialog.GeneratedEditor!.Fields).ConditionEditor!.Conditions);
+        row.SourcePicker.Load(ResultBinding.ForStepResult(choice.Id, "selected_option_id"));
+        var comparison = row.ComparisonField!;
+
+        Assert.Equal(
+            [(firstId, "Production"), (secondId, "Test")],
+            comparison.EnumOptions.Select(option => (option.Value, option.Label)));
+        comparison.SelectedEnumValue = secondId;
+        Assert.True(ifDialog.GeneratedEditor.TryCreateStep(out var createdIf),
+            ifDialog.GeneratedEditor.ValidationError);
+        var ifStep = Assert.IsType<IfStep>(createdIf);
+        ifDialog.CommitDraftValues(ifStep);
+
+        var editDialog = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [choice],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: localValues);
+        Assert.True(editDialog.TryLoadGeneratedStep(ifStep));
+        var loaded = Assert.Single(Assert.Single(editDialog.GeneratedEditor!.Fields).ConditionEditor!.Conditions)
+            .ComparisonField!;
+
+        Assert.Equal(
+            [(firstId, "Production"), (secondId, "Test")],
+            loaded.EnumOptions.Select(option => (option.Value, option.Label)));
+        Assert.Equal(secondId, loaded.SelectedEnumValue);
+        var job = new Job { Steps = [choice, ifStep, new EndIfStep()], LocalValues = localValues };
+        Assert.True(JobValidation.ValidateJob(job).IsValid);
+    }
+
+    [Fact]
+    public void AddStepDialog_EnumComparisonOffersOnlyTheDirectValueSource()
+    {
+        var sourceStep = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test" }
+                ]
+            }
+        };
+        var viewModel = new AddJobStepDialogViewModel(
+            new ControllableJobExecutor([]),
+            [sourceStep],
+            cameraCaptureService: new CameraDefinitionTestService());
+        viewModel.SelectedType = "If";
+        var conditions = Assert.Single(viewModel.GeneratedEditor!.Fields).ConditionEditor!;
+        var row = Assert.Single(conditions.Conditions);
+
+        row.SourcePicker.Load(ResultBinding.ForStepResult(sourceStep.Id, "selected_option_id"));
+
+        var field = row.ComparisonField!;
+        Assert.True(field.InputReferenceEditor!.Picker.CanUseDirectValue);
+        Assert.False(field.InputReferenceEditor.Picker.CanUseJobVariables);
+        Assert.False(field.InputReferenceEditor.Picker.CanUseStepResults);
+        Assert.False(field.InputReferenceEditor.Picker.CanUseSecrets);
+        Assert.False(field.ShowsInputSourceSelector);
+    }
+
+    [Fact]
     public void GeneratedConditionEditor_LoadsUserChoiceEnumOptionsForStoredCondition()
     {
         var sourceStep = new UserChoiceStep
@@ -2324,6 +2530,48 @@ public sealed class StepDefinitionCatalogTests
     }
 
     [Fact]
+    public void ConditionEnumField_RepairsLegacyExternalBindingToDirectValue()
+    {
+        var descriptor = new StepFieldDescriptor(
+            "comparison", "Ui.Common.Value", StepValueKind.Enum, Required: true,
+            EditorHint: GeneratedStepFieldViewModel.ConditionEnumDirectValueEditorHint,
+            Options:
+            [
+                new StepFieldOptionDescriptor("known", "Ui.Common.Value", "Known"),
+                new StepFieldOptionDescriptor("other", "Ui.Common.Value", "Other")
+            ]);
+        var legacy = new JobVariable
+        {
+            Name = "Legacy mode",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("known")
+        };
+        var picker = new ValueReferencePickerViewModel(
+            [], StepInputContractRegistry.ForField(descriptor), false, [legacy],
+            context: new ValueReferencePickerContext(
+                "If", "Comparison", null, null, null,
+                () => new LocalValue
+                {
+                    Name = "Comparison",
+                    ValueKind = ResultValueKind.Enum,
+                    Value = JsonValue.Create("known")
+                }));
+        picker.Load(new ResultBinding
+        {
+            ProviderId = ValueProviderIds.JobVariable,
+            SourceId = legacy.Id.ToString("D")
+        });
+        var field = new GeneratedStepFieldViewModel(
+            descriptor,
+            JsonValue.Create("known"),
+            inputReferenceEditor: new GeneratedResultBindingEditorViewModel(null, picker));
+
+        Assert.True(picker.IsStepValue);
+        Assert.True(picker.CanUseDirectValue);
+        Assert.False(field.ShowsInputSourceSelector);
+    }
+
+    [Fact]
     public void ValueProviderDescriptor_PreservesEnumSchemaAndSeparatesDifferentEnumTypes()
     {
         var first = new JobVariable
@@ -2348,6 +2596,23 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.Equal(["Active", "Inactive"], firstProperty.EnumValues);
         Assert.False(StepResultMetadata.AreComparable(firstProperty, secondProperty));
+    }
+
+    [Fact]
+    public void ValueProviderDescriptor_DoesNotInventAnEnumSchemaFromTheCurrentValue()
+    {
+        var variable = new LocalValue
+        {
+            Name = "Legacy generated enum",
+            ValueKind = ResultValueKind.Enum,
+            Value = JsonValue.Create("only-current-value"),
+            EnumTypeName = "generated.choice"
+        };
+
+        var descriptor = ValueProviderSourceDescriptor.FromVariable(variable);
+
+        Assert.Null(descriptor.EnumValues);
+        Assert.Null(descriptor.ToResultProperty().EnumValues);
     }
 
     [Fact]
@@ -3608,8 +3873,17 @@ public sealed class StepDefinitionCatalogTests
             value: null,
             new ValueReferencePickerViewModel([], StepInputContractRegistry.Get(typeof(FocusProcessStep), "process")!, false),
             []);
+        var existing = new FocusProcessStep
+        {
+            Settings = new FocusProcessSettings
+            {
+                Action = FocusProcessAction.BringToFront,
+                WindowMode = FocusProcessWindowMode.Maximized
+            }
+        };
         var editor = new GeneratedStepEditorViewModel(
             definition,
+            existing,
             processTargetResolver: (_, _) => processEditor);
         var target = editor.Fields.Single(field => field.Descriptor.Id == FocusProcessStepDefinition.ProcessTargetFieldId);
         var action = editor.Fields.Single(field => field.Descriptor.Id == FocusProcessStepDefinition.ActionFieldId);
@@ -3622,11 +3896,13 @@ public sealed class StepDefinitionCatalogTests
 
         action.SelectedEnumOption = action.EnumOptions.Single(option => option.Value == nameof(FocusProcessAction.Minimize));
         Assert.False(windowMode.IsVisible);
+        windowMode.InputText = "removed-window-mode";
         processEditor.ProcessName = "notepad";
 
         Assert.True(editor.TryCreateStep(out var created));
         var focus = Assert.IsType<FocusProcessStep>(created);
         Assert.Equal(FocusProcessAction.Minimize, focus.Settings.Action);
+        Assert.Equal(FocusProcessWindowMode.Maximized, focus.Settings.WindowMode);
         Assert.Equal("notepad", focus.Settings.Target.ProcessName);
         Assert.Empty(focus.Settings.Target.ExecutablePath);
     }

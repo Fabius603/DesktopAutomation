@@ -1,6 +1,7 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Generated.GeneratedValueSourceInput"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
@@ -10,11 +11,10 @@
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged, Delay=250}"/>
         </DataTemplate>
     </UserControl.Resources>
-    <Grid x:Name="InputValueHost">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+    <controls:ResponsiveActionPanel x:Name="InputValueHost"
+                                    MinPrimaryWidth="160"
+                                    HorizontalSpacing="5"
+                                    VerticalSpacing="6">
         <Grid>
             <ContentControl Content="{Binding}"
                             ContentTemplateSelector="{DynamicResource InlineStepValueTemplateSelector}"
@@ -22,7 +22,7 @@
             <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
                                        Visibility="{Binding DataContext.ShowsInputSourcePicker, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
-        <Button Grid.Column="1" Width="34" MinHeight="30" Margin="5,0,0,0"
+        <Button Width="34" MinHeight="30" HorizontalAlignment="Right" VerticalAlignment="Top"
                 Padding="0" Style="{StaticResource ButtonSecondary}"
                 Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"
@@ -47,5 +47,5 @@
                                         VerticalAlignment="Center" HorizontalAlignment="Center"
                                         Foreground="{DynamicResource App.Brush.Accent}"/>
         </Button>
-    </Grid>
+    </controls:ResponsiveActionPanel>
 </UserControl>

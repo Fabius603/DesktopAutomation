@@ -50,12 +50,12 @@ namespace TaskAutomation.Jobs
         private bool _disposed = false;
 
         private readonly DxgiResources _dxgiResources = DxgiResources.Instance;
-        private readonly Dictionary<string, Job>   _allJobs   = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Job> _allJobs = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Makro> _allMakros = new(StringComparer.OrdinalIgnoreCase);
         private Job? _currentJob;
 
         // ── Events ─────────────────────────────────────────────────────────────
-        public event EventHandler<JobErrorEventArgs>?     JobErrorOccurred;
+        public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
         public event EventHandler<JobStepErrorEventArgs>? JobStepErrorOccurred;
 
         private readonly Lazy<IJobLauncher> _lazyLauncher;
@@ -99,9 +99,9 @@ namespace TaskAutomation.Jobs
         };
 
         // ── IJobExecutor ───────────────────────────────────────────────────────
-        public IReadOnlyDictionary<string, Job>   AllJobs   => _allJobs;
+        public IReadOnlyDictionary<string, Job> AllJobs => _allJobs;
         public IReadOnlyDictionary<string, Makro> AllMakros => _allMakros;
-        public IYoloManager   YoloManager   => _yoloManager;
+        public IYoloManager YoloManager => _yoloManager;
         public IMakroExecutor MakroExecutor => _makroExecutor;
 
         public Job? CurrentJob
@@ -131,14 +131,14 @@ namespace TaskAutomation.Jobs
             IWindowsSystemSettingService? windowsSettingService = null,
             ISecretStore? secretStore = null)
         {
-            _logger               = logger;
-            _jobRepository        = jobRepo;
-            _makroRepository      = makroRepo;
-            _makroExecutor        = makroExecutor;
-            _recordingOverlay     = recordingOverlay;
-            _scriptExecutor       = scriptExecutor;
-            _yoloManager          = yoloManager;
-            _imageDisplayService  = imageDisplayService;
+            _logger = logger;
+            _jobRepository = jobRepo;
+            _makroRepository = makroRepo;
+            _makroExecutor = makroExecutor;
+            _recordingOverlay = recordingOverlay;
+            _scriptExecutor = scriptExecutor;
+            _yoloManager = yoloManager;
+            _imageDisplayService = imageDisplayService;
             _desktopResultOverlay = desktopResultOverlay;
             _desktopCaptureService = desktopCaptureService;
             _cameraCaptureService = cameraCaptureService;
@@ -251,9 +251,9 @@ namespace TaskAutomation.Jobs
             {
                 var errorMessage = $"Job '{jobName}' existiert nicht.";
                 _logger.LogError(errorMessage);
-                
+
                 // Event für allgemeine Job-Fehler auslösen
-                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobName ?? "Unknown", 
+                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(jobName ?? "Unknown",
                     new ArgumentException(errorMessage)));
                 return;
             }
@@ -435,7 +435,7 @@ namespace TaskAutomation.Jobs
                 {
                     try
                     {
-                        int videoWidth  = 1920;
+                        int videoWidth = 1920;
                         int videoHeight = 1080;
 
                         if (desktopDuplicationStep != null)
@@ -447,7 +447,7 @@ namespace TaskAutomation.Jobs
                         pipelineCtx.VideoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
                         {
                             OutputDirectory = videoStep.Settings.SavePath,
-                            FileName        = videoStep.Settings.FileName
+                            FileName = videoStep.Settings.FileName
                         };
                         await pipelineCtx.VideoRecorder.StartAsync(ct).ConfigureAwait(false);
                         recorderStarted = true;
@@ -675,41 +675,41 @@ namespace TaskAutomation.Jobs
                         "Das interne Aufräumen wird weiterhin ausgeführt.");
                 }
                 else using (var endTimeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation.EndPhaseToken))
-                {
-                    if (debugSession == null)
-                        endTimeoutCts.CancelAfter(endPhaseTimeout);
-                    try
                     {
-                        pipelineCtx.ResetResults(job.StartSteps.Concat(job.Steps).Select(step => step.Id));
-                        await ExecuteStepSequenceAsync(
-                            job.EndSteps,
-                            "Endphase",
-                            pipelineCtx,
-                            job,
-                            endTimeoutCts.Token,
-                            continueAfterStepError: true,
-                            precedingSteps: job.StartSteps.Concat(job.Steps).ToList(),
-                            onStepError: () =>
-                            {
-                                jobCompletedSuccessfully = false;
-                                completionReason = JobCompletionReason.StepFailed;
-                            },
-                            debugSession: debugSession).ConfigureAwait(false);
+                        if (debugSession == null)
+                            endTimeoutCts.CancelAfter(endPhaseTimeout);
+                        try
+                        {
+                            pipelineCtx.ResetResults(job.StartSteps.Concat(job.Steps).Select(step => step.Id));
+                            await ExecuteStepSequenceAsync(
+                                job.EndSteps,
+                                "Endphase",
+                                pipelineCtx,
+                                job,
+                                endTimeoutCts.Token,
+                                continueAfterStepError: true,
+                                precedingSteps: job.StartSteps.Concat(job.Steps).ToList(),
+                                onStepError: () =>
+                                {
+                                    jobCompletedSuccessfully = false;
+                                    completionReason = JobCompletionReason.StepFailed;
+                                },
+                                debugSession: debugSession).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            var cause = cancellation.EndPhaseToken.IsCancellationRequested
+                                ? "durch ForceStop"
+                                : $"nach {endPhaseTimeout.TotalSeconds:0} Sekunden wegen Zeitüberschreitung";
+                            _logger.LogWarning("Endphase von Job '{JobName}' wurde {Cause} abgebrochen.", job.Name, cause);
+                            _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Endphase abgebrochen.", cause);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Unerwarteter Fehler in der Endphase von Job '{JobName}'.", job.Name);
+                            _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Endphase fehlgeschlagen.", ex.ToString());
+                        }
                     }
-                    catch (OperationCanceledException)
-                    {
-                        var cause = cancellation.EndPhaseToken.IsCancellationRequested
-                            ? "durch ForceStop"
-                            : $"nach {endPhaseTimeout.TotalSeconds:0} Sekunden wegen Zeitüberschreitung";
-                        _logger.LogWarning("Endphase von Job '{JobName}' wurde {Cause} abgebrochen.", job.Name, cause);
-                        _executionLogService.Write(executionLog, ExecutionLogLevel.Warning, "Endphase abgebrochen.", cause);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Unerwarteter Fehler in der Endphase von Job '{JobName}'.", job.Name);
-                        _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Endphase fehlgeschlagen.", ex.ToString());
-                    }
-                }
 
                 jobRunStopwatch.Stop();
                 CurrentJob = null;
@@ -771,9 +771,9 @@ namespace TaskAutomation.Jobs
                     catch (Exception ex) { _logger.LogError(ex, "Fehler beim StopRecordingOverlay."); }
                 }
 
-                try { pipelineCtx.VideoRecorder?.Dispose();   } catch { /* best-effort */ }
+                try { pipelineCtx.VideoRecorder?.Dispose(); } catch { /* best-effort */ }
                 try { pipelineCtx.KeyPointMatcher?.Dispose(); } catch { /* best-effort */ }
-                try { pipelineCtx.Dispose(); }                catch { /* best-effort */ }
+                try { pipelineCtx.Dispose(); } catch { /* best-effort */ }
 
                 await UnloadYoloModelsAsync(job);
 
@@ -1172,9 +1172,9 @@ namespace TaskAutomation.Jobs
         public void ReportStepError(string stepType, Exception exception)
         {
             var jobName = CurrentJob?.Name ?? "Unknown";
-            _logger.LogError(exception, "Step-Fehler gemeldet: {StepType} in Job {JobName}: {Message}", 
+            _logger.LogError(exception, "Step-Fehler gemeldet: {StepType} in Job {JobName}: {Message}",
                 stepType, jobName, exception.Message);
-            
+
             JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(jobName, stepType, exception));
         }
 
@@ -1208,7 +1208,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            _logger.LogInformation("Lade {Count} YOLO-Modell(e) vor für Job '{JobName}': {Models}", 
+            _logger.LogInformation("Lade {Count} YOLO-Modell(e) vor für Job '{JobName}': {Models}",
                 modelsToPreload.Count, job.Name, string.Join(", ", modelsToPreload));
 
             var preloadTasks = modelsToPreload.Select(async model =>
@@ -1218,12 +1218,12 @@ namespace TaskAutomation.Jobs
                     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                     await _yoloManager.EnsureModelAsync(model, ct);
                     stopwatch.Stop();
-                    _logger.LogInformation("YOLO-Modell '{Model}' erfolgreich vorgeladen in {ElapsedMs}ms", 
+                    _logger.LogInformation("YOLO-Modell '{Model}' erfolgreich vorgeladen in {ElapsedMs}ms",
                         model, stopwatch.ElapsedMilliseconds);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Fehler beim Vorladen von YOLO-Modell '{Model}': {Message}", 
+                    _logger.LogError(ex, "Fehler beim Vorladen von YOLO-Modell '{Model}': {Message}",
                         model, ex.Message);
                     throw; // Weiterwerfen, damit der Job nicht startet, wenn Modelle fehlen
                 }
@@ -1260,7 +1260,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            _logger.LogInformation("Entlade {Count} YOLO-Modell(e) für Job '{JobName}': {Models}", 
+            _logger.LogInformation("Entlade {Count} YOLO-Modell(e) für Job '{JobName}': {Models}",
                 modelsToUnload.Count, job.Name, string.Join(", ", modelsToUnload));
 
             await Task.Run(() =>
@@ -1281,7 +1281,7 @@ namespace TaskAutomation.Jobs
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Fehler beim Entladen von YOLO-Modell '{Model}': {Message}", 
+                        _logger.LogWarning(ex, "Fehler beim Entladen von YOLO-Modell '{Model}': {Message}",
                             model, ex.Message);
                         // Weiter mit den anderen Modellen
                     }
@@ -1333,8 +1333,8 @@ namespace TaskAutomation.Jobs
 
             public BranchFrame(bool parentActive, bool anyMatched, bool currentActive)
             {
-                ParentActive  = parentActive;
-                AnyMatched    = anyMatched;
+                ParentActive = parentActive;
+                AnyMatched = anyMatched;
                 CurrentActive = currentActive;
             }
         }
@@ -1630,8 +1630,11 @@ namespace TaskAutomation.Jobs
                         $"{FormatValueReference(comparison, conditionSources)}: Vergleichswert ist nicht verfügbar.",
                         FormatLogValue(value));
                 var rightName = FormatValueReference(comparison, conditionSources, rightDescriptor);
-                if (!StepResultMetadata.AreComparable(descriptor, rightDescriptor)
-                    && !IsLegacyDirectEnumComparison(descriptor, rightDescriptor, comparison, expected))
+                if (!ConditionRules.AreComparisonSourcesCompatible(
+                        descriptor,
+                        rightDescriptor,
+                        string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal),
+                        expected?.ToString()))
                     return Unavailable(
                         $"Datentypen stimmen nicht überein: {descriptor.DataType} und {rightDescriptor.DataType}.",
                         FormatLogValue(value),
@@ -1644,19 +1647,6 @@ namespace TaskAutomation.Jobs
             return BuildSingleEvaluation(isMatch, leftName + leftStatus, descriptor, value,
                 FormatConditionOperator(condition.Operator), expectedText);
         }
-
-        private static bool IsLegacyDirectEnumComparison(
-            ResultPropertyDescriptor descriptor,
-            ResultPropertyDescriptor rightDescriptor,
-            ResultBinding comparison,
-            object? expected) =>
-            descriptor.DataType == ResultValueKind.Enum
-            && rightDescriptor.DataType is ResultValueKind.Text or ResultValueKind.Enum
-            && (rightDescriptor.DataType != ResultValueKind.Enum
-                || string.IsNullOrWhiteSpace(rightDescriptor.EnumTypeName))
-            && string.Equals(comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
-            && ConditionRules.IsComparisonValueValid(
-                descriptor, ConditionOperator.Equals, expected?.ToString());
 
         private static SingleConditionEvaluation BuildSingleEvaluation(
             bool isMatch,
@@ -1876,13 +1866,13 @@ namespace TaskAutomation.Jobs
             };
             return op switch
             {
-                ConditionOperator.Equals             => cmp == 0,
-                ConditionOperator.NotEquals          => cmp != 0,
-                ConditionOperator.GreaterThan        => cmp > 0,
-                ConditionOperator.LessThan           => cmp < 0,
+                ConditionOperator.Equals => cmp == 0,
+                ConditionOperator.NotEquals => cmp != 0,
+                ConditionOperator.GreaterThan => cmp > 0,
+                ConditionOperator.LessThan => cmp < 0,
                 ConditionOperator.GreaterThanOrEqual => cmp >= 0,
-                ConditionOperator.LessThanOrEqual    => cmp <= 0,
-                _                                    => false
+                ConditionOperator.LessThanOrEqual => cmp <= 0,
+                _ => false
             };
         }
     }

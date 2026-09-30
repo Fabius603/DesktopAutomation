@@ -135,9 +135,11 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("ItemsSource=\"{Binding ItemsSource, ElementName=Root}\"", xaml);
         Assert.Contains("SelectedItem=\"{Binding SelectedItem, ElementName=Root, Mode=TwoWay}\"", xaml);
-        Assert.Contains("<UniformGrid Rows=\"1\"/>", xaml);
+        Assert.Contains("<controls:ResponsiveColumnsPanel", xaml);
+        Assert.Contains("MinItemWidth=\"130\"", xaml);
         Assert.Contains("HorizontalContentAlignment=\"Stretch\"", xaml);
         Assert.DoesNotContain("WrapPanel", xaml);
+        Assert.DoesNotContain("<UniformGrid Rows=\"1\"/>", xaml);
         Assert.DoesNotContain("RadioButton", xaml);
         Assert.DoesNotContain("GroupName", xaml);
     }
@@ -506,6 +508,60 @@ public sealed class JobStepsViewResourceTests
         Assert.Contains("SelectedValue=\"{Binding SelectedEnumValue, Mode=TwoWay}\"", xaml);
         Assert.Contains("AutomationProperties.AutomationId=\"GeneratedStepEnumPicker\"", xaml);
         Assert.DoesNotContain("MinWidth=\"220\"", xaml);
+    }
+
+    [Fact]
+    public void InspectorEditors_WrapCompoundFieldsAndDisableHorizontalScrolling()
+    {
+        var root = RepositoryRoot();
+        var conditionXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Conditions", "ConditionEditor.xaml"));
+        var generatedXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Generated", "GeneratedStepEditor.xaml"));
+        var axisXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Analysis", "AxisExpressionEditor.xaml"));
+        var roiXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Controls", "Jobs", "Roi", "RoiEditor.xaml"));
+
+        Assert.Contains("<controls:ResponsiveColumnsPanel x:Name=\"ConditionComparisonGrid\"", conditionXaml);
+        Assert.Contains("<controls:ResponsiveColumnsPanel MinItemWidth=\"170\" MaxColumns=\"2\"", conditionXaml);
+        Assert.True(CountOccurrences(conditionXaml, "TextWrapping=\"Wrap\"") >= 3);
+        Assert.DoesNotContain("MinWidth=\"150\"", conditionXaml);
+        Assert.DoesNotContain("MinWidth=\"115\"", conditionXaml);
+        Assert.Contains("ScrollViewer.HorizontalScrollBarVisibility=\"Disabled\"", conditionXaml);
+        Assert.Contains("ScrollViewer.VerticalScrollBarVisibility=\"Auto\"", conditionXaml);
+        Assert.Contains("BasedOn=\"{StaticResource StepInspectorScrollBarStyle}\"", conditionXaml);
+        Assert.Contains("<controls:ResponsiveColumnsPanel Grid.Row=\"1\"", axisXaml);
+        Assert.DoesNotContain("<ColumnDefinition Width=\"80\"/>", axisXaml);
+        Assert.DoesNotContain("<ColumnDefinition Width=\"120\"/>", axisXaml);
+        Assert.Contains("<geometry:ResponsiveGeometryPanel MinItemWidth=\"150\" MaxColumns=\"2\"", roiXaml);
+        Assert.DoesNotContain("SharedSizeGroup=\"GeometryLabel\"", roiXaml);
+        Assert.Equal(4, CountOccurrences(roiXaml, "Style=\"{StaticResource GeometryFieldLabel}\""));
+        Assert.Equal(4, CountOccurrences(generatedXaml, "ScrollViewer.HorizontalScrollBarVisibility=\"Disabled\""));
+        Assert.Equal(3, CountOccurrences(generatedXaml, "ScrollViewer.VerticalScrollBarVisibility=\"Hidden\""));
+
+        var jobStepsXaml = File.ReadAllText(Path.Combine(
+            root, "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
+        Assert.Contains(
+            "<ScrollViewer VerticalScrollBarVisibility=\"Auto\" HorizontalScrollBarVisibility=\"Disabled\">",
+            jobStepsXaml);
+        Assert.Contains("AutomationProperties.AutomationId=\"InspectorResizeGrip\"", jobStepsXaml);
+        Assert.Contains("Style=\"{StaticResource InspectorGridSplitterStyle}\"", jobStepsXaml);
+        Assert.Contains("x:Name=\"ResizeGrip\"", jobStepsXaml);
+        Assert.Contains("BasedOn=\"{StaticResource StepInspectorScrollBarStyle}\"", jobStepsXaml);
+    }
+
+    private static int CountOccurrences(string value, string fragment)
+    {
+        var count = 0;
+        var start = 0;
+        while ((start = value.IndexOf(fragment, start, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            start += fragment.Length;
+        }
+
+        return count;
     }
 
     private static string RepositoryRoot()

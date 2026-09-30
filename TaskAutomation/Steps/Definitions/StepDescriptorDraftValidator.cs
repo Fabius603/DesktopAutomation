@@ -29,6 +29,8 @@ internal static class StepDescriptorDraftValidator
                 issues.Add(new("StepValidation.Required", field.Id));
                 continue;
             }
+            if (!field.Required && field.ValueKind == StepValueKind.Enum && IsEmpty(field, value))
+                continue;
             if (value is null)
                 continue;
             if (!TryReadComparable(field.ValueKind, value, out var number, out var text, out var length))

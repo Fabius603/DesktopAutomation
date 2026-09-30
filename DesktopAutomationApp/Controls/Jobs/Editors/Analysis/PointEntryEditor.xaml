@@ -2,6 +2,7 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:geometry="clr-namespace:DesktopAutomationApp.Controls.Jobs.Geometry"
              xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
@@ -27,8 +28,10 @@
                         ToolTip="{loc:Translate Key=Ui.Step.Settings.RemovePoint}"/>
             </Grid>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <controls:ResponsiveActionPanel Grid.Row="1"
+                                            MinPrimaryWidth="220"
+                                            HorizontalSpacing="12"
+                                            VerticalSpacing="6">
                 <Grid>
                     <Border Style="{StaticResource CompoundValueSourceGroup}"
                             Visibility="{Binding WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -48,10 +51,10 @@
                     <jobs:ValueReferencePicker DataContext="{Binding WholeValueSource.Picker}"
                                                Visibility="{Binding DataContext.WholeValueSource.UsesReference, ElementName=Root, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
-                <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
                                                               VerticalAlignment="Center"
                                                               DataContext="{Binding WholeValueSource}"/>
-            </Grid>
+            </controls:ResponsiveActionPanel>
         </Grid>
     </Border>
 </UserControl>

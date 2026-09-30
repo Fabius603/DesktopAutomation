@@ -153,9 +153,10 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             step = null;
             return false;
         }
-        foreach (var field in Fields.Where(field => _editableFieldIds.Contains(field.Descriptor.Id)))
+        foreach (var field in Fields.Where(field =>
+                     field.IsVisible && _editableFieldIds.Contains(field.Descriptor.Id)))
         {
-            if (field.IsVisible && CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
+            if (CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
             {
                 error = Loc.Format("Ui.Step.Generated.Validation.Required", field.Label);
                 step = null;
@@ -669,7 +670,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         return StepEnumRules.GetOptions(descriptor)
             .Select(option => new GeneratedStepEnumOptionViewModel(
                 option.Value,
-                option.DisplayName ?? Loc.Get(option.LabelKey)));
+                EnumValueLocalization.ForStepOption(option)));
     }
 
     private GeneratedStepEnumOptionViewModel? ResolveEnumOption(string? value) =>
@@ -871,6 +872,7 @@ public sealed class GeneratedStepFieldViewModel : INotifyPropertyChanged
         set
         {
             if (string.Equals(SelectedEnumValue, value, StringComparison.Ordinal)) return;
+            if (value is null && !string.IsNullOrWhiteSpace(_inputText)) return;
             if (value is not null && !StepEnumRules.IsKnownToken(Descriptor, value)) return;
             _inputText = value ?? string.Empty;
             StoreInlineStepValue();

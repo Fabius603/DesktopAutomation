@@ -39,13 +39,23 @@ public sealed class UserChoiceStepResultContractProvider : IStepResultContractPr
                 ? property with
                 {
                     DataType = ResultValueKind.Enum,
-                    EnumTypeName = nameof(UserChoiceResult),
+                    EnumTypeName = UserChoiceEnumContract.ForStep(choice.Id),
                     EnumValues = ids,
                     EnumDisplayNames = displayNames
                 }
                 : property).ToArray();
         return new ResultTypeDescriptor(contract.TypeName, contract.DisplayName, properties);
     }
+}
+
+internal static class UserChoiceEnumContract
+{
+    public const string LegacyTypeName = nameof(UserChoiceResult);
+
+    public static string ForStep(string stepId) => $"{LegacyTypeName}:{stepId}";
+
+    public static bool IsStepSpecific(string? typeName) =>
+        typeName?.StartsWith($"{LegacyTypeName}:", StringComparison.Ordinal) == true;
 }
 
 /// <summary>

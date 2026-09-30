@@ -540,7 +540,7 @@ public sealed class JobStepDetailsProvider
     {
         var option = StepEnumRules.GetOptions(field).FirstOrDefault(candidate =>
             string.Equals(candidate.Value, value, StringComparison.Ordinal));
-        return option is null ? value : option.DisplayName ?? Loc.Get(option.LabelKey);
+        return option is null ? value : EnumValueLocalization.ForStepOption(option);
     }
 
     private static string FormatDefinitionBinding(

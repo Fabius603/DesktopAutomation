@@ -27,16 +27,7 @@ public sealed record ValueProviderSourceDescriptor(
         Id: SourceId);
 
     public static ValueProviderSourceDescriptor FromVariable(JobVariable variable)
-    {
-        IReadOnlyList<string>? enumValues = variable.EnumValues;
-        if (variable.ValueKind == ResultValueKind.Enum
-            && enumValues is not { Count: > 0 }
-            && variable.Value is System.Text.Json.Nodes.JsonValue jsonValue
-            && jsonValue.TryGetValue<string>(out var currentValue)
-            && !string.IsNullOrWhiteSpace(currentValue))
-            enumValues = [currentValue];
-
-        return new(
+        => new(
             variable is LocalValue ? ValueProviderIds.LocalValue : ValueProviderIds.JobVariable,
             variable.Id.ToString("D"),
             variable.Name,
@@ -44,7 +35,6 @@ public sealed record ValueProviderSourceDescriptor(
             variable.ValueKind,
             variable.Cardinality,
             EnumTypeName: variable.EnumTypeName,
-            EnumValues: enumValues,
+            EnumValues: variable.EnumValues,
             EnumDisplayNames: variable.EnumDisplayNames);
-    }
 }

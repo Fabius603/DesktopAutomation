@@ -83,6 +83,21 @@ public sealed class GeneratedStepEditorConversionTests
     }
 
     [Fact]
+    public void GeneratedEnumField_IgnoresTransientNullSelectionForStoredValue()
+    {
+        var descriptor = new StepFieldDescriptor(
+            "mode", "Ui.Common.Value", StepValueKind.Enum, Required: true,
+            DefaultValue: JsonValue.Create("known"),
+            Options: [new StepFieldOptionDescriptor("known", "Ui.Common.Value", "Known")]);
+        var field = new GeneratedStepFieldViewModel(descriptor, JsonValue.Create("known"));
+
+        field.SelectedEnumValue = null;
+
+        Assert.Equal("known", field.SelectedEnumValue);
+        Assert.Equal("known", field.InputText);
+    }
+
+    [Fact]
     public void InitializingEveryBuiltInGeneratedEditor_DoesNotUseHandledConversionExceptions()
     {
         var exceptions = new ConcurrentQueue<string>();

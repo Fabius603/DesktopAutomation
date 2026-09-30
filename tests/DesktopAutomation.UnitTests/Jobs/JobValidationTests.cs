@@ -323,6 +323,59 @@ public sealed class JobValidationTests
     }
 
     [Fact]
+    public void ValidateJob_AcceptsLegacyGenericUserChoiceEnumForDirectComparison()
+    {
+        var source = new UserChoiceStep
+        {
+            Id = "choice",
+            Settings = new UserChoiceSettings
+            {
+                Options =
+                [
+                    new UserChoiceOption { Id = "mode-prod", Label = "Production" },
+                    new UserChoiceOption { Id = "mode-test", Label = "Test" }
+                ]
+            }
+        };
+        var comparison = new LocalValue
+        {
+            Name = "Selected choice",
+            ValueKind = ResultValueKind.Enum,
+            Value = System.Text.Json.Nodes.JsonValue.Create("mode-prod"),
+            EnumTypeName = nameof(UserChoiceResult),
+            EnumValues = ["mode-prod", "mode-test"]
+        };
+        var condition = new StepCondition
+        {
+            SourceStepId = source.Id,
+            PropertyId = "selected_option_id",
+            PropertyPath = nameof(UserChoiceResult.SelectedOptionId),
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = comparison.Id.ToString("D")
+            }
+        };
+        var job = new Job
+        {
+            Steps =
+            [
+                source,
+                new IfStep { Settings = new IfConditionSettings { Conditions = [condition] } },
+                new EndIfStep()
+            ],
+            LocalValues = [comparison]
+        };
+
+        var validation = JobValidation.ValidateJob(job);
+
+        Assert.True(validation.IsValid, string.Join(Environment.NewLine,
+            validation.Steps.Where(step => !step.IsValid).Select(step => step.Error)));
+    }
+
+    [Fact]
     public void ValidateJob_EmptyJob_IsValid() => Assert.True(JobValidation.ValidateJob(new Job()).IsValid);
 
     [Fact]

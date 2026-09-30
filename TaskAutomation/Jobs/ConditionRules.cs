@@ -46,6 +46,32 @@ public static class ConditionRules
         return StepResultMetadata.TryParseComparison(property, value, out _);
     }
 
+    public static bool AreComparisonSourcesCompatible(
+        ResultPropertyDescriptor property,
+        ResultPropertyDescriptor comparisonProperty,
+        bool isDirectLocalValue,
+        string? comparisonValue)
+    {
+        if (StepResultMetadata.AreComparable(property, comparisonProperty)) return true;
+        if (property.DataType != ResultValueKind.Enum
+            || comparisonProperty.DataType is not (ResultValueKind.Text or ResultValueKind.Enum)
+            || !isDirectLocalValue)
+            return false;
+
+        var isLegacyUserChoiceEnum = comparisonProperty.DataType == ResultValueKind.Enum
+                                     && UserChoiceEnumContract.IsStepSpecific(property.EnumTypeName)
+                                     && string.Equals(
+                                         comparisonProperty.EnumTypeName,
+                                         UserChoiceEnumContract.LegacyTypeName,
+                                         StringComparison.Ordinal);
+        if (comparisonProperty.DataType == ResultValueKind.Enum
+            && !string.IsNullOrWhiteSpace(comparisonProperty.EnumTypeName)
+            && !isLegacyUserChoiceEnum)
+            return false;
+
+        return IsComparisonValueValid(property, ConditionOperator.Equals, comparisonValue);
+    }
+
     public static string? FormatComparisonValue(ResultPropertyDescriptor property, object? value)
     {
         if (value is null) return null;

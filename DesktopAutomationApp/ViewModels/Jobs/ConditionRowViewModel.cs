@@ -235,15 +235,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public string? ComparisonEnum { get => _comparisonEnum; set { if (_comparisonEnum == value) return; _comparisonEnum = value; OnChange(); NotifyValidation(); NotifySemanticChange(); } }
     public IReadOnlyList<string> EnumValues => SelectedProperty?.EnumValues ?? [];
     public IReadOnlyList<EnumConditionOption> EnumOptions => (SelectedProperty?.EnumValues ?? [])
-        .Select(value =>
-        {
-            if (SelectedProperty?.EnumDisplayNames?.TryGetValue(value, out var configuredName) == true)
-                return new EnumConditionOption(value, configuredName);
-            var typeName = SelectedProperty?.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
-            var key = $"Enum.{typeName}.{value}";
-            var localized = Loc.Get(key);
-            return new EnumConditionOption(value, localized == $"[{key}]" ? value : localized);
-        }).ToArray();
+        .Select(value => new EnumConditionOption(
+            value,
+            EnumValueLocalization.ForResultValue(SelectedProperty!, value)))
+        .ToArray();
 
     private ComparisonOperandKind _comparisonKind = ComparisonOperandKind.Literal;
     public ComparisonOperandKind ComparisonKind
@@ -711,14 +706,14 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
                 System.Globalization.NumberStyles.Number,
                 System.Globalization.CultureInfo.InvariantCulture, out var number)) node = JsonValue.Create(number);
         if (kind == StepValueKind.Boolean && bool.TryParse(literal, out var boolean)) node = JsonValue.Create(boolean);
-        var enumTypeName = SelectedProperty.EnumTypeName?.Split('.').LastOrDefault() ?? "Enum";
+        var enumTypeName = EnumValueLocalization.ShortTypeName(SelectedProperty.EnumTypeName);
         var options = kind == StepValueKind.Enum
             ? (SelectedProperty.EnumValues ?? []).Select(value =>
             {
-                string? displayName = null;
-                SelectedProperty.EnumDisplayNames?.TryGetValue(value, out displayName);
                 return new StepFieldOptionDescriptor(
-                    value, $"Enum.{enumTypeName}.{value}", displayName);
+                    value,
+                    $"Enum.{enumTypeName}.{value}",
+                    EnumValueLocalization.ForResultValue(SelectedProperty, value));
             }).ToArray()
             : null;
         var descriptor = new StepFieldDescriptor(_comparisonInputKey, string.Empty, kind,

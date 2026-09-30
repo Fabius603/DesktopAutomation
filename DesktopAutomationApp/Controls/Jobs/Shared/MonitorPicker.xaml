@@ -2,21 +2,20 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
-    <Grid VerticalAlignment="Center">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+    <controls:ResponsiveActionPanel VerticalAlignment="Center"
+                                    MinPrimaryWidth="220"
+                                    HorizontalSpacing="8"
+                                    VerticalSpacing="6">
         <TextBox
                  IsReadOnly="True"
                  Style="{StaticResource GeometryNumberInput}"
                  Text="{Binding MonitorIndex, ElementName=Root}"/>
-        <Button Grid.Column="1"
+        <Button HorizontalAlignment="Right"
                 Content="{loc:Translate Key=Ui.Step.Settings.SelectMonitor}"
-                Margin="8,0,0,0"
                 Style="{StaticResource GeometryInlineAction}"
                 Command="{Binding SelectCommand, ElementName=Root}"
                 CommandParameter="{Binding SelectCommandParameter, ElementName=Root}"/>
-    </Grid>
+    </controls:ResponsiveActionPanel>
 </UserControl>

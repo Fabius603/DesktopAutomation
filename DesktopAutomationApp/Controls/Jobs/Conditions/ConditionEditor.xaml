@@ -7,6 +7,7 @@
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:generated="clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization">
     <UserControl.Resources>
         <conv:OneBasedIndexConverter x:Key="OneBasedIndexConverter"/>
@@ -27,34 +28,35 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource StepInspectorScrollBarStyle}"/>
     </UserControl.Resources>
 
     <StackPanel>
         <Border Background="{DynamicResource App.Brush.SurfaceHover}"
                 BorderBrush="{DynamicResource App.Brush.CardBorder}"
                 BorderThickness="1" CornerRadius="7" Padding="10" Margin="0,0,0,10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <StackPanel>
                 <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Evaluation}"
-                           FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.AllAND}"
-                                 IsChecked="{Binding IsAll, ElementName=Root}"
-                                 VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <RadioButton Content="{loc:Translate Key=Ui.Step.Settings.OneOR}"
-                                 IsChecked="{Binding IsAny, ElementName=Root}"
-                                 VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
+                           FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <controls:ResponsiveColumnsPanel MinItemWidth="170" MaxColumns="2"
+                                                 HorizontalSpacing="16" VerticalSpacing="6">
+                    <RadioButton IsChecked="{Binding IsAll, ElementName=Root}"
+                                 VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.AllAND}" TextWrapping="Wrap"/>
+                    </RadioButton>
+                    <RadioButton IsChecked="{Binding IsAny, ElementName=Root}"
+                                 VerticalAlignment="Center">
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.OneOR}" TextWrapping="Wrap"/>
+                    </RadioButton>
+                </controls:ResponsiveColumnsPanel>
+            </StackPanel>
         </Border>
 
         <ListBox ItemsSource="{Binding Conditions, ElementName=Root}" AlternationCount="1000"
                  MaxHeight="560" BorderThickness="0" Background="Transparent"
                  ScrollViewer.CanContentScroll="True"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  VirtualizingPanel.IsVirtualizing="True"
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  ItemContainerStyle="{StaticResource VirtualizedConditionItem}">
@@ -113,21 +115,16 @@
                                 </Grid>
 
                                 <!-- A condition reads from left to right: source, operator, comparison value. -->
-                                <Grid x:Name="ConditionComparisonGrid">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="5*" MinWidth="150"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="3*" MinWidth="115"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="5*" MinWidth="150"/>
-                                    </Grid.ColumnDefinitions>
+                                <controls:ResponsiveColumnsPanel x:Name="ConditionComparisonGrid"
+                                                                 MinItemWidth="160" MaxColumns="3"
+                                                                 HorizontalSpacing="12" VerticalSpacing="10">
                                     <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.IfEditor.ResultPath}"
                                                Style="{StaticResource ConditionFieldLabel}"/>
                                     <generated:GeneratedValueSourceInput DataContext="{Binding SourceField}"/>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="2">
+                                    <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Operator}"
                                                Style="{StaticResource ConditionFieldLabel}"/>
                                     <ComboBox ItemsSource="{Binding AvailableOperators}"
@@ -142,13 +139,13 @@
                                     </ComboBox>
                                     </StackPanel>
 
-                                    <StackPanel Grid.Column="4"
-                                                Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <StackPanel
+                                                 Visibility="{Binding ShowComparisonValue, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Value}"
                                                    Style="{StaticResource ConditionFieldLabel}"/>
                                         <generated:GeneratedValueSourceInput DataContext="{Binding ComparisonField}"/>
-                                        <TextBlock Text="{Binding ComparisonValueValidationError}"
-                                                   FontSize="11" Margin="0,4,0,0">
+                                         <TextBlock Text="{Binding ComparisonValueValidationError}"
+                                                    FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -162,7 +159,7 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </StackPanel>
-                                </Grid>
+                                </controls:ResponsiveColumnsPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>

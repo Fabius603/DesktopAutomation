@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
+             xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:conditions="clr-namespace:DesktopAutomationApp.Controls.Jobs.Conditions"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
@@ -66,15 +67,17 @@
                       Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </DataTemplate>
         <DataTemplate x:Key="SuggestionFileFieldTemplate">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <controls:ResponsiveActionPanel MinPrimaryWidth="160"
+                                            HorizontalSpacing="6"
+                                            VerticalSpacing="6">
                 <ComboBox IsEditable="True" IsTextSearchEnabled="True" StaysOpenOnEdit="True"
                           ItemsSource="{Binding Suggestions}"
                           Text="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28" Margin="6,0,0,0"
+                <Button Content="{loc:Translate Key=Ui.Common.Ellipsis}" Width="32" Height="28"
+                        HorizontalAlignment="Right"
                         Command="{Binding DataContext.BrowseGeneratedFileCommand, RelativeSource={RelativeSource AncestorType={x:Type generated:GeneratedStepEditor}}}"
                         CommandParameter="{Binding}"/>
-            </Grid>
+            </controls:ResponsiveActionPanel>
         </DataTemplate>
         <DataTemplate x:Key="ChoiceFieldTemplate">
             <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label"
@@ -130,8 +133,9 @@
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="ProcessTargetFieldTemplate">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <controls:ResponsiveActionPanel MinPrimaryWidth="220"
+                                            HorizontalSpacing="12"
+                                            VerticalSpacing="6">
                 <Grid x:Name="ProcessTargetValueHost">
                     <Border Style="{StaticResource CompoundValueSourceGroup}"
                             Visibility="{Binding ProcessTargetEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -141,10 +145,10 @@
                     <jobs:ValueReferencePicker DataContext="{Binding ProcessTargetEditor.WholeValueSource.Picker}"
                                                Visibility="{Binding DataContext.ProcessTargetEditor.WholeValueSource.UsesReference, ElementName=ProcessTargetValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
-                <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
                                                               VerticalAlignment="Center"
                                                               DataContext="{Binding ProcessTargetEditor.WholeValueSource}"/>
-            </Grid>
+            </controls:ResponsiveActionPanel>
         </DataTemplate>
         <DataTemplate x:Key="FileFieldTemplate">
             <shared:PathPickerField PathValue="{Binding InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -184,17 +188,17 @@
                             Background="{DynamicResource App.Brush.AccentSubtle}"
                             Visibility="{Binding RequiresInlineEditChoice, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="{Binding InputReferenceEditor.Picker.MultipleUsageText}" TextWrapping="Wrap"/>
                                 <TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Inline.ChooseAction}"
                                            Margin="0,2,0,0" FontSize="10"
                                            Foreground="{DynamicResource App.Brush.TextSecondary}"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
+                            <StackPanel Margin="0,10,0,0">
                                 <Button Content="{loc:Translate Key=Ui.Job.Variables.Inline.EditEverywhere}"
                                         Command="{Binding InputReferenceEditor.Picker.EditEverywhereCommand}"
-                                        Style="{StaticResource ButtonSecondary}" Margin="0,0,6,0"/>
+                                        Style="{StaticResource ButtonSecondary}" Margin="0,0,0,6"/>
                                 <Button Content="{loc:Translate Key=Ui.Job.Variables.Inline.EditOnlyHere}"
                                         Command="{Binding InputReferenceEditor.Picker.EditOnlyHereCommand}"
                                         Style="{StaticResource ButtonPrimary}"/>
@@ -237,13 +241,15 @@
         </DataTemplate>
         <DataTemplate x:Key="CameraFieldTemplate">
             <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <controls:ResponsiveActionPanel MinPrimaryWidth="220"
+                                                HorizontalSpacing="8"
+                                                VerticalSpacing="6">
                     <ComboBox ItemsSource="{Binding CameraEditor.Cameras}" SelectedItem="{Binding CameraEditor.SelectedCamera, Mode=TwoWay}"
                               DisplayMemberPath="Name" MinWidth="0" HorizontalAlignment="Stretch"/>
-                    <Button Grid.Column="1" Command="{Binding CameraEditor.RefreshCommand}"
-                            Content="{loc:Translate Key=Ui.Step.Camera.Refresh}" Margin="8,0,0,0"/>
-                </Grid>
+                    <Button Command="{Binding CameraEditor.RefreshCommand}"
+                            Content="{loc:Translate Key=Ui.Step.Camera.Refresh}"
+                            HorizontalAlignment="Right"/>
+                </controls:ResponsiveActionPanel>
                 <TextBlock Text="{Binding CameraEditor.CameraStatus}" Foreground="{DynamicResource App.Brush.TextMuted}"
                            TextWrapping="Wrap" Margin="0,4,0,8"/>
                 <TextBlock Text="{loc:Translate Key=Ui.Step.Camera.Quality}" Style="{StaticResource StepFieldLabel}" Margin="0,0,0,4"/>
@@ -283,19 +289,23 @@
         <DataTemplate x:Key="ScreenPointFieldTemplate">
             <StackPanel>
                 <StackPanel Visibility="{Binding ScreenPointEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <DockPanel Margin="0,0,0,10">
-                        <Button DockPanel.Dock="Right"
+                    <controls:ResponsiveActionPanel Margin="0,0,0,10"
+                                                    MinPrimaryWidth="220"
+                                                    HorizontalSpacing="8"
+                                                    VerticalSpacing="6">
+                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Coordinates}"
+                                   Style="{StaticResource GeometrySectionHeader}" TextWrapping="Wrap"/>
+                        <Button HorizontalAlignment="Right"
                                 Content="{loc:Translate Key=Ui.Step.Settings.Capture}"
                                 Style="{StaticResource GeometryInlineAction}"
                                 Command="{Binding ScreenPointEditor.CaptureCommand}"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Coordinates}"
-                                   Style="{StaticResource GeometrySectionHeader}"/>
-                    </DockPanel>
+                    </controls:ResponsiveActionPanel>
                     <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.Monitor}" Style="{StaticResource GeometryFieldLabel}"/>
                     <generated:GeneratedValueSourceInput DataContext="{Binding ScreenPointEditor.MonitorField}" Margin="0,0,0,10"/>
                 </StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <controls:ResponsiveActionPanel MinPrimaryWidth="220"
+                                                HorizontalSpacing="12"
+                                                VerticalSpacing="6">
                     <Grid x:Name="ScreenPointValueHost">
                         <Border Style="{StaticResource CompoundValueSourceGroup}"
                                 Visibility="{Binding ScreenPointEditor.WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -307,25 +317,25 @@
                         <jobs:ValueReferencePicker DataContext="{Binding ScreenPointEditor.WholeValueSource.Picker}"
                                                    Visibility="{Binding DataContext.ScreenPointEditor.WholeValueSource.UsesReference, ElementName=ScreenPointValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </Grid>
-                    <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                    <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
                                                                   VerticalAlignment="Center"
                                                                   DataContext="{Binding ScreenPointEditor.WholeValueSource}"/>
-                </Grid>
+                </controls:ResponsiveActionPanel>
             </StackPanel>
         </DataTemplate>
         <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
             <StackPanel>
                 <ListBox ItemsSource="{Binding UserChoiceOptionsEditor.Options}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                          ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
                     <ListBox.ItemTemplate><DataTemplate>
                         <Border Style="{StaticResource GeometryCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                            <controls:ResponsiveActionPanel MinPrimaryWidth="220"
+                                                            HorizontalSpacing="10"
+                                                            VerticalSpacing="6">
                                 <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.UserChoice.AnswerTextRequired}"
                                                Style="{StaticResource GeometryFieldLabel}"/>
@@ -335,9 +345,8 @@
                                                Style="{StaticResource GeometryFieldLabel}"/>
                                     <generated:GeneratedValueSourceInput DataContext="{Binding ValueField}"/>
                                 </StackPanel>
-                                <Button Grid.Column="1"
+                                <Button HorizontalAlignment="Right"
                                         Width="28" Height="28"
-                                        Margin="10,0,0,0"
                                         VerticalAlignment="Center"
                                         Style="{StaticResource ButtonIcon}"
                                         ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
@@ -355,7 +364,7 @@
                                     </Button.ContextMenu>
                                     <iconPacks:PackIconMaterial Kind="DotsVertical" Width="15" Height="15"/>
                                 </Button>
-                            </Grid>
+                            </controls:ResponsiveActionPanel>
                         </Border>
                     </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
@@ -372,6 +381,8 @@
             <StackPanel>
                 <ListBox ItemsSource="{Binding PointEntryListEditor.Points}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                          ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
                     <ListBox.ItemTemplate><DataTemplate><analysis:PointEntryEditor/></DataTemplate></ListBox.ItemTemplate>
@@ -386,6 +397,8 @@
             <StackPanel>
                 <ListBox ItemsSource="{Binding AxisExpressionListEditor.Expressions}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                          ItemContainerStyle="{StaticResource VirtualizedCompoundEditorItem}">
                     <ListBox.ItemTemplate><DataTemplate><analysis:AxisExpressionEditor/></DataTemplate></ListBox.ItemTemplate>
@@ -441,18 +454,20 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepPointFieldPairViewModel}">
             <Grid x:Name="PointPairHost" Margin="0,0,0,12" HorizontalAlignment="Stretch">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid Width="153" Margin="0,0,12,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,6">
                     <TextBlock Margin="0,6,0,0"
                                Text="{Binding Label}"
                                Style="{StaticResource StepFieldLabel}"
                                Visibility="{Binding HasLabel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
-                <Grid Grid.Column="1">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <controls:ResponsiveActionPanel Grid.Row="1"
+                                                MinPrimaryWidth="220"
+                                                HorizontalSpacing="12"
+                                                VerticalSpacing="6">
                     <Grid x:Name="PointPairValueHost">
                         <Border Style="{StaticResource CompoundValueSourceGroup}"
                                 Visibility="{Binding WholeValueSource.ShowsIndividualValues, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -475,10 +490,10 @@
                         <jobs:ValueReferencePicker DataContext="{Binding WholeValueSource.Picker}"
                                                    Visibility="{Binding DataContext.WholeValueSource.UsesReference, ElementName=PointPairValueHost, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </Grid>
-                    <generated:GeneratedWholeValueSourceSelector Grid.Column="1" Margin="12,0,0,0"
+                    <generated:GeneratedWholeValueSourceSelector HorizontalAlignment="Right"
                                                                   VerticalAlignment="Center"
                                                                   DataContext="{Binding WholeValueSource}"/>
-                </Grid>
+                </controls:ResponsiveActionPanel>
             </Grid>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:GeneratedStepChoiceGroupViewModel}">

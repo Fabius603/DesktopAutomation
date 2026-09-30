@@ -668,7 +668,21 @@ namespace DesktopAutomationApp.ViewModels
             IReadOnlyDictionary<string, ResultBinding>? inputs,
             ResultPropertyDescriptor? enumProperty = null)
         {
-            var descriptor = new StepFieldDescriptor(key, owner.LabelKey, kind, DefaultValue: literal?.DeepClone());
+            var enumOptions = kind == StepValueKind.Enum && enumProperty is not null
+                ? (enumProperty.EnumValues ?? []).Select(value => new StepFieldOptionDescriptor(
+                    value,
+                    $"Enum.{EnumValueLocalization.ShortTypeName(enumProperty.EnumTypeName)}.{value}",
+                    EnumValueLocalization.ForResultValue(enumProperty, value))).ToArray()
+                : null;
+            var descriptor = new StepFieldDescriptor(
+                key,
+                owner.LabelKey,
+                kind,
+                DefaultValue: literal?.DeepClone(),
+                Constraints: enumOptions is { Length: > 0 }
+                    ? new StepFieldConstraints(AllowedValues: enumOptions.Select(option => option.Value).ToArray())
+                    : null,
+                Options: enumOptions);
             var contract = StepInputContractRegistry.ForField(descriptor);
             if (string.Equals(owner.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
                 contract = contract with { AllowedProviderIds = new HashSet<string>() };

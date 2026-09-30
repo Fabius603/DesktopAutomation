@@ -115,6 +115,37 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Style x:Key="InspectorGridSplitterStyle" TargetType="GridSplitter">
+                <Setter Property="Width" Value="14"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Stretch"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Cursor" Value="SizeWE"/>
+                <Setter Property="ResizeDirection" Value="Columns"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridSplitter">
+                            <Grid Background="Transparent">
+                                <Border x:Name="ResizeGrip"
+                                        Width="4" MinHeight="52"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Background="{DynamicResource App.Brush.BorderSubtle}"
+                                        CornerRadius="2"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ResizeGrip" Property="Width" Value="6"/>
+                                    <Setter TargetName="ResizeGrip" Property="Background" Value="{DynamicResource App.Brush.Accent}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter TargetName="ResizeGrip" Property="Width" Value="6"/>
+                                    <Setter TargetName="ResizeGrip" Property="Background" Value="{DynamicResource App.Brush.FocusBorder}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <DataTemplate x:Key="StepDetailItemTemplate">
                 <Border Padding="4,6" BorderBrush="{DynamicResource App.Brush.CardBorder}"
                         BorderThickness="0,0,0,1">
@@ -1455,9 +1486,9 @@
             </StackPanel>
             </ScrollViewer>
         </Border>
-            <GridSplitter Grid.Column="1" Width="6" Margin="6,0"
-                          HorizontalAlignment="Center" VerticalAlignment="Stretch"
-                          Background="Transparent" ResizeDirection="Columns"/>
+            <GridSplitter Grid.Column="1" Margin="2,0"
+                          AutomationProperties.AutomationId="InspectorResizeGrip"
+                          Style="{StaticResource InspectorGridSplitterStyle}"/>
 
             <Border Grid.Column="2" MinWidth="360"
                     Margin="0" Padding="16" CornerRadius="8"
@@ -1494,7 +1525,7 @@
                             </Button>
                             <StackPanel>
                                 <TextBlock Text="{Binding SelectedStepDisplayName}" FontSize="18" FontWeight="SemiBold"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                <StackPanel Margin="0,2,0,0">
                                     <TextBlock Text="{Binding SelectedStepNumber}" Margin="0,0,8,0"
                                                Foreground="{DynamicResource App.Brush.TextMuted}"/>
                                     <TextBlock Text="{Binding SelectedStepDescription}" TextWrapping="Wrap"
@@ -1502,7 +1533,7 @@
                                 </StackPanel>
                             </StackPanel>
                         </DockPanel>
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                        <WrapPanel Grid.Row="1" Margin="0,0,0,10">
                             <CheckBox Content="{loc:Translate Key=Ui.Job.Steps.Editor.Active}"
                                       AutomationProperties.AutomationId="SelectedJobStepEnabledToggle"
                                       IsChecked="{Binding SelectedStep.IsEnabled, Mode=OneWay}"
@@ -1512,13 +1543,16 @@
                                       AutomationProperties.AutomationId="SelectedJobStepBreakpointToggle"
                                       IsChecked="{Binding SelectedStep.IsBreakpoint, Mode=OneWay}"
                                       Command="{Binding ToggleBreakpointCommand}" CommandParameter="{Binding SelectedStep}"/>
-                        </StackPanel>
+                        </WrapPanel>
                         <TabControl x:Name="SelectedJobStepTabs" Grid.Row="2"
                                     AutomationProperties.AutomationId="SelectedJobStepTabs"
                                     Style="{StaticResource InspectorPageTabControlStyle}"
                                     Loaded="SelectedJobStepTabs_Loaded"
                                     SizeChanged="SelectedJobStepTabs_SizeChanged"
                                     SelectionChanged="SelectedJobStepTabs_SelectionChanged">
+                            <TabControl.Resources>
+                                <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource StepInspectorScrollBarStyle}"/>
+                            </TabControl.Resources>
                             <TabItem Header="{loc:Translate Key=Ui.Job.Steps.Editor.Details}">
                                 <Grid>
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
