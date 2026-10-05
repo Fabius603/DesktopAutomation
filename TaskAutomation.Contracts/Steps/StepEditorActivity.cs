@@ -2,6 +2,10 @@ namespace TaskAutomation.Contracts.Steps;
 
 public static class StepEditorActivity
 {
+    public static bool IsVisible(StepFieldDescriptor field, Func<StepVisibilityRule, bool> matches) =>
+        (field.VisibleWhen is null || matches(field.VisibleWhen))
+        && (field.VisibleWhenAll is not { Count: > 0 } rules || rules.All(matches));
+
     public static IReadOnlySet<string> GetActiveFieldIds(
         StepDescriptor descriptor,
         Func<string, string?> selectionValueResolver,
@@ -23,6 +27,7 @@ public static class StepEditorActivity
                 ActivateSelectedBranch(group);
             }
         }
+        active.RemoveWhere(fieldId => fieldVisibilityResolver?.Invoke(fieldId) == false);
         return active;
 
         void RemoveTree(StepEditorNodeDescriptor node)

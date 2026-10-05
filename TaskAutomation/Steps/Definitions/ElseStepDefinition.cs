@@ -10,7 +10,7 @@ public sealed class ElseStepDefinition : StepDefinition<ElseStep>
         CategoryId: "AblaufSteuern",
         DisplayNameKey: "Step.Type.Else",
         DescriptionKey: "Step.Description.Else",
-        IconKey: "source-branch",
+        IconKey: "else-branch",
         Fields: [],
         Presentation: new StepPresentationDescriptor(
             EditorSections: [],

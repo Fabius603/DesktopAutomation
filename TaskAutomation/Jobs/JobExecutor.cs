@@ -16,6 +16,7 @@ using ImageHelperMethods;
 using TaskAutomation.Makros;
 using System.Linq;
 using TaskAutomation.Steps;
+using TaskAutomation.Steps.Definitions;
 using Microsoft.Extensions.Logging;
 using ImageCapture.DesktopDuplication.RecordingIndicator;
 using TaskAutomation.Scripts;
@@ -323,47 +324,20 @@ namespace TaskAutomation.Jobs
                 cancellation.MarkCompleted(JobExecutionState.Failed);
                 _executionLogService.Complete(executionLog, false, err);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
-                await UnloadYoloModelsAsync(job);
+                await UnloadYoloModelsAsync(job, []);
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
                 return;
             }
             _executionChain.Value = parentChain.Add(job.Id);
 
-            // ── YOLO-Modelle vorladen ─────────────────────────────────────────
-            try
-            {
-                await PreloadYoloModelsAsync(job, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("Job '{JobName}' vor Ausführung abgebrochen.", job.Name);
-                _executionLogService.Write(executionLog, ExecutionLogLevel.Information, "Job vor Ausführung gestoppt.");
-                cancellation.MarkCompleted(JobExecutionState.Cancelled);
-                _executionLogService.Complete(executionLog, false, "Gestoppt während YOLO-Preload.", cancelled: true);
-                await UnloadYoloModelsAsync(job);
-                _executionChain.Value = parentChain;
-                CurrentJob = null;
-                return;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Job '{JobName}' vor Ausführung fehlgeschlagen: {Message}", job.Name, ex.Message);
-                _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung fehlgeschlagen.", ex.ToString());
-                cancellation.MarkCompleted(JobExecutionState.Failed);
-                _executionLogService.Complete(executionLog, false, ex.Message);
-                JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
-                await UnloadYoloModelsAsync(job);
-                _executionChain.Value = parentChain;
-                CurrentJob = null;
-                return;
-            }
-
             VideoCreationStep? videoStep;
             DesktopDuplicationStep? desktopDuplicationStep;
-            StepPipelineContext pipelineCtx;
+            StepPipelineContext? pipelineCtx = null;
             try
             {
+                var identityErrors = JobValueSources.ValidateIdentities(job);
+                if (identityErrors.Count > 0) throw new InvalidOperationException(string.Join(", ", identityErrors));
                 // ── Schritte analysieren ──────────────────────────────────────
                 var allSteps = job.EnumerateAllSteps().ToList();
                 videoStep = allSteps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
@@ -392,6 +366,7 @@ namespace TaskAutomation.Jobs
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
                     launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
                     secrets: secretValues);
+                await PreloadYoloModelsAsync(job, pipelineCtx, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException ex)
             {
@@ -402,7 +377,8 @@ namespace TaskAutomation.Jobs
                     "Job vor der Step-Ausführung gestoppt.");
                 cancellation.MarkCompleted(JobExecutionState.Cancelled);
                 _executionLogService.Complete(executionLog, false, ex.Message, cancelled: true);
-                await UnloadYoloModelsAsync(job);
+                await UnloadYoloModelsAsync(job, pipelineCtx?.LoadedYoloModels ?? []);
+                pipelineCtx?.Dispose();
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
                 return;
@@ -418,61 +394,16 @@ namespace TaskAutomation.Jobs
                 cancellation.MarkCompleted(JobExecutionState.Failed);
                 _executionLogService.Complete(executionLog, false, ex.Message);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
-                await UnloadYoloModelsAsync(job);
+                await UnloadYoloModelsAsync(job, pipelineCtx?.LoadedYoloModels ?? []);
+                pipelineCtx?.Dispose();
                 _executionChain.Value = parentChain;
                 CurrentJob = null;
                 return;
             }
 
-            bool recorderStarted = false;
-
             try
             {
                 ct.ThrowIfCancellationRequested();
-
-                // ── VideoRecorder initialisieren ──────────────────────────────
-                if (videoStep != null)
-                {
-                    try
-                    {
-                        int videoWidth = 1920;
-                        int videoHeight = 1080;
-
-                        if (desktopDuplicationStep != null)
-                        {
-                            var sb = ScreenHelper.GetDesktopBounds(desktopDuplicationStep.Settings.DesktopIdx);
-                            if (!sb.IsEmpty) { videoWidth = sb.Width; videoHeight = sb.Height; }
-                        }
-
-                        pipelineCtx.VideoRecorder = new StreamVideoRecorder(videoWidth, videoHeight, 60)
-                        {
-                            OutputDirectory = videoStep.Settings.SavePath,
-                            FileName = videoStep.Settings.FileName
-                        };
-                        await pipelineCtx.VideoRecorder.StartAsync(ct).ConfigureAwait(false);
-                        recorderStarted = true;
-                        _logger.LogInformation("VideoRecorder gestartet.");
-                        _executionLogService.Write(
-                            executionLog,
-                            ExecutionLogLevel.Information,
-                            "Videoaufnahme gestartet.",
-                            $"Datei={pipelineCtx.VideoRecorder.OutputFilePath}, Größe={videoWidth}x{videoHeight}, FPS=60",
-                            stepId: videoStep.Id,
-                            stepType: videoStep.GetType().Name);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Fehler beim Starten des VideoRecorders: {Message}", ex.Message);
-                        _executionLogService.Write(
-                            executionLog,
-                            ExecutionLogLevel.Error,
-                            "Videoaufnahme konnte nicht gestartet werden.",
-                            ex.ToString(),
-                            stepId: videoStep.Id,
-                            stepType: videoStep.GetType().Name);
-                        throw;
-                    }
-                }
 
                 // ── Aufnahme-Overlay ──────────────────────────────────────────
                 // Einmalige Startphase. Ein EndJob-Step beendet danach kontrolliert die Hauptphase.
@@ -568,7 +499,7 @@ namespace TaskAutomation.Jobs
                                 stepId: step.Id,
                                 stepType: step.GetType().Name);
                             jobEndedByStep = true;
-                            runEndSteps = !endJobStep.Settings.SkipEndSteps;
+                            runEndSteps = !((EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results)).Settings.SkipEndSteps;
                             debugSession?.MarkCompleted(step, "Job durch EndJob beendet.");
                             break;
                         }
@@ -738,7 +669,7 @@ namespace TaskAutomation.Jobs
                 try { _desktopResultOverlay.OnJobEnded(overlayStepKeys); } catch { /* best-effort */ }
                 try { WindowsInputBlockController.Unblock(); } catch { /* best-effort */ }
 
-                if (recorderStarted && pipelineCtx.VideoRecorder != null)
+                if (pipelineCtx.VideoRecorder != null)
                 {
                     try
                     {
@@ -775,7 +706,7 @@ namespace TaskAutomation.Jobs
                 try { pipelineCtx.KeyPointMatcher?.Dispose(); } catch { /* best-effort */ }
                 try { pipelineCtx.Dispose(); } catch { /* best-effort */ }
 
-                await UnloadYoloModelsAsync(job);
+                await UnloadYoloModelsAsync(job, pipelineCtx?.LoadedYoloModels ?? []);
 
                 _logger.LogInformation("Job '{JobName}' beendet.", job.Name);
                 var finalState = cancellation.IsForceStopRequested || jobWasCancelled
@@ -883,7 +814,7 @@ namespace TaskAutomation.Jobs
                         stepId: step.Id,
                         stepType: step.GetType().Name);
                     debugSession?.MarkCompleted(step, $"{phaseName} durch EndJob beendet.");
-                    return endJobStep;
+                    return (EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results);
                 }
 
                 try
@@ -1181,7 +1112,7 @@ namespace TaskAutomation.Jobs
         /// <summary>
         /// Lädt alle YOLO-Modelle vor, die im Job verwendet werden, um bessere Performance zu erzielen.
         /// </summary>
-        private async Task PreloadYoloModelsAsync(Job job, CancellationToken ct)
+        private async Task PreloadYoloModelsAsync(Job job, StepPipelineContext context, CancellationToken ct)
         {
             if (_yoloManager == null)
             {
@@ -1189,7 +1120,7 @@ namespace TaskAutomation.Jobs
                 return;
             }
 
-            var yoloSteps = job.EnumerateAllSteps().OfType<YOLODetectionStep>().ToList();
+            var yoloSteps = job.EnumerateAllSteps().OfType<YOLODetectionStep>().Where(step => step.IsEnabled).ToList();
             if (yoloSteps.Count == 0)
             {
                 _logger.LogDebug("Keine YOLO-Steps im Job '{JobName}' - Vorladen übersprungen", job.Name);
@@ -1197,7 +1128,8 @@ namespace TaskAutomation.Jobs
             }
 
             var modelsToPreload = yoloSteps
-                .Select(step => step.Settings.Model)
+                .Select(step => ((YOLODetectionStep)StepInputMaterializer.MaterializeFields(
+                    step, context.Results, new HashSet<string> { YoloDetectionStepDefinition.SelectionFieldId })).Settings.Model)
                 .Where(model => !string.IsNullOrWhiteSpace(model))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -1217,6 +1149,7 @@ namespace TaskAutomation.Jobs
                 {
                     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                     await _yoloManager.EnsureModelAsync(model, ct);
+                    context.RegisterYoloModel(model);
                     stopwatch.Stop();
                     _logger.LogInformation("YOLO-Modell '{Model}' erfolgreich vorgeladen in {ElapsedMs}ms",
                         model, stopwatch.ElapsedMilliseconds);
@@ -1236,22 +1169,14 @@ namespace TaskAutomation.Jobs
         /// <summary>
         /// Entlädt alle YOLO-Modelle, die im Job verwendet wurden, um Speicher freizugeben.
         /// </summary>
-        private async Task UnloadYoloModelsAsync(Job job)
+        private async Task UnloadYoloModelsAsync(Job job, IEnumerable<string> loadedModels)
         {
             if (_yoloManager == null)
             {
                 return;
             }
 
-            var yoloSteps = job.EnumerateAllSteps().OfType<YOLODetectionStep>().ToList();
-            if (yoloSteps.Count == 0)
-            {
-                return;
-            }
-
-            var modelsToUnload = yoloSteps
-                .Select(step => step.Settings.Model)
-                .Where(model => !string.IsNullOrWhiteSpace(model))
+            var modelsToUnload = loadedModels
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -1355,8 +1280,9 @@ namespace TaskAutomation.Jobs
             var parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
             if (step is IfStep configuredIf)
             {
-                var materialized = (IfStep)StepInputMaterializer.Materialize(configuredIf, results);
-                var settings = materialized.Settings ?? new IfConditionSettings();
+                var settings = parentActive
+                    ? ((IfStep)StepInputMaterializer.Materialize(configuredIf, results)).Settings
+                    : configuredIf.Settings;
                 var evaluation = parentActive
                     ? EvaluateCondition(settings, results, conditionSources)
                     : NotEvaluated(settings, "Der übergeordnete Bedingungszweig ist inaktiv.");
@@ -1371,8 +1297,7 @@ namespace TaskAutomation.Jobs
 
             if (step is ElseIfStep configuredElseIf)
             {
-                var materialized = (ElseIfStep)StepInputMaterializer.Materialize(configuredElseIf, results);
-                var settings = materialized.Settings ?? new IfConditionSettings();
+                var settings = configuredElseIf.Settings ?? new IfConditionSettings();
                 if (branchStack.Count == 0)
                     return new ConditionControlFlowTransition(
                         ExecutionLogLevel.Warning,
@@ -1382,6 +1307,7 @@ namespace TaskAutomation.Jobs
                 var top = branchStack.Pop();
                 if (top.ParentActive && !top.AnyMatched)
                 {
+                    settings = ((ElseIfStep)StepInputMaterializer.Materialize(configuredElseIf, results)).Settings;
                     var evaluation = EvaluateCondition(settings, results, conditionSources);
                     branchStack.Push(new BranchFrame(top.ParentActive, evaluation.IsMatch, evaluation.IsMatch));
                     return new ConditionControlFlowTransition(
@@ -1748,69 +1674,18 @@ namespace TaskAutomation.Jobs
             return false;
         }
 
-        private static bool TryReadResultValue(
-            IJobResultStore results,
-            string? sourceStepId,
-            string? propertyId,
-            string? propertyPath,
-            IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
-            out ResultPropertyDescriptor descriptor,
-            out object? value,
-            out bool wasExecuted)
-        {
-            descriptor = null!;
-            value = null;
-            wasExecuted = false;
-            if (string.IsNullOrWhiteSpace(sourceStepId)
-                || (string.IsNullOrWhiteSpace(propertyId) && string.IsNullOrWhiteSpace(propertyPath)))
-                return false;
-            var result = results.GetRaw(sourceStepId);
-            wasExecuted = result?.WasExecuted == true;
-            if (result is null || !wasExecuted)
-                return false;
-            if (conditionSources.TryGetValue(sourceStepId, out var configuredSource)
-                && configuredSource.ResultType is not null)
-            {
-                if (!StepResultMetadata.TryGetProperty(
-                        configuredSource.ResultType, propertyId, propertyPath, out descriptor))
-                    return false;
-            }
-            else if (!StepResultMetadata.TryGetProperty(
-                         result.GetType(), propertyId, propertyPath, out descriptor))
-                return false;
-            return StepResultMetadata.TryReadValue(result, descriptor, out value);
-        }
-
         private static bool TryReadReferenceValue(
-            IJobResultStore results,
-            ResultBinding binding,
+            IJobResultStore results, ResultBinding binding,
             IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
-            out ResultPropertyDescriptor descriptor,
-            out object? value,
-            out bool wasExecuted)
+            out ResultPropertyDescriptor descriptor, out object? value, out bool wasExecuted)
         {
-            if (binding.TryGetStepResult(out var stepResult))
-                return TryReadResultValue(
-                    results,
-                    stepResult.StepId,
-                    stepResult.PropertyId,
-                    binding.PropertyPath,
-                    conditionSources,
-                    out descriptor,
-                    out value,
-                    out wasExecuted);
-            if (binding.HasProviderReference)
-            {
-                var providerValue = ValueReferenceResolver.Resolve(results, binding);
-                descriptor = providerValue.Descriptor?.ToResultProperty()!;
-                value = providerValue.Value;
-                wasExecuted = true;
-                return providerValue.IsSuccess
-                       && providerValue.Descriptor is { IsSensitive: false };
-            }
-            return TryReadResultValue(
-                results, binding.SourceStepId, binding.PropertyId, binding.PropertyPath,
-                conditionSources, out descriptor, out value, out wasExecuted);
+            var configured = binding.TryGetStepResult(out var stepResult)
+                && conditionSources.TryGetValue(stepResult.StepId, out var source) ? source.ResultType : null;
+            var resolved = ValueReferenceResolver.Resolve(results, binding, configured);
+            descriptor = resolved.Descriptor?.ToResultProperty()!;
+            value = resolved.Value;
+            wasExecuted = resolved.IsSuccess;
+            return resolved.IsSuccess && resolved.Descriptor is { IsSensitive: false };
         }
 
         private async Task<IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>>

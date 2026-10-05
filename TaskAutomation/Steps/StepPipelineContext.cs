@@ -32,31 +32,36 @@ namespace TaskAutomation.Steps
         public IDictionary<string, DynamicRoiState> DynamicRoiStates { get; } =
             new Dictionary<string, DynamicRoiState>(StringComparer.OrdinalIgnoreCase);
 
-        public ILogger              Logger             { get; }
-        public DxgiResources        DxgiResources      { get; }
-        public IReadOnlyDictionary<string, Job>   AllJobs   { get; }
+        public ILogger Logger { get; }
+        public DxgiResources DxgiResources { get; }
+        public IReadOnlyDictionary<string, Job> AllJobs { get; }
         public IReadOnlyDictionary<string, Makro> AllMakros { get; }
-        public IMakroExecutor       MakroExecutor      { get; }
-        public IScriptExecutor      ScriptExecutor     { get; }
-        public IYoloManager         YoloManager        { get; }
+        public IMakroExecutor MakroExecutor { get; }
+        public IScriptExecutor ScriptExecutor { get; }
+        public IYoloManager YoloManager { get; }
         public IImageDisplayService ImageDisplayService { get; }
         public IDesktopResultOverlay DesktopResultOverlay { get; }
         public ExecutionLogSession? ExecutionLogSession { get; }
         public IExecutionLogService ExecutionLogService { get; }
-        public Job                  CurrentJob         { get; }
+        public Job CurrentJob { get; }
         public Func<Guid, CancellationToken, Task> ExecuteJob { get; }
-        public Func<Guid, Guid>?                    StartJobViaDispatcher { get; }
+        public Func<Guid, Guid>? StartJobViaDispatcher { get; }
         public Func<Guid, CancellationToken, Task>? StartJobViaDispatcherAsync { get; }
-        public Action<Guid>?                        CancelJobViaDispatcher { get; }
+        public Action<Guid>? CancelJobViaDispatcher { get; }
 
         public IDesktopCaptureService DesktopCaptureService { get; }
         public ICameraCaptureService CameraCaptureService { get; }
-        public ISet<string>  OpenedWindowNames    { get; } = new HashSet<string>(StringComparer.Ordinal);
-        public IList<Guid>   ChildJobInstanceIds  { get; } = new List<Guid>();
-        public TemplateMatching?    TemplateMatcher    { get; set; }
-        public ColorDetector?       ColorDetector      { get; set; }
-        public KeyPointMatcher?     KeyPointMatcher    { get; set; }
-        public StreamVideoRecorder? VideoRecorder      { get; set; }
+        public ISet<string> OpenedWindowNames { get; } = new HashSet<string>(StringComparer.Ordinal);
+        public IList<Guid> ChildJobInstanceIds { get; } = new List<Guid>();
+        public TemplateMatching? TemplateMatcher { get; set; }
+        public ColorDetector? ColorDetector { get; set; }
+        public KeyPointMatcher? KeyPointMatcher { get; set; }
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _loadedYoloModels =
+            new(StringComparer.OrdinalIgnoreCase);
+        public void RegisterYoloModel(string model) => _loadedYoloModels.TryAdd(model, 0);
+        public IReadOnlyCollection<string> LoadedYoloModels => _loadedYoloModels.Keys.ToArray();
+
+        public IVideoRecorder? VideoRecorder { get; set; }
 
         public Dictionary<string, DateTime> StepTimeouts { get; } =
             new(StringComparer.OrdinalIgnoreCase);
@@ -70,48 +75,55 @@ namespace TaskAutomation.Steps
         // ── Konstruktor ────────────────────────────────────────────────────────
 
         public StepPipelineContext(
-            ILogger                            logger,
-            DxgiResources                      dxgiResources,
-            IReadOnlyDictionary<string, Job>   allJobs,
+            ILogger logger,
+            DxgiResources dxgiResources,
+            IReadOnlyDictionary<string, Job> allJobs,
             IReadOnlyDictionary<string, Makro> allMakros,
-            IMakroExecutor                     makroExecutor,
-            IScriptExecutor                    scriptExecutor,
-            IYoloManager                       yoloManager,
-            IImageDisplayService               imageDisplayService,
-            IDesktopResultOverlay              desktopResultOverlay,
-            Job                                currentJob,
+            IMakroExecutor makroExecutor,
+            IScriptExecutor scriptExecutor,
+            IYoloManager yoloManager,
+            IImageDisplayService imageDisplayService,
+            IDesktopResultOverlay desktopResultOverlay,
+            Job currentJob,
             Func<Guid, CancellationToken, Task> executeJob,
-            IDesktopCaptureService             desktopCaptureService,
-            ICameraCaptureService              cameraCaptureService,
-            ExecutionLogSession?                executionLogSession = null,
-            IExecutionLogService?               executionLogService = null,
-            Func<Guid, Guid>?                  startJobViaDispatcher  = null,
-            Action<Guid>?                      cancelJobViaDispatcher = null,
+            IDesktopCaptureService desktopCaptureService,
+            ICameraCaptureService cameraCaptureService,
+            ExecutionLogSession? executionLogSession = null,
+            IExecutionLogService? executionLogService = null,
+            Func<Guid, Guid>? startJobViaDispatcher = null,
+            Action<Guid>? cancelJobViaDispatcher = null,
             Func<Guid, CancellationToken, Task>? startJobViaDispatcherAsync = null,
             IReadOnlyDictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>? secrets = null)
         {
-            Logger                     = logger;
-            DxgiResources              = dxgiResources;
-            AllJobs                    = allJobs;
-            AllMakros                  = allMakros;
-            MakroExecutor              = makroExecutor;
-            ScriptExecutor             = scriptExecutor;
-            YoloManager                = yoloManager;
-            ImageDisplayService        = imageDisplayService;
-            DesktopResultOverlay       = desktopResultOverlay;
-            ExecutionLogSession        = executionLogSession;
-            ExecutionLogService        = executionLogService
+            Logger = logger;
+            DxgiResources = dxgiResources;
+            AllJobs = allJobs;
+            AllMakros = allMakros;
+            MakroExecutor = makroExecutor;
+            ScriptExecutor = scriptExecutor;
+            YoloManager = yoloManager;
+            ImageDisplayService = imageDisplayService;
+            DesktopResultOverlay = desktopResultOverlay;
+            ExecutionLogSession = executionLogSession;
+            ExecutionLogService = executionLogService
                 ?? throw new ArgumentNullException(nameof(executionLogService));
-            CurrentJob                 = currentJob;
-            _secrets                   = secrets
+            CurrentJob = currentJob;
+            _secrets = secrets
                 ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>();
-            _results                   = new JobResultStore(CurrentJob.Variables, _secrets, CurrentJob.LocalValues);
-            ExecuteJob                 = executeJob;
-            DesktopCaptureService      = desktopCaptureService;
-            CameraCaptureService       = cameraCaptureService;
-            StartJobViaDispatcher      = startJobViaDispatcher;
-            CancelJobViaDispatcher     = cancelJobViaDispatcher;
+            _results = CreateResultStore();
+            ExecuteJob = executeJob;
+            DesktopCaptureService = desktopCaptureService;
+            CameraCaptureService = cameraCaptureService;
+            StartJobViaDispatcher = startJobViaDispatcher;
+            CancelJobViaDispatcher = cancelJobViaDispatcher;
             StartJobViaDispatcherAsync = startJobViaDispatcherAsync;
+        }
+
+        private JobResultStore CreateResultStore()
+        {
+            var results = new JobResultStore(CurrentJob.Variables, _secrets, CurrentJob.LocalValues);
+            foreach (var step in CurrentJob.EnumerateAllSteps()) results.RegisterStep(step);
+            return results;
         }
 
         // ── Iteration-Reset ────────────────────────────────────────────────────
@@ -123,7 +135,7 @@ namespace TaskAutomation.Steps
         public void ResetResults()
         {
             _results.DisposeAndClear();
-            _results = new JobResultStore(CurrentJob.Variables, _secrets, CurrentJob.LocalValues);
+            _results = CreateResultStore();
         }
 
         /// <summary>

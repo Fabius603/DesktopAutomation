@@ -3204,7 +3204,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Button" xml:space="preserve"><value>Jobvariablen</value></data>
   <data name="Ui.Job.Variables.DialogTitle" xml:space="preserve"><value>Jobvariablen</value></data>
   <data name="Ui.Job.Variables.DialogDescription" xml:space="preserve"><value>Zentrale Werte für diesen Job verwalten und in mehreren Steps wiederverwenden.</value></data>
-  <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>Variable hinzufügen</value></data>
+  <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>Neue Variable</value></data>
   <data name="Ui.Job.Variables.Shortcut.Add" xml:space="preserve"><value>Variable hinzufügen (Strg+N)</value></data>
   <data name="Ui.Job.Variables.Shortcut.Search" xml:space="preserve"><value>Variablen durchsuchen (Strg+F)</value></data>
   <data name="Ui.Job.Variables.Empty" xml:space="preserve"><value>Noch keine Variablen vorhanden. Lege zentrale Werte an, die du in mehreren Steps verwenden kannst.</value></data>
@@ -3251,7 +3251,7 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Variables.Filter.Type" xml:space="preserve"><value>Variablentyp</value></data>
   <data name="Ui.Job.Variables.Filter.AllTypes" xml:space="preserve"><value>Alle Typen</value></data>
   <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>Keine Variablen entsprechen der Suche und dem ausgewählten Filter.</value></data>
-  <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Variable duplizieren</value></data>
+  <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Duplizieren</value></data>
   <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Kopie</value></data>
   <data name="Ui.Job.Variables.PromoteToShared" xml:space="preserve"><value>In gemeinsame Jobvariable umwandeln</value></data>
   <data name="Ui.Job.Variables.SelectHint" xml:space="preserve"><value>Wähle links eine Variable aus, um sie zu bearbeiten.</value></data>
@@ -3326,4 +3326,70 @@ Fehlercode: {3}</value>
   <data name="Ui.Job.Steps.TotalCount" xml:space="preserve"><value>{0} Steps gesamt</value></data>
   <data name="Ui.Job.Steps.Picker.Description" xml:space="preserve"><value>Beschreibung</value></data>
   <data name="Ui.Job.Steps.Editor.Active" xml:space="preserve"><value>Step aktiv</value></data>
+  <data name="Ui.Job.Variables.InvalidStoredValue" xml:space="preserve"><value>Der gespeicherte Wert {0} passt nicht zum Variablentyp. Er bleibt bis zu einer ausdrücklichen Korrektur erhalten.</value></data>
+  <data name="Ui.Job.Variables.UseDefaultExplicitly" xml:space="preserve"><value>Durch Standardwert ersetzen</value></data>
+  <data name="Ui.Step.Generated.Validation.UnknownSavedToken" xml:space="preserve"><value>Der gespeicherte Auswahlwert „{0}“ wird nicht unterstützt. Bitte einen gültigen Wert auswählen.</value></data>
+  <data name="Ui.Job.Validation.DuplicateStepId" xml:space="preserve"><value>Step-IDs fehlen oder sind doppelt vergeben. Bitte die betroffenen Steps korrigieren.</value></data>
+  <data name="Ui.Job.Validation.DuplicateValueId" xml:space="preserve"><value>Wert-IDs fehlen oder sind innerhalb derselben Quelle doppelt vergeben.</value></data>
+  <data name="Ui.Job.Validation.LocalValueOwnership" xml:space="preserve"><value>Ein lokaler Wert ist dem falschen Step oder Eingabefeld zugeordnet.</value></data>
+  <data name="Ui.Job.Steps.RemoveCondition" xml:space="preserve"><value>Bedingung entfernen, Inhalt behalten</value></data>
+  <data name="Step.Delete.UnwrapWarning" xml:space="preserve"><value>Die Bedingung wird entfernt. Alle Zweige werden in ihrer bisherigen Reihenfolge zusammengeführt und anschließend ohne diese Bedingung ausgeführt. Verschachtelte Bedingungen bleiben erhalten. Fortfahren?</value></data>
+  <data name="Ui.Job.Steps.ToggleBlock" xml:space="preserve"><value>Bedingungsblock auf- oder zuklappen</value></data>
+  <data name="Ui.Job.Steps.CollapsedSummary" xml:space="preserve"><value>{0} Steps · {1} Probleme · {2} Breakpoints</value></data>
+  <data name="Ui.Job.Steps.MoveDependencyWarning" xml:space="preserve"><value>Durch das Verschieben entstehen folgende Probleme. Die Werte-Referenzen bleiben erhalten:
+{0}
+Trotzdem verschieben?</value></data>
+  <data name="Ui.Job.Steps.Insert" xml:space="preserve"><value>Step hinzufügen</value></data>
+  <data name="Ui.Job.Steps.Summary.Seconds" xml:space="preserve"><value>{0} s</value></data>
+  <data name="Ui.Job.Steps.Summary.ExecuteEnd" xml:space="preserve"><value>Beendigungsphase ausführen</value></data>
+  <data name="Ui.Job.Steps.Summary.SkipEnd" xml:space="preserve"><value>Beendigungsphase überspringen</value></data>
+  <data name="Ui.Job.Steps.Summary.Answer" xml:space="preserve"><value>Antwort</value></data>
+  <data name="Ui.Job.Steps.Drag.Handle" xml:space="preserve"><value>Am Symbol ziehen, um den Step zu verschieben</value></data>
+  <data name="Ui.Job.Steps.Drag.Count" xml:space="preserve"><value>{0} Steps</value></data>
+  <data name="Ui.Job.Steps.ExpandBlock" xml:space="preserve"><value>Block aufklappen</value></data>
+  <data name="Ui.Job.Steps.CollapseBlock" xml:space="preserve"><value>Block einklappen</value></data>
+  <data name="Ui.Job.Steps.Summary.StepSource" xml:space="preserve"><value>{0} (Step {1})</value></data>
+  <data name="Ui.Job.Steps.Summary.Answers" xml:space="preserve"><value>{0} Antworten</value></data>
+  <data name="Ui.Job.Steps.Summary.Items" xml:space="preserve"><value>{0} Einträge</value></data>
+  <data name="Ui.Job.Steps.Drag.Single" xml:space="preserve"><value>1 Step</value></data>
+  <data name="Ui.Job.Steps.Summary.Child" xml:space="preserve"><value>1 enthaltener Step</value></data>
+  <data name="Ui.Job.Steps.Summary.Children" xml:space="preserve"><value>{0} enthaltene Steps</value></data>
+  <data name="Ui.Job.Steps.Summary.Problems" xml:space="preserve"><value>Probleme: {0}</value></data>
+  <data name="Ui.Job.Steps.Summary.Breakpoints" xml:space="preserve"><value>Breakpoints: {0}</value></data>
+  <data name="Ui.Job.Steps.ShowProblem" xml:space="preserve">
+    <value>Betroffenen Step anzeigen</value>
+  </data>
+  <data name="Ui.Job.Steps.BlockStructureProblem" xml:space="preserve"><value>Problem in der Blockstruktur</value></data>
+  <data name="Ui.Job.Validation.OrphanElseIf" xml:space="preserve">
+    <value>„Sonst wenn“ hat keine zugehörige Wenn-Bedingung.</value>
+  </data>
+  <data name="Ui.Job.Validation.OrphanElse" xml:space="preserve">
+    <value>„Sonst“ hat keine zugehörige Wenn-Bedingung.</value>
+  </data>
+  <data name="Ui.Job.Validation.ElseIfAfterElse" xml:space="preserve">
+    <value>„Sonst wenn“ muss vor „Sonst“ stehen.</value>
+  </data>
+  <data name="Ui.Job.Validation.DuplicateElse" xml:space="preserve">
+    <value>Dieser Wenn-Block enthält mehrere Sonst-Zweige.</value>
+  </data>
+  <data name="Ui.Job.Validation.OrphanBlockEnd" xml:space="preserve">
+    <value>Ein Blockende hat keine zugehörige Wenn-Bedingung.</value>
+  </data>
+  <data name="Ui.Job.Validation.MissingBlockEnd" xml:space="preserve">
+    <value>Dieser Wenn-Block ist nicht abgeschlossen.</value>
+  </data>
+  <data name="Ui.Job.Steps.Picker.All" xml:space="preserve"><value>Alle Steps</value></data>
+  <data name="Ui.Job.Steps.Picker.Categories" xml:space="preserve"><value>Step-Kategorien</value></data>
+  <data name="Ui.Job.Steps.Picker.Empty" xml:space="preserve"><value>Keine passenden Steps gefunden. Ändere die Suche oder Kategorie.</value></data>
+  <data name="Ui.Job.Steps.Picker.EditLater" xml:space="preserve"><value>Die Einstellungen bearbeitest du nach dem Hinzufügen in der Jobübersicht.</value></data>
+  <data name="Ui.Job.Steps.Picker.After" xml:space="preserve"><value>Einfügen: Nach „{0}“ · {1}</value></data>
+  <data name="Ui.Job.Steps.Picker.Append" xml:space="preserve"><value>Einfügen: Am Ende von „{0}“</value></data>
+  <data name="Ui.Job.Steps.Picker.NoFocus" xml:space="preserve"><value>Ohne Step-Fokus: am Ende von „Bei jedem Durchlauf“</value></data>
+  <data name="Ui.Job.Steps.Branch.AddElse" xml:space="preserve"><value>Add else</value></data>
+  <data name="Ui.Job.Steps.Branch.AddElseIf" xml:space="preserve"><value>Add else if</value></data>
+  <data name="Ui.Job.Steps.Branch.ElseHint" xml:space="preserve"><value>Fügt den abschließenden Sonst-Zweig hinzu. Pro vollständigem Wenn-Block ist nur ein Sonst-Zweig möglich.</value></data>
+  <data name="Ui.Job.Steps.Branch.ElseIfHint" xml:space="preserve"><value>Fügt einen weiteren Sonst-wenn-Zweig vor Sonst hinzu. Die Bedingung bearbeitest du in der Jobübersicht.</value></data>
+  <data name="Ui.Job.Variables.Usage.OnlyThis" xml:space="preserve"><value>Nur diese Verwendung ändern</value></data>
+  <data name="Ui.Job.Variables.Draft.Retained" xml:space="preserve"><value>Nicht übernommene Änderungen bleiben beim Wechsel der Variable erhalten.</value></data>
+  <data name="Ui.Job.Steps.EmptyBranch" xml:space="preserve"><value>Dieser Zweig enthält noch keine Steps.</value></data>
 </root>

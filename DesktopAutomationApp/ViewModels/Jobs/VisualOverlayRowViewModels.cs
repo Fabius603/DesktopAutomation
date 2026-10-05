@@ -64,6 +64,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     private Guid _id = Guid.NewGuid();
     private float _fontSize = 24f;
     private Color _fontColor = Colors.White;
+    private string _fontColorToken = "#FFFFFF";
     private float _opacity = 1f;
     private int _desktopIndex;
     private int _offsetX;
@@ -94,9 +95,10 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         Source.ReferenceChanged += (_, _) => OnChange(nameof(Source));
         if (settings is not null)
         {
-            _id = settings.Id == Guid.Empty ? Guid.NewGuid() : settings.Id;
+            _id = settings.Id;
             _fontSize = settings.FontSize;
             _fontColor = ParseColor(settings.FontColor);
+            _fontColorToken = settings.FontColor;
             _opacity = settings.Opacity;
             _desktopIndex = settings.DesktopIndex;
             _offsetX = settings.OffsetX;
@@ -109,12 +111,12 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         {
             TextSourceField = CreateNestedField("result", StepValueKind.Text,
                 JsonValue.Create(string.Empty), null, nestedInputResolver);
-            if (settings?.Result.IsConfigured == true)
+            if (settings?.Result?.IsConfigured == true)
                 TextSourceField.InputReferenceEditor!.Picker.Load(settings.Result);
             FontSizeField = CreateNestedField("font_size", StepValueKind.Number,
                 JsonValue.Create(_fontSize), null, nestedInputResolver);
             FontColorField = CreateNestedField("font_color", StepValueKind.Color,
-                JsonValue.Create($"#{_fontColor.R:X2}{_fontColor.G:X2}{_fontColor.B:X2}"), null, nestedInputResolver);
+                JsonValue.Create(_fontColorToken), null, nestedInputResolver);
             OpacityField = CreateNestedField("opacity", StepValueKind.Number,
                 JsonValue.Create(_opacity), StepEditorHints.Percentage, nestedInputResolver);
             DesktopIndexField = CreateNestedField("desktop_index", StepValueKind.Integer,
@@ -172,7 +174,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         .Where(field => !ReferenceEquals(field, TextSourceField)).ToDictionary(
         field => field.Descriptor.Id, field => field.InputReferenceEditor!.Picker.ToBinding(), StringComparer.Ordinal);
     public float FontSize { get => (float)(FontSizeField?.NumberValue ?? _fontSize); set { if (FontSizeField is not null) { FontSizeField.NumberValue = value; _fontSize = value; } else if (_fontSize != value) { _fontSize = value; OnChange(); } } }
-    public Color FontColor { get => FontColorField?.ColorValue ?? _fontColor; set { if (FontColorField is not null) { FontColorField.ColorValue = value; _fontColor = value; } else if (_fontColor != value) { _fontColor = value; OnChange(); } } }
+    public Color FontColor { get => FontColorField?.ColorValue ?? _fontColor; set { if (FontColorField is not null) { FontColorField.ColorValue = value; _fontColor = value; } else if (_fontColor != value || !WpfColorParser.TryParse(_fontColorToken, out _)) { _fontColor = value; _fontColorToken = value.ToString(); OnChange(); } } }
     public float Opacity { get => (float)(OpacityField?.NumberValue ?? _opacity); set { if (OpacityField is not null) { OpacityField.NumberValue = value; _opacity = value; } else if (_opacity != value) { _opacity = value; OnChange(); } } }
     public int DesktopIndex { get => DesktopIndexField?.IntegerValue ?? _desktopIndex; set { if (DesktopIndexField is not null) { DesktopIndexField.IntegerValue = value; _desktopIndex = value; } else if (_desktopIndex != value) { _desktopIndex = value; OnChange(); } } }
     public int OffsetX { get => OffsetXField?.IntegerValue ?? _offsetX; set { if (OffsetXField is not null) { OffsetXField.IntegerValue = value; _offsetX = value; } else if (_offsetX != value) { _offsetX = value; OnChange(); } } }
@@ -185,7 +187,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
         Id = _id,
         Result = TextSourceField?.InputReferenceEditor?.Picker.ToBinding() ?? Source.ToBinding(),
         FontSize = FontSize,
-        FontColor = $"#{FontColor.R:X2}{FontColor.G:X2}{FontColor.B:X2}",
+        FontColor = FontColorField?.InputText ?? _fontColorToken,
         Opacity = Opacity,
         DesktopIndex = DesktopIndex,
         OffsetX = OffsetX,

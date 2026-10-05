@@ -18,7 +18,7 @@ namespace DesktopAutomationApp.Converters
     {
         private int _cacheVersion = int.MinValue;
         private IList? _cacheCollection;
-        private Dictionary<JobStep, int> _numbers =
+        private Dictionary<JobStep, int> _positions =
             new(ReferenceEqualityComparer.Instance);
 
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
@@ -30,7 +30,9 @@ namespace DesktopAutomationApp.Converters
                 var version = values.Length > 2 && values[2] is int value ? value : 0;
                 if (!ReferenceEquals(collection, _cacheCollection) || version != _cacheVersion)
                     RebuildCache(collection, version);
-                return _numbers.TryGetValue(step, out var number)
+                if (parameter as string == "position")
+                    return _positions.TryGetValue(step, out var position) ? position.ToString(culture) : string.Empty;
+                return StepLocalization.IsNumbered(step) && _positions.TryGetValue(step, out var number)
                     ? $"{number}.\u00A0"
                     : string.Empty;
             }
@@ -43,15 +45,14 @@ namespace DesktopAutomationApp.Converters
 
         private void RebuildCache(IList collection, int version)
         {
-            var numbers = new Dictionary<JobStep, int>(
-                collection.Count, ReferenceEqualityComparer.Instance);
-            var number = 0;
+            var position = 0;
+            var positions = new Dictionary<JobStep, int>(ReferenceEqualityComparer.Instance);
             foreach (var item in collection)
             {
-                if (item is not JobStep step || !StepLocalization.IsNumbered(step)) continue;
-                numbers[step] = ++number;
+                if (item is not JobStep step || !StepLocalization.HasListPosition(step)) continue;
+                positions[step] = ++position;
             }
-            _numbers = numbers;
+            _positions = positions;
             _cacheCollection = collection;
             _cacheVersion = version;
         }

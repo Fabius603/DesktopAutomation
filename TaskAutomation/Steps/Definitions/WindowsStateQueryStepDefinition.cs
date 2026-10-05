@@ -43,7 +43,7 @@ internal static class WindowsCapabilityStepDefinitionSupport
         CategoryId: "WindowsSystem",
         DisplayNameKey: displayNameKey,
         DescriptionKey: descriptionKey,
-        IconKey: "windows",
+        IconKey: mode == StepWindowsCapabilityPickerMode.StateQuery ? "windows-query" : "windows-setting",
         Fields:
         [
             new StepFieldDescriptor(WindowsStateQueryStepDefinition.CapabilityFieldId, "Ui.Windows.Capability", StepValueKind.Object,

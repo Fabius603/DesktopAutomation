@@ -25,9 +25,15 @@
                 <ResourceDictionary Source="Styles/Controls.xaml" />
                 <ResourceDictionary Source="Styles/ReferencePicker.xaml" />
                 <ResourceDictionary Source="Styles/StepEditors.xaml" />
+                <ResourceDictionary Source="Styles/StepAppearance.xaml" />
                 <ResourceDictionary Source="Styles/Dialogs.xaml" />
                 <ResourceDictionary Source="Styles/Logs.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Suppress the WPF keyboard-only dotted adorner globally. Controls retain their themed focus borders. -->
+            <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" TargetType="Control">
+                <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Control"><Grid/></ControlTemplate></Setter.Value></Setter>
+            </Style>
 
             <!-- Converter -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />

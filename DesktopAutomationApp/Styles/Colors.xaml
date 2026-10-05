@@ -84,4 +84,6 @@
     <SolidColorBrush x:Key="MahApps.Brushes.ThemeBackground" Color="{DynamicResource App.Color.WindowBackground}" />
     <SolidColorBrush x:Key="MahApps.Brushes.ThemeForeground" Color="{DynamicResource App.Color.TextPrimary}" />
 
+    <SolidColorBrush x:Key="App.Brush.StepCard" Color="{DynamicResource App.Color.SurfaceRaised}"/>
+    <SolidColorBrush x:Key="App.Brush.StepBlock" Color="{DynamicResource App.Color.ControlFlowBlock}"/>
 </ResourceDictionary>

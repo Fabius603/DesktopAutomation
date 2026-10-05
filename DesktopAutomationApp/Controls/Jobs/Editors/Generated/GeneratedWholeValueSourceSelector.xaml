@@ -6,7 +6,7 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              VerticalAlignment="Top">
     <Grid>
-        <Button Width="34" Height="30"
+        <Button Width="34" Height="34"
                 Padding="0" Style="{StaticResource ButtonSecondary}"
                 VerticalAlignment="Top"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.WholeValueToolTip}"

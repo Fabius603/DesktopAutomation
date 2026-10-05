@@ -18,6 +18,64 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class StepDefinitionCatalogTests
 {
+    [Theory]
+    [InlineData("0")]
+    [InlineData("999")]
+    [InlineData("Automatic ")]
+    public void CameraQuality_RejectsNonTokenValues(string token)
+    {
+        var definition = new CameraCaptureStepDefinition();
+        var draft = definition.CreateDraft();
+        draft.Values[CameraCaptureStepDefinition.CameraFieldId] = JsonSerializer.SerializeToNode(
+            new StepCameraSelectionValue("camera", "Camera", token, 640, 480, 30, "RGB"));
+        Assert.Contains(definition.ValidateDraft(draft), issue => issue.Code == "StepValidation.Invalid");
+        Assert.Throws<InvalidOperationException>(() => definition.ApplyDraft(draft));
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("999")]
+    [InlineData("LessThan ")]
+    public void PointExpression_RejectsNonTokenOperators(string token)
+    {
+        var definition = new PointComparisonStepDefinition();
+        var draft = definition.CreateDraft();
+        draft.Values[PointComparisonStepDefinition.ModeFieldId] = JsonValue.Create("Expression");
+        draft.Values[PointComparisonStepDefinition.ExpressionsFieldId] = JsonSerializer.SerializeToNode(
+            new[] { new StepAxisExpressionValue("X", token, 0) });
+        Assert.Contains(definition.ValidateDraft(draft), issue =>
+            issue.FieldId == PointComparisonStepDefinition.ExpressionsFieldId);
+        Assert.Throws<InvalidOperationException>(() => definition.ApplyDraft(draft));
+    }
+
+    [Theory]
+    [InlineData("12")]
+    [InlineData("true")]
+    [InlineData("{}")]
+    [InlineData("\" \"")]
+    public void OptionalEnum_RejectsNonStringAndWhitespaceValues(string json)
+    {
+        var field = new StepFieldDescriptor("mode", "label", StepValueKind.Enum,
+            Options: [new("known", "label")]);
+        var descriptor = new StepDescriptor("test", "test", "test", "test", null, [field], new([], [], []));
+        var draft = new StepDraft("test");
+        draft.Values[field.Id] = JsonNode.Parse(json);
+        Assert.NotEmpty(StepDescriptorDraftValidator.Validate(descriptor, draft, StepValidationContext.FullyResolved()));
+    }
+
+    [Fact]
+    public void NumberFields_AcceptIntegerJsonAndRejectOverflowWithoutThrowing()
+    {
+        var field = new StepFieldDescriptor("number", "label", StepValueKind.Number);
+        var descriptor = new StepDescriptor("test", "test", "test", "test", null, [field], new([], [], []));
+        var draft = new StepDraft("test");
+        draft.Values[field.Id] = JsonValue.Create(12);
+        Assert.Empty(StepDescriptorDraftValidator.Validate(descriptor, draft, StepValidationContext.FullyResolved()));
+        Assert.Equal(12, DefinitionValueReader.Number(draft, field.Id));
+        draft.Values[field.Id] = JsonValue.Create(double.MaxValue);
+        Assert.NotEmpty(StepDescriptorDraftValidator.Validate(descriptor, draft, StepValidationContext.FullyResolved()));
+    }
+
     [Fact]
     public void OptionalEnumField_AllowsAnEmptyValue()
     {
@@ -2352,6 +2410,16 @@ public sealed class StepDefinitionCatalogTests
         var ifStep = Assert.IsType<IfStep>(createdIf);
         ifDialog.CommitDraftValues(ifStep);
 
+        var serializerOptions = new JsonSerializerOptions();
+        JobJsonSerialization.Configure(serializerOptions);
+        var savedJob = new Job { Steps = [choice, ifStep, new EndIfStep()], LocalValues = localValues };
+        var json = JsonSerializer.Serialize(savedJob, serializerOptions);
+        Assert.DoesNotContain("\"settings\"", json);
+        var reopenedJob = JsonSerializer.Deserialize<Job>(json, serializerOptions)!;
+        choice = Assert.IsType<UserChoiceStep>(reopenedJob.Steps[0]);
+        ifStep = Assert.IsType<IfStep>(reopenedJob.Steps[1]);
+        localValues = reopenedJob.LocalValues;
+
         var editDialog = new AddJobStepDialogViewModel(
             new ControllableJobExecutor([]),
             [choice],
@@ -2366,7 +2434,103 @@ public sealed class StepDefinitionCatalogTests
             loaded.EnumOptions.Select(option => (option.Value, option.Label)));
         Assert.Equal(secondId, loaded.SelectedEnumValue);
         var job = new Job { Steps = [choice, ifStep, new EndIfStep()], LocalValues = localValues };
-        Assert.True(JobValidation.ValidateJob(job).IsValid);
+        var validation = JobValidation.ValidateJob(job);
+        Assert.True(validation.IsValid, string.Join("; ", validation.Steps.Select(step => step.Error)));
+    }
+
+    [Fact]
+    public void StoredCondition_CanChangeFromBooleanToUserChoiceAndBack()
+    {
+        var choice = new UserChoiceStep
+        {
+            Settings = new UserChoiceSettings
+            {
+                Options = [new() { Id = "yes", Label = "Yes" }, new() { Id = "no", Label = "No" }]
+            }
+        };
+        var locals = new List<LocalValue>();
+        AddJobStepDialogViewModel Dialog() => new(
+            new ControllableJobExecutor([]), [choice],
+            cameraCaptureService: new CameraDefinitionTestService(),
+            localValues: locals, localValueCreated: locals.Add);
+        var create = Dialog();
+        create.SelectedType = "If";
+        var initial = Assert.Single(Assert.Single(create.GeneratedEditor!.Fields).ConditionEditor!.Conditions);
+        initial.SourcePicker.Load(ResultBinding.ForStepResult(choice.Id, "was_cancelled"));
+        initial.ComparisonField!.BooleanValue = true;
+        Assert.True(create.GeneratedEditor.TryCreateStep(out var step), create.GeneratedEditor.ValidationError);
+        create.CommitDraftValues(step!);
+        var edit = Dialog();
+        Assert.True(edit.TryLoadGeneratedStep(step!));
+        var row = Assert.Single(Assert.Single(edit.GeneratedEditor!.Fields).ConditionEditor!.Conditions);
+        row.SourcePicker.Load(ResultBinding.ForStepResult(choice.Id, "selected_option_id"));
+        row.ComparisonField!.SelectedEnumValue = choice.Settings.Options[1].Id;
+        Assert.True(row.IsValid, row.ComparisonValueValidationError);
+        Assert.True(edit.GeneratedEditor.TryCreateStep(out var updated), edit.GeneratedEditor.ValidationError);
+        edit.CommitDraftValues(updated!);
+        Assert.True(JobValidation.ValidateJob(new Job
+        {
+            Steps = [choice, updated!, new EndIfStep()],
+            LocalValues = locals
+        }).IsValid);
+        row.SourcePicker.Load(ResultBinding.ForStepResult(choice.Id, "was_cancelled"));
+        row.ComparisonField!.BooleanValue = true;
+        Assert.True(row.IsValid, row.ComparisonValueValidationError);
+    }
+
+    [Theory]
+    [InlineData("yes", true)]
+    [InlineData("removed", false)]
+    public void StoredLegacyTextComparison_RemainsEditableAsUserChoiceEnum(string token, bool valid)
+    {
+        var choice = new UserChoiceStep
+        {
+            Settings = new UserChoiceSettings
+            {
+                Options = [new() { Id = "yes", Label = "Yes" }, new() { Id = "no", Label = "No" }]
+            }
+        };
+        var local = new LocalValue { ValueKind = ResultValueKind.Text, Value = JsonValue.Create(token) };
+        var condition = new StepCondition
+        {
+            SourceStepId = choice.Id,
+            PropertyId = "selected_option_id",
+            Operator = ConditionOperator.Equals,
+            Comparison = new ComparisonOperand
+            {
+                Kind = ComparisonOperandKind.JobResult,
+                ProviderId = ValueProviderIds.LocalValue,
+                SourceId = local.Id.ToString("D")
+            }
+        };
+        var step = new IfStep { Settings = new IfConditionSettings { Conditions = [condition] } };
+        var dialog = new AddJobStepDialogViewModel(new ControllableJobExecutor([]), [choice],
+            cameraCaptureService: new CameraDefinitionTestService(), localValues: [local]);
+        Assert.True(dialog.TryLoadGeneratedStep(step));
+        var row = Assert.Single(Assert.Single(dialog.GeneratedEditor!.Fields).ConditionEditor!.Conditions);
+        Assert.Equal(token, row.ComparisonField!.InputText);
+        Assert.Equal(valid, row.IsValid);
+        row.ComparisonField.SelectedEnumValue = "no";
+        Assert.True(row.IsValid);
+        Assert.Equal(token, local.Value!.GetValue<string>());
+        Assert.True(dialog.GeneratedEditor.TryCreateStep(out var updated), dialog.GeneratedEditor.ValidationError);
+        dialog.CommitDraftValues(updated!);
+        Assert.Equal("no", local.Value!.GetValue<string>());
+    }
+
+    [Fact]
+    public void OpeningLegacyStep_PreservesNonDefaultScalarAndEnumSettings()
+    {
+        var step = new PointComparisonStep();
+        step.Settings.Mode = PointComparisonMode.Expression;
+        step.Settings.OffsetSettings.OffsetX = 123;
+        var dialog = new AddJobStepDialogViewModel(new ControllableJobExecutor([]), [],
+            cameraCaptureService: new CameraDefinitionTestService());
+        Assert.True(dialog.TryLoadGeneratedStep(step));
+        Assert.Equal("Expression", dialog.GeneratedEditor!.Fields.Single(field =>
+            field.Descriptor.Id == PointComparisonStepDefinition.ModeFieldId).SelectedEnumValue);
+        Assert.Equal(123, dialog.GeneratedEditor.Fields.Single(field =>
+            field.Descriptor.Id == PointComparisonStepDefinition.OffsetXFieldId).IntegerValue);
     }
 
     [Fact]
@@ -2639,7 +2803,7 @@ public sealed class StepDefinitionCatalogTests
             null,
             [],
             [actual],
-            nestedInputResolver: (key, kind, literal, _) =>
+            nestedInputResolver: (key, kind, literal, _, _) =>
             {
                 var descriptor = new StepFieldDescriptor(key, string.Empty, kind, DefaultValue: literal);
                 var picker = new ValueReferencePickerViewModel(
@@ -2662,7 +2826,8 @@ public sealed class StepDefinitionCatalogTests
         string key,
         StepValueKind kind,
         JsonNode? literal,
-        ResultPropertyDescriptor? enumProperty)
+        ResultPropertyDescriptor? enumProperty,
+        ResultBinding? binding)
     {
         var value = new LocalValue
         {
@@ -2794,7 +2959,7 @@ public sealed class StepDefinitionCatalogTests
             var editor = new GeneratedConditionEditorViewModel(
                 null,
                 [source],
-                nestedInputResolver: (_, kind, literal, _) =>
+                nestedInputResolver: (_, kind, literal, _, _) =>
                 {
                     var descriptor = new StepFieldDescriptor(
                         "comparison", string.Empty, kind, DefaultValue: literal);
@@ -2859,7 +3024,7 @@ public sealed class StepDefinitionCatalogTests
         var editor = new GeneratedConditionEditorViewModel(
             JsonSerializer.SerializeToNode(settings),
             [source],
-            nestedInputResolver: (_, kind, literal, _) =>
+            nestedInputResolver: (_, kind, literal, _, _) =>
             {
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
@@ -2945,7 +3110,7 @@ public sealed class StepDefinitionCatalogTests
         var editor = new GeneratedConditionEditorViewModel(
             null,
             [source],
-            nestedInputResolver: (_, kind, literal, _) =>
+            nestedInputResolver: (_, kind, literal, _, _) =>
             {
                 var descriptor = new StepFieldDescriptor(
                     "comparison", string.Empty, kind, DefaultValue: literal);
@@ -3000,7 +3165,7 @@ public sealed class StepDefinitionCatalogTests
                 new GeneratedConditionEditorViewModel(
                     value,
                     [source],
-                    nestedInputResolver: (_, kind, literal, _) =>
+                    nestedInputResolver: (_, kind, literal, _, _) =>
                     {
                         comparisonValue.Value = literal?.DeepClone() ?? JsonValue.Create(false);
                         var descriptor = new StepFieldDescriptor(

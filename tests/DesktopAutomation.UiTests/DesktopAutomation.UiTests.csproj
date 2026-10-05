@@ -2,6 +2,8 @@
   <Import Project="..\TestProject.props" />
   <PropertyGroup>
     <AssemblyName>DesktopAutomation.UiTests</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <StartupObject>TaskAutomation.Tests.DesktopAutomationApp.StepListRenderHost</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\TestInfrastructure\TestDoubles\*.cs" Link="TestDoubles\%(Filename)%(Extension)" />

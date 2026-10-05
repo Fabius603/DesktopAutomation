@@ -4,6 +4,16 @@ namespace TaskAutomation.Steps;
 
 internal static class StepDraftValueOverlay
 {
+    internal static bool TryGet(JsonNode root, string member, out JsonNode? value)
+    {
+        value = null;
+        if (root is JsonArray array && int.TryParse(member, out var index) && index >= 0 && index < array.Count)
+        { value = array[index]; return true; }
+        if (root is not JsonObject obj) return false;
+        var property = obj.FirstOrDefault(candidate => Normalize(candidate.Key) == Normalize(member)).Key;
+        return property is not null && obj.TryGetPropertyValue(property, out value);
+    }
+
     public static bool TrySet(JsonNode root, string path, JsonNode? value)
     {
         var current = root;

@@ -36,7 +36,6 @@ namespace DesktopAutomationApp.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             PreviewKeyDown += OnPreviewKeyDown;
-            PreviewMouseDown += OnPreviewMouseDown;
         }
 
         private void SelectedJobStepTabs_Loaded(object sender, RoutedEventArgs e) =>
@@ -88,9 +87,6 @@ namespace DesktopAutomationApp.Views
                 : translateTransform;
         }
 
-        private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e) =>
-            CloseOpenStepDetailsPopups();
-
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Handled) return;
@@ -116,9 +112,16 @@ namespace DesktopAutomationApp.Views
             if (ViewShortcutRouter.TryExecute(e, AppShortcutGestures.ToggleBreakpoint, _vm.ToggleBreakpointCommand, _vm.SelectedStep))
                 return;
 
-            if (ViewShortcutRouter.IsTextInputFocused || Keyboard.FocusedElement is ButtonBase or ComboBox) return;
-
             var focusedList = AllStepLists().First(list => list.IsKeyboardFocusWithin);
+            if ((e.Key == Key.Apps || e.Key == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift)
+                && focusedList.SelectedItem is JobStep selected
+                && focusedList.ItemContainerGenerator.ContainerFromItem(selected) is ListBoxItem item)
+            {
+                ShowStepContextMenu(focusedList, item, selected, _vm);
+                e.Handled = true;
+                return;
+            }
+            if (ViewShortcutRouter.IsTextInputFocused || Keyboard.FocusedElement is ButtonBase or ComboBox) return;
             if (AppShortcutGestures.Matches(e, AppShortcutGestures.SelectAll))
             {
                 focusedList.SelectAll();
@@ -165,8 +168,12 @@ namespace DesktopAutomationApp.Views
             if (e.PropertyName != nameof(JobStepsViewModel.SelectedStep)) return;
 
             // If the item is already among the selected ones, leave multi-selection intact.
-            if (_vm!.SelectedStep != null && AllStepLists().Any(list => list.SelectedItems.Contains(_vm.SelectedStep)))
+            if (_vm!.SelectedStep != null && AllStepLists().FirstOrDefault(list => list.SelectedItems.Contains(_vm.SelectedStep)) is { } selectedList)
+            {
+                var selected = _vm.SelectedStep;
+                selectedList.Dispatcher.BeginInvoke(() => selectedList.ScrollIntoView(selected));
                 return;
+            }
 
             _syncingSelection = true;
             try
@@ -227,31 +234,13 @@ namespace DesktopAutomationApp.Views
                 return;
 
             var isInteractiveControl = FindVisualAncestor<ButtonBase>(source, item) is not null;
-            if (!ShouldOpenStepDetails(isInteractiveControl, step is not EndIfStep)
-                || FindVisualDescendant<Popup>(item) is not { } popup)
-                return;
-
-            CloseOpenStepDetailsPopups(popup);
-            popup.IsOpen = true;
+            if (!ShouldFocusStepInspector(isInteractiveControl, step is not EndIfStep)) return;
+            SelectedJobStepTabs.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
             e.Handled = true;
         }
 
-        internal static bool ShouldOpenStepDetails(bool isInteractiveControl, bool hasDetails) =>
+        internal static bool ShouldFocusStepInspector(bool isInteractiveControl, bool hasDetails) =>
             !isInteractiveControl && hasDetails;
-
-        private void CloseOpenStepDetailsPopups(Popup? except = null)
-        {
-            foreach (var list in AllStepLists())
-            {
-                for (var index = 0; index < list.Items.Count; index++)
-                {
-                    if (list.ItemContainerGenerator.ContainerFromIndex(index) is DependencyObject item
-                        && FindVisualDescendant<Popup>(item) is { } popup
-                        && !ReferenceEquals(popup, except))
-                        popup.IsOpen = false;
-                }
-            }
-        }
 
         private void StepsList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -262,16 +251,27 @@ namespace DesktopAutomationApp.Views
                 || DataContext is not JobStepsViewModel vm)
                 return;
 
+            ShowStepContextMenu(list, item, step, vm);
+            e.Handled = true;
+        }
+
+        private static void ShowStepContextMenu(ListBox list, ListBoxItem item, JobStep step, JobStepsViewModel vm)
+        {
             if (!item.IsSelected)
             {
                 list.SelectedItems.Clear();
                 item.IsSelected = true;
             }
 
+            CreateStepContextMenu(item, step, vm).IsOpen = true;
+        }
+
+        internal static ContextMenu CreateStepContextMenu(FrameworkElement target, JobStep step, JobStepsViewModel vm)
+        {
             var multiple = vm.SelectedSteps.Count > 1 && vm.SelectedSteps.Contains(step);
             var count = multiple ? vm.SelectedSteps.Count : 1;
 
-            var menu = new ContextMenu { PlacementTarget = item };
+            var menu = new ContextMenu { PlacementTarget = target };
             if (step.CanBeDisabled)
                 AddMenuItem(menu, multiple
                     ? Loc.Format("Ui.Job.Steps.ToggleSelected", count)
@@ -298,6 +298,8 @@ namespace DesktopAutomationApp.Views
                 AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElseIf"), vm.AddElseIfCommand, step);
                 AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), vm.AddElseCommand, step);
             }
+            if (vm.RemoveConditionCommand.CanExecute(step))
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.RemoveCondition"), vm.RemoveConditionCommand, step);
             menu.Items.Add(new Separator());
             AddMenuItem(menu, multiple
                     ? Loc.Format("Ui.Common.DeleteSelected", count)
@@ -305,8 +307,7 @@ namespace DesktopAutomationApp.Views
                 multiple ? vm.DeleteSelectedCommand : vm.DeleteStepCommand,
                 multiple ? null : step,
                 Loc.Get("Shortcut.Delete"));
-            menu.IsOpen = true;
-            e.Handled = true;
+            return menu;
         }
 
         private static void AddMenuItem(
@@ -332,16 +333,6 @@ namespace DesktopAutomationApp.Views
             yield return EndStepsList;
         }
 
-        private void StepMoreButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button { ContextMenu: { } menu } button)
-            {
-                menu.PlacementTarget = button;
-                menu.IsOpen = true;
-                e.Handled = true;
-            }
-        }
-
         private void EndSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             EndSettingsPopup.IsOpen = !EndSettingsPopup.IsOpen;
@@ -365,11 +356,10 @@ namespace DesktopAutomationApp.Views
             if (list == null)
                 return;
 
-            if (IsPointerOverHeader(expander, e))
-                StepDragDrop.ShowSectionStartTarget(list);
-            else
-                StepDragDrop.ShowSectionTarget(list);
-            e.Effects = DragDropEffects.Move;
+            var valid = IsPointerOverHeader(expander, e)
+                ? StepDragDrop.ShowSectionStartTarget(list)
+                : StepDragDrop.ShowSectionTarget(list);
+            e.Effects = valid ? DragDropEffects.Move : DragDropEffects.None;
             e.Handled = true;
         }
 
@@ -401,9 +391,9 @@ namespace DesktopAutomationApp.Views
                 target,
                 IsPointerOverHeader(expander, e) ? 0 : target.Count,
                 SourceIndices: payload.SourceIndices);
-            if (vm.ReorderStepCommand.CanExecute(request))
-                vm.ReorderStepCommand.Execute(request);
             StepDragDrop.ClearTargetPreview();
+            if (vm.PreviewMoveValidator(request) && vm.ReorderStepCommand.CanExecute(request))
+                vm.ReorderStepCommand.Execute(request);
             e.Handled = true;
         }
 
@@ -434,17 +424,5 @@ namespace DesktopAutomationApp.Views
             return null;
         }
 
-        private static T? FindVisualDescendant<T>(DependencyObject parent)
-            where T : DependencyObject
-        {
-            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, index);
-                if (child is T match) return match;
-                if (FindVisualDescendant<T>(child) is { } descendant) return descendant;
-            }
-
-            return null;
-        }
     }
 }

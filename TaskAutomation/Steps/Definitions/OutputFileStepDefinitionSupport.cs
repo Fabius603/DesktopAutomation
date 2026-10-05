@@ -27,7 +27,7 @@ internal static class OutputFileStepDefinitionSupport
         "AnzeigenSpeichern",
         displayNameKey,
         descriptionKey,
-        "file-output",
+        typeId == "video_creation" ? "video-output" : "image-output",
         [
             new(ImageSourceFieldId, "Ui.Step.Settings.ImageSource", StepValueKind.ResultBinding, true,
                 EditorHint: StepEditorHints.ValueReferencePicker, InputContractId: "image", Order: 0),

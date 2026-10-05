@@ -153,16 +153,15 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
             step = null;
             return false;
         }
-        foreach (var field in Fields.Where(field =>
-                     field.IsVisible && _editableFieldIds.Contains(field.Descriptor.Id)))
+        foreach (var field in Fields.Where(field => _editableFieldIds.Contains(field.Descriptor.Id)))
         {
-            if (CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
+            if (field.IsVisible && CompositeInputEditors(field).Any(HasIncompleteReferenceSelection))
             {
                 error = Loc.Format("Ui.Step.Generated.Validation.Required", field.Label);
                 step = null;
                 return false;
             }
-            if (!field.TryWriteValue(draft, out var inputError))
+            if (!field.TryWriteValue(draft, out var inputError) && field.IsVisible)
             {
                 error = inputError;
                 step = null;
@@ -346,10 +345,8 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
         var conventionallyVisible = new Dictionary<string, bool>(StringComparer.Ordinal);
         foreach (var field in Fields)
         {
-            var rule = field.Descriptor.VisibleWhen;
-            var visible = rule is null || RuleMatches(rule, fieldsById);
-            if (visible && field.Descriptor.VisibleWhenAll is { Count: > 0 } rules)
-                visible = rules.All(candidate => RuleMatches(candidate, fieldsById));
+            var visible = StepEditorActivity.IsVisible(field.Descriptor, rule =>
+                RuleMatches(rule, fieldsById));
             conventionallyVisible[field.Descriptor.Id] = visible;
         }
         var structurallyActive = StepEditorActivity.GetActiveFieldIds(
@@ -373,21 +370,7 @@ public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
     {
         var field = Fields.FirstOrDefault(candidate => candidate.Descriptor.Id == issue.FieldId);
         var label = field?.Label ?? issue.FieldId ?? Descriptor.DisplayNameKey;
-        return issue.Code switch
-        {
-            "StepValidation.Required" => Loc.Format("Ui.Step.Generated.Validation.Required", label),
-            "StepValidation.Integer" => Loc.Format("Ui.Step.Generated.Validation.Integer", label),
-            "StepValidation.Boolean" => Loc.Format("Ui.Step.Generated.Validation.Boolean", label),
-            "StepValidation.Minimum" => Loc.Format(
-                "Ui.Step.Generated.Validation.Minimum",
-                label,
-                issue.Arguments?.GetValueOrDefault("minimum") ?? 0),
-            "StepValidation.Maximum" => Loc.Format(
-                "Ui.Step.Generated.Validation.Maximum",
-                label,
-                issue.Arguments?.GetValueOrDefault("maximum") ?? 0),
-            _ => Loc.Get("Ui.Step.Generated.Validation.Invalid")
-        };
+        return JobValidationErrorLocalizer.FormatIssue(issue, label);
     }
 
     public void RefreshSuggestions(Func<StepFieldDescriptor, IEnumerable<string>?> suggestionResolver)
@@ -458,20 +441,37 @@ public sealed class GeneratedStepFieldNodeViewModel(GeneratedStepFieldViewModel 
     public GeneratedStepFieldViewModel Field { get; } = field;
 }
 
-public sealed class GeneratedStepPointFieldPairViewModel(
-    GeneratedStepFieldViewModel xField,
-    GeneratedStepFieldViewModel yField,
-    string label,
-    GeneratedStepFieldViewModel? sourceField = null,
-    GeneratedStepFieldViewModel? referenceField = null) : GeneratedStepEditorNodeViewModel
+public sealed class GeneratedStepPointFieldPairViewModel : GeneratedStepEditorNodeViewModel, INotifyPropertyChanged
 {
-    public GeneratedStepFieldViewModel XField { get; } = xField;
-    public GeneratedStepFieldViewModel YField { get; } = yField;
-    public string Label { get; } = label;
+    public GeneratedStepPointFieldPairViewModel(GeneratedStepFieldViewModel xField,
+        GeneratedStepFieldViewModel yField, string label,
+        GeneratedStepFieldViewModel? sourceField = null, GeneratedStepFieldViewModel? referenceField = null)
+    {
+        XField = xField;
+        YField = yField;
+        Label = label;
+        WholeValueSource = CreateWholeValueSource(xField, yField, sourceField, referenceField);
+        if (WholeValueSource is not null)
+            WholeValueSource.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName is nameof(GeneratedWholeValueSourceViewModel.ShowsIndividualValues)
+                    or nameof(GeneratedWholeValueSourceViewModel.UsesReference))
+                {
+                    PropertyChanged?.Invoke(this, new(nameof(ShowsIndividualValues)));
+                    PropertyChanged?.Invoke(this, new(nameof(UsesWholeValueReference)));
+                }
+            };
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public GeneratedStepFieldViewModel XField { get; }
+    public GeneratedStepFieldViewModel YField { get; }
+    public string Label { get; }
     public bool HasLabel => !string.IsNullOrWhiteSpace(Label);
-    public GeneratedWholeValueSourceViewModel? WholeValueSource { get; } = CreateWholeValueSource(
-        xField, yField, sourceField, referenceField);
+    public GeneratedWholeValueSourceViewModel? WholeValueSource { get; }
     public bool HasWholeValueSource => WholeValueSource is not null;
+    public bool ShowsIndividualValues => WholeValueSource?.ShowsIndividualValues ?? true;
+    public bool UsesWholeValueReference => WholeValueSource?.UsesReference ?? false;
 
     private static GeneratedWholeValueSourceViewModel? CreateWholeValueSource(
         GeneratedStepFieldViewModel x,
@@ -1414,7 +1414,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
     private readonly IReadOnlyList<JobVariable> _variables;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
     private readonly string _inputKeyPrefix;
-    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
+    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, ResultBinding?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
     private readonly ValueReferenceSourceCatalog? _sourceCatalog;
     private int _nextConditionKey;
 
@@ -1424,7 +1424,7 @@ public sealed class GeneratedConditionEditorViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         string inputKeyPrefix = "conditions",
-        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, ResultBinding?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
         ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _sources = sources;
@@ -1661,6 +1661,9 @@ public sealed class GeneratedScreenPointEditorViewModel : INotifyPropertyChanged
 
 public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueEditor, IGeneratedCompositeInputEditor
 {
+    private JsonNode? _malformedValue;
+    private bool _initializing = true;
+
     private readonly string _inputKeyPrefix;
     private readonly Func<string, StepValueKind, JsonNode?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
 
@@ -1674,10 +1677,13 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
         Options.CollectionChanged += OnCollectionChanged;
         IReadOnlyList<StepUserChoiceOptionValue> values;
         try { values = value?.Deserialize<List<StepUserChoiceOptionValue>>() ?? []; }
-        catch (JsonException) { values = []; }
+        catch (JsonException) { values = []; _malformedValue = value?.DeepClone(); }
+        if (value is not null && values.Count < 2) _malformedValue = value.DeepClone();
+        if (values.Any(item => item is null)) { _malformedValue = value?.DeepClone(); values = []; }
         foreach (var option in values) Add(option);
         while (Options.Count < 2) Add();
         AddCommand = new RelayCommand(() => Add(), () => Options.Count < 18);
+        _initializing = false;
     }
 
     public event Action? Changed;
@@ -1691,7 +1697,7 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
             new KeyValuePair<string, ResultBinding>($"{_inputKeyPrefix}.{index}.value",
                 option.ValueField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding())
         }).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-    public JsonNode? ToNode() => JsonSerializer.SerializeToNode(Options.Select(option =>
+    public JsonNode? ToNode() => _malformedValue?.DeepClone() ?? JsonSerializer.SerializeToNode(Options.Select(option =>
         new StepUserChoiceOptionValue(option.Id, option.Label, option.Value)).ToArray());
     private void Add(StepUserChoiceOptionValue? value = null)
     {
@@ -1707,13 +1713,19 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
         if (e.OldItems is not null) foreach (UserChoiceOptionEditorViewModel item in e.OldItems) item.PropertyChanged -= ItemChanged;
         if (e.NewItems is not null) foreach (UserChoiceOptionEditorViewModel item in e.NewItems) item.PropertyChanged += ItemChanged;
         (AddCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        if (!_initializing) _malformedValue = null;
         Changed?.Invoke();
     }
-    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Changed?.Invoke();
+    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Edited();
+    private void Edited() { if (!_initializing) _malformedValue = null; Changed?.Invoke(); }
+
 }
 
 public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEditor, IGeneratedCompositeInputEditor
 {
+    private JsonNode? _malformedValue;
+    private bool _initializing = true;
+
     private readonly IReadOnlyList<SourceStepItem> _sources;
     private readonly IReadOnlyList<JobVariable> _variables;
     private readonly IReadOnlyList<ValueProviderSourceDescriptor> _providerSources;
@@ -1741,10 +1753,13 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
         Points.CollectionChanged += OnCollectionChanged;
         IReadOnlyList<StepPointEntryValue> values;
         try { values = value?.Deserialize<List<StepPointEntryValue>>() ?? []; }
-        catch (JsonException) { values = []; }
+        catch (JsonException) { values = []; _malformedValue = value?.DeepClone(); }
+        if (value is not null && values.Count < 1) _malformedValue = value.DeepClone();
+        if (values.Any(item => item is null)) { _malformedValue = value?.DeepClone(); values = []; }
         foreach (var valueItem in values) Add(valueItem);
         if (Points.Count == 0) Add();
         AddCommand = new RelayCommand(() => Add());
+        _initializing = false;
     }
     public event Action? Changed;
     public ObservableCollection<PointEntryViewModel> Points { get; } = [];
@@ -1761,10 +1776,10 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
                     ? new ResultBinding()
                     : point.ManualYField?.InputReferenceEditor?.Picker.ToBinding() ?? new ResultBinding())
         }).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-    public JsonNode? ToNode() => JsonSerializer.SerializeToNode(Points.Select(point =>
+    public JsonNode? ToNode() => _malformedValue?.DeepClone() ?? JsonSerializer.SerializeToNode(Points.Select(point =>
     {
         var value = point.ToPointEntry();
-        return new StepPointEntryValue(value.Source.ToString(), value.ManualX, value.ManualY,
+        return new StepPointEntryValue(point.SourceToken, value.ManualX, value.ManualY,
             JsonSerializer.SerializeToNode(value.PointsSource));
     }).ToArray());
     private void Add(StepPointEntryValue? value = null)
@@ -1777,11 +1792,12 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
             try { binding = value.PointsSource?.Deserialize<ResultBinding>() ?? new(); } catch (JsonException) { binding = new(); }
             item.LoadFrom(new PointEntry
             {
-                Source = Enum.TryParse(value.Source, out PointEntrySource source) ? source : PointEntrySource.Manual,
+                Source = StepEnumRules.TryRead<PointEntrySource>(value.Source, out var source) ? source : (PointEntrySource)(-1),
                 ManualX = value.ManualX,
                 ManualY = value.ManualY,
                 PointsSource = binding
             });
+            item.LoadSourceToken(value.Source);
         }
         if (_nestedInputResolver is not null)
             item.ConfigureNestedInputs($"{_inputKeyPrefix}.{Points.Count}", _nestedInputResolver);
@@ -1791,30 +1807,38 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
     {
         if (e.OldItems is not null) foreach (PointEntryViewModel item in e.OldItems) { item.PropertyChanged -= ItemChanged; item.PointsSource.ReferenceChanged -= ReferenceItemChanged; }
         if (e.NewItems is not null) foreach (PointEntryViewModel item in e.NewItems) { item.PropertyChanged += ItemChanged; item.PointsSource.ReferenceChanged += ReferenceItemChanged; }
+        if (!_initializing) _malformedValue = null;
         Changed?.Invoke();
     }
-    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Changed?.Invoke();
-    private void ReferenceItemChanged(object? sender, EventArgs e) => Changed?.Invoke();
+    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Edited();
+    private void ReferenceItemChanged(object? sender, EventArgs e) => Edited();
+    private void Edited() { if (!_initializing) _malformedValue = null; Changed?.Invoke(); }
+
 }
 
 public sealed class GeneratedAxisExpressionListEditorViewModel : IGeneratedValueEditor
 {
+    private JsonNode? _malformedValue;
+    private bool _initializing = true;
+
     public GeneratedAxisExpressionListEditorViewModel(JsonNode? value)
     {
         Expressions.CollectionChanged += OnCollectionChanged;
         IReadOnlyList<StepAxisExpressionValue> values;
-        try { values = value?.Deserialize<List<StepAxisExpressionValue>>() ?? []; } catch (JsonException) { values = []; }
+        try { values = value?.Deserialize<List<StepAxisExpressionValue>>() ?? []; } catch (JsonException) { values = []; _malformedValue = value?.DeepClone(); }
+        if (value is not null && values.Count < 1) _malformedValue = value.DeepClone();
+        if (values.Any(item => item is null)) { _malformedValue = value?.DeepClone(); values = []; }
         foreach (var item in values) Add(item);
         if (Expressions.Count == 0) Add();
         AddCommand = new RelayCommand(() => Add());
+        _initializing = false;
     }
     public event Action? Changed;
     public ObservableCollection<AxisExpressionViewModel> Expressions { get; } = [];
     public ICommand AddCommand { get; }
-    public JsonNode? ToNode() => JsonSerializer.SerializeToNode(Expressions.Select(item =>
+    public JsonNode? ToNode() => _malformedValue?.DeepClone() ?? JsonSerializer.SerializeToNode(Expressions.Select(item =>
     {
-        var value = item.ToAxisExpression();
-        return new StepAxisExpressionValue(value.Axis, value.Operator.ToString(), value.Value);
+        return new StepAxisExpressionValue(item.Axis, item.OperatorToken, item.Value);
     }).ToArray());
     private void Add(StepAxisExpressionValue? value = null)
     {
@@ -1822,18 +1846,22 @@ public sealed class GeneratedAxisExpressionListEditorViewModel : IGeneratedValue
         if (value is not null) item.LoadFrom(new AxisExpression
         {
             Axis = value.Axis,
-            Operator = Enum.TryParse(value.Operator, out PointAxisOperator op) ? op : PointAxisOperator.LessThan,
+            Operator = StepEnumRules.TryRead<PointAxisOperator>(value.Operator, out var op) ? op : default,
             Value = value.Value
         });
+        if (value is not null) item.LoadOperatorToken(value.Operator);
         Expressions.Add(item);
     }
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.OldItems is not null) foreach (AxisExpressionViewModel item in e.OldItems) item.PropertyChanged -= ItemChanged;
         if (e.NewItems is not null) foreach (AxisExpressionViewModel item in e.NewItems) item.PropertyChanged += ItemChanged;
+        if (!_initializing) _malformedValue = null;
         Changed?.Invoke();
     }
-    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Changed?.Invoke();
+    private void ItemChanged(object? sender, PropertyChangedEventArgs e) => Edited();
+    private void Edited() { if (!_initializing) _malformedValue = null; Changed?.Invoke(); }
+
 }
 
 public sealed class GeneratedRoiEditorViewModel : INotifyPropertyChanged, IGeneratedCompositeInputEditor
@@ -2515,6 +2543,7 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
     private string _cameraId;
     private string _cameraName;
     private CameraQualityMode _qualityMode;
+    private string _qualityToken;
     private int _width;
     private int _height;
     private double _framesPerSecond;
@@ -2533,9 +2562,9 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
         var selection = ReadSelection(value);
         _cameraId = selection.CameraId;
         _cameraName = selection.CameraName;
-        _qualityMode = Enum.TryParse<CameraQualityMode>(selection.QualityMode, out var mode)
-            ? mode
-            : CameraQualityMode.Automatic;
+        _qualityToken = selection.QualityMode;
+        _qualityMode = StepEnumRules.TryRead<CameraQualityMode>(_qualityToken, out var mode)
+            ? mode : (CameraQualityMode)(-1);
         _width = selection.Width;
         _height = selection.Height;
         _framesPerSecond = selection.FramesPerSecond;
@@ -2552,6 +2581,9 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
     public ICommand RefreshCommand { get; }
     public Task Initialization { get; }
     public Task QualityLoading { get; private set; } = Task.CompletedTask;
+    public bool HasInvalidQualityToken => !StepEnumRules.TryRead<CameraQualityMode>(_qualityToken, out _);
+    public string InvalidQualityMessage => HasInvalidQualityToken
+        ? Loc.Format("Ui.Step.Generated.Validation.UnknownSavedToken", _qualityToken) : string.Empty;
 
     public CameraDeviceInfo? SelectedCamera
     {
@@ -2581,12 +2613,15 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
             if (value is not null)
             {
                 _qualityMode = value.QualityMode;
+                _qualityToken = value.QualityMode.ToString();
                 _width = value.Mode?.Width ?? 0;
                 _height = value.Mode?.Height ?? 0;
                 _framesPerSecond = value.Mode?.FramesPerSecond ?? 0;
                 _pixelFormat = value.Mode?.PixelFormat ?? string.Empty;
             }
             OnChanged(nameof(SelectedQuality));
+            PropertyChanged?.Invoke(this, new(nameof(HasInvalidQualityToken)));
+            PropertyChanged?.Invoke(this, new(nameof(InvalidQualityMessage)));
         }
     }
 
@@ -2666,7 +2701,7 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
     public StepCameraSelectionValue ToValue() => new(
         _cameraId,
         _cameraName,
-        _qualityMode.ToString(),
+        _qualityToken,
         _width,
         _height,
         _framesPerSecond,
@@ -2705,14 +2740,14 @@ public sealed class GeneratedCameraEditorViewModel : INotifyPropertyChanged
                     && choice.Mode.Height == _height
                     && Math.Abs(choice.Mode.FramesPerSecond - _framesPerSecond) < 0.02
                     && string.Equals(choice.Mode.PixelFormat, _pixelFormat, StringComparison.OrdinalIgnoreCase)))
-                ?? Qualities[0];
+                ;
             QualityStatus = Loc.Format("Ui.Step.Camera.QualityFoundCount", modes.Count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             if (loadVersion != _qualityLoadVersion) return;
             AddBaseQualities();
-            SelectedQuality = Qualities[0];
+            SelectedQuality = Qualities.FirstOrDefault(choice => choice.QualityMode == _qualityMode);
             QualityStatus = Loc.Format("Ui.Step.Camera.QualityLoadFailed", ex.Message);
         }
         finally

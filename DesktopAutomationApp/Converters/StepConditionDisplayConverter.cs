@@ -15,7 +15,8 @@ namespace DesktopAutomationApp.Converters
         public static string Format(
             StepCondition condition,
             IList? steps,
-            IReadOnlyList<JobVariable>? variables = null)
+            IReadOnlyList<JobVariable>? variables = null,
+            bool compact = false)
         {
             var stepMap = new Dictionary<string, (string Name, JobStep Step)>(StringComparer.OrdinalIgnoreCase);
             if (steps is not null)
@@ -23,7 +24,7 @@ namespace DesktopAutomationApp.Converters
                     if (steps[index] is JobStep step)
                         stepMap[step.Id] = (StepLocalization.NumberedName(step, steps), step);
 
-            var source = FormatReference(condition, stepMap, variables);
+            var source = FormatReference(condition, stepMap, variables, compact);
             var conditionOperator = condition.Operator;
             var operand = condition.EffectiveComparison;
             switch (condition.Operator)
@@ -50,9 +51,9 @@ namespace DesktopAutomationApp.Converters
             var sourceProperty = ResolveProperty(condition, stepMap, variables);
             var operandText = operand.Kind == ComparisonOperandKind.JobResult
                 ? TryFormatStoredLiteral(operand, variables, out var storedLiteral)
-                    ? $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(storedLiteral, sourceProperty)}"
-                    : $"{Loc.Get("Ui.Step.IfEditor.JobResultValue")}: {FormatReference(operand, stepMap, variables)}"
-                : $"{Loc.Get("Ui.Step.IfEditor.LiteralValue")}: {FormatLiteral(operand.Value, sourceProperty)}";
+                    ? (compact ? "" : Loc.Get("Ui.Step.IfEditor.LiteralValue") + ": ") + FormatLiteral(storedLiteral, sourceProperty)
+                    : (compact ? "" : Loc.Get("Ui.Step.IfEditor.JobResultValue") + ": ") + FormatReference(operand, stepMap, variables, compact)
+                : (compact ? "" : Loc.Get("Ui.Step.IfEditor.LiteralValue") + ": ") + FormatLiteral(operand.Value, sourceProperty);
             return $"{source} {operatorText} {operandText}";
         }
 
@@ -65,26 +66,28 @@ namespace DesktopAutomationApp.Converters
             if (conditions.Count == 0)
                 return Loc.Get("Ui.Job.Condition.NoConditions");
             if (conditions.Count == 1)
-                return Format(conditions[0], steps, variables);
+                return Format(conditions[0], steps, variables, compact: true);
 
             var mode = settings.MatchMode == ConditionMatchMode.All
                 ? Loc.Get("Ui.Job.Condition.AllBadge")
                 : Loc.Get("Ui.Job.Condition.AnyBadge");
-            var first = Format(conditions[0], steps, variables);
-            return $"{mode} · {Loc.Format("Ui.Job.Condition.Count", conditions.Count)} · "
-                   + $"{first} · {Loc.Format("Ui.Job.Condition.More", conditions.Count - 1)}";
+            var first = Format(conditions[0], steps, variables, compact: true);
+            return $"{mode}: {first} · {Loc.Format("Ui.Job.Condition.More", conditions.Count - 1)}";
         }
 
         private static string FormatReference(
             ResultBinding binding,
             IReadOnlyDictionary<string, (string Name, JobStep Step)> stepMap,
-            IReadOnlyList<JobVariable>? variables)
+            IReadOnlyList<JobVariable>? variables,
+            bool compact = false)
         {
+            if (compact && binding.ProviderId == ValueProviderIds.Secret) return Loc.Get("Ui.ValueReference.Sensitive");
             if (binding.ProviderId is ValueProviderIds.JobVariable or ValueProviderIds.LocalValue
                 && Guid.TryParse(binding.SourceId, out var variableId))
             {
                 var variable = variables?.FirstOrDefault(candidate => candidate.Id == variableId);
                 var name = variable?.Name ?? Loc.Get("Ui.Job.Steps.SourceUnavailable");
+                if (compact) return name;
                 var sourceName = string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
                     ? Loc.Get("Ui.Step.IfEditor.LiteralValue")
                     : Loc.Get("Ui.ValueReference.JobVariables");
@@ -93,7 +96,16 @@ namespace DesktopAutomationApp.Converters
 
             if (binding.HasProviderReference
                 && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
-                return $"{binding.ProviderId} → {binding.SourceId}";
+                return compact ? Loc.Get("Ui.Job.Steps.SourceUnavailable") : $"{binding.ProviderId} → {binding.SourceId}";
+
+            if (compact)
+            {
+                if (!stepMap.TryGetValue(binding.SourceStepId, out var entry)) return Loc.Get("Ui.Job.Steps.SourceUnavailable");
+                var property = entry.Step is UserChoiceStep && binding.PropertyPath == "SelectedOptionId"
+                    ? Loc.Get("Ui.Job.Steps.Summary.Answer") : ResolvePropertyName(binding, stepMap);
+                var index = StepLocalization.ListPosition(stepMap.Values.Select(value => value.Step), entry.Step);
+                return Loc.Format("Ui.Job.Steps.Summary.StepSource", property, index);
+            }
 
             var source = ResolveStep(binding.SourceStepId, stepMap);
             return $"{source} → {ResolvePropertyName(binding, stepMap)}";

@@ -24,6 +24,8 @@ using DesktopAutomationApp.Localization;
 using TaskAutomation.Contracts.Steps;
 using TaskAutomation.Steps.Definitions;
 using TaskAutomation.Security;
+using DesktopAutomationApp.Services.Jobs;
+using MahApps.Metro.IconPacks;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -91,7 +93,9 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IReadOnlyList<SourceStepItem> _conditionSourceSteps;
         private readonly ValueReferenceSourceCatalog _valueReferenceSources;
         private readonly IReadOnlyList<JobVariable> _jobVariables;
-        private readonly IReadOnlyList<LocalValue> _localValues;
+        private readonly IReadOnlyList<LocalValue> _persistedLocalValues;
+        private readonly List<LocalValue> _localValues;
+        private readonly Dictionary<Guid, string> _localValueBaselines;
         private readonly List<ValueProviderSourceDescriptor> _providerSources;
         private readonly Action<JobVariable>? _jobVariableCreated;
         private readonly Action<LocalValue>? _localValueCreated;
@@ -134,12 +138,17 @@ namespace DesktopAutomationApp.ViewModels
                 ?? throw new ArgumentNullException(nameof(cameraCaptureService));
             _stepDefinitionCatalog = stepDefinitionCatalog ?? BuiltInStepDefinitions.Instance;
             _jobVariables = jobVariables ?? [];
-            _localValues = localValues ?? [];
+            _persistedLocalValues = localValues ?? [];
+            _localValues = _persistedLocalValues.Select(CloneLocalValue).ToList();
+            _localValueBaselines = _localValues.GroupBy(value => value.Id).ToDictionary(group => group.Key, group => JsonSerializer.Serialize(group.First()));
             _providerSources = (providerSources ?? []).ToList();
             _jobVariableCreated = jobVariableCreated;
             _localValueCreated = localValueCreated;
             _secretStore = secretStore;
             StepTypeItems = CreateStepTypeItems(_stepDefinitionCatalog);
+            StepCategories = new[] { Loc.Get("Ui.Job.Steps.Picker.All") }
+                .Concat(StepTypeItems.Cast<StepTypeItem>().Select(item => item.Category).Distinct()).ToArray();
+            _selectedStepCategory = StepCategories[0];
             AvailableJobs = new ObservableCollection<Job>(
                 (_ctx.AllJobs?.Values ?? Enumerable.Empty<Job>())
                 .Where(job => job.Id != _currentJobId)
@@ -192,6 +201,8 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (_isPickerOnly == value) return;
                 _isPickerOnly = value;
+                if (value) GeneratedEditor = null;
+                else SetGeneratedEditor(_selectedType);
                 OnChange();
                 RaiseConfirmCanExecuteChanged();
             }
@@ -224,7 +235,7 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowTypeSelector => !IsTypeLocked;
 
         public string DialogTitle =>
-            IsTypeLocked
+            IsPickerOnly ? Loc.Get("Step.Add") : IsTypeLocked
                 ? (SelectedType == "ElseIf"
                     ? Loc.Get(Mode == StepDialogMode.Edit ? "Step.ElseIf.Edit" : "Step.ElseIf.Add")
                     : Loc.Get(Mode == StepDialogMode.Edit ? "Step.Edit" : "Step.Add"))
@@ -245,6 +256,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             if (IsPickerOnly)
             {
+                if (!CanConfirm()) return;
                 CreatedStep = _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
                     ? definition.CreateDefault()
                     : null;
@@ -265,24 +277,40 @@ namespace DesktopAutomationApp.ViewModels
             var localInputs = ValueBindingTree.EnumerateReferences(step.Inputs)
                 .Where(input => string.Equals(
                     input.Binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
-                .ToDictionary(input => input.Binding.SourceId, input => input.Path, StringComparer.OrdinalIgnoreCase);
-            foreach (var usage in ValueReferenceUsageInspector.Find(new Job { Steps = [step] })
+                .GroupBy(input => input.Binding.SourceId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First().Path, StringComparer.OrdinalIgnoreCase);
+            foreach (var usage in ValueReferenceUsageInspector.Find(new Job { Steps = [step], LocalValues = CurrentVariables().OfType<LocalValue>().ToList(), Variables = CurrentVariables().Where(value => value is not LocalValue).ToList() })
                          .Where(usage => string.Equals(
                              usage.Reference.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)))
                 localInputs.TryAdd(usage.Reference.SourceId, usage.Path);
+            foreach (var edited in _localValues.Where(value => localInputs.ContainsKey(value.Id.ToString("D"))))
+            {
+                var persisted = _persistedLocalValues.FirstOrDefault(value => value.Id == edited.Id);
+                var serialized = JsonSerializer.Serialize(edited);
+                if (persisted is null || _localValueBaselines.GetValueOrDefault(edited.Id) == serialized) continue;
+                persisted.Value = edited.Value?.DeepClone();
+                persisted.EnumTypeName = edited.EnumTypeName;
+                persisted.EnumValues = edited.EnumValues?.ToList();
+                persisted.EnumDisplayNames = edited.EnumDisplayNames is null ? null
+                    : new Dictionary<string, string>(edited.EnumDisplayNames, StringComparer.Ordinal);
+                _localValueBaselines[edited.Id] = serialized;
+            }
             foreach (var local in _draftStepVariables.OfType<LocalValue>()
                          .Where(value => localInputs.ContainsKey(value.Id.ToString("D"))).ToArray())
             {
                 local.OwnerStepId = step.Id;
                 local.InputPath = localInputs[local.Id.ToString("D")];
-                CommitCreatedLocalValue(local);
+                CommitCreatedLocalValue(CloneLocalValue(local));
+                _localValues.Add(local);
+                _localValueBaselines[local.Id] = JsonSerializer.Serialize(local);
             }
             _draftStepVariables.Clear();
         }
 
         private bool CanConfirm()
         {
-            return IsPickerOnly || _candidateValidationPending || _candidateIsValid;
+            return IsPickerOnly ? StepTypeItems.Cast<StepTypeItem>().Any(item => item.Name == SelectedType)
+                : _candidateValidationPending || _candidateIsValid;
         }
 
         private void RefreshCandidateValidation()
@@ -305,7 +333,7 @@ namespace DesktopAutomationApp.ViewModels
                 }
                 var result = JobValidation.ValidateCandidate(
                     _precedingSteps, CreatedStep, _allJobSteps, CurrentVariables(), _providerSources);
-                _validationError = JobValidationErrorLocalizer.Localize(result.Error);
+                _validationError = JobValidationErrorLocalizer.Localize(result.Error, CreatedStep);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
                 _candidateIsValid = result.IsValid;
@@ -353,6 +381,7 @@ namespace DesktopAutomationApp.ViewModels
             private readonly string _displayNameKey;
             private readonly string _descriptionKey;
             public string Name { get; }
+            public PackIconMaterialKind Icon { get; }
             public string CategoryKey => _category;
             public string Category => LocalizedOrFallback($"Step.Category.{_category}", _category);
             public string Description => LocalizedOrFallback(_descriptionKey, _description);
@@ -363,9 +392,11 @@ namespace DesktopAutomationApp.ViewModels
                 string category,
                 string description = "",
                 string? displayNameKey = null,
-                string? descriptionKey = null)
+                string? descriptionKey = null,
+                Type? stepType = null)
             {
                 Name = name;
+                Icon = StepIconPresentation.ForType(stepType ?? typeof(JobStep));
                 _category = category;
                 _description = description;
                 _displayNameKey = displayNameKey ?? $"Step.Type.{Name}";
@@ -392,7 +423,8 @@ namespace DesktopAutomationApp.ViewModels
                     TrimStepSuffix(definition.StepType.Name),
                     definition.Descriptor.CategoryId,
                     displayNameKey: definition.Descriptor.DisplayNameKey,
-                    descriptionKey: definition.Descriptor.DescriptionKey))
+                    descriptionKey: definition.Descriptor.DescriptionKey,
+                    stepType: definition.StepType))
                 .ToList();
             string[] categoryOrder =
             [
@@ -410,10 +442,30 @@ namespace DesktopAutomationApp.ViewModels
                 .ToList();
 
             var view = new ListCollectionView(items);
-            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(StepTypeItem.Category)));
+
             return view;
         }
 
+        public string InsertionDescription { get; set; } = string.Empty;
+        public IReadOnlyList<string> StepCategories { get; }
+        private string _selectedStepCategory = string.Empty;
+        public string SelectedStepCategoryFilter
+        {
+            get => _selectedStepCategory;
+            set
+            {
+                if (value is null || _selectedStepCategory == value) return;
+                _selectedStepCategory = value;
+                RefreshStepFilter();
+                OnChange();
+            }
+        }
+        public bool HasMatchingStepTypes => !StepTypeItems.IsEmpty;
+        public StepTypeItem? SelectedStepTypeItem
+        {
+            get => StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(item => item.Name == SelectedType);
+            set { if (value is not null) SelectedType = value.Name; }
+        }
         private string _stepTypeSearchText = string.Empty;
         public string StepTypeSearchText
         {
@@ -422,16 +474,26 @@ namespace DesktopAutomationApp.ViewModels
             {
                 if (_stepTypeSearchText == value) return;
                 _stepTypeSearchText = value;
-                StepTypeItems.Filter = FilterStepType;
-                StepTypeItems.Refresh();
+                RefreshStepFilter();
                 OnChange();
             }
         }
-
+        private void RefreshStepFilter()
+        {
+            StepTypeItems.Filter = FilterStepType;
+            StepTypeItems.Refresh();
+            if (IsPickerOnly && !StepTypeItems.Cast<StepTypeItem>().Any(item => item.Name == SelectedType)
+                && StepTypeItems.Cast<StepTypeItem>().FirstOrDefault() is { } first)
+                SelectedType = first.Name;
+            OnChange(nameof(SelectedType));
+            OnChange(nameof(SelectedStepTypeItem));
+            OnChange(nameof(HasMatchingStepTypes));
+        }
         private bool FilterStepType(object item)
         {
-            if (item is not StepTypeItem stepType || string.IsNullOrWhiteSpace(StepTypeSearchText))
-                return true;
+            if (item is not StepTypeItem stepType) return false;
+            if (_selectedStepCategory != StepCategories[0] && stepType.Category != _selectedStepCategory) return false;
+            if (string.IsNullOrWhiteSpace(StepTypeSearchText)) return true;
             var search = StepTypeSearchText.Trim();
             return stepType.DisplayLabel.Contains(search, StringComparison.CurrentCultureIgnoreCase)
                    || stepType.Category.Contains(search, StringComparison.CurrentCultureIgnoreCase)
@@ -465,7 +527,7 @@ namespace DesktopAutomationApp.ViewModels
                 // Keep the last valid step type so clearing or changing the search can restore it.
                 if (string.IsNullOrWhiteSpace(value) || _selectedType == value) return;
                 _selectedType = value;
-                SetGeneratedEditor(value);
+                if (!IsPickerOnly) SetGeneratedEditor(value);
                 OnChange(string.Empty);
             }
         }
@@ -589,7 +651,9 @@ namespace DesktopAutomationApp.ViewModels
                               ?? (field.ValueKind == StepValueKind.Collection
                                   ? ResultCardinality.Collection
                                   : ResultCardinality.Single),
-                Value = field.DefaultValue?.DeepClone()
+                // The generated field initializes this from the actual draft, including
+                // legacy settings. A descriptor default must not overwrite a loaded value.
+                Value = null
             };
             ApplyEnumMetadata(variable, $"{definition.Descriptor.TypeId}.{field.Id}", field);
             _draftStepVariables.Add(variable);
@@ -598,21 +662,21 @@ namespace DesktopAutomationApp.ViewModels
             return variable;
         }
 
+        private static LocalValue CloneLocalValue(LocalValue value) =>
+            JsonSerializer.Deserialize<LocalValue>(JsonSerializer.Serialize(value))!;
+
         private IReadOnlyList<JobVariable> CurrentVariables() =>
             _jobVariables.Cast<JobVariable>().Concat(_localValues).Concat(_draftStepVariables)
-                .DistinctBy(variable => variable.Id).ToArray();
+                .DistinctBy(variable => (JobValueSources.ProviderFor(variable), variable.Id)).ToArray();
 
         private JobVariable? FindStoredVariable(ResultBinding binding) =>
-            binding.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-            && Guid.TryParse(binding.SourceId, out var variableId)
-                ? CurrentVariables().FirstOrDefault(variable => variable.Id == variableId)
-                : null;
+            JobValueSources.Find(CurrentVariables(), binding);
 
         private void CommitCreatedLocalValue(LocalValue variable)
         {
             if (_localValueCreated is not null) _localValueCreated(variable);
             else if (_jobVariableCreated is not null) _jobVariableCreated(variable);
-            else if (_localValues is ICollection<LocalValue> { IsReadOnly: false } values) values.Add(variable);
+            else if (_persistedLocalValues is ICollection<LocalValue> { IsReadOnly: false } values) values.Add(variable);
         }
 
         private IEnumerable<string>? ResolveGeneratedSuggestions(StepFieldDescriptor field) =>
@@ -666,7 +730,8 @@ namespace DesktopAutomationApp.ViewModels
             StepValueKind kind,
             JsonNode? literal,
             IReadOnlyDictionary<string, ResultBinding>? inputs,
-            ResultPropertyDescriptor? enumProperty = null)
+            ResultPropertyDescriptor? enumProperty = null,
+            ResultBinding? explicitBinding = null)
         {
             var enumOptions = kind == StepValueKind.Enum && enumProperty is not null
                 ? (enumProperty.EnumValues ?? []).Select(value => new StepFieldOptionDescriptor(
@@ -684,6 +749,8 @@ namespace DesktopAutomationApp.ViewModels
                     : null,
                 Options: enumOptions);
             var contract = StepInputContractRegistry.ForField(descriptor);
+            if (enumProperty is not null)
+                contract = ConditionRules.ComparisonInputContract(contract, enumProperty);
             if (string.Equals(owner.EditorHint, StepEditorHints.YoloPicker, StringComparison.Ordinal))
                 contract = contract with { AllowedProviderIds = new HashSet<string>() };
             JobVariable CreateStepValue() => CreateDraftNestedVariable(
@@ -698,7 +765,7 @@ namespace DesktopAutomationApp.ViewModels
                 variable => DetachStepValue(variable, stepName, fieldName),
                 CreateStepValue,
                 CreateSecret);
-            var binding = ValueBindingTree.Find(inputs, key);
+            var binding = explicitBinding ?? ValueBindingTree.Find(inputs, key);
             if (kind == StepValueKind.Enum
                 && enumProperty is not null
                 && binding?.IsConfigured == true
@@ -840,7 +907,7 @@ namespace DesktopAutomationApp.ViewModels
                 || !Guid.TryParse(binding.SourceId, out var variableId))
                 return fallback;
 
-            return CurrentVariables().FirstOrDefault(variable => variable.Id == variableId)?.Value?.DeepClone()
+            return JobValueSources.Find(CurrentVariables(), binding)?.Value?.DeepClone()
                    ?? fallback;
         }
 
@@ -894,7 +961,7 @@ namespace DesktopAutomationApp.ViewModels
                 CreateSecret);
         }
 
-        private int GetVariableUsageCount(Guid variableId)
+        private int GetVariableUsageCount(JobVariable variable)
         {
             if (_variableUsageCounts is null)
             {
@@ -905,11 +972,10 @@ namespace DesktopAutomationApp.ViewModels
                     if (existingIndex >= 0) steps[existingIndex] = draftStep;
                     else steps.Add(draftStep);
                 }
-                _variableUsageCounts = ValueReferenceUsageInspector.CountLogicalBySource(
-                    new Job { Steps = steps },
-                    [ValueProviderIds.LocalValue, ValueProviderIds.JobVariable]);
+                _variableUsageCounts = ValueReferenceUsageInspector.CountLogicalByIdentity(
+                    new Job { Steps = steps, LocalValues = CurrentVariables().OfType<LocalValue>().ToList(), Variables = CurrentVariables().Where(value => value is not LocalValue).ToList() });
             }
-            var sourceId = variableId.ToString("D");
+            var sourceId = JobValueSources.Key(JobValueSources.ProviderFor(variable), variable.Id.ToString("D"));
             return _variableUsageCounts.GetValueOrDefault(sourceId);
         }
 
@@ -940,23 +1006,8 @@ namespace DesktopAutomationApp.ViewModels
             return detached;
         }
 
-        private static void ApplyEnumMetadata(
-            JobVariable variable,
-            string enumTypeName,
-            StepFieldDescriptor field)
-        {
-            if (variable.ValueKind != ResultValueKind.Enum) return;
-            variable.EnumTypeName = enumTypeName;
-            var options = StepEnumRules.GetOptions(field);
-            variable.EnumValues = options.Select(option => option.Value)
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
-            variable.EnumDisplayNames = options
-                .Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
-                .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
-            if (variable.EnumDisplayNames is { Count: 0 }) variable.EnumDisplayNames = null;
-        }
-
+        private static void ApplyEnumMetadata(JobVariable variable, string enumTypeName, StepFieldDescriptor field) =>
+            StepEnumRules.ApplyMetadata(variable, enumTypeName, field);
         private static void ApplyEnumMetadata(JobVariable variable, ResultPropertyDescriptor property)
         {
             if (variable.ValueKind != ResultValueKind.Enum) return;
@@ -1036,11 +1087,11 @@ namespace DesktopAutomationApp.ViewModels
                 ? new GeneratedConditionEditorViewModel(
                     value,
                     _conditionSourceSteps,
-                    _jobVariables,
+                    CurrentVariables(),
                     _providerSources.Where(source => !source.IsSensitive).ToArray(),
                     field.Id,
-                    (key, kind, literal, enumProperty) => ResolveNestedInputReference(
-                        definition, field, key, kind, literal, inputs, enumProperty),
+                    (key, kind, literal, enumProperty, binding) => ResolveNestedInputReference(
+                        definition, field, key, kind, literal, null, enumProperty, binding),
                     _valueReferenceSources)
                 : null;
 
@@ -1176,12 +1227,16 @@ namespace DesktopAutomationApp.ViewModels
             name.EndsWith("Step", StringComparison.Ordinal) ? name[..^4] : name;
 
         // Beschreibung kommt direkt aus dem StepTypeItem – kein separates switch mehr nötig.
-        public string StepTypeDescription =>
-            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.Description ?? string.Empty;
-        public string SelectedStepDisplayName =>
-            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.DisplayLabel ?? SelectedType;
-        public string SelectedStepCategory =>
-            StepTypeItems.Cast<StepTypeItem>().FirstOrDefault(i => i.Name == SelectedType)?.Category ?? string.Empty;
+        public string StepTypeDescription => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+            ? Loc.Get(definition.Descriptor.DescriptionKey) : string.Empty;
+        public string SelectedStepDisplayName => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+            ? Loc.Get(definition.Descriptor.DisplayNameKey) : SelectedType;
+        public string SelectedStepCategory => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+            ? Loc.Get($"Step.Category.{definition.Descriptor.CategoryId}") : string.Empty;
+        public PackIconMaterialKind SelectedStepIcon => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+            ? StepIconPresentation.ForType(definition.StepType) : PackIconMaterialKind.ShapeOutline;
+        public string SelectedStepCategoryKey => _stepDefinitionCatalog.TryGetByName(SelectedType, out var definition)
+            ? definition.Descriptor.CategoryId : "Unknown";
 
         /// <summary>Voraussetzung eines Steps mit Information ob sie durch vorherige Steps erfüllt ist.</summary>
         // ----- Quell-Step-Helfer -----

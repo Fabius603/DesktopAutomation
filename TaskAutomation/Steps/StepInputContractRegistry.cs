@@ -22,6 +22,8 @@ public sealed record StepInputDescriptor(
     params AcceptedResultShape[] AcceptedShapes)
 {
     public IReadOnlySet<string>? AllowedProviderIds { get; init; }
+    /// <summary>Persisted sources remain readable without being offered for new selections.</summary>
+    public IReadOnlySet<string> LegacyAllowedProviderIds { get; init; } = new HashSet<string>();
     public bool AllowsDirectValue { get; init; }
     public IReadOnlyList<AcceptedResultShape> LegacyAcceptedShapes { get; init; } = [];
 
@@ -29,6 +31,12 @@ public sealed record StepInputDescriptor(
         string.Equals(providerId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
             ? AllowsDirectValue
             : AllowedProviderIds is null || AllowedProviderIds.Contains(providerId);
+
+    public bool AcceptsSource(string providerId, ResultPropertyDescriptor property, bool legacyDirect = false,
+        bool includeLegacy = true) =>
+        (AllowsProvider(providerId) || legacyDirect && AllowsDirectValue
+            || includeLegacy && LegacyAllowedProviderIds.Contains(providerId))
+        && Accepts(property.DataType, property.Cardinality, includeLegacy);
 
     public bool Accepts(ResultPropertyDescriptor property) => AcceptedShapes.Any(shape => shape.Accepts(property))
                                                                 || LegacyAcceptedShapes.Any(shape => shape.Accepts(property));
@@ -58,6 +66,7 @@ public sealed record StepInputDescriptor(
 public static class StepInputContractRegistry
 {
     private static readonly IReadOnlySet<string> DirectOnlyProviders = new HashSet<string>();
+    private static readonly IReadOnlySet<string> LegacyTextProviders = new HashSet<string> { ValueProviderIds.Secret };
     private static readonly IReadOnlySet<string> StepResultProviders = new HashSet<string>
     {
         ValueProviderIds.StepResult
@@ -148,6 +157,7 @@ public static class StepInputContractRegistry
         [typeof(ShowTextStep)] = [Required("text", CollectionConsumptionMode.FirstValue, DisplayableText) with
         {
             AllowedProviderIds = ReusableValueProviders,
+            LegacyAllowedProviderIds = LegacyTextProviders,
             AllowsDirectValue = true
         }],
         [typeof(FileSystemOperationStep)] =
@@ -191,6 +201,7 @@ public static class StepInputContractRegistry
             new AcceptedResultShape(kind, cardinality))
         {
             AllowedProviderIds = providers,
+            LegacyAllowedProviderIds = LegacyProvidersFor(kind),
             AllowsDirectValue = true
         };
         return kind is ResultValueKind.Color or ResultValueKind.FilePath
@@ -201,6 +212,10 @@ public static class StepInputContractRegistry
             : descriptor;
     }
 
+    internal static IReadOnlySet<string> LegacyProvidersFor(ResultValueKind kind) =>
+        kind is ResultValueKind.Text or ResultValueKind.Color or ResultValueKind.FilePath
+            ? LegacyTextProviders : DirectOnlyProviders;
+
     private static StepInputDescriptor Required(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
         new(key, true, MissingValuePolicy.FailStep, collection, shapes)
         {
@@ -209,12 +224,16 @@ public static class StepInputContractRegistry
     private static StepInputDescriptor Optional(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
         new(key, false, MissingValuePolicy.SkipStep, collection, shapes)
         {
-            AllowedProviderIds = StepResultProviders
+            AllowedProviderIds = StepResultProviders,
+            LegacyAllowedProviderIds = shapes.Any(shape => shape.ValueKind == ResultValueKind.Text)
+                ? LegacyTextProviders : DirectOnlyProviders
         };
     private static StepInputDescriptor OptionalReusable(string key, CollectionConsumptionMode collection, params AcceptedResultShape[] shapes) =>
         new(key, false, MissingValuePolicy.SkipStep, collection, shapes)
         {
-            AllowedProviderIds = ReusableValueProviders
+            AllowedProviderIds = ReusableValueProviders,
+            LegacyAllowedProviderIds = shapes.Any(shape => shape.ValueKind == ResultValueKind.Text)
+                ? LegacyTextProviders : DirectOnlyProviders
         };
 
     private static bool IsDirectOnly(StepFieldDescriptor field) =>

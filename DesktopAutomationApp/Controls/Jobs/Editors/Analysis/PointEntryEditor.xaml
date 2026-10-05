@@ -12,6 +12,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Grid Margin="0,0,0,8">
@@ -28,7 +29,7 @@
                         ToolTip="{loc:Translate Key=Ui.Step.Settings.RemovePoint}"/>
             </Grid>
 
-            <controls:ResponsiveActionPanel Grid.Row="1"
+            <controls:ResponsiveActionPanel CanWrap="False" Grid.Row="1"
                                             MinPrimaryWidth="220"
                                             HorizontalSpacing="12"
                                             VerticalSpacing="6">
@@ -55,6 +56,10 @@
                                                               VerticalAlignment="Center"
                                                               DataContext="{Binding WholeValueSource}"/>
             </controls:ResponsiveActionPanel>
+            <TextBlock Grid.Row="2" Margin="0,6,0,0" TextWrapping="Wrap"
+                       Foreground="{DynamicResource App.Brush.Danger}"
+                       Text="{Binding InvalidTokenMessage}"
+                       Visibility="{Binding HasInvalidToken, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
     </Border>
 </UserControl>

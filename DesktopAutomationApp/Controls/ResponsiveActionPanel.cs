@@ -9,6 +9,16 @@ namespace DesktopAutomationApp.Controls;
 /// </summary>
 public class ResponsiveActionPanel : Panel
 {
+    public static readonly DependencyProperty CanWrapProperty = DependencyProperty.Register(
+        nameof(CanWrap), typeof(bool), typeof(ResponsiveActionPanel),
+        new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    public bool CanWrap
+    {
+        get => (bool)GetValue(CanWrapProperty);
+        set => SetValue(CanWrapProperty, value);
+    }
+
     public static readonly DependencyProperty MinPrimaryWidthProperty = DependencyProperty.Register(
         nameof(MinPrimaryWidth), typeof(double), typeof(ResponsiveActionPanel),
         new FrameworkPropertyMetadata(160d, FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -52,7 +62,7 @@ public class ResponsiveActionPanel : Panel
         var width = double.IsInfinity(availableSize.Width) ? double.PositiveInfinity : Math.Max(0, availableSize.Width);
         var secondary = children[1];
         secondary.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var stacks = ShouldStack(width, MinPrimaryWidth, secondary.DesiredSize.Width, HorizontalSpacing);
+        var stacks = CanWrap && ShouldStack(width, MinPrimaryWidth, secondary.DesiredSize.Width, HorizontalSpacing);
 
         if (stacks)
         {
@@ -88,7 +98,7 @@ public class ResponsiveActionPanel : Panel
 
         var primary = children[0];
         var secondary = children[1];
-        var stacks = ShouldStack(finalSize.Width, MinPrimaryWidth, secondary.DesiredSize.Width, HorizontalSpacing);
+        var stacks = CanWrap && ShouldStack(finalSize.Width, MinPrimaryWidth, secondary.DesiredSize.Width, HorizontalSpacing);
         if (stacks)
         {
             primary.Arrange(new Rect(0, 0, finalSize.Width, primary.DesiredSize.Height));

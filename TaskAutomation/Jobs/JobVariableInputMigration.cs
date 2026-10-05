@@ -177,6 +177,7 @@ public static class JobVariableInputMigration
             job.LocalValues.Add(local);
             reference.ProviderId = ValueProviderIds.LocalValue;
             reference.SourceId = local.Id.ToString("D");
+            usage.UpdateReference(_ => { });
             changed = true;
         }
         return changed;
@@ -192,31 +193,15 @@ public static class JobVariableInputMigration
             || binding.ProviderId is not (ValueProviderIds.LocalValue or ValueProviderIds.JobVariable)
             || !Guid.TryParse(binding.SourceId, out var variableId))
             return false;
-        var variable = job.LocalValues.Cast<JobVariable>().Concat(job.Variables)
-            .FirstOrDefault(candidate => candidate.Id == variableId);
+        var variable = JobValueSources.Find(job.LocalValues.Cast<JobVariable>().Concat(job.Variables), binding);
         if (variable is null) return false;
         var previous = System.Text.Json.JsonSerializer.Serialize(variable);
         ApplyEnumMetadata(variable, stepTypeId, field);
         return !string.Equals(previous, System.Text.Json.JsonSerializer.Serialize(variable), StringComparison.Ordinal);
     }
 
-    private static void ApplyEnumMetadata(
-        JobVariable variable,
-        string stepTypeId,
-        StepFieldDescriptor field)
-    {
-        if (field.ValueKind != StepValueKind.Enum || variable.ValueKind != ResultValueKind.Enum) return;
-        variable.EnumTypeName = $"{stepTypeId}.{field.Id}";
-        variable.EnumValues = StepEnumRules.GetOptions(field)
-            .Select(option => option.Value)
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
-        variable.EnumDisplayNames = field.Options?
-            .Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
-            .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
-        if (variable.EnumDisplayNames is { Count: 0 }) variable.EnumDisplayNames = null;
-    }
-
+    private static void ApplyEnumMetadata(JobVariable variable, string stepTypeId, StepFieldDescriptor field) =>
+        StepEnumRules.ApplyMetadata(variable, $"{stepTypeId}.{field.Id}", field);
     private static string ResolveInputPath(ValueReferenceUsage usage)
     {
         var input = usage.Step.Inputs.FirstOrDefault(candidate =>

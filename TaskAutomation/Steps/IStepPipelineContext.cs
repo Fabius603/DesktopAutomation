@@ -35,13 +35,13 @@ namespace TaskAutomation.Steps
 
         // ── Read-only Services ─────────────────────────────────────────────────
 
-        ILogger              Logger             { get; }
-        DxgiResources        DxgiResources      { get; }
-        IReadOnlyDictionary<string, Job>   AllJobs   { get; }
+        ILogger Logger { get; }
+        DxgiResources DxgiResources { get; }
+        IReadOnlyDictionary<string, Job> AllJobs { get; }
         IReadOnlyDictionary<string, Makro> AllMakros { get; }
-        IMakroExecutor       MakroExecutor      { get; }
-        IScriptExecutor      ScriptExecutor     { get; }
-        IYoloManager         YoloManager        { get; }
+        IMakroExecutor MakroExecutor { get; }
+        IScriptExecutor ScriptExecutor { get; }
+        IYoloManager YoloManager { get; }
         IImageDisplayService ImageDisplayService { get; }
         IDesktopResultOverlay DesktopResultOverlay { get; }
         ExecutionLogSession? ExecutionLogSession { get; }
@@ -95,10 +95,15 @@ namespace TaskAutomation.Steps
         /// </summary>
         IList<Guid> ChildJobInstanceIds { get; }
 
-        TemplateMatching?    TemplateMatcher    { get; set; }
-        ColorDetector?       ColorDetector      { get; set; }
-        KeyPointMatcher?     KeyPointMatcher    { get; set; }
-        StreamVideoRecorder? VideoRecorder      { get; set; }
+        TemplateMatching? TemplateMatcher { get; set; }
+        ColorDetector? ColorDetector { get; set; }
+        KeyPointMatcher? KeyPointMatcher { get; set; }
+        void RegisterYoloModel(string model) { }
+        IReadOnlyCollection<string> LoadedYoloModels => Array.Empty<string>();
+
+        IVideoRecorder CreateVideoRecorder(int width, int height, int fps) => new StreamVideoRecorder(width, height, fps);
+
+        IVideoRecorder? VideoRecorder { get; set; }
 
         /// <summary>Timeout-Tracking pro Step-ID (verhindert zu schnelle Wiederholungen).</summary>
         Dictionary<string, DateTime> StepTimeouts { get; }

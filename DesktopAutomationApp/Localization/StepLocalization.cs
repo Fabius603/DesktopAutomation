@@ -110,18 +110,23 @@ public static class StepLocalization
     public static bool IsNumbered(JobStep step) =>
         step is not IControlFlowMarker;
 
-    public static int? DisplayNumber(IEnumerable? steps, JobStep target)
+    public static bool HasListPosition(JobStep step) => step is not EndIfStep;
+
+    public static int? ListPosition(IEnumerable? steps, JobStep target)
     {
-        if (!IsNumbered(target) || steps is null) return null;
-        var number = 0;
+        if (!HasListPosition(target) || steps is null) return null;
+        var position = 0;
         foreach (var item in steps)
         {
             if (item is not JobStep step) continue;
-            if (IsNumbered(step)) number++;
-            if (ReferenceEquals(step, target) || step.Id == target.Id) return number;
+            if (HasListPosition(step)) position++;
+            if (ReferenceEquals(step, target) || string.Equals(step.Id, target.Id, StringComparison.OrdinalIgnoreCase)) return position;
         }
         return null;
     }
+
+    public static int? DisplayNumber(IEnumerable? steps, JobStep target)
+        => IsNumbered(target) ? ListPosition(steps, target) : null;
 
     public static string NumberedName(JobStep step, IEnumerable? steps)
     {

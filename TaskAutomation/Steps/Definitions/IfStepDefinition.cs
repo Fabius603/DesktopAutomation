@@ -30,7 +30,7 @@ internal static class ConditionStepDefinitionSupport
         CategoryId: "AblaufSteuern",
         DisplayNameKey: displayNameKey,
         DescriptionKey: descriptionKey,
-        IconKey: "condition",
+        IconKey: typeId == "else_if" ? "condition-alternative" : "condition",
         Fields:
         [
             new StepFieldDescriptor(IfStepDefinition.ConditionsFieldId, "Ui.Step.Settings.Evaluation", StepValueKind.Object,

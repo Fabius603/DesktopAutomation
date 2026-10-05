@@ -52,7 +52,7 @@ public sealed class UserChoiceEditorBindingTests
         var singleLineTemplate = document.Descendants()
             .Single(element => element.Attribute(x + "Key")?.Value == "SingleLineTextFieldTemplate");
         var titleTextBox = Assert.Single(singleLineTemplate.Descendants(presentation + "TextBox"));
-        Assert.Equal("30", titleTextBox.Attribute("Height")?.Value);
+        Assert.Equal("34", titleTextBox.Attribute("Height")?.Value);
         Assert.Equal("False", titleTextBox.Attribute("AcceptsReturn")?.Value);
     }
 

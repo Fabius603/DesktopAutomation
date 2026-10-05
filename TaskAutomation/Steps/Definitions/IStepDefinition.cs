@@ -72,7 +72,19 @@ public abstract class StepDefinition<TStep> : IStepDefinition where TStep : JobS
             _ => throw new ArgumentException(
                 $"Expected {typeof(TStep).Name}, got {existingStep.GetType().Name}.", nameof(existingStep))
         };
-        Apply(draft, step);
+        var effective = draft.Clone();
+        var active = StepActiveFieldResolver.GetActiveFieldIds(this, effective);
+        var defaults = Read(CreateDefaultStep());
+        foreach (var field in Descriptor.Fields.Where(field => !active.Contains(field.Id)))
+        {
+            var alwaysVisible = field with { VisibleWhen = null, VisibleWhenAll = null };
+            var descriptor = Descriptor with { Fields = [alwaysVisible], Presentation = new TaskAutomation.Contracts.Steps.StepPresentationDescriptor([], [], []) };
+            if (StepDescriptorDraftValidator.Validate(descriptor, effective,
+                    StepValidationContext.FullyResolved(StepValidationPhase.Runtime))
+                .Any(issue => issue.Severity == StepValidationSeverity.Error))
+                effective.Values[field.Id] = defaults.Values.GetValueOrDefault(field.Id)?.DeepClone();
+        }
+        Apply(effective, step);
         return step;
     }
 }

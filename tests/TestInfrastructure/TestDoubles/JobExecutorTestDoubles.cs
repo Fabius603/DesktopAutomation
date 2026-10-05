@@ -146,7 +146,8 @@ internal sealed class RecordingYoloManager : IYoloManager
     public List<string> GetAvailableModels() => [];
     public List<string> GetClassesForModel(string modelKey) => [];
     public float GetRecommendedConfidenceThreshold(string modelKey) => 0.5f;
-    public bool UnloadModel(string modelKey) => true;
+    public List<string> UnloadedModels { get; } = [];
+    public bool UnloadModel(string modelKey) { UnloadedModels.Add(modelKey); return true; }
     public void Dispose() { }
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

@@ -10,10 +10,11 @@
                  Title="{Binding WindowTitle}"
                  Icon="Assets/App.ico"
                  MinWidth="1300" MinHeight="600"
+                 Width="1487" Height="1000" TitleBarHeight="42" FontSize="14"
                  Background="{DynamicResource App.Brush.WindowBackground}"
-                 WindowTitleBrush="{DynamicResource App.Brush.Accent}"
-                 NonActiveWindowTitleBrush="{DynamicResource App.Brush.AccentDark}"
-                 TitleForeground="White"
+                 WindowTitleBrush="{DynamicResource App.Brush.Surface}"
+                 NonActiveWindowTitleBrush="{DynamicResource App.Brush.Surface}"
+                 TitleForeground="{DynamicResource App.Brush.TextPrimary}"
                  BorderBrush="Transparent"
                  BorderThickness="0"
                  GlowBrush="Transparent"
@@ -35,7 +36,7 @@
     </mah:MetroWindow.TitleTemplate>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="268"/>
             <ColumnDefinition Width="1"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>

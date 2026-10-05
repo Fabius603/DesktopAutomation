@@ -51,9 +51,7 @@ public sealed class CameraCaptureStepDefinition : StepDefinition<CameraCaptureSt
         var value = ReadSelection(draft);
         step.Settings.CameraId = value.CameraId;
         step.Settings.CameraName = value.CameraName;
-        step.Settings.QualityMode = Enum.TryParse<CameraQualityMode>(value.QualityMode, out var mode)
-            ? mode
-            : CameraQualityMode.Automatic;
+        step.Settings.QualityMode = DefinitionValueReader.Enum<CameraQualityMode>(value.QualityMode, CameraFieldId);
         step.Settings.Width = value.Width;
         step.Settings.Height = value.Height;
         step.Settings.FramesPerSecond = value.FramesPerSecond;
@@ -65,7 +63,7 @@ public sealed class CameraCaptureStepDefinition : StepDefinition<CameraCaptureSt
         var value = ReadSelection(draft);
         if (string.IsNullOrWhiteSpace(value.CameraId))
             return [new("StepValidation.Required", CameraFieldId)];
-        if (!Enum.TryParse<CameraQualityMode>(value.QualityMode, out var mode))
+        if (!DefinitionValueReader.TryEnum<CameraQualityMode>(value.QualityMode, out var mode))
             return [new("StepValidation.Invalid", CameraFieldId)];
         if (mode == CameraQualityMode.Specific
             && (value.Width <= 0 || value.Height <= 0 || value.FramesPerSecond < 0

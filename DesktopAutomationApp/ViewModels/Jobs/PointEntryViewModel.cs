@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Text.Json.Nodes;
 using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps.Definitions;
 using TaskAutomation.Steps;
 
 namespace DesktopAutomationApp.ViewModels
@@ -29,6 +30,18 @@ namespace DesktopAutomationApp.ViewModels
         public GeneratedWholeValueSourceViewModel WholeValueSource { get; }
 
         private PointEntrySource _source = PointEntrySource.Manual;
+        private string? _unknownSource;
+        public string SourceToken => _unknownSource ?? Source.ToString();
+        public bool HasInvalidToken => _unknownSource is not null;
+        public string InvalidTokenMessage => HasInvalidToken
+            ? Loc.Format("Ui.Step.Generated.Validation.UnknownSavedToken", _unknownSource) : string.Empty;
+
+        public void LoadSourceToken(string token)
+        {
+            _unknownSource = StepEnumRules.TryRead<PointEntrySource>(token, out var source) ? null : token;
+            Source = _unknownSource is null ? source : (PointEntrySource)(-1);
+            OnChange(nameof(HasInvalidToken)); OnChange(nameof(InvalidTokenMessage));
+        }
 
         public bool IsManual
         {
@@ -56,17 +69,20 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        public EditorChoiceOptionViewModel SelectedSourceOption
+        public EditorChoiceOptionViewModel? SelectedSourceOption
         {
-            get => SourceOptions.First(option => option.Value == Source.ToString());
+            get => SourceOptions.FirstOrDefault(option => option.Value == SourceToken);
             set
             {
-                if (value is not null && Enum.TryParse<PointEntrySource>(value.Value, out var source))
+                if (value is not null && StepEnumRules.TryRead<PointEntrySource>(value.Value, out var source))
+                {
+                    LoadSourceToken(value.Value);
                     WholeValueSource.UsesReference = source != PointEntrySource.Manual;
+                }
             }
         }
 
-        public bool ShowManual    => _source == PointEntrySource.Manual;
+        public bool ShowManual => _source == PointEntrySource.Manual;
         public bool ShowJobResult => _source == PointEntrySource.JobResult;
 
         private int _manualX;
@@ -103,20 +119,21 @@ namespace DesktopAutomationApp.ViewModels
             WholeValueSource = new GeneratedWholeValueSourceViewModel(PointsSource, false);
             WholeValueSource.Changed += () =>
             {
+                _unknownSource = null;
                 Source = WholeValueSource.UsesReference
                     ? PointEntrySource.JobResult
                     : PointEntrySource.Manual;
                 OnChange(string.Empty);
             };
             _source = PointEntrySource.Manual;
-            RemoveCommand            = new RelayCommand(() => owner.Remove(this));
+            RemoveCommand = new RelayCommand(() => owner.Remove(this));
         }
 
         public PointEntry ToPointEntry() => new PointEntry
         {
-            Source                = WholeValueSource.UsesReference ? PointEntrySource.JobResult : PointEntrySource.Manual,
-            ManualX               = ManualX,
-            ManualY               = ManualY,
+            Source = WholeValueSource.UsesReference ? PointEntrySource.JobResult : PointEntrySource.Manual,
+            ManualX = ManualX,
+            ManualY = ManualY,
             PointsSource = WholeValueSource.ToBinding()
         };
 

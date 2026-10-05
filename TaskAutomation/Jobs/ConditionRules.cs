@@ -5,6 +5,15 @@ namespace TaskAutomation.Jobs;
 
 public static class ConditionRules
 {
+    public static StepInputDescriptor ComparisonInputContract(
+        StepInputDescriptor contract, ResultPropertyDescriptor property) =>
+        property.DataType == ResultValueKind.Enum
+            ? contract with
+            {
+                LegacyAcceptedShapes = [new AcceptedResultShape(ResultValueKind.Text, ResultCardinality.Single)]
+            }
+            : contract;
+
     private static readonly ConditionOperator[] BoolOperators =
         [ConditionOperator.Equals, ConditionOperator.NotEquals];
 
@@ -52,7 +61,9 @@ public static class ConditionRules
         bool isDirectLocalValue,
         string? comparisonValue)
     {
-        if (StepResultMetadata.AreComparable(property, comparisonProperty)) return true;
+        if (StepResultMetadata.AreComparable(property, comparisonProperty))
+            return property.DataType != ResultValueKind.Enum || !isDirectLocalValue
+                   || IsComparisonValueValid(property, ConditionOperator.Equals, comparisonValue);
         if (property.DataType != ResultValueKind.Enum
             || comparisonProperty.DataType is not (ResultValueKind.Text or ResultValueKind.Enum)
             || !isDirectLocalValue)

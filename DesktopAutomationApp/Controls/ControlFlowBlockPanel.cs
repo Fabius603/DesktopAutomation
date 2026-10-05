@@ -1,13 +1,15 @@
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
+using System.Windows.Controls.Primitives;
+using System.Windows.Automation;
 using System.Windows.Media;
-using DesktopAutomationApp.Localization;
 using TaskAutomation.Jobs;
 using TaskAutomation.Jobs.ControlFlow;
+using DesktopAutomationApp.Services.Jobs;
+using DesktopAutomationApp.ViewModels;
+using System.Collections;
 
 namespace DesktopAutomationApp.Controls;
 
@@ -41,8 +43,38 @@ public sealed class ControlFlowBlockPanel : VirtualizingStackPanel
         nameof(PlaceholderForeground), typeof(Brush), typeof(ControlFlowBlockPanel),
         new FrameworkPropertyMetadata(Brushes.Transparent, FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private readonly List<BlockHitGeometry> _blockHitGeometries = [];
-    private int? _hoveredBlockStartIndex;
+    private LayoutState? _layoutState;
+
+    public ControlFlowBlockPanel()
+    {
+        LayoutUpdated += OnLayoutUpdated;
+        Loaded += (_, _) => { LayoutUpdated -= OnLayoutUpdated; LayoutUpdated += OnLayoutUpdated; };
+        Unloaded += (_, _) => { LayoutUpdated -= OnLayoutUpdated; _layoutState = null; };
+    }
+
+    // The panel can render before its generated containers finish arranging. Observe the
+    // measured positions, not mouse input, and invalidate only when those positions change.
+    private void OnLayoutUpdated(object? sender, EventArgs args)
+    {
+        var owner = ItemsControl.GetItemsOwner(this);
+        if (owner is null) return;
+        var model = owner.DataContext as JobStepsViewModel;
+        var rows = InternalChildren.OfType<FrameworkElement>().Select(item => new RowLayout(
+            item.DataContext, item.Visibility, item.TranslatePoint(new Point(), this), item.RenderSize,
+            GetElementRect(FindIcon(item)), GetElementRect((item as Control)?.Template?.FindName("Card", item) as FrameworkElement))).ToArray();
+        var next = new LayoutState(owner.ItemsSource, model?.StepsVersion ?? 0, owner.ActualWidth, rows);
+        if (_layoutState is { } previous && previous.Source == next.Source && previous.Version == next.Version
+            && previous.Width == next.Width && previous.Rows.SequenceEqual(next.Rows)) return;
+        _layoutState = next;
+        InvalidateVisual();
+    }
+
+    protected override void OnItemsChanged(object sender, ItemsChangedEventArgs args)
+    {
+        base.OnItemsChanged(sender, args);
+        _layoutState = null;
+        InvalidateVisual();
+    }
 
     public Brush BlockBackground
     {
@@ -87,193 +119,225 @@ public sealed class ControlFlowBlockPanel : VirtualizingStackPanel
         var owner = ItemsControl.GetItemsOwner(this);
         if (owner is null) return;
 
-        var steps = owner.Items.Cast<object>().OfType<JobStep>().ToArray();
+        var viewModel = owner.DataContext as JobStepsViewModel;
+        var items = owner.ItemsSource as IList ?? owner.Items;
+        var projection = StepListProjection.Get(items, viewModel?.StepsVersion ?? 0);
+        var steps = projection.Steps;
         if (steps.Length == 0) return;
 
-        var structure = ControlFlowStructureAnalyzer.Analyze(steps);
-        _blockHitGeometries.Clear();
+        var structure = projection.Structure;
 
-        foreach (var block in structure.Blocks.OrderBy(candidate => candidate.Depth))
-            DrawBlock(drawingContext, owner, structure, block, steps.Length);
-    }
-
-    protected override void OnMouseMove(MouseEventArgs e)
-    {
-        base.OnMouseMove(e);
-        var position = e.GetPosition(this);
-        var hovered = _blockHitGeometries
-            .Where(candidate => candidate.Geometry.FillContains(position))
-            .OrderByDescending(candidate => candidate.Depth)
-            .Select(candidate => (int?)candidate.StartIndex)
-            .FirstOrDefault();
-        SetHoveredBlock(hovered);
-    }
-
-    protected override void OnMouseLeave(MouseEventArgs e)
-    {
-        base.OnMouseLeave(e);
-        SetHoveredBlock(null);
+        var blocks = structure.Blocks.OrderBy(candidate => candidate.Depth)
+            .Where(block => !projection.IsHidden(block.StartIndex, viewModel?.CollapsedBlockIds ?? [])).ToArray();
+        // Paint all surfaces first: a nested surface must never cover an ancestor's route.
+        foreach (var block in blocks) DrawBlock(drawingContext, owner, block, steps.Length, surfacesOnly: true);
+        DrawSequence(drawingContext, owner, projection, Enumerable.Range(0, steps.Length)
+            .Where(index => projection.Depth(index) == 0 && steps[index] is not ElseStep and not ElseIfStep and not EndIfStep));
+        foreach (var block in blocks) DrawBlock(drawingContext, owner, block, steps.Length, surfacesOnly: false);
     }
 
     private void DrawBlock(
         DrawingContext drawingContext,
         ItemsControl owner,
-        ControlFlowStructure structure,
         ControlFlowBlock block,
-        int stepCount)
+        int stepCount,
+        bool surfacesOnly)
     {
+        var viewModel = owner.DataContext as JobStepsViewModel;
+        var collapsed = viewModel?.CollapsedBlockIds.Contains(((JobStep)owner.Items[block.StartIndex]).Id) == true;
         var start = GetItemRect(owner, block.StartIndex);
         var endIndex = block.EndIndex ?? block.LastIndex(stepCount);
-        var end = GetItemRect(owner, endIndex);
-        if (start is null || end is null) return;
+        var projection = StepListProjection.Get(owner.ItemsSource as IList ?? owner.Items, viewModel?.StepsVersion ?? 0);
+        var closing = collapsed ? null : GetClosurePoint(owner, projection, block);
+        var end = collapsed ? start : closing is { } point ? new Rect(0, point.Y - 8, 0, 12) : null;
+        var realized = Enumerable.Range(block.StartIndex, endIndex - block.StartIndex + 1)
+            .Select(index => GetItemRect(owner, index)).Where(rect => rect is { Height: > 0 }).ToArray();
+        if (realized.Length == 0) return;
+        // Keep ancestor rails visible when their headers are outside the realized viewport.
+        var clippedStart = start is null;
+        var clippedEnd = end is null || block.EndIndex is null;
+        start ??= realized[0];
+        end ??= realized[^1];
 
-        const double gutterWidth = 32;
-        const double depthIndent = 16;
-        const double railWidth = 12;
-        const double baseWidth = 358;
-        const double radius = 9;
-
-        var descendantDepth = structure.Blocks
-            .Where(candidate => block.Contains(candidate.StartIndex, stepCount))
-            .Select(candidate => candidate.Depth)
-            .DefaultIfEmpty(block.Depth)
-            .Max();
-        var width = baseWidth + ((descendantDepth - block.Depth) * depthIndent);
-        var left = gutterWidth + (block.Depth * depthIndent);
-
-        var sectionBars = block.Sections
-            .OrderBy(section => section.MarkerIndex)
-            .Select(section => (Section: section, ItemRect: GetItemRect(owner, section.MarkerIndex)))
-            .Where(item => item.ItemRect is not null)
-            .Select(item => (item.Section, Rect: new Rect(
-                left, item.ItemRect!.Value.Top, width, item.ItemRect.Value.Height)))
-            .ToArray();
-        if (sectionBars.Length == 0) return;
-
-        var footer = new Rect(left, end.Value.Top, width, end.Value.Height);
-        var bars = sectionBars.Select(item => item.Rect).Append(footer).ToArray();
-
-        var shape = CreateBlockGeometry(bars, railWidth, radius);
-        _blockHitGeometries.Add(new BlockHitGeometry(block.StartIndex, block.Depth, shape));
-        var hovered = _hoveredBlockStartIndex == block.StartIndex;
-        var pen = new Pen(hovered ? BlockHoverBorderBrush : BlockBorderBrush, 1.5)
+        var left = StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation;
+        var width = projection.Width(block.Depth, owner.ActualWidth);
+        var first = start.GetValueOrDefault();
+        var last = end.GetValueOrDefault();
+        var frame = new Rect(left, first.Top, width, Math.Max(64, last.Bottom - first.Top - 4));
+        if (surfacesOnly)
         {
-            LineJoin = PenLineJoin.Round,
-            StartLineCap = PenLineCap.Round,
-            EndLineCap = PenLineCap.Round
-        };
-        drawingContext.DrawGeometry(hovered ? BlockHoverBackground : BlockBackground, pen, shape);
-        DrawEmptySectionPlaceholders(drawingContext, block, sectionBars, footer, stepCount);
-    }
-
-    private void DrawEmptySectionPlaceholders(
-        DrawingContext drawingContext,
-        ControlFlowBlock block,
-        IReadOnlyList<(ControlFlowSection Section, Rect Rect)> sectionBars,
-        Rect footer,
-        int stepCount)
-    {
-        var borderPen = new Pen(PlaceholderBorderBrush, 1)
-        {
-            DashStyle = DashStyles.Dash
-        };
-        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var text = new FormattedText(
-            Loc.Get("Ui.Job.Steps.EmptyBranchPlaceholder"),
-            CultureInfo.CurrentUICulture,
-            FlowDirection.LeftToRight,
-            new Typeface("Segoe UI"),
-            12,
-            PlaceholderForeground,
-            dpi);
-
-        for (var index = 0; index < sectionBars.Count; index++)
-        {
-            var current = sectionBars[index];
-            if (!block.IsSectionEmpty(current.Section.MarkerIndex, stepCount)) continue;
-
-            var nextTop = index + 1 < sectionBars.Count
-                ? sectionBars[index + 1].Rect.Top
-                : footer.Top;
-            var availableHeight = nextTop - current.Rect.Bottom;
-            if (availableHeight < 24) continue;
-
-            var placeholder = new Rect(
-                current.Rect.Left + 20,
-                current.Rect.Bottom + 4,
-                330,
-                Math.Min(24, availableHeight - 12));
-            var textLeft = placeholder.Left + Math.Max(0, (placeholder.Width - text.Width) / 2);
-            var lineY = placeholder.Top + (placeholder.Height / 2);
-            const double textGap = 10;
-            drawingContext.DrawLine(
-                borderPen,
-                new Point(placeholder.Left, lineY),
-                new Point(Math.Max(placeholder.Left, textLeft - textGap), lineY));
-            drawingContext.DrawLine(
-                borderPen,
-                new Point(Math.Min(placeholder.Right, textLeft + text.Width + textGap), lineY),
-                new Point(placeholder.Right, lineY));
-            drawingContext.DrawText(text, new Point(
-                textLeft,
-                placeholder.Top + Math.Max(0, (placeholder.Height - text.Height) / 2)));
+            DrawLayer(drawingContext, frame, block.Depth, !clippedStart && !clippedEnd);
+            return;
         }
+        if (collapsed) return;
+        foreach (var section in block.Sections)
+        {
+            if (viewModel?.CollapsedBlockIds.Contains(section.Marker.Id) == true) continue;
+            var next = block.SectionEndExclusive(section.MarkerIndex, stepCount) ?? endIndex;
+            var header = GetCardRect(owner, section.MarkerIndex);
+            var brush = TryFindResource(section.Marker is ElseStep ? "StepList.Rail.Else" : "StepList.Rail.If") as Brush ?? BlockBorderBrush;
+            var children = Enumerable.Range(section.MarkerIndex + 1, next - section.MarkerIndex - 1)
+                .Where(index => projection.Depth(index) == block.Depth + 1
+                    && projection.Steps[index] is not ElseStep and not ElseIfStep and not EndIfStep).ToArray();
+            // A branch is a scope, not a step followed by the alternative branch. The rail
+            // groups its contents; directional arrows exist only inside this sequence.
+            var branchExit = DrawSequence(drawingContext, owner, projection, children, brush);
+            var childRows = children.Select(index => GetCardRect(owner, index)).Where(rect => rect is { Height: > 0 }).ToArray();
+            var top = header?.Bottom ?? childRows.FirstOrDefault()?.Top;
+            var bottom = childRows.Length > 0 ? Math.Max(childRows[^1]!.Value.Bottom, branchExit?.Y ?? 0) : GetEmptyBranchRect(owner, section.MarkerIndex)?.Bottom ?? header?.Bottom;
+            if (top is { } railTop && bottom is { } railBottom)
+            {
+                var lane = left + 14;
+                var cap = left + StepListProjection.Indentation - 6;
+                DrawScope(drawingContext, brush, lane, cap, railTop + 2, Math.Max(railTop + 10, railBottom + 4));
+            }
+        }
+
     }
 
-    private static Geometry CreateBlockGeometry(IReadOnlyList<Rect> bars, double railWidth, double radius)
+    private Point? DrawSequence(DrawingContext context, ItemsControl owner, StepListProjection projection,
+        IEnumerable<int> indices, Brush? routeBrush = null, Point? previous = null)
     {
-        var first = bars[0];
-        var last = bars[^1];
-        var left = first.Left;
-        var inner = left + railWidth;
-        var right = first.Right;
+        var brush = routeBrush ?? TryFindResource("App.Brush.Accent") as Brush ?? BlockBorderBrush;
+        foreach (var index in indices)
+        {
+            if (GetCardRect(owner, index) is not { Height: > 0 } row || GetIconRect(owner, index) is not { } icon) continue;
+            var conditional = projection.Structure.GetBlockStartingAt(index);
+            var entry = new Point(icon.Left + icon.Width / 2, row.Top - 2);
+            if (previous is { } exit && entry.Y >= exit.Y) DrawConnection(context, brush, exit, entry);
+            previous = conditional is not null && GetClosurePoint(owner, projection, conditional) is { } closure
+                ? closure : new Point(entry.X, row.Bottom + 2);
+        }
+        return previous;
+    }
+
+    private Point? GetClosurePoint(ItemsControl owner, StepListProjection projection, ControlFlowBlock block)
+    {
+        if (block.EndIndex is not int end) return null;
+        var collapsed = (owner.DataContext as JobStepsViewModel)?.CollapsedBlockIds ?? [];
+        if (collapsed.Contains(projection.Steps[block.StartIndex].Id)) return null;
+        for (var index = end - 1; index >= block.StartIndex; index--)
+        {
+            if (projection.Steps[index] is EndIfStep || projection.IsHidden(index, collapsed)) continue;
+            if (GetCardRect(owner, index) is not { } row) return null;
+            var closures = projection.ClosuresAfter(index, collapsed);
+            var order = closures.ToList().FindIndex(candidate => candidate.StartIndex == block.StartIndex);
+            var icon = GetIconRect(owner, block.StartIndex);
+            var exitX = icon is { } measured ? measured.Left + measured.Width / 2
+                : StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation + 57;
+            return order < 0 ? null : new Point(exitX, (GetEmptyBranchRect(owner, index)?.Bottom ?? row.Bottom) + 12 + order * 24);
+        }
+        return null;
+    }
+
+    private static void DrawConnection(DrawingContext drawing, Brush brush, Point from, Point to)
+    {
         var geometry = new StreamGeometry();
-        using var context = geometry.Open();
-        context.BeginFigure(new Point(left + radius, first.Top), true, true);
-        context.LineTo(new Point(right - radius, first.Top), true, false);
-        context.QuadraticBezierTo(new Point(right, first.Top), new Point(right, first.Top + radius), true, false);
-
-        for (var index = 0; index < bars.Count; index++)
+        using (var context = geometry.Open())
         {
-            var bar = bars[index];
-            context.LineTo(new Point(right, bar.Bottom - radius), true, false);
-            context.QuadraticBezierTo(new Point(right, bar.Bottom), new Point(right - radius, bar.Bottom), true, false);
-
-            if (index == bars.Count - 1)
-                break;
-
-            context.LineTo(new Point(inner + radius, bar.Bottom), true, false);
-            context.QuadraticBezierTo(new Point(inner, bar.Bottom), new Point(inner, bar.Bottom + radius), true, false);
-            var next = bars[index + 1];
-            context.LineTo(new Point(inner, next.Top - radius), true, false);
-            context.QuadraticBezierTo(new Point(inner, next.Top), new Point(inner + radius, next.Top), true, false);
-            context.LineTo(new Point(right - radius, next.Top), true, false);
-            context.QuadraticBezierTo(new Point(right, next.Top), new Point(right, next.Top + radius), true, false);
+            var middle = (from.Y + to.Y) / 2;
+            context.BeginFigure(from, false, false);
+            if (Math.Abs(from.X - to.X) < 0.5)
+                context.LineTo(to, true, false);
+            else
+            {
+                // Rounded right-angle elbow: direction remains visibly downward at both ports.
+                var radius = Math.Min(4, Math.Min(Math.Abs(to.X - from.X) / 2, Math.Max(0, (to.Y - from.Y) / 4)));
+                var direction = Math.Sign(to.X - from.X);
+                context.LineTo(new Point(from.X, middle - radius), true, false);
+                context.QuadraticBezierTo(new Point(from.X, middle), new Point(from.X + direction * radius, middle), true, false);
+                context.LineTo(new Point(to.X - direction * radius, middle), true, false);
+                context.QuadraticBezierTo(new Point(to.X, middle), new Point(to.X, middle + radius), true, false);
+                context.LineTo(to, true, false);
+            }
         }
-
-        context.LineTo(new Point(left + radius, last.Bottom), true, false);
-        context.QuadraticBezierTo(new Point(left, last.Bottom), new Point(left, last.Bottom - radius), true, false);
-        context.LineTo(new Point(left, first.Top + radius), true, false);
-        context.QuadraticBezierTo(new Point(left, first.Top), new Point(left + radius, first.Top), true, false);
-        geometry.Freeze();
-        return geometry;
+        drawing.DrawGeometry(null, new Pen(brush, 1.75) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, geometry);
+        var arrow = new StreamGeometry();
+        using (var context = arrow.Open())
+        {
+            context.BeginFigure(to, true, true);
+            context.LineTo(new Point(to.X - 3, to.Y - 4), true, false);
+            context.LineTo(new Point(to.X + 3, to.Y - 4), true, false);
+        }
+        drawing.DrawGeometry(brush, null, arrow);
     }
 
-    private void SetHoveredBlock(int? startIndex)
+    private static void DrawScope(DrawingContext drawing, Brush brush, double lane, double cap, double top, double bottom)
     {
-        if (_hoveredBlockStartIndex == startIndex) return;
-        _hoveredBlockStartIndex = startIndex;
-        InvalidateVisual();
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            context.BeginFigure(new Point(cap, top), false, false);
+            context.LineTo(new Point(lane + 4, top), true, false);
+            context.QuadraticBezierTo(new Point(lane, top), new Point(lane, top + 4), true, false);
+            context.LineTo(new Point(lane, bottom - 4), true, false);
+            context.QuadraticBezierTo(new Point(lane, bottom), new Point(lane + 4, bottom), true, false);
+            context.LineTo(new Point(cap, bottom), true, false);
+        }
+        var muted = brush.CloneCurrentValue(); muted.Opacity = 0.75;
+        drawing.DrawGeometry(null, new Pen(muted, 1.5), geometry);
+    }
+
+    private void DrawLayer(DrawingContext context, Rect frame, int depth, bool complete)
+    {
+        var baseColor = (BlockBackground as SolidColorBrush)?.Color ?? Color.FromRgb(24, 29, 35);
+        var light = baseColor.R + baseColor.G + baseColor.B > 450;
+        Color Mix(double ratio) => Color.FromRgb((byte)(baseColor.R + (255 - baseColor.R) * ratio),
+            (byte)(baseColor.G + (255 - baseColor.G) * ratio), (byte)(baseColor.B + (255 - baseColor.B) * ratio));
+        var elevation = light ? Math.Min(0.75, depth * 0.18) : Math.Min(0.24, depth * 0.055);
+        var fill = new LinearGradientBrush(Mix(elevation + 0.025), Mix(elevation), 90);
+        if (complete)
+        {
+            var shadow = frame; shadow.Offset(3, 5);
+            context.DrawRoundedRectangle(new SolidColorBrush(Color.FromArgb(light ? (byte)30 : (byte)85, 0, 0, 0)), null, shadow, 9, 9);
+            context.DrawRoundedRectangle(fill, new Pen(BlockBorderBrush, 1), frame, 8, 8);
+            var highlight = new SolidColorBrush(Color.FromArgb(25, 255, 255, 255));
+            context.DrawLine(new Pen(highlight, 1), new Point(frame.Left + 8, frame.Top + 1), new Point(frame.Right - 8, frame.Top + 1));
+        }
+        else
+        {
+            // An incomplete block has an open surface; never paint a fabricated bottom closure.
+            context.DrawRectangle(fill, null, frame);
+            context.DrawLine(new Pen(BlockBorderBrush, 1), frame.TopLeft, frame.BottomLeft);
+        }
     }
 
     private Rect? GetItemRect(ItemsControl owner, int index)
     {
-        if (owner.ItemContainerGenerator.ContainerFromIndex(index) is not FrameworkElement item)
+        if (owner.ItemContainerGenerator.ContainerFromIndex(index) is not FrameworkElement { Visibility: Visibility.Visible } item)
             return null;
 
         var topLeft = item.TranslatePoint(new Point(0, 0), this);
         return new Rect(topLeft, item.RenderSize);
     }
 
-    private sealed record BlockHitGeometry(int StartIndex, int Depth, Geometry Geometry);
+    private Rect? GetCardRect(ItemsControl owner, int index)
+    {
+        if (owner.ItemContainerGenerator.ContainerFromIndex(index) is not Control { Visibility: Visibility.Visible } item) return null;
+        return GetElementRect(item.Template?.FindName("Card", item) as FrameworkElement);
+    }
+
+    private Rect? GetEmptyBranchRect(ItemsControl owner, int index) => GetElementRect(
+        owner.ItemContainerGenerator.ContainerFromIndex(index) is Control item
+            ? item.Template?.FindName("EmptyBranchHint", item) as FrameworkElement : null);
+
+    private Rect? GetIconRect(ItemsControl owner, int index) => GetElementRect(
+        owner.ItemContainerGenerator.ContainerFromIndex(index) is FrameworkElement item ? FindIcon(item) : null);
+
+    private Rect? GetElementRect(FrameworkElement? element) => element is { Visibility: Visibility.Visible, ActualHeight: > 0 }
+        ? new Rect(element.TranslatePoint(new Point(), this), element.RenderSize) : null;
+
+    private static FrameworkElement? FindIcon(DependencyObject item)
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(item); index++)
+        {
+            var child = VisualTreeHelper.GetChild(item, index);
+            if (child is FrameworkElement element && AutomationProperties.GetAutomationId(element) == "JobStepDragHandle") return element;
+            if (FindIcon(child) is { } icon) return icon;
+        }
+        return null;
+    }
+
+    private sealed record RowLayout(object Data, Visibility Visibility, Point Position, Size Size, Rect? Icon, Rect? Card);
+    private sealed record LayoutState(object? Source, int Version, double Width, RowLayout[] Rows);
 }

@@ -1,0 +1,131 @@
+[
+  {
+    "id": "mode_roundtrip",
+    "result": {
+      "authoringValid": true,
+      "mode": "Expression",
+      "expressions": [
+        {
+          "Axis": "X",
+          "op": "GreaterThan",
+          "Value": 999
+        }
+      ]
+    }
+  },
+  {
+    "id": "hidden_condition_references",
+    "result": {
+      "valid": true,
+      "actualReferences": 1,
+      "inspectedReferences": 0
+    }
+  },
+  {
+    "id": "duplicate_variable_ids",
+    "result": {
+      "authoringValid": true,
+      "runtimeValue": 99
+    }
+  },
+  {
+    "id": "wrong_provider",
+    "result": {
+      "authoringValid": true,
+      "runtimeValue": -1,
+      "runtimeError": "Die ausgew\u00E4hlte Jobvariable ist nicht verf\u00FCgbar."
+    }
+  },
+  {
+    "id": "collection_scalar_reader",
+    "error": "The node must be of type \u0027JsonValue\u0027."
+  },
+  {
+    "id": "hidden_enum_validation_vs_apply",
+    "result": {
+      "authoringValid": true,
+      "runtimeValue": "",
+      "runtimeError": "Field \u0027window_mode\u0027 contains unknown FocusProcessWindowMode token \u0027RemovedMode\u0027."
+    }
+  },
+  {
+    "id": "unvalidated_collection_item",
+    "result": {
+      "authoringValid": true,
+      "errors": [
+        null
+      ],
+      "runtimeOptionCount": 0,
+      "runtimeError": null
+    }
+  },
+  {
+    "id": "object_array_property_metadata",
+    "result": {
+      "authoringKind": "Integer",
+      "authoringCardinality": "Single",
+      "runtimeKind": "ResultObject",
+      "runtimeCardinality": "Collection",
+      "value": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "id": "user_choice_wrong_shape",
+    "result": {
+      "valid": true,
+      "appliedOptions": 0
+    }
+  },
+  {
+    "id": "editor_invalid_operator_preservation",
+    "result": {
+      "storedToken": "RemovedOperator",
+      "emitted": [
+        {
+          "axis": "X",
+          "operator": "LessThan",
+          "value": 17
+        }
+      ]
+    }
+  },
+  {
+    "id": "variable_editor_invalid_value_preservation",
+    "result": {
+      "original": "broken",
+      "valueAfterOpening": 0
+    }
+  },
+  {
+    "id": "end_job_persisted_vs_resolved",
+    "result": {
+      "authoringValid": true,
+      "skipEndStepsFromRawSettings": false,
+      "skipEndStepsResolved": true
+    }
+  },
+  {
+    "id": "clone_choice_and_condition",
+    "result": {
+      "originalSourceStep": "11ce364b-83b0-4cb4-842a-f3eb8fec2242",
+      "clonedSourceStep": "c757c3d7-839b-4378-9c61-e34e3f8b9f85",
+      "conditionStillReferencesStep": "11ce364b-83b0-4cb4-842a-f3eb8fec2242",
+      "comparisonCapturedInClipboard": false,
+      "nestedComparisonReportedUsed": 0
+    }
+  },
+  {
+    "id": "forbidden_step_result_provider",
+    "result": {
+      "contractAllowsStepResults": false,
+      "authoringValid": false,
+      "errors": [
+        null,
+        "Die Ergebnis-Eigenschaft \u0027Selected Option Id\u0027 ist f\u00FCr die Eingabe \u0027action\u0027 nicht erlaubt."
+      ]
+    }
+  }
+]

@@ -2,6 +2,53 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                     xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf">
+    <Style x:Key="StepRadioButton" TargetType="RadioButton">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceRaised}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
+                            CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
+                                <Ellipse x:Name="Ring" Stroke="{DynamicResource App.Brush.TextMuted}" StrokeThickness="1.5"/>
+                                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource App.Brush.Accent}" Visibility="Collapsed"/>
+                            </Grid>
+                            <ContentPresenter Grid.Column="1" RecognizesAccessKey="True"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource App.Brush.Accent}"/>
+                            <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key="StepFieldGrid" TargetType="Grid">
         <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
@@ -196,7 +243,7 @@
     <Style x:Key="GeometryNumberInput" TargetType="TextBox"
            BasedOn="{StaticResource {x:Type TextBox}}">
         <Setter Property="MinWidth" Value="60"/>
-        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="MinHeight" Value="34"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style x:Key="StepRichTextInput" TargetType="{x:Type emoji:RichTextBox}"
@@ -226,7 +273,7 @@
         <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
     </Style>
     <Style x:Key="GeometryInlineAction" TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
-        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="MinHeight" Value="34"/>
         <Setter Property="Padding" Value="10,4"/>
     </Style>
     <Style x:Key="GeometrySummary" TargetType="TextBlock">

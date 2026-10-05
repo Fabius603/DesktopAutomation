@@ -1,4 +1,5 @@
 using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Steps;
 
 namespace TaskAutomation.Jobs;
 
@@ -133,6 +134,7 @@ public static class ValueBindingTree
 
     private static void ApplySchema(ResultBinding binding, string schemaId)
     {
+        if (!string.IsNullOrEmpty(binding.SchemaId) && binding.SchemaId != schemaId) return;
         binding.SchemaId = schemaId;
         if (!ValueBindingSchemaRegistry.TryGet(schemaId, out var schema)) return;
         if (binding.Members is not null)
@@ -151,7 +153,19 @@ public sealed record ValueBindingMemberDescriptor(
     ResultValueKind ValueKind,
     ResultCardinality Cardinality = ResultCardinality.Single,
     string? NestedSchemaId = null,
-    IReadOnlySet<string>? AllowedProviderIds = null);
+    IReadOnlySet<string>? AllowedProviderIds = null)
+{
+    public IReadOnlySet<string> LegacyAllowedProviderIds { get; init; } = new HashSet<string>();
+
+    public bool AllowsProvider(string providerId, bool includeLegacy = true) =>
+        AllowedProviderIds?.Contains(providerId) != false
+        || includeLegacy && LegacyAllowedProviderIds.Contains(providerId);
+
+    public bool AcceptsSource(string providerId, ResultPropertyDescriptor property) =>
+        AllowsProvider(providerId) && property.DataType == ValueKind
+        && (property.Cardinality == Cardinality
+            || Cardinality == ResultCardinality.Single && property.Cardinality == ResultCardinality.OptionalSingle);
+}
 
 public sealed record ValueBindingSchemaDescriptor(
     string Id,
@@ -208,7 +222,7 @@ public static class ValueBindingSchemaRegistry
             [VisualOverlay] = new(VisualOverlay,
                 new Dictionary<string, ValueBindingMemberDescriptor>(StringComparer.Ordinal)
                 {
-                    ["text_results"] = new(ResultValueKind.ResultObject,
+                    ["text_results"] = new(ResultValueKind.ResultObject, ResultCardinality.Collection,
                         NestedSchemaId: VisualOverlayTextEntries,
                         AllowedProviderIds: ReusableProviders)
                 }),
@@ -220,6 +234,9 @@ public static class ValueBindingSchemaRegistry
                 ("offset_x", ResultValueKind.Integer), ("offset_y", ResultValueKind.Integer),
                 ("duration_ms", ResultValueKind.Integer), ("clear_on_job_end", ResultValueKind.Boolean))
         };
+
+    public static ValueBindingMemberDescriptor ItemContract(string itemSchemaId) =>
+        new(ResultValueKind.ResultObject, NestedSchemaId: itemSchemaId, AllowedProviderIds: ReusableProviders);
 
     public static bool TryGet(string schemaId, out ValueBindingSchemaDescriptor schema) =>
         Schemas.TryGetValue(schemaId, out schema!);
@@ -241,7 +258,10 @@ public static class ValueBindingSchemaRegistry
         params (string Id, ResultValueKind Kind)[] members) => new(
         id,
         members.ToDictionary(member => member.Id,
-            member => new ValueBindingMemberDescriptor(member.Kind, AllowedProviderIds: ReusableProviders),
+            member => new ValueBindingMemberDescriptor(member.Kind, AllowedProviderIds: ReusableProviders)
+            {
+                LegacyAllowedProviderIds = StepInputContractRegistry.LegacyProvidersFor(member.Kind)
+            },
             StringComparer.Ordinal));
 
     private static ValueBindingSchemaDescriptor DirectObject(

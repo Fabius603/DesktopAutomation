@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using TaskAutomation.Jobs;
+using TaskAutomation.Steps.Definitions;
+using DesktopAutomationApp.Localization;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -34,11 +36,28 @@ namespace DesktopAutomationApp.ViewModels
             set { _axis = value; OnChange(); }
         }
 
-        private PointAxisOperator _operator = PointAxisOperator.LessThan;
-        public PointAxisOperator Operator
+        private string? _unknownOperator;
+        private PointAxisOperator? _operator = PointAxisOperator.LessThan;
+        public PointAxisOperator? Operator
         {
             get => _operator;
-            set { _operator = value; OnChange(); }
+            set
+            {
+                if (value is null) return;
+                _operator = value; _unknownOperator = null;
+                OnChange(); OnChange(nameof(HasInvalidToken)); OnChange(nameof(InvalidTokenMessage));
+            }
+        }
+
+        public string OperatorToken => _unknownOperator ?? _operator?.ToString() ?? string.Empty;
+        public bool HasInvalidToken => _unknownOperator is not null;
+        public string InvalidTokenMessage => HasInvalidToken
+            ? Loc.Format("Ui.Step.Generated.Validation.UnknownSavedToken", _unknownOperator) : string.Empty;
+        public void LoadOperatorToken(string token)
+        {
+            if (StepEnumRules.TryRead<PointAxisOperator>(token, out var value)) Operator = value;
+            else { _operator = null; _unknownOperator = token; OnChange(nameof(Operator)); }
+            OnChange(nameof(HasInvalidToken)); OnChange(nameof(InvalidTokenMessage));
         }
 
         private int _value;
@@ -57,16 +76,16 @@ namespace DesktopAutomationApp.ViewModels
 
         public AxisExpression ToAxisExpression() => new AxisExpression
         {
-            Axis     = _axis,
-            Operator = _operator,
-            Value    = _value
+            Axis = _axis,
+            Operator = _operator ?? throw new InvalidOperationException(InvalidTokenMessage),
+            Value = _value
         };
 
         public void LoadFrom(AxisExpression e)
         {
-            Axis     = e.Axis;
+            Axis = e.Axis;
             Operator = e.Operator;
-            Value    = e.Value;
+            Value = e.Value;
         }
     }
 }

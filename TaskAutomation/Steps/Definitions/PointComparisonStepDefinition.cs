@@ -118,7 +118,10 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
             Expressions = ReadExpressions(draft).Select(value => new AxisExpression
             {
                 Axis = value.Axis,
-                Operator = Enum.TryParse(value.Operator, out PointAxisOperator op) ? op : PointAxisOperator.LessThan,
+                Operator = mode == PointComparisonMode.Offset
+                    && !DefinitionValueReader.TryEnum<PointAxisOperator>(value.Operator, out _)
+                        ? PointAxisOperator.LessThan
+                        : DefinitionValueReader.Enum<PointAxisOperator>(value.Operator, ExpressionsFieldId),
                 Value = value.Value
             }).ToList()
         };
@@ -129,13 +132,15 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         if (!DefinitionValueReader.TryEnum<PointComparisonMode>(draft, ModeFieldId, out var mode))
             return [];
         var points = ReadPoints(draft);
-        if (points.Count == 0 || points.Any(point => point.Source != "Manual" && !ReadBinding(point.PointsSource).IsConfigured))
+        if (points.Count == 0 || points.Any(point => point is null
+                || !DefinitionValueReader.TryEnum<PointEntrySource>(point.Source, out var source)
+                || source != PointEntrySource.Manual && !ReadBinding(point.PointsSource).IsConfigured))
             return [Invalid(PointsFieldId, PointsFieldId)];
         if (mode != PointComparisonMode.Offset)
         {
             var expressions = ReadExpressions(draft);
-            if (expressions.Count == 0 || expressions.Any(expression => expression.Axis is not ("X" or "Y")
-                    || !Enum.TryParse<PointAxisOperator>(expression.Operator, out _)))
+            if (expressions.Count == 0 || expressions.Any(expression => expression is null || expression.Axis is not ("X" or "Y")
+                    || !DefinitionValueReader.TryEnum<PointAxisOperator>(expression.Operator, out _)))
                 return [Invalid(ExpressionsFieldId, ModeFieldId, ExpressionsFieldId)];
         }
         else if (DefinitionValueReader.String(draft, ReferenceSourceFieldId) != "Manual"
@@ -152,7 +157,7 @@ public sealed class PointComparisonStepDefinition : StepDefinition<PointComparis
         JsonSerializer.SerializeToNode(entry.PointsSource));
     private static PointEntry FromValue(StepPointEntryValue value) => new()
     {
-        Source = Enum.TryParse(value.Source, out PointEntrySource source) ? source : PointEntrySource.Manual,
+        Source = DefinitionValueReader.Enum<PointEntrySource>(value.Source, PointsFieldId),
         ManualPoint = value.ManualPoint,
         PointsSource = ReadBinding(value.PointsSource)
     };

@@ -6,6 +6,29 @@ namespace TaskAutomation.Tests.Jobs;
 
 public sealed class ConditionRulesTests
 {
+    [Fact]
+    public void InvalidConditionAndMissingBlockEndAreBothReported()
+    {
+        var step = new IfStep();
+        var result = Assert.Single(JobValidation.ValidateJob(new Job { Steps = [step] }).Steps);
+        Assert.False(result.IsValid);
+        Assert.Contains("StepValidation.Required", result.Error);
+        Assert.Contains("EndIf", result.Error);
+        Assert.True(result.Errors!.Count >= 2);
+    }
+
+    [Theory]
+    [InlineData("yes", true)]
+    [InlineData("removed", false)]
+    [InlineData("YES", false)]
+    [InlineData(null, false)]
+    public void DirectEnumComparison_RequiresACurrentTokenEvenWhenSchemaMatches(string? token, bool expected)
+    {
+        var property = new ResultPropertyDescriptor("choice", "Choice", ResultValueKind.Enum,
+            EnumTypeName: "UserChoiceResult:choice", EnumValues: ["yes", "no"]);
+        Assert.Equal(expected, ConditionRules.AreComparisonSourcesCompatible(property, property, true, token));
+    }
+
     [Theory]
     [InlineData(ResultValueKind.Boolean, ConditionOperator.IsTrue, true)]
     [InlineData(ResultValueKind.Boolean, ConditionOperator.Contains, false)]

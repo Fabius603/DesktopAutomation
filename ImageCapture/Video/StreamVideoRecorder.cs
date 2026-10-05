@@ -1,4 +1,4 @@
-﻿using ImageCapture.Video;
+using ImageCapture.Video;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using System;
@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg.Downloader;
 
-public class StreamVideoRecorder : IDisposable
+public class StreamVideoRecorder : IVideoRecorder
 {
     // interner PST‐Frame
     private struct TimedFrame
@@ -197,13 +197,13 @@ public class StreamVideoRecorder : IDisposable
                 long wait = nextTargetTime - now;
                 if (wait > 2)
                     await Task.Delay((int)(wait - 2), token);
-                while (stopwatch.ElapsedMilliseconds < nextTargetTime) {}
+                while (stopwatch.ElapsedMilliseconds < nextTargetTime) { }
 
                 TimedFrame? slotFrame;
                 lock (_frameLock)
                 {
                     slotFrame = _latestFrame;
-                    _latestFrame = null;      
+                    _latestFrame = null;
                 }
 
                 var toWrite = slotFrame?.RawFrame ?? lastFrame;

@@ -87,7 +87,7 @@ public sealed class ConditionSelectionNode : INotifyPropertyChanged
 public sealed class ConditionRowViewModel : INotifyPropertyChanged
 {
     private readonly string _comparisonInputKey;
-    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
+    private readonly Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, ResultBinding?, GeneratedResultBindingEditorViewModel>? _nestedInputResolver;
     private GeneratedStepFieldViewModel? _comparisonField;
     private bool _loadingSourcePicker;
     private int _semanticChangeDeferral;
@@ -353,7 +353,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         IReadOnlyList<JobVariable>? variables = null,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null,
         string comparisonInputKey = "conditions.0.comparison",
-        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
+        Func<string, StepValueKind, JsonNode?, ResultPropertyDescriptor?, ResultBinding?, GeneratedResultBindingEditorViewModel>? nestedInputResolver = null,
         ValueReferenceSourceCatalog? sourceCatalog = null)
     {
         _owner = owner;
@@ -362,10 +362,10 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         RemoveCommand = new RelayCommand(
             () => { if (owner.Count > 1) owner.Remove(this); },
             () => owner.Count > 1);
-        _availableSourceSteps = sources;
-        _jobVariables = (variables ?? []).Where(variable => variable.Id != Guid.Empty)
-            .ToDictionary(variable => variable.Id.ToString("D"), StringComparer.OrdinalIgnoreCase);
-        _availableVariables = (variables ?? []).Select(ValueProviderSourceDescriptor.FromVariable)
+        _availableSourceSteps = sourceCatalog?.Sources ?? sources;
+        _jobVariables = sourceCatalog?.JobVariables ?? (variables ?? []).Where(variable => variable.Id != Guid.Empty)
+            .ToDictionary(variable => JobValueSources.Key(JobValueSources.ProviderFor(variable), variable.Id.ToString("D")), StringComparer.Ordinal);
+        _availableVariables = (IReadOnlyList<ValueProviderSourceDescriptor>?)sourceCatalog?.ProviderSources ?? (variables ?? []).Select(ValueProviderSourceDescriptor.FromVariable)
             .Concat(providerSources ?? [])
             .DistinctBy(source => (source.ProviderId, source.SourceId))
             .ToArray();
@@ -577,7 +577,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
 
     private ResultPropertyDescriptor Describe(ValueProviderSourceDescriptor variable, string? valuePath = null) =>
         !string.IsNullOrWhiteSpace(valuePath)
-        && _jobVariables.TryGetValue(variable.SourceId, out var jobVariable)
+        && _jobVariables.TryGetValue(JobValueSources.Key(variable.ProviderId, variable.SourceId), out var jobVariable)
         && JobVariablePropertyMetadata.GetProperties(jobVariable).FirstOrDefault(property =>
             property.Name.Equals(valuePath, StringComparison.OrdinalIgnoreCase)) is { } property
             ? property
@@ -728,9 +728,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         var field = new GeneratedStepFieldViewModel(descriptor, node,
             inputReferenceEditor: _nestedInputResolver(
                 _comparisonInputKey, kind, node,
-                kind == StepValueKind.Enum ? SelectedProperty : null));
-        if (binding?.IsConfigured == true)
-            field.InputReferenceEditor!.Picker.Load(binding);
+                kind == StepValueKind.Enum ? SelectedProperty : null, binding));
         field.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName is nameof(GeneratedStepFieldViewModel.InputText)

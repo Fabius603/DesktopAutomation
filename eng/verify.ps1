@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+. (Join-Path $PSScriptRoot 'initialize-dotnet.ps1') -RepositoryRoot $repoRoot
 $manifestPath = Join-Path $PSScriptRoot 'test-manifest.json'
 $artifactsRoot = Join-Path $repoRoot 'artifacts\verify'
 

@@ -6,6 +6,41 @@ namespace TaskAutomation.Tests.Jobs;
 
 public sealed class JobSerializationTests
 {
+    [Fact]
+    public void ReferenceBackedDynamicContracts_AreRestoredWhenReopeningJob()
+    {
+        var choice = new UserChoiceStep
+        {
+            Settings = new() { Options = [new() { Id = "answer-id", Label = "Answer", Value = "value" }] }
+        };
+        var query = new WindowsStateQueryStep
+        {
+            Settings = new() { QueryType = "audio.volume", Parameters = new() { ["device"] = "default" } }
+        };
+        var job = new Job { Steps = [choice, query] };
+        JobVariableInputMigration.Migrate(job);
+        var options = new JsonSerializerOptions();
+        JobJsonSerialization.Configure(options);
+
+        var json = JsonSerializer.Serialize(job, options);
+        Assert.DoesNotContain("\"settings\"", json);
+        var restored = JsonSerializer.Deserialize<Job>(json, options)!;
+
+        var restoredChoice = Assert.IsType<UserChoiceStep>(restored.Steps[0]);
+        var answer = Assert.Single(restoredChoice.Settings.Options);
+        Assert.Equal("answer-id", answer.Id);
+        Assert.Equal("Answer", answer.Label);
+        var property = TaskAutomation.Steps.StepResultContractRegistry.Resolve(restoredChoice)!
+            .Properties.Single(property => property.StableId == "selected_option_id");
+        Assert.Equal(["answer-id"], property.EnumValues);
+        Assert.Equal("Answer", property.EnumDisplayNames!["answer-id"]);
+        var restoredQuery = Assert.IsType<WindowsStateQueryStep>(restored.Steps[1]);
+        Assert.Equal("audio.volume", restoredQuery.Settings.QueryType);
+        Assert.Equal("default", restoredQuery.Settings.Parameters["device"]);
+        Assert.Equal(job.LocalValues.Select(value => value.Id), restored.LocalValues.Select(value => value.Id));
+        Assert.Equal(json, JsonSerializer.Serialize(restored, options));
+    }
+
     [Theory]
     [InlineData("x", "y", "width", "height")]
     [InlineData("X", "Y", "Width", "Height")]

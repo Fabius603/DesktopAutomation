@@ -14,7 +14,7 @@ namespace TaskAutomation.Steps
         /// Gibt <c>TResult.Default</c> zurück wenn der Step noch nicht gelaufen ist.
         /// </summary>
         TResult Get<TStep, TResult>()
-            where TStep   : JobStep
+            where TStep : JobStep
             where TResult : StepResultBase;
 
         /// <summary>
@@ -33,6 +33,11 @@ namespace TaskAutomation.Steps
 
         /// <summary>Returns a persisted job variable by its stable ID.</summary>
         JobVariable? GetVariable(Guid variableId) => null;
+
+        void RegisterStep(JobStep step) { }
+
+        ResultTypeDescriptor? GetResultContract(string stepId) => GetRaw(stepId) is { } result
+            ? StepResultMetadata.GetResultType(result.GetType().Name) : null;
 
         /// <summary>Resolves a non-step value through the provider registry.</summary>
         RuntimeValueReadResult ReadProvider(string providerId, string sourceId) =>

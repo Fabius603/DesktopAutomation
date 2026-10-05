@@ -36,6 +36,7 @@ namespace TaskAutomation.Steps
             }
 
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
+            ctx.RegisterYoloModel(step.Settings.Model);
 
             System.Drawing.Rectangle? roi = null;
             var dynamicRoi = DynamicRoiResolver.Resolve(
@@ -60,8 +61,8 @@ namespace TaskAutomation.Steps
                     step.Settings.ClassName, step.Settings.ConfidenceThreshold);
                 return new YOLODetectionResult
                 {
-                    WasExecuted    = true,
-                    Found          = false,
+                    WasExecuted = true,
+                    Found = false,
                     AppliedRoi = dynamicRoi,
                     UsedDynamicRoi = dynamicRoi.HasValue
                 };
@@ -99,15 +100,17 @@ namespace TaskAutomation.Steps
 
             return new YOLODetectionResult
             {
-                WasExecuted    = true,
-                Found          = true,
-                Point          = globalPoint,
-                BoundingBox    = globalBoundingBox,
-                Confidence     = rawResult.Confidence,
+                WasExecuted = true,
+                Found = true,
+                Point = globalPoint,
+                BoundingBox = globalBoundingBox,
+                Confidence = rawResult.Confidence,
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
-                AllDetections  = allDetections
-                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
+                AllDetections = allDetections
+                ,
+                AppliedRoi = dynamicRoi,
+                UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

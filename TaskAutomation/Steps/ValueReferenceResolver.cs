@@ -16,33 +16,20 @@ public sealed record ResolvedValueReference(
 /// <summary>Canonical value-reference resolution shared by validation and execution.</summary>
 public static class ValueReferenceResolver
 {
-    public static ResolvedValueReference Resolve(IJobResultStore results, ValueReference reference)
+    public static ResolvedValueReference Resolve(IJobResultStore results, ValueReference reference,
+        ResultTypeDescriptor? resultContract = null)
     {
         ArgumentNullException.ThrowIfNull(results);
         ArgumentNullException.ThrowIfNull(reference);
         RuntimeValueReadResult read;
-        if (reference.HasProviderReference)
+        if (reference is ResultBinding stepBinding && stepBinding.TryGetStepResult(out var stepSource))
+        {
+            read = ReadStepResult(results.GetRaw, id => resultContract ?? results.GetResultContract(id),
+                stepSource, stepBinding.PropertyPath);
+        }
+        else if (reference.HasProviderReference)
         {
             read = results.ReadProvider(reference.ProviderId, reference.SourceId);
-        }
-        else if (reference is ResultBinding binding && binding.TryGetStepResult(out var source))
-        {
-            var result = results.GetRaw(source.StepId);
-            if (result is null || !result.WasExecuted)
-                return Failure($"Der Quell-Step '{source.StepId}' wurde noch nicht ausgeführt.");
-            if (!StepResultMetadata.TryGetProperty(result.GetType(), source.PropertyId, source.PropertyId, out var property)
-                || !StepResultMetadata.TryReadValue(result, property, out var value))
-                return Failure($"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
-            read = new RuntimeValueReadResult(
-                RuntimeValueReadStatus.Success,
-                new ValueProviderSourceDescriptor(
-                    ValueProviderIds.StepResult,
-                    StepResultSourceIdCodec.Create(source.StepId, source.PropertyId),
-                    property.DisplayName,
-                    property.Description,
-                    property.DataType,
-                    property.Cardinality),
-                value);
         }
         else
         {
@@ -52,6 +39,30 @@ public static class ValueReferenceResolver
         if (!read.IsSuccess)
             return new(read.Status, read.Descriptor, Error: read.Error);
         return ApplyValuePath(read.Value, read.Descriptor, reference.ValuePath);
+    }
+
+    internal static RuntimeValueReadResult ReadStepResult(Func<string, StepResultBase?> readResult,
+        Func<string, ResultTypeDescriptor?> readContract, StepResultSourceId source, string? propertyPath = null)
+    {
+        var result = readResult(source.StepId);
+        if (result?.WasExecuted != true)
+            return new(RuntimeValueReadStatus.SourceUnavailable, Error: $"Der Quell-Step '{source.StepId}' wurde noch nicht ausgeführt.");
+        var contract = readContract(source.StepId);
+        ResultPropertyDescriptor property;
+        var found = contract is not null
+            ? StepResultMetadata.TryGetProperty(contract, source.PropertyId, propertyPath ?? source.PropertyId, out property!)
+            : StepResultMetadata.TryGetProperty(result.GetType(), source.PropertyId, propertyPath ?? source.PropertyId, out property!);
+        if (!found && contract is null && ResultBindingResolver.TryReadPath(
+                result, propertyPath ?? source.PropertyId, out var legacyValue))
+            return new(RuntimeValueReadStatus.Success, new ValueProviderSourceDescriptor(ValueProviderIds.StepResult,
+                StepResultSourceIdCodec.Create(source.StepId, source.PropertyId), source.PropertyId, null,
+                ResultValueShape.Kind(legacyValue), ResultValueShape.Cardinality(legacyValue)), legacyValue);
+        if (!found || !StepResultMetadata.TryReadValue(result, property, out var value))
+            return new(RuntimeValueReadStatus.PropertyUnavailable, Error: $"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
+        return new(RuntimeValueReadStatus.Success, new ValueProviderSourceDescriptor(ValueProviderIds.StepResult,
+            StepResultSourceIdCodec.Create(source.StepId, source.PropertyId), property.DisplayName, property.Description,
+            property.DataType, property.Cardinality, EnumTypeName: property.EnumTypeName,
+            EnumValues: property.EnumValues, EnumDisplayNames: property.EnumDisplayNames), value);
     }
 
     public static bool TryReadVariable(
@@ -88,17 +99,15 @@ public static class ValueReferenceResolver
         if (string.IsNullOrWhiteSpace(valuePath))
             return new(RuntimeValueReadStatus.Success, descriptor, value);
         if (value is null || !ResultBindingResolver.TryReadPath(value, valuePath, out var selected))
-            return Failure($"Die Untereigenschaft '{valuePath}' ist in der ausgewählten Wertquelle nicht verfügbar.", descriptor);
+            return new(RuntimeValueReadStatus.PropertyUnavailable, descriptor, Error: $"Die Untereigenschaft '{valuePath}' ist in der ausgewählten Wertquelle nicht verfügbar.");
 
         var property = descriptor is null
             ? null
             : new ResultPropertyDescriptor(
                 valuePath,
                 valuePath,
-                InferKind(selected),
-                Cardinality: selected is System.Collections.IEnumerable and not string
-                    ? ResultCardinality.Collection
-                    : ResultCardinality.Single,
+                ResultValueShape.Kind(selected),
+                Cardinality: ResultValueShape.Cardinality(selected),
                 Id: ResultContractIds.FromPropertyPath(valuePath));
         var selectedDescriptor = property is null || descriptor is null
             ? descriptor
@@ -112,20 +121,6 @@ public static class ValueReferenceResolver
                 descriptor.IsSensitive);
         return new(RuntimeValueReadStatus.Success, selectedDescriptor, selected);
     }
-
-    private static ResultValueKind InferKind(object? value) => value switch
-    {
-        bool => ResultValueKind.Boolean,
-        byte or short or int or long => ResultValueKind.Integer,
-        float or double or decimal => ResultValueKind.Number,
-        DateTime => ResultValueKind.DateTime,
-        string => ResultValueKind.Text,
-        TaskAutomation.Contracts.Geometry.PixelPoint => ResultValueKind.Point,
-        TaskAutomation.Contracts.Geometry.PixelRegion => ResultValueKind.Rectangle,
-        DetectionItem => ResultValueKind.Detection,
-        RuntimeProcessReference => ResultValueKind.ProcessReference,
-        _ => ResultValueKind.ResultObject
-    };
 
     private static ResolvedValueReference Failure(
         string error,

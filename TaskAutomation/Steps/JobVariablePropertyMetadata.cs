@@ -77,25 +77,12 @@ public static class JobVariablePropertyMetadata
         foreach (var (name, child) in objectValue)
         {
             var path = string.IsNullOrEmpty(prefix) ? name : $"{prefix}.{name}";
-            var childKind = Kind(child);
-            if (childKind is not null)
-                properties.Add(Property(path, childKind.Value, cardinality));
+            if (child is not null)
+                properties.Add(Property(path, ResultValueShape.Kind(child), child is JsonArray
+                    ? ResultCardinality.Collection : cardinality));
             properties.AddRange(FromJson(child, path, cardinality));
         }
         return properties;
-    }
-
-    private static ResultValueKind? Kind(JsonNode? value)
-    {
-        if (value is JsonObject) return ResultValueKind.ResultObject;
-        if (value is JsonArray array) return Kind(array.FirstOrDefault(item => item is not null));
-        if (value is not JsonValue json) return null;
-        if (json.TryGetValue<bool>(out _)) return ResultValueKind.Boolean;
-        if (json.TryGetValue<int>(out _) || json.TryGetValue<long>(out _)) return ResultValueKind.Integer;
-        if (json.TryGetValue<double>(out _) || json.TryGetValue<decimal>(out _)) return ResultValueKind.Number;
-        if (json.TryGetValue<DateTime>(out _)) return ResultValueKind.DateTime;
-        if (json.TryGetValue<string>(out _)) return ResultValueKind.Text;
-        return null;
     }
 
     private static ResultPropertyDescriptor Property(

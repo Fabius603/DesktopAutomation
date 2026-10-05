@@ -13,7 +13,7 @@
                       IsChecked="{Binding IsRoiEnabled, ElementName=Root, Mode=TwoWay}"
                       HorizontalAlignment="Left" Margin="0,0,0,10"/>
 
-            <controls:ResponsiveActionPanel MinPrimaryWidth="220"
+            <controls:ResponsiveActionPanel CanWrap="False" MinPrimaryWidth="220"
                                             HorizontalSpacing="12"
                                             VerticalSpacing="6">
                 <Grid>

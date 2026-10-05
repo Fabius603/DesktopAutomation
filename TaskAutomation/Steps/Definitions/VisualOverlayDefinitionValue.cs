@@ -27,14 +27,15 @@ internal static class VisualOverlayDefinitionValue
     }
 
     public static bool IsValid(VisualOverlaySettings overlay, bool requireContent) =>
-        (!requireContent || overlay.DetectionResults.Count > 0 || overlay.TextResults.Count > 0)
-        && overlay.DetectionResults is not null
+        overlay.DetectionResults is not null
         && overlay.TextResults is not null
+        && (!requireContent || overlay.DetectionResults.Count > 0 || overlay.TextResults.Count > 0)
         && overlay.DetectionResults.All(binding => binding?.IsConfigured == true)
         && overlay.TextResults.All(entry =>
             entry is not null
             && entry.Id != Guid.Empty
-            && entry.Result.IsConfigured
+            && entry.Result?.IsConfigured == true
+            && ColorValueRules.TryParse(entry.FontColor, out _)
             && float.IsFinite(entry.FontSize) && entry.FontSize > 0
             && float.IsFinite(entry.Opacity) && entry.Opacity is >= 0 and <= 1
             && entry.DesktopIndex >= 0

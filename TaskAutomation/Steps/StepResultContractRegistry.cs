@@ -64,6 +64,32 @@ internal static class UserChoiceEnumContract
 /// </summary>
 public static class StepResultContractRegistry
 {
+    /// <summary>Rebuilds derived settings used by dynamic contracts from persisted values.</summary>
+    internal static void RestoreResultContractSettings(Job job)
+    {
+        var values = (job.Variables ?? []).Cast<JobVariable>().Concat(job.LocalValues ?? []).ToArray();
+        foreach (var step in job.EnumerateAllSteps())
+        {
+            if (!DynamicProviders.ContainsKey(step.GetType()) || step.Inputs is not { Count: > 0 }
+                || !Definitions.BuiltInStepDefinitions.Instance.TryGetByType(step.GetType(), out var definition))
+                continue;
+            var draft = definition.CreateDraft(step);
+            var contractFields = new HashSet<string>(StringComparer.Ordinal)
+            {
+                step is UserChoiceStep
+                    ? Definitions.UserChoiceStepDefinition.OptionsFieldId
+                    : Definitions.WindowsStateQueryStepDefinition.CapabilityFieldId
+            };
+            var overlay = JobValidation.OverlayKnownInputValues(step, definition, draft, values, contractFields);
+            if (overlay.Error is null)
+            {
+                try { definition.ApplyDraft(draft, step); }
+                catch (InvalidOperationException) { /* Preserve malformed persisted inputs for explicit repair. */ }
+                catch (System.Text.Json.JsonException) { /* Draft validation reports the malformed contract value. */ }
+            }
+        }
+    }
+
     private static readonly IReadOnlyDictionary<Type, IStepResultContractProvider> DynamicProviders =
         new Dictionary<Type, IStepResultContractProvider>
         {

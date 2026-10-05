@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -36,27 +37,21 @@ public static class ResultBindingResolver
         if (binding?.IsConfigured != true)
             return Failure<T>(ResultResolutionStatus.NotConfigured, null, "Keine Ergebnis-Eigenschaft ausgewählt.");
 
-        if (binding.HasProviderReference)
-            return ResolveProviderValue<T>(results, binding);
-        var source = results.GetRaw(binding.SourceStepId);
-        if (source is null || !source.WasExecuted)
-            return Failure<T>(ResultResolutionStatus.SourceNotExecuted, source,
-                $"Der Quell-Step '{binding.SourceStepId}' wurde noch nicht ausgeführt.");
-
-        var propertyPath = binding.PropertyPath;
-        if (!string.IsNullOrWhiteSpace(binding.PropertyId)
-            && StepResultMetadata.TryGetProperty(
-                source.GetType(), binding.PropertyId, binding.PropertyPath, out var property))
-            propertyPath = property.Name;
-
-        if (string.IsNullOrWhiteSpace(propertyPath) || !TryReadPath(source, propertyPath, out var raw))
-            return Failure<T>(ResultResolutionStatus.PropertyNotFound, source,
-                $"Die Ergebnis-Eigenschaft '{binding.PropertyId ?? binding.PropertyPath}' existiert im Ergebnis nicht.");
+        var read = ValueReferenceResolver.Resolve(results, binding);
+        var source = binding.TryGetStepResult(out var reference) ? results.GetRaw(reference.StepId) : null;
+        if (!read.IsSuccess) return Failure<T>(read.Status == RuntimeValueReadStatus.PropertyUnavailable
+            ? ResultResolutionStatus.PropertyNotFound : ResultResolutionStatus.SourceNotExecuted, source, read.Error ?? "StepValidation.Invalid");
+        var raw = read.Value;
         if (raw is null)
             return Failure<T>(ResultResolutionStatus.ValueIsNull, source,
                 $"Die Eigenschaft '{binding.PropertyPath}' enthält keinen Wert.");
 
-        var values = Flatten(raw).OfType<T>().ToArray();
+        if (raw is JsonValue jsonValue) raw = Unwrap(jsonValue)!;
+        var projected = Flatten(raw).Select(value => ProjectNumber<T>(value, read.Descriptor?.ValueKind)).ToArray();
+        if (projected.Any(value => value is not T))
+            return Failure<T>(ResultResolutionStatus.TypeMismatch, source,
+                $"Die Eigenschaft '{binding.PropertyPath}' ist nicht vom erwarteten Typ {typeof(T).Name}.");
+        var values = projected.OfType<T>().ToArray();
         if (values.Length > 0)
             return new(ResultResolutionStatus.Success, values, source);
         if (raw is IEnumerable and not string)
@@ -143,14 +138,23 @@ public static class ResultBindingResolver
         return true;
     }
 
+    private static object? ProjectNumber<T>(object? value, ResultValueKind? kind)
+    {
+        if (value is T || kind != ResultValueKind.Number
+            || value is not (byte or short or int or long or float or double or decimal)) return value;
+        if (typeof(T) != typeof(double) && typeof(T) != typeof(float) && typeof(T) != typeof(decimal)) return value;
+        try { return Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture); }
+        catch (OverflowException) { return value; }
+    }
+
     private static IEnumerable<object?> Flatten(object value)
     {
-        if (value is IEnumerable enumerable and not string)
+        if (value is JsonValue scalar) { yield return Unwrap(scalar); yield break; }
+        if (value is IEnumerable enumerable and not string and not JsonObject)
         {
             foreach (var item in enumerable)
-                if (item is IEnumerable nested and not string)
-                    foreach (var nestedItem in nested) yield return nestedItem;
-                else yield return item;
+                if (item is not null)
+                    foreach (var flattened in Flatten(item)) yield return flattened;
             yield break;
         }
         yield return value;
@@ -185,46 +189,7 @@ public static class ResultBindingResolver
     private static ResolvedResultValue<T> Failure<T>(ResultResolutionStatus status, StepResultBase? source, string error) =>
         new(status, Array.Empty<T>(), source, error);
 
-    private static ResolvedResultValue<T> ResolveProviderValue<T>(
-        IJobResultStore results,
-        ValueReference reference)
-    {
-        var read = results.ReadProvider(reference.ProviderId, reference.SourceId);
-        var sourceResult = string.Equals(reference.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal)
-                           && StepResultSourceIdCodec.TryParse(reference.SourceId, out var stepResultSource)
-            ? results.GetRaw(stepResultSource.StepId)
-            : null;
-        if (!read.IsSuccess)
-            return Failure<T>(ResultResolutionStatus.SourceNotExecuted, sourceResult,
-                read.Error ?? "Die ausgewählte Wertquelle ist nicht verfügbar.");
-        if (read.Value is null)
-            return Failure<T>(ResultResolutionStatus.ValueIsNull, sourceResult,
-                "Die ausgewählte Wertquelle enthält keinen Wert.");
-        var raw = read.Value;
-        if (!string.IsNullOrWhiteSpace(reference.ValuePath)
-            && !TryReadPath(raw, reference.ValuePath, out raw))
-            return Failure<T>(ResultResolutionStatus.PropertyNotFound, sourceResult,
-                $"Die Untereigenschaft '{reference.ValuePath}' ist in der ausgewählten Wertquelle nicht verfügbar.");
-        if (raw is null)
-            return Failure<T>(ResultResolutionStatus.ValueIsNull, sourceResult,
-                $"Die Untereigenschaft '{reference.ValuePath}' enthält keinen Wert.");
-        if (raw is JsonValue jsonValue)
-            raw = Unwrap(jsonValue);
-        if (raw is T typed)
-            return new(ResultResolutionStatus.Success, [typed], sourceResult);
-        if (raw is IEnumerable enumerable and not string)
-        {
-            var values = enumerable.Cast<object?>().OfType<T>().ToArray();
-            return values.Length > 0
-                ? new(ResultResolutionStatus.Success, values, sourceResult)
-                : Failure<T>(ResultResolutionStatus.EmptyCollection, sourceResult,
-                    "Die ausgewählte Wertquelle enthält keine passenden Werte.");
-        }
-        return Failure<T>(ResultResolutionStatus.TypeMismatch, sourceResult,
-            $"Die ausgewählte Wertquelle ist nicht vom erwarteten Typ {typeof(T).Name}.");
-    }
-
-    private static object? Unwrap(JsonValue value)
+    internal static object? Unwrap(JsonValue value)
     {
         if (value.TryGetValue<bool>(out var boolean)) return boolean;
         if (value.TryGetValue<int>(out var integer)) return integer;

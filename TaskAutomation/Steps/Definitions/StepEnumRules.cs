@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using TaskAutomation.Contracts.Steps;
+using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Steps.Definitions;
 
@@ -9,6 +10,24 @@ namespace TaskAutomation.Steps.Definitions;
 /// </summary>
 public static class StepEnumRules
 {
+    public static bool TryRead<TEnum>(string? token, out TEnum value) where TEnum : struct, Enum
+    {
+        value = default;
+        return token is not null && Enum.GetNames<TEnum>().Contains(token, StringComparer.Ordinal)
+            && Enum.TryParse(token, ignoreCase: false, out value);
+    }
+
+    public static void ApplyMetadata(JobVariable variable, string enumTypeName, StepFieldDescriptor field)
+    {
+        if (field.ValueKind != StepValueKind.Enum || variable.ValueKind != ResultValueKind.Enum) return;
+        variable.EnumTypeName = enumTypeName;
+        var options = GetOptions(field);
+        variable.EnumValues = options.Select(option => option.Value).Distinct(StringComparer.Ordinal).ToList();
+        variable.EnumDisplayNames = options.Where(option => !string.IsNullOrWhiteSpace(option.DisplayName))
+            .ToDictionary(option => option.Value, option => option.DisplayName!, StringComparer.Ordinal);
+        if (variable.EnumDisplayNames.Count == 0) variable.EnumDisplayNames = null;
+    }
+
     public static IReadOnlyList<StepFieldOptionDescriptor> GetOptions(StepFieldDescriptor field) =>
         field.Options is { Count: > 0 }
             ? field.Options

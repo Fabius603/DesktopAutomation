@@ -53,4 +53,11 @@ Windows boundary; WPF is reserved for `DesktopAutomationApp`.
 | Application data paths and generic JSON repositories | `Common.ApplicationData.AppPaths`, `Common.JsonRepository` |
 | Localized automation presentation | `DesktopAutomationApp.Localization.AutomationDisplayFormatter` |
 
-No open architecture violation or undocumented duplicate remains in the audited categories.
+The 2026-09-28 audit closed its recorded findings. This is a dated baseline, not a statement
+that the current working tree has no remaining duplicated rules or behavior defects.
+
+The [2026-10-01 step-values audit](step-values-audit-2026-10-01.md) recorded 13 findings
+in property validation, reference traversal, cloning, editor projections and execution.
+Its field inventory covers all 39 current step definitions. The
+[repair report](step-values-repair-2026-10-01.md) maps every finding to its canonical owners
+and regression evidence. Product-policy alternatives remain explicitly proposed in the decision log.

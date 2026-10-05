@@ -34,17 +34,23 @@ internal static class DefinitionValueReader
     }
 
     public static TEnum Enum<TEnum>(StepDraft draft, string id) where TEnum : struct, Enum
+        => Enum<TEnum>(String(draft, id), id);
+
+    public static TEnum Enum<TEnum>(string token, string id) where TEnum : struct, Enum
     {
-        if (TryEnum<TEnum>(draft, id, out var result))
+        if (TryEnum<TEnum>(token, out var result))
             return result;
-        var token = String(draft, id);
         throw new InvalidOperationException($"Field '{id}' contains unknown {typeof(TEnum).Name} token '{token}'.");
     }
 
     public static bool TryEnum<TEnum>(StepDraft draft, string id, out TEnum result)
         where TEnum : struct, Enum =>
-        System.Enum.TryParse(String(draft, id), ignoreCase: false, out result)
-        && System.Enum.IsDefined(result);
+        TryEnum(String(draft, id), out result);
+
+    public static bool TryEnum<TEnum>(string token, out TEnum result) where TEnum : struct, Enum
+    {
+        return StepEnumRules.TryRead(token, out result);
+    }
 
     public static int Integer(StepDraft draft, string id)
     {
@@ -57,6 +63,7 @@ internal static class DefinitionValueReader
         if (value.TryGetValue<double>(out var result)) return result;
         if (value.TryGetValue<float>(out var floatResult)) return floatResult;
         if (value.TryGetValue<decimal>(out var decimalResult)) return (double)decimalResult;
+        if (value.TryGetValue<int>(out var intResult)) return intResult;
         if (value.TryGetValue<long>(out var integerResult)) return integerResult;
         return double.NaN;
     }

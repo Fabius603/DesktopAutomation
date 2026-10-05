@@ -29,16 +29,20 @@ internal static class StepDescriptorDraftValidator
                 issues.Add(new("StepValidation.Required", field.Id));
                 continue;
             }
-            if (!field.Required && field.ValueKind == StepValueKind.Enum && IsEmpty(field, value))
+            if (!field.Required && field.ValueKind == StepValueKind.Enum
+                && (value is null || TryGetString(value, out var optionalToken) && optionalToken.Length == 0))
                 continue;
             if (value is null)
                 continue;
-            if (!TryReadComparable(field.ValueKind, value, out var number, out var text, out var length))
+            if (!TryReadComparable(field.ValueKind, value, out var number, out var text, out var length)
+                || !HasReadableEditorShape(field, value))
             {
                 issues.Add(new(TypeError(field.ValueKind), field.Id));
                 continue;
             }
 
+            if (field.ValueKind == StepValueKind.Color && !ColorValueRules.TryParse(text, out _))
+                issues.Add(new("StepValidation.Invalid", field.Id));
             var constraints = field.Constraints;
             var hasInvalidEnumToken = field.ValueKind == StepValueKind.Enum
                                       && (text is null || !StepEnumRules.IsKnownToken(field, text));
@@ -63,14 +67,13 @@ internal static class StepDescriptorDraftValidator
         return issues;
     }
 
-    private static bool CanDetermineVisibility(StepFieldDescriptor field, StepValidationContext context) =>
+    internal static bool CanDetermineVisibility(StepFieldDescriptor field, StepValidationContext context) =>
         (field.VisibleWhen is null || context.IsResolved(field.VisibleWhen.FieldId))
         && (field.VisibleWhenAll is not { Count: > 0 } rules
             || rules.All(rule => context.IsResolved(rule.FieldId)));
 
     internal static bool IsVisible(StepFieldDescriptor field, StepDraft draft) =>
-        (field.VisibleWhen is null || RuleMatches(field.VisibleWhen, draft))
-        && (field.VisibleWhenAll is not { Count: > 0 } rules || rules.All(rule => RuleMatches(rule, draft)));
+        StepEditorActivity.IsVisible(field, rule => RuleMatches(rule, draft));
 
     private static bool TryGetStringValue(StepDraft draft, string fieldId, out string value)
     {
@@ -123,11 +126,12 @@ internal static class StepDescriptorDraftValidator
                 return false;
             case StepValueKind.Number:
                 if (value is not JsonValue numberValue) return false;
+                if (numberValue.TryGetValue<int>(out var intNumber)) { number = intNumber; return true; }
                 if (numberValue.TryGetValue<decimal>(out var decimalNumber)) { number = decimalNumber; return true; }
                 if (numberValue.TryGetValue<double>(out var floatingPoint) && double.IsFinite(floatingPoint))
-                { number = (decimal)floatingPoint; return true; }
+                { try { number = (decimal)floatingPoint; return true; } catch (OverflowException) { return false; } }
                 if (numberValue.TryGetValue<float>(out var singlePrecision) && float.IsFinite(singlePrecision))
-                { number = (decimal)singlePrecision; return true; }
+                { try { number = (decimal)singlePrecision; return true; } catch (OverflowException) { return false; } }
                 if (numberValue.TryGetValue<long>(out var wholeNumber)) { number = wholeNumber; return true; }
                 return false;
             case StepValueKind.Boolean:
@@ -147,9 +151,40 @@ internal static class StepDescriptorDraftValidator
                 length = array.Count; return true;
             case StepValueKind.ResultBinding:
                 return TryDeserialize<TaskAutomation.Jobs.ResultBinding>(value, out _);
+            case StepValueKind.Object:
+            case StepValueKind.Point:
+                return value is JsonObject;
             default:
                 return true;
         }
+    }
+
+    private static bool HasReadableEditorShape(StepFieldDescriptor field, JsonNode value)
+    {
+        try
+        {
+            return field.EditorHint switch
+            {
+                StepEditorHints.RoiPicker => value.Deserialize<StepRoiSelectionValue>() is { } roi && Binding(roi.DynamicSource),
+                StepEditorHints.ProcessTargetPicker or StepEditorHints.ExecutableProcessTargetPicker =>
+                    value.Deserialize<StepProcessSelectorValue>() is { } process && Binding(process.ProcessSource),
+                StepEditorHints.ScreenPointPicker => value.Deserialize<StepScreenPointSelectionValue>() is { } point && Binding(point.PointSource),
+                StepEditorHints.CameraPicker => value.Deserialize<StepCameraSelectionValue>() is not null,
+                StepEditorHints.YoloPicker => value.Deserialize<StepYoloSelectionValue>() is not null,
+                StepEditorHints.UserChoiceOptions => value.Deserialize<List<StepUserChoiceOptionValue>>() is { } options && options.All(option => option is not null),
+                StepEditorHints.PointEntryList => value.Deserialize<List<StepPointEntryValue>>() is { } points && points.All(point => point is not null && Binding(point.PointsSource)),
+                StepEditorHints.AxisExpressionList => value.Deserialize<List<StepAxisExpressionValue>>() is { } expressions && expressions.All(expression => expression is not null),
+                StepEditorHints.VisualOverlay => value.Deserialize<TaskAutomation.Jobs.VisualOverlaySettings>() is { DetectionResults: not null, TextResults: not null } overlay
+                    && overlay.DetectionResults.All(binding => binding is not null)
+                    && overlay.TextResults.All(entry => entry is not null && entry.Result is not null),
+                _ => true
+            };
+        }
+        catch (JsonException) { return false; }
+        catch (InvalidOperationException) { return false; }
+
+        static bool Binding(JsonNode? value) => value is null
+            || value is JsonObject && value.Deserialize<TaskAutomation.Jobs.ResultBinding>() is not null;
     }
 
     private static string TypeError(StepValueKind kind) => kind switch

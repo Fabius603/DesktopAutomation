@@ -637,6 +637,72 @@ public sealed class JobExecutorControlFlowTests
         Assert.Equal(ConditionDebugState.NotEvaluated, evaluation.Conditions[1].State);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ExecuteJob_ThreeNestedConditionsResolveStoredVariablesOnlyInActiveBranches(bool enabled)
+    {
+        var gate = new JobVariable
+        {
+            Name = "Enabled",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(enabled)
+        };
+        var comparison = new JobVariable
+        {
+            Name = "Expected",
+            Scope = JobVariableScope.Shared,
+            ValueKind = ResultValueKind.Boolean,
+            Value = System.Text.Json.Nodes.JsonValue.Create(true)
+        };
+        var source = new WindowsStateQueryStep { Id = "nested-source", Settings = new() { QueryType = "audio.volume" } };
+        var outer = new IfStep
+        {
+            Settings = new()
+            {
+                Conditions = [new() {
+            ProviderId = ValueProviderIds.JobVariable, SourceId = gate.Id.ToString("D"), Operator = ConditionOperator.IsTrue }]
+            }
+        };
+        var middle = new IfStep
+        {
+            Settings = new()
+            {
+                Conditions = [new() {
+            SourceStepId = source.Id, PropertyPath = "IsMuted", Operator = ConditionOperator.Equals,
+            Comparison = new() { Kind = ComparisonOperandKind.JobResult, ProviderId = ValueProviderIds.StepResult,
+                SourceStepId = source.Id, PropertyPath = "IsMuted" } }]
+            }
+        };
+        var inner = new IfStep
+        {
+            Settings = new()
+            {
+                Conditions = [new() {
+            ProviderId = ValueProviderIds.JobVariable, SourceId = comparison.Id.ToString("D"), Operator = ConditionOperator.IsTrue }]
+            }
+        };
+        var unusedElseIf = new ElseIfStep { Settings = middle.Settings };
+        var job = new Job
+        {
+            Name = "stored nested conditions",
+            Variables = [gate, comparison],
+            Steps = [outer, source, middle, inner, Text("nested"), new EndIfStep(), new EndIfStep(),
+                unusedElseIf, Text("unreachable"), new EndIfStep(), Text("after")]
+        };
+        JobVariableInputMigration.Migrate(job);
+        var options = new System.Text.Json.JsonSerializerOptions();
+        JobJsonSerialization.Configure(options);
+        job = System.Text.Json.JsonSerializer.Deserialize<Job>(System.Text.Json.JsonSerializer.Serialize(job, options), options)!;
+        Assert.True(JobValidation.ValidateJob(job).IsValid);
+        var builder = new JobExecutorTestBuilder().WithJobs(job)
+            .WithWindowsStates(new AudioVolumeQueryResult { IsMuted = true });
+        using var executor = await builder.BuildAsync();
+        await executor.ExecuteJob(job.Id);
+        Assert.Equal(enabled ? ["nested", "after"] : ["after"], builder.Overlay.TextCalls.Select(call => call.Text));
+    }
+
     private static IfConditionSettings Settings(ConditionOperator op) => new()
     {
         Conditions = [new StepCondition

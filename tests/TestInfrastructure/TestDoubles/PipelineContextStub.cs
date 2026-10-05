@@ -17,8 +17,8 @@ namespace TaskAutomation.Tests.TestDoubles;
 
 internal sealed class PipelineContextStub : IStepPipelineContext
 {
-    public PipelineContextStub(IEnumerable<JobVariable>? variables = null) =>
-        Results = new JobResultStore(variables);
+    public PipelineContextStub(IEnumerable<JobVariable>? variables = null, IEnumerable<LocalValue>? localValues = null) =>
+        Results = new JobResultStore(variables, localValues: localValues);
 
     public IJobResultStore Results { get; }
     public IDictionary<string, DynamicRoiState> DynamicRoiStates { get; } = new Dictionary<string, DynamicRoiState>();
@@ -32,7 +32,7 @@ internal sealed class PipelineContextStub : IStepPipelineContext
     public IImageDisplayService ImageDisplayService { get; init; } = new NoOpImageDisplayService();
     public IDesktopResultOverlay DesktopResultOverlay { get; init; } = new RecordingDesktopResultOverlay();
     public ExecutionLogSession? ExecutionLogSession => null;
-    public IExecutionLogService ExecutionLogService => null!;
+    public IExecutionLogService ExecutionLogService { get; init; } = new RecordingExecutionLogService();
     public Job CurrentJob { get; init; } = new();
     public Func<Guid, CancellationToken, Task> ExecuteJob { get; init; } = (_, _) => Task.CompletedTask;
     public Func<Guid, Guid>? StartJobViaDispatcher { get; init; }
@@ -45,7 +45,10 @@ internal sealed class PipelineContextStub : IStepPipelineContext
     public TemplateMatching? TemplateMatcher { get; set; }
     public ColorDetector? ColorDetector { get; set; }
     public KeyPointMatcher? KeyPointMatcher { get; set; }
-    public StreamVideoRecorder? VideoRecorder { get; set; }
+    public Func<int, int, int, IVideoRecorder> RecorderFactory { get; init; } =
+        (width, height, fps) => new StreamVideoRecorder(width, height, fps);
+    public IVideoRecorder CreateVideoRecorder(int width, int height, int fps) => RecorderFactory(width, height, fps);
+    public IVideoRecorder? VideoRecorder { get; set; }
     public Dictionary<string, DateTime> StepTimeouts { get; } = new();
     public Dictionary<string, PredictMovementState> PredictMovementStates { get; } = new();
     public Dictionary<string, ActiveWindowCacheEntry> ActiveWindowCache { get; } = new();

@@ -41,10 +41,12 @@
                 <controls:ResponsiveColumnsPanel MinItemWidth="170" MaxColumns="2"
                                                  HorizontalSpacing="16" VerticalSpacing="6">
                     <RadioButton IsChecked="{Binding IsAll, ElementName=Root}"
+                                 Style="{StaticResource StepRadioButton}"
                                  VerticalAlignment="Center">
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.AllAND}" TextWrapping="Wrap"/>
                     </RadioButton>
                     <RadioButton IsChecked="{Binding IsAny, ElementName=Root}"
+                                 Style="{StaticResource StepRadioButton}"
                                  VerticalAlignment="Center">
                         <TextBlock Text="{loc:Translate Key=Ui.Step.Settings.OneOR}" TextWrapping="Wrap"/>
                     </RadioButton>
@@ -117,6 +119,7 @@
                                 <!-- A condition reads from left to right: source, operator, comparison value. -->
                                 <controls:ResponsiveColumnsPanel x:Name="ConditionComparisonGrid"
                                                                  MinItemWidth="160" MaxColumns="3"
+                                                                 KeepAllColumnsTogether="True"
                                                                  HorizontalSpacing="12" VerticalSpacing="10">
                                     <StackPanel>
                                     <TextBlock Text="{loc:Translate Key=Ui.Step.IfEditor.ResultPath}"
@@ -129,7 +132,7 @@
                                                Style="{StaticResource ConditionFieldLabel}"/>
                                     <ComboBox ItemsSource="{Binding AvailableOperators}"
                                               SelectedItem="{Binding SelectedOperator}"
-                                              Height="36">
+                                              Height="34">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding Converter={StaticResource ConditionOperatorConverter}}"

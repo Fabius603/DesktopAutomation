@@ -7,6 +7,20 @@ namespace TaskAutomation.Tests.Orchestration;
 public sealed class JobDebugSessionTests
 {
     [Fact]
+    public async Task InternalBlockEndsDoNotPauseOrAppearInDebugSnapshots()
+    {
+        var marker = new EndIfStep { IsBreakpoint = true };
+        var session = new JobDebugSession(Guid.NewGuid(), new Job { Steps = [marker] });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        await session.BeforeStepAsync(marker, "run", timeout.Token);
+        session.MarkCompleted(marker);
+        session.MarkSkipped(marker, "internal");
+        Assert.Null(session.CurrentStepId);
+        Assert.Empty(session.GetSnapshots());
+        Assert.Equal(JobDebugSessionState.Starting, session.State);
+    }
+
+    [Fact]
     public async Task Step_PausesAgainBeforeFollowingStep()
     {
         var first = new TimeoutStep();

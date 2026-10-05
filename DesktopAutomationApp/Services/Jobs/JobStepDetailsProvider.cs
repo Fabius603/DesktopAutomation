@@ -113,17 +113,29 @@ public sealed class JobStepDetailsProvider
             return string.Empty;
 
         var draft = definition.CreateDraft(step);
+        var overlay = JobValidation.OverlayKnownInputValues(step, definition, draft, variables ?? []);
         var fields = definition.Descriptor.Fields.ToDictionary(field => field.Id, StringComparer.Ordinal);
         var values = new List<string>();
         foreach (var item in definition.Descriptor.Presentation.SummaryItems
                      .OrderByDescending(item => item.Priority))
         {
+            if (values.Count == 2) break;
+            if (fields.TryGetValue(item.FieldId, out var summaryField)
+                && !IsDefinitionFieldVisible(summaryField, draft)) continue;
             if (step.Inputs.TryGetValue(item.FieldId, out var input) && input.IsConfigured)
             {
-                var reference = FormatBinding(input, steps, variables, null);
-                values.Add(string.IsNullOrWhiteSpace(item.LabelKey)
-                    ? reference
-                    : $"{Loc.Get(item.LabelKey)}: {reference}");
+                var reference = string.Equals(input.ProviderId, ValueProviderIds.Secret, StringComparison.Ordinal)
+                    ? Loc.Get("Ui.ValueReference.Sensitive")
+                    : FormatBinding(input, steps, variables, null, compact: true);
+                if (fields.TryGetValue(item.FieldId, out var boundField)
+                    && !overlay.UnresolvedPaths.Contains(item.FieldId)
+                    && draft.Values.GetValueOrDefault(item.FieldId) is { } stored)
+                {
+                    if (item.HideWhenEmpty && IsSummaryValueEmpty(boundField, stored)) continue;
+                    reference = FormatSummaryValue(item, boundField, stored, steps, variables, null);
+                    if (item.HideWhenEmpty && string.IsNullOrWhiteSpace(reference)) continue;
+                }
+                values.Add(FormatSummaryLabel(item, fields.GetValueOrDefault(item.FieldId), reference));
                 continue;
             }
             if (!fields.TryGetValue(item.FieldId, out var field)
@@ -136,11 +148,20 @@ public sealed class JobStepDetailsProvider
             var formatted = FormatSummaryValue(item, field, value, steps, variables, null);
             if (item.HideWhenEmpty && string.IsNullOrWhiteSpace(formatted))
                 continue;
-            values.Add(string.IsNullOrWhiteSpace(item.LabelKey)
-                ? formatted
-                : $"{Loc.Get(item.LabelKey)}: {formatted}");
+            values.Add(FormatSummaryLabel(item, field, formatted));
         }
         return string.Join(" · ", values);
+    }
+
+    private static string FormatSummaryLabel(StepSummaryItemDescriptor item, StepFieldDescriptor? field, string value)
+    {
+        var label = item.FieldId == EndJobStepDefinition.SkipEndStepsFieldId ? null : item.LabelKey;
+        if (string.IsNullOrWhiteSpace(label) && item.FieldId != EndJobStepDefinition.SkipEndStepsFieldId
+            && field?.ValueKind is StepValueKind.Integer or StepValueKind.Number or StepValueKind.Boolean)
+            label = field.LabelKey;
+        var compact = string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        if (compact.Length > 90) compact = compact[..87] + "…";
+        return string.IsNullOrWhiteSpace(label) ? compact : $"{Loc.Get(label)}: {compact}";
     }
 
     public JobStepDetails GetDetails(
@@ -310,7 +331,7 @@ public sealed class JobStepDetailsProvider
             return FormatPointEntries(value, steps, variables, providerSources);
         if (string.Equals(field.EditorHint, StepEditorHints.AxisExpressionList, StringComparison.Ordinal))
             return FormatAxisExpressions(value);
-        if (field.ValueKind == StepValueKind.ResultBinding)
+        if (field.ValueKind == StepValueKind.ResultBinding && value is not JsonValue)
             return FormatDefinitionBinding(value, steps, variables, providerSources);
         if (field.ValueKind == StepValueKind.Object)
             return FormatDefinitionObject(value, steps, variables, providerSources);
@@ -438,10 +459,33 @@ public sealed class JobStepDetailsProvider
         IReadOnlyList<JobVariable>? variables,
         IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
     {
+        if (field.EditorHint == StepEditorHints.UserChoiceOptions && value is JsonArray options)
+            return Loc.Format("Ui.Job.Steps.Summary.Answers", options.Count);
+        if (field.ValueKind == StepValueKind.Collection && value is JsonArray entries
+            && field.EditorHint is not StepEditorHints.VisualOverlay)
+            return Loc.Format("Ui.Job.Steps.Summary.Items", entries.Count);
+        if (field.EditorHint == StepEditorHints.ConditionEditor)
+        {
+            try
+            {
+                if (value.Deserialize<IfConditionSettings>() is { } conditions)
+                    return ConditionDisplayFormatter.FormatSummary(conditions, steps as IList, variables);
+            }
+            catch (JsonException) { return Loc.Get("Ui.Job.Steps.SourceUnavailable"); }
+        }
         var formatted = FormatDefinitionValue(field, value, steps, variables, providerSources);
+        if (field.EditorHint == StepEditorHints.MonitorPicker && value is JsonValue monitorValue
+            && TryGetInteger(monitorValue, out var monitorIndex))
+            return (monitorIndex + 1).ToString(CultureInfo.CurrentCulture);
+        if (field.Id == EndJobStepDefinition.SkipEndStepsFieldId
+            && value is JsonValue endValue && endValue.TryGetValue<bool>(out var skipEnd))
+            return Loc.Get(skipEnd ? "Ui.Job.Steps.Summary.SkipEnd" : "Ui.Job.Steps.Summary.ExecuteEnd");
+        if (field.ValueKind == StepValueKind.Duration && value is JsonValue milliseconds
+            && TryGetInteger(milliseconds, out var ms) && ms >= 1000)
+            return Loc.Format("Ui.Job.Steps.Summary.Seconds", (ms / 1000m).ToString("0.###", CultureInfo.CurrentCulture));
         return item.Format switch
         {
-            StepSummaryValueFormat.ShortText when formatted.Length > 80 => formatted[..77] + "...",
+            StepSummaryValueFormat.ShortText when formatted.Length > 80 => formatted[..77] + "…",
             StepSummaryValueFormat.FileName => Path.GetFileName(formatted.TrimEnd(Path.DirectorySeparatorChar,
                 Path.AltDirectorySeparatorChar)),
             StepSummaryValueFormat.DurationMilliseconds when value is JsonValue durationValue
@@ -481,7 +525,9 @@ public sealed class JobStepDetailsProvider
                        && string.IsNullOrWhiteSpace(selector?.ProcessName)
                        && string.IsNullOrWhiteSpace(selector?.ExecutablePath);
             }
-            if (field.ValueKind == StepValueKind.Object)
+            if (field.ValueKind == StepValueKind.Object && value is JsonObject referenceObject
+                && referenceObject.Any(pair => pair.Key.Equals("id", StringComparison.OrdinalIgnoreCase)
+                    || pair.Key.Equals("name", StringComparison.OrdinalIgnoreCase)))
             {
                 var reference = value.Deserialize<StepReferenceValue>();
                 if (reference is not null)
@@ -858,7 +904,8 @@ public sealed class JobStepDetailsProvider
         ResultBinding binding,
         IEnumerable? steps,
         IReadOnlyList<JobVariable>? variables,
-        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources)
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources,
+        bool compact = false)
     {
         if (binding.ProviderId is ValueProviderIds.JobVariable or ValueProviderIds.LocalValue
             && Guid.TryParse(binding.SourceId, out var variableId))
@@ -872,7 +919,7 @@ public sealed class JobStepDetailsProvider
             var reference = string.IsNullOrWhiteSpace(binding.ValuePath)
                 ? variable.Name
                 : $"{variable.Name} › {LocalizedPropertyName(binding.ValuePath)}";
-            return $"{reference} · {variableValue}";
+            return compact ? reference : $"{reference} · {variableValue}";
         }
 
         if (binding.HasProviderReference
@@ -883,7 +930,8 @@ public sealed class JobStepDetailsProvider
             return $"{ProviderLabel(providerSource.ProviderId)} → {providerSource.Name}";
 
         var sourceStep = steps?.Cast<object>().OfType<JobStep>()
-            .FirstOrDefault(candidate => candidate.Id == binding.SourceStepId);
+            .FirstOrDefault(candidate => string.Equals(candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase));
+        if (compact && sourceStep is null) return Loc.Get("Ui.Job.Steps.SourceUnavailable");
         var source = ResolveStep(binding.SourceStepId, steps) ?? binding.SourceStepId;
         var property = string.IsNullOrWhiteSpace(binding.PropertyPath)
             ? binding.PropertyId
@@ -895,6 +943,12 @@ public sealed class JobStepDetailsProvider
                 && StepResultMetadata.TryGetProperty(
                     resultType, binding.PropertyId, binding.PropertyPath, out var descriptor))
                 property = descriptor.Name;
+        }
+        if (compact && sourceStep is not null)
+        {
+            var label = sourceStep is UserChoiceStep && property == "SelectedOptionId"
+                ? Loc.Get("Ui.Job.Steps.Summary.Answer") : LocalizedPropertyName(property);
+            return Loc.Format("Ui.Job.Steps.Summary.StepSource", label, StepLocalization.ListPosition(steps, sourceStep));
         }
         return string.IsNullOrWhiteSpace(property)
             ? source

@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- White glyphs remain legible across application themes. One hue per catalog category. -->
+    <SolidColorBrush x:Key="Step.Category.BildAufnehmen.Brush" Color="#167A94" />
+    <SolidColorBrush x:Key="Step.Category.BildAuswerten.Brush" Color="#6D53B0" />
+    <SolidColorBrush x:Key="Step.Category.MausTastatur.Brush" Color="#256CB5" />
+    <SolidColorBrush x:Key="Step.Category.ProgrammeFenster.Brush" Color="#318052" />
+    <SolidColorBrush x:Key="Step.Category.DateienOrdner.Brush" Color="#A36B22" />
+    <SolidColorBrush x:Key="Step.Category.WindowsSystem.Brush" Color="#66758A" />
+    <SolidColorBrush x:Key="Step.Category.AnzeigenSpeichern.Brush" Color="#A54875" />
+    <SolidColorBrush x:Key="Step.Category.AblaufSteuern.Brush" Color="#B4612C" />
+</ResourceDictionary>

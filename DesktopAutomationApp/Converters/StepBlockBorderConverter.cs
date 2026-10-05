@@ -45,7 +45,7 @@ namespace DesktopAutomationApp.Converters
         static StepBlockBorderConverter()
         {
             _borderBrushes = new SolidColorBrush[Palette.Length];
-            _bgBrushes     = new SolidColorBrush[Palette.Length];
+            _bgBrushes = new SolidColorBrush[Palette.Length];
             for (int i = 0; i < Palette.Length; i++)
             {
                 var c = Palette[i];
@@ -76,7 +76,7 @@ namespace DesktopAutomationApp.Converters
             if (_groupIndexMap == null || version != _cacheVersion)
             {
                 _groupIndexMap = BuildGroupIndexMap(steps);
-                _cacheVersion  = version;
+                _cacheVersion = version;
             }
 
             int groupIndex = _groupIndexMap.TryGetValue(currentStep, out var idx) ? idx : -1;
@@ -147,118 +147,47 @@ namespace DesktopAutomationApp.Converters
 
     public sealed class StepBlockVisualConverter : IMultiValueConverter
     {
-        private sealed record Layout(
-            bool InBlock,
-            bool Start,
-            bool End,
-            bool Branch,
-            bool Inner,
-            bool FirstInSection,
-            bool LastInSection,
-            bool EmptySection,
-            int Depth,
-            double ContainerWidth);
-        private int _cacheVersion = int.MinValue;
-        private IList? _cacheCollection;
-        private Dictionary<JobStep, Layout> _layout =
-            new(ReferenceEqualityComparer.Instance);
-
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            var usesPreviewProjection = values.Length >= 4;
-            var steps = usesPreviewProjection
-                ? values[1] as IList ?? values[2] as IList
-                : values.Length > 1 ? values[1] as IList : null;
-            if (values.Length < 2 || values[0] is not JobStep step || steps is null)
-                return DependencyProperty.UnsetValue;
-            var versionIndex = usesPreviewProjection ? 3 : 2;
-            var version = values.Length > versionIndex && values[versionIndex] is int value ? value : 0;
-            if (!ReferenceEquals(steps, _cacheCollection) || version != _cacheVersion)
-                RebuildCache(steps, version);
-            if (!_layout.TryGetValue(step, out var layout))
-                return DependencyProperty.UnsetValue;
-
-            var inBlock = layout.InBlock;
-            var start = layout.Start;
-            var end = layout.End;
-            var branch = layout.Branch;
-            var inner = layout.Inner;
-            var depthIndent = layout.Depth * 16d;
+            var preview = values.Length >= 4;
+            var items = preview ? values[1] as IList ?? values[2] as IList : values.ElementAtOrDefault(1) as IList;
+            if (values[0] is not JobStep step || items is null) return DependencyProperty.UnsetValue;
+            var version = values.ElementAtOrDefault(preview ? 3 : 2) is int number ? number : 0;
+            var projection = DesktopAutomationApp.Services.Jobs.StepListProjection.Get(items, version);
+            var index = Array.IndexOf(projection.Steps, step);
+            if (index < 0) return DependencyProperty.UnsetValue;
+            var block = projection.Structure.GetOwningBlock(index);
+            var marker = step is IControlFlowMarker;
+            var depth = projection.Depth(index);
+            var collapsed = values.ElementAtOrDefault(4) as IReadOnlyCollection<string> ?? Array.Empty<string>();
+            var viewport = values.ElementAtOrDefault(5) is double width && width > 0 ? width : 430;
+            var hidden = projection.IsHidden(index, collapsed);
+            var isEnd = block?.EndIndex == index;
+            var closed = collapsed.Contains(step.Id);
             return (parameter as string) switch
             {
-                // The left margin includes the 12 px C-shaped rail plus the shared 8 px gap.
-                "itemMargin" => new Thickness(0, 0, 10, layout.EmptySection ? 40 : end || !inBlock ? 7 : 0),
-                "frameMargin" => new Thickness(depthIndent, 0, 0, 0),
-                "frameWidth" => inBlock ? layout.ContainerWidth : 330d,
-                "cardWidth" => inBlock && !inner ? layout.ContainerWidth : 330d,
-                "cardHeight" => end ? 24d : inBlock && !inner ? 40d : 36d,
-                "contentVisibility" => end ? Visibility.Collapsed : Visibility.Visible,
+                "visibility" => hidden || step is EndIfStep ? Visibility.Collapsed : Visibility.Visible,
+                "collapseVisibility" => projection.CanCollapse(index) ? Visibility.Visible : Visibility.Collapsed,
+                "collapseIcon" => closed ? MahApps.Metro.IconPacks.PackIconMaterialKind.ChevronRight : MahApps.Metro.IconPacks.PackIconMaterialKind.ChevronDown,
+                "emptyBranchVisibility" => !hidden && !closed && projection.IsEmptyBranch(index) ? Visibility.Visible : Visibility.Collapsed,
+                "collapseLabel" => DesktopAutomationApp.Localization.Loc.Get(closed ? "Ui.Job.Steps.ExpandBlock" : "Ui.Job.Steps.CollapseBlock"),
+                "itemMargin" => hidden ? new Thickness(0) : new Thickness(0, step is IfStep ? 8 : 0, 8, 8 + 24 * projection.ClosuresAfter(index, collapsed).Count),
+                "headerMargin" => new Thickness(marker && block is not null ? 36 : 12, 6, 12, 6),
+                "frameMargin" => new Thickness(depth * DesktopAutomationApp.Services.Jobs.StepListProjection.Indentation, 0, 0, 0),
+                "frameWidth" or "cardWidth" => projection.Width(depth, viewport),
+                "cardHeight" => isEnd ? 14d : 64d,
+                // An unmatched EndIf is a visible, diagnosable row.
+                "contentVisibility" => isEnd ? Visibility.Collapsed : Visibility.Visible,
                 "frameBorder" => new Thickness(0),
                 "frameCorner" => new CornerRadius(0),
-                "cardMargin" => inner
-                    ? new Thickness(
-                        20,
-                        layout.FirstInSection ? 8 : 4,
-                        8,
-                        layout.LastInSection ? 8 : 4)
-                    : new Thickness(0),
-                "cardBorder" => !inBlock || inner ? new Thickness(1) : new Thickness(0),
+                "cardMargin" => new Thickness(0),
+                "cardBorder" => marker && block is not null ? new Thickness(0) : new Thickness(1),
                 "cardCorner" => new CornerRadius(8),
                 "frameBackground" => Brushes.Transparent,
-                "cardBackground" => inBlock && !inner
-                    ? Brushes.Transparent
-                    : FindBrush("App.Brush.Surface"),
+                "cardBackground" => marker && block is not null ? Brushes.Transparent : FindBrush("App.Brush.StepCard"),
                 _ => DependencyProperty.UnsetValue
             };
         }
-
-        private void RebuildCache(IList steps, int version)
-        {
-            var layout = new Dictionary<JobStep, Layout>(
-                steps.Count, ReferenceEqualityComparer.Instance);
-            var typedSteps = steps.Cast<object>().OfType<JobStep>().ToArray();
-            var structure = ControlFlowStructureAnalyzer.Analyze(typedSteps);
-            for (var index = 0; index < typedSteps.Length; index++)
-            {
-                var step = typedSteps[index];
-                var block = structure.GetOwningBlock(index);
-                var inBlock = block is not null;
-                var start = block?.StartIndex == index;
-                var end = block?.EndIndex == index;
-                var branch = step is IControlFlowMarker
-                             && !start
-                             && !end;
-                var section = block?.Sections
-                    .OrderBy(candidate => candidate.MarkerIndex)
-                    .LastOrDefault(candidate => candidate.MarkerIndex < index);
-                var nextSectionIndex = block?.Sections
-                    .Where(candidate => candidate.MarkerIndex > (section?.MarkerIndex ?? -1))
-                    .Select(candidate => candidate.MarkerIndex)
-                    .DefaultIfEmpty(block.EndIndex ?? typedSteps.Length)
-                    .Min() ?? typedSteps.Length;
-                var firstInSection = section is not null && index == section.MarkerIndex + 1;
-                var lastInSection = section is not null && index == nextSectionIndex - 1;
-                var containerWidth = block is null
-                    ? 330d
-                    : 358d + (structure.Blocks
-                        .Where(candidate => block.Contains(candidate.StartIndex, typedSteps.Length))
-                        .Select(candidate => candidate.Depth)
-                        .DefaultIfEmpty(block.Depth)
-                        .Max() - block.Depth) * 16d;
-                layout[step] = new Layout(
-                    inBlock, start, end, branch,
-                    inBlock && !start && !end && !branch,
-                    firstInSection,
-                    lastInSection,
-                    block?.IsSectionEmpty(index, typedSteps.Length) == true,
-                    block?.Depth ?? 0,
-                    containerWidth);
-            }
-            _layout = layout;
-            _cacheCollection = steps;
-            _cacheVersion = version;
-        }
-
         private static Brush FindBrush(string key) => Application.Current?.TryFindResource(key) as Brush ?? Brushes.Transparent;
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
     }

@@ -1,11 +1,42 @@
 using DesktopAutomationApp.Behaviors;
 using DesktopAutomationApp.Views;
 using System.Windows.Media;
+using System.Windows.Controls;
+using System.Runtime.ExceptionServices;
+using TaskAutomation.Jobs;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
 public sealed class JobStepsViewInteractionTests
 {
+    [Fact]
+    public void StepContextMenu_ActionsTargetTheClickedStepEvenWhenAnotherStepWasSelected()
+    {
+        Exception? error = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var previous = new TimeoutStep();
+                var clicked = new TimeoutStep();
+                using var vm = JobStepsViewModelExecutionTests.CreateRenderViewModel(new Job { Steps = [previous, clicked] });
+                vm.SetSelectedSteps([previous], vm.Steps);
+                var menu = JobStepsView.CreateStepContextMenu(new Border(), clicked, vm);
+                var actions = menu.Items.OfType<MenuItem>().ToArray();
+                var delete = Assert.Single(actions, item => ReferenceEquals(item.Command, vm.DeleteStepCommand));
+                Assert.Same(clicked, delete.CommandParameter);
+                var toggle = Assert.Single(actions, item => ReferenceEquals(item.Command, vm.ToggleBreakpointCommand));
+                Assert.Same(clicked, toggle.CommandParameter);
+                Assert.Same(previous, vm.SelectedStep);
+            }
+            catch (Exception exception) { error = exception; }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        Assert.True(thread.Join(TimeSpan.FromSeconds(10)));
+        if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
+    }
+
     [Fact]
     public void InspectorSelectionIndicator_ReplacesFrozenTemplateTransformWithMutableCopy()
     {
@@ -23,11 +54,11 @@ public sealed class JobStepsViewInteractionTests
     }
 
     [Fact]
-    public void StepDoubleClick_OpensDetailsOnlyForNonInteractiveStepsWithDetails()
+    public void StepDoubleClick_FocusesInspectorOnlyForNonInteractiveStepsWithDetails()
     {
-        Assert.True(JobStepsView.ShouldOpenStepDetails(isInteractiveControl: false, hasDetails: true));
-        Assert.False(JobStepsView.ShouldOpenStepDetails(isInteractiveControl: true, hasDetails: true));
-        Assert.False(JobStepsView.ShouldOpenStepDetails(isInteractiveControl: false, hasDetails: false));
+        Assert.True(JobStepsView.ShouldFocusStepInspector(isInteractiveControl: false, hasDetails: true));
+        Assert.False(JobStepsView.ShouldFocusStepInspector(isInteractiveControl: true, hasDetails: true));
+        Assert.False(JobStepsView.ShouldFocusStepInspector(isInteractiveControl: false, hasDetails: false));
     }
 
     [Fact]

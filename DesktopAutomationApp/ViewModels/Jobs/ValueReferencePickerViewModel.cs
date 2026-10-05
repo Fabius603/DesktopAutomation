@@ -14,7 +14,7 @@ public sealed record ValueReferencePickerContext(
     string StepName,
     string FieldName,
     Func<StepInputDescriptor, JobVariable?>? CreateJobVariable = null,
-    Func<Guid, int>? GetVariableUsageCount = null,
+    Func<JobVariable, int>? GetVariableUsageCount = null,
     Func<JobVariable, JobVariable?>? DetachStepValue = null,
     Func<JobVariable?>? CreateStepValue = null,
     Func<ValueProviderSourceDescriptor?>? CreateSecret = null);
@@ -51,7 +51,7 @@ public sealed class ValueReferenceSourceCatalog
         JobVariables.Clear();
         foreach (var variable in variables ?? [])
             if (variable.Id != Guid.Empty)
-                JobVariables[variable.Id.ToString("D")] = variable;
+                JobVariables.TryAdd(JobValueSources.Key(JobValueSources.ProviderFor(variable), variable.Id.ToString("D")), variable);
         ProviderSources.Clear();
         ProviderSources.AddRange(JobVariables.Values.Select(ValueProviderSourceDescriptor.FromVariable)
             .Concat(providerSources ?? [])
@@ -64,9 +64,9 @@ public sealed class ValueReferenceSourceCatalog
     {
         if (variable.Id == Guid.Empty) return;
         var sourceId = variable.Id.ToString("D");
-        JobVariables[sourceId] = variable;
+        JobVariables[JobValueSources.Key(JobValueSources.ProviderFor(variable), sourceId)] = variable;
         ProviderSources.RemoveAll(source =>
-            source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
+            source.ProviderId == JobValueSources.ProviderFor(variable)
             && string.Equals(source.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
         ProviderSources.Add(ValueProviderSourceDescriptor.FromVariable(variable));
     }
@@ -238,7 +238,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     public JobVariable? SelectedJobVariable =>
         _selectedProviderSource is not null
         && _selectedProviderSource.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-        && _jobVariables.TryGetValue(_selectedProviderSource.SourceId, out var variable)
+        && _jobVariables.TryGetValue(JobValueSources.Key(_selectedProviderSource.ProviderId, _selectedProviderSource.SourceId), out var variable)
             ? variable
             : null;
     public bool IsStepValue => _selectedProviderSource?.ProviderId == ValueProviderIds.LocalValue
@@ -383,7 +383,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             && (string.IsNullOrWhiteSpace(binding.ValuePath)
                 ? Accepts(providerSource)
                 : FindProviderProperty(providerSource, binding.ValuePath) is { } providerProperty
-                  && _contract.Accepts(providerProperty)))
+                  && _contract.AcceptsSource(providerSource.ProviderId, providerProperty, IsDirectStepValue(providerSource))))
         {
             if (string.IsNullOrWhiteSpace(binding.ValuePath)) Select(providerSource);
             else Select(providerSource, FindProviderProperty(providerSource, binding.ValuePath)!);
@@ -419,7 +419,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             StepInputSourceKind.JobVariable => CreateProviderEntries(
                     ValueProviderIds.JobVariable,
                     "Ui.ValueReference.Empty.JobVariables",
-                    source => _jobVariables.TryGetValue(source.SourceId, out var variable)
+                    source => _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
                               && variable.Scope == JobVariableScope.Shared),
             StepInputSourceKind.StepResult => CreateResultEntries(),
             StepInputSourceKind.Secret => CreateProviderEntries(
@@ -472,7 +472,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         entries.AddRange(_providerSources
             .Where(source => source.ProviderId != ValueProviderIds.LocalValue)
             .Where(AcceptsForNewSelection)
-            .OrderBy(source => _jobVariables.TryGetValue(source.SourceId, out var variable)
+            .OrderBy(source => _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
                                && variable.Scope == JobVariableScope.Shared ? 0 : 1)
             .Take(3)
             .Select(source => CreateProviderNode(source, true)));
@@ -563,13 +563,13 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             .Where(node => node is not null).Cast<ConditionSelectionNode>().ToArray();
         if (children.Count == 0
             && source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-            && _jobVariables.TryGetValue(source.SourceId, out var structuredVariable))
+            && _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var structuredVariable))
             children = CreateValueNodes(structuredVariable.Value);
         compatible = compatible && AcceptsForNewSelection(source);
         var valueText = ProviderPreviewValue(source);
         var fullValueText = source.IsSensitive
             ? valueText
-            : _jobVariables.TryGetValue(source.SourceId, out var selectedVariable)
+            : _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var selectedVariable)
                 ? _formatter.FullValue(selectedVariable)
                 : valueText;
         return new ConditionSelectionNode(
@@ -626,7 +626,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         var key = (source.ProviderId, source.SourceId);
         if (_providerPropertyCache.TryGetValue(key, out var properties)) return properties;
         properties = source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-                     && _jobVariables.TryGetValue(source.SourceId, out var variable)
+                     && _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
             ? JobVariablePropertyMetadata.GetProperties(variable)
             : [];
         _providerPropertyCache[key] = properties;
@@ -681,7 +681,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         if (source.IsSensitive) return Loc.Get("Ui.ValueReference.Sensitive");
         var type = _formatter.Type(source.ValueKind, source.Cardinality);
         return source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-               && _jobVariables.TryGetValue(source.SourceId, out var variable)
+               && _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
             ? $"{_formatter.CompactValue(variable)} · {type}"
             : type;
     }
@@ -690,7 +690,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     {
         if (source.IsSensitive) return "••••••••";
         return source.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
-               && _jobVariables.TryGetValue(source.SourceId, out var variable)
+               && _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
             ? _formatter.CompactValue(variable)
             : source.Description;
     }
@@ -699,7 +699,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     {
         if (source.IsSensitive) return source.Description;
         if (source.ProviderId is not ValueProviderIds.LocalValue and not ValueProviderIds.JobVariable
-            || !_jobVariables.TryGetValue(source.SourceId, out var variable))
+            || !_jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable))
             return source.Description;
         var value = _formatter.FullValue(variable);
         return string.IsNullOrWhiteSpace(source.Description)
@@ -739,7 +739,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         if (variable is null || variable.Id == Guid.Empty) return;
         variable.Scope = JobVariableScope.Shared;
         var sourceId = variable.Id.ToString("D");
-        _jobVariables[sourceId] = variable;
+        _jobVariables[JobValueSources.Key(JobValueSources.ProviderFor(variable), sourceId)] = variable;
         _providerSources.RemoveAll(source => string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
                                              && string.Equals(source.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
         var descriptor = ValueProviderSourceDescriptor.FromVariable(variable);
@@ -768,7 +768,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         out object? value)
     {
         value = null;
-        if (!_jobVariables.TryGetValue(source.SourceId, out var variable)) return false;
+        if (!_jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)) return false;
         var key = (source.ProviderId, source.SourceId);
         if (!_providerRuntimeValueCache.TryGetValue(key, out var cached))
         {
@@ -859,7 +859,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
             foreach (var node in _selectionTree)
                 node.UpdateSelection(CurrentSelectionKey());
         _selectedVariableUsageCount = IsStepValue && SelectedJobVariable is { } variable
-            ? Math.Max(0, _context?.GetVariableUsageCount?.Invoke(variable.Id) ?? 1)
+            ? Math.Max(0, _context?.GetVariableUsageCount?.Invoke(variable) ?? 1)
             : 0;
         OnChange(nameof(SelectedStepName));
         OnChange(nameof(SelectedDisplayPath));
@@ -897,7 +897,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         var detached = _context?.DetachStepValue?.Invoke(current);
         if (detached is null || detached.Id == Guid.Empty) return;
         var sourceId = detached.Id.ToString("D");
-        _jobVariables[sourceId] = detached;
+        _jobVariables[JobValueSources.Key(JobValueSources.ProviderFor(detached), sourceId)] = detached;
         var descriptor = ValueProviderSourceDescriptor.FromVariable(detached);
         _providerSources.Add(descriptor);
         _selectionTreeDirty = true;
@@ -920,7 +920,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         if (variable is null || variable.Id == Guid.Empty) return;
         variable.Scope = JobVariableScope.StepValue;
         var sourceId = variable.Id.ToString("D");
-        _jobVariables[sourceId] = variable;
+        _jobVariables[JobValueSources.Key(JobValueSources.ProviderFor(variable), sourceId)] = variable;
         _providerSources.RemoveAll(source =>
             source.ProviderId == ValueProviderIds.LocalValue
             && string.Equals(source.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
@@ -969,7 +969,7 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
         if (string.Equals(source.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal))
             return StepInputSourceKind.Direct;
         if (string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal))
-            return _jobVariables.TryGetValue(source.SourceId, out var variable)
+            return _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
                    && variable.Scope == JobVariableScope.StepValue
                 ? StepInputSourceKind.Direct
                 : StepInputSourceKind.JobVariable;
@@ -1028,24 +1028,20 @@ public class ValueReferencePickerViewModel : INotifyPropertyChanged
     }
 
     private bool Accepts(ValueProviderSourceDescriptor source) =>
-        IsDirectStepValue(source)
-            ? _contract.AllowsDirectValue
-              && _contract.Accepts(source.ValueKind, source.Cardinality)
-            : _contract.AllowsProvider(source.ProviderId)
-              && _contract.Accepts(source.ValueKind, source.Cardinality);
+        _contract.AcceptsSource(source.ProviderId, source.ToResultProperty(), IsDirectStepValue(source));
 
     private bool AcceptsForNewSelection(ValueProviderSourceDescriptor source) =>
-        Accepts(source)
+        _contract.AcceptsSource(source.ProviderId, source.ToResultProperty(), IsDirectStepValue(source), includeLegacy: false)
         && (source.ProviderId != ValueProviderIds.JobVariable
-            || !_jobVariables.TryGetValue(source.SourceId, out var variable)
+            || !_jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
             || JobVariableEditorViewModel.SupportedKinds.Contains(variable.ValueKind))
         && _contract.Accepts(source.ValueKind, source.Cardinality, includeLegacy: false);
 
     private bool IsDirectStepValue(ValueProviderSourceDescriptor source) =>
         string.Equals(source.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
-        && _jobVariables.ContainsKey(source.SourceId)
+        && _jobVariables.ContainsKey(JobValueSources.Key(source.ProviderId, source.SourceId))
         || string.Equals(source.ProviderId, ValueProviderIds.JobVariable, StringComparison.Ordinal)
-        && _jobVariables.TryGetValue(source.SourceId, out var variable)
+        && _jobVariables.TryGetValue(JobValueSources.Key(source.ProviderId, source.SourceId), out var variable)
         && variable.Scope == JobVariableScope.StepValue;
 
     private bool AllowsSourceKind(StepInputSourceKind kind) => kind switch

@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace DesktopAutomationApp.Behaviors;
 
@@ -32,6 +33,40 @@ public static class StepDragDrop
     public sealed record DragStartRequest(IList Source, int SourceIndex, IReadOnlyList<int> SelectedIndices);
     public delegate IReadOnlyList<int> DragIndexResolver(DragStartRequest request);
     public delegate bool PreviewValidator(MoveRequest request);
+    public sealed record InsertionPlacement(int Index, double Y, double X = 8, double Distance = 0, double Width = double.NaN);
+    public delegate InsertionPlacement InsertionPlacementResolver(ListBox list, Point pointer);
+
+    public static readonly DependencyProperty IsDragHandleProperty = DependencyProperty.RegisterAttached(
+        "IsDragHandle", typeof(bool), typeof(StepDragDrop), new PropertyMetadata(false));
+    public static void SetIsDragHandle(DependencyObject element, bool value) => element.SetValue(IsDragHandleProperty, value);
+    public static bool GetIsDragHandle(DependencyObject element) => (bool)element.GetValue(IsDragHandleProperty);
+    public static readonly DependencyProperty RequireDragHandleProperty = DependencyProperty.RegisterAttached(
+        "RequireDragHandle", typeof(bool), typeof(StepDragDrop), new PropertyMetadata(false));
+    public static void SetRequireDragHandle(DependencyObject element, bool value) => element.SetValue(RequireDragHandleProperty, value);
+    public static bool GetRequireDragHandle(DependencyObject element) => (bool)element.GetValue(RequireDragHandleProperty);
+    public static readonly DependencyProperty IsGhostPreviewEnabledProperty = DependencyProperty.RegisterAttached(
+        "IsGhostPreviewEnabled", typeof(bool), typeof(StepDragDrop), new PropertyMetadata(false));
+    public static void SetIsGhostPreviewEnabled(DependencyObject element, bool value) => element.SetValue(IsGhostPreviewEnabledProperty, value);
+    public static bool GetIsGhostPreviewEnabled(DependencyObject element) => (bool)element.GetValue(IsGhostPreviewEnabledProperty);
+    private static readonly DependencyProperty PreviewDisplacementProperty = DependencyProperty.RegisterAttached(
+        "PreviewDisplacement", typeof(double), typeof(StepDragDrop), new PropertyMetadata(0d));
+    internal static void SetPreviewDisplacement(DependencyObject element, double value) => element.SetValue(PreviewDisplacementProperty, value);
+    internal static double GetPreviewDisplacement(DependencyObject element) => (double)element.GetValue(PreviewDisplacementProperty);
+    private static StepDragPreviewSession? _ghostPreview;
+
+    public static readonly DependencyProperty PlacementResolverProperty = DependencyProperty.RegisterAttached(
+        "PlacementResolver", typeof(InsertionPlacementResolver), typeof(StepDragDrop), new PropertyMetadata(null));
+    public static void SetPlacementResolver(DependencyObject element, InsertionPlacementResolver? value)
+        => element.SetValue(PlacementResolverProperty, value);
+    public static InsertionPlacementResolver? GetPlacementResolver(DependencyObject element)
+        => element.GetValue(PlacementResolverProperty) as InsertionPlacementResolver;
+
+    public static readonly DependencyProperty HoverExpandCommandProperty = DependencyProperty.RegisterAttached(
+        "HoverExpandCommand", typeof(ICommand), typeof(StepDragDrop), new PropertyMetadata(null));
+    public static void SetHoverExpandCommand(DependencyObject element, ICommand? value)
+        => element.SetValue(HoverExpandCommandProperty, value);
+    public static ICommand? GetHoverExpandCommand(DependencyObject element)
+        => element.GetValue(HoverExpandCommandProperty) as ICommand;
 
     public static readonly DependencyProperty MoveCommandProperty =
         DependencyProperty.RegisterAttached(
@@ -101,6 +136,8 @@ public static class StepDragDrop
     private static Point _dragStart;
     private static ListBox? _sourceList;
     private static int _sourceIndex = -1;
+    private static IReadOnlyList<int> _dragSelection = [];
+    private static object? _deferredSelectionItem;
     private static bool _isDragging;
     private static DragPayload? _activePayload;
     private static IReadOnlyList<PreviewImage> _previewImages = [];
@@ -117,11 +154,17 @@ public static class StepDragDrop
     private static ListBox? _indicatorOwner;
     private static InsertionAdorner? _indicator;
     private static int _targetIndex = -1;
+    private static long _lastScrollTicks;
+    private static DispatcherTimer? _hoverTimer;
+    private static object? _hoverItem;
+    private static ListBox? _hoverList;
 
     private static void OnMoveCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not ListBox list)
             return;
+
+        if (e.NewValue is null && (ReferenceEquals(_sourceList, list) || ReferenceEquals(_ghostPreview?.Target, list))) CleanupDrag();
 
         list.PreviewMouseLeftButtonDown -= OnMouseDown;
         list.PreviewMouseLeftButtonUp -= OnMouseUp;
@@ -130,6 +173,9 @@ public static class StepDragDrop
         list.DragOver -= OnDragOver;
         list.DragLeave -= OnDragLeave;
         list.Drop -= OnDrop;
+        list.Unloaded -= OnListUnloaded;
+        list.QueryContinueDrag -= OnQueryContinueDrag;
+        list.GiveFeedback -= OnGiveFeedback;
         list.AllowDrop = false;
 
         if (e.NewValue is not ICommand)
@@ -143,12 +189,33 @@ public static class StepDragDrop
         list.DragOver += OnDragOver;
         list.DragLeave += OnDragLeave;
         list.Drop += OnDrop;
+        list.Unloaded += OnListUnloaded;
+        list.QueryContinueDrag += OnQueryContinueDrag;
+        list.GiveFeedback += OnGiveFeedback;
+    }
+
+    private static void OnListUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (ReferenceEquals(sender, _sourceList) || ReferenceEquals(sender, _indicatorOwner)
+            || ReferenceEquals(sender, _livePreviewOwner) || ReferenceEquals(sender, _hoverList)
+            || ReferenceEquals(sender, _ghostPreview?.Target))
+            CleanupDrag();
+    }
+
+    private static void OnGiveFeedback(object sender, GiveFeedbackEventArgs e) => _ghostPreview?.RefreshPointer();
+
+    private static void OnQueryContinueDrag(object sender, QueryContinueDragEventArgs e)
+    {
+        if (!e.EscapePressed) return;
+        e.Action = DragAction.Cancel;
+        e.Handled = true;
     }
 
     private static void OnMouseDown(object sender, MouseButtonEventArgs e)
     {
         ResetPendingDrag();
-        if (sender is not ListBox list || IsInteractiveElement(e.OriginalSource as DependencyObject))
+        if (sender is not ListBox list || IsInteractiveElement(e.OriginalSource as DependencyObject)
+            || GetRequireDragHandle(list) && !IsInsideDragHandle(e.OriginalSource as DependencyObject))
             return;
 
         var container = ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) as ListBoxItem;
@@ -158,12 +225,29 @@ public static class StepDragDrop
         _dragStart = e.GetPosition(list);
         _sourceIndex = list.ItemContainerGenerator.IndexFromContainer(container);
         _sourceList = _sourceIndex >= 0 ? list : null;
+        if (_sourceList is null || list.ItemsSource is not IList source) return;
+        _dragSelection = list.SelectedItems.Contains(source[_sourceIndex])
+            ? list.SelectedItems.Cast<object>().Select(source.IndexOf).Where(index => index >= 0).Order().ToArray()
+            : [_sourceIndex];
+        if (_dragSelection.Count > 1 && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            // Keep a group selected until we know whether this gesture is a click or a drag.
+            _deferredSelectionItem = source[_sourceIndex];
+            e.Handled = true;
+        }
     }
 
     private static void OnMouseUp(object sender, MouseButtonEventArgs e)
     {
         if (!_isDragging)
+        {
+            if (sender is ListBox list && ReferenceEquals(list, _sourceList) && _deferredSelectionItem is { } item)
+            {
+                list.SelectedItems.Clear();
+                list.SelectedItem = item;
+            }
             ResetPendingDrag();
+        }
     }
 
     private static void OnCancelPendingDrag(object sender, MouseButtonEventArgs e)
@@ -177,21 +261,15 @@ public static class StepDragDrop
             || _sourceIndex < 0
             || e.LeftButton != MouseButtonState.Pressed
             || (e.GetPosition(list) - _dragStart).Length <= 6
-            || list.ItemsSource is not IList source)
+            || list.ItemsSource is not IList source
+            || _sourceIndex >= source.Count)
             return;
 
         _isDragging = true;
 
         try
         {
-            IReadOnlyList<int> sourceIndices = list.SelectedItems.Contains(source[_sourceIndex])
-                ? list.SelectedItems.Cast<object>()
-                    .Select(source.IndexOf)
-                    .Where(index => index >= 0)
-                    .Distinct()
-                    .OrderBy(index => index)
-                    .ToArray()
-                : [_sourceIndex];
+            IReadOnlyList<int> sourceIndices = _dragSelection;
             if (GetDragIndicesResolver(list) is { } resolver)
                 sourceIndices = resolver(new DragStartRequest(source, _sourceIndex, sourceIndices));
             sourceIndices = sourceIndices
@@ -203,8 +281,9 @@ public static class StepDragDrop
                 sourceIndices = [_sourceIndex];
 
             _activePayload = new DragPayload(source, _sourceIndex, sourceIndices);
-            _previewImages = CapturePreviewImages(list, sourceIndices);
-            foreach (var index in sourceIndices)
+            if (GetIsGhostPreviewEnabled(list)) _ghostPreview = new StepDragPreviewSession(list, _activePayload);
+            _previewImages = GetIsLivePreviewEnabled(list) ? CapturePreviewImages(list, sourceIndices) : [];
+            foreach (var index in GetIsLivePreviewEnabled(list) ? sourceIndices : Array.Empty<int>())
             {
                 if (list.ItemContainerGenerator.ContainerFromIndex(index) is not ListBoxItem item)
                     continue;
@@ -223,36 +302,52 @@ public static class StepDragDrop
 
     private static void OnDragOver(object sender, DragEventArgs e)
     {
-        if (sender is not ListBox list || !TryGetPayload(e.Data, out _))
+        if (sender is not ListBox list || !TryGetPayload(e.Data, out var payload))
             return;
 
         e.Effects = DragDropEffects.Move;
         e.Handled = true;
 
-        var position = e.GetPosition(list);
-        var scrolled = ScrollAtEdge(list, e);
+        var scrolled = _ghostPreview is null && ScrollAtEdge(list, e);
         if (scrolled && ReferenceEquals(list, _livePreviewOwner))
             ClearLivePreviewVisuals();
 
+        var position = e.GetPosition(list);
+        _ghostPreview?.UpdatePointerFrom(list, position);
+        UpdateHoverExpansion(list, payload, position);
+
         var placement = GetInsertionPlacement(list, position);
+        placement = _ghostPreview?.RetainTarget(list, position, placement) ?? placement;
         var targetIndex = TryGetLiveTargetIndex(list, position.Y, out var liveTargetIndex)
             ? liveTargetIndex
             : placement.Index;
         _targetIndex = targetIndex;
-        if (GetIsLivePreviewEnabled(list))
+        if (_ghostPreview is not null)
+        {
+            e.Effects = _ghostPreview.UpdateTarget(list, placement, CanAcceptDrop(list, payload, targetIndex))
+                ? DragDropEffects.Move : DragDropEffects.None;
+        }
+        else if (GetIsLivePreviewEnabled(list))
             e.Effects = ShowLivePreview(list, targetIndex) ? DragDropEffects.Move : DragDropEffects.None;
         else
         {
             ClearLivePreviewVisuals();
-            ShowIndicator(list, placement.Y, list.Items.Count == 0);
+            if (CanAcceptDrop(list, payload, targetIndex))
+                ShowIndicator(list, placement.Y, list.Items.Count == 0, placement.X);
+            else
+            {
+                RemoveIndicator();
+                e.Effects = DragDropEffects.None;
+            }
         }
     }
 
     private static void OnDragLeave(object sender, DragEventArgs e)
     {
         if (sender is not ListBox list
-            || !ReferenceEquals(list, _indicatorOwner)
-               && !ReferenceEquals(list, _livePreview?.AdornedElement))
+            || _ghostPreview is null && !ReferenceEquals(list, _indicatorOwner)
+               && !ReferenceEquals(list, _livePreview?.AdornedElement)
+               && !ReferenceEquals(list, _hoverList))
             return;
 
         var point = e.GetPosition(list);
@@ -272,9 +367,19 @@ public static class StepDragDrop
             return;
 
         var position = e.GetPosition(list);
+        var placement = GetInsertionPlacement(list, position);
+        placement = _ghostPreview?.RetainTarget(list, position, placement) ?? placement;
         var targetIndex = TryGetLiveTargetIndex(list, position.Y, out var liveTargetIndex)
             ? liveTargetIndex
-            : GetInsertionPlacement(list, position).Index;
+            : placement.Index;
+        if (_ghostPreview is not null && !_ghostPreview.UpdateTarget(list, placement,
+                CanAcceptDrop(list, payload, targetIndex)))
+        {
+            ClearTargetPreview();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
         ClearLivePreviewVisuals();
         var dropTarget = GetDropTarget(list, e);
         var request = new MoveRequest(
@@ -285,7 +390,8 @@ public static class StepDragDrop
             dropTarget.Item,
             dropTarget.InsertAfter,
             payload.SourceIndices);
-        if (command.CanExecute(request))
+        _ghostPreview?.ClearTarget();
+        if (CanAcceptDrop(list, payload, targetIndex) && command.CanExecute(request))
             command.Execute(request);
 
         ClearTargetPreview();
@@ -301,49 +407,111 @@ public static class StepDragDrop
         return true;
     }
 
+    internal static bool CanAcceptDrop(ListBox list, DragPayload payload, int targetIndex)
+    {
+        if (list.ItemsSource is not IList target || GetMoveCommand(list) is not { } command) return false;
+        var request = new MoveRequest(payload.Source, payload.SourceIndex, target, targetIndex,
+            SourceIndices: payload.SourceIndices);
+        return command.CanExecute(request) && (GetPreviewMoveValidator(list)?.Invoke(request) ?? true);
+    }
+
     /// <summary>
     /// Zeigt die Ablageposition an, wenn der Mauszeiger ueber dem Balken eines Bereichs liegt.
     /// Ein leerer Bereich zeigt seine gesamte Ablageflaeche, ein belegter die Position am Ende.
     /// </summary>
-    public static void ShowSectionTarget(ListBox list)
+    public static bool ShowSectionTarget(ListBox list)
     {
-        if (!_isDragging)
-            return;
+        if (!_isDragging || _activePayload is not { } payload || !CanAcceptDrop(list, payload, list.Items.Count))
+        { ClearTargetPreview(); return false; }
 
         _targetIndex = list.Items.Count;
+        if (_ghostPreview is not null)
+            return _ghostPreview.UpdateTarget(list, new(_targetIndex, GetEndInsertionY(list), GetSectionInsertionX(list)), true, force: true);
         if (GetIsLivePreviewEnabled(list))
-            ShowLivePreview(list, _targetIndex);
+            return ShowLivePreview(list, _targetIndex);
         else
-            ShowIndicator(list, GetEndInsertionY(list), list.Items.Count == 0);
+            ShowIndicator(list, GetEndInsertionY(list), list.Items.Count == 0, GetSectionInsertionX(list));
+        return true;
     }
 
     /// <summary>
     /// Shows the insertion target at index zero when hovering a section header.
     /// </summary>
-    public static void ShowSectionStartTarget(ListBox list)
+    public static bool ShowSectionStartTarget(ListBox list)
     {
-        if (!_isDragging)
-            return;
+        if (!_isDragging || _activePayload is not { } payload || !CanAcceptDrop(list, payload, 0))
+        { ClearTargetPreview(); return false; }
 
         _targetIndex = 0;
+        if (_ghostPreview is not null)
+            return _ghostPreview.UpdateTarget(list, new(0, Math.Max(2, GetInsertionPlacement(list, new Point(0, 0)).Y), GetSectionInsertionX(list)), true, force: true);
         if (GetIsLivePreviewEnabled(list))
-            ShowLivePreview(list, _targetIndex);
+            return ShowLivePreview(list, _targetIndex);
         else
         {
             var insertionY = list.Items.Count == 0
                 ? Math.Max(1, list.ActualHeight / 2)
                 : GetInsertionPlacement(list, new Point(0, 0)).Y;
-            ShowIndicator(list, insertionY, list.Items.Count == 0);
+            ShowIndicator(list, insertionY, list.Items.Count == 0, GetSectionInsertionX(list));
         }
+        return true;
     }
 
     public static void ClearTargetPreview(ListBox? list = null)
     {
+        _ghostPreview?.ClearTarget(list);
+        if (list is null || ReferenceEquals(list, _hoverList)) ClearHoverExpansion();
         if (list == null || ReferenceEquals(list, _indicatorOwner) || ReferenceEquals(list, _livePreview?.AdornedElement))
         {
             ClearLivePreviewVisuals();
             RemoveIndicator();
         }
+    }
+
+    private static double GetSectionInsertionX(ListBox list)
+        => GetPlacementResolver(list)?.Invoke(list, new Point(0, double.NegativeInfinity)).X ?? 8;
+
+    private static void UpdateHoverExpansion(ListBox list, DragPayload payload, Point position)
+    {
+        var hit = list.InputHitTest(position) as DependencyObject;
+        var container = ItemsControl.ContainerFromElement(list, hit) as ListBoxItem;
+        var item = container?.DataContext;
+        var command = GetHoverExpandCommand(list);
+        var draggedItem = item is not null && payload.SourceIndices.Any(index => index >= 0 && index < payload.Source.Count
+            && ReferenceEquals(payload.Source[index], item));
+        if (item is null || command is null || draggedItem || !command.CanExecute(item))
+        {
+            ClearHoverExpansion();
+            return;
+        }
+        if (ReferenceEquals(list, _hoverList) && ReferenceEquals(item, _hoverItem)) return;
+        ClearHoverExpansion();
+        _hoverList = list;
+        _hoverItem = item;
+        _hoverTimer = new DispatcherTimer(DispatcherPriority.Input, list.Dispatcher) { Interval = TimeSpan.FromMilliseconds(700) };
+        _hoverTimer.Tick += (_, _) =>
+        {
+            ClearHoverExpansion();
+            if (!_isDragging || !command.CanExecute(item)) return;
+            command.Execute(item);
+            list.UpdateLayout();
+            // Recompute the insertion lane immediately after the block opens.
+            _ghostPreview?.RefreshPointer();
+            var placement = GetInsertionPlacement(list, _ghostPreview?.PointerRelativeTo(list) ?? Mouse.GetPosition(list));
+            if (_ghostPreview is not null) _ghostPreview.UpdateTarget(list, placement, CanAcceptDrop(list, payload, placement.Index));
+            else if (CanAcceptDrop(list, payload, placement.Index))
+                ShowIndicator(list, placement.Y, list.Items.Count == 0, placement.X);
+            else RemoveIndicator();
+        };
+        _hoverTimer.Start();
+    }
+
+    private static void ClearHoverExpansion()
+    {
+        _hoverTimer?.Stop();
+        _hoverTimer = null;
+        _hoverList = null;
+        _hoverItem = null;
     }
 
     internal static IReadOnlyList<int> BuildPreviewOrder(
@@ -669,10 +837,11 @@ public static class StepDragDrop
         _livePreviewHitZones = [];
     }
 
-    private static (int Index, double Y) GetInsertionPlacement(ListBox list, Point pointer)
+    private static InsertionPlacement GetInsertionPlacement(ListBox list, Point pointer)
     {
+        if (GetPlacementResolver(list) is { } resolver) return resolver(list, pointer);
         if (list.Items.Count == 0)
-            return (0, Math.Max(1, list.ActualHeight / 2));
+            return new(0, Math.Max(1, list.ActualHeight / 2));
 
         (int Index, double Bottom, Thickness Margin)? previous = null;
         for (var i = 0; i < list.Items.Count; i++)
@@ -687,14 +856,14 @@ public static class StepDragDrop
                 var lineY = previous is { } before
                     ? (before.Bottom + top) / 2
                     : Math.Max(2, top - item.Margin.Top / 2);
-                return (i, lineY);
+                return new(i, lineY);
             }
             previous = (i, bottom, item.Margin);
         }
 
         return previous is { } last
-            ? (last.Index + 1, last.Bottom + last.Margin.Bottom / 2)
-            : (list.Items.Count, Math.Max(1, list.ActualHeight - 2));
+            ? new(last.Index + 1, last.Bottom + last.Margin.Bottom / 2)
+            : new(list.Items.Count, Math.Max(1, list.ActualHeight - 2));
     }
 
     private static (object? Item, bool InsertAfter) GetDropTarget(ListBox list, DragEventArgs e)
@@ -720,13 +889,13 @@ public static class StepDragDrop
             if (list.ItemContainerGenerator.ContainerFromIndex(i) is not ListBoxItem item)
                 continue;
             var bottom = item.TranslatePoint(new Point(0, 0), list).Y + item.ActualHeight;
-            return bottom + item.Margin.Bottom / 2;
+            return bottom - GetPreviewDisplacement(item) + item.Margin.Bottom / 2;
         }
 
         return Math.Max(2, list.ActualHeight - 2);
     }
 
-    private static void ShowIndicator(ListBox list, double y, bool empty)
+    private static void ShowIndicator(ListBox list, double y, bool empty, double x = 8)
     {
         if (!ReferenceEquals(_indicatorOwner, list))
         {
@@ -739,7 +908,7 @@ public static class StepDragDrop
             layer.Add(_indicator);
         }
 
-        _indicator?.Update(y, empty);
+        _indicator?.Update(y, empty, x);
     }
 
     private static void RemoveIndicator()
@@ -759,14 +928,32 @@ public static class StepDragDrop
 
         var position = e.GetPosition(scroller);
         const double edge = 44;
+        var now = Environment.TickCount64;
+        if (now - _lastScrollTicks < 60) return false;
         var oldOffset = scroller.VerticalOffset;
+        var newOffset = oldOffset;
         if (position.Y < edge)
-            scroller.ScrollToVerticalOffset(oldOffset - 14);
+            newOffset = Math.Max(0, oldOffset - 16);
         else if (position.Y > scroller.ViewportHeight - edge)
-            scroller.ScrollToVerticalOffset(oldOffset + 14);
+            newOffset = Math.Min(scroller.ScrollableHeight, oldOffset + 16);
 
-        if (Math.Abs(oldOffset - scroller.VerticalOffset) > 0.1)
+        var horizontal = FindDescendantScrollViewer(list);
+        var oldHorizontalOffset = horizontal?.HorizontalOffset ?? 0;
+        var newHorizontalOffset = oldHorizontalOffset;
+        if (horizontal is { ScrollableWidth: > 0 })
         {
+            var x = e.GetPosition(horizontal).X;
+            if (x < edge) newHorizontalOffset = Math.Max(0, oldHorizontalOffset - 16);
+            else if (x > horizontal.ViewportWidth - edge)
+                newHorizontalOffset = Math.Min(horizontal.ScrollableWidth, oldHorizontalOffset + 16);
+        }
+
+        if (Math.Abs(oldOffset - newOffset) > 0.1 || Math.Abs(oldHorizontalOffset - newHorizontalOffset) > 0.1)
+        {
+            _lastScrollTicks = now;
+            scroller.ScrollToVerticalOffset(newOffset);
+            horizontal?.ScrollToHorizontalOffset(newHorizontalOffset);
+            scroller.UpdateLayout();
             list.Dispatcher.BeginInvoke(() => _indicator?.InvalidateVisual());
             return true;
         }
@@ -775,6 +962,7 @@ public static class StepDragDrop
 
     private static ScrollViewer? FindScrollViewerForDrag(ListBox list)
         => FindAncestorScrollViewer(list) ?? FindDescendantScrollViewer(list);
+    internal static double GetHorizontalScrollOffset(ListBox list) => FindDescendantScrollViewer(list)?.HorizontalOffset ?? 0;
 
     private static ScrollViewer? FindAncestorScrollViewer(DependencyObject element)
     {
@@ -809,14 +997,29 @@ public static class StepDragDrop
         return false;
     }
 
+    internal static bool IsInsideDragHandle(DependencyObject? element)
+    {
+        for (var current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (GetIsDragHandle(current)) return true;
+            if (current is ListBoxItem) return false;
+        }
+        return false;
+    }
+
     private static void ResetPendingDrag()
     {
         _sourceList = null;
         _sourceIndex = -1;
+        _dragSelection = [];
+        _deferredSelectionItem = null;
     }
 
     private static void CleanupDrag()
     {
+        _ghostPreview?.Dispose();
+        _ghostPreview = null;
+        ClearHoverExpansion();
         ClearLivePreviewVisuals();
         RemoveIndicator();
         _activePayload = null;
@@ -877,6 +1080,7 @@ public static class StepDragDrop
     private sealed class InsertionAdorner : Adorner
     {
         private double _y;
+        private double _x = 8;
         private bool _empty;
         private readonly Brush _accent;
         private readonly Brush _fill;
@@ -896,10 +1100,11 @@ public static class StepDragDrop
             };
         }
 
-        public void Update(double y, bool empty)
+        public void Update(double y, bool empty, double x)
         {
             _y = y;
             _empty = empty;
+            _x = x;
             InvalidateVisual();
         }
 
@@ -920,8 +1125,8 @@ public static class StepDragDrop
 
             var y = Math.Clamp(_y, 2, Math.Max(2, AdornedElement.RenderSize.Height - 2));
             var penLine = new Pen(_accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-            drawingContext.DrawLine(penLine, new Point(8, y), new Point(Math.Max(8, width - 8), y));
-            drawingContext.DrawEllipse(_accent, null, new Point(8, y), 4, 4);
+            drawingContext.DrawLine(penLine, new Point(_x, y), new Point(Math.Max(_x, width - 8), y));
+            drawingContext.DrawEllipse(_accent, null, new Point(_x, y), 4, 4);
             drawingContext.DrawEllipse(_accent, null, new Point(Math.Max(8, width - 8), y), 4, 4);
         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TaskAutomation.Jobs;
@@ -21,7 +21,7 @@ namespace TaskAutomation.Steps
     /// und das automatische Speichern des Ergebnisses im <see cref="IJobResultStore"/>.
     /// </summary>
     public abstract class JobStepHandler<TStep, TResult> : IJobStepHandler
-        where TStep   : JobStep
+        where TStep : JobStep
         where TResult : StepResultBase
     {
         public Type StepType => typeof(TStep);
@@ -33,6 +33,7 @@ namespace TaskAutomation.Steps
                 return CreateDefault();
 
             var result = await ExecuteCoreAsync(typed, ctx, ct).ConfigureAwait(false);
+            ctx.Results.RegisterStep(typed);
             ctx.Results.Set<TStep>(result, step.Id);
             return result;
         }
@@ -63,6 +64,7 @@ namespace TaskAutomation.Steps
 
             var result = await ExecuteCoreAsync(typed, ctx, ct).ConfigureAwait(false);
             ValidateResultContract(typed, result);
+            ctx.Results.RegisterStep(typed);
             ctx.Results.Set<TStep>(result, step.Id);
             return result;
         }

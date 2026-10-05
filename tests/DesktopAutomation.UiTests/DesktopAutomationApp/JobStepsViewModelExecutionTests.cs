@@ -10,6 +10,248 @@ namespace TaskAutomation.Tests.DesktopAutomationApp;
 public sealed class JobStepsViewModelExecutionTests
 {
     [Fact]
+    public void SelectingAChildInsideCollapsedAlternative_RevealsTheBranchWithoutChangingJobSteps()
+    {
+        var alternative = new ElseIfStep();
+        var child = new TimeoutStep();
+        var job = new Job { Steps = [new IfStep(), new TimeoutStep(), alternative, child, new ElseStep(), new TimeoutStep(), new EndIfStep()] };
+        using var vm = CreateViewModel(job);
+        vm.ToggleBlockCommand.Execute(alternative);
+        Assert.Contains(alternative.Id, vm.CollapsedBlockIds);
+        vm.SelectedStep = child;
+        Assert.DoesNotContain(alternative.Id, vm.CollapsedBlockIds);
+        Assert.Equal(job.Steps, vm.Steps);
+    }
+
+    [Fact]
+    public void AddStepTarget_UsesTheLastSelectedRowAndDefaultsToRunAfterSelectionIsCleared()
+    {
+        var first = new TimeoutStep(); var later = new TimeoutStep(); var start = new TimeoutStep();
+        using var vm = CreateViewModel(new Job { Steps = [first, later], StartSteps = [start] });
+        vm.SetSelectedSteps([later, first], vm.Steps);
+        var section = vm.ResolveAddStepSection();
+        Assert.Same(vm.Steps, section);
+        Assert.Equal(1, TaskAutomation.Jobs.ControlFlow.ControlFlowEditRules.ResolveAddInsertionIndex(section, section.IndexOf(vm.SelectedStep!)));
+        vm.SetSelectedSteps([start], vm.StartSteps);
+        Assert.Same(vm.StartSteps, vm.ResolveAddStepSection());
+        vm.SetSelectedSteps([], vm.StartSteps);
+        Assert.Same(vm.Steps, vm.ResolveAddStepSection());
+        Assert.Contains(global::DesktopAutomationApp.Localization.Loc.Get("Ui.Job.Steps.Section.Run"), vm.DescribeAddStepTarget(vm.ResolveAddStepSection()));
+    }
+
+    [Fact]
+    public async Task DirectBranchActions_UseTheirOwnPhaseSelectTheNewBranchAndCanBeUndone()
+    {
+        var conditional = new IfStep(); var alternate = new ElseIfStep(); var end = new EndIfStep();
+        using var vm = CreateViewModel(new Job { StartSteps = [conditional, alternate, end], Steps = [new TimeoutStep()] });
+        vm.SetSelectedSteps([vm.Steps[0]], vm.Steps);
+        Assert.True(vm.AddElseCommand.CanExecute(alternate));
+        var addElse = Assert.IsType<AsyncRelayCommand<JobStep?>>(vm.AddElseCommand);
+        addElse.Execute(alternate); await WaitUntilAsync(() => !addElse.IsExecuting);
+        var addedElse = Assert.IsType<ElseStep>(vm.StartSteps[2]);
+        Assert.Same(addedElse, vm.SelectedStep);
+        Assert.Single(vm.SelectedSteps);
+        Assert.False(vm.AddElseCommand.CanExecute(conditional));
+        Assert.False(vm.AddElseCommand.CanExecute(alternate));
+        Assert.Single(vm.Steps);
+        var addElseIf = Assert.IsType<AsyncRelayCommand<JobStep?>>(vm.AddElseIfCommand);
+        addElseIf.Execute(alternate); await WaitUntilAsync(() => !addElseIf.IsExecuting);
+        Assert.IsType<ElseIfStep>(vm.StartSteps[2]);
+        Assert.Same(addedElse, vm.StartSteps[3]);
+        Assert.NotNull(vm.SelectedStepEditor);
+        Assert.IsType<ElseIfStep>(vm.SelectedStep);
+        var undo = Assert.IsType<AsyncRelayCommand>(vm.UndoCommand);
+        undo.Execute(null); await WaitUntilAsync(() => !undo.IsExecuting);
+        Assert.Equal(4, vm.StartSteps.Count);
+        Assert.IsType<ElseStep>(vm.StartSteps[2]);
+    }
+
+    [Fact]
+    public async Task InvalidLocalDraftDoesNotChangeStoredValuesAndAValidEditCanBeUndone()
+    {
+        var step = new TimeoutStep { Settings = new() { DelayMs = 250 } };
+        var other = new TimeoutStep();
+        var job = new Job { Steps = [step, other] };
+        JobVariableInputMigration.Migrate(job);
+        var local = job.LocalValues.Single(value => value.OwnerStepId == step.Id);
+        using var vm = CreateViewModel(job);
+        vm.SetSelectedSteps([step], vm.Steps);
+        var delay = vm.SelectedGeneratedEditor!.Fields.Single(field => field.Descriptor.Id == "delay_ms");
+        delay.InputText = "broken";
+        await WaitUntilAsync(() => vm.HasInlineEditorError);
+        Assert.Equal(250, local.Value!.GetValue<int>());
+        vm.SetSelectedSteps([other], vm.Steps);
+        vm.ShowValidationIssueCommand.Execute(step);
+        delay.InputText = "500";
+        await WaitUntilAsync(() => ((TimeoutStep)vm.Steps[0]).Settings.DelayMs == 500 && !vm.IsMutationBusy);
+        Assert.Equal(500, local.Value!.GetValue<int>());
+        var undo = Assert.IsType<AsyncRelayCommand>(vm.UndoCommand);
+        undo.Execute(null);
+        await WaitUntilAsync(() => !undo.IsExecuting);
+        Assert.Equal(250, ((TimeoutStep)vm.Steps[0]).Settings.DelayMs);
+        Assert.Equal(250, job.LocalValues.Single(value => value.OwnerStepId == step.Id).Value!.GetValue<int>());
+    }
+
+    [Fact]
+    public async Task InvalidDraft_SurvivesSelectionChangeAndIsRestoredUntilFixedOrDiscarded()
+    {
+        var step = new TimeoutStep { Settings = new TimeoutSettings { DelayMs = 250 } };
+        var other = new TimeoutStep();
+        using var vm = CreateViewModel(new Job { Steps = [step, other] });
+        vm.SetSelectedSteps([step], vm.Steps);
+        var editor = vm.SelectedGeneratedEditor!;
+        var delay = editor.Fields.Single(field => field.Descriptor.Id == TimeoutStepDefinition.DelayFieldId);
+        delay.InputText = "broken";
+        await WaitUntilAsync(() => vm.HasInlineEditorError);
+        vm.SetSelectedSteps([other], vm.Steps);
+        Assert.Single(vm.ValidationIssues, issue => issue.Step.Id == step.Id && issue.IsDraft);
+        Assert.True(vm.HasValidationErrors);
+        Assert.True(vm.HasUnsavedChanges);
+        Assert.False(vm.StartJobCommand.CanExecute(null));
+        vm.ShowValidationIssueCommand.Execute(step);
+        Assert.Same(editor, vm.SelectedGeneratedEditor);
+        Assert.Equal("broken", delay.InputText);
+        delay.InputText = "500";
+        await WaitUntilAsync(() => ((TimeoutStep)vm.Steps[0]).Settings.DelayMs == 500 && !vm.IsMutationBusy);
+        Assert.DoesNotContain(vm.ValidationIssues, issue => issue.IsDraft);
+        delay.InputText = "broken again";
+        await WaitUntilAsync(() => vm.HasInlineEditorError);
+        vm.DiscardChanges();
+        Assert.DoesNotContain(vm.ValidationIssues, issue => issue.IsDraft);
+        Assert.False(vm.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public void InternalClosingMarkers_CannotBeSelectedOrOpenedInTheInspector()
+    {
+        var conditional = new IfStep();
+        var marker = new EndIfStep();
+        using var vm = CreateViewModel(new Job { Steps = [conditional, new TimeoutStep(), marker] });
+        vm.SelectedStep = marker;
+        Assert.Same(conditional, vm.SelectedStep);
+        vm.SetSelectedSteps(vm.Steps, vm.Steps);
+        Assert.DoesNotContain(vm.SelectedSteps, step => step is EndIfStep);
+    }
+
+    [Fact]
+    public async Task ValidationNavigation_RevealsNestedErrorsInCollapsedPhasesWithoutChangingJob()
+    {
+        var outer = new IfStep();
+        var inner = new IfStep();
+        var closing = new EndIfStep();
+        using var viewModel = CreateViewModel(new Job { EndSteps = [outer, inner, new TimeoutStep(), closing, new EndIfStep()] });
+        inner.SetValidationResult(false, "Missing condition");
+        Assert.Contains(viewModel.ValidationIssues, issue => ReferenceEquals(issue.Step, inner));
+        viewModel.ToggleBlockCommand.Execute(outer);
+        viewModel.IsEndSectionExpanded = false;
+
+        viewModel.ShowValidationIssueCommand.Execute(inner);
+
+        Assert.True(viewModel.IsEndSectionExpanded);
+        Assert.Same(inner, viewModel.SelectedStep);
+        Assert.Empty(viewModel.CollapsedBlockIds);
+        viewModel.ToggleBlockCommand.Execute(outer);
+        viewModel.ShowValidationIssueCommand.Execute(inner);
+        Assert.Empty(viewModel.CollapsedBlockIds);
+        closing.SetValidationResult(false, "Invalid closure");
+        viewModel.ShowValidationIssueCommand.Execute(closing);
+        Assert.Same(inner, viewModel.SelectedStep);
+        await viewModel.WaitForDirtyStateAsync();
+        Assert.False(viewModel.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public async Task DropHover_ExpandsOnlyCollapsedBlocksWithoutChangingSelectionOrJob()
+    {
+        var condition = new IfStep();
+        var child = new TimeoutStep();
+        using var viewModel = CreateViewModel(new Job { Steps = [condition, child, new EndIfStep()] });
+        viewModel.SelectedStep = child;
+        Assert.False(viewModel.ExpandDropBlockCommand.CanExecute(condition));
+        viewModel.ToggleBlockCommand.Execute(condition);
+        Assert.False(viewModel.ExpandDropBlockCommand.CanExecute(child));
+        Assert.True(viewModel.ExpandDropBlockCommand.CanExecute(condition));
+        viewModel.ExpandDropBlockCommand.Execute(condition);
+        Assert.Empty(viewModel.CollapsedBlockIds);
+        Assert.Same(child, viewModel.SelectedStep);
+        await viewModel.WaitForDirtyStateAsync();
+        Assert.False(viewModel.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public async Task CollapsingBlock_KeepsInspectorSelectionAndDoesNotModifyJob()
+    {
+        var condition = new IfStep();
+        var child = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job { Steps = [condition, child, new EndIfStep()] });
+        viewModel.SelectedStep = child;
+        viewModel.ToggleBlockCommand.Execute(condition);
+        Assert.Contains(condition.Id, viewModel.CollapsedBlockIds);
+        Assert.Same(child, viewModel.SelectedStep);
+        await viewModel.WaitForDirtyStateAsync();
+        Assert.False(viewModel.HasUnsavedChanges);
+        viewModel.SelectedStep = condition;
+        viewModel.SelectedStep = child;
+        Assert.Empty(viewModel.CollapsedBlockIds);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task DeletingAlternative_PreservesOtherBranchesAndUndoRestoresTheOriginalJob(bool elseIf, bool selectionCommand)
+    {
+        JobStep branch = elseIf ? new ElseIfStep() : new ElseStep();
+        var condition = new IfStep();
+        var body = new TimeoutStep();
+        var nested = new IfStep();
+        var nestedEnd = new EndIfStep();
+        var end = new EndIfStep();
+        var after = new TimeoutStep();
+        JobStep[] original = [condition, body, branch, nested, new TimeoutStep(), nestedEnd, end, after];
+        using var vm = CreateViewModel(new Job { Steps = original.ToList() });
+        vm.SelectedStep = branch;
+        if (selectionCommand)
+        {
+            vm.SelectedSteps.Add(branch);
+            var command = Assert.IsType<AsyncRelayCommand>(vm.DeleteSelectedCommand);
+            command.Execute(null);
+            await WaitUntilAsync(() => !command.IsExecuting);
+        }
+        else
+        {
+            var command = Assert.IsType<AsyncRelayCommand<JobStep?>>(vm.DeleteStepCommand);
+            command.Execute(branch);
+            await WaitUntilAsync(() => !command.IsExecuting);
+        }
+        Assert.Equal([condition, body, end, after], vm.Steps);
+        var undo = Assert.IsType<AsyncRelayCommand>(vm.UndoCommand);
+        undo.Execute(null);
+        await WaitUntilAsync(() => !undo.IsExecuting);
+        Assert.Equal(original.Select(step => step.Id), vm.Steps.Select(step => step.Id));
+    }
+
+    [Fact]
+    public async Task DeletingBlock_RemovesItsContentAndUndoRestoresAllSteps()
+    {
+        var condition = new IfStep();
+        var child = new TimeoutStep();
+        var end = new EndIfStep();
+        var after = new TimeoutStep();
+        var viewModel = CreateViewModel(new Job { Steps = [condition, child, end, after] });
+        viewModel.SelectedStep = condition;
+        var command = Assert.IsType<AsyncRelayCommand<JobStep?>>(viewModel.DeleteStepCommand);
+        command.Execute(condition);
+        await WaitUntilAsync(() => !command.IsExecuting);
+        Assert.Equal([after], viewModel.Steps);
+        var undo = Assert.IsType<AsyncRelayCommand>(viewModel.UndoCommand);
+        undo.Execute(null);
+        await WaitUntilAsync(() => !undo.IsExecuting);
+        Assert.Equal([condition.Id, child.Id, end.Id, after.Id], viewModel.Steps.Select(step => step.Id));
+    }
+
+    [Fact]
     public async Task ManuallyRestoredSetting_ClearsUnsavedState()
     {
         var job = new Job { Name = "Dirty state", Repeating = false, Steps = [new TimeoutStep()] };
@@ -279,7 +521,7 @@ public sealed class JobStepsViewModelExecutionTests
 
         Assert.Equal([conditional, body, endIf, selectedAfter], viewModel.StartSteps);
         Assert.Equal([untouchedBefore, untouchedAfter], viewModel.Steps);
-        Assert.Equal(4, viewModel.SelectedStepCount);
+        Assert.Equal(3, viewModel.SelectedStepCount);
     }
 
     [Fact]
@@ -317,6 +559,28 @@ public sealed class JobStepsViewModelExecutionTests
             Target: viewModel.Steps,
             TargetIndex: 2,
             SourceIndices: expanded)));
+    }
+
+    [Fact]
+    public async Task Drop_UsesTheCapturedDragSelectionAndCanBeUndone()
+    {
+        var first = new TimeoutStep();
+        var second = new TimeoutStep();
+        var third = new TimeoutStep();
+        using var vm = CreateViewModel(new Job { Steps = [first, second, third] });
+        vm.SetSelectedSteps([first], vm.Steps);
+        var captured = vm.DragIndicesResolver(new StepDragDrop.DragStartRequest(vm.Steps, 0, [0]));
+        vm.SetSelectedSteps([first, second], vm.Steps);
+        var request = new StepDragDrop.MoveRequest(vm.Steps, 0, vm.Steps, 3, SourceIndices: captured);
+        Assert.True(vm.PreviewMoveValidator(request));
+        var move = Assert.IsType<AsyncRelayCommand<StepDragDrop.MoveRequest>>(vm.ReorderStepCommand);
+        move.Execute(request);
+        await WaitUntilAsync(() => !move.IsExecuting);
+        Assert.Equal([second, third, first], vm.Steps);
+        var undo = Assert.IsType<AsyncRelayCommand>(vm.UndoCommand);
+        undo.Execute(null);
+        await WaitUntilAsync(() => !undo.IsExecuting);
+        Assert.Equal([first.Id, second.Id, third.Id], vm.Steps.Select(step => step.Id));
     }
 
     [Fact]
@@ -531,8 +795,10 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.Single(viewModel.Job.Variables);
     }
 
-    [Fact]
-    public void VariableDraft_OnlyThisUsageCreatesDetachedVariable()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VariableDraft_OnlyThisUsageCreatesDetachedVariable(bool directUsage)
     {
         var variable = new JobVariable
         {
@@ -578,11 +844,11 @@ public sealed class JobStepsViewModelExecutionTests
         viewModel.SelectedJobVariable = editor;
         var selectedUsage = editor.UsageItems.Single(usage => ReferenceEquals(usage.Step, firstStep));
         var remainingUsage = editor.UsageItems.Single(usage => ReferenceEquals(usage.Step, secondStep));
-        viewModel.SelectedVariableUsage = selectedUsage;
-        Assert.True(viewModel.ApplyVariableToSelectedUsageCommand.CanExecute(null));
+        if (!directUsage) viewModel.SelectedVariableUsage = selectedUsage;
+        Assert.True(viewModel.ApplyVariableToSelectedUsageCommand.CanExecute(directUsage ? selectedUsage : null));
         editor.TextValue = "Only here";
 
-        viewModel.ApplyVariableToSelectedUsageCommand.Execute(null);
+        viewModel.ApplyVariableToSelectedUsageCommand.Execute(directUsage ? selectedUsage : null);
 
         Assert.Equal("Hello", variable.Value!.GetValue<string>());
         Assert.Equal(variable.Id.ToString("D"), remainingUsage.Reference.SourceId);
@@ -730,6 +996,8 @@ public sealed class JobStepsViewModelExecutionTests
         Assert.NotEmpty(usage.InputName);
         Assert.Contains("2", usage.StepName);
     }
+
+    internal static JobStepsViewModel CreateRenderViewModel(Job job) => CreateViewModel(job);
 
     private static JobStepsViewModel CreateViewModel(
         Job job,

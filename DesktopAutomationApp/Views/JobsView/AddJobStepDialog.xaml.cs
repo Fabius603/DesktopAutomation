@@ -1,4 +1,4 @@
-﻿using DesktopAutomationApp.ViewModels;
+using DesktopAutomationApp.ViewModels;
 using MahApps.Metro.Controls;
 using System;
 using System.Collections.Generic;
@@ -27,18 +27,24 @@ namespace DesktopAutomationApp.Views
             Loaded += async (_, __) =>
             {
                 CenterOnOwnerOnce();
+                StepSearchBox.Focus();
                 if (DataContext is AddJobStepDialogViewModel vm)
                     await vm.InitializeAsync();
             };
         }
-        private void Ok_Click(object sender, RoutedEventArgs e)
+        private void StepTypeList_Loaded(object sender, RoutedEventArgs e) => RevealSelectedType();
+
+        private void StepTypeList_SizeChanged(object sender, SizeChangedEventArgs e) => RevealSelectedType();
+
+        private void StepTypeList_SelectionChanged(object sender, SelectionChangedEventArgs e) => RevealSelectedType();
+
+        private void RevealSelectedType()
         {
-            if (DataContext is AddJobStepDialogViewModel vm)
+            // Bring into view after resized rows and the viewport have completed layout.
+            StepTypeList.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
-                vm.CreateStep();
-                DialogResult = vm.CreatedStep != null; // ShowDialog() gibt dann true/false zurück
-            }
-            Close();
+                if (StepTypeList.SelectedItem is not null) StepTypeList.ScrollIntoView(StepTypeList.SelectedItem);
+            }));
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)

@@ -12,6 +12,7 @@ public partial class ResultPathPicker : UserControl
 {
     private ScrollViewer? _ancestorScrollViewer;
     private bool _repositionPending;
+    private Window? _popupOwner;
     public event EventHandler? DropDownOpened;
 
     public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
@@ -223,32 +224,45 @@ public partial class ResultPathPicker : UserControl
     private void TreeNode_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: ConditionSelectionNode node } button) return;
-        if (node.IsSelectable || !node.HasChildren) return;
+        if (node.IsSelectable)
+        {
+            SelectionPopup.IsOpen = false;
+            DropDownToggle.Focus();
+            return;
+        }
+        if (!node.HasChildren) return;
 
         var item = VisualTreeHelperExtensions.GetAncestor<TreeViewItem>(button);
         if (item is not null) item.IsExpanded = !item.IsExpanded;
     }
 
-    private void DropDownToggle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void DropDownToggle_Click(object sender, RoutedEventArgs e) =>
+        SelectionPopup.IsOpen = !SelectionPopup.IsOpen;
+
+    private void OnPopupInput(object sender, PreProcessInputEventArgs e)
     {
-        if (!SelectionPopup.IsOpen) return;
+        if (e.StagingItem.Input is not MouseButtonEventArgs mouse
+            || mouse.RoutedEvent != Mouse.PreviewMouseDownEvent) return;
+        var source = mouse.OriginalSource as Visual ?? Mouse.DirectlyOver as Visual;
+        if (source is not null && (IsAncestorOf(source) || SelectionPopup.Child?.IsAncestorOf(source) == true)) return;
         SelectionPopup.IsOpen = false;
-        DropDownToggle.Focus();
-        e.Handled = true;
     }
 
-    private void DropDownToggle_Click(object sender, RoutedEventArgs e)
-    {
-        if (!SelectionPopup.IsOpen) SelectionPopup.IsOpen = true;
-    }
+    private void OnPopupOwnerDeactivated(object? sender, EventArgs e) => SelectionPopup.IsOpen = false;
 
     private void SelectionPopup_Closed(object? sender, EventArgs e)
     {
-        DropDownToggle.IsChecked = false;
+        InputManager.Current.PreProcessInput -= OnPopupInput;
+        if (_popupOwner is not null) _popupOwner.Deactivated -= OnPopupOwnerDeactivated;
+        _popupOwner = null;
+        DropDownToggle.SetCurrentValue(System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty, false);
     }
 
     private void SelectionPopup_Opened(object? sender, EventArgs e)
     {
+        InputManager.Current.PreProcessInput += OnPopupInput;
+        _popupOwner = Window.GetWindow(this);
+        if (_popupOwner is not null) _popupOwner.Deactivated += OnPopupOwnerDeactivated;
         DropDownOpened?.Invoke(this, EventArgs.Empty);
         Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () =>
         {

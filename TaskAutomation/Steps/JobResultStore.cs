@@ -8,9 +8,10 @@ namespace TaskAutomation.Steps
 {
     internal sealed class JobResultStore : IJobResultStore
     {
-        private readonly Dictionary<Type, StepResultBase>   _byType = new();
-        private readonly Dictionary<string, StepResultBase> _byId   = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<Type, StepResultBase> _byType = new();
+        private readonly Dictionary<string, StepResultBase> _byId = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Type> _stepTypesById = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, JobStep> _configuredSteps = new(StringComparer.OrdinalIgnoreCase);
         private readonly IReadOnlyDictionary<Guid, JobVariable> _variables;
         private readonly RuntimeValueProviderRegistry _valueProviders;
 
@@ -21,14 +22,12 @@ namespace TaskAutomation.Steps
         {
             var variableList = (variables ?? []).ToArray();
             var localValueList = (localValues ?? []).ToArray();
-            _variables = variableList.Where(variable => variable.Id != Guid.Empty)
-                .GroupBy(variable => variable.Id)
-                .ToDictionary(group => group.Key, group => group.Last());
+            _variables = variableList.ToDictionary(variable => variable.Id);
             _valueProviders = new RuntimeValueProviderRegistry(
             [
                 new StoredValueRuntimeValueProvider(ValueProviderIds.LocalValue, localValueList),
                 new StoredValueRuntimeValueProvider(ValueProviderIds.JobVariable, variableList),
-                new StepResultRuntimeValueProvider(GetRaw),
+                new StepResultRuntimeValueProvider(GetRaw, GetResultContract),
                 new SecretRuntimeValueProvider(secrets
                     ?? new Dictionary<Guid, (ValueProviderSourceDescriptor Descriptor, string Value)>())
             ]);
@@ -37,7 +36,7 @@ namespace TaskAutomation.Steps
         // ── Lesen ──────────────────────────────────────────────────────────────
 
         public TResult Get<TStep, TResult>()
-            where TStep   : JobStep
+            where TStep : JobStep
             where TResult : StepResultBase
         {
             if (_byType.TryGetValue(typeof(TStep), out var r) && r is TResult typed)
@@ -62,7 +61,7 @@ namespace TaskAutomation.Steps
             _byId.TryGetValue(stepId, out var previousById);
 
             _byType[typeof(TStep)] = result;
-            _byId[stepId]         = result;
+            _byId[stepId] = result;
             _stepTypesById[stepId] = typeof(TStep);
 
             DisposeIfUnreferenced(previousByType, result);
@@ -75,6 +74,12 @@ namespace TaskAutomation.Steps
 
         public JobVariable? GetVariable(Guid variableId)
             => _variables.GetValueOrDefault(variableId);
+
+        public void RegisterStep(JobStep step) => _configuredSteps[step.Id] = step;
+
+        public ResultTypeDescriptor? GetResultContract(string stepId) => _configuredSteps.TryGetValue(stepId, out var step)
+            ? StepResultMetadata.GetResultTypeForStep(step)
+            : GetRaw(stepId) is { } result ? StepResultMetadata.GetResultType(result.GetType().Name) : null;
 
         public RuntimeValueReadResult ReadProvider(string providerId, string sourceId) =>
             _valueProviders.Read(providerId, sourceId);

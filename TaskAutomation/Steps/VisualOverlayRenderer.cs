@@ -83,7 +83,8 @@ public static class VisualOverlayResolver
 
     private static Color ParseColor(string value, float opacity)
     {
-        var color = ColorTranslator.FromHtml(string.IsNullOrWhiteSpace(value) ? "#FFFFFF" : value);
+        if (!ColorValueRules.TryParse(value, out var color))
+            throw new ArgumentException("StepValidation.Invalid", nameof(value));
         var alpha = (byte)Math.Clamp(Math.Round(opacity * 255), 0, 255);
         return Color.FromArgb(alpha, color.R, color.G, color.B);
     }

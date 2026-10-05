@@ -8,6 +8,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Button HorizontalAlignment="Right"
@@ -34,6 +35,10 @@
             <TextBox
                      Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             </controls:ResponsiveColumnsPanel>
+            <TextBlock Grid.Row="2" Margin="0,6,0,0" TextWrapping="Wrap"
+                       Foreground="{DynamicResource App.Brush.Danger}"
+                       Text="{Binding InvalidTokenMessage}"
+                       Visibility="{Binding HasInvalidToken, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
     </Border>
 </UserControl>

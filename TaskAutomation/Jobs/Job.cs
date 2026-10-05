@@ -8,9 +8,9 @@ using TaskAutomation.Jobs.ControlFlow;
 
 namespace TaskAutomation.Jobs
 {
-    public sealed class Job
+    public sealed class Job : IJsonOnDeserialized
     {
-    public const int CurrentFormatVersion = 4;
+        public const int CurrentFormatVersion = 4;
         public const int DefaultEndPhaseTimeoutSeconds = 10;
         public const int MinEndPhaseTimeoutSeconds = 1;
         public const int MaxEndPhaseTimeoutSeconds = 3600;
@@ -32,6 +32,9 @@ namespace TaskAutomation.Jobs
 
         public IEnumerable<JobStep> EnumerateAllSteps()
             => (StartSteps ?? []).Concat(Steps ?? []).Concat(EndSteps ?? []);
+
+        void IJsonOnDeserialized.OnDeserialized() =>
+            TaskAutomation.Steps.StepResultContractRegistry.RestoreResultContractSettings(this);
 
         private static bool IsFlowControlStep(JobStep step)
             => step is IControlFlowMarker;

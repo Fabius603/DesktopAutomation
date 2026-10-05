@@ -9,49 +9,39 @@ namespace TaskAutomation.Steps;
 /// <summary>Builds the handler-facing step from its persisted input references.</summary>
 internal static class StepInputMaterializer
 {
+    public static JobStep MaterializeFields(JobStep source, IJobResultStore results, IReadOnlySet<string> fields)
+    {
+        if (!BuiltInStepDefinitions.Instance.TryGetByType(source.GetType(), out var definition)) return source;
+        var draft = definition.CreateDraft(source);
+        var overlay = StepInputValueResolver.Apply(source, definition, draft, reference =>
+        {
+            var read = ValueReferenceResolver.Resolve(results, reference);
+            if (!read.IsSuccess) throw new InvalidOperationException(read.Error);
+            return (true, ValueReferenceResolver.ToJsonNode(read.Value));
+        }, fields, requireResolved: true);
+        if (overlay.Error is not null) throw new InvalidOperationException(overlay.Error);
+        ValidateConfiguredInputs(definition, source, draft, results, fields);
+        return definition.ApplyDraft(draft, Clone(source));
+    }
+
     public static JobStep Materialize(JobStep source, IJobResultStore results, IStepDefinitionCatalog? catalog = null)
     {
         catalog ??= BuiltInStepDefinitions.Instance;
         if (!catalog.TryGetByType(source.GetType(), out var definition)) return source;
 
-        var sourceDraft = definition.CreateDraft(source);
-        var activeFields = StepActiveFieldResolver.GetActiveFieldIds(definition, sourceDraft);
-        var resolvedValues = new Dictionary<string, JsonNode?>(StringComparer.Ordinal);
-        var changed = false;
-        foreach (var field in definition.Descriptor.Fields.Where(field => activeFields.Contains(field.Id)))
+        var original = definition.CreateDraft(source);
+        var draft = original.Clone();
+        var overlay = StepInputValueResolver.Apply(source, definition, draft, reference =>
         {
-            if (!source.Inputs.TryGetValue(field.Id, out var reference) || !reference.IsConfigured) continue;
-            JsonNode? resolved;
-            if (field.ValueKind == TaskAutomation.Contracts.Steps.StepValueKind.ResultBinding)
-            {
-                resolved = JsonSerializer.SerializeToNode(reference);
-            }
-            else
-            {
-                resolved = ResolveNode(results, reference, sourceDraft.Values.GetValueOrDefault(field.Id));
-            }
-            resolvedValues[field.Id] = resolved;
-            changed |= !JsonNode.DeepEquals(sourceDraft.Values.GetValueOrDefault(field.Id), resolved);
-        }
-        foreach (var (key, reference) in source.Inputs.Where(input => input.Key.Contains('.')))
-        {
-            if (!reference.IsConfigured) continue;
-            var separator = key.IndexOf('.');
-            var fieldId = key[..separator];
-            if (!activeFields.Contains(fieldId)) continue;
-            var root = (resolvedValues.GetValueOrDefault(fieldId)
-                        ?? sourceDraft.Values.GetValueOrDefault(fieldId))?.DeepClone();
-            if (root is null) continue;
-            var resolved = ValueReferenceResolver.ToJsonNode(Resolve(results, reference));
-            if (!StepDraftValueOverlay.TrySet(root, key[(separator + 1)..], resolved))
-                throw new InvalidOperationException($"Die Step-Eingabe '{key}' konnte nicht in den Zielwert eingesetzt werden.");
-            resolvedValues[fieldId] = root;
-            changed = true;
-        }
+            var read = ValueReferenceResolver.Resolve(results, reference);
+            if (!read.IsSuccess) throw new InvalidOperationException(read.Error);
+            return (true, ValueReferenceResolver.ToJsonNode(read.Value));
+        }, requireResolved: true);
+        if (overlay.Error is not null) throw new InvalidOperationException(overlay.Error);
+        ValidateConfiguredInputs(definition, source, draft, results);
+        var changed = !draft.Values.All(pair => JsonNode.DeepEquals(
+            original.Values.GetValueOrDefault(pair.Key), pair.Value));
         var clone = changed ? Clone(source) : source;
-        var draft = definition.CreateDraft(clone);
-        foreach (var (fieldId, value) in resolvedValues)
-            draft.Values[fieldId] = value?.DeepClone();
         var issues = definition.ValidateDraft(
                 draft,
                 StepValidationContext.FullyResolved(StepValidationPhase.Runtime))
@@ -63,58 +53,6 @@ internal static class StepInputMaterializer
         var materialized = changed ? definition.ApplyDraft(draft, clone) : source;
         ValidateRuntimeBindings(definition, materialized, results);
         return materialized;
-    }
-
-    private static string Normalize(string value) =>
-        new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
-
-    private static object? Resolve(IJobResultStore results, ResultBinding reference)
-    {
-        var read = ValueReferenceResolver.Resolve(results, reference);
-        if (!read.IsSuccess)
-            throw new InvalidOperationException(read.Error ?? "Die Step-Eingabe konnte nicht aufgelöst werden.");
-        return read.Value;
-    }
-
-    private static JsonNode? ResolveNode(
-        IJobResultStore results,
-        ResultBinding binding,
-        JsonNode? inherited = null)
-    {
-        JsonNode? resolved = inherited?.DeepClone();
-        if (binding.HasProviderReference || binding.TryGetStepResult(out _))
-        {
-            var value = Resolve(results, binding);
-            resolved = value switch
-            {
-                null => null,
-                JsonNode node => node.DeepClone(),
-                _ => JsonSerializer.SerializeToNode(value, value.GetType())
-            };
-        }
-
-        if (binding.Members is { Count: > 0 })
-        {
-            if (resolved is not JsonObject objectValue)
-                resolved = objectValue = new JsonObject();
-            foreach (var (memberId, childBinding) in binding.Members)
-            {
-                var property = objectValue.FirstOrDefault(candidate =>
-                    Normalize(candidate.Key) == Normalize(memberId)).Key;
-                if (string.IsNullOrEmpty(property)) property = memberId;
-                objectValue[property] = ResolveNode(results, childBinding, objectValue[property]);
-            }
-        }
-
-        if (binding.Items is { Count: > 0 })
-        {
-            if (resolved is not JsonArray arrayValue)
-                resolved = arrayValue = [];
-            while (arrayValue.Count < binding.Items.Count) arrayValue.Add(null);
-            for (var index = 0; index < binding.Items.Count; index++)
-                arrayValue[index] = ResolveNode(results, binding.Items[index], arrayValue[index]);
-        }
-        return resolved;
     }
 
     private static void ValidateRuntimeBindings(
@@ -129,10 +67,74 @@ internal static class StepInputMaterializer
             var resolved = ValueReferenceResolver.Resolve(results, input.Binding);
             if (!resolved.IsSuccess)
                 throw new InvalidOperationException(resolved.Error ?? $"Die Eingabe '{input.ContractId}' konnte nicht aufgelöst werden.");
-            if (resolved.Descriptor is not { } descriptor || !contract.Accepts(descriptor.ToResultProperty()))
+            if (resolved.Descriptor is not { } descriptor || !contract.AcceptsSource(Provider(input.Binding), descriptor.ToResultProperty(), IsLegacyDirect(input.Binding, results)))
                 throw new InvalidOperationException($"Die aufgelöste Eingabe '{input.ContractId}' besitzt nicht den erwarteten Typ.");
         }
     }
+
+    private static void ValidateConfiguredInputs(IStepDefinition definition, JobStep step, StepDraft draft,
+        IJobResultStore results, IReadOnlySet<string>? fields = null)
+    {
+        var active = StepActiveFieldResolver.GetActiveFieldIds(definition, draft);
+        foreach (var field in definition.Descriptor.Fields.Where(field => active.Contains(field.Id)
+                     && (fields is null || fields.Contains(field.Id))))
+        {
+            var binding = ValueBindingTree.Find(step.Inputs, field.Id);
+            if (binding is null) continue;
+            if (binding.HasProviderReference || binding.TryGetStepResult(out _))
+            {
+                var source = Read(binding);
+                var contract = StepInputContractRegistry.Resolve(step.GetType(), field);
+                if (!contract.AcceptsSource(Provider(binding), source, IsLegacyDirect(binding, results)))
+                    throw new InvalidOperationException($"{field.Id}: StepValidation.Invalid");
+            }
+            ValidateChildren(binding, ValueBindingSchemaRegistry.ForField(field), field.Id);
+        }
+
+        ResultPropertyDescriptor Read(ResultBinding binding)
+        {
+            var read = ValueReferenceResolver.Resolve(results, binding);
+            if (!read.IsSuccess || read.Descriptor is null)
+                throw new InvalidOperationException(read.Error ?? "StepValidation.Invalid");
+            return read.Descriptor.ToResultProperty();
+        }
+
+        void ValidateChildren(ResultBinding binding, string? schemaId, string path)
+        {
+            if (!binding.HasStructuredChildren) return;
+            if (schemaId is null || !ValueBindingSchemaRegistry.TryGet(schemaId, out var schema))
+                throw new InvalidOperationException($"{path}: StepValidation.Invalid");
+            foreach (var (key, child) in binding.Members ?? [])
+            {
+                if (!child.IsConfigured) continue;
+                if (!schema.Members.TryGetValue(key, out var member))
+                    throw new InvalidOperationException($"{path}.{key}: StepValidation.Invalid");
+                if ((child.HasProviderReference || child.TryGetStepResult(out _))
+                    && !member.AcceptsSource(Provider(child), Read(child)))
+                    throw new InvalidOperationException($"{path}.{key}: StepValidation.Invalid");
+                ValidateChildren(child, member.NestedSchemaId, $"{path}.{key}");
+            }
+            if (binding.Items is null) return;
+            if (schema.ItemSchemaId is null) throw new InvalidOperationException($"{path}: StepValidation.Invalid");
+            for (var index = 0; index < binding.Items.Count; index++)
+            {
+                var child = binding.Items[index];
+                if (!child.IsConfigured) continue;
+                var expected = ValueBindingSchemaRegistry.ItemContract(schema.ItemSchemaId);
+                if ((child.HasProviderReference || child.TryGetStepResult(out _))
+                    && !expected.AcceptsSource(Provider(child), Read(child)))
+                    throw new InvalidOperationException($"{path}.{index}: StepValidation.Invalid");
+                ValidateChildren(child, schema.ItemSchemaId, $"{path}.{index}");
+            }
+        }
+    }
+
+    private static string Provider(ResultBinding binding) => binding.HasProviderReference
+        ? binding.ProviderId : ValueProviderIds.StepResult;
+
+    private static bool IsLegacyDirect(ResultBinding binding, IJobResultStore results) =>
+        binding.ProviderId == ValueProviderIds.JobVariable && Guid.TryParse(binding.SourceId, out var id)
+        && results.GetVariable(id)?.Scope == JobVariableScope.StepValue;
 
     private static JobStep Clone(JobStep source)
     {

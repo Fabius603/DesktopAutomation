@@ -9,6 +9,7 @@ public enum RuntimeValueReadStatus
     Success,
     ProviderUnavailable,
     SourceUnavailable,
+    PropertyUnavailable,
     InvalidValue
 }
 
@@ -33,8 +34,7 @@ internal sealed class RuntimeValueProviderRegistry : IDisposable
 
     public RuntimeValueProviderRegistry(IEnumerable<IRuntimeValueProvider> providers)
     {
-        _providers = providers.GroupBy(provider => provider.ProviderId, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.Last(), StringComparer.Ordinal);
+        _providers = providers.ToDictionary(provider => provider.ProviderId, StringComparer.Ordinal);
     }
 
     public RuntimeValueReadResult Read(string providerId, string sourceId) =>
@@ -59,9 +59,8 @@ internal sealed class StoredValueRuntimeValueProvider : IRuntimeValueProvider, I
     public StoredValueRuntimeValueProvider(string providerId, IEnumerable<JobVariable> variables)
     {
         _providerId = providerId;
-        _variables = variables.Where(variable => variable.Id != Guid.Empty)
-            .GroupBy(variable => variable.Id)
-            .ToDictionary(group => group.Key, group => group.Last());
+        _variables = variables.ToDictionary(variable => variable.Id);
+        if (_variables.ContainsKey(Guid.Empty)) throw new ArgumentException("StepValidation.DuplicateValueId");
     }
 
     public string ProviderId => _providerId;
@@ -94,8 +93,8 @@ internal sealed class StoredValueRuntimeValueProvider : IRuntimeValueProvider, I
 
     public void Dispose()
     {
-        foreach (var value in _values.Values.OfType<IDisposable>())
-            value.Dispose();
+        foreach (var value in _values.Values)
+            JobVariableRuntimeValueReader.DisposeValue(value);
         _values.Clear();
     }
 
@@ -114,10 +113,51 @@ internal sealed class StoredValueRuntimeValueProvider : IRuntimeValueProvider, I
 
 public static class JobVariableRuntimeValueReader
 {
-    public static object? Read(JobVariable variable) => variable.ValueKind switch
+    internal static void DisposeValue(object? value)
+    {
+        if (value is IDisposable disposable) disposable.Dispose();
+        else if (value is Array array)
+            foreach (var item in array) DisposeValue(item);
+    }
+
+
+    public static object? Read(JobVariable variable)
+    {
+        if (!JobVariableValueRules.IsValid(variable)) throw new InvalidOperationException("StepValidation.Invalid");
+        if (variable.Value is null) return null;
+        if (variable.Cardinality == ResultCardinality.Collection)
+            return variable.ValueKind switch
+            {
+                ResultValueKind.Boolean => variable.Value.Deserialize<bool[]>(),
+                ResultValueKind.Integer => variable.Value.Deserialize<int[]>(),
+                ResultValueKind.Number => variable.Value.Deserialize<double[]>(),
+                ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath => variable.Value.Deserialize<string[]>(),
+                ResultValueKind.DateTime => variable.Value.Deserialize<DateTime[]>(),
+                ResultValueKind.Image => ReadImages(variable.Value.Deserialize<string[]>() ?? []),
+                _ => ReadScalar(variable)
+            };
+        return ReadScalar(variable);
+    }
+
+    private static System.Drawing.Bitmap[] ReadImages(IEnumerable<string> paths)
+    {
+        var images = new List<System.Drawing.Bitmap>();
+        try
+        {
+            foreach (var path in paths) images.Add(new System.Drawing.Bitmap(path));
+            return images.ToArray();
+        }
+        catch
+        {
+            foreach (var image in images) image.Dispose();
+            throw;
+        }
+    }
+
+    private static object? ReadScalar(JobVariable variable) => variable.ValueKind switch
     {
         ResultValueKind.Boolean => variable.Value?.GetValue<bool>(),
-        ResultValueKind.Integer => variable.Value?.GetValue<int>(),
+        ResultValueKind.Integer => variable.Value?.Deserialize<int>(),
         ResultValueKind.Number => variable.Value?.Deserialize<double>(),
         ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.Color or ResultValueKind.FilePath =>
             variable.Value?.GetValue<string>(),
@@ -143,35 +183,15 @@ public static class JobVariableRuntimeValueReader
     };
 }
 
-internal sealed class StepResultRuntimeValueProvider(Func<string, StepResultBase?> resultReader)
-    : IRuntimeValueProvider
+internal sealed class StepResultRuntimeValueProvider(Func<string, StepResultBase?> resultReader,
+    Func<string, ResultTypeDescriptor?>? contractReader = null) : IRuntimeValueProvider
 {
     public string ProviderId => ValueProviderIds.StepResult;
 
-    public RuntimeValueReadResult Read(string sourceId)
-    {
-        if (!StepResultSourceIdCodec.TryParse(sourceId, out var source))
-            return new(RuntimeValueReadStatus.SourceUnavailable,
-                Error: "Die Step-Ergebnisreferenz ist ungültig.");
-        var result = resultReader(source.StepId);
-        if (result is null || !result.WasExecuted)
-            return new(RuntimeValueReadStatus.SourceUnavailable,
-                Error: $"Der Quell-Step '{source.StepId}' wurde noch nicht ausgeführt.");
-        if (!StepResultMetadata.TryGetProperty(
-                result.GetType(), source.PropertyId, source.PropertyId, out var property)
-            || !StepResultMetadata.TryReadValue(result, property, out var value))
-            return new(RuntimeValueReadStatus.SourceUnavailable,
-                Error: $"Die Ergebnis-Eigenschaft '{source.PropertyId}' ist nicht verfügbar.");
-        return new(RuntimeValueReadStatus.Success,
-            new ValueProviderSourceDescriptor(
-                ProviderId,
-                sourceId,
-                property.DisplayName,
-                property.Description,
-                property.DataType,
-                property.Cardinality),
-            value);
-    }
+    public RuntimeValueReadResult Read(string sourceId) => StepResultSourceIdCodec.TryParse(sourceId, out var source)
+        ? ValueReferenceResolver.ReadStepResult(resultReader, contractReader ?? (id =>
+            resultReader(id) is { } result ? StepResultMetadata.GetResultType(result.GetType().Name) : null), source)
+        : new(RuntimeValueReadStatus.SourceUnavailable, Error: "StepValidation.Invalid");
 }
 
 internal sealed class SecretRuntimeValueProvider : IRuntimeValueProvider

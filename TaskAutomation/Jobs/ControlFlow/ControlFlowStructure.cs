@@ -56,17 +56,19 @@ public sealed record ControlFlowBlock(
     public int? FindSection(ControlFlowMarkerRole role)
         => Sections.FirstOrDefault(section => section.Role == role)?.MarkerIndex;
 
-    public bool IsSectionEmpty(int markerIndex, int stepCount)
+    public int? SectionEndExclusive(int markerIndex, int stepCount)
     {
-        if (!Sections.Any(section => section.MarkerIndex == markerIndex)) return false;
+        if (!Sections.Any(section => section.MarkerIndex == markerIndex)) return null;
 
-        var nextBoundary = Sections
+        return Sections
             .Where(section => section.MarkerIndex > markerIndex)
             .Select(section => section.MarkerIndex)
             .DefaultIfEmpty(EndIndex ?? Math.Max(markerIndex + 1, stepCount))
             .Min();
-        return nextBoundary == markerIndex + 1;
     }
+
+    public bool IsSectionEmpty(int markerIndex, int stepCount)
+        => SectionEndExclusive(markerIndex, stepCount) == markerIndex + 1;
 }
 
 /// <summary>

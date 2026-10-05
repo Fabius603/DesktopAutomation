@@ -12,7 +12,8 @@ public sealed record StepValidationResult(
     bool IsValid,
     string? Error,
     IReadOnlyList<string>? Errors = null);
-public sealed record JobValidationResult(bool IsValid, IReadOnlyList<StepValidationResult> Steps);
+public sealed record JobValidationResult(bool IsValid, IReadOnlyList<StepValidationResult> Steps,
+    IReadOnlyList<string>? Errors = null);
 
 /// <summary>Zentrale Regeln fuer Step-Abhaengigkeiten. UI-Code darf diese Regeln nur anzeigen.</summary>
 public static class JobValidation
@@ -26,17 +27,16 @@ public static class JobValidation
             : ReferenceEquals(section, job.EndSteps)
                 ? job.StartSteps.Concat(job.Steps).ToList()
                 : [];
-        return ValidateStep(precedingPhases.Concat(section).ToList(), step).IsValid;
+        return ValidateStep(precedingPhases.Concat(section).ToList(), step,
+            variables: job.Variables.Cast<JobVariable>().Concat(job.LocalValues).ToArray()).IsValid;
     }
 
     public static bool IsJobAllowed(Job job) => ValidateJob(job).IsValid;
 
-    public static bool CanConfirm(IReadOnlyList<JobStep> precedingSteps, JobStep? candidate)
-    {
-        if (candidate == null) return false;
-        var steps = precedingSteps.Concat([candidate]).ToList();
-        return ValidateStep(steps, candidate).IsValid;
-    }
+    public static bool CanConfirm(IReadOnlyList<JobStep> precedingSteps, JobStep? candidate,
+        IReadOnlyList<JobVariable>? variables = null,
+        IReadOnlyList<ValueProviderSourceDescriptor>? providerSources = null) =>
+        ValidateCandidate(precedingSteps, candidate, variables: variables, providerSources: providerSources).IsValid;
 
     public static StepValidationResult ValidateCandidate(
         IReadOnlyList<JobStep> precedingSteps,
@@ -67,7 +67,12 @@ public static class JobValidation
             .Concat(ValidateSection(job.Steps, job.StartSteps, variables, providerSources ?? []))
             .Concat(ValidateSection(job.EndSteps, job.StartSteps.Concat(job.Steps).ToList(), variables, providerSources ?? []))
             .ToList();
-        return new JobValidationResult(results.All(r => r.IsValid), results);
+        var identityErrors = JobValueSources.ValidateIdentities(job);
+        if (identityErrors.Count > 0)
+            results = results.Select(result => new StepValidationResult(result.Step, false,
+                string.Join(Environment.NewLine, (result.Errors ?? []).Concat(identityErrors)),
+                (result.Errors ?? []).Concat(identityErrors).ToArray())).ToList();
+        return new JobValidationResult(identityErrors.Count == 0 && results.All(r => r.IsValid), results, identityErrors);
     }
 
     private static IReadOnlyList<StepValidationResult> ValidateSection(
@@ -81,7 +86,8 @@ public static class JobValidation
             executionOrder, s, variables: variables, providerSources: providerSources)).ToList();
         var structureErrors = GetControlFlowStructureErrors(steps);
         results = results.Select(r => structureErrors.TryGetValue(r.Step, out var error)
-            ? new StepValidationResult(r.Step, false, error) : r).ToList();
+            ? new StepValidationResult(r.Step, false, string.Join(Environment.NewLine, (r.Errors ?? []).Append(error)),
+                (r.Errors ?? []).Append(error).ToArray()) : r).ToList();
         return results;
     }
 
@@ -166,47 +172,18 @@ public static class JobValidation
             .ToArray();
     }
 
-    private sealed record KnownValueOverlay(IReadOnlySet<string> UnresolvedPaths, string? Error = null);
+    public sealed record KnownValueOverlay(IReadOnlySet<string> UnresolvedPaths, string? Error = null);
 
-    private static KnownValueOverlay OverlayKnownInputValues(
+    public static KnownValueOverlay OverlayKnownInputValues(
         JobStep step,
         IStepDefinition definition,
         StepDraft draft,
-        IReadOnlyList<JobVariable> variables)
+        IReadOnlyList<JobVariable> variables,
+        IReadOnlySet<string>? fieldIds = null)
     {
-        var unresolved = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var field in definition.Descriptor.Fields)
-        {
-            var binding = ValueBindingTree.Find(step.Inputs, field.Id);
-            if (binding?.IsConfigured != true) continue;
-            if (field.ValueKind == StepValueKind.ResultBinding)
-            {
-                draft.Values[field.Id] = System.Text.Json.JsonSerializer.SerializeToNode(binding);
-                continue;
-            }
-            if (!binding.HasProviderReference && !binding.TryGetStepResult(out _))
-                continue;
-            if (TryReadKnownValue(binding, variables, out var value))
-                draft.Values[field.Id] = value?.DeepClone();
-            else
-                unresolved.Add(field.Id);
-        }
-
-        foreach (var (path, binding) in ValueBindingTree.EnumerateReferences(step.Inputs)
-                     .Where(candidate => candidate.Path.Contains('.')))
-        {
-            if (!TryReadKnownValue(binding, variables, out var value))
-            {
-                unresolved.Add(path);
-                continue;
-            }
-            var separator = path.IndexOf('.');
-            var fieldId = path[..separator];
-            if (draft.Values.GetValueOrDefault(fieldId) is not { } root
-                || !StepDraftValueOverlay.TrySet(root, path[(separator + 1)..], value))
-                return new(unresolved, $"Die Eingabe '{path}' passt nicht zur Struktur des Zielfelds.");
-        }
-        return new(unresolved);
+        var overlay = StepInputValueResolver.Apply(step, definition, draft, binding =>
+            (TryReadKnownValue(binding, variables, out var value), value), fieldIds);
+        return new(overlay.UnresolvedPaths, overlay.Error);
     }
 
     private static bool TryReadKnownValue(
@@ -220,7 +197,7 @@ public static class JobValidation
             || (binding.ProviderId != ValueProviderIds.LocalValue
                 && binding.ProviderId != ValueProviderIds.JobVariable))
             return false;
-        var variable = variables.FirstOrDefault(candidate => candidate.Id == sourceId);
+        var variable = JobValueSources.Find(variables, binding);
         if (variable is null) return false;
         return ValueReferenceResolver.TryReadVariable(variable, binding.ValuePath, out value, out _);
     }
@@ -312,7 +289,7 @@ public static class JobValidation
                 comparison.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal);
             var directComparisonValue = isDirectLocalValue
                 && Guid.TryParse(comparison.SourceId, out var comparisonValueId)
-                && variables.FirstOrDefault(variable => variable.Id == comparisonValueId) is LocalValue local
+                && JobValueSources.Find(variables, comparison) is LocalValue local
                 && local.Value is System.Text.Json.Nodes.JsonValue jsonValue
                 && jsonValue.TryGetValue<string>(out var storedValue)
                     ? storedValue
@@ -335,7 +312,7 @@ public static class JobValidation
         {
             if (binding.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
                 && Guid.TryParse(binding.SourceId, out var storedValueId)
-                && variables.FirstOrDefault(variable => variable.Id == storedValueId) is { } storedValue
+                && JobValueSources.Find(variables, binding) is { } storedValue
                 && !TryValidateStoredValue(storedValue, binding.ValuePath, out _))
                 return null;
             var providerSource = ResolveProviderSource(variables, providerSources, binding);
@@ -363,7 +340,9 @@ public static class JobValidation
         if (activityOverlay.Error is not null) return [activityOverlay.Error];
         var activeFields = StepActiveFieldResolver.GetActiveFieldIds(definition, draft);
         var semanticInputs = definition.GetInputBindings(step);
-        foreach (var field in definition.Descriptor.Fields.Where(field => activeFields.Contains(field.Id)))
+        foreach (var field in definition.Descriptor.Fields.Where(field => activeFields.Contains(field.Id)
+                     && StepDescriptorDraftValidator.CanDetermineVisibility(field,
+                         new StepValidationContext(StepValidationPhase.Authoring, activityOverlay.UnresolvedPaths))))
         {
             var key = field.Id;
             var binding = ValueBindingTree.Find(step.Inputs, key) ?? new ResultBinding();
@@ -426,7 +405,7 @@ public static class JobValidation
                 return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
             if (binding.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
                 && Guid.TryParse(binding.SourceId, out var storedValueId)
-                && variables.FirstOrDefault(variable => variable.Id == storedValueId) is { } storedValue
+                && JobValueSources.Find(variables, binding) is { } storedValue
                 && !TryValidateStoredValue(storedValue, binding.ValuePath, out var valueError))
                 return valueError;
             var directValue = string.Equals(binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal)
@@ -434,9 +413,7 @@ public static class JobValidation
                               && Guid.TryParse(binding.SourceId, out var variableId)
                               && variables.Any(variable => variable.Id == variableId
                                                            && variable.Scope == JobVariableScope.StepValue);
-            if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
-                return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
-            if (!contract.Accepts(providerSource.ToResultProperty()))
+            if (!contract.AcceptsSource(binding.ProviderId, providerSource.ToResultProperty(), directValue))
                 return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
             return null;
         }
@@ -445,6 +422,8 @@ public static class JobValidation
             .FirstOrDefault(candidate => string.Equals(
                 candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
         if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
+        if (!contract.AllowsProvider(ValueProviderIds.StepResult))
+            return $"Die Wertquelle '{ValueProviderIds.StepResult}' ist für die Eingabe '{key}' nicht erlaubt.";
         var resultType = StepResultMetadata.GetResultTypeForStep(source);
         if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
             return $"Die Ergebnis-Eigenschaft '{binding.PropertyId ?? binding.PropertyPath}' existiert für den Quell-Step nicht.";
@@ -459,9 +438,10 @@ public static class JobValidation
         out string? error)
     {
         error = null;
+        object? value = null;
         try
         {
-            var value = JobVariableRuntimeValueReader.Read(variable);
+            value = JobVariableRuntimeValueReader.Read(variable);
             if (string.IsNullOrWhiteSpace(valuePath)) return true;
             if (value is not null && ResultBindingResolver.TryReadPath(value, valuePath, out _)) return true;
             error = $"Die Untereigenschaft '{valuePath}' ist in der Wertquelle '{variable.Name}' nicht verfügbar.";
@@ -478,6 +458,7 @@ public static class JobValidation
             error = $"Die Wertquelle '{variable.Name}' enthält keinen gültigen Wert für den Typ '{variable.ValueKind}'.";
             return false;
         }
+        finally { JobVariableRuntimeValueReader.DisposeValue(value); }
     }
 
     private static string? ValidateStructuredBinding(
@@ -512,6 +493,20 @@ public static class JobValidation
             for (var index = 0; index < binding.Items.Count; index++)
             {
                 var child = binding.Items[index];
+                if (!child.IsConfigured) continue;
+                if (child.SchemaId is { Length: > 0 } childSchema && childSchema != schema.ItemSchemaId)
+                    return $"{path}.{index}: StepValidation.Invalid";
+                if (child.HasProviderReference || child.TryGetStepResult(out _))
+                {
+                    var itemSource = ResolveConditionProperty(
+                        steps.Take(Math.Max(0, consumerIndex)).Where(step => step.IsEnabled)
+                            .GroupBy(step => step.Id, StringComparer.OrdinalIgnoreCase)
+                            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase),
+                        variables, providerSources, child);
+                    if (itemSource is null || !ValueBindingSchemaRegistry.ItemContract(schema.ItemSchemaId).AcceptsSource(
+                            child.HasProviderReference ? child.ProviderId : ValueProviderIds.StepResult, itemSource))
+                        return $"{path}.{index}: StepValidation.Invalid";
+                }
                 if (!child.HasStructuredChildren) continue;
                 var error = ValidateStructuredBinding(
                     child, steps, consumerIndex, variables, providerSources, $"{path}.{index}");
@@ -533,6 +528,8 @@ public static class JobValidation
         // Missing members use the value stored in the step settings. Older editors also
         // persisted empty placeholders for direct members such as roi.enabled.
         if (!binding.IsConfigured) return null;
+        if (binding.SchemaId is { Length: > 0 } schemaId && expected.NestedSchemaId is { } expectedSchema
+            && schemaId != expectedSchema) return $"{path}: StepValidation.Invalid";
         if (binding.HasProviderReference || binding.TryGetStepResult(out _))
         {
             if (binding.HasProviderReference
@@ -540,15 +537,16 @@ public static class JobValidation
             {
                 var source = ResolveProviderSource(variables, providerSources, binding);
                 if (source is null) return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
-                if (expected.AllowedProviderIds?.Contains(binding.ProviderId) == false)
+                if (!expected.AllowsProvider(binding.ProviderId))
                     return $"Die Wertquelle '{source.Name}' ist für '{path}' nicht erlaubt.";
-                if (source.ValueKind != expected.ValueKind
-                    || !CardinalityMatches(source.Cardinality, expected.Cardinality))
+                if (!expected.AcceptsSource(binding.ProviderId, source.ToResultProperty()))
                     return $"Die Wertquelle '{source.Name}' besitzt nicht den erwarteten Typ für '{path}'.";
+                if (JobValueSources.Find(variables, binding) is { } stored
+                    && !TryValidateStoredValue(stored, binding.ValuePath, out var valueError)) return valueError;
             }
             else
             {
-                if (expected.AllowedProviderIds?.Contains(ValueProviderIds.StepResult) == false)
+                if (!expected.AllowsProvider(ValueProviderIds.StepResult))
                     return $"Step-Ergebnisse sind für '{path}' nicht erlaubt.";
                 var sourceStep = steps.Take(Math.Max(0, consumerIndex))
                     .FirstOrDefault(candidate => string.Equals(
@@ -558,82 +556,13 @@ public static class JobValidation
                 var resultType = StepResultMetadata.GetResultTypeForStep(sourceStep);
                 if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
                     return $"Die Ergebnis-Eigenschaft für '{path}' existiert nicht.";
-                if (property.DataType != expected.ValueKind
-                    || !CardinalityMatches(property.Cardinality, expected.Cardinality))
+                if (!expected.AcceptsSource(ValueProviderIds.StepResult, property))
                     return $"Die Ergebnis-Eigenschaft '{property.DisplayName}' besitzt nicht den erwarteten Typ für '{path}'.";
             }
         }
         return binding.HasStructuredChildren
             ? ValidateStructuredBinding(binding, steps, consumerIndex, variables, providerSources, path)
             : null;
-    }
-
-    private static bool CardinalityMatches(ResultCardinality actual, ResultCardinality expected) =>
-        actual == expected
-        || expected == ResultCardinality.Single && actual == ResultCardinality.OptionalSingle;
-
-    private static string? ValidateLegacyResultBindings(
-        IReadOnlyList<JobStep> steps,
-        int consumerIndex,
-        JobStep step,
-        IStepDefinition definition,
-        IReadOnlyList<JobVariable> variables,
-        IReadOnlyList<ValueProviderSourceDescriptor> providerSources)
-    {
-        var configuredInputs = definition.GetInputBindings(step).ToList();
-        if (step is FileSystemOperationStep fileSystem)
-        {
-            if (fileSystem.Settings.SourceMode == FileSystemPathSource.TaskResult)
-            {
-                if (!fileSystem.Settings.SourceResult.IsConfigured)
-                    return "Für die Eingabe 'source' wurde keine Ergebnis-Eigenschaft ausgewählt.";
-                configuredInputs.Add(new StepInputBinding("source", fileSystem.Settings.SourceResult));
-            }
-            if (fileSystem.Settings.Operation is FileSystemOperation.Copy or FileSystemOperation.Move
-                && fileSystem.Settings.TargetMode == FileSystemPathSource.TaskResult)
-            {
-                if (!fileSystem.Settings.TargetResult.IsConfigured)
-                    return "Für die Eingabe 'target' wurde keine Ergebnis-Eigenschaft ausgewählt.";
-                configuredInputs.Add(new StepInputBinding("target", fileSystem.Settings.TargetResult));
-            }
-        }
-        foreach (var configuredInput in configuredInputs)
-        {
-            var key = configuredInput.ContractId;
-            var binding = configuredInput.Binding;
-            var contract = StepInputContractRegistry.Get(step.GetType(), key);
-            if (contract is null) return $"Für die Eingabe '{key}' fehlt der Backend-Vertrag.";
-            if (!binding.IsConfigured)
-            {
-                if (contract.Required && !HasReadableLegacyInput(step, key))
-                    return $"Für die Eingabe '{key}' wurde keine Ergebnis-Eigenschaft ausgewählt.";
-                continue;
-            }
-            if (binding.HasProviderReference
-                && !string.Equals(binding.ProviderId, ValueProviderIds.StepResult, StringComparison.Ordinal))
-            {
-                var providerSource = ResolveProviderSource(variables, providerSources, binding);
-                if (providerSource is null)
-                    return "Eine Referenz verweist auf eine nicht vorhandene Wertquelle.";
-                var directValue = string.Equals(
-                    binding.ProviderId, ValueProviderIds.LocalValue, StringComparison.Ordinal);
-                if (directValue ? !contract.AllowsDirectValue : !contract.AllowsProvider(binding.ProviderId))
-                    return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
-                if (!contract.Accepts(providerSource.ToResultProperty()))
-                    return $"Die Wertquelle '{providerSource.Name}' ist für die Eingabe '{key}' nicht erlaubt.";
-                continue;
-            }
-            var source = steps.Take(Math.Max(0, consumerIndex))
-                .FirstOrDefault(candidate => string.Equals(
-                    candidate.Id, binding.SourceStepId, StringComparison.OrdinalIgnoreCase) && candidate.IsEnabled);
-            if (source is null) return "Eine Ergebnis-Eigenschaft verweist nicht auf einen gültigen vorherigen Step.";
-            var resultType = StepResultMetadata.GetResultTypeForStep(source);
-            if (resultType is null || !StepResultMetadata.TryGetProperty(resultType, binding, out var property))
-                return $"Die Ergebnis-Eigenschaft '{binding.PropertyId ?? binding.PropertyPath}' existiert für den Quell-Step nicht.";
-            if (!contract.Accepts(property))
-                return $"Die Ergebnis-Eigenschaft '{property.DisplayName}' ist für die Eingabe '{key}' nicht erlaubt.";
-        }
-        return null;
     }
 
     private static bool HasReadableLegacyInput(JobStep step, string contractId) =>
@@ -687,7 +616,7 @@ public static class JobValidation
     {
         if (reference.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable
             && Guid.TryParse(reference.SourceId, out var variableId)
-            && variables.FirstOrDefault(variable => variable.Id == variableId) is { } variable)
+            && JobValueSources.Find(variables, reference) is { } variable)
         {
             var root = ValueProviderSourceDescriptor.FromVariable(variable);
             if (string.IsNullOrWhiteSpace(reference.ValuePath)) return root;
@@ -702,6 +631,7 @@ public static class JobValidation
                 property.Cardinality);
         }
 
+        if (reference.ProviderId is ValueProviderIds.LocalValue or ValueProviderIds.JobVariable) return null;
         var source = providerSources.FirstOrDefault(candidate =>
             string.Equals(candidate.ProviderId, reference.ProviderId, StringComparison.Ordinal)
             && string.Equals(candidate.SourceId, reference.SourceId, StringComparison.OrdinalIgnoreCase));
@@ -738,34 +668,21 @@ public static class JobValidation
     /// Voruebergehend ungueltige Referenzen (deaktivierter Step oder falsche Reihenfolge)
     /// bleiben erhalten, damit sie nach Reaktivieren oder Zurueckverschieben wieder gueltig werden.
     /// </summary>
-    public static void RemoveInvalidSourceSelections(IReadOnlyList<JobStep> steps)
-    {
-        var existingIds = steps.Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
-        for (var i = 0; i < steps.Count; i++)
-        {
-            VisitSourceProperties(steps[i], (owner, property) =>
-            {
-                if (property.GetValue(owner) is string id && id.Length > 0 && !existingIds.Contains(id) && property.CanWrite)
-                    property.SetValue(owner, string.Empty);
-            });
-        }
-    }
+    public static void RemoveInvalidSourceSelections(IReadOnlyList<JobStep> steps) =>
+        RemoveInvalidSourceSelections(new Job { Steps = steps.ToList() });
 
-    private static void VisitSourceProperties(object? value, Action<object, PropertyInfo> visitor, HashSet<object>? seen = null)
+    public static void RemoveInvalidSourceSelections(Job job)
     {
-        if (value == null || value is string || value.GetType().IsPrimitive || value.GetType().IsEnum) return;
-        seen ??= new(ReferenceEqualityComparer.Instance);
-        if (!seen.Add(value)) return;
-        if (value is IEnumerable sequence) { foreach (var item in sequence) VisitSourceProperties(item, visitor, seen); return; }
-        if (value.GetType().Namespace != typeof(JobStep).Namespace) return;
-        foreach (var property in value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
-        {
-            if (!property.CanRead || property.GetIndexParameters().Length != 0) continue;
-            if (property.PropertyType == typeof(string) && property.Name.StartsWith("Source", StringComparison.Ordinal) && property.Name.EndsWith("StepId", StringComparison.Ordinal))
-                visitor(value, property);
-            else if (property.PropertyType != typeof(string))
-                VisitSourceProperties(property.GetValue(value), visitor, seen);
-        }
+        var existingIds = job.EnumerateAllSteps().Select(step => step.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var usage in ValueReferenceUsageInspector.Find(job))
+            if (usage.Reference is ResultBinding binding && binding.TryGetStepResult(out var source)
+                && !existingIds.Contains(source.StepId))
+                usage.UpdateReference(reference =>
+                {
+                    var result = (ResultBinding)reference;
+                    result.SourceId = string.Empty;
+                    result.LegacySourceStepId = null;
+                });
     }
 
     private static int IndexOf(IReadOnlyList<JobStep> steps, JobStep step)

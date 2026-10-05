@@ -137,6 +137,7 @@ public sealed class JobDebugSession
 
     internal async Task BeforeStepAsync(JobStep step, string phase, CancellationToken cancellationToken, string? details = null)
     {
+        if (step is EndIfStep) return;
         Task? waitTask = null;
         lock (_gate)
         {
@@ -216,6 +217,7 @@ public sealed class JobDebugSession
         object? result = null,
         ConditionDebugEvaluation? conditionEvaluation = null)
     {
+        if (step is EndIfStep) return;
         lock (_gate)
         {
             if (!_suppressIntermediateChanges)
@@ -236,6 +238,7 @@ public sealed class JobDebugSession
 
     internal void MarkSkipped(JobStep step, string reason)
     {
+        if (step is EndIfStep) return;
         lock (_gate)
         {
             if (!_suppressIntermediateChanges)

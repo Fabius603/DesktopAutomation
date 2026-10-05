@@ -9,6 +9,16 @@ namespace DesktopAutomationApp.Controls;
 /// </summary>
 public class ResponsiveColumnsPanel : Panel
 {
+    public static readonly DependencyProperty KeepAllColumnsTogetherProperty = DependencyProperty.Register(
+        nameof(KeepAllColumnsTogether), typeof(bool), typeof(ResponsiveColumnsPanel),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsMeasure));
+
+    public bool KeepAllColumnsTogether
+    {
+        get => (bool)GetValue(KeepAllColumnsTogetherProperty);
+        set => SetValue(KeepAllColumnsTogetherProperty, value);
+    }
+
     public static readonly DependencyProperty MinItemWidthProperty = DependencyProperty.Register(
         nameof(MinItemWidth), typeof(double), typeof(ResponsiveColumnsPanel),
         new FrameworkPropertyMetadata(170d, FrameworkPropertyMetadataOptions.AffectsMeasure));
@@ -58,7 +68,7 @@ public class ResponsiveColumnsPanel : Panel
             ? Math.Min(children.Count, Math.Max(1, MaxColumns)) * Math.Max(0, MinItemWidth)
               + Math.Max(0, Math.Min(children.Count, Math.Max(1, MaxColumns)) - 1) * Math.Max(0, HorizontalSpacing)
             : Math.Max(0, availableSize.Width);
-        var columns = CalculateColumnCount(width, children.Count, MinItemWidth, MaxColumns, HorizontalSpacing);
+        var columns = GetColumnCount(width, children.Count);
         var itemWidth = CalculateItemWidth(width, columns, HorizontalSpacing);
         var rowHeights = new double[(children.Count + columns - 1) / columns];
 
@@ -76,7 +86,7 @@ public class ResponsiveColumnsPanel : Panel
         var children = VisibleChildren();
         if (children.Count == 0) return finalSize;
 
-        var columns = CalculateColumnCount(finalSize.Width, children.Count, MinItemWidth, MaxColumns, HorizontalSpacing);
+        var columns = GetColumnCount(finalSize.Width, children.Count);
         var itemWidth = CalculateItemWidth(finalSize.Width, columns, HorizontalSpacing);
         var rowHeights = new double[(children.Count + columns - 1) / columns];
         for (var index = 0; index < children.Count; index++)
@@ -112,6 +122,12 @@ public class ResponsiveColumnsPanel : Panel
         var safeSpacing = Math.Max(0, spacing);
         var supportedColumns = (int)Math.Floor((Math.Max(0, width) + safeSpacing) / (safeMinWidth + safeSpacing));
         return Math.Max(1, Math.Min(itemCount, Math.Min(Math.Max(1, maxColumns), supportedColumns)));
+    }
+
+    private int GetColumnCount(double width, int itemCount)
+    {
+        var columns = CalculateColumnCount(width, itemCount, MinItemWidth, MaxColumns, HorizontalSpacing);
+        return KeepAllColumnsTogether && columns < itemCount ? 1 : columns;
     }
 
     private static double CalculateItemWidth(double width, int columns, double spacing) =>

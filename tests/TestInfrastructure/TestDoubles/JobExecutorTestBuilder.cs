@@ -18,6 +18,7 @@ internal sealed class JobExecutorTestBuilder
     public RecordingWindowsSettingService WindowsSettings { get; } = new();
     public StubUserChoiceService UserChoices { get; } = new();
     public StubSecretStore Secrets { get; } = new();
+    public RecordingYoloManager Yolo { get; } = new();
     public NoOpRecordingIndicator RecordingIndicator { get; } = new();
 
     public JobExecutorTestBuilder WithJobs(params Job[] jobs) { _jobs.AddRange(jobs); return this; }
@@ -35,7 +36,7 @@ internal sealed class JobExecutorTestBuilder
             new NoOpMakroExecutor(),
             Scripts,
             RecordingIndicator,
-            new NoOpYoloManager(),
+            Yolo,
             new NoOpImageDisplayService(),
             Overlay,
             new NoOpDesktopCaptureService(),

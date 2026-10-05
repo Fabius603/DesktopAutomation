@@ -3100,7 +3100,7 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Button" xml:space="preserve"><value>Job variables</value></data>
   <data name="Ui.Job.Variables.DialogTitle" xml:space="preserve"><value>Job variables</value></data>
   <data name="Ui.Job.Variables.DialogDescription" xml:space="preserve"><value>Manage shared values for this job and reuse them across multiple steps.</value></data>
-  <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>Add variable</value></data>
+  <data name="Ui.Job.Variables.Add" xml:space="preserve"><value>New variable</value></data>
   <data name="Ui.Job.Variables.Shortcut.Add" xml:space="preserve"><value>Add variable (Ctrl+N)</value></data>
   <data name="Ui.Job.Variables.Shortcut.Search" xml:space="preserve"><value>Search variables (Ctrl+F)</value></data>
   <data name="Ui.Job.Variables.Empty" xml:space="preserve"><value>No variables yet. Create shared values that can be used by multiple steps.</value></data>
@@ -3147,7 +3147,7 @@ Error code: {3}</value>
   <data name="Ui.Job.Variables.Filter.Type" xml:space="preserve"><value>Variable type</value></data>
   <data name="Ui.Job.Variables.Filter.AllTypes" xml:space="preserve"><value>All types</value></data>
   <data name="Ui.Job.Variables.EmptyFilter" xml:space="preserve"><value>No variables match the search and selected filter.</value></data>
-  <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Duplicate variable</value></data>
+  <data name="Ui.Job.Variables.Duplicate" xml:space="preserve"><value>Duplicate</value></data>
   <data name="Ui.Job.Variables.CopyName" xml:space="preserve"><value>{0} – Copy</value></data>
   <data name="Ui.Job.Variables.PromoteToShared" xml:space="preserve"><value>Convert to shared job variable</value></data>
   <data name="Ui.Job.Variables.SelectHint" xml:space="preserve"><value>Select a variable on the left to edit it.</value></data>
@@ -3222,4 +3222,70 @@ Error code: {3}</value>
   <data name="Ui.Job.Steps.TotalCount" xml:space="preserve"><value>{0} steps total</value></data>
   <data name="Ui.Job.Steps.Picker.Description" xml:space="preserve"><value>Description</value></data>
   <data name="Ui.Job.Steps.Editor.Active" xml:space="preserve"><value>Step active</value></data>
+  <data name="Ui.Job.Variables.InvalidStoredValue" xml:space="preserve"><value>The saved value {0} does not match the variable type. It is preserved until explicitly corrected.</value></data>
+  <data name="Ui.Job.Variables.UseDefaultExplicitly" xml:space="preserve"><value>Replace with default value</value></data>
+  <data name="Ui.Step.Generated.Validation.UnknownSavedToken" xml:space="preserve"><value>The saved choice “{0}” is not supported. Please select a valid value.</value></data>
+  <data name="Ui.Job.Validation.DuplicateStepId" xml:space="preserve"><value>Step IDs are missing or duplicated. Please correct the affected steps.</value></data>
+  <data name="Ui.Job.Validation.DuplicateValueId" xml:space="preserve"><value>Value IDs are missing or duplicated within the same provider.</value></data>
+  <data name="Ui.Job.Validation.LocalValueOwnership" xml:space="preserve"><value>A local value is assigned to the wrong step or input field.</value></data>
+  <data name="Ui.Job.Steps.RemoveCondition" xml:space="preserve"><value>Remove condition, keep content</value></data>
+  <data name="Step.Delete.UnwrapWarning" xml:space="preserve"><value>The condition will be removed. All branches will be combined in their existing order and will then execute without this condition. Nested conditions remain intact. Continue?</value></data>
+  <data name="Ui.Job.Steps.ToggleBlock" xml:space="preserve"><value>Expand or collapse conditional block</value></data>
+  <data name="Ui.Job.Steps.CollapsedSummary" xml:space="preserve"><value>{0} steps · {1} issues · {2} breakpoints</value></data>
+  <data name="Ui.Job.Steps.MoveDependencyWarning" xml:space="preserve"><value>This move introduces the following issues. Value references will be preserved:
+{0}
+Move anyway?</value></data>
+  <data name="Ui.Job.Steps.Insert" xml:space="preserve"><value>Add step</value></data>
+  <data name="Ui.Job.Steps.Summary.Seconds" xml:space="preserve"><value>{0} s</value></data>
+  <data name="Ui.Job.Steps.Summary.ExecuteEnd" xml:space="preserve"><value>Run the end phase</value></data>
+  <data name="Ui.Job.Steps.Summary.SkipEnd" xml:space="preserve"><value>Skip the end phase</value></data>
+  <data name="Ui.Job.Steps.Summary.Answer" xml:space="preserve"><value>Answer</value></data>
+  <data name="Ui.Job.Steps.Drag.Handle" xml:space="preserve"><value>Drag this icon to move the step</value></data>
+  <data name="Ui.Job.Steps.Drag.Count" xml:space="preserve"><value>{0} steps</value></data>
+  <data name="Ui.Job.Steps.ExpandBlock" xml:space="preserve"><value>Expand block</value></data>
+  <data name="Ui.Job.Steps.CollapseBlock" xml:space="preserve"><value>Collapse block</value></data>
+  <data name="Ui.Job.Steps.Summary.StepSource" xml:space="preserve"><value>{0} (step {1})</value></data>
+  <data name="Ui.Job.Steps.Summary.Answers" xml:space="preserve"><value>{0} answers</value></data>
+  <data name="Ui.Job.Steps.Summary.Items" xml:space="preserve"><value>{0} items</value></data>
+  <data name="Ui.Job.Steps.Drag.Single" xml:space="preserve"><value>1 step</value></data>
+  <data name="Ui.Job.Steps.Summary.Child" xml:space="preserve"><value>1 contained step</value></data>
+  <data name="Ui.Job.Steps.Summary.Children" xml:space="preserve"><value>{0} contained steps</value></data>
+  <data name="Ui.Job.Steps.Summary.Problems" xml:space="preserve"><value>Issues: {0}</value></data>
+  <data name="Ui.Job.Steps.Summary.Breakpoints" xml:space="preserve"><value>Breakpoints: {0}</value></data>
+  <data name="Ui.Job.Steps.ShowProblem" xml:space="preserve">
+    <value>Show the affected step</value>
+  </data>
+  <data name="Ui.Job.Steps.BlockStructureProblem" xml:space="preserve"><value>Block structure problem</value></data>
+  <data name="Ui.Job.Validation.OrphanElseIf" xml:space="preserve">
+    <value>“Else if” has no matching If condition.</value>
+  </data>
+  <data name="Ui.Job.Validation.OrphanElse" xml:space="preserve">
+    <value>“Else” has no matching If condition.</value>
+  </data>
+  <data name="Ui.Job.Validation.ElseIfAfterElse" xml:space="preserve">
+    <value>“Else if” must precede “Else”.</value>
+  </data>
+  <data name="Ui.Job.Validation.DuplicateElse" xml:space="preserve">
+    <value>This If block contains multiple Else branches.</value>
+  </data>
+  <data name="Ui.Job.Validation.OrphanBlockEnd" xml:space="preserve">
+    <value>A block end has no matching If condition.</value>
+  </data>
+  <data name="Ui.Job.Validation.MissingBlockEnd" xml:space="preserve">
+    <value>This If block has no closing boundary.</value>
+  </data>
+  <data name="Ui.Job.Steps.Picker.All" xml:space="preserve"><value>All steps</value></data>
+  <data name="Ui.Job.Steps.Picker.Categories" xml:space="preserve"><value>Step categories</value></data>
+  <data name="Ui.Job.Steps.Picker.Empty" xml:space="preserve"><value>No matching steps found. Change the search or category.</value></data>
+  <data name="Ui.Job.Steps.Picker.EditLater" xml:space="preserve"><value>Edit the settings in the job overview after adding the step.</value></data>
+  <data name="Ui.Job.Steps.Picker.After" xml:space="preserve"><value>Insert: After “{0}” · {1}</value></data>
+  <data name="Ui.Job.Steps.Picker.Append" xml:space="preserve"><value>Insert: At the end of “{0}”</value></data>
+  <data name="Ui.Job.Steps.Picker.NoFocus" xml:space="preserve"><value>Without step focus: at the end of “On each run”</value></data>
+  <data name="Ui.Job.Steps.Branch.AddElse" xml:space="preserve"><value>Add else</value></data>
+  <data name="Ui.Job.Steps.Branch.AddElseIf" xml:space="preserve"><value>Add else if</value></data>
+  <data name="Ui.Job.Steps.Branch.ElseHint" xml:space="preserve"><value>Adds the final else branch. Each complete if block can have only one else branch.</value></data>
+  <data name="Ui.Job.Steps.Branch.ElseIfHint" xml:space="preserve"><value>Adds another else-if branch before else. Edit its condition in the job overview.</value></data>
+  <data name="Ui.Job.Variables.Usage.OnlyThis" xml:space="preserve"><value>Change only this usage</value></data>
+  <data name="Ui.Job.Variables.Draft.Retained" xml:space="preserve"><value>Unapplied changes are retained when switching variables.</value></data>
+  <data name="Ui.Job.Steps.EmptyBranch" xml:space="preserve"><value>This branch has no steps yet.</value></data>
 </root>

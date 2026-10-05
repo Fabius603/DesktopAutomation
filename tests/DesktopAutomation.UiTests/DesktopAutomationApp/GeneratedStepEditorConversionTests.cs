@@ -12,6 +12,39 @@ namespace TaskAutomation.Tests.DesktopAutomationApp;
 
 public sealed class GeneratedStepEditorConversionTests
 {
+    [Fact]
+    public void PlainPositionPair_KeepsItsCoordinateInputsAvailableWithoutAWholeValueSource()
+    {
+        var editor = new GeneratedStepEditorViewModel(new ShowTextStepDefinition());
+        var pair = Assert.IsType<GeneratedStepPointFieldPairViewModel>(editor.Sections.SelectMany(section => section.Nodes)
+            .Single(node => node is GeneratedStepPointFieldPairViewModel));
+        Assert.False(pair.HasWholeValueSource);
+        Assert.True(pair.ShowsIndividualValues);
+        Assert.False(pair.UsesWholeValueReference);
+        pair.XField.IntegerValue = -25;
+        pair.YField.IntegerValue = 70;
+        Assert.Equal(-25, pair.XField.IntegerValue);
+        Assert.Equal(70, pair.YField.IntegerValue);
+    }
+
+    [Fact]
+    public void SwitchingMode_PreservesEditedInactiveValuesWhenSaving()
+    {
+        var editor = new GeneratedStepEditorViewModel(new PointComparisonStepDefinition(),
+            pointEntryListResolver: (field, value) => field.EditorHint == StepEditorHints.PointEntryList
+                ? new GeneratedPointEntryListEditorViewModel(value, [])
+                : null,
+            axisExpressionListResolver: (field, value) => field.EditorHint == StepEditorHints.AxisExpressionList
+                ? new GeneratedAxisExpressionListEditorViewModel(value)
+                : null);
+        editor.Fields.Single(field => field.Descriptor.Id == PointComparisonStepDefinition.OffsetXFieldId)
+            .IntegerValue = 123;
+        editor.Fields.Single(field => field.Descriptor.Id == PointComparisonStepDefinition.ModeFieldId)
+            .SelectedEnumValue = "Expression";
+        Assert.True(editor.TryCreateStep(out var step), editor.ValidationError);
+        Assert.Equal(123, Assert.IsType<PointComparisonStep>(step).Settings.OffsetSettings.OffsetX);
+    }
+
     [Theory]
     [InlineData("#123", 0x11, 0x22, 0x33, 0xFF)]
     [InlineData("#80112233", 0x11, 0x22, 0x33, 0x80)]
@@ -206,7 +239,8 @@ public sealed class GeneratedStepEditorConversionTests
         {
             var editor = new JobVariableEditorViewModel(variable, _ => { });
             Assert.Equal(0, editor.IntegerValue);
-            Assert.Equal(0, variable.Value!.GetValue<int>());
+            Assert.Equal("not-an-integer", variable.Value!.GetValue<string>());
+            Assert.True(editor.HasInvalidValue);
         }
         finally
         {

@@ -26,6 +26,13 @@
         <Style x:Key="VariableDateTimeInputStyle" TargetType="mah:DateTimePicker"
                BasedOn="{StaticResource AppDateTimePickerStyle}"/>
     </UserControl.Resources>
+    <StackPanel>
+        <StackPanel Margin="0,0,0,8"
+                    Visibility="{Binding HasInvalidValue, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{Binding InvalidValueMessage}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.Danger}"/>
+            <Button Content="{loc:Translate Key=Ui.Job.Variables.UseDefaultExplicitly}"
+                    Command="{Binding ResetInvalidValueCommand}" HorizontalAlignment="Left" Margin="0,6,0,0"/>
+        </StackPanel>
     <Grid>
         <TextBox Text="{Binding TextValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  Visibility="{Binding IsText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -119,4 +126,5 @@
             <StackPanel Grid.Column="6"><TextBlock Text="{loc:Translate Key=Ui.Job.Variables.Height}" Margin="0,0,0,4"/><mah:NumericUpDown Value="{Binding Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Minimum="0" NumericInputMode="Numbers" Interval="1" Style="{StaticResource VariableNumericInputStyle}"/></StackPanel>
         </Grid>
     </Grid>
+    </StackPanel>
 </UserControl>

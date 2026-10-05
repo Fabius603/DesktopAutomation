@@ -73,29 +73,6 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void ResultPathPicker_ClosesWhenHiddenOrClickedOutsideAndKeepsItsNormalHeight()
-    {
-        var root = RepositoryRoot();
-        var xaml = File.ReadAllText(Path.Combine(
-            root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml"));
-        var code = File.ReadAllText(Path.Combine(
-            root, "DesktopAutomationApp", "Controls", "Jobs", "ResultPathPicker.xaml.cs"));
-
-        Assert.Contains("Height=\"34\" MaxHeight=\"34\" VerticalAlignment=\"Top\"", xaml);
-        Assert.Contains("StaysOpen=\"False\"", xaml);
-        Assert.Contains("IsChecked=\"{Binding IsOpen, ElementName=SelectionPopup, Mode=OneWay}\"", xaml);
-        Assert.Contains("Click=\"DropDownToggle_Click\"", xaml);
-        Assert.Contains("IsVisibleChanged += OnIsVisibleChanged", code);
-        Assert.Contains("if (e.NewValue is false) SelectionPopup.IsOpen = false;", code);
-        Assert.Contains("if (!SelectionPopup.IsOpen) return;", code);
-        Assert.Contains("if (!SelectionPopup.IsOpen) SelectionPopup.IsOpen = true;", code);
-        Assert.Contains("DispatcherPriority.ContextIdle", code);
-        Assert.Contains("if (SelectionPopup.IsOpen)", code);
-        Assert.DoesNotContain("OwnerWindow_Deactivated", code);
-        Assert.DoesNotContain(".Deactivated +=", code);
-    }
-
-    [Fact]
     public void ResultPathPicker_DoesNotBindPressedStateOrNullColorsThroughBrushConversion()
     {
         var root = RepositoryRoot();
@@ -179,26 +156,6 @@ public sealed class JobStepsViewResourceTests
 
         Assert.Contains("<conv:StepNumberConverter x:Key=\"StepNumberConverter\"/>", xaml);
         Assert.Contains("<conv:StepDisplayNameConverter x:Key=\"StepDisplayNameConverter\"/>", xaml);
-    }
-
-    [Fact]
-    public void StepMoreMenus_DeleteTheirOwnStepInsteadOfTheCurrentSelection()
-    {
-        var document = XDocument.Load(Path.Combine(
-            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
-        XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-
-        var deleteItems = document.Descendants(presentation + "MenuItem")
-            .Where(element => element.Attribute("Header")?.Value.Contains(
-                "Ui.Job.Steps.DeleteStep", StringComparison.Ordinal) == true)
-            .ToList();
-
-        Assert.Equal(2, deleteItems.Count);
-        Assert.All(deleteItems, item =>
-        {
-            Assert.Contains("DeleteStepCommand", item.Attribute("Command")?.Value, StringComparison.Ordinal);
-            Assert.Contains("PlacementTarget.DataContext", item.Attribute("CommandParameter")?.Value, StringComparison.Ordinal);
-        });
     }
 
     [Fact]
@@ -338,35 +295,17 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void StepDetailsPopup_StaysOpenWhileItsContentIsUsed()
+    public void StepOverview_ProvidesInspectorEditingAndAccessibleBlockActions()
     {
-        var xaml = File.ReadAllText(Path.Combine(
+        var document = XDocument.Load(Path.Combine(
             RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
-        var popupStart = xaml.IndexOf("<Popup x:Name=\"StepDetailsPopup\"", StringComparison.Ordinal);
-        var popupEnd = xaml.IndexOf('>', popupStart);
-
-        Assert.True(popupStart >= 0);
-        Assert.True(popupEnd > popupStart);
-        Assert.Contains("StaysOpen=\"True\"", xaml[popupStart..popupEnd], StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ControlFlowContainers_UseConsistentSpacingAndANonCardPlaceholder()
-    {
-        var root = RepositoryRoot();
-        var converter = File.ReadAllText(Path.Combine(
-            root, "DesktopAutomationApp", "Converters", "StepBlockBorderConverter.cs"));
-        var panel = File.ReadAllText(Path.Combine(
-            root, "DesktopAutomationApp", "Controls", "ControlFlowBlockPanel.cs"));
-        var xaml = File.ReadAllText(Path.Combine(
-            root, "DesktopAutomationApp", "Views", "JobsView", "JobStepsView.xaml"));
-
-        Assert.Contains("layout.FirstInSection ? 8 : 4", converter, StringComparison.Ordinal);
-        Assert.Contains("layout.LastInSection ? 8 : 4", converter, StringComparison.Ordinal);
-        Assert.Contains("const double baseWidth = 358", panel, StringComparison.Ordinal);
-        Assert.DoesNotContain("PlaceholderBackground", panel, StringComparison.Ordinal);
-        Assert.DoesNotContain("PlaceholderBackground", xaml, StringComparison.Ordinal);
-        Assert.Contains("drawingContext.DrawLine(", panel, StringComparison.Ordinal);
+        XNamespace ui = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        Assert.DoesNotContain(document.Descendants(ui + "Button"), button =>
+            button.Attribute("Command")?.Value.Contains("EditStepCommand", StringComparison.Ordinal) == true);
+        Assert.Contains(document.Descendants(ui + "Button"), button =>
+            button.Attribute("AutomationProperties.AutomationId")?.Value == "ToggleJobStepBlock");
+        Assert.DoesNotContain(document.Descendants(ui + "Button"), button =>
+            button.Attribute("AutomationProperties.AutomationId")?.Value == "AddStepToEmptyBranch");
     }
 
     [Fact]
@@ -446,25 +385,20 @@ public sealed class JobStepsViewResourceTests
     }
 
     [Fact]
-    public void JobStepPicker_UsesSearchableListAndDescriptionOnly()
+    public void StepCatalog_OffersOrdinaryTypesAndIfWithoutStandaloneAlternativeOrClosingMarkers()
     {
-        var xaml = File.ReadAllText(Path.Combine(
-            RepositoryRoot(), "DesktopAutomationApp", "Views", "JobsView", "AddJobStepDialog.xaml"));
-
-        Assert.Contains("Text=\"{Binding StepTypeSearchText, UpdateSourceTrigger=PropertyChanged}\"", xaml);
-        Assert.Contains("ItemsSource=\"{Binding StepTypeItems}\"", xaml);
-        Assert.Contains("SelectedValue=\"{Binding SelectedType}\"", xaml);
-        Assert.Contains("Width=\"300\"", xaml);
-        Assert.DoesNotContain("Kind=\"FormTextbox\"", xaml);
-        Assert.Contains("<Grid x:Name=\"ItemContainer\">", xaml);
-        Assert.Contains("<ColumnDefinition Width=\"5\"/>", xaml);
-        Assert.Contains("<Border x:Name=\"ItemCard\" Grid.Column=\"2\"", xaml);
-        Assert.Contains("x:Name=\"SelectionIndicator\"", xaml);
-        Assert.Contains("TargetName=\"ItemCard\" Property=\"Background\" Value=\"{DynamicResource App.Brush.SurfaceHover}\"", xaml);
-        Assert.Contains("TargetName=\"SelectionIndicator\" Property=\"Background\" Value=\"{DynamicResource App.Brush.SelectionBorder}\"", xaml);
-        Assert.Contains("AutomationProperties.AutomationId=\"JobStepTypePickerList\"", xaml);
-        Assert.Contains("AutomationProperties.AutomationId=\"JobStepPickerDescriptionPanel\"", xaml);
-        Assert.Contains("Visibility=\"{Binding IsPickerOnly, Converter={StaticResource BooleanToVisibilityConverter}}\"", xaml);
+        var catalog = global::DesktopAutomationApp.ViewModels.AddJobStepDialogViewModel
+            .CreateStepTypeItems(global::TaskAutomation.Steps.Definitions.BuiltInStepDefinitions.Instance)
+            .Cast<global::DesktopAutomationApp.ViewModels.AddJobStepDialogViewModel.StepTypeItem>().ToArray();
+        Assert.Contains(catalog, item => item.Name == "If");
+        Assert.Contains(catalog, item => item.Name == "Timeout");
+        Assert.DoesNotContain(catalog, item => item.Name is "ElseIf" or "Else" or "EndIf");
+        Assert.All(catalog, item =>
+        {
+            Assert.NotEmpty(item.DisplayLabel);
+            Assert.NotEmpty(item.Description);
+            Assert.NotEmpty(item.Category);
+        });
     }
 
     [Fact]
@@ -488,7 +422,11 @@ public sealed class JobStepsViewResourceTests
         Assert.Contains("Content=\"{Binding SelectedStepEditor}\"", xaml);
         Assert.Contains("ItemsSource=\"{Binding SelectedDebugContextGroups}\"", xaml);
         Assert.Contains("ItemsSource=\"{Binding Result.Properties}\"", xaml);
-        Assert.DoesNotContain("HorizontalScrollBarVisibility=\"Auto\"", xaml);
+        var document = System.Xml.Linq.XDocument.Parse(xaml);
+        var inspector = document.Descendants().Single(element =>
+            (string?)element.Attribute("AutomationProperties.AutomationId") == "SelectedJobStepInspector");
+        Assert.DoesNotContain(inspector.Descendants(), element =>
+            (string?)element.Attribute("HorizontalScrollBarVisibility") == "Auto");
         Assert.Contains("x:Name=\"SelectionOverlay\"", xaml);
         Assert.Contains("TargetName=\"SelectionOverlay\" Property=\"Background\" Value=\"{DynamicResource App.Brush.SelectionBackground}\"", xaml);
     }

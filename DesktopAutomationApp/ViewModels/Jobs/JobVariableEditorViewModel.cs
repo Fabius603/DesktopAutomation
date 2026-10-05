@@ -61,6 +61,10 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     }
 
     public JobVariable Model { get; private set; }
+    public bool HasInvalidValue => !JobVariableValueRules.IsValid(Model);
+    public string InvalidValueMessage => HasInvalidValue
+        ? Loc.Format("Ui.Job.Variables.InvalidStoredValue", Model.Value?.ToJsonString() ?? "null") : string.Empty;
+    public ICommand ResetInvalidValueCommand => new RelayCommand(() => { SetDefaultValue(); LoadValue(); Changed(nameof(Model)); });
     public JobVariable CommittedModel => _committedModel;
     public bool IsDraftSessionActive => _isDraftSessionActive;
     public bool IsNewDraft => _isNewDraft;
@@ -84,6 +88,17 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     public string SearchValue => ValueReferenceDisplayFormatter.Instance.CompactValue(Model);
     public string CompactValue => SearchValue;
     public string TypeDisplayName => SelectedKind.DisplayName;
+    public MahApps.Metro.IconPacks.PackIconMaterialKind Icon => Model.ValueKind switch
+    {
+        ResultValueKind.Integer or ResultValueKind.Number => MahApps.Metro.IconPacks.PackIconMaterialKind.Pound,
+        ResultValueKind.Boolean => MahApps.Metro.IconPacks.PackIconMaterialKind.ToggleSwitchOutline,
+        ResultValueKind.FilePath => MahApps.Metro.IconPacks.PackIconMaterialKind.FolderOutline,
+        ResultValueKind.Color => MahApps.Metro.IconPacks.PackIconMaterialKind.PaletteOutline,
+        ResultValueKind.Point or ResultValueKind.Rectangle => MahApps.Metro.IconPacks.PackIconMaterialKind.VectorRectangle,
+        ResultValueKind.DateTime => MahApps.Metro.IconPacks.PackIconMaterialKind.CalendarClock,
+        ResultValueKind.Image => MahApps.Metro.IconPacks.PackIconMaterialKind.ImageOutline,
+        _ => MahApps.Metro.IconPacks.PackIconMaterialKind.TextBoxOutline
+    };
 
     public void BeginDraftSession(bool isNew = false)
     {
@@ -178,6 +193,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectedKindValue));
             OnPropertyChanged(nameof(TypeDisplayName));
+            OnPropertyChanged(nameof(Icon));
             NotifyKindVisibility();
             Changed(nameof(SelectedKind));
         }
@@ -276,17 +292,17 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
     private int _height;
     public int Height { get => _height; set { if (UpdateProperty(ref _height, Math.Max(0, value))) StoreGeometry(); } }
 
-    public bool IsText => Model.ValueKind is ResultValueKind.Text or ResultValueKind.Enum;
-    public bool IsBoolean => Model.ValueKind == ResultValueKind.Boolean;
-    public bool IsInteger => Model.ValueKind == ResultValueKind.Integer;
-    public bool IsNumber => Model.ValueKind == ResultValueKind.Number;
-    public bool IsDateTime => Model.ValueKind == ResultValueKind.DateTime;
-    public bool IsPoint => Model.ValueKind == ResultValueKind.Point;
-    public bool IsRectangle => Model.ValueKind == ResultValueKind.Rectangle;
-    public bool IsColor => Model.ValueKind == ResultValueKind.Color;
-    public bool IsFilePath => Model.ValueKind == ResultValueKind.FilePath;
-    public bool IsImage => Model.ValueKind == ResultValueKind.Image;
-    public bool IsResultObject => Model.ValueKind is ResultValueKind.ResultObject
+    public bool IsText => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind is ResultValueKind.Text or ResultValueKind.Enum;
+    public bool IsBoolean => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Boolean;
+    public bool IsInteger => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Integer;
+    public bool IsNumber => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Number;
+    public bool IsDateTime => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.DateTime;
+    public bool IsPoint => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Point;
+    public bool IsRectangle => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Rectangle;
+    public bool IsColor => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Color;
+    public bool IsFilePath => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.FilePath;
+    public bool IsImage => Model.Cardinality != ResultCardinality.Collection && Model.ValueKind == ResultValueKind.Image;
+    public bool IsResultObject => Model.Cardinality == ResultCardinality.Collection || Model.ValueKind is ResultValueKind.ResultObject
         or ResultValueKind.Detection or ResultValueKind.ProcessReference;
 
     private void LoadValue()
@@ -294,7 +310,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         _loading = true;
         try
         {
-            var valid = true;
+            var valid = !HasInvalidValue;
             _textValue = IsText ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
             _booleanValue = IsBoolean && ReadBoolean(Model.Value, false, ref valid);
             _integerValue = IsInteger ? ReadInteger(Model.Value, 0, ref valid) : 0;
@@ -306,16 +322,11 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
             _filePath = IsFilePath ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
             _imagePath = IsImage ? ReadString(Model.Value, string.Empty, ref valid) : string.Empty;
             _jsonValue = IsResultObject ? Model.Value?.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) ?? "null" : string.Empty;
-            _x = IsPoint || IsRectangle ? ReadInteger(Model.Value?["x"], 0, ref valid) : 0;
-            _y = IsPoint || IsRectangle ? ReadInteger(Model.Value?["y"], 0, ref valid) : 0;
-            _width = IsRectangle ? ReadInteger(Model.Value?["width"], 0, ref valid) : 0;
-            _height = IsRectangle ? ReadInteger(Model.Value?["height"], 0, ref valid) : 0;
-            if (!valid)
-            {
-                SetDefaultValue();
-                LoadValue();
-                return;
-            }
+            _x = IsPoint || IsRectangle ? ReadInteger((Model.Value as JsonObject)?["x"], 0, ref valid) : 0;
+            _y = IsPoint || IsRectangle ? ReadInteger((Model.Value as JsonObject)?["y"], 0, ref valid) : 0;
+            _width = IsRectangle ? ReadInteger((Model.Value as JsonObject)?["width"], 0, ref valid) : 0;
+            _height = IsRectangle ? ReadInteger((Model.Value as JsonObject)?["height"], 0, ref valid) : 0;
+
         }
         finally
         {
@@ -384,24 +395,8 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         return fallback;
     }
 
-    private void SetDefaultValue()
-    {
-        Model.Value = Model.ValueKind switch
-        {
-            ResultValueKind.Text or ResultValueKind.Enum or ResultValueKind.FilePath => JsonValue.Create(string.Empty),
-            ResultValueKind.Boolean => JsonValue.Create(false),
-            ResultValueKind.Integer => JsonValue.Create(0),
-            ResultValueKind.Number => JsonValue.Create(0d),
-            ResultValueKind.DateTime => JsonValue.Create(DateTime.Now),
-            ResultValueKind.Color => JsonValue.Create("#FFFFFF"),
-            ResultValueKind.Point => new JsonObject { ["x"] = 0, ["y"] = 0 },
-            ResultValueKind.Rectangle => new JsonObject { ["x"] = 0, ["y"] = 0, ["width"] = 0, ["height"] = 0 },
-            ResultValueKind.Image => JsonValue.Create(string.Empty),
-            ResultValueKind.ResultObject => new JsonObject(),
-            ResultValueKind.Detection or ResultValueKind.ProcessReference => new JsonObject(),
-            _ => null
-        };
-    }
+    private void SetDefaultValue() => Model.Value = Model.Cardinality == ResultCardinality.Collection
+        ? new JsonArray() : JobVariableValueRules.CreateDefault(Model.ValueKind);
 
     private void StoreGeometry([CallerMemberName] string? propertyName = null)
     {
@@ -414,7 +409,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
 
     private bool UpdateProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        if (EqualityComparer<T>.Default.Equals(field, value)) return !_loading && HasInvalidValue;
         SetProperty(ref field, value, propertyName);
         return true;
     }
@@ -433,6 +428,8 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(SearchValue));
         OnPropertyChanged(nameof(CompactValue));
         OnPropertyChanged(nameof(IsDirty));
+        OnPropertyChanged(nameof(HasInvalidValue));
+        OnPropertyChanged(nameof(InvalidValueMessage));
         _changed(propertyName);
     }
 
@@ -445,6 +442,7 @@ public sealed class JobVariableEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedKind));
         OnPropertyChanged(nameof(SelectedKindValue));
         OnPropertyChanged(nameof(TypeDisplayName));
+        OnPropertyChanged(nameof(Icon));
         OnPropertyChanged(nameof(SearchValue));
         OnPropertyChanged(nameof(CompactValue));
         OnPropertyChanged(nameof(IsDirty));

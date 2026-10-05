@@ -7,11 +7,11 @@
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
     <UserControl.Resources>
         <DataTemplate x:Key="TextFieldTemplate">
-            <TextBox MinWidth="0" HorizontalAlignment="Stretch"
+            <TextBox MinWidth="0" MinHeight="34" VerticalContentAlignment="Center" HorizontalAlignment="Stretch"
                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged, Delay=250}"/>
         </DataTemplate>
     </UserControl.Resources>
-    <controls:ResponsiveActionPanel x:Name="InputValueHost"
+    <controls:ResponsiveActionPanel CanWrap="False" x:Name="InputValueHost"
                                     MinPrimaryWidth="160"
                                     HorizontalSpacing="5"
                                     VerticalSpacing="6">
@@ -22,7 +22,7 @@
             <jobs:ValueReferencePicker DataContext="{Binding InputReferenceEditor.Picker}"
                                        Visibility="{Binding DataContext.ShowsInputSourcePicker, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
-        <Button Width="34" MinHeight="30" HorizontalAlignment="Right" VerticalAlignment="Top"
+        <Button Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top"
                 Padding="0" Style="{StaticResource ButtonSecondary}"
                 Visibility="{Binding ShowsInputSourceSelector, Converter={StaticResource BooleanToVisibilityConverter}}"
                 ToolTip="{loc:Translate Key=Ui.Job.StepInput.Source.ToolTip}"

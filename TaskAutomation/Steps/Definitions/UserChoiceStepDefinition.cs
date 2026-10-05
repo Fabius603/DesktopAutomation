@@ -66,8 +66,8 @@ public sealed class UserChoiceStepDefinition : StepDefinition<UserChoiceStep>
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)
     {
-        var options = ReadOptions(draft);
-        if (options.Any(option => string.IsNullOrWhiteSpace(option.Id) || string.IsNullOrWhiteSpace(option.Label))
+        if (!TryReadOptions(draft, out var options)) return [Invalid(OptionsFieldId)];
+        if (options.Any(option => option is null || string.IsNullOrWhiteSpace(option.Id) || string.IsNullOrWhiteSpace(option.Label))
             || options.Select(option => option.Id).Distinct(StringComparer.Ordinal).Count() != options.Count
             || options.Select(option => option.Label.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != options.Count)
             return [Invalid(OptionsFieldId)];
@@ -76,8 +76,20 @@ public sealed class UserChoiceStepDefinition : StepDefinition<UserChoiceStep>
 
     private static IReadOnlyList<StepUserChoiceOptionValue> ReadOptions(StepDraft draft)
     {
-        try { return draft.Values.GetValueOrDefault(OptionsFieldId)?.Deserialize<List<StepUserChoiceOptionValue>>() ?? []; }
-        catch (JsonException) { return []; }
+        if (TryReadOptions(draft, out var options) && options.All(option => option is not null)) return options;
+        throw new InvalidOperationException("options: StepValidation.Invalid");
+    }
+
+    private static bool TryReadOptions(StepDraft draft, out IReadOnlyList<StepUserChoiceOptionValue> options)
+    {
+        options = [];
+        try
+        {
+            if (draft.Values.GetValueOrDefault(OptionsFieldId) is not JsonArray array) return false;
+            options = array.Deserialize<List<StepUserChoiceOptionValue>>() ?? [];
+            return options.Count == array.Count;
+        }
+        catch (JsonException) { return false; }
     }
 
     private static StepValidationIssue Invalid(string fieldId) => new("StepValidation.Invalid", fieldId);
