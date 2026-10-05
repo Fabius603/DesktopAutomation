@@ -40,28 +40,19 @@ namespace TaskAutomation.Steps
             var alpha = (byte)Math.Clamp((int)(s.Opacity * 255f), 0, 255);
 
             ctx.DesktopResultOverlay.ShowText(
-                stepKey:     step.Id,
-                text:        text,
-                fontSize:    s.FontSize,
+                stepKey: step.Id,
+                text: text,
+                fontSize: s.FontSize,
                 r: r, g: g, b: b, a: alpha,
                 desktopIndex: s.DesktopIndex,
-                offsetX:     s.OffsetX,
-                offsetY:     s.OffsetY,
-                durationMs:  s.DurationMs,
+                offsetX: s.OffsetX,
+                offsetY: s.OffsetY,
+                durationMs: s.DurationMs,
                 clearOnJobEnd: s.ClearOnJobEnd);
 
-            if (string.Equals(s.TextResult.ProviderId, ValueProviderIds.Secret, StringComparison.Ordinal))
-            {
-                ctx.Logger.LogInformation(
-                    "ShowTextStepHandler: Secret-Text auf Monitor {Index} bei ({X},{Y}) angezeigt.",
-                    s.DesktopIndex, s.OffsetX, s.OffsetY);
-            }
-            else
-            {
-                ctx.Logger.LogInformation(
-                    "ShowTextStepHandler: Text '{Text}' auf Monitor {Index} bei ({X},{Y}) angezeigt.",
-                    text, s.DesktopIndex, s.OffsetX, s.OffsetY);
-            }
+            ctx.Logger.LogInformation(
+                "ShowTextStepHandler: Text auf Monitor {Index} bei ({X},{Y}) angezeigt.",
+                s.DesktopIndex, s.OffsetX, s.OffsetY);
 
             return Task.FromResult(new ShowTextResult { WasExecuted = true, Success = true });
         }

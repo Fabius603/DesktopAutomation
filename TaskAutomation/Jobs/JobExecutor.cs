@@ -285,6 +285,11 @@ namespace TaskAutomation.Jobs
             CurrentJob = job;
             var jobRunStopwatch = Stopwatch.StartNew();
             var executionLog = _executionLogService.BeginJob(job.Id, job.Name, startContext);
+            _executionLogService.InitializeRun(executionLog, job, startContext.InstanceId ?? executionLog.Id);
+            using var runLogScope = LogAmbient.Push(new(executionLog.Id, startContext.InstanceId ?? executionLog.Id,
+                startContext.TriggerId, startContext.Source == JobStartSource.Automation ? startContext.SourceId : null,
+                ParentRunId: startContext.ParentRunId));
+            using var debugLog = new DebugLogSubscription(debugSession, executionLog, _executionLogService);
             cancellation.StateChanged += state => _executionLogService.Write(
                 executionLog,
                 state is JobExecutionState.ForceStopRequested or JobExecutionState.Failed
@@ -322,7 +327,7 @@ namespace TaskAutomation.Jobs
                 _logger.LogError(err);
                 _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job vor Ausführung abgebrochen.", err);
                 cancellation.MarkCompleted(JobExecutionState.Failed);
-                _executionLogService.Complete(executionLog, false, err);
+                _executionLogService.Finish(executionLog, LogOutcome.Failed, "DependencyCycle");
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, new InvalidOperationException(err)));
                 await UnloadYoloModelsAsync(job, []);
                 _executionChain.Value = parentChain;
@@ -343,6 +348,7 @@ namespace TaskAutomation.Jobs
                 videoStep = allSteps.OfType<VideoCreationStep>().FirstOrDefault(s => s.IsEnabled);
                 desktopDuplicationStep = allSteps.OfType<DesktopDuplicationStep>().FirstOrDefault(s => s.IsEnabled);
                 var secretValues = await LoadSecretValuesAsync(job, ct).ConfigureAwait(false);
+                _executionLogService.RegisterSecrets(secretValues.Values.Select(value => value.Value));
 
                 // ── Pipeline-Kontext erstellen ────────────────────────────────
                 var launcher = _lazyLauncher.Value;
@@ -362,9 +368,9 @@ namespace TaskAutomation.Jobs
                     _cameraCaptureService,
                     executionLog,
                     _executionLogService,
-                    launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
+                    launcher == null ? null : id => launcher.StartJob(id, new JobStartContext(JobStartSource.Job, job.Name, job.Id, ParentRunId: executionLog.Id)),
                     launcher == null ? (Action<Guid>?)null : launcher.CancelJob,
-                    launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id)),
+                    launcher == null ? null : (id, token) => launcher.StartJobAsync(id, token, new JobStartContext(JobStartSource.Job, job.Name, job.Id, ParentRunId: executionLog.Id)),
                     secrets: secretValues);
                 await PreloadYoloModelsAsync(job, pipelineCtx, ct).ConfigureAwait(false);
             }
@@ -376,7 +382,7 @@ namespace TaskAutomation.Jobs
                     ExecutionLogLevel.Information,
                     "Job vor der Step-Ausführung gestoppt.");
                 cancellation.MarkCompleted(JobExecutionState.Cancelled);
-                _executionLogService.Complete(executionLog, false, ex.Message, cancelled: true);
+                _executionLogService.Finish(executionLog, LogOutcome.Stopped, "CancelledBeforeSteps");
                 await UnloadYoloModelsAsync(job, pipelineCtx?.LoadedYoloModels ?? []);
                 pipelineCtx?.Dispose();
                 _executionChain.Value = parentChain;
@@ -386,13 +392,9 @@ namespace TaskAutomation.Jobs
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Job '{JobName}' konnte den Pipeline-Kontext nicht initialisieren.", job.Name);
-                _executionLogService.Write(
-                    executionLog,
-                    ExecutionLogLevel.Error,
-                    "Job vor der Step-Ausführung fehlgeschlagen.",
-                    ex.ToString());
+                RecordFailure(executionLog, "Job vor der Step-Ausführung fehlgeschlagen.", ex);
                 cancellation.MarkCompleted(JobExecutionState.Failed);
-                _executionLogService.Complete(executionLog, false, ex.Message);
+                _executionLogService.Finish(executionLog, LogOutcome.Failed, "InitializationFailed");
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 await UnloadYoloModelsAsync(job, pipelineCtx?.LoadedYoloModels ?? []);
                 pipelineCtx?.Dispose();
@@ -456,9 +458,9 @@ namespace TaskAutomation.Jobs
 
                         // ── Control-flow steps: handle without executing ────────
                         if (ProcessConditionControlFlow(
-                                step, branchStack, pipelineCtx.Results, conditionSources) is { } transition)
+                                step, branchStack, pipelineCtx.Results, conditionSources, executionLog, "Main", iteration) is { } transition)
                         {
-                            CompleteConditionControlFlow(executionLog, debugSession, step, transition);
+                            CompleteConditionControlFlow(debugSession, step, transition);
                             continue;
                         }
 
@@ -466,21 +468,14 @@ namespace TaskAutomation.Jobs
                         if (!parentActive)
                         {
                             debugSession?.MarkSkipped(step, "Inaktiver Bedingungszweig.");
-                            _executionLogService.Write(executionLog, ExecutionLogLevel.Debug,
-                                "Step wegen inaktivem Bedingungszweig übersprungen.",
-                                stepId: step.Id, stepType: step.GetType().Name);
+                            StepLogScope.Skip(_executionLogService, executionLog, step, "Main", iteration, "InactiveBranch");
                             continue;
                         }
 
                         // ── Disabled step: skip without executing ─────────────────────
                         if (!step.IsEnabled)
                         {
-                            _executionLogService.Write(
-                                executionLog,
-                                ExecutionLogLevel.Debug,
-                                "Step übersprungen, weil er deaktiviert ist.",
-                                stepId: step.Id,
-                                stepType: step.GetType().Name);
+                            StepLogScope.Skip(_executionLogService, executionLog, step, "Main", iteration, "Disabled");
                             continue;
                         }
 
@@ -490,29 +485,17 @@ namespace TaskAutomation.Jobs
                         // ── EndJob: immediately stop the job ──────────────────────────
                         if (step is EndJobStep endJobStep)
                         {
-                            _logger.LogInformation(
-                                "Job '{JobName}' durch EndJob-Step beendet.", job.Name);
-                            _executionLogService.Write(
-                                executionLog,
-                                ExecutionLogLevel.Information,
-                                "Job durch EndJob-Step beendet.",
-                                stepId: step.Id,
-                                stepType: step.GetType().Name);
+                            var observed = ExecuteControlStep(endJobStep, executionLog, "Main", iteration,
+                                () => (EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results), "EndJob");
                             jobEndedByStep = true;
-                            runEndSteps = !((EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results)).Settings.SkipEndSteps;
+                            runEndSteps = !observed.Settings.SkipEndSteps;
                             debugSession?.MarkCompleted(step, "Job durch EndJob beendet.");
                             break;
                         }
 
                         if (step is ContinueJobStep)
                         {
-                            _logger.LogInformation("Job '{JobName}' wird durch Continue-Step von vorne gestartet.", job.Name);
-                            _executionLogService.Write(
-                                executionLog,
-                                ExecutionLogLevel.Information,
-                                "Job-Runde durch Continue-Step neu gestartet.",
-                                stepId: step.Id,
-                                stepType: step.GetType().Name);
+                            ExecuteControlStep(step, executionLog, "Main", iteration, () => step, "NextIteration");
                             continueJob = true;
                             debugSession?.MarkCompleted(step, "Nächste Job-Runde angefordert.");
                             break;
@@ -534,13 +517,6 @@ namespace TaskAutomation.Jobs
                         {
                             if (debugSession != null)
                                 await debugSession.PauseAfterFailureAsync(step, ex, ct).ConfigureAwait(false);
-                            _executionLogService.Write(
-                                executionLog,
-                                ExecutionLogLevel.Error,
-                                "Step fehlgeschlagen.",
-                                ex.ToString(),
-                                step.Id,
-                                step.GetType().Name);
                             JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, step.GetType().Name, ex));
                             // StepException verhindert, dass der äußere catch ein zweites Event feuert.
                             throw new StepException(ex);
@@ -586,8 +562,8 @@ namespace TaskAutomation.Jobs
             catch (Exception ex)
             {
                 completionReason = JobCompletionReason.StepFailed;
-                _logger.LogError(ex, "Fehler in Job '{JobName}': {Message}", job.Name, ex.Message);
-                _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Job fehlgeschlagen.", ex.ToString());
+                _logger.LogError(ex, "Fehler in Job '{JobName}'.", job.Name);
+                RecordFailure(executionLog, "Job fehlgeschlagen.", ex);
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
             }
             finally
@@ -599,6 +575,9 @@ namespace TaskAutomation.Jobs
                     Job.MaxEndPhaseTimeoutSeconds));
                 if (!runEndSteps)
                 {
+                    foreach (var endStep in job.EndSteps)
+                        StepLogScope.Skip(_executionLogService, executionLog, endStep, "End", null,
+                            endStep.IsEnabled ? "EndPhaseSuppressed" : "Disabled");
                     _executionLogService.Write(
                         executionLog,
                         ExecutionLogLevel.Information,
@@ -637,8 +616,10 @@ namespace TaskAutomation.Jobs
                         }
                         catch (Exception ex)
                         {
+                            jobCompletedSuccessfully = false;
+                            completionReason = JobCompletionReason.StepFailed;
                             _logger.LogError(ex, "Unerwarteter Fehler in der Endphase von Job '{JobName}'.", job.Name);
-                            _executionLogService.Write(executionLog, ExecutionLogLevel.Error, "Endphase fehlgeschlagen.", ex.ToString());
+                            RecordFailure(executionLog, "Endphase fehlgeschlagen.", ex);
                         }
                     }
 
@@ -686,13 +667,7 @@ namespace TaskAutomation.Jobs
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Fehler beim Stoppen des VideoRecorders.");
-                        _executionLogService.Write(
-                            executionLog,
-                            ExecutionLogLevel.Error,
-                            "Videoaufnahme konnte nicht gespeichert werden.",
-                            ex.ToString(),
-                            stepId: videoStep?.Id,
-                            stepType: videoStep?.GetType().Name);
+                        RecordFailure(executionLog, "Videoaufnahme konnte nicht gespeichert werden.", ex, videoStep);
                     }
                 }
 
@@ -721,11 +696,10 @@ namespace TaskAutomation.Jobs
                     JobExecutionState.Cancelled => JobDebugSessionState.Cancelled,
                     _ => JobDebugSessionState.Failed
                 });
-                _executionLogService.Complete(
-                    executionLog,
-                    jobCompletedSuccessfully,
-                    $"Gesamtdauer={jobRunStopwatch.ElapsedMilliseconds} ms, Grund={completionReason}",
-                    cancelled: jobWasCancelled);
+                _executionLogService.Finish(executionLog,
+                    cancellation.IsForceStopRequested || jobWasCancelled ? LogOutcome.Stopped
+                        : jobCompletedSuccessfully ? LogOutcome.Successful : LogOutcome.Failed,
+                    cancellation.IsForceStopRequested ? "ForceStop" : completionReason.ToString());
 
                 _executionChain.Value = parentChain;
             }
@@ -772,33 +746,23 @@ namespace TaskAutomation.Jobs
                     await debugSession.BeforeStepAsync(step, phaseName, ct, BuildStepStartDetails(step, phaseName, null)).ConfigureAwait(false);
 
                 if (ProcessConditionControlFlow(
-                        step, branchStack, pipelineCtx.Results, conditionSources) is { } transition)
+                        step, branchStack, pipelineCtx.Results, conditionSources, pipelineCtx.ExecutionLogSession, phaseName) is { } transition)
                 {
                     CompleteConditionControlFlow(
-                        pipelineCtx.ExecutionLogSession, debugSession, step, transition);
+                        debugSession, step, transition);
                     continue;
                 }
 
                 if (!parentActive)
                 {
                     debugSession?.MarkSkipped(step, "Inaktiver Bedingungszweig.");
-                    _executionLogService.Write(
-                        pipelineCtx.ExecutionLogSession,
-                        ExecutionLogLevel.Debug,
-                        "Step wegen inaktivem Bedingungszweig übersprungen.",
-                        stepId: step.Id,
-                        stepType: step.GetType().Name);
+                    StepLogScope.Skip(_executionLogService, pipelineCtx.ExecutionLogSession, step, phaseName, null, "InactiveBranch");
                     continue;
                 }
 
                 if (!step.IsEnabled)
                 {
-                    _executionLogService.Write(
-                        pipelineCtx.ExecutionLogSession,
-                        ExecutionLogLevel.Debug,
-                        "Step übersprungen, weil er deaktiviert ist.",
-                        stepId: step.Id,
-                        stepType: step.GetType().Name);
+                    StepLogScope.Skip(_executionLogService, pipelineCtx.ExecutionLogSession, step, phaseName, null, "Disabled");
                     continue;
                 }
 
@@ -807,14 +771,10 @@ namespace TaskAutomation.Jobs
 
                 if (step is EndJobStep endJobStep)
                 {
-                    _executionLogService.Write(
-                        pipelineCtx.ExecutionLogSession,
-                        ExecutionLogLevel.Information,
-                        $"{phaseName} durch EndJob-Step beendet.",
-                        stepId: step.Id,
-                        stepType: step.GetType().Name);
+                    var observed = ExecuteControlStep(endJobStep, pipelineCtx.ExecutionLogSession, phaseName, null,
+                        () => (EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results), "EndJob");
                     debugSession?.MarkCompleted(step, $"{phaseName} durch EndJob beendet.");
-                    return (EndJobStep)StepInputMaterializer.Materialize(endJobStep, pipelineCtx.Results);
+                    return observed;
                 }
 
                 try
@@ -831,13 +791,6 @@ namespace TaskAutomation.Jobs
                 {
                     if (debugSession != null)
                         await debugSession.PauseAfterFailureAsync(step, ex, ct).ConfigureAwait(false);
-                    _executionLogService.Write(
-                        pipelineCtx.ExecutionLogSession,
-                        ExecutionLogLevel.Error,
-                        $"Step in {phaseName} fehlgeschlagen.",
-                        ex.ToString(),
-                        step.Id,
-                        step.GetType().Name);
                     JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(job.Name, step.GetType().Name, ex));
                     onStepError?.Invoke();
                     if (!continueAfterStepError) throw new StepException(ex);
@@ -860,76 +813,37 @@ namespace TaskAutomation.Jobs
             string phaseName,
             int? iteration = null)
         {
-            if (!_stepHandlers.TryGetValue(step.GetType(), out var handler))
-            {
-                var message = $"Für den Step-Typ '{step.GetType().Name}' ist kein Handler registriert.";
-                _logger.LogError("{Message}", message);
-                throw new InvalidOperationException(message);
-            }
-
-            var stopwatch = Stopwatch.StartNew();
+            using var log = new StepLogScope(_executionLogService, ctx.ExecutionLogSession, step, phaseName, iteration);
+            var observedStep = step;
             try
             {
-                if (ctx.ExecutionLogSession != null)
-                {
-                    _executionLogService.Write(
-                        ctx.ExecutionLogSession,
-                        ExecutionLogLevel.Debug,
-                        "Step gestartet.",
-                        BuildStepStartDetails(step, phaseName, iteration),
-                        stepId: step.Id,
-                        stepType: step.GetType().Name);
-                }
-
-                var materializedStep = StepInputMaterializer.Materialize(step, ctx.Results);
-                if (materializedStep is DesktopDuplicationStep captureStep)
-                    StartRecordingOverlayFor(captureStep);
-                await handler.ExecuteAsync(materializedStep, ctx, ct);
-
-                stopwatch.Stop();
-                if (ctx.ExecutionLogSession != null)
-                {
-                    var result = ctx.Results.GetRaw(step.Id);
-                    var level = GetStepResultLevel(result);
-                    _executionLogService.Write(
-                        ctx.ExecutionLogSession,
-                        level,
-                        level == ExecutionLogLevel.Warning
-                            ? "Step mit Warnung abgeschlossen."
-                            : "Step abgeschlossen.",
-                        BuildStepResultDetails(step, result, ctx.Results),
-                        step.Id,
-                        step.GetType().Name,
-                        stopwatch.ElapsedMilliseconds);
-                }
+                if (!_stepHandlers.TryGetValue(step.GetType(), out var handler))
+                    throw new InvalidOperationException($"No handler for {step.GetType().Name}.");
+                observedStep = StepInputMaterializer.Materialize(step, ctx.Results);
+                if (observedStep is DesktopDuplicationStep captureStep) StartRecordingOverlayFor(captureStep);
+                await handler.ExecuteAsync(observedStep, ctx, ct);
+                log.Complete(observedStep, ctx.Results.GetRaw(step.Id));
             }
-            catch (OperationCanceledException)
+            catch (Exception error)
             {
-                stopwatch.Stop();
-                _executionLogService.Write(
-                    ctx.ExecutionLogSession,
-                    ExecutionLogLevel.Information,
-                    "Step abgebrochen.",
-                    $"Phase={phaseName}" + (iteration.HasValue ? $", Runde={iteration.Value}" : string.Empty),
-                    step.Id,
-                    step.GetType().Name,
-                    stopwatch.ElapsedMilliseconds);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fehler in Step '{StepType}': {Message}", step.GetType().Name, ex.Message);
+                log.Fail(error, observedStep);
+                if (error is not OperationCanceledException)
+                    _logger.LogError(error, "Fehler in Step '{StepType}'.", step.GetType().Name);
                 throw;
             }
         }
 
-        private static ExecutionLogLevel GetStepResultLevel(object? result)
+        private TStep ExecuteControlStep<TStep>(JobStep step, ExecutionLogSession session, string phase,
+            int? iteration, Func<TStep> execute, string reason) where TStep : JobStep
         {
-            if (result is IActionExecutionResult { Success: false })
-                return ExecutionLogLevel.Warning;
-            if (result is WindowsStateQueryResult { Status: not WindowsCapabilityStatus.Success })
-                return ExecutionLogLevel.Warning;
-            return ExecutionLogLevel.Information;
+            using var log = new StepLogScope(_executionLogService, session, step, phase, iteration);
+            try
+            {
+                var observed = execute();
+                log.Complete(observed, reason: reason);
+                return observed;
+            }
+            catch (Exception error) { log.Fail(error); throw; }
         }
 
         private void StartRecordingOverlayFor(DesktopDuplicationStep step)
@@ -945,157 +859,23 @@ namespace TaskAutomation.Jobs
             });
         }
 
+        private void RecordFailure(ExecutionLogSession session, string message, Exception error, JobStep? step = null)
+            => _executionLogService.Record(session, new LogEvent
+            {
+                Level = ExecutionLogLevel.Error,
+                Message = message,
+                Details = LogDiagnostics.ExceptionDetails(error),
+                Context = LogAmbient.Current with { StepId = step?.Id ?? LogAmbient.Current.StepId },
+                ProblemId = LogDiagnostics.ProblemId(error, LogAmbient.Current.StepExecutionId),
+                DiagnosticCode = LogDiagnostics.Code(error),
+                Parameters = new() { ["StepType"] = step?.GetType().Name }
+            });
+
         private static string BuildStepStartDetails(JobStep step, string phaseName, int? iteration)
-        {
-            var parts = new List<string> { $"Phase={phaseName}" };
-            if (iteration.HasValue) parts.Add($"Runde={iteration.Value}");
-            switch (step)
-            {
-                case WindowsStateQueryStep query:
-                    parts.Add($"Abfrage={query.Settings.QueryType}");
-                    if (query.Settings.Parameters.Count > 0)
-                        parts.Add("Parameter=" + string.Join("; ", query.Settings.Parameters.Select(x => $"{x.Key}={x.Value}")));
-                    break;
-                case WindowsSettingChangeStep setting:
-                    parts.Add($"Einstellung={setting.Settings.SettingId}");
-                    if (setting.Settings.Parameters.Count > 0)
-                        parts.Add("Parameter=" + string.Join("; ",
-                            setting.Settings.Parameters.Select(x => $"{x.Key}={x.Value}")));
-                    break;
-                case StartProcessStep process:
-                    parts.Add($"Programm={process.Settings.ExecutablePath}");
-                    parts.Add($"AufBeendigungWarten={process.Settings.WaitForExit}");
-                    break;
-                case TerminateProcessStep terminate:
-                    parts.Add("Ziel=" + ProcessTargetLabel(terminate.Settings.Target));
-                    break;
-                case GetProcessStep getProcess:
-                    parts.Add("Suche=" + ProcessTargetLabel(getProcess.Settings.Query));
-                    break;
-                case ActiveProcessStep activeProcess:
-                    parts.Add("Ziel=" + ProcessTargetLabel(activeProcess.Settings.Target));
-                    break;
-                case ActiveWindowStep activeWindow:
-                    parts.Add("Ziel=" + ProcessTargetLabel(activeWindow.Settings.Target));
-                    break;
-                case FocusProcessStep focus:
-                    parts.Add("Ziel=" + ProcessTargetLabel(focus.Settings.Target));
-                    parts.Add($"Aktion={focus.Settings.Action}");
-                    break;
-                case TimeoutStep timeout:
-                    parts.Add($"DauerMs={timeout.Settings.DelayMs}");
-                    break;
-                case ScriptExecutionStep script:
-                    parts.Add($"Skript={script.Settings.ScriptPath}");
-                    parts.Add($"AufBeendigungWarten={script.Settings.WaitForExit}");
-                    break;
-                case JobExecutionStep childJob:
-                    parts.Add($"Job={childJob.Settings.JobName}");
-                    parts.Add($"AufAbschlussWarten={childJob.Settings.WaitForCompletion}");
-                    break;
-                case MakroExecutionStep macro:
-                    parts.Add($"Makro={macro.Settings.MakroName}");
-                    break;
-            }
-            return string.Join(", ", parts);
-        }
+            => $"Phase={StepLogEvents.Phase(phaseName)}, Iteration={iteration}";
 
-        private static string ProcessTargetLabel(ProcessTargetSettings target)
-        {
-            if (target.ProcessSource.IsConfigured)
-                return $"Referenz {target.ProcessSource.SourceStepId}.{target.ProcessSource.PropertyPath}";
-            var values = new[]
-            {
-                string.IsNullOrWhiteSpace(target.ProcessName) ? null : $"Name={target.ProcessName}",
-                string.IsNullOrWhiteSpace(target.ExecutablePath) ? null : $"Pfad={target.ExecutablePath}",
-                string.IsNullOrWhiteSpace(target.WindowTitleContains) ? null : $"Fenstertitel~{target.WindowTitleContains}"
-            }.Where(x => x is not null);
-            return string.Join("; ", values!);
-        }
-
-        private static string? BuildStepResultDetails(
-            JobStep step,
-            object? result,
-            IJobResultStore results)
-        {
-            if (result == null) return null;
-
-            var parts = new List<string>();
-            foreach (var name in new[]
-            {
-                "WasExecuted", "Success", "Found", "Confidence", "Point", "BoundingBox",
-                "DeltaX", "DeltaY", "MovementFactorX", "MovementFactorY", "AppliedDeltaX", "AppliedDeltaY",
-                "Status", "ErrorCode", "Exists", "IsConnected", "IsEnabled",
-                "IsMuted", "IsCharging", "PendingRestart", "Count", "Value", "Percentage",
-                "FreeSpaceGb", "Name", "Id", "Text", "Path", "Connectivity", "ConnectionType",
-                "PowerSource", "SessionState", "DeviceState", "OnOffState", "WindowHandle",
-                "AppliedRoi", "UsedDynamicRoi", "RoiUpdated", "RoiReset", "GlobalBounds",
-                "ConsecutiveMisses", "FullSearchInterval", "IsPredicted", "PredictedForUtc",
-                "ErrorMessage", "SourceCaptureIsFresh", "SourceCaptureTimestampUtc",
-                "HasImage", "Bounds", "Offset", "IsFresh", "CaptureTimestampUtc",
-                "IsRunning", "IsActive", "Matches", "MatchCount", "TotalCount"
-            })
-            {
-                var property = result.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-                if (property == null) continue;
-
-                var value = property.GetValue(result);
-                if (value is null || value is string text && string.IsNullOrWhiteSpace(text)) continue;
-                parts.Add($"{name}={value}");
-            }
-
-            if (result is IProcessReferenceResult { Process: { } processReference })
-                parts.Add($"PID={processReference.ProcessId}, Process={processReference.ProcessName}, HWND=0x{processReference.WindowHandle:X}");
-
-            switch (step)
-            {
-                case WindowsStateQueryStep windowsState:
-                    parts.Add($"Query={windowsState.Settings.QueryType}");
-                    break;
-                case WindowsSettingChangeStep windowsSetting:
-                    parts.Add($"Setting={windowsSetting.Settings.SettingId}");
-                    break;
-                case DesktopDuplicationStep capture:
-                    parts.Add($"MonitorIndex={capture.Settings.DesktopIdx}");
-                    parts.Add($"CaptureCursor={capture.Settings.CaptureCursor}");
-                    break;
-                case CameraCaptureStep camera:
-                    parts.Add($"Camera={camera.Settings.CameraName}");
-                    break;
-                case FileSystemOperationStep fileSystem:
-                    parts.Add($"Operation={fileSystem.Settings.Operation}");
-                    break;
-                case TimeoutStep timeout:
-                    parts.Add($"ConfiguredDelayMs={timeout.Settings.DelayMs}");
-                    break;
-                case ShowOnDesktopStep overlay:
-                    var count = ResultBindingResolver.ResolveDetections(results, overlay.Settings.DetectionsSource).Values.Count;
-                    parts.Add(count > 0 ? $"OverlayItems={count}" : "OverlayCleared=True");
-                    break;
-                case VideoCreationStep video:
-                    parts.Add($"Output={Path.Combine(video.Settings.SavePath, video.Settings.FileName)}");
-                    parts.Add(!video.Settings.DetectionsSource.IsConfigured
-                        ? "DetectionOverlay=None"
-                        : $"DetectionOverlay={video.Settings.DetectionsSource.SourceStepId}.{video.Settings.DetectionsSource.PropertyPath}");
-                    break;
-                case SaveImageStep saveImage:
-                    parts.Add($"Output={Path.Combine(saveImage.Settings.SavePath, saveImage.Settings.FileName)}");
-                    break;
-                case ScriptExecutionStep script:
-                    parts.Add($"Script={script.Settings.ScriptPath}");
-                    parts.Add(script.Settings.WaitForExit ? "Mode=WaitForCompletion" : "Mode=FireAndForget; Status=Started");
-                    break;
-                case JobExecutionStep childJob:
-                    parts.Add($"Job={childJob.Settings.JobName}");
-                    parts.Add(childJob.Settings.WaitForCompletion ? "Mode=WaitForCompletion" : "Mode=FireAndForget; Status=Started");
-                    break;
-                case MakroExecutionStep macro:
-                    parts.Add($"Makro={macro.Settings.MakroName}");
-                    break;
-            }
-
-            return parts.Count == 0 ? result.GetType().Name : string.Join(", ", parts);
-        }
+        private static string? BuildStepResultDetails(JobStep step, object? result, IJobResultStore results)
+            => string.Join(", ", StepLogEvents.Result(result).Select(pair => $"{pair.Key}={pair.Value}"));
 
         /// <summary>
         /// Methode für Step-Handler um Fehler zu melden
@@ -1103,8 +883,8 @@ namespace TaskAutomation.Jobs
         public void ReportStepError(string stepType, Exception exception)
         {
             var jobName = CurrentJob?.Name ?? "Unknown";
-            _logger.LogError(exception, "Step-Fehler gemeldet: {StepType} in Job {JobName}: {Message}",
-                stepType, jobName, exception.Message);
+            _logger.LogError(exception, "Step-Fehler gemeldet: {StepType} in Job {JobName}.",
+                stepType, jobName);
 
             JobStepErrorOccurred?.Invoke(this, new JobStepErrorEventArgs(jobName, stepType, exception));
         }
@@ -1275,6 +1055,40 @@ namespace TaskAutomation.Jobs
             JobStep step,
             Stack<BranchFrame> branchStack,
             IJobResultStore results,
+            IReadOnlyDictionary<string, ConditionStepSource> conditionSources,
+            ExecutionLogSession executionLog,
+            string phase,
+            int? iteration = null)
+        {
+            if (step is not (IfStep or ElseIfStep or ElseStep or EndIfStep)) return null;
+            var parentActive = branchStack.Count == 0 || (step is IfStep
+                ? branchStack.Peek().CurrentActive : branchStack.Peek().ParentActive);
+            var previousBranchMatched = branchStack.Count > 0 && branchStack.Peek().AnyMatched;
+            using var log = new StepLogScope(_executionLogService, executionLog, step, phase, iteration);
+            try
+            {
+                var transition = EvaluateConditionControlFlow(step, branchStack, results, conditionSources)!;
+                var evaluation = transition.Evaluation?.DebugEvaluation;
+                var active = !transition.MarkSkipped && (branchStack.Count == 0 || branchStack.Peek().CurrentActive);
+                var reason = transition.MarkSkipped ? "InvalidControlFlow" : step is EndIfStep ? "BlockClosed"
+                    : !parentActive ? "ParentInactive"
+                    : step is ElseIfStep or ElseStep && previousBranchMatched ? "PreviousBranchMatched"
+                    : evaluation?.State == ConditionDebugState.NotEvaluated ? "PreviousBranchMatched"
+                    : evaluation?.Conditions.Any(item => item.State == ConditionDebugState.Unavailable) == true ? "ConditionUnavailable"
+                    : active ? "BranchSelected" : "ConditionNotMet";
+                var decision = new LogBranchDecision(parentActive, active, reason, evaluation?.MatchMode.ToString(),
+                    evaluation?.Conditions.Select((item, index) => new LogConditionOutcome(index + 1,
+                        item.State.ToString(), item.Definition.Operator.ToString())).ToArray() ?? []);
+                log.Complete(reason: reason, level: transition.LogLevel, branch: decision, skipped: transition.MarkSkipped);
+                return transition;
+            }
+            catch (Exception error) { log.Fail(error); throw; }
+        }
+
+        private ConditionControlFlowTransition? EvaluateConditionControlFlow(
+            JobStep step,
+            Stack<BranchFrame> branchStack,
+            IJobResultStore results,
             IReadOnlyDictionary<string, ConditionStepSource> conditionSources)
         {
             var parentActive = branchStack.Count == 0 || branchStack.Peek().CurrentActive;
@@ -1369,19 +1183,9 @@ namespace TaskAutomation.Jobs
             return null;
         }
 
-        private void CompleteConditionControlFlow(
-            ExecutionLogSession executionLog,
-            JobDebugSession? debugSession,
-            JobStep step,
-            ConditionControlFlowTransition transition)
+        private static void CompleteConditionControlFlow(
+            JobDebugSession? debugSession, JobStep step, ConditionControlFlowTransition transition)
         {
-            _executionLogService.Write(
-                executionLog,
-                transition.LogLevel,
-                transition.Message,
-                transition.Details,
-                stepId: step.Id,
-                stepType: step.GetType().Name);
             if (transition.MarkSkipped)
                 debugSession?.MarkSkipped(step, transition.Message);
             else
@@ -1710,6 +1514,7 @@ namespace TaskAutomation.Jobs
                 if (!descriptors.TryGetValue(id, out var secret)) continue;
                 var read = await _secretStore.ReadAsync(id, cancellationToken).ConfigureAwait(false);
                 if (read.Status != SecretReadStatus.Success || read.Value is null) continue;
+                _executionLogService.RegisterSecrets([read.Value]);
                 values[id] = (new ValueProviderSourceDescriptor(
                     ValueProviderIds.Secret,
                     id.ToString("D"),

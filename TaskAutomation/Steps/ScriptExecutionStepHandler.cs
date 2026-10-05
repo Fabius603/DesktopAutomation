@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,18 +20,30 @@ namespace TaskAutomation.Steps
                 throw new InvalidOperationException("No script path specified");
 
             if (!File.Exists(step.Settings.ScriptPath))
-                throw new FileNotFoundException($"Script file not found: '{step.Settings.ScriptPath}'");
+                throw new FileNotFoundException("Script file not found.", step.Settings.ScriptPath);
 
-            var scriptName = Path.GetFileName(step.Settings.ScriptPath);
+            var outputContext = LogAmbient.Current;
+            var outputPhase = StepLogScope.CurrentPhase;
+            var outputIteration = StepLogScope.CurrentIteration;
             Action<string, bool>? outputCallback = ctx.ExecutionLogSession == null
                 ? null
-                : (line, isError) => ctx.ExecutionLogService.Write(
-                    ctx.ExecutionLogSession,
-                    isError ? ExecutionLogLevel.Warning : ExecutionLogLevel.Debug,
-                    isError ? $"Script-Fehlerausgabe: {scriptName}" : $"Script-Ausgabe: {scriptName}",
-                    line,
-                    step.Id,
-                    step.GetType().Name);
+                : (line, isError) => ctx.ExecutionLogService.Record(ctx.ExecutionLogSession,
+                    new LogEvent
+                    {
+                        Code = LogCodes.StepOutput,
+                        Context = outputContext,
+                        Phase = outputPhase,
+                        Iteration = outputIteration,
+                        Level = isError ? ExecutionLogLevel.Warning : ExecutionLogLevel.Debug,
+                        Message = isError ? "Script-Fehlerausgabe empfangen." : "Script-Ausgabe empfangen.",
+                        ProblemId = isError ? outputContext.StepExecutionId : null,
+                        Parameters = new()
+                        {
+                            ["Stream"] = isError ? "StandardError" : "StandardOutput",
+                            ["CharacterCount"] = line.Length.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            ["StepType"] = step.GetType().Name
+                        }
+                    });
 
             if (!step.Settings.WaitForExit)
             {
@@ -42,12 +54,33 @@ namespace TaskAutomation.Steps
                 logger.LogInformation("ScriptExecutionStepHandler: Starting '{Path}' fire-and-forget", scriptPath);
                 _ = Task.Run(async () =>
                 {
+                    var duration = System.Diagnostics.Stopwatch.StartNew();
+                    void RecordBackground(string code, Exception? error = null)
+                    {
+                        if (ctx.ExecutionLogSession is not { } session) return;
+                        ctx.ExecutionLogService.Record(session, new LogEvent
+                        {
+                            Code = code,
+                            Context = outputContext,
+                            Phase = outputPhase,
+                            Iteration = outputIteration,
+                            Level = error is null ? ExecutionLogLevel.Information : ExecutionLogLevel.Error,
+                            Message = code,
+                            DurationMs = duration.ElapsedMilliseconds,
+                            DiagnosticCode = error is null ? null : LogDiagnostics.Code(error),
+                            ProblemId = error is null ? null : LogDiagnostics.ProblemId(error, outputContext.StepExecutionId),
+                            Details = error is null ? null : LogDiagnostics.ExceptionDetails(error),
+                            Parameters = new() { ["CompletionScope"] = "BackgroundExecution", ["StepType"] = step.GetType().Name }
+                        });
+                    }
                     try
                     {
+                        RecordBackground(LogCodes.StepBackgroundStarted);
                         await scriptExecutor.ExecuteScriptFile(
                             scriptPath, arguments, CancellationToken.None, outputCallback);
+                        RecordBackground(LogCodes.StepBackgroundCompleted);
                     }
-                    catch (Exception ex) { logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
+                    catch (Exception ex) { RecordBackground(LogCodes.StepBackgroundFailed, ex); logger.LogError(ex, "ScriptExecutionStepHandler: Fire-and-forget script failed"); }
                 });
             }
             else

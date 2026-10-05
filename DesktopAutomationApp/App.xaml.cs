@@ -39,7 +39,7 @@ using DesktopAutomation.Application.Settings;
 using DesktopAutomationApp.Theming;
 using Velopack;
 using TaskAutomation.Timing;
-using DesktopAutomationApp.Logging;
+
 using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
@@ -52,6 +52,7 @@ namespace DesktopAutomationApp
     public partial class App : Application
     {
         private IHost _host = null!;
+        private LogRepository? _logRepository;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
         private AccentIconSet? _accentIcons;
         private IThemeService? _themeService;
@@ -75,9 +76,8 @@ namespace DesktopAutomationApp
             GlobalScrollBehavior.Initialize();
 
             AppPaths.MigrateLegacyData();
-            var logDirectory = AppPaths.LogsDirectory;
-            var logFileStorageService = new LogFileStorageService();
-            var applicationLogService = new ApplicationLogService(logDirectory, logFileStorageService);
+            var logRepository = _logRepository = new LogRepository();
+            var applicationLogService = new ApplicationLogService(logRepository);
 
             // Logs must live outside Velopack's replaceable application directory.
             Log.Logger = new LoggerConfiguration()
@@ -86,16 +86,6 @@ namespace DesktopAutomationApp
                 .Enrich.FromLogContext()
                 .WriteTo.Debug()
                 .WriteTo.Sink(applicationLogService)
-                .WriteTo.File(
-                    path: Path.Combine(logDirectory, "desktop-automation-.log"),
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    rollOnFileSizeLimit: true,
-                    fileSizeLimitBytes: 10_000_000,
-                    shared: true,
-                    outputTemplate:
-                        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"
-                )
                 .CreateLogger();
 
             AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
@@ -142,7 +132,9 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IDesktopResultOverlay, WpfDesktopResultOverlay>();
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IReleaseNotesService, ReleaseNotesService>();
-                    services.AddSingleton<ILogFileStorageService>(logFileStorageService);
+                    services.AddSingleton<ILogRepository>(logRepository);
+                    services.AddSingleton<DesktopAutomation.Application.Logging.LogQueryService>();
+                    services.AddSingleton<DesktopAutomation.Application.Logging.LogExportService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
                     services.AddSingleton<IAutomationLogService, AutomationLogService>();
                     services.AddSingleton<IApplicationLogService>(applicationLogService);
@@ -315,6 +307,9 @@ namespace DesktopAutomationApp
         protected override async void OnExit(ExitEventArgs e)
         {
             Log.Information("Anwendung wird beendet.");
+            // WPF may return from async OnExit before providers finish; persist the current checkpoint synchronously.
+            try { _logRepository?.FlushAsync().GetAwaiter().GetResult(); }
+            catch (IOException) { /* The repository marks the retained history incomplete. */ }
             if (_themeService != null)
                 _themeService.ThemeChanged -= OnThemeChanged;
             _trayIcon?.Dispose();
@@ -327,6 +322,7 @@ namespace DesktopAutomationApp
 
             await _host.StopAsync();
             _host.Dispose();
+            _logRepository?.Dispose();
             base.OnExit(e);
         }
 

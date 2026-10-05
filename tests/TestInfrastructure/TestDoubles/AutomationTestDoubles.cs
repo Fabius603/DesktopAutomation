@@ -23,7 +23,7 @@ internal sealed class AutomationRepository(params AutomationDefinition[] definit
 internal sealed class ManualAutomationTriggerProvider(params AutomationTriggerKind[] kinds) : IAutomationTriggerProvider
 {
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = kinds;
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
     public int StartCalls { get; private set; }
     public int StopCalls { get; private set; }
     public List<Guid> Registered { get; } = [];
@@ -45,6 +45,7 @@ internal sealed class RecordingAutomationLogService : IAutomationLogService
     public IReadOnlyList<AutomationLog> Logs => [];
     public List<AutomationLogEntry> Entries { get; } = [];
     public void Synchronize(IEnumerable<AutomationDefinition> automations) => LogsChanged?.Invoke(this, EventArgs.Empty);
+    public void Record(Guid automationId, LogEvent entry) => Write(automationId, entry.Level, entry.Message, entry.Details);
     public void Write(Guid automationId, ExecutionLogLevel level, string message, string? details = null)
     {
         var entry = new AutomationLogEntry
@@ -98,6 +99,7 @@ internal sealed class RecordingJobDispatcher : IJobDispatcher
     public void ForceStopJobsByDefinition(Guid jobDefinitionId) { }
     public void ForceStopAllJobs() { }
     public void StartMakro(Guid id) { StartedMakros.Add(id); RunningMakrosChanged?.Invoke(); }
+    public Guid StartMakroWithContext(Guid id, JobStartContext context) { StartMakro(id); return Guid.NewGuid(); }
     public void CancelMakro(Guid id) => CancelledMakros.Add(id);
     public void Dispose() { }
 }

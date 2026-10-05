@@ -66,8 +66,12 @@ namespace TaskAutomation.Steps
             if (!ExecutablePathResolver.TryResolve(configuredExecutable, out var executablePath))
             {
                 ctx.Logger.LogWarning("StartProcessStepHandler: Programm '{Program}' wurde nicht gefunden.", configuredExecutable);
-                return new StartProcessResult { WasExecuted = true, Success = false,
-                    ErrorMessage = $"Programm '{configuredExecutable}' wurde nicht gefunden." };
+                return new StartProcessResult
+                {
+                    WasExecuted = true,
+                    Success = false,
+                    ErrorMessage = $"Programm '{configuredExecutable}' wurde nicht gefunden."
+                };
             }
 
             var startInfo = CreateStartInfo(executablePath, step.Settings.Arguments);
@@ -77,8 +81,8 @@ namespace TaskAutomation.Steps
                 startInfo.WorkingDirectory = workingDirectory;
 
             ctx.Logger.LogInformation(
-                "StartProcessStepHandler: Starte '{Path}' mit Argumenten '{Args}' aus Arbeitsverzeichnis '{WorkingDirectory}' (WaitForExit={Wait}).",
-                executablePath, startInfo.Arguments, startInfo.WorkingDirectory, step.Settings.WaitForExit);
+                "StartProcessStepHandler: Starte '{Path}' aus Arbeitsverzeichnis '{WorkingDirectory}' (WaitForExit={Wait}).",
+                executablePath, startInfo.WorkingDirectory, step.Settings.WaitForExit);
 
             var processName = Path.GetFileNameWithoutExtension(executablePath);
             var windowsBeforeStart = ProcessWindowMatcher.FindMatchingWindows(processName)
@@ -98,8 +102,12 @@ namespace TaskAutomation.Steps
 
             if (process == null)
             {
-                return new StartProcessResult { WasExecuted = true, Success = false,
-                    ErrorMessage = "Prozess konnte nicht gestartet werden (Process.Start gab null zurück)." };
+                return new StartProcessResult
+                {
+                    WasExecuted = true,
+                    Success = false,
+                    ErrorMessage = "Prozess konnte nicht gestartet werden (Process.Start gab null zurück)."
+                };
             }
 
             var processReference = ProcessTargetResolver.CreateReference(process, startInfo.FileName);

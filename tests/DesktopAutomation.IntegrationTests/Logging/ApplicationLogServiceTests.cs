@@ -1,4 +1,5 @@
-using DesktopAutomationApp.Logging;
+using Serilog.Events;
+using Serilog.Parsing;
 using TaskAutomation.Logging;
 using TaskAutomation.Tests.TestDoubles;
 
@@ -7,45 +8,63 @@ namespace TaskAutomation.Tests.Logging;
 public sealed class ApplicationLogServiceTests
 {
     [Fact]
-    public void ReadEntries_ReturnsOnlyNewestRequestedEntriesAcrossRolledFiles()
+    public async Task RunMessages_KeepMetadataButOmitArbitraryInputsAndObjects()
     {
+        const string privateValue = "unregistered-private-output-431";
         using var directory = new TemporaryDirectory();
-        WriteLog(directory.Path, "desktop-automation-20260101.log", 0, 4_000);
-        WriteLog(directory.Path, "desktop-automation-20260102.log", 4_000, 2_000);
-        var service = new ApplicationLogService(directory.Path, new LogFileStorageService());
-
-        var entries = service.ReadEntries(5_000);
-
-        Assert.Equal(5_000, entries.Count);
-        Assert.Equal("entry-1000", entries[0].Message);
-        Assert.Equal("entry-5999", entries[^1].Message);
+        using var repository = new LogRepository(directory.Path);
+        using var service = new ApplicationLogService(repository);
+        using (LogAmbient.Push(new(RunId: Guid.NewGuid(), StepExecutionId: Guid.NewGuid())))
+            service.Emit(new Serilog.Events.LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Error,
+                new InvalidOperationException(privateValue),
+                new MessageTemplateParser().Parse("Read {Text} {Arguments} {Payload} at {Path} ({Count})"),
+                [new("Text", new ScalarValue(privateValue)), new("Arguments", new ScalarValue(privateValue)),
+                 new("Payload", new SequenceValue([new ScalarValue(privateValue)])),
+                 new("Path", new ScalarValue("C:/approved/output.txt")), new("Count", new ScalarValue(7))]));
+        await repository.FlushAsync();
+        var entry = Assert.Single(service.ReadEntries());
+        Assert.DoesNotContain(privateValue, entry.Message + entry.Details);
+        Assert.Contains("C:/approved/output.txt", entry.Message);
+        Assert.Contains("7", entry.Message);
+        using var reloaded = new LogRepository(directory.Path);
+        Assert.DoesNotContain(privateValue, Assert.Single(reloaded.Query(new()).Entries).Message);
     }
 
     [Fact]
-    public void ReadEntries_PreservesMultilineExceptionDetailsFromTheTail()
+    public async Task StructuredEntries_PreserveMultilineDetailsAndIgnoreHistoricalText()
     {
         using var directory = new TemporaryDirectory();
-        var path = Path.Combine(directory.Path, "desktop-automation-20260101.log");
-        File.WriteAllLines(path,
-        [
-            "2026-01-01 10:00:00.000 [ERR] Source Failure",
-            "System.InvalidOperationException: broken",
-            "   at Example.Run()",
-            "2026-01-01 10:00:01.000 [INF] Source Recovered"
-        ]);
-        var service = new ApplicationLogService(directory.Path, new LogFileStorageService());
-
-        var entries = service.ReadEntries();
-
-        Assert.Equal(2, entries.Count);
-        Assert.Contains("InvalidOperationException", entries[0].Details);
-        Assert.Contains("Example.Run", entries[0].Details);
+        File.WriteAllText(Path.Combine(directory.Path, "desktop-automation-old.log"), "2026-01-01 [ERR] historical");
+        using var repository = new LogRepository(directory.Path);
+        using var service = new ApplicationLogService(repository);
+        Assert.Empty(service.ReadEntries());
+        var run = Guid.NewGuid();
+        using (LogAmbient.Push(new(run, run, StepId: "s1", StepExecutionId: Guid.NewGuid())))
+            service.Emit(new Serilog.Events.LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Error,
+                new DirectoryNotFoundException("missing folder"), new MessageTemplateParser().Parse("Could not save"), []));
+        await repository.FlushAsync();
+        var entry = Assert.Single(service.ReadEntries());
+        Assert.Contains("DirectoryNotFoundException", entry.Details);
+        var structured = Assert.Single(repository.Query(new(Source: LogSource.Application)).Entries);
+        Assert.Equal(run, structured.Context.RunId);
+        Assert.Equal("s1", structured.Context.StepId);
+        Assert.Equal(LogCodes.FileUnavailable, structured.DiagnosticCode);
     }
 
-    private static void WriteLog(string directory, string fileName, int start, int count)
+    [Fact]
+    public async Task ReloadAndLiveEventsAtSameTimestampRemainDistinct()
     {
-        var firstTimestamp = new DateTime(2026, 1, 1, 0, 0, 0);
-        File.WriteAllLines(Path.Combine(directory, fileName), Enumerable.Range(start, count).Select(index =>
-            $"{firstTimestamp.AddSeconds(index):yyyy-MM-dd HH:mm:ss.fff} [INF] Source entry-{index}"));
+        using var directory = new TemporaryDirectory();
+        var timestamp = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using (var repository = new LogRepository(directory.Path))
+        {
+            repository.Append(new TaskAutomation.Logging.LogEvent { Timestamp = timestamp, Source = LogSource.Application, Message = "first" });
+            await repository.FlushAsync();
+        }
+        using var reloaded = new LogRepository(directory.Path);
+        using var service = new ApplicationLogService(reloaded);
+        service.Emit(new Serilog.Events.LogEvent(timestamp, LogEventLevel.Information, null,
+            new MessageTemplateParser().Parse("second"), []));
+        Assert.Equal(new[] { "first", "second" }, service.ReadEntries().Select(entry => entry.Message));
     }
 }

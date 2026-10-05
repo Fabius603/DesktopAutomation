@@ -75,6 +75,12 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
     public Task<IReadOnlyList<ExecutionLogEntry>> ReadEntriesAsync(Guid sessionId, int maxEntries = 2000,
         CancellationToken cancellationToken = default) => Task.FromResult(ReadEntries(sessionId, maxEntries));
     public void ReloadSessions(int maxSessions = 200) { }
+    public void InitializeRun(ExecutionLogSession session, Job job, Guid instanceId) { }
+    public void RegisterSecrets(IEnumerable<string> values) { }
+    public void Record(ExecutionLogSession session, LogEvent entry) => Write(session, entry.Level, entry.Message,
+        entry.Details, entry.Context.StepId, entry.Parameters.GetValueOrDefault("StepType"), durationMs: entry.DurationMs);
+    public void Finish(ExecutionLogSession session, LogOutcome outcome, string reason) => Complete(session,
+        outcome is LogOutcome.Successful or LogOutcome.WithWarnings or LogOutcome.WithErrors, reason, outcome == LogOutcome.Stopped);
 }
 
 internal sealed class NoOpRecordingIndicator : IRecordingIndicatorOverlay
@@ -154,9 +160,11 @@ internal sealed class RecordingYoloManager : IYoloManager
 
 internal sealed class DelegateScriptExecutor : IScriptExecutor
 {
+    public Func<string, string, CancellationToken, Action<string, bool>?, Task>? ExecuteWithOutput { get; set; }
     public Func<string, string, CancellationToken, Task> Execute { get; set; } = (_, _, _) => Task.CompletedTask;
     public Task ExecuteScriptFile(string scriptPath, string arguments, CancellationToken ct,
-        Action<string, bool>? outputCallback = null) => Execute(scriptPath, arguments, ct);
+        Action<string, bool>? outputCallback = null) => ExecuteWithOutput is { } run
+            ? run(scriptPath, arguments, ct, outputCallback) : Execute(scriptPath, arguments, ct);
 }
 
 internal sealed class NoOpMakroExecutor : IMakroExecutor

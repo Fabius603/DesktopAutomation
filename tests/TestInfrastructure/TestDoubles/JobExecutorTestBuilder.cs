@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 using TaskAutomation.Makros;
 using TaskAutomation.Security;
 using TaskAutomation.Steps;
@@ -10,6 +11,10 @@ namespace TaskAutomation.Tests.TestDoubles;
 internal sealed class JobExecutorTestBuilder
 {
     private readonly List<Job> _jobs = [];
+    private IExecutionLogService? _logOverride;
+    private Microsoft.Extensions.Logging.ILogger<JobExecutor> _logger = NullLogger<JobExecutor>.Instance;
+    public JobExecutorTestBuilder WithLogger(Microsoft.Extensions.Logging.ILogger<JobExecutor> logger) { _logger = logger; return this; }
+    public JobExecutorTestBuilder WithLogs(IExecutionLogService logs) { _logOverride = logs; return this; }
     public RecordingDesktopResultOverlay Overlay { get; } = new();
     public RecordingExecutionLogService Logs { get; } = new();
     public ControlledDelayService Delay { get; } = new();
@@ -30,7 +35,7 @@ internal sealed class JobExecutorTestBuilder
     public async Task<JobExecutor> BuildAsync()
     {
         var executor = new JobExecutor(
-            NullLogger<JobExecutor>.Instance,
+            _logger,
             new InMemoryRepository<Job>(_jobs),
             new InMemoryRepository<Makro>(),
             new NoOpMakroExecutor(),
@@ -42,7 +47,7 @@ internal sealed class JobExecutorTestBuilder
             new NoOpDesktopCaptureService(),
             new NoOpCameraCaptureService(),
             new NoOpOcrService(),
-            Logs,
+            _logOverride ?? Logs,
             Delay,
             WindowsStates,
             UserChoices,
@@ -93,11 +98,12 @@ internal sealed class StubSecretStore : ISecretStore
 internal sealed class StubUserChoiceService : IUserChoiceService
 {
     public string? SelectedOptionId { get; set; }
+    public bool CancelChoice { get; set; }
 
     public Task<string?> ChooseAsync(UserChoiceDialogRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(SelectedOptionId ?? request.Options.FirstOrDefault()?.Id);
+        return Task.FromResult(CancelChoice ? null : SelectedOptionId ?? request.Options.FirstOrDefault()?.Id);
     }
 }
 

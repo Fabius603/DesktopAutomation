@@ -12,7 +12,10 @@ public enum JobStartSource
 public sealed record JobStartContext(
     JobStartSource Source,
     string? SourceName = null,
-    Guid? SourceId = null)
+    Guid? SourceId = null,
+    Guid? InstanceId = null,
+    Guid? TriggerId = null,
+    Guid? ParentRunId = null)
 {
     public static JobStartContext Manual { get; } = new(JobStartSource.Manual);
     public static JobStartContext Unknown { get; } = new(JobStartSource.Unknown);

@@ -5,6 +5,14 @@ namespace DesktopAutomation.ArchitectureTests;
 public sealed class ProjectDependencyRulesTests
 {
     [Fact]
+    public void LoggingSchemaAndRules_LiveBelowPresentation()
+    {
+        Assert.Equal("TaskAutomation.Contracts", typeof(TaskAutomation.Logging.LogEvent).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation", typeof(TaskAutomation.Logging.LogOutcomeRules).Assembly.GetName().Name);
+        Assert.Equal("TaskAutomation", typeof(TaskAutomation.Logging.ApplicationLogService).Assembly.GetName().Name);
+        Assert.Equal("DesktopAutomation.Application", typeof(DesktopAutomation.Application.Logging.LogQueryService).Assembly.GetName().Name);
+    }
+    [Fact]
     public void SharedProjects_DoNotReferencePresentationProject()
     {
         var root = FindRepositoryRoot();

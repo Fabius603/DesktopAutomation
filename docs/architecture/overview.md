@@ -36,6 +36,8 @@ defaults and persistence. The current audit evidence is maintained in the
 
 Detailed contracts:
 
+- [Structured user logs](logging.md)
+
 - [Step result contracts](result-contracts.md)
 - [Windows integration](windows-integration.md)
 - [Testing strategy](testing-strategy.md)

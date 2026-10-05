@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,6 +94,7 @@ namespace TaskAutomation.Orchestration
 
         /// <summary>Startet ein Makro per ID.</summary>
         void StartMakro(Guid id);
+        Guid StartMakroWithContext(Guid id, JobStartContext context);
 
         /// <summary>Bricht ein laufendes Makro per ID ab.</summary>
         void CancelMakro(Guid id);

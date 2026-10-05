@@ -25,13 +25,14 @@ namespace TaskAutomation.Automations
         Task StopAsync(CancellationToken ct = default);
         Task SetPausedAsync(bool paused, CancellationToken ct = default);
         Task TriggerAsync(Guid automationId, CancellationToken ct = default);
+        Task TriggerAsync(AutomationTriggerContext context, CancellationToken ct = default);
         AutomationRuntimeInfo GetRuntimeInfo(Guid automationId);
     }
 
     public interface IAutomationTriggerProvider
     {
         IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; }
-        event Action<Guid>? Triggered;
+        event Action<AutomationTriggerContext>? Triggered;
         Task StartAsync(CancellationToken ct = default);
         Task StopAsync(CancellationToken ct = default);
         Task RegisterAsync(AutomationDefinition automation, CancellationToken ct = default);
@@ -46,6 +47,7 @@ namespace TaskAutomation.Automations
         private readonly IReadOnlyList<IAutomationTriggerProvider> _providers;
         private readonly ILogger<AutomationEngine> _log;
         private readonly IAutomationLogService _automationLogs;
+        private readonly TimeProvider _time;
         private readonly ConcurrentDictionary<Guid, AutomationDefinition> _automations = new();
         private readonly ConcurrentDictionary<Guid, AutomationRuntimeInfo> _runtime = new();
         private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _executionGates = new();
@@ -63,13 +65,15 @@ namespace TaskAutomation.Automations
             IJobDispatcher dispatcher,
             IEnumerable<IAutomationTriggerProvider> providers,
             ILogger<AutomationEngine> log,
-            IAutomationLogService automationLogs)
+            IAutomationLogService automationLogs,
+            TimeProvider? time = null)
         {
             _repository = repository;
             _dispatcher = dispatcher;
             _providers = providers.ToList();
             _log = log;
             _automationLogs = automationLogs;
+            _time = time ?? TimeProvider.System;
 
             foreach (var provider in _providers)
                 provider.Triggered += OnTriggered;
@@ -207,21 +211,39 @@ namespace TaskAutomation.Automations
             return current with { LastRunAt = current.LastRunAt ?? persistedLastRun, NextRunAt = next };
         }
 
-        public async Task TriggerAsync(Guid automationId, CancellationToken ct = default)
+        public Task TriggerAsync(Guid automationId, CancellationToken ct = default)
+            => TriggerAsync(new AutomationTriggerContext(automationId, Guid.NewGuid(), _time.GetUtcNow()), ct);
+
+        public async Task TriggerAsync(AutomationTriggerContext triggerContext, CancellationToken ct = default)
         {
+            var automationId = triggerContext.AutomationId;
+            using var triggerScope = LogAmbient.Push(new(TriggerId: triggerContext.TriggerId, AutomationId: automationId));
             if (!_automations.TryGetValue(automationId, out var automation))
                 return;
 
-            _automationLogs.Write(automationId, ExecutionLogLevel.Debug, "Trigger erkannt.", $"Typ: {automation.Trigger.Kind}");
+            _automationLogs.Record(automationId, new LogEvent
+            {
+                Code = LogCodes.Trigger,
+                Message = "Trigger erkannt.",
+                Context = LogAmbient.Current,
+                Timestamp = triggerContext.ObservedAt,
+                Parameters = new(triggerContext.Parameters ?? [])
+                {
+                    ["TriggerKind"] = automation.Trigger.Kind.ToString(),
+                    ["TargetId"] = (automation.Action.JobId ?? automation.Action.MakroId)?.ToString(),
+                    ["TargetName"] = automation.Action.Name,
+                    ["TargetKind"] = automation.Action.ActionType.ToString()
+                }
+            });
             if (!_started || _isPaused)
             {
-                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Trigger ignoriert.", "Automationen sind pausiert.");
+                RecordDecision(automationId, "Paused", "Trigger ignoriert.", "Automationen sind pausiert.");
                 return;
             }
 
             if (!automation.Active)
             {
-                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Trigger ignoriert.", "Automation ist deaktiviert.");
+                RecordDecision(automationId, "Disabled", "Trigger ignoriert.", "Automation ist deaktiviert.");
                 return;
             }
 
@@ -231,14 +253,20 @@ namespace TaskAutomation.Automations
             {
                 if (!_started || _isPaused)
                 {
-                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Automationen wurden pausiert.");
+                    RecordDecision(automationId, "Paused", "Ausführung übersprungen.", "Automationen wurden pausiert.");
                     return;
                 }
 
-                var now = DateTimeOffset.Now;
-                if (!IsInsideEnabledWindow(automation.RunPolicy, TimeOnly.FromDateTime(now.LocalDateTime)))
+                var now = _time.GetLocalNow();
+                if (!IsInsideEnabledWindow(automation.RunPolicy, TimeOnly.FromDateTime(now.DateTime)))
                 {
-                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Außerhalb des erlaubten Zeitfensters.");
+                    var start = automation.RunPolicy.EnabledFrom ?? TimeOnly.MinValue;
+                    var next = now.Date + start.ToTimeSpan();
+                    if (next <= now.DateTime) next = next.AddDays(1);
+                    // This is eligibility, not a promise that a non-scheduled trigger will fire again.
+                    while (_time.LocalTimeZone.IsInvalidTime(next)) next = next.AddMinutes(1);
+                    RecordDecision(automationId, "OutsideWindow", "Ausführung übersprungen.", "Außerhalb des erlaubten Zeitfensters.",
+                        eligibleAt: new DateTimeOffset(next, _time.LocalTimeZone.GetUtcOffset(next)));
                     return;
                 }
 
@@ -246,28 +274,49 @@ namespace TaskAutomation.Automations
                 if (lastRun is { } last && automation.RunPolicy.Cooldown > TimeSpan.Zero
                     && now - last < automation.RunPolicy.Cooldown)
                 {
-                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Cooldown ist noch aktiv.");
+                    RecordDecision(automationId, "Cooldown", "Ausführung übersprungen.", "Cooldown ist noch aktiv.", eligibleAt: last + automation.RunPolicy.Cooldown);
                     return;
                 }
 
-                if (!ExecuteAction(automation))
-                {
-                    _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Ausführung übersprungen.", "Ziel läuft bereits.");
-                    return;
-                }
+                var actionResult = ExecuteAction(automation);
+                RecordDecision(automationId, actionResult.Reason,
+                    actionResult.Reason switch
+                    {
+                        "AlreadyRunning" => "Ausführung übersprungen.",
+                        "StartRejected" => "Start abgelehnt.",
+                        "StopRequested" => "Stopp angefordert.",
+                        _ => "Start angefordert."
+                    },
+                    actionResult.Reason == "AlreadyRunning" ? "Ziel läuft bereits." : null,
+                    instanceId: actionResult.InstanceId, relatedInstances: actionResult.RelatedInstances);
+                if (actionResult.Reason is "AlreadyRunning" or "StartRejected") return;
 
                 automation.LastRunAt = now;
                 await _repository.SaveAsync(automation).ConfigureAwait(false);
                 _runtime[automationId] = new AutomationRuntimeInfo(now, GetRuntimeInfo(automationId).NextRunAt);
                 RuntimeChanged?.Invoke(automationId);
-                _automationLogs.Write(automationId, ExecutionLogLevel.Information, "Aktion gestartet.", $"Ziel: {automation.Action.Name}; Typ: {automation.Action.ActionType}");
+
                 _log.LogInformation("Automation ausgelöst: {Name}", automation.Name);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                RecordDecision(automationId, "Cancelled", "Auslösung abgebrochen.");
+                throw;
             }
             catch (Exception ex)
             {
                 _runtime[automationId] = new AutomationRuntimeInfo(automation.LastRunAt, GetRuntimeInfo(automationId).NextRunAt, ex.Message);
                 RuntimeChanged?.Invoke(automationId);
-                _automationLogs.Write(automationId, ExecutionLogLevel.Error, "Automation fehlgeschlagen.", ex.ToString());
+                _automationLogs.Record(automationId, new LogEvent
+                {
+                    Code = LogCodes.AutomationDecision,
+                    Level = ExecutionLogLevel.Error,
+                    Message = "Automation fehlgeschlagen.",
+                    Details = ex.ToString(),
+                    Context = LogAmbient.Current,
+                    DiagnosticCode = LogDiagnostics.Code(ex),
+                    Parameters = new() { ["Reason"] = "Failed" }
+                });
                 _log.LogError(ex, "Automation konnte nicht ausgeführt werden: {Name}", automation.Name);
             }
             finally
@@ -276,46 +325,44 @@ namespace TaskAutomation.Automations
             }
         }
 
-        private bool ExecuteAction(AutomationDefinition automation)
+        private sealed record ActionResult(string Reason, Guid? InstanceId = null, Guid[]? RelatedInstances = null);
+        private ActionResult ExecuteAction(AutomationDefinition automation)
         {
             var action = automation.Action;
             var isMakro = action.ActionType == AutomationActionTarget.Makro;
-            var targetId = isMakro ? action.MakroId : action.JobId;
-            if (!targetId.HasValue)
-                throw new InvalidOperationException($"Für die Aktion '{action.Name}' ist keine ID gesetzt.");
-
-            var isRunning = isMakro
-                ? _dispatcher.RunningMakroIds.Contains(targetId.Value)
-                : _dispatcher.RunningJobIds.Contains(targetId.Value);
-
-            if (!isRunning)
-            {
-                StartTarget(isMakro, targetId.Value, automation);
-                return true;
-            }
-
-            switch (automation.RunPolicy.AlreadyRunningBehavior)
-            {
-                case AutomationAlreadyRunningBehavior.StartParallel:
-                    StartTarget(isMakro, targetId.Value, automation);
-                    return true;
-                case AutomationAlreadyRunningBehavior.Stop:
-                    StopTarget(isMakro, targetId.Value);
-                    return true;
-                case AutomationAlreadyRunningBehavior.Restart:
-                    StopTarget(isMakro, targetId.Value);
-                    StartTarget(isMakro, targetId.Value, automation);
-                    return true;
-                default:
-                    return false;
-            }
+            var targetId = (isMakro ? action.MakroId : action.JobId)
+                ?? throw new InvalidOperationException("Automation target ID is missing.");
+            var running = isMakro ? _dispatcher.RunningMakroIds.Contains(targetId) : _dispatcher.RunningJobIds.Contains(targetId);
+            var related = _dispatcher.RunningJobInstances.Where(run => run.JobId == targetId).Select(run => run.InstanceId).ToArray();
+            if (running && automation.RunPolicy.AlreadyRunningBehavior == AutomationAlreadyRunningBehavior.Stop)
+            { StopTarget(isMakro, targetId); return new("StopRequested", RelatedInstances: related); }
+            if (running && automation.RunPolicy.AlreadyRunningBehavior == AutomationAlreadyRunningBehavior.Restart)
+                StopTarget(isMakro, targetId);
+            else if (running && automation.RunPolicy.AlreadyRunningBehavior != AutomationAlreadyRunningBehavior.StartParallel)
+                return new("AlreadyRunning", RelatedInstances: related);
+            var context = new JobStartContext(JobStartSource.Automation, automation.Name, automation.Id,
+                TriggerId: LogAmbient.Current.TriggerId);
+            var instance = isMakro ? _dispatcher.StartMakroWithContext(targetId, context) : _dispatcher.StartJob(targetId, context);
+            return new(instance == Guid.Empty ? "StartRejected" : running
+                ? automation.RunPolicy.AlreadyRunningBehavior == AutomationAlreadyRunningBehavior.Restart ? "RestartRequested" : "ParallelStartRequested"
+                : "StartRequested", instance == Guid.Empty ? null : instance, related);
         }
 
-        private void StartTarget(bool isMakro, Guid id, AutomationDefinition automation)
-        {
-            if (isMakro) _dispatcher.StartMakro(id);
-            else _dispatcher.StartJob(id, new JobStartContext(JobStartSource.Automation, automation.Name, automation.Id));
-        }
+        private void RecordDecision(Guid automationId, string reason, string message, string? details = null,
+            Guid? instanceId = null, Guid[]? relatedInstances = null, DateTimeOffset? eligibleAt = null)
+            => _automationLogs.Record(automationId, new LogEvent
+            {
+                Code = LogCodes.AutomationDecision,
+                Message = message,
+                Details = details,
+                Context = LogAmbient.Current with { InstanceId = instanceId },
+                Parameters = new()
+                {
+                    ["Reason"] = reason,
+                    ["EligibleAt"] = eligibleAt?.ToString("O"),
+                    ["RelatedInstances"] = relatedInstances is null ? null : string.Join(",", relatedInstances)
+                }
+            });
 
         private void StopTarget(bool isMakro, Guid id)
         {
@@ -331,7 +378,7 @@ namespace TaskAutomation.Automations
             return from <= until ? now >= from && now <= until : now >= from || now <= until;
         }
 
-        private void OnTriggered(Guid id) => _ = TriggerAsync(id);
+        private void OnTriggered(AutomationTriggerContext context) => _ = TriggerAsync(context);
     }
 
     public sealed class HotkeyAutomationTriggerProvider : IAutomationTriggerProvider
@@ -356,7 +403,7 @@ namespace TaskAutomation.Automations
         private readonly IGlobalHotkeyService _hotkeys;
         private readonly ConcurrentDictionary<Guid, Registration> _registrations = new();
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Hotkey];
-        public event Action<Guid>? Triggered;
+        public event Action<AutomationTriggerContext>? Triggered;
 
         public HotkeyAutomationTriggerProvider(IGlobalHotkeyService hotkeys) => _hotkeys = hotkeys;
 
@@ -422,7 +469,7 @@ namespace TaskAutomation.Automations
 
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } =
             [AutomationTriggerKind.OnceAt, AutomationTriggerKind.Schedule, AutomationTriggerKind.Interval];
-        public event Action<Guid>? Triggered;
+        public event Action<AutomationTriggerContext>? Triggered;
 
         public Task StartAsync(CancellationToken ct = default)
         {
@@ -574,7 +621,7 @@ namespace TaskAutomation.Automations
         private ManagementEventWatcher? _stopWatcher;
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } =
             [AutomationTriggerKind.ProcessStarted, AutomationTriggerKind.ProcessExited];
-        public event Action<Guid>? Triggered;
+        public event Action<AutomationTriggerContext>? Triggered;
 
         public ProcessAutomationTriggerProvider(ILogger<ProcessAutomationTriggerProvider> log) => _log = log;
 

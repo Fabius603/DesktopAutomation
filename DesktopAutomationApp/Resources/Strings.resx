@@ -3392,4 +3392,10 @@ Trotzdem verschieben?</value></data>
   <data name="Ui.Job.Variables.Usage.OnlyThis" xml:space="preserve"><value>Nur diese Verwendung ändern</value></data>
   <data name="Ui.Job.Variables.Draft.Retained" xml:space="preserve"><value>Nicht übernommene Änderungen bleiben beim Wechsel der Variable erhalten.</value></data>
   <data name="Ui.Job.Steps.EmptyBranch" xml:space="preserve"><value>Dieser Zweig enthält noch keine Steps.</value></data>
+  <data name="Log.Cause.LOG-FILE-004" xml:space="preserve"><value>Die benötigte Datei oder der Ordner wurde nicht gefunden.</value></data>
+  <data name="Log.Help.LOG-FILE-004" xml:space="preserve"><value>Prüfe den angegebenen Pfad und ob die Datei oder der Ordner vorhanden ist.</value></data>
+  <data name="Log.Cause.LOG-ACCESS-001" xml:space="preserve"><value>Der Zugriff auf die benötigte Ressource wurde verweigert.</value></data>
+  <data name="Log.Help.LOG-ACCESS-001" xml:space="preserve"><value>Prüfe die Zugriffsrechte für die angegebene Ressource.</value></data>
+  <data name="Log.Cause.LOG-UNEXPECTED-001" xml:space="preserve"><value>Ein unerwarteter Fehler ist aufgetreten. Die Ursache ist noch nicht eindeutig bekannt.</value></data>
+  <data name="Log.Help.LOG-UNEXPECTED-001" xml:space="preserve"><value>Öffne die technischen Details oder exportiere die betreffenden Ereignisse zur weiteren Untersuchung.</value></data>
 </root>

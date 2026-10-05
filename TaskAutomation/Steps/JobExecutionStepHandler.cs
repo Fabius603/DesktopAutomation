@@ -12,7 +12,7 @@ namespace TaskAutomation.Steps
         protected override async Task<JobExecutionResult> ExecuteCoreAsync(
             JobExecutionStep step, IStepPipelineContext ctx, CancellationToken ct)
         {
-            var logger   = ctx.Logger;
+            var logger = ctx.Logger;
             var settings = step.Settings;
 
             // Job auflösen (ID hat Vorrang vor Name)
@@ -69,8 +69,8 @@ namespace TaskAutomation.Steps
                     // Über den Dispatcher starten → in RunningJobInstances sichtbar und abbruchfähig.
                     // Instanz-ID merken: JobExecutor.ExecuteJobAsync bereinigt sie beim Abbruch des Eltern-Jobs.
                     var instanceId = ctx.StartJobViaDispatcher(id);
-                    if (instanceId != Guid.Empty)
-                        ctx.ChildJobInstanceIds.Add(instanceId);
+                    if (instanceId == Guid.Empty) return new JobExecutionResult { WasExecuted = true, Success = false };
+                    ctx.ChildJobInstanceIds.Add(instanceId);
                     logger.LogInformation(
                         "JobExecutionStepHandler: '{Name}' started as dispatcher instance {InstanceId}",
                         targetJob.Name, instanceId);
@@ -83,7 +83,7 @@ namespace TaskAutomation.Steps
                     var targetJobName = targetJob.Name;
                     _ = Task.Run(async () =>
                     {
-                        try   { await executeJob(id, linkedCts.Token).ConfigureAwait(false); }
+                        try { await executeJob(id, linkedCts.Token).ConfigureAwait(false); }
                         catch (OperationCanceledException) { /* expected when parent stops */ }
                         catch (Exception ex)
                         {

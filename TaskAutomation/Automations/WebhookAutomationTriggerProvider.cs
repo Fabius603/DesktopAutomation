@@ -1,3 +1,4 @@
+using TaskAutomation.Logging;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
@@ -27,7 +28,7 @@ public sealed class WebhookAutomationTriggerProvider : IAutomationTriggerProvide
     public WebhookAutomationTriggerProvider(ILogger<WebhookAutomationTriggerProvider> log) => _log = log;
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Webhook];
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
 
     public async Task StartAsync(CancellationToken ct = default)
     {

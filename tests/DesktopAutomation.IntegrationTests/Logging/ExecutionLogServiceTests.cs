@@ -61,42 +61,32 @@ public sealed class ExecutionLogServiceTests
     }
 
     [Fact]
-    public void ReloadSessions_LoadsOnlyRequestedNewestPageAndReportsMoreSessions()
+    public async Task ReloadSessions_OnlyDiscoversNewSchemaAndPagesRuns()
     {
         using var directory = new TemporaryDirectory();
-        var jobDirectory = Path.Combine(directory.Path, ExecutionLogKind.Job.ToString());
-        Directory.CreateDirectory(jobDirectory);
-        for (var index = 0; index < 55; index++)
+        File.WriteAllText(Path.Combine(directory.Path, "20260101-120000-000_old.log"), "historical");
+        using (var repository = new LogRepository(directory.Path))
         {
-            var timestamp = new DateTime(2026, 1, 1).AddMinutes(index);
-            var fileName = $"{timestamp:yyyyMMdd-HHmmss-fff}_job-{index:D2}_{Guid.NewGuid():N}.log";
-            File.WriteAllText(Path.Combine(jobDirectory, fileName), string.Empty);
+            for (var index = 0; index < 55; index++)
+                repository.SaveRun(new LogRun
+                {
+                    Id = Guid.NewGuid(),
+                    Source = LogSource.Job,
+                    Name = $"job-{index:D2}",
+                    StartedAt = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero).AddMinutes(index),
+                    EndedAt = new DateTimeOffset(2026, 10, 5, 13, 0, 0, TimeSpan.Zero),
+                    Outcome = LogOutcome.Successful
+                });
+            await repository.FlushAsync();
         }
-
         using var service = new ExecutionLogService(directory.Path);
         service.ReloadSessions(50);
-
         Assert.Equal(50, service.Sessions.Count);
         Assert.True(service.HasMoreSessions);
         Assert.Equal("job-54", service.Sessions[0].Name);
-
         service.ReloadSessions(100);
-
         Assert.Equal(55, service.Sessions.Count);
         Assert.False(service.HasMoreSessions);
-    }
-
-    [Fact]
-    public void SharedFileStorage_ReadLastLinesDoesNotRequireScanningFromTheBeginning()
-    {
-        using var directory = new TemporaryDirectory();
-        var filePath = Path.Combine(directory.Path, "large.log");
-        File.WriteAllLines(filePath, Enumerable.Range(0, 10_000).Select(index => $"entry-{index}"));
-        var storage = new LogFileStorageService();
-
-        var entries = storage.ReadLastLines(filePath, 3);
-
-        Assert.Equal(["entry-9997", "entry-9998", "entry-9999"], entries);
     }
 
     [Fact]

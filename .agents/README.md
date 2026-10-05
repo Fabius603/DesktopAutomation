@@ -18,6 +18,8 @@ the root `AGENTS.md` before using them.
   `skills/maintain-architecture/SKILL.md`
 - Job-step work: `skills/add-job-step/SKILL.md`
 - Test design or test creation: `skills/create-tests/SKILL.md`
+- Logging, log storage, diagnostics, run history, automation correlation, or log export:
+  `skills/maintain-logging/SKILL.md`
 - Localization changes: `skills/maintain-localization/SKILL.md`
 - Sustainable design decisions: `skills/record-decision/SKILL.md`
 - Final repository verification: `skills/validate-repository/SKILL.md`

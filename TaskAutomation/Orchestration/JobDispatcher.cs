@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -19,6 +19,7 @@ namespace TaskAutomation.Orchestration
     {
         private readonly ILogger<JobDispatcher> _logger;
         private readonly IJobExecutor _executor;
+        private readonly ILogRepository? _logs;
 
         // instanceId → Jobdefinition und einheitliche Zustands-/Abbruchsteuerung
         private sealed record RunningJobEntry(Guid JobId, string JobName, JobExecutionCancellation Cancellation, JobDebugSession? DebugSession = null);
@@ -31,7 +32,7 @@ namespace TaskAutomation.Orchestration
         private readonly ConcurrentDictionary<Guid, RunningMakroEntry> _makroInstances = new();
 
         // Debounce: maximal ein Notify-Task gleichzeitig pro Event, feuert nach 50 ms Stille.
-        private int _jobsChangedPending   = 0;
+        private int _jobsChangedPending = 0;
         private int _makrosChangedPending = 0;
 
         public event EventHandler<JobErrorEventArgs>? JobErrorOccurred;
@@ -77,13 +78,14 @@ namespace TaskAutomation.Orchestration
         public IReadOnlyCollection<Guid> RunningMakroIds
             => _makroInstances.Values.Select(entry => entry.MakroId).Distinct().ToArray();
 
-        public JobDispatcher(IJobExecutor executor, ILogger<JobDispatcher> logger)
+        public JobDispatcher(IJobExecutor executor, ILogger<JobDispatcher> logger, ILogRepository? logs = null)
         {
-            _logger        = logger;
-            _executor      = executor      ?? throw new ArgumentNullException(nameof(executor));
+            _logger = logger;
+            _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+            _logs = logs;
 
-            _executor.JobErrorOccurred         += OnJobErrorOccurred;
-            _executor.JobStepErrorOccurred     += OnJobStepErrorOccurred;
+            _executor.JobErrorOccurred += OnJobErrorOccurred;
+            _executor.JobStepErrorOccurred += OnJobStepErrorOccurred;
             _logger.LogInformation("JobDispatcher initialisiert.");
         }
 
@@ -97,6 +99,7 @@ namespace TaskAutomation.Orchestration
             {
                 var ex = new InvalidOperationException($"Job '{job.Name}' kann nicht gestartet werden, weil er keine aktiven Steps hat.");
                 _logger.LogWarning(ex.Message);
+                Rejected(job.Id, job.Name, "NoActiveSteps");
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 return Guid.Empty;
             }
@@ -105,6 +108,7 @@ namespace TaskAutomation.Orchestration
             {
                 var ex = new JobLimitExceededException(job.Name, MaxJobCount);
                 _logger.LogWarning(ex.Message);
+                Rejected(job.Id, job.Name, "InstanceLimit");
                 throw ex;
             }
 
@@ -112,19 +116,19 @@ namespace TaskAutomation.Orchestration
             var cancellation = new JobExecutionCancellation();
             var debugSession = debug ? new JobDebugSession(instanceId, job) : null;
             cancellation.StateChanged += _ => FireRunningJobsChanged();
-            var entry      = new RunningJobEntry(job.Id, job.Name, cancellation, debugSession);
+            var entry = new RunningJobEntry(job.Id, job.Name, cancellation, debugSession);
             _jobInstances[instanceId] = entry;
 
             FireRunningJobsChanged();
             if (debugSession != null) DebugSessionsChanged?.Invoke();
 
-            var jobId   = job.Id;
+            var jobId = job.Id;
             var jobName = job.Name;
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _executor.ExecuteJob(jobId, startContext, cancellation, debugSession).ConfigureAwait(false);
+                    await _executor.ExecuteJob(jobId, startContext with { InstanceId = instanceId }, cancellation, debugSession).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -253,6 +257,18 @@ namespace TaskAutomation.Orchestration
             }
         }
 
+        private void Rejected(Guid id, string name, string reason)
+            => _logs?.Append(new LogEvent
+            {
+                Source = LogSource.Job,
+                SourceId = id,
+                SourceName = name,
+                Code = LogCodes.StartRejected,
+                Level = ExecutionLogLevel.Warning,
+                Context = LogAmbient.Current,
+                Parameters = new() { ["Reason"] = reason }
+            });
+
         private void OnJobStepErrorOccurred(object? sender, JobStepErrorEventArgs e)
         {
             // Event an UI weiterleiten
@@ -314,6 +330,7 @@ namespace TaskAutomation.Orchestration
             if (job == null)
             {
                 _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
+                Rejected(id, id.ToString(), "JobMissing");
                 return Guid.Empty;
             }
             try
@@ -366,6 +383,7 @@ namespace TaskAutomation.Orchestration
             if (job == null)
             {
                 _logger.LogWarning("Job mit ID '{JobId}' nicht gefunden.", id);
+                Rejected(id, id.ToString(), "JobMissing");
                 return;
             }
 
@@ -373,6 +391,7 @@ namespace TaskAutomation.Orchestration
             {
                 var ex = new InvalidOperationException($"Job '{job.Name}' kann nicht gestartet werden, weil er keine aktiven Steps hat.");
                 _logger.LogWarning(ex.Message);
+                Rejected(job.Id, job.Name, "NoActiveSteps");
                 JobErrorOccurred?.Invoke(this, new JobErrorEventArgs(job.Name, ex));
                 return;
             }
@@ -381,6 +400,7 @@ namespace TaskAutomation.Orchestration
             {
                 var ex = new JobLimitExceededException(job.Name, MaxJobCount);
                 _logger.LogWarning(ex.Message);
+                Rejected(job.Id, job.Name, "InstanceLimit");
                 throw ex;
             }
 
@@ -392,7 +412,7 @@ namespace TaskAutomation.Orchestration
 
             try
             {
-                await _executor.ExecuteJob(job.Id, startContext ?? JobStartContext.Manual, cancellation).ConfigureAwait(false);
+                await _executor.ExecuteJob(job.Id, (startContext ?? JobStartContext.Manual) with { InstanceId = instanceId }, cancellation).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -413,51 +433,101 @@ namespace TaskAutomation.Orchestration
         /// <summary>
         /// Startet ein Makro per ID.
         /// </summary>
-        public void StartMakro(Guid id)
+        public void StartMakro(Guid id) => StartMakroWithContext(id, JobStartContext.Manual);
+        public Guid StartMakroWithContext(Guid id, JobStartContext context)
         {
             var makro = _executor.AllMakros.Values.FirstOrDefault(m => m.Id == id);
             if (makro == null)
             {
                 _logger.LogWarning("Makro mit ID '{MakroId}' nicht gefunden.", id);
-                return;
+                return Guid.Empty;
             }
-            StartMakroInternal(makro);
+            return StartMakroInternal(makro, context);
         }
 
-        private void StartMakroInternal(Makro makro)
+        private Guid StartMakroInternal(Makro makro, JobStartContext context)
         {
             var cts = new CancellationTokenSource();
             var instanceId = Guid.NewGuid();
             if (!_makroInstances.TryAdd(instanceId, new RunningMakroEntry(makro.Id, cts)))
             {
                 cts.Dispose();
-                return;
+                return Guid.Empty;
             }
 
             FireRunningMakrosChanged();
 
             var makroName = makro.Name;
+            var run = _logs?.SaveRun(new LogRun
+            {
+                Id = instanceId,
+                InstanceId = instanceId,
+                SourceId = makro.Id,
+                Source = LogSource.Makro,
+                Name = makro.Name,
+                StartedAt = DateTimeOffset.UtcNow,
+                ExecutionNumber = _logs.NextExecutionNumber(makro.Id),
+                Origin = context.Source.ToString(),
+                OriginName = context.SourceName,
+                OriginId = context.SourceId,
+                Context = new(instanceId, instanceId, context.TriggerId, context.SourceId)
+            });
+            _logs?.Append(new LogEvent
+            {
+                Source = LogSource.Makro,
+                SourceId = makro.Id,
+                SourceName = makroName,
+                Code = LogCodes.RunStarted,
+                Context = new(instanceId, instanceId, context.TriggerId, context.SourceId)
+            });
             _ = Task.Run(async () =>
             {
+                using var logScope = LogAmbient.Push(new(instanceId, instanceId, context.TriggerId, context.SourceId));
+                var outcome = LogOutcome.Successful;
                 try
                 {
                     await _executor.MakroExecutor.ExecuteMakro(makro, null!, cts.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
+                    outcome = LogOutcome.Stopped;
                     _logger.LogInformation("Makro '{Name}' abgebrochen.", makroName);
                 }
                 catch (Exception ex)
                 {
+                    outcome = LogOutcome.Failed;
                     _logger.LogError(ex, "Fehler bei Makro '{Name}'", makroName);
                 }
                 finally
                 {
+                    if (run is not null)
+                    {
+                        var end = DateTimeOffset.UtcNow;
+                        var current = _logs!.ReadRuns().First(item => item.Id == run.Id);
+                        outcome = LogOutcomeRules.Complete(outcome, current.ErrorCount, current.WarningCount);
+                        _logs!.SaveRun(run with
+                        {
+                            EndedAt = end,
+                            DurationMs = (long)(end - run.StartedAt).TotalMilliseconds,
+                            Outcome = outcome,
+                            CompletionReason = outcome.ToString()
+                        });
+                        _logs.Append(new LogEvent
+                        {
+                            Source = LogSource.Makro,
+                            SourceId = makro.Id,
+                            SourceName = makroName,
+                            Code = LogCodes.RunCompleted,
+                            Context = LogAmbient.Current,
+                            Parameters = new() { ["Outcome"] = outcome.ToString() }
+                        });
+                    }
                     _makroInstances.TryRemove(instanceId, out _);
                     cts.Dispose();
                     FireRunningMakrosChanged();
                 }
             });
+            return instanceId;
         }
 
         /// <summary>

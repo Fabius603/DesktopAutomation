@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
-using DesktopAutomationApp.Logging;
+
 using TaskAutomation.Logging;
 
 namespace DesktopAutomationApp.ViewModels;

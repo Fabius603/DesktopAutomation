@@ -1,3 +1,4 @@
+using TaskAutomation.Logging;
 using System.Collections.Concurrent;
 using TaskAutomation.WindowsIntegration;
 
@@ -10,7 +11,7 @@ public sealed class WindowsEventAutomationTriggerProvider : IAutomationTriggerPr
     public WindowsEventAutomationTriggerProvider(IWindowsSystemEventHub hub) => _hub = hub;
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.WindowsEvent];
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
 
     public Task StartAsync(CancellationToken ct = default) => _hub.StartAsync(ct);
 

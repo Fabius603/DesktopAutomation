@@ -1,5 +1,10 @@
 # Einen neuen Job-Step hinzufügen
 
+Die Logging-Anbindung gehört zur Step-Integration. Verwende den
+[Logging-Skill](../../maintain-logging/SKILL.md), die gemeinsame Ausführungsgrenze `StepLogScope`
+und eine explizite sichere Ergebniszusammenfassung in `StepLogResults`. Die Contract-Abdeckung
+muss jeden neuen Ergebnistyp erfassen; Rohwerte dürfen nicht als Logdetails übernommen werden.
+
 Diese Anleitung beschreibt alle Stellen, die ein neuer `JobStep` im aktuellen
 Projekt benötigt. Ein Step gilt erst als vollständig integriert, wenn
 Serialisierung, Ausführung, Result-Vertrag, Backend-Validierung, Editor,

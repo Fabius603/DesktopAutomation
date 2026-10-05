@@ -177,7 +177,7 @@ public sealed class AutomationEngineTests
     private sealed class PartiallyFailingTriggerProvider(Guid failingId) : IAutomationTriggerProvider
     {
         public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.Hotkey];
-        public event Action<Guid>? Triggered;
+        public event Action<AutomationTriggerContext>? Triggered;
         public List<Guid> Registered { get; } = [];
         public Task StartAsync(CancellationToken ct = default) => Task.CompletedTask;
         public Task StopAsync(CancellationToken ct = default) => Task.CompletedTask;

@@ -1,3 +1,4 @@
+using TaskAutomation.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
@@ -37,7 +38,7 @@ public sealed class WindowAutomationTriggerProvider : IAutomationTriggerProvider
     }
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.WindowEvent];
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
 
     public async Task StartAsync(CancellationToken ct = default)
     {
@@ -371,7 +372,7 @@ public sealed class FileSystemAutomationTriggerProvider : IAutomationTriggerProv
     public FileSystemAutomationTriggerProvider(ILogger<FileSystemAutomationTriggerProvider> log) => _log = log;
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.FileSystemEvent];
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
 
     public Task StartAsync(CancellationToken ct = default)
     {
@@ -443,7 +444,7 @@ public sealed class FileSystemAutomationTriggerProvider : IAutomationTriggerProv
             return;
         var key = $"{kind}|{path}";
         var version = registration.EventVersions.AddOrUpdate(key, 1, (_, current) => current + 1);
-        _ = FireDebouncedAsync(id, registration, trigger, path, key, version);
+        _ = FireDebouncedAsync(id, registration, trigger, path, key, version, DateTimeOffset.UtcNow);
     }
 
     private async Task FireDebouncedAsync(
@@ -452,7 +453,8 @@ public sealed class FileSystemAutomationTriggerProvider : IAutomationTriggerProv
         FileSystemAutomationTrigger trigger,
         string path,
         string key,
-        long version)
+        long version,
+        DateTimeOffset observedAt)
     {
         try
         {
@@ -469,7 +471,8 @@ public sealed class FileSystemAutomationTriggerProvider : IAutomationTriggerProv
                 && _registrations.TryGetValue(id, out var current)
                 && ReferenceEquals(current, registration))
             {
-                Triggered?.Invoke(id);
+                Triggered?.Invoke(new AutomationTriggerContext(id, Guid.NewGuid(), observedAt, trigger.EventKind.ToString(),
+                    new() { ["Path"] = path, ["FileName"] = Path.GetFileName(path) }));
                 RemoveVersionIfCurrent(registration, key, version);
             }
         }
@@ -532,7 +535,7 @@ public sealed class SystemAutomationTriggerProvider : IAutomationTriggerProvider
     private bool _started;
 
     public IReadOnlyCollection<AutomationTriggerKind> SupportedKinds { get; } = [AutomationTriggerKind.SystemEvent];
-    public event Action<Guid>? Triggered;
+    public event Action<AutomationTriggerContext>? Triggered;
 
     public Task StartAsync(CancellationToken ct = default)
     {

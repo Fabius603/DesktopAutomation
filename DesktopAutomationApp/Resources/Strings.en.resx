@@ -3288,4 +3288,10 @@ Move anyway?</value></data>
   <data name="Ui.Job.Variables.Usage.OnlyThis" xml:space="preserve"><value>Change only this usage</value></data>
   <data name="Ui.Job.Variables.Draft.Retained" xml:space="preserve"><value>Unapplied changes are retained when switching variables.</value></data>
   <data name="Ui.Job.Steps.EmptyBranch" xml:space="preserve"><value>This branch has no steps yet.</value></data>
+  <data name="Log.Cause.LOG-FILE-004" xml:space="preserve"><value>The required file or directory was not found.</value></data>
+  <data name="Log.Help.LOG-FILE-004" xml:space="preserve"><value>Check the specified path and whether the file or directory exists.</value></data>
+  <data name="Log.Cause.LOG-ACCESS-001" xml:space="preserve"><value>Access to the required resource was denied.</value></data>
+  <data name="Log.Help.LOG-ACCESS-001" xml:space="preserve"><value>Check the access permissions for the specified resource.</value></data>
+  <data name="Log.Cause.LOG-UNEXPECTED-001" xml:space="preserve"><value>An unexpected error occurred. Its cause has not yet been established.</value></data>
+  <data name="Log.Help.LOG-UNEXPECTED-001" xml:space="preserve"><value>Open the technical details or export the relevant events for further investigation.</value></data>
 </root>

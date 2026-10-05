@@ -9,6 +9,8 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-05 — Use structured user logs (proposed)](2026-10-05-use-structured-user-logs.md)
+
 - [2026-10-05 — Retain coordinate inputs and use themed focus markers](2026-10-05-retain-coordinate-inputs-and-use-themed-focus-markers.md)
 
 - [2026-10-05 — Fold alternative branches with passive empty hints](2026-10-05-fold-alternative-branches-with-passive-empty-hints.md)

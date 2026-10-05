@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Scripts
 {
@@ -33,8 +34,9 @@ namespace TaskAutomation.Scripts
 
             var (fileName, commandArguments, workingDir) = ResolveCommand(scriptPath, arguments);
 
-            _logger.LogInformation("Starte Skript {Script} mit Interpreter {Exe} {Args} (WorkingDir={Dir})",
-                scriptPath, fileName, commandArguments, workingDir);
+            _logger.LogInformation("Starte Skript {Script} mit Interpreter {Exe} (WorkingDir={Dir})",
+                scriptPath, fileName, workingDir);
+            var outputContext = LogAmbient.Current;
 
             using var proc = new Process
             {
@@ -55,7 +57,8 @@ namespace TaskAutomation.Scripts
             {
                 if (e.Data != null)
                 {
-                    _logger.LogDebug("[{Script}] STDOUT: {Line}", Path.GetFileName(scriptPath), e.Data);
+                    using var scope = LogAmbient.Push(outputContext);
+                    if (outputCallback is null) _logger.LogDebug("Skript-Standardausgabe empfangen ({CharacterCount} Zeichen).", e.Data.Length);
                     ForwardOutput(outputCallback, e.Data, isError: false, scriptPath);
                 }
             };
@@ -63,7 +66,8 @@ namespace TaskAutomation.Scripts
             {
                 if (e.Data != null)
                 {
-                    _logger.LogWarning("[{Script}] STDERR: {Line}", Path.GetFileName(scriptPath), e.Data);
+                    using var scope = LogAmbient.Push(outputContext);
+                    if (outputCallback is null) _logger.LogWarning("Skript-Fehlerausgabe empfangen ({CharacterCount} Zeichen).", e.Data.Length);
                     ForwardOutput(outputCallback, e.Data, isError: true, scriptPath);
                 }
             };
@@ -99,6 +103,7 @@ namespace TaskAutomation.Scripts
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("Ausführung von {Script} abgebrochen.", scriptPath);
+                throw;
             }
 
             sw.Stop();

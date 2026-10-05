@@ -1,162 +1,72 @@
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.IO;
 using TaskAutomation.Automations;
-using Common.ApplicationData;
 
 namespace TaskAutomation.Logging;
 
-public sealed class AutomationLog
+public sealed class AutomationLogService : IAutomationLogService, IDisposable
 {
-    internal AutomationLog(Guid automationId, string name, string filePath, DateTimeOffset createdAt, DateTimeOffset lastEntryAt)
-    {
-        AutomationId = automationId;
-        Name = name;
-        FilePath = filePath;
-        CreatedAt = createdAt;
-        LastEntryAt = lastEntryAt;
-    }
-
-    public Guid AutomationId { get; }
-    public string Name { get; internal set; }
-    public string FilePath { get; }
-    public DateTimeOffset CreatedAt { get; }
-    public DateTimeOffset LastEntryAt { get; internal set; }
-}
-
-public sealed class AutomationLogEntry
-{
-    public Guid AutomationId { get; init; }
-    public DateTimeOffset Timestamp { get; init; }
-    public ExecutionLogLevel Level { get; init; }
-    public string Message { get; init; } = string.Empty;
-    public string? Details { get; init; }
-}
-
-public interface IAutomationLogService
-{
-    event EventHandler<AutomationLogEntry>? EntryWritten;
-    event EventHandler? LogsChanged;
-    IReadOnlyList<AutomationLog> Logs { get; }
-    void Synchronize(IEnumerable<AutomationDefinition> automations);
-    void Write(Guid automationId, ExecutionLogLevel level, string message, string? details = null);
-    IReadOnlyList<AutomationLogEntry> ReadEntries(Guid automationId, int maxEntries = 3000);
-    Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000,
-        CancellationToken cancellationToken = default);
-}
-
-public sealed class AutomationLogService : IAutomationLogService
-{
+    private readonly ILogRepository _repository;
+    private readonly Dictionary<Guid, string> _names = new();
     private readonly object _gate = new();
-    private readonly Dictionary<Guid, AutomationLog> _logs = new();
-    private readonly string _directory;
-    private readonly ILogFileStorageService _fileStorage;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
-
-    public AutomationLogService(ILogFileStorageService fileStorage)
-    {
-        _fileStorage = fileStorage;
-        _directory = AppPaths.AutomationLogsDirectory;
-        Directory.CreateDirectory(_directory);
-    }
-
+    public AutomationLogService(ILogRepository repository) { _repository = repository; _repository.EntryWritten += OnEntry; }
     public event EventHandler<AutomationLogEntry>? EntryWritten;
     public event EventHandler? LogsChanged;
-
     public IReadOnlyList<AutomationLog> Logs
     {
-        get { lock (_gate) return _logs.Values.OrderBy(log => log.Name).ToArray(); }
+        get
+        {
+            var events = new List<LogEvent>();
+            var query = new LogQuery(Source: LogSource.Automation, PageSize: 10000);
+            while (true)
+            {
+                var page = _repository.Query(query);
+                events.AddRange(page.Entries.Where(entry => entry.SourceId.HasValue));
+                if (page.NextBeforeSequence is null) break;
+                query = query with { BeforeSequence = page.NextBeforeSequence.Value, SnapshotSequence = page.SnapshotSequence };
+            }
+            lock (_gate) return events.GroupBy(entry => entry.SourceId!.Value).Select(group =>
+                new AutomationLog(group.Key, _names.GetValueOrDefault(group.Key) ?? group.First().SourceName,
+                    _repository.DirectoryPath, group.Min(entry => entry.Timestamp), group.Max(entry => entry.Timestamp))).ToArray();
+        }
     }
-
     public void Synchronize(IEnumerable<AutomationDefinition> automations)
     {
-        var definitions = automations.ToArray();
-        var activeIds = definitions.Select(automation => automation.Id).ToHashSet();
-        lock (_gate)
-        {
-            foreach (var removedId in _logs.Keys.Where(id => !activeIds.Contains(id)).ToArray())
-                _logs.Remove(removedId);
-
-            foreach (var automation in definitions)
-            {
-                var filePath = Path.Combine(_directory, $"{automation.Id:N}.log");
-                if (_logs.TryGetValue(automation.Id, out var current))
-                {
-                    current.Name = automation.Name;
-                    continue;
-                }
-
-                var exists = File.Exists(filePath);
-                var createdAt = exists ? File.GetCreationTime(filePath) : DateTimeOffset.Now;
-                var lastAt = exists ? File.GetLastWriteTime(filePath) : createdAt;
-                _logs[automation.Id] = new AutomationLog(automation.Id, automation.Name, filePath, createdAt, lastAt);
-            }
-        }
-
+        lock (_gate) foreach (var automation in automations) _names[automation.Id] = automation.Name;
         LogsChanged?.Invoke(this, EventArgs.Empty);
     }
-
     public void Write(Guid automationId, ExecutionLogLevel level, string message, string? details = null)
+        => Record(automationId, new LogEvent { Level = level, Message = message, Details = details });
+    public void Record(Guid automationId, LogEvent entry)
     {
-        AutomationLog? log;
-        AutomationLogEntry entry;
-        lock (_gate)
+        string name;
+        lock (_gate) name = _names.GetValueOrDefault(automationId) ?? automationId.ToString();
+        _repository.Append(entry with
         {
-            if (!_logs.TryGetValue(automationId, out log)) return;
-            entry = new AutomationLogEntry
-            {
-                AutomationId = automationId,
-                Timestamp = DateTimeOffset.Now,
-                Level = level,
-                Message = message,
-                Details = details
-            };
-            try
-            {
-                File.AppendAllText(log.FilePath, JsonSerializer.Serialize(entry, JsonOptions) + Environment.NewLine, Encoding.UTF8);
-                log.LastEntryAt = entry.Timestamp;
-            }
-            catch (IOException) { return; }
-            catch (UnauthorizedAccessException) { return; }
-        }
-        EntryWritten?.Invoke(this, entry);
+            Source = LogSource.Automation,
+            SourceId = automationId,
+            SourceName = name,
+            Area = "Automation",
+            Context = entry.Context with { AutomationId = automationId }
+        });
     }
-
     public IReadOnlyList<AutomationLogEntry> ReadEntries(Guid automationId, int maxEntries = 3000)
+        => _repository.Query(new(Source: LogSource.Automation, SourceId: automationId, PageSize: Math.Clamp(maxEntries, 1, 10000)))
+            .Entries.OrderBy(entry => entry.Sequence).Select(ToEntry).ToArray();
+    public Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000, CancellationToken cancellationToken = default)
+        => Task.Run(() => { cancellationToken.ThrowIfCancellationRequested(); return ReadEntries(automationId, maxEntries); }, cancellationToken);
+    private static AutomationLogEntry ToEntry(LogEvent entry) => new()
     {
-        string? filePath;
-        lock (_gate) filePath = _logs.GetValueOrDefault(automationId)?.FilePath;
-        if (filePath == null || !File.Exists(filePath)) return Array.Empty<AutomationLogEntry>();
-        try
-        {
-            return _fileStorage.ReadLastLines(filePath, maxEntries)
-                .Select(line =>
-                {
-                    try { return JsonSerializer.Deserialize<AutomationLogEntry>(line.TrimStart('\uFEFF'), JsonOptions); }
-                    catch (JsonException) { return null; }
-                })
-                .Where(entry => entry != null)
-                .Cast<AutomationLogEntry>()
-                .ToArray();
-        }
-        catch (IOException) { return Array.Empty<AutomationLogEntry>(); }
-        catch (UnauthorizedAccessException) { return Array.Empty<AutomationLogEntry>(); }
-    }
-
-    public Task<IReadOnlyList<AutomationLogEntry>> ReadEntriesAsync(Guid automationId, int maxEntries = 3000,
-        CancellationToken cancellationToken = default)
+        Id = entry.Id,
+        Sequence = entry.Sequence,
+        AutomationId = entry.SourceId ?? Guid.Empty,
+        Timestamp = entry.Timestamp,
+        Level = entry.Level,
+        Message = entry.Message,
+        Details = entry.Details
+    };
+    private void OnEntry(object? sender, LogEvent entry)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.Run(() =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var entries = ReadEntries(automationId, maxEntries);
-            cancellationToken.ThrowIfCancellationRequested();
-            return entries;
-        }, cancellationToken);
+        if (entry.Source != LogSource.Automation) return;
+        EntryWritten?.Invoke(this, ToEntry(entry)); LogsChanged?.Invoke(this, EventArgs.Empty);
     }
+    public void Dispose() => _repository.EntryWritten -= OnEntry;
 }

@@ -107,9 +107,9 @@ public sealed class JobDispatcherTests
         var executor = new ControllableJobExecutor([job]);
         using var dispatcher = new JobDispatcher(executor, NullLogger<JobDispatcher>.Instance);
         var context = new JobStartContext(JobStartSource.Automation, "automation", Guid.NewGuid());
-        dispatcher.StartJob(job.Id, context);
+        var instanceId = dispatcher.StartJob(job.Id, context);
         await WaitUntilAsync(() => executor.SnapshotInvocations().Length == 1);
-        Assert.Equal(context, executor.SnapshotInvocations()[0].Context);
+        Assert.Equal(context with { InstanceId = instanceId }, executor.SnapshotInvocations()[0].Context);
         CompleteAll(executor);
         await WaitUntilAsync(() => dispatcher.RunningJobInstances.Count == 0);
     }
