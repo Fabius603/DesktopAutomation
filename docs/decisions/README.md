@@ -9,6 +9,8 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-06 — Support Velopack and MSIX](2026-10-06-support-velopack-and-msix.md)
+
 - [2026-10-06 — Summarize successful step repetitions](2026-10-06-summarize-successful-step-repetitions.md)
 
 - [2026-10-05 — Use structured user logs (proposed)](2026-10-05-use-structured-user-logs.md)

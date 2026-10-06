@@ -28,7 +28,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IJobDispatcher _jobDispatcher;
         private readonly IUpdateService _updateService;
         private readonly IDialogService _dialogService;
-        private readonly UpdateCheckScheduler _updateCheckScheduler;
+        private readonly UpdateCheckScheduler? _updateCheckScheduler;
 
         private bool _hasUpdate;
         private string _latestVersion = string.Empty;
@@ -236,9 +236,8 @@ namespace DesktopAutomationApp.ViewModels
             CurrentContent = _start;
 
             // Sofort prüfen und anschließend auch bei langem Tray-Betrieb regelmäßig wiederholen.
-            _updateCheckScheduler = new UpdateCheckScheduler(
-                CheckForUpdateAsync,
-                TimeSpan.FromHours(2));
+            if (_updateService.Installation.CanUpdateInApp)
+                _updateCheckScheduler = new UpdateCheckScheduler(CheckForUpdateAsync, TimeSpan.FromHours(2));
         }
 
         private async Task CheckForUpdateAsync()
@@ -406,7 +405,7 @@ namespace DesktopAutomationApp.ViewModels
             if (disposing)
             {
                 _updateService.UpdateChecked -= OnUpdateChecked;
-                _updateCheckScheduler.Dispose();
+                _updateCheckScheduler?.Dispose();
             }
 
             base.Dispose(disposing);

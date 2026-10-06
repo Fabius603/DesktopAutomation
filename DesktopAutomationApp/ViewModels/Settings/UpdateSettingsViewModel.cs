@@ -1,6 +1,7 @@
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.Services;
 using Microsoft.Extensions.Logging;
+using DesktopAutomation.Application.Deployment;
 
 namespace DesktopAutomationApp.ViewModels;
 
@@ -23,11 +24,25 @@ public sealed class UpdateSettingsViewModel : ViewModelBase
         ShowReleaseNotesCommand = new RelayCommand(async () => await _releaseNotes.ShowAllAsync());
         CheckForUpdatesCommand = new RelayCommand(
             async () => await CheckForUpdatesAsync(),
-            () => !IsCheckingForUpdates);
+            () => _updateService.Installation.CanUpdateInApp && !IsCheckingForUpdates);
+        UpdateCheckStatus = ManagedUpdateStatus;
+        LocalizationService.Instance.CultureChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(UpdateDescription));
+            if (!_updateService.Installation.CanUpdateInApp) UpdateCheckStatus = ManagedUpdateStatus;
+        };
     }
 
     public RelayCommand ShowReleaseNotesCommand { get; }
     public RelayCommand CheckForUpdatesCommand { get; }
+    public string UpdateDescription => Loc.Get(_updateService.Installation.CanUpdateInApp
+        ? "Settings.Updates.Description" : "Settings.Updates.ExternalDescription");
+    private string ManagedUpdateStatus => _updateService.Installation.Kind switch
+    {
+        InstallationKind.Msix => Loc.Get("Settings.Updates.MsixManaged"),
+        InstallationKind.Unpackaged => Loc.Get("Settings.Updates.LocalBuild"),
+        _ => string.Empty
+    };
 
     public bool IsCheckingForUpdates
     {
@@ -47,6 +62,11 @@ public sealed class UpdateSettingsViewModel : ViewModelBase
 
     private async Task CheckForUpdatesAsync()
     {
+        if (!_updateService.Installation.CanUpdateInApp)
+        {
+            UpdateCheckStatus = ManagedUpdateStatus;
+            return;
+        }
         IsCheckingForUpdates = true;
         UpdateCheckStatus = Loc.Get("Settings.Updates.Checking");
         try

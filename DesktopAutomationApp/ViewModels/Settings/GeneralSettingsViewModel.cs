@@ -58,6 +58,7 @@ public sealed class GeneralSettingsViewModel : ViewModelBase
             foreach (var option in Themes)
                 option.Refresh();
             OnPropertyChanged(nameof(ForceStopKeyButtonText));
+            OnPropertyChanged(nameof(StartupStatus));
         };
         _isLoading = false;
     }
@@ -106,13 +107,19 @@ public sealed class GeneralSettingsViewModel : ViewModelBase
     public bool StartWithWindows
     {
         get => _startWithWindows;
-        set { if (SetAndChanged(ref _startWithWindows, value)) _ = ApplyAsync(); }
+        set
+        {
+            if (!CanConfigureStartup) return;
+            if (!SetAndChanged(ref _startWithWindows, value)) return;
+            OnPropertyChanged(nameof(CanConfigureBackgroundStartup));
+            _ = ApplyAsync(startupChanged: true);
+        }
     }
 
     public bool StartInBackgroundAtWindowsStartup
     {
         get => _startInBackgroundAtWindowsStartup;
-        set { if (SetAndChanged(ref _startInBackgroundAtWindowsStartup, value)) _ = ApplyAsync(); }
+        set { if (CanConfigureBackgroundStartup && SetAndChanged(ref _startInBackgroundAtWindowsStartup, value)) _ = ApplyAsync(); }
     }
 
     public uint ForceStopVirtualKey
@@ -128,6 +135,11 @@ public sealed class GeneralSettingsViewModel : ViewModelBase
     }
 
     public string ForceStopKeyDisplay => _hotkeys.FormatKey(KeyModifiers.None, ForceStopVirtualKey);
+    public bool CanConfigureStartup => _startupRegistration.IsSupported;
+    public bool CanConfigureBackgroundStartup => CanConfigureStartup && StartWithWindows;
+    public string StartupStatus => Loc.Get(!CanConfigureStartup ? "Settings.Startup.Unavailable" :
+        _startupRegistration.Status == StartupRegistrationStatus.DisabledByUser ? "Settings.Startup.DisabledByUser" :
+        _startupRegistration.Status == StartupRegistrationStatus.Disabled && StartWithWindows ? "Settings.Startup.NotEnabled" : "Settings.Startup.Managed");
 
     public bool IsCapturingForceStopKey
     {
@@ -170,7 +182,7 @@ public sealed class GeneralSettingsViewModel : ViewModelBase
         return true;
     }
 
-    private async Task ApplyAsync()
+    private async Task ApplyAsync(bool startupChanged = false)
     {
         if (_isLoading || SelectedLanguage is null || SelectedTheme is null || SelectedAccent is null)
             return;
@@ -196,7 +208,8 @@ public sealed class GeneralSettingsViewModel : ViewModelBase
 
         try
         {
-            _startupRegistration.Apply(current.StartWithWindows, current.StartInBackgroundAtWindowsStartup);
+            await _startupRegistration.ApplyAsync(current.StartWithWindows, current.StartInBackgroundAtWindowsStartup, userInitiated: startupChanged);
+            OnPropertyChanged(nameof(StartupStatus));
         }
         catch (Exception exception)
         {

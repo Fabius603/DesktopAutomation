@@ -1,0 +1,51 @@
+name: Package MSIX for testing or Store submission
+on:
+  workflow_dispatch:
+    inputs:
+      store_submission:
+        description: Use the reserved Partner Center identity
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Verify repository
+        shell: pwsh
+        run: .\eng\verify.ps1 -Mode Full
+      - name: Publish shared application payload
+        shell: pwsh
+        run: .\eng\publish-app.ps1
+      - name: Package MSIX
+        shell: pwsh
+        env:
+          STORE_SUBMISSION: ${{ inputs.store_submission }}
+          MSIX_IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+          MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          if ($env:STORE_SUBMISSION -eq 'true') {
+            foreach ($value in @($env:MSIX_IDENTITY_NAME, $env:MSIX_PUBLISHER, $env:MSIX_PUBLISHER_DISPLAY_NAME)) {
+              if ([string]::IsNullOrWhiteSpace($value)) { throw 'Partner Center identity is required for Store submissions.' }
+            }
+          } else {
+            $env:MSIX_IDENTITY_NAME = 'DesktopAutomation.LocalTest'
+            $env:MSIX_PUBLISHER = 'CN=DesktopAutomation.LocalTest'
+            $env:MSIX_PUBLISHER_DISPLAY_NAME = 'DesktopAutomation'
+          }
+          .\eng\build-msix.ps1 -PublishDirectory artifacts/distribution/publish `
+            -IdentityName $env:MSIX_IDENTITY_NAME -Publisher $env:MSIX_PUBLISHER `
+            -PublisherDisplayName $env:MSIX_PUBLISHER_DISPLAY_NAME
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msix-store-submission-${{ inputs.store_submission }}
+          path: |
+            artifacts/msix/*.msix
+            artifacts/msix/package.json
+          if-no-files-found: error

@@ -1,12 +1,13 @@
-using System.Reflection;
 using Velopack;
 using Velopack.Sources;
 using Microsoft.Extensions.Logging;
+using DesktopAutomation.Application.Deployment;
 
 namespace DesktopAutomationApp.Services;
 
 public interface IUpdateService
 {
+    InstallationContext Installation { get; }
     event Action<UpdateCheckResult>? UpdateChecked;
 
     Task<UpdateCheckResult> CheckForUpdateAsync();
@@ -26,8 +27,8 @@ public sealed class UpdateService : IUpdateService
 {
     private const string RepositoryUrl = "https://github.com/Fabius603/DesktopAutomation";
 
-    private readonly UpdateManager _updateManager = new(
-        new GithubSource(RepositoryUrl, accessToken: null, prerelease: false));
+    private readonly UpdateManager? _updateManager;
+    public InstallationContext Installation { get; }
 
     private UpdateInfo? _availableUpdate;
     private readonly ILogger<UpdateService> _log;
@@ -35,18 +36,24 @@ public sealed class UpdateService : IUpdateService
 
     public event Action<UpdateCheckResult>? UpdateChecked;
 
-    public UpdateService(ILogger<UpdateService> log) => _log = log;
+    public UpdateService(ILogger<UpdateService> log, InstallationContext installation)
+    {
+        _log = log;
+        Installation = installation;
+        if (installation.CanUpdateInApp)
+            _updateManager = new UpdateManager(new GithubSource(RepositoryUrl, accessToken: null, prerelease: false));
+    }
 
     public async Task<UpdateCheckResult> CheckForUpdateAsync()
     {
         await _checkLock.WaitAsync();
         try
         {
-            var currentVersion = _updateManager.CurrentVersion?.ToString() ?? GetAssemblyVersion();
+            var currentVersion = _updateManager?.CurrentVersion?.ToString() ?? Installation.Version;
             _log.LogInformation("Update-Prüfung gestartet. Aktuelle Version: {Version}", currentVersion);
 
             // A regular IDE/publish launch has no Velopack installation metadata.
-            if (!_updateManager.IsInstalled)
+            if (_updateManager is null || !_updateManager.IsInstalled)
             {
                 _log.LogInformation("Update-Prüfung übersprungen: Die Anwendung wird nicht über Velopack ausgeführt.");
                 return Publish(new UpdateCheckResult(false, string.Empty, RepositoryUrl + "/releases", currentVersion));
@@ -81,7 +88,7 @@ public sealed class UpdateService : IUpdateService
 
     public async Task<bool> DownloadUpdateAsync(IProgress<int>? progress = null)
     {
-        if (!_updateManager.IsInstalled || _availableUpdate is null)
+        if (_updateManager is null || !_updateManager.IsInstalled || _availableUpdate is null)
         {
             _log.LogWarning("Update-Download übersprungen: Es ist kein installierbares Update verfügbar.");
             return false;
@@ -98,8 +105,8 @@ public sealed class UpdateService : IUpdateService
 
     public bool PrepareUpdateAndRestart()
     {
-        var target = _availableUpdate?.TargetFullRelease ?? _updateManager.UpdatePendingRestart;
-        if (!_updateManager.IsInstalled || target is null)
+        var target = _availableUpdate?.TargetFullRelease ?? _updateManager?.UpdatePendingRestart;
+        if (_updateManager is null || !_updateManager.IsInstalled || target is null)
         {
             _log.LogWarning("Update-Neustart übersprungen: Es ist kein vorbereitetes Update verfügbar.");
             return false;
@@ -118,9 +125,4 @@ public sealed class UpdateService : IUpdateService
         return true;
     }
 
-    private static string GetAssemblyVersion()
-    {
-        var version = Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
-    }
 }

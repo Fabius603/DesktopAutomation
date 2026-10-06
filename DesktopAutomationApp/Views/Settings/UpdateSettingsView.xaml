@@ -7,8 +7,8 @@
         <Border Style="{StaticResource SettingsSectionCardStyle}" Margin="0,0,0,16">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Settings.Updates.Title}" Style="{StaticResource Heading2}"/><TextBlock Text="{loc:Translate Key=Settings.Updates.Description}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,3,0,0"/><TextBlock Text="{Binding UpdateCheckStatus}" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,6,0,0"/></StackPanel>
-                <Button Grid.Column="1" Command="{Binding CheckForUpdatesCommand}" Style="{StaticResource ButtonSecondary}" Content="{loc:Translate Key=Settings.Updates.CheckNow}" VerticalAlignment="Center"/>
+                <StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Settings.Updates.Title}" Style="{StaticResource Heading2}"/><TextBlock Text="{Binding UpdateDescription}" Foreground="{DynamicResource App.Brush.TextSecondary}" TextWrapping="Wrap" Margin="0,3,0,0"/><TextBlock Text="{Binding UpdateCheckStatus}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,6,0,0"/></StackPanel>
+                <Button Grid.Column="1" Command="{Binding CheckForUpdatesCommand}" AutomationProperties.AutomationId="CheckForUpdates" Style="{StaticResource ButtonSecondary}" Content="{loc:Translate Key=Settings.Updates.CheckNow}" VerticalAlignment="Center"/>
             </Grid>
         </Border>
         <Border Style="{StaticResource SettingsSectionCardStyle}">

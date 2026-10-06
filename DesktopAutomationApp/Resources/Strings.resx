@@ -3732,4 +3732,13 @@ Step: {8} / {9}</value></data>
   <data name="Ui.Step.Capture.Advanced" xml:space="preserve"><value>Erweiterte Aufnahme-Einstellungen</value></data>
   <data name="Logs.Ui.AttentionCleanupFailed" xml:space="preserve"><value>Alte Lesestatus-Einträge konnten nicht bereinigt werden. Die Bereinigung wird erneut versucht.</value></data>
   <data name="Ui.Step.Capture.TimeoutHelp" xml:space="preserve"><value>Begrenzt Wartezeiten und Wiederholungen. Die Initialisierung des Monitors und die Bildverarbeitung können zusätzliche Zeit benötigen.</value></data>
+  <data name="Deployment.ProfileTooNew" xml:space="preserve"><value>Dieses Datenprofil benötigt eine neuere Anwendung. Bitte aktualisiere diese Installation.</value></data>
+  <data name="Deployment.ProfileUnavailable" xml:space="preserve"><value>Das Datenprofil ist nicht zugänglich oder ungültig. Bitte prüfe Profilname und Zugriffsrechte.</value></data>
+  <data name="Settings.Startup.DisabledByUser" xml:space="preserve"><value>Windows hat den Autostart deaktiviert. Aktiviere ihn in den Windows-Autostart-Einstellungen.</value></data>
+  <data name="Settings.Startup.Managed" xml:space="preserve"><value>Windows verwaltet den Autostart. Bei mehreren Installationen startet nur eine Anwendung je Profil.</value></data>
+  <data name="Settings.Startup.NotEnabled" xml:space="preserve"><value>Autostart ist für diese Installation noch nicht aktiviert. Schalte die Option aus und wieder ein.</value></data>
+  <data name="Settings.Startup.Unavailable" xml:space="preserve"><value>Autostart ist nur für installierte Anwendungen im Standardprofil verfügbar.</value></data>
+  <data name="Settings.Updates.LocalBuild" xml:space="preserve"><value>Eigener Build: Updates durch erneutes Bauen oder eine offizielle Installation beziehen.</value></data>
+  <data name="Settings.Updates.MsixManaged" xml:space="preserve"><value>Updates dieser MSIX-Installation werden über den Microsoft Store oder die Paketbereitstellung verwaltet.</value></data>
+  <data name="Settings.Updates.ExternalDescription" xml:space="preserve"><value>Der Updateweg richtet sich nach der Installationsart.</value></data>
 </root>

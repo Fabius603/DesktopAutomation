@@ -6,15 +6,25 @@ namespace Common.ApplicationData;
 /// </summary>
 public static class AppPaths
 {
+    static AppPaths() { } // Initialize only after the command-line profile is selected.
     public const string ApplicationFolderName = "DesktopAutomation";
+
+    public static string? ProfileName { get; } = ValidateProfile(Environment.GetEnvironmentVariable("DESKTOPAUTOMATION_PROFILE"));
+    public static bool IsDefaultProfile => ProfileName is null;
+    private static string ProfileFolder => ProfileName is null ? ApplicationFolderName : Path.Combine(ApplicationFolderName, "Profiles", ProfileName);
+
+    public static string? ValidateProfile(string? name)
+    {
+        return ProfileNames.Validate(name);
+    }
 
     public static string RoamingRoot { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        ApplicationFolderName);
+        ProfileFolder);
 
     public static string LocalRoot { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        ApplicationFolderName);
+        ProfileFolder);
 
     public static string ConfigRoot => Path.Combine(RoamingRoot, "Configs");
     public static string JobConfigDirectory => Path.Combine(ConfigRoot, "Job");
@@ -41,6 +51,7 @@ public static class AppPaths
     /// </summary>
     public static void MigrateLegacyData()
     {
+        if (!IsDefaultProfile) return;
         TryCopyMissingFiles(
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DesktopAutomationApp"),
             RoamingRoot);

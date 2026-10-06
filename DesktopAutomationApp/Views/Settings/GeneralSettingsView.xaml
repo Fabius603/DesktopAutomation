@@ -42,15 +42,16 @@
             <Border Style="{StaticResource SettingsSectionCardStyle}" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="{loc:Translate Settings.Startup}" Style="{StaticResource Heading2}" Margin="0,0,0,16"/>
+                    <TextBlock Text="{Binding StartupStatus}" Style="{StaticResource SettingsDescription}" Margin="0,0,0,8"/>
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Settings.StartWithWindows}" Style="{StaticResource SettingsLabel}"/><TextBlock Text="{loc:Translate Settings.StartWithWindows.Description}" Style="{StaticResource SettingsDescription}"/></StackPanel>
-                        <CheckBox Grid.Column="1" IsChecked="{Binding StartWithWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding StartWithWindows, Mode=TwoWay}" IsEnabled="{Binding CanConfigureStartup}" AutomationProperties.AutomationId="StartupEnabled" VerticalAlignment="Center"/>
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Settings.StartInBackground}" Style="{StaticResource SettingsLabel}"/><TextBlock Text="{loc:Translate Settings.StartInBackground.Description}" Style="{StaticResource SettingsDescription}"/></StackPanel>
-                        <CheckBox Grid.Column="1" IsChecked="{Binding StartInBackgroundAtWindowsStartup, Mode=TwoWay}" IsEnabled="{Binding StartWithWindows}" VerticalAlignment="Center"/>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding StartInBackgroundAtWindowsStartup, Mode=TwoWay}" IsEnabled="{Binding CanConfigureBackgroundStartup}" AutomationProperties.AutomationId="StartupBackground" VerticalAlignment="Center"/>
                     </Grid>
                 </StackPanel>
             </Border>

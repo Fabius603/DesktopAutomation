@@ -1,4 +1,4 @@
-name: Release (Windows / Velopack)
+name: Release (Windows / Velopack + MSIX)
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
     paths:
       - 'DesktopAutomationApp/DesktopAutomationApp.csproj'
       - '.github/workflows/release.yml'
+      - 'eng/build-msix.ps1'
+      - 'eng/publish-app.ps1'
+      - 'packaging/msix/**'
   workflow_dispatch:
 
 permissions:
@@ -37,18 +40,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "${{ steps.ver.outputs.TAG }}"
-          $isManual = "${{ github.event_name }}" -eq "workflow_dispatch"
 
           $releases = gh release list --limit 100 --json tagName | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw "Failed to list GitHub releases." }
           $exists = $releases.tagName -contains $tag
 
-          if ($isManual -and $exists) {
-            Write-Host "Manual run: recreating $tag."
-            gh release delete $tag --yes --cleanup-tag
-            if ($LASTEXITCODE -ne 0) { throw "Failed to delete existing release/tag $tag" }
-            $exists = $false
-          }
+          if ($exists) { Write-Host "Release $tag already exists; published artifacts are immutable." }
 
           "EXISTS=$($exists.ToString().ToLowerInvariant())" |
             Out-File -FilePath $env:GITHUB_OUTPUT -Append
@@ -57,7 +54,7 @@ jobs:
         if: steps.check.outputs.EXISTS == 'false'
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
 
       - name: Cache NuGet
         if: steps.check.outputs.EXISTS == 'false'
@@ -83,14 +80,37 @@ jobs:
 
       - name: Publish self-contained (win-x64)
         if: steps.check.outputs.EXISTS == 'false'
-        run: >
-          dotnet publish DesktopAutomationApp/DesktopAutomationApp.csproj
-          -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true
-          -p:EnableCompressionInSingleFile=true
-          -p:PublishTrimmed=false
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -o out/win-x64
+        shell: pwsh
+        run: .\eng\publish-app.ps1 -OutputDirectory out/win-x64
+
+      - name: Build MSIX from the same publish output
+        if: steps.check.outputs.EXISTS == 'false'
+        shell: pwsh
+        env:
+          MSIX_IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+          MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          $configured = @($env:MSIX_IDENTITY_NAME, $env:MSIX_PUBLISHER, $env:MSIX_PUBLISHER_DISPLAY_NAME) |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          if ($configured.Count -eq 0) {
+            Write-Host "Partner Center is not configured; generating a development MSIX, not a Store submission."
+            $env:MSIX_IDENTITY_NAME = "DesktopAutomation.LocalTest"
+            $env:MSIX_PUBLISHER = "CN=DesktopAutomation.LocalTest"
+            $env:MSIX_PUBLISHER_DISPLAY_NAME = "DesktopAutomation"
+          } elseif ($configured.Count -ne 3) { throw "All three MSIX identity variables are required." }
+          .\eng\build-msix.ps1 -PublishDirectory out/win-x64 -IdentityName $env:MSIX_IDENTITY_NAME `
+            -Publisher $env:MSIX_PUBLISHER -PublisherDisplayName $env:MSIX_PUBLISHER_DISPLAY_NAME
+
+      - name: Upload MSIX for manual Store submission or development testing
+        if: steps.check.outputs.EXISTS == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: msix-${{ steps.ver.outputs.VERSION }}
+          path: |
+            artifacts/msix/*.msix
+            artifacts/msix/package.json
+          if-no-files-found: error
 
       - name: Install Velopack CLI
         if: steps.check.outputs.EXISTS == 'false'
@@ -110,7 +130,13 @@ jobs:
       - name: Build Velopack packages and installer
         if: steps.check.outputs.EXISTS == 'false'
         shell: pwsh
+        env:
+          VELOPACK_SIGN_PARAMS: ${{ secrets.VELOPACK_SIGN_PARAMS }}
         run: |
+          $signingArguments = @()
+          if (-not [string]::IsNullOrWhiteSpace($env:VELOPACK_SIGN_PARAMS)) {
+            $signingArguments = @("--signParams", $env:VELOPACK_SIGN_PARAMS)
+          }
           ./.tools/vpk pack `
             --packId "Fabius603.DesktopAutomation" `
             --packVersion "${{ steps.ver.outputs.VERSION }}" `
@@ -119,8 +145,10 @@ jobs:
             --packTitle "DesktopAutomation" `
             --packAuthors "Fabius603" `
             --runtime "win-x64" `
+            --framework "vcredist143-x64" `
             --icon "DesktopAutomationApp/Assets/App.ico" `
-            --outputDir Releases
+            --outputDir Releases @signingArguments
+          if ($LASTEXITCODE -ne 0) { throw "Velopack packaging failed." }
 
       - name: Upload draft GitHub release
         if: steps.check.outputs.EXISTS == 'false'

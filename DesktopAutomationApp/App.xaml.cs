@@ -46,6 +46,7 @@ using System.Runtime.InteropServices;
 using TaskAutomation.WindowsIntegration;
 using DesktopAutomationApp.Behaviors;
 using TaskAutomation.Security;
+using DesktopAutomation.Application.Deployment;
 
 namespace DesktopAutomationApp
 {
@@ -59,18 +60,60 @@ namespace DesktopAutomationApp
         private MainWindow? _mainWindow;
         private string[] _startupArguments = [];
         private Task? _backgroundInitializationTask;
+        private readonly CancellationTokenSource _shutdownCancellation = new();
+        private bool _activationRequested;
 
         [STAThread]
         public static void Main(string[] args)
         {
-            VelopackApp.Build().Run();
-
-            var app = new App();
-            app._startupArguments = args;
-            app.Run();
+            var packageFamilyName = InstallationDetector.GetPackageFamilyName();
+            if (packageFamilyName is null) VelopackApp.Build().Run();
+            try
+            {
+                var profileIndex = Array.IndexOf(args, "--profile");
+                if (profileIndex >= 0)
+                {
+                    if (profileIndex + 1 >= args.Length) throw new ArgumentException("Missing profile name.");
+                    Environment.SetEnvironmentVariable("DESKTOPAUTOMATION_PROFILE", ProfileNames.Validate(args[profileIndex + 1]));
+                }
+                using var activation = new EventWaitHandle(false, EventResetMode.AutoReset, ProfileLease.ActivationEventName(AppPaths.LocalRoot));
+                using var lease = ProfileLease.TryAcquire(AppPaths.LocalRoot);
+                if (lease is null)
+                {
+                    if (!args.Contains("--startup") && !args.Contains("--background")) activation.Set();
+                    return;
+                }
+                if (!ProfileCompatibility.EnsureSupported(AppPaths.LocalRoot))
+                {
+                    MessageBox.Show(Loc.Get("Deployment.ProfileTooNew"), "DesktopAutomation", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                var installation = InstallationDetector.Detect(packageFamilyName);
+                if (args.Contains("--deployment-probe"))
+                {
+                    Environment.ExitCode = DeploymentProbe.Run(args, installation);
+                    return;
+                }
+                var app = new App(installation) { _startupArguments = args };
+                var registration = ThreadPool.RegisterWaitForSingleObject(activation, (_, _) =>
+                    app.Dispatcher.BeginInvoke(() =>
+                    {
+                        app._activationRequested = true;
+                        if (app._mainWindow is not null) app.ShowMainWindow(app._mainWindow);
+                    }), null, Timeout.Infinite, false);
+                try { app.Run(); }
+                finally { registration.Unregister(null); }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or JsonException)
+            {
+                MessageBox.Show(Loc.Get("Deployment.ProfileUnavailable"), "DesktopAutomation", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Environment.ExitCode = 1;
+            }
         }
 
-        public App()
+        public App() : this(InstallationDetector.Detect(InstallationDetector.GetPackageFamilyName())) { }
+
+        private App(InstallationContext installation)
         {
             InitializeComponent();
             GlobalScrollBehavior.Initialize();
@@ -106,6 +149,7 @@ namespace DesktopAutomationApp
                 .UseSerilog()
                 .ConfigureServices((ctx, services) =>
                 {
+                    services.AddSingleton(installation);
                     services.AddJsonRepository<Job>(AppPaths.JobConfigDirectory, options, j => j.Id.ToString());
                     services.AddJsonRepository<Makro>(AppPaths.MakroConfigDirectory, options, m => m.Id.ToString());
                     services.AddJsonRepository<AutomationDefinition>(AppPaths.AutomationConfigDirectory, options, a => a.Id.ToString());
@@ -234,13 +278,19 @@ namespace DesktopAutomationApp
             _themeService.Apply(preferences.Current.ThemeMode, preferences.Current.Accent);
             try
             {
-                _host.Services.GetRequiredService<IWindowsStartupRegistrationService>().Apply(
+                await _host.Services.GetRequiredService<IWindowsStartupRegistrationService>().ApplyAsync(
                     preferences.Current.StartWithWindows,
                     preferences.Current.StartInBackgroundAtWindowsStartup);
             }
             catch (Exception ex)
             {
                 Log.Warning(ex, "Der Windows-Autostart konnte nicht synchronisiert werden.");
+            }
+
+            if (_startupArguments.Contains("--startup") && !preferences.Current.StartWithWindows)
+            {
+                Shutdown();
+                return;
             }
 
             _ = _host.Services.GetRequiredService<IJobDispatcher>();
@@ -273,9 +323,9 @@ namespace DesktopAutomationApp
             _themeService.ThemeChanged += OnThemeChanged;
             UpdateAccentIcons();
 
-            var startInBackground = _startupArguments.Any(argument =>
-                string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
-            if (!startInBackground)
+            var startInBackground = _startupArguments.Contains("--background") ||
+                (_startupArguments.Contains("--startup") && preferences.Current.StartInBackgroundAtWindowsStartup);
+            if (!startInBackground || _activationRequested)
                 ShowMainWindow(mainWindow);
 
             // Alles, was nicht für das erste sichtbare Fenster benötigt wird, startet im Hintergrund.
@@ -287,23 +337,32 @@ namespace DesktopAutomationApp
         {
             try
             {
+                _shutdownCancellation.Token.ThrowIfCancellationRequested();
                 await _host.Services.GetRequiredService<IJobApplicationService>().ReloadAsync().ConfigureAwait(false);
+                _shutdownCancellation.Token.ThrowIfCancellationRequested();
                 await _host.Services.GetRequiredService<IMakroApplicationService>().ReloadAsync().ConfigureAwait(false);
-                await _host.Services.GetRequiredService<IAutomationEngine>().StartAsync().ConfigureAwait(false);
+                _shutdownCancellation.Token.ThrowIfCancellationRequested();
+                await _host.Services.GetRequiredService<IAutomationEngine>().StartAsync(_shutdownCancellation.Token).ConfigureAwait(false);
 
-                await Dispatcher.InvokeAsync(
-                        () => _host.Services.GetRequiredService<StartViewModel>().RefreshAsync(),
-                        DispatcherPriority.Background)
-                    .Task.Unwrap();
+                // Do not make shutdown wait for a continuation on the dispatcher being shut down.
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(async () =>
+                {
+                    if (_shutdownCancellation.IsCancellationRequested) return;
+                    try { await _host.Services.GetRequiredService<StartViewModel>().RefreshAsync(); }
+                    catch (Exception exception) { Log.Warning(exception, "Die Startseite konnte nicht aktualisiert werden."); }
+                }));
             }
+            catch (OperationCanceledException) when (_shutdownCancellation.IsCancellationRequested) { }
             catch (Exception ex)
             {
                 Log.Error(ex, "Die Hintergrundinitialisierung konnte nicht abgeschlossen werden.");
             }
         }
 
-        protected override async void OnExit(ExitEventArgs e)
+        protected override void OnExit(ExitEventArgs e)
         {
+            _shutdownCancellation.Cancel();
+            _backgroundInitializationTask?.GetAwaiter().GetResult();
             Log.Information("Anwendung wird beendet.");
             // WPF may return from async OnExit before providers finish; persist the current checkpoint synchronously.
             try { _logRepository?.FlushAsync().GetAwaiter().GetResult(); }
@@ -315,12 +374,13 @@ namespace DesktopAutomationApp
             _accentIcons?.Dispose();
             _accentIcons = null;
 
-            await _host.Services.GetRequiredService<IAutomationEngine>().StopAsync();
+            _host.Services.GetRequiredService<IAutomationEngine>().StopAsync().GetAwaiter().GetResult();
             Log.CloseAndFlush();
 
-            await _host.StopAsync();
+            _host.StopAsync().GetAwaiter().GetResult();
             _host.Dispose();
             _logRepository?.Dispose();
+            _shutdownCancellation.Dispose();
             base.OnExit(e);
         }
 
