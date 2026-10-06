@@ -24,3 +24,11 @@ the environment of the script and its child processes.
 configuration. `Start-Debug.ps1` always performs an explicit Debug build before starting the
 application with `--no-build`, so a debugger can be attached to the resulting process without
 running stale binaries.
+
+The menu stays open: `1` starts the Debug app, `2` starts the test app (Release),
+`3` stops the app, and `4` stops the app and runs repository verification.
+Afterwards you can start again in the same console. Starting another configuration
+first stops the previous app. `Q` stops the app and closes the menu.
+Stopping requests a normal window close, then terminates the process after five
+seconds if necessary. Only the app started by this menu is stopped.
+Both configurations use the usual application data.
