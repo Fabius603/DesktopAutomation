@@ -133,6 +133,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<IUpdateService, UpdateService>();
                     services.AddSingleton<IReleaseNotesService, ReleaseNotesService>();
                     services.AddSingleton<ILogRepository>(logRepository);
+                    services.AddSingleton<DesktopAutomation.Application.Logging.LogAttentionService>();
                     services.AddSingleton<DesktopAutomation.Application.Logging.LogQueryService>();
                     services.AddSingleton<DesktopAutomation.Application.Logging.LogExportService>();
                     services.AddSingleton<IExecutionLogService, ExecutionLogService>();
@@ -188,10 +189,7 @@ namespace DesktopAutomationApp
                     services.AddSingleton<ListJobsViewModel>();
                     services.AddSingleton<ListMakrosViewModel>();
                     services.AddSingleton<YoloDownloadsViewModel>();
-                    services.AddSingleton<ExecutionLogsViewModel>();
                     services.AddSingleton<LogsHomeViewModel>();
-                    services.AddSingleton<AutomationLogsViewModel>();
-                    services.AddSingleton<ApplicationLogsViewModel>();
                     services.AddSingleton<SettingsViewModel>();
                     services.AddSingleton<GeneralSettingsViewModel>();
                     services.AddSingleton<CredentialsSettingsViewModel>();

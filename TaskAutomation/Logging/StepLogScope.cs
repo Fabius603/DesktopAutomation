@@ -7,10 +7,11 @@ namespace TaskAutomation.Logging;
 /// <summary>The single lifecycle boundary for ordinary steps and control-flow operations.</summary>
 internal sealed class StepLogScope : IDisposable
 {
-    private static readonly AsyncLocal<(string Phase, int? Iteration)?> Observation = new();
+    private static readonly AsyncLocal<(string Phase, int? Iteration, LogArea Category)?> Observation = new();
     public static string? CurrentPhase => Observation.Value?.Phase;
     public static int? CurrentIteration => Observation.Value?.Iteration;
-    private readonly (string Phase, int? Iteration)? _previousObservation;
+    public static LogArea? CurrentCategory => Observation.Value?.Category;
+    private readonly (string Phase, int? Iteration, LogArea Category)? _previousObservation;
     private readonly IExecutionLogService _logs;
     private readonly ExecutionLogSession _run;
     private readonly JobStep _step;
@@ -24,7 +25,7 @@ internal sealed class StepLogScope : IDisposable
     {
         _logs = logs; _run = run; _step = step; _phase = phase; _iteration = iteration;
         _previousObservation = Observation.Value;
-        Observation.Value = (StepLogEvents.Phase(phase), iteration);
+        Observation.Value = (StepLogEvents.Phase(phase), iteration, LogPresentation.CategoryForStep(step));
         _context = LogAmbient.Push(LogAmbient.Current with { StepId = step.Id, StepExecutionId = Guid.NewGuid() });
         _logs.Record(run, StepLogEvents.Create(step, LogCodes.StepStarted, phase, iteration));
     }
@@ -35,16 +36,21 @@ internal sealed class StepLogScope : IDisposable
         if (_ended) return;
         _ended = true;
         var cancelled = result is UserChoiceResult { WasCancelled: true };
+        if (result is IActionExecutionResult { SkipReason: { } skipReason })
+        {
+            skipped = true;
+            reason = skipReason;
+        }
         if (reason == "Completed" && result is IActionExecutionResult { Success: false })
             reason = result is JobExecutionResult ? "StartRejected" : "ActionUnsuccessful";
         _logs.Record(_run, StepLogEvents.Create(observed ?? _step,
             cancelled ? LogCodes.StepCancelled : skipped ? LogCodes.StepSkipped : LogCodes.StepCompleted,
             _phase, _iteration, level ?? StepLogEvents.ResultLevel(result),
             cancelled ? "UserCancelled" : reason, _duration.ElapsedMilliseconds, result: result) with
-        { BranchDecision = branch });
+        { BranchDecision = branch, FlowEffect = reason is "EndJob" or "NextIteration" ? new(reason) : null });
     }
 
-    public void Fail(Exception error, JobStep? observed = null)
+    public void Fail(Exception error, JobStep? observed = null, bool stopsPhase = true)
     {
         if (_ended) return;
         _ended = true;
@@ -52,7 +58,9 @@ internal sealed class StepLogScope : IDisposable
         _logs.Record(_run, StepLogEvents.Create(observed ?? _step,
             cancelled ? LogCodes.StepCancelled : LogCodes.StepFailed, _phase, _iteration,
             cancelled ? ExecutionLogLevel.Information : ExecutionLogLevel.Error,
-            cancelled ? "Cancellation" : "Exception", _duration.ElapsedMilliseconds, error: cancelled ? null : error));
+            cancelled ? "Cancellation" : "Exception", _duration.ElapsedMilliseconds, error: cancelled ? null : error)
+            with
+        { FlowEffect = stopsPhase || cancelled ? new("StopPhase") : null });
     }
 
     public static void Skip(IExecutionLogService logs, ExecutionLogSession run, JobStep step, string phase, int? iteration, string reason)

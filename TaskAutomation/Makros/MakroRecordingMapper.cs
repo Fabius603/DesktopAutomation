@@ -46,8 +46,17 @@ public static class MakroRecordingMapper
             previousY = y;
         }
 
-        foreach (var captured in events)
+        for (var eventIndex = 0; eventIndex < events.Count; eventIndex++)
         {
+            var captured = events[eventIndex];
+            if (settings.RecordKeyboard && settings.CombineKeyboardInputs
+                && TryCombine(events, eventIndex, out var combined, out var lastIndex))
+            {
+                Add(combined!, captured.TimestampMicroseconds);
+                previousTimestamp = events[lastIndex].TimestampMicroseconds;
+                eventIndex = lastIndex;
+                continue;
+            }
             switch (captured)
             {
                 case KeyDownCaptured key when settings.RecordKeyboard:
@@ -78,6 +87,38 @@ public static class MakroRecordingMapper
         }
 
         return result;
+    }
+
+    private static bool TryCombine(IReadOnlyList<CapturedInputEvent> events, int index, out MakroBefehl? command, out int last)
+    {
+        command = null;
+        last = index;
+        if (events[index] is not KeyDownCaptured first) return false;
+        if (first.Text is { Length: > 0 } text && index + 1 < events.Count
+            && events[index + 1] is KeyUpCaptured release && release.VirtualKey == first.VirtualKey)
+        {
+            last = index + 1;
+            command = new TextInputBefehl { Text = text, DurationMicroseconds = Math.Max(0, events[last].TimestampMicroseconds - first.TimestampMicroseconds) };
+            return true;
+        }
+        var keys = new List<uint>();
+        var cursor = index;
+        while (cursor < events.Count && events[cursor] is KeyDownCaptured down)
+        {
+            keys.Add(down.VirtualKey);
+            cursor++;
+            if (!MakroCommandRules.IsModifier((WindowsInput.Native.VirtualKeyCode)down.VirtualKey)) break;
+        }
+        var names = keys.Select(key => ((WindowsInput.Native.VirtualKeyCode)key).ToString()).ToList();
+        if (!MakroCommandRules.TryParseCombination(names, out _)) return false;
+        var released = new HashSet<uint>();
+        for (var count = 0; count < keys.Count; count++, cursor++)
+        {
+            if (cursor >= events.Count || events[cursor] is not KeyUpCaptured up || !keys.Contains(up.VirtualKey) || !released.Add(up.VirtualKey)) return false;
+        }
+        last = cursor - 1;
+        command = new KeyCombinationBefehl { Keys = names, DurationMicroseconds = Math.Max(0, events[last].TimestampMicroseconds - first.TimestampMicroseconds) };
+        return true;
     }
 
     private static IReadOnlyList<CapturedInputEvent> RemoveStopGesture(IReadOnlyList<CapturedInputEvent> events)

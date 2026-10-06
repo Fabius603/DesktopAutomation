@@ -75,17 +75,8 @@
             <DataTemplate DataType="{x:Type vm:YoloDownloadsViewModel}">
                 <views:YoloDownloadsView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:ExecutionLogsViewModel}">
-                <views:ExecutionLogsView/>
-            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:LogsHomeViewModel}">
                 <views:LogsHomeView/>
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:AutomationLogsViewModel}">
-                <views:AutomationLogsView/>
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:ApplicationLogsViewModel}">
-                <views:ApplicationLogsView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
                 <views:SettingsView/>

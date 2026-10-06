@@ -40,7 +40,9 @@ public sealed class CameraCaptureStepHandler
             Bounds = bounds,
             Offset = PixelPoint.Origin,
             IsFresh = true,
-            CaptureTimestampUtc = capture.CaptureTimestampUtc
+            CaptureTimestampUtc = capture.CaptureTimestampUtc,
+            FrameVersion = capture.FrameVersion,
+            FrameTimestamp = capture.FrameTimestamp
         };
     }
 

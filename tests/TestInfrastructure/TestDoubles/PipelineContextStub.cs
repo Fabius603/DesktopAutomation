@@ -50,6 +50,10 @@ internal sealed class PipelineContextStub : IStepPipelineContext
     public IVideoRecorder CreateVideoRecorder(int width, int height, int fps) => RecorderFactory(width, height, fps);
     public IVideoRecorder? VideoRecorder { get; set; }
     public Dictionary<string, DateTime> StepTimeouts { get; } = new();
+    public IDictionary<string, TaskAutomation.Contracts.Geometry.PixelPoint> Last3DMovements { get; } =
+        new Dictionary<string, TaskAutomation.Contracts.Geometry.PixelPoint>(StringComparer.OrdinalIgnoreCase);
+    public IDictionary<string, long> Last3DInputTimestamps { get; } =
+        new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, PredictMovementState> PredictMovementStates { get; } = new();
     public Dictionary<string, ActiveWindowCacheEntry> ActiveWindowCache { get; } = new();
 }

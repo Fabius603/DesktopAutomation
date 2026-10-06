@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Text;
 using WindowsInput;
 using WindowsInput.Native;
 using ImageHelperMethods;
@@ -54,6 +55,45 @@ namespace TaskAutomation.Makros
 
                     switch (befehl)
                     {
+                        case TextInputBefehl text:
+                            foreach (var rune in text.Text.EnumerateRunes())
+                            {
+                                ct.ThrowIfCancellationRequested();
+                                _input.Text(rune.ToString());
+                            }
+                            scheduledElapsedUs += text.DurationMicroseconds;
+                            if (text.DurationMicroseconds > 0)
+                                await _delayService.DelayUntilAsync(PreciseTime.AddMicroseconds(startedAt, scheduledElapsedUs + scheduledElapsedMs * 1_000L), ct).ConfigureAwait(false);
+                            break;
+
+                        case KeyCombinationBefehl combination:
+                            if (!MakroCommandRules.TryParseCombination(combination.Keys, out var combinationKeys))
+                                throw new ArgumentException("Invalid macro key combination.");
+                            var ownedKeys = new List<VirtualKeyCode>();
+                            try
+                            {
+                                foreach (var key in combinationKeys)
+                                {
+                                    ct.ThrowIfCancellationRequested();
+                                    if (pressedKeys.Add(key))
+                                    {
+                                        ownedKeys.Add(key);
+                                        _input.Key(key, true);
+                                    }
+                                }
+                                scheduledElapsedUs += combination.DurationMicroseconds;
+                                if (combination.DurationMicroseconds > 0)
+                                    await _delayService.DelayUntilAsync(PreciseTime.AddMicroseconds(startedAt, scheduledElapsedUs + scheduledElapsedMs * 1_000L), ct).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                foreach (var key in ownedKeys.AsEnumerable().Reverse())
+                                {
+                                    TryRelease(() => _input.Key(key, false), $"Taste {key}");
+                                    pressedKeys.Remove(key);
+                                }
+                            }
+                            break;
                         case MouseMoveAbsoluteBefehl m:
                             var xy = ScreenHelper.ToAbsoluteVirtual(m.X, m.Y);
                             _input.MoveAbsolute(xy.Item1, xy.Item2);
@@ -144,7 +184,7 @@ namespace TaskAutomation.Makros
                 key = "VK_" + key;
             }
 
-            if (!Enum.TryParse<VirtualKeyCode>(key, ignoreCase: true, out code))
+            if (!MakroCommandRules.TryParseKey(key, out code))
             {
                 _logger.LogError("Unbekannter Key: {Key}", key);
                 return false;

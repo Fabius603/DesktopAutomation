@@ -11,6 +11,29 @@ namespace TaskAutomation.Tests.Organization;
 public sealed class LibraryTreeViewModelTests
 {
     [Fact]
+    public async Task CreatingSubfolderExpandsParentAndPreservesTheChosenFolder()
+    {
+        using var directory = new TemporaryDirectory();
+        using var organization = new LibraryOrganizationService(Path.Combine(directory.Path, "LibraryLayout.json"));
+        var parent = await organization.CreateFolderAsync(LibraryItemKind.Job, null, "Parent");
+        var preferences = new TestPreferencesService();
+        var vm = new LibraryTreeViewModel(organization, new TestDialogService("Child"), preferences, LibraryItemKind.Job, "New job");
+        await vm.SetItemsAsync([]);
+        vm.SelectedFolderId = parent.Id;
+        var command = (global::DesktopAutomationApp.ViewModels.AsyncRelayCommand<LibraryTreeNodeViewModel?>)vm.NewSubfolderCommand;
+        command.Execute(Assert.Single(vm.FolderNodes));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (command.IsExecuting) await Task.Delay(10, timeout.Token);
+        Assert.Contains(parent.Id, preferences.Current.ExpandedLibraryFolders[nameof(LibraryItemKind.Job)]);
+        Assert.Contains(vm.FolderNodes, node => node.Name == "Child");
+        Assert.Equal(parent.Id, vm.SelectedFolderId);
+        vm.SearchText = "No matching job";
+        Assert.Equal(2, vm.FolderNodes.Count);
+        Assert.Empty(vm.ContentNodes);
+        Assert.Equal(parent.Id, vm.SelectedFolderId);
+    }
+
+    [Fact]
     public async Task FileCanBeMovedFromFolderToRootThroughTreeViewModel()
     {
         using var directory = new TemporaryDirectory();
@@ -279,13 +302,13 @@ public sealed class LibraryTreeViewModelTests
 
         Assert.True(viewModel.HasSearchText);
         Assert.Equal(1, viewModel.SearchResultCount);
-        Assert.Single(viewModel.VisibleNodes);
+        Assert.Single(viewModel.ContentNodes);
 
         viewModel.ClearSearchCommand.Execute(null);
 
         Assert.False(viewModel.HasSearchText);
         Assert.Equal(2, viewModel.SearchResultCount);
-        Assert.Equal(2, viewModel.VisibleNodes.Count);
+        Assert.Equal(2, viewModel.ContentNodes.Count);
     }
 
     private static LibraryItemDescriptor CreateItem(string name) => new()
@@ -313,13 +336,13 @@ public sealed class LibraryTreeViewModelTests
         public Task SaveAsync() => Task.CompletedTask;
     }
 
-    private sealed class TestDialogService : IDialogService
+    private sealed class TestDialogService(string? response = null) : IDialogService
     {
         public Task<bool> ConfirmAsync(string message, string title) => Task.FromResult(false);
         public Task<bool?> ConfirmWithCancelAsync(string message, string title) =>
             Task.FromResult<bool?>(false);
         public Task<string?> AskForNameAsync(string title, string prompt, string? defaultValue = null) =>
-            Task.FromResult<string?>(null);
+            Task.FromResult(response);
         public void ShowError(string message, string title) { }
     }
 

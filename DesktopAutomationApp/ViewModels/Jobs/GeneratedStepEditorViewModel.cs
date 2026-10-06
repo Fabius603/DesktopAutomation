@@ -20,6 +20,16 @@ namespace DesktopAutomationApp.ViewModels;
 
 public sealed class GeneratedStepEditorViewModel : INotifyPropertyChanged
 {
+    public void ApplyMonitorSelection(GeneratedStepFieldViewModel field, int index, string deviceName)
+    {
+        field.IntegerValue = index;
+        if (field.Descriptor.MonitorDeviceNameFieldId is { } identityFieldId)
+        {
+            var identity = Fields.FirstOrDefault(candidate => candidate.Descriptor.Id == identityFieldId);
+            if (identity != null) identity.InputText = deviceName;
+        }
+    }
+
     private readonly IStepDefinition _definition;
     private readonly StepDraft _baseDraft;
     private readonly JobStep? _existingStep;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +13,10 @@ namespace TaskAutomation.Hotkeys
 
     public sealed record TimeoutEvent(int Milliseconds) : CapturedInputEvent;
 
-    public sealed record KeyDownCaptured(uint VirtualKey) : CapturedInputEvent;
+    public sealed record KeyDownCaptured(uint VirtualKey) : CapturedInputEvent
+    {
+        public string? Text { get; init; }
+    }
     public sealed record KeyUpCaptured(uint VirtualKey) : CapturedInputEvent;
 
     public sealed record MouseMoveCaptured(int X, int Y) : CapturedInputEvent;

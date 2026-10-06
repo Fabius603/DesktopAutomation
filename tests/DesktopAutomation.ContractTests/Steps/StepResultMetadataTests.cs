@@ -7,6 +7,30 @@ namespace TaskAutomation.Tests.Steps;
 public sealed class StepResultMetadataTests
 {
     [Fact]
+    public void CaptureAndDetectionContracts_ExposeStableFrameProvenanceIds()
+    {
+        foreach (var type in new[] { typeof(DesktopDuplicationResult), typeof(CameraCaptureResult) })
+        {
+            var properties = StepResultMetadata.GetResultType(type.Name)!.Properties;
+            Assert.Contains(properties, property => property.Name == "FrameVersion" && property.StableId == "frame_version");
+            Assert.Contains(properties, property => property.Name == "FrameTimestamp" && property.StableId == "frame_timestamp");
+        }
+        foreach (var type in new[]
+        {
+            typeof(ColorDetectionResult), typeof(TemplateMatchingResult), typeof(KeyPointMatchingResult),
+            typeof(YOLODetectionResult), typeof(OcrResult), typeof(PredictMovementResult)
+        })
+        {
+            var properties = StepResultMetadata.GetResultType(type.Name)!.Properties;
+            Assert.Contains(properties, property => property.Name == "SourceFrameVersion" && property.StableId == "source_frame_version");
+            Assert.Contains(properties, property => property.Name == "SourceFrameTimestamp" && property.StableId == "source_frame_timestamp");
+        }
+        var movement = StepResultMetadata.GetResultType(nameof(KlickOnPoint3DResult))!;
+        Assert.Contains(movement.Properties, property => property.Name == "MovementBlocked"
+            && property.StableId == "click_on_point_3d.movement_blocked");
+    }
+
+    [Fact]
     public void WindowsStateResult_ExposesPayloadButHidesExecutionMarker()
     {
         var descriptor = StepResultMetadata.GetResultType(nameof(AudioVolumeQueryResult));

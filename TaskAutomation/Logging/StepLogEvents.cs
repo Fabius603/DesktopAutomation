@@ -8,6 +8,7 @@ public static class StepLogEvents
     public static string Phase(string phase) => phase switch { "Startphase" or "Start" => "Start", "Endphase" or "End" => "End", _ => "Main" };
     public static ExecutionLogLevel ResultLevel(object? result) => result switch
     {
+        IActionExecutionResult { SkipReason: not null } => ExecutionLogLevel.Information,
         IActionExecutionResult { Success: false } => ExecutionLogLevel.Warning,
         WindowsStateQueryResult { Status: not TaskAutomation.WindowsIntegration.WindowsCapabilityStatus.Success } => ExecutionLogLevel.Warning,
         _ => ExecutionLogLevel.Information
@@ -24,8 +25,9 @@ public static class StepLogEvents
         if (step is ScriptExecutionStep { Settings: not null } script) parameters["CompletionScope"] = script.Settings.WaitForExit ? "Execution" : "Dispatch";
         if (step is JobExecutionStep { Settings: not null } job) parameters["CompletionScope"] = job.Settings.WaitForCompletion ? "Execution" : "Dispatch";
         if (error is FileNotFoundException { FileName: { } missingPath }) parameters["Path"] = missingPath;
-        if (!parameters.ContainsKey("Path") && step is SaveImageStep { Settings: not null } save)
-            parameters["Path"] = Path.Combine(save.Settings.SavePath ?? "", save.Settings.FileName ?? "");
+        var paths = StepLogPaths.Capture(step, result);
+        if (!parameters.ContainsKey("Path") && paths.FirstOrDefault(path => path.Kind == "TargetFile") is { } target)
+            parameters["Path"] = target.Value;
         return new LogEvent
         {
             Code = code,
@@ -44,6 +46,8 @@ public static class StepLogEvents
                 _ => code
             },
             Parameters = parameters,
+            Paths = paths,
+            Category = result is FileSystemPathQueryResult ? LogArea.FileAccess : LogPresentation.CategoryForStep(step),
             DiagnosticCode = error is null ? null : LogDiagnostics.Code(error),
             ProblemId = level >= ExecutionLogLevel.Warning ? error is not null
                 ? LogDiagnostics.ProblemId(error, LogAmbient.Current.StepExecutionId)

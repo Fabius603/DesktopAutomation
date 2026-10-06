@@ -470,6 +470,7 @@ namespace TaskAutomation.Orchestration
                 Origin = context.Source.ToString(),
                 OriginName = context.SourceName,
                 OriginId = context.SourceId,
+                Trigger = context.Trigger,
                 Context = new(instanceId, instanceId, context.TriggerId, context.SourceId)
             });
             _logs?.Append(new LogEvent

@@ -32,6 +32,7 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
     public event EventHandler<ExecutionLogSession>? SessionChanged;
     public List<ExecutionLogSession> MutableSessions { get; } = [];
     public List<ExecutionLogEntry> Entries { get; } = [];
+    public List<LogEvent> Observations { get; } = [];
     public List<(ExecutionLogSession Session, bool Success, bool Cancelled, string? Details)> Completions { get; } = [];
     public IReadOnlyList<ExecutionLogSession> Sessions => MutableSessions;
     public bool HasMoreSessions => false;
@@ -77,8 +78,12 @@ internal sealed class RecordingExecutionLogService : IExecutionLogService
     public void ReloadSessions(int maxSessions = 200) { }
     public void InitializeRun(ExecutionLogSession session, Job job, Guid instanceId) { }
     public void RegisterSecrets(IEnumerable<string> values) { }
-    public void Record(ExecutionLogSession session, LogEvent entry) => Write(session, entry.Level, entry.Message,
-        entry.Details, entry.Context.StepId, entry.Parameters.GetValueOrDefault("StepType"), durationMs: entry.DurationMs);
+    public void Record(ExecutionLogSession session, LogEvent entry)
+    {
+        Observations.Add(entry);
+        Write(session, entry.Level, entry.Message, entry.Details, entry.Context.StepId,
+            entry.Parameters.GetValueOrDefault("StepType"), durationMs: entry.DurationMs);
+    }
     public void Finish(ExecutionLogSession session, LogOutcome outcome, string reason) => Complete(session,
         outcome is LogOutcome.Successful or LogOutcome.WithWarnings or LogOutcome.WithErrors, reason, outcome == LogOutcome.Stopped);
 }
@@ -87,9 +92,11 @@ internal sealed class NoOpRecordingIndicator : IRecordingIndicatorOverlay
 {
     public bool IsRunning { get; private set; }
     public List<int> StartedMonitorIndices { get; } = [];
+    public List<string?> StartedMonitorIdentities { get; } = [];
     public void Start(RecordingIndicatorOptions? options = null)
     {
         StartedMonitorIndices.Add(options?.MonitorIndex ?? 0);
+        StartedMonitorIdentities.Add(options?.MonitorDeviceName);
         IsRunning = true;
     }
     public void Stop() => IsRunning = false;
@@ -174,7 +181,7 @@ internal sealed class NoOpMakroExecutor : IMakroExecutor
 
 internal sealed class NoOpDesktopCaptureService : IDesktopCaptureService
 {
-    public Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false) =>
+    public Task<CaptureFrame> CaptureAsync(DesktopCaptureRequest request, CancellationToken ct) =>
         Task.FromResult(CaptureFrame.Default);
     public void Dispose() { }
 }

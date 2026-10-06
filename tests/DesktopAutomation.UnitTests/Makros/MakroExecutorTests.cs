@@ -73,6 +73,7 @@ public sealed class MakroExecutorTests
         public void MouseButton(string button, bool down) => Calls.Add($"mouse:{button}:{down}");
         public void MouseWheel(int deltaX, int deltaY) => Calls.Add($"wheel:{deltaX}:{deltaY}");
         public void Key(VirtualKeyCode key, bool down) => Calls.Add($"key:{key}:{down}");
+        public void Text(string text) => Calls.Add($"text:{text}");
     }
 
     private sealed class RecordingDelay : IPreciseDelayService

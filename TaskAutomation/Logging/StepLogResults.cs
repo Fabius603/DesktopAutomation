@@ -20,16 +20,18 @@ public static class StepLogResults
         Add("ResultKind", result.GetType().Name);
         Add("SummarySupported", Supports(result.GetType()));
         if (result is StepResultBase common) Add("WasExecuted", common.WasExecuted);
-        if (result is IActionExecutionResult action) Add("Success", action.Success);
+        if (result is IActionExecutionResult action) { Add("Success", action.Success); if (action.SkipReason is not null) Add("SkipReason", action.SkipReason); }
         if (result is ICaptureStepResult capture)
         {
             Add("HasImage", capture.Image is not null); Add("Width", capture.Bounds.Width); Add("Height", capture.Bounds.Height);
             Add("IsFresh", capture.IsFresh);
+            Add("FrameVersion", capture.FrameVersion); Add("FrameTimestamp", capture.FrameTimestamp);
         }
         if (result is IDetectionStepResult detection)
         {
             Add("Found", detection.Found); Add("Confidence", detection.Confidence);
             Add("DetectionCount", detection.AllDetections.Count); Add("SourceCaptureIsFresh", detection.SourceCaptureIsFresh);
+            Add("SourceFrameVersion", detection.SourceFrameVersion); Add("SourceFrameTimestamp", detection.SourceFrameTimestamp);
             if (detection.Point is { } point) { Add("PointX", point.X); Add("PointY", point.Y); }
         }
         if (result is IProcessReferenceResult processReference)
@@ -62,7 +64,8 @@ public static class StepLogResults
             case WindowsSettingChangeResult setting:
                 Add("Status", setting.Status); Add("RestartRequired", setting.RestartRequired); break;
             case KlickOnPoint3DResult click:
-                Add("AppliedDeltaX", click.AppliedDeltaX); Add("AppliedDeltaY", click.AppliedDeltaY); break;
+                Add("AppliedDeltaX", click.AppliedDeltaX); Add("AppliedDeltaY", click.AppliedDeltaY);
+                Add("MovementBlocked", click.MovementBlocked); break;
             case PredictMovementResult movement: Add("IsPredicted", movement.IsPredicted); break;
         }
         if (result is WindowsStateQueryResult query)

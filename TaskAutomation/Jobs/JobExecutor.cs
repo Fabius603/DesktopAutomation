@@ -435,10 +435,6 @@ namespace TaskAutomation.Jobs
                     debugSession?.SetIteration(
                         iteration,
                         startStepIds.Where(stepId => pipelineCtx.Results.GetRaw(stepId) != null));
-                    _executionLogService.Write(
-                        executionLog,
-                        ExecutionLogLevel.Debug,
-                        $"Job-Runde {iteration} gestartet.");
 
                     var steps = job.Steps ?? Enumerable.Empty<JobStep>().ToList();
                     var branchStack = new Stack<BranchFrame>();
@@ -521,18 +517,16 @@ namespace TaskAutomation.Jobs
                             // StepException verhindert, dass der äußere catch ein zweites Event feuert.
                             throw new StepException(ex);
                         }
-                        _logger.LogDebug(
-                            "Job '{JobName}' → Step '{StepType}' abgeschlossen.",
-                            job.Name, step.GetType().Name);
                     }
 
                     iterationStopwatch.Stop();
-                    _executionLogService.Write(
-                        executionLog,
-                        ExecutionLogLevel.Debug,
-                        $"Job-Runde {iteration} beendet.",
-                        $"Durchgangsdauer={iterationStopwatch.ElapsedMilliseconds} ms",
-                        durationMs: iterationStopwatch.ElapsedMilliseconds);
+                    _executionLogService.Record(executionLog, new LogEvent
+                    {
+                        Code = LogCodes.IterationCompleted,
+                        Phase = "Main",
+                        Iteration = iteration,
+                        DurationMs = iterationStopwatch.ElapsedMilliseconds
+                    });
 
                     if (jobEndedByStep) break;
                     ct.ThrowIfCancellationRequested();
@@ -779,7 +773,7 @@ namespace TaskAutomation.Jobs
 
                 try
                 {
-                    await ExecuteStepAsync(step, pipelineCtx, job, ct, phaseName).ConfigureAwait(false);
+                    await ExecuteStepAsync(step, pipelineCtx, job, ct, phaseName, stopsPhaseOnFailure: !continueAfterStepError).ConfigureAwait(false);
                     var debugResult = pipelineCtx.Results.GetRaw(step.Id);
                     debugSession?.MarkCompleted(
                         step,
@@ -811,7 +805,7 @@ namespace TaskAutomation.Jobs
             Job job,
             CancellationToken ct,
             string phaseName,
-            int? iteration = null)
+            int? iteration = null, bool stopsPhaseOnFailure = true)
         {
             using var log = new StepLogScope(_executionLogService, ctx.ExecutionLogSession, step, phaseName, iteration);
             var observedStep = step;
@@ -826,7 +820,7 @@ namespace TaskAutomation.Jobs
             }
             catch (Exception error)
             {
-                log.Fail(error, observedStep);
+                log.Fail(error, observedStep, stopsPhaseOnFailure);
                 if (error is not OperationCanceledException)
                     _logger.LogError(error, "Fehler in Step '{StepType}'.", step.GetType().Name);
                 throw;
@@ -851,6 +845,7 @@ namespace TaskAutomation.Jobs
             StartRecordingOverlay(new RecordingIndicatorOptions
             {
                 MonitorIndex = step.Settings.DesktopIdx,
+                MonitorDeviceName = step.Settings.MonitorDeviceName,
                 Color = new GameOverlay.Drawing.Color(255, 64, 64, 220),
                 BorderThickness = 2f,
                 Mode = RecordingIndicatorMode.RedBorder,

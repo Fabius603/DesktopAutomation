@@ -225,7 +225,8 @@ public sealed record StepFieldDescriptor(
     StepYoloPickerOptions? YoloPickerOptions = null,
     StepWindowsCapabilityPickerOptions? WindowsCapabilityPickerOptions = null,
     StepScreenPointPickerOptions? ScreenPointPickerOptions = null,
-    bool? AllowsDirectValue = null);
+    bool? AllowsDirectValue = null,
+    string? MonitorDeviceNameFieldId = null);
 
 public sealed record StepEditorSectionDescriptor(
     string Id,

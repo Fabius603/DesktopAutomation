@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
@@ -33,6 +33,18 @@ namespace DesktopOverlay
         private double _playbackTime; // Sekunden
         private bool _playbackRunning;
         public double PlaybackSpeed { get; set; } = 1.0;
+        public double PlaybackTime { get { lock (_drawLock) return _playbackTime; } }
+
+        public void SeekPlayback(double seconds)
+        {
+            lock (_drawLock)
+            {
+                _playbackTime = Math.Max(0, seconds);
+                _lastSeconds = _clock.Elapsed.TotalSeconds;
+                foreach (var item in _items.Values)
+                    if (item is ITimedOverlayItem timed) timed.Update(_playbackTime);
+            }
+        }
 
         const uint WDA_EXCLUDEFROMCAPTURE = 0x11; // verhindert Aufnahme/PrintScreen
 

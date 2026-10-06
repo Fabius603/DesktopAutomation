@@ -23,6 +23,7 @@ namespace DesktopAutomationApp.Views
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             PreviewKeyDown += OnPreviewKeyDown;
+            Loaded += (_, _) => OnVmPropertyChanged(_vm, new PropertyChangedEventArgs(nameof(MakroStepsViewModel.SelectedStep)));
         }
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
@@ -82,7 +83,7 @@ namespace DesktopAutomationApp.Views
 
         private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (_syncingSelection || e.PropertyName != nameof(MakroStepsViewModel.SelectedStep)) return;
+            if (_syncingSelection || _vm is null || e.PropertyName != nameof(MakroStepsViewModel.SelectedStep)) return;
 
             var visibleItem = _vm!.SelectedStep is null ? null : _vm.GetVisibleItem(_vm.SelectedStep);
             if (visibleItem != null && StepsList.SelectedItems.Contains(visibleItem))

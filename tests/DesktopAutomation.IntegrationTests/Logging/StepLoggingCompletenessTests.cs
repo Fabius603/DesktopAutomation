@@ -12,6 +12,37 @@ namespace TaskAutomation.Tests.Logging;
 public sealed class StepLoggingCompletenessTests
 {
     [Fact]
+    public async Task IntentionalActionSkip_HasTypedReasonAndNoRunProblem()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = new LogRepository(directory.Path);
+        using var logs = new ExecutionLogService(repository);
+        using var application = new ApplicationLogService(repository);
+        using var serilog = new Serilog.LoggerConfiguration().WriteTo.Sink(application).CreateLogger();
+        using var factory = new Serilog.Extensions.Logging.SerilogLoggerFactory(serilog, false);
+        var step = new KlickOnPoint3DStep();
+        var job = new Job { Steps = [step] };
+        var run = logs.BeginJob(job.Id, "empty input");
+        logs.InitializeRun(run, job, Guid.NewGuid());
+        using var context = LogAmbient.Push(new(run.Id));
+        using (var scope = new StepLogScope(logs, run, step, "Main", 1))
+        {
+            factory.CreateLogger("test").LogInformation("Expected empty detection");
+            scope.Complete(result: new KlickOnPoint3DResult { WasExecuted = true, Success = false, SkipReason = "NoInput" });
+        }
+        logs.Finish(run, LogOutcome.Successful, "Completed");
+        await repository.FlushAsync();
+        var stored = Assert.Single(repository.ReadRuns());
+        Assert.Equal(0, stored.WarningCount);
+        Assert.Equal(0, stored.ErrorCount);
+        var entries = repository.QueryAll(new(RunId: stored.Id)).Entries;
+        var terminal = Assert.Single(entries, entry => entry.Code == LogCodes.StepSkipped);
+        Assert.Equal("NoInput", terminal.Parameters["Reason"]);
+        Assert.Equal("Log.Summary.NoInput", LogPresentation.Summary(terminal).Key);
+        Assert.Equal(LogArea.Execution, Assert.Single(entries, entry => entry.Source == LogSource.Application).Category);
+    }
+
+    [Fact]
     public async Task ConditionsAndOutputs_AreStructuredWithoutPersistingPrivateValues()
     {
         const string privateValue = "unregistered-private-text-9842";
@@ -93,7 +124,7 @@ public sealed class StepLoggingCompletenessTests
     }
 
     [Fact]
-    public async Task ContinueJob_SeparatesRepeatedExecutionsAndDisabledSteps()
+    public async Task ContinueJob_SummarizesSuccessfulRepetitionsAndDisabledSteps()
     {
         using var directory = new TemporaryDirectory();
         using var repository = new LogRepository(directory.Path);
@@ -110,8 +141,13 @@ public sealed class StepLoggingCompletenessTests
         var entries = new LogQueryService(repository).ReadAll(new(), default, out _, out _);
         AssertLifecycle(entries, [body.Id, next.Id]);
         var repeated = entries.Where(entry => entry.Code == LogCodes.StepCompleted && entry.Context.StepId == body.Id).ToArray();
-        Assert.Equal(new int?[] { 1, 2 }, repeated.Select(entry => entry.Iteration));
-        Assert.Equal(2, repeated.Select(entry => entry.Context.StepExecutionId).Distinct().Count());
+        Assert.Equal(1, Assert.Single(repeated).Iteration);
+        var summary = Assert.Single(repository.ReadRuns().Single().StepSummaries, item => item.StepId == body.Id);
+        Assert.Equal(2, summary.Count);
+        Assert.Equal(new LogIterationRange(1, 2), Assert.Single(summary.Iterations));
+        Assert.Equal(2, Assert.Single(repository.ReadRuns().Single().StepSummaries, item => item.StepId == disabled.Id).Count);
+        Assert.Equal(1, repository.ReadRuns().Single().CompletedIterations);
+        Assert.DoesNotContain(entries, entry => entry.Code == LogCodes.IterationCompleted);
         Assert.Equal("NextIteration", Assert.Single(entries, entry => entry.Code == LogCodes.StepCompleted && entry.Context.StepId == next.Id).Parameters["Reason"]);
         Assert.All(entries.Where(entry => entry.Context.StepId == disabled.Id), entry =>
         { Assert.Equal(LogCodes.StepSkipped, entry.Code); Assert.NotNull(entry.Context.StepExecutionId); Assert.Equal("Disabled", entry.Parameters["Reason"]); });

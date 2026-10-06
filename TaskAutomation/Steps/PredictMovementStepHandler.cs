@@ -27,6 +27,13 @@ namespace TaskAutomation.Steps
             var source = resolved.SourceResult as IDetectionStepResult;
             if (source is null)
                 return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
+            var sourceResult = new PredictMovementResult
+            {
+                SourceCaptureIsFresh = source.SourceCaptureIsFresh,
+                SourceCaptureTimestampUtc = source.SourceCaptureTimestampUtc,
+                SourceFrameVersion = source.SourceFrameVersion,
+                SourceFrameTimestamp = source.SourceFrameTimestamp
+            };
             var state = GetState(ctx, step.Id);
             var sampleTimestamp = source.SourceCaptureTimestampUtc;
 
@@ -37,7 +44,7 @@ namespace TaskAutomation.Steps
                 // A single missed detection must not destroy an otherwise stable track. Old
                 // tracks are removed by MaxSampleAgeMs and can therefore survive brief gaps.
                 ctx.Logger.LogInformation("PredictMovementStepHandler: Kein Quellpunkt verfuegbar, History beibehalten.");
-                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
+                return Task.FromResult(sourceResult with { WasExecuted = true, Found = false });
             }
 
             var detections = resolved.Values.Select((point, index) => new DetectionItem
@@ -71,7 +78,7 @@ namespace TaskAutomation.Steps
                     "PredictMovementStepHandler: Noch nicht genug stabile Samples. Benoetigt={MinSamples}, Tracks={Tracks}.",
                     step.Settings.MinSamples,
                     state.Tracks.Count);
-                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
+                return Task.FromResult(sourceResult with { WasExecuted = true, Found = false });
             }
 
             var ordered = predictions
@@ -97,10 +104,10 @@ namespace TaskAutomation.Steps
                     "PredictMovementStepHandler: Confidence {Confidence:F3} liegt unter Minimum {Minimum:F3}.",
                     confidence,
                     step.Settings.MinimumConfidence);
-                return Task.FromResult(new PredictMovementResult { WasExecuted = true, Found = false });
+                return Task.FromResult(sourceResult with { WasExecuted = true, Found = false });
             }
 
-            return Task.FromResult(new PredictMovementResult
+            return Task.FromResult(sourceResult with
             {
                 WasExecuted = true,
                 Found = true,

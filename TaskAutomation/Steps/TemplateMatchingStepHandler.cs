@@ -27,10 +27,17 @@ namespace TaskAutomation.Steps
 
             var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = input.Capture;
+            var captureResult = new TemplateMatchingResult
+            {
+                SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
+                SourceFrameVersion = capture.FrameVersion,
+                SourceFrameTimestamp = capture.FrameTimestamp
+            };
             if (input.Image is null)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: Kein Bild verfuegbar, Step wird uebersprungen");
-                return new TemplateMatchingResult { WasExecuted = true, Found = false };
+                return captureResult with { WasExecuted = true, Found = false };
             }
 
             if (ctx.TemplateMatcher == null)
@@ -43,7 +50,7 @@ namespace TaskAutomation.Steps
                 step.Settings.EnableROI ? step.Settings.ROI : null);
             ctx.TemplateMatcher.SetROI((dynamicRoi ?? step.Settings.ROI).ToOpenCvRect());
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.TemplateMatcher.EnableROI();
-            else                         ctx.TemplateMatcher.DisableROI();
+            else ctx.TemplateMatcher.DisableROI();
             ctx.TemplateMatcher.EnableMultiplePoints();
             ctx.TemplateMatcher.SetTemplate(step.Settings.TemplatePath);
             ctx.TemplateMatcher.SetThreshold(step.Settings.ConfidenceThreshold);
@@ -53,7 +60,7 @@ namespace TaskAutomation.Steps
             if (!rawResult.Success)
             {
                 logger.LogInformation("TemplateMatchingStepHandler: No match found above threshold");
-                return new TemplateMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
+                return captureResult with { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = new PixelPoint(
@@ -95,17 +102,19 @@ namespace TaskAutomation.Steps
             if (allDetections.Count == 0)
                 allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new TemplateMatchingResult
+            return captureResult with
             {
-                WasExecuted   = true,
-                Found         = true,
-                Point         = globalPoint,
-                BoundingBox   = globalBoundingBox,
-                Confidence    = rawResult.Confidence,
+                WasExecuted = true,
+                Found = true,
+                Point = globalPoint,
+                BoundingBox = globalBoundingBox,
+                Confidence = rawResult.Confidence,
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
-                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
+                ,
+                AppliedRoi = dynamicRoi,
+                UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

@@ -1,4 +1,5 @@
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Steps;
 using TaskAutomation.Tests.TestDoubles;
@@ -15,7 +16,7 @@ public sealed class JobExecutorLifecycleTests
             Name = "capture monitors",
             Steps =
             [
-                new DesktopDuplicationStep { Settings = new() { DesktopIdx = 2 } },
+                new DesktopDuplicationStep { Settings = new() { DesktopIdx = 2, MonitorDeviceName = "DISPLAY-A" } },
                 new DesktopDuplicationStep { Settings = new() { DesktopIdx = 1 } }
             ]
         };
@@ -25,6 +26,7 @@ public sealed class JobExecutorLifecycleTests
         await executor.ExecuteJob(job.Id);
 
         Assert.Equal([2, 1], builder.RecordingIndicator.StartedMonitorIndices);
+        Assert.Equal(["DISPLAY-A", ""], builder.RecordingIndicator.StartedMonitorIdentities);
         Assert.False(builder.RecordingIndicator.IsRunning);
     }
 
@@ -148,7 +150,7 @@ public sealed class JobExecutorLifecycleTests
     }
 
     [Fact]
-    public async Task ExecuteJob_RepeatingJobLogsEveryIterationAndStep()
+    public async Task ExecuteJob_RepeatingJobObservesCompletedRoundsAndStepOutcomesForAggregation()
     {
         using var cts = new CancellationTokenSource();
         var step = Text("run");
@@ -163,15 +165,12 @@ public sealed class JobExecutorLifecycleTests
         using var executor = await builder.BuildAsync();
         await executor.ExecuteJob(job.Id, cts.Token);
 
-        Assert.Equal(
-            Enumerable.Range(1, 5).Select(iteration => $"Job-Runde {iteration} gestartet."),
-            builder.Logs.Entries
-                .Where(entry => entry.Message.StartsWith("Job-Runde ") && entry.Message.EndsWith(" gestartet."))
-                .Select(entry => entry.Message));
-        Assert.Equal(5, builder.Logs.Entries.Count(entry =>
-            entry.Message == "Step gestartet." && entry.StepId == step.Id));
-        Assert.Equal(5, builder.Logs.Entries.Count(entry =>
-            entry.Message == "Step abgeschlossen." && entry.StepId == step.Id));
+        var rounds = builder.Logs.Observations.Where(entry => entry.Code == LogCodes.IterationCompleted).ToArray();
+        Assert.Equal(Enumerable.Range(1, 5).Select(iteration => (int?)iteration), rounds.Select(entry => entry.Iteration));
+        Assert.All(rounds, entry => { Assert.Equal("Main", entry.Phase); Assert.True(entry.DurationMs >= 0); });
+        var completions = builder.Logs.Observations.Where(entry => entry.Code == LogCodes.StepCompleted && entry.Context.StepId == step.Id).ToArray();
+        Assert.Equal(5, completions.Length);
+        Assert.Equal(5, completions.Select(entry => entry.Context.StepExecutionId).Distinct().Count());
     }
 
     [Fact]

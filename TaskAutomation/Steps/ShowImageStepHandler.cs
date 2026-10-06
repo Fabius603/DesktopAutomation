@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +23,12 @@ namespace TaskAutomation.Steps
             if (rawImage == null)
             {
                 logger.LogInformation("ShowImageStepHandler: Kein Bild verfügbar, Step wird übersprungen");
-                return new ShowImageResult { WasExecuted = true, Success = false };
+                return new ShowImageResult
+                {
+                    WasExecuted = true,
+                    Success = false,
+                    SkipReason = ResultBindingResolver.IsExpectedEmpty(imageInput.Resolution.Status) ? "NoInput" : null
+                };
             }
 
             var overlay = VisualOverlayResolver.Resolve(

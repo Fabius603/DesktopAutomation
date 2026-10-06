@@ -2,6 +2,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                 xmlns:local="clr-namespace:DesktopAutomationApp.Views"
                  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                  Title="{Binding DialogTitle}"
@@ -152,113 +153,8 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled"
                                       Padding="18,16">
-                            <StackPanel>
-                                <Border Style="{StaticResource GeometryCard}"
-                                        Visibility="{Binding ShowMouseXY, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Position}"
-                                                   Style="{StaticResource GeometrySectionHeader}" Margin="0,0,0,10"/>
-                                        <WrapPanel>
-                                            <StackPanel Style="{StaticResource GeometryFieldContainer}">
-                                                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.X}" Style="{StaticResource GeometryFieldLabel}"/>
-                                                <TextBox Text="{Binding X, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource GeometryNumberInput}"/>
-                                            </StackPanel>
-                                            <StackPanel Style="{StaticResource GeometryFieldContainer}">
-                                                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Y}" Style="{StaticResource GeometryFieldLabel}"/>
-                                                <TextBox Text="{Binding Y, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource GeometryNumberInput}"/>
-                                            </StackPanel>
-                                        </WrapPanel>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource GeometryCard}"
-                                        Visibility="{Binding ShowMouseDelta, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Offset}"
-                                                   Style="{StaticResource GeometrySectionHeader}" Margin="0,0,0,10"/>
-                                        <WrapPanel>
-                                            <StackPanel Style="{StaticResource GeometryFieldContainer}">
-                                                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DeltaX}" Style="{StaticResource GeometryFieldLabel}"/>
-                                                <TextBox Text="{Binding DeltaX, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource GeometryNumberInput}"/>
-                                            </StackPanel>
-                                            <StackPanel Style="{StaticResource GeometryFieldContainer}">
-                                                <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DeltaY}" Style="{StaticResource GeometryFieldLabel}"/>
-                                                <TextBox Text="{Binding DeltaY, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource GeometryNumberInput}"/>
-                                            </StackPanel>
-                                        </WrapPanel>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource GeometryCard}"
-                                        Visibility="{Binding ShowMouseButton, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Button}" Style="{StaticResource GeometryFieldLabel}"/>
-                                        <ComboBox Width="220" HorizontalAlignment="Left"
-                                                  SelectedValuePath="Tag" SelectedValue="{Binding MouseButton}">
-                                            <ComboBoxItem Tag="Left" Content="{loc:Translate Key=Ui.Macro.StepEditor.Left}"/>
-                                            <ComboBoxItem Tag="Right" Content="{loc:Translate Key=Ui.Macro.StepEditor.Right}"/>
-                                            <ComboBoxItem Tag="Middle" Content="{loc:Translate Key=Ui.Macro.StepEditor.Middle}"/>
-                                        </ComboBox>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource GeometryCard}"
-                                        Visibility="{Binding ShowKey, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Key}" Style="{StaticResource GeometryFieldLabel}"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox IsReadOnly="True" Text="{Binding Key}"/>
-                                            <Button Grid.Column="1" Margin="8,0,0,0"
-                                                    Command="{Binding CaptureKeyCommand}"
-                                                    Content="{Binding CaptureButtonText}"
-                                                    Style="{StaticResource ButtonSecondary}"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource GeometryCard}"
-                                        Visibility="{Binding ShowDuration, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.Duration}" Style="{StaticResource GeometryFieldLabel}"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="110"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Text="{Binding DurationValue, UpdateSourceTrigger=PropertyChanged}"
-                                                     Style="{StaticResource GeometryNumberInput}"/>
-                                            <ComboBox Grid.Column="1" ItemsSource="{Binding DurationUnits}"
-                                                      SelectedItem="{Binding SelectedDurationUnit}"
-                                                      DisplayMemberPath="Label" Margin="8,0,0,0"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Style="{StaticResource GeometryCard}">
-                                    <StackPanel>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DelayBefore}"
-                                                   Style="{StaticResource GeometrySectionHeader}"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.StepEditor.DelayBefore.Help}"
-                                                   Style="{StaticResource GeometrySummary}" Margin="0,3,0,10"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="110"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Text="{Binding DelayBeforeValue, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                                                     Style="{StaticResource GeometryNumberInput}"/>
-                                            <ComboBox Grid.Column="1" ItemsSource="{Binding DelayUnits}"
-                                                      SelectedItem="{Binding SelectedDelayUnit}"
-                                                      DisplayMemberPath="Label" Margin="8,0,0,0"/>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </ScrollViewer>
+                            <local:MacroStepFields/>
+</ScrollViewer>
                     </Border>
                 </Grid>
             </Border>

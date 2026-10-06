@@ -1,237 +1,165 @@
 using ImageCapture.DesktopDuplication;
-using ImageHelperMethods;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Concurrent;
-using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using TaskAutomation.Geometry;
-using TaskAutomation.Jobs;
 
-namespace TaskAutomation.Steps
+namespace TaskAutomation.Steps;
+
+/// <summary>Owns capture policy and one serialized session per monitor identity.</summary>
+public sealed class DesktopCaptureService : IDesktopCaptureService
 {
-    /// <summary>
-    /// Implementierung von <see cref="IDesktopCaptureService"/>.
-    /// Eine Instanz dieser Klasse wird als Singleton registriert und teilt sich genau eine
-    /// <see cref="DesktopDuplicator"/>-Instanz pro Monitor-Index über alle gleichzeitig
-    /// laufenden Jobs hinweg.
-    /// </summary>
-    public sealed class DesktopCaptureService : IDesktopCaptureService
+    private sealed class MonitorSession
     {
-        private readonly ILogger<DesktopCaptureService> _logger;
+        public readonly SemaphoreSlim Gate = new(1, 1);
+        public IDesktopDuplicationSession? Capture;
+    }
+    private readonly ILogger<DesktopCaptureService> _logger;
+    private readonly IDesktopDuplicationSessionFactory _factory;
+    private readonly TimeProvider _time;
+    private readonly object _lifetime = new();
+    private readonly Dictionary<string, MonitorSession> _sessions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly CancellationTokenSource _shutdown = new();
+    private bool _disposed;
+    private int _activeCaptures;
 
-        // pro Monitor-Index: ein Semaphor (serialisiert Zugriffe) und ein Duplicator
-        private readonly ConcurrentDictionary<int, SemaphoreSlim>   _semaphores  = new();
-        private readonly ConcurrentDictionary<int, DesktopDuplicator> _duplicators = new();
+    public DesktopCaptureService(ILogger<DesktopCaptureService> logger)
+        : this(logger, new DesktopDuplicationSessionFactory(), TimeProvider.System) { }
 
-        // ── Cursor-Overlay via P/Invoke ───────────────────────────────────────
-        private const uint CURSOR_SHOWING = 0x00000001;
+    public DesktopCaptureService(ILogger<DesktopCaptureService> logger,
+        IDesktopDuplicationSessionFactory factory, TimeProvider? timeProvider = null)
+    {
+        _logger = logger;
+        _factory = factory;
+        _time = timeProvider ?? TimeProvider.System;
+    }
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CursorPoint { public int X, Y; }
+    public Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false)
+        => CaptureAsync(new DesktopCaptureRequest(monitorIdx, CaptureCursor: captureCursor), ct);
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CURSORINFO
+    public async Task<CaptureFrame> CaptureAsync(DesktopCaptureRequest request, CancellationToken ct)
+    {
+        request.Validate();
+        lock (_lifetime)
         {
-            public int    cbSize;
-            public uint   flags;
-            public IntPtr hCursor;
-            public CursorPoint ptScreenPos;
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _activeCaptures++;
         }
-
-        [DllImport("user32.dll")]
-        private static extern bool GetCursorInfo(ref CURSORINFO pci);
-
-        [DllImport("user32.dll")]
-        private static extern bool DrawIcon(IntPtr hDC, int X, int Y, IntPtr hIcon);
-
-        private static void OverlayCursor(Bitmap bmp, Rectangle monitorBounds)
+        try
         {
-            var ci = new CURSORINFO { cbSize = Marshal.SizeOf<CURSORINFO>() };
-            if (!GetCursorInfo(ref ci) || (ci.flags & CURSOR_SHOWING) == 0) return;
-
-            int cx = ci.ptScreenPos.X - monitorBounds.Left;
-            int cy = ci.ptScreenPos.Y - monitorBounds.Top;
-
-            // Cursor liegt außerhalb des aufgenommenen Monitors?
-            if (cx < -64 || cy < -64 || cx > bmp.Width + 64 || cy > bmp.Height + 64) return;
-
-            using var g = Graphics.FromImage(bmp);
-            IntPtr hdc = g.GetHdc();
-            try   { DrawIcon(hdc, cx, cy, ci.hCursor); }
-            finally { g.ReleaseHdc(hdc); }
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _shutdown.Token);
+            // Native acquisition and GPU readback must never block the WPF dispatcher.
+            return await Task.Run(() => CaptureCoreAsync(request, linked.Token), linked.Token).ConfigureAwait(false);
         }
-
-        public DesktopCaptureService(ILogger<DesktopCaptureService> logger)
-            => _logger = logger;
-
-        public async Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false)
+        finally
         {
-            var sem = _semaphores.GetOrAdd(monitorIdx, _ => new SemaphoreSlim(1, 1));
-            await sem.WaitAsync(ct).ConfigureAwait(false);
-            DesktopFrame? frame = null;
-            DesktopFrame? cachedFallbackFrame = null;
-            try
+            lock (_lifetime)
+            {
+                _activeCaptures--;
+                Monitor.PulseAll(_lifetime);
+            }
+        }
+    }
+
+    private async Task<CaptureFrame> CaptureCoreAsync(DesktopCaptureRequest request, CancellationToken ct)
+    {
+        long started = _time.GetTimestamp();
+        var monitor = _factory.ResolveMonitor(request.MonitorIndex, request.MonitorDeviceName);
+        MonitorSession session;
+        lock (_lifetime)
+        {
+            if (!_sessions.TryGetValue(monitor.DeviceName, out session!))
+                _sessions.Add(monitor.DeviceName, session = new MonitorSession());
+        }
+        int queueBudget = request.TimeoutMilliseconds - (int)_time.GetElapsedTime(started).TotalMilliseconds;
+        if (queueBudget <= 0) throw new TimeoutException("Desktop capture timed out resolving the monitor.");
+        using var deadline = new CancellationTokenSource(TimeSpan.FromMilliseconds(queueBudget), _time);
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct, deadline.Token);
+        try { await session.Gate.WaitAsync(budget.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        { throw new TimeoutException("Desktop capture timed out waiting for the monitor."); }
+        try
+        {
+            bool fresh = false;
+            int recoveries = 0;
+            while (true)
             {
                 ct.ThrowIfCancellationRequested();
-
-                // Lazy-Init des Duplicators (nur beim ersten Aufruf pro Monitor)
-                if (!_duplicators.TryGetValue(monitorIdx, out var duplicator))
+                int remaining = request.TimeoutMilliseconds - (int)_time.GetElapsedTime(started).TotalMilliseconds;
+                if (remaining <= 0) break;
+                try
                 {
-                    _logger.LogDebug(
-                        "DesktopCaptureService: Erstelle DesktopDuplicator für Monitor {MonitorIndex}", monitorIdx);
-                    duplicator = CreateDuplicator(monitorIdx);
-                    // 16 ms ≈ 60 fps: DXGI blockiert intern bis ein neuer Frame verfügbar ist.
-                    _duplicators[monitorIdx] = duplicator;
-                    // Warm-up-Pause: DXGI braucht ~100 ms bis der erste Frame bereit ist.
-                    await Task.Delay(100, ct).ConfigureAwait(false);
+                    var current = _factory.ResolveMonitor(request.MonitorIndex, monitor.DeviceName);
+                    if (session.Capture != null && session.Capture.Bounds != current.Bounds) Reset(session);
+                    session.Capture ??= _factory.Create(current);
+                    // Initialization may exceed the waiting budget; only probe without waiting afterward.
+                    remaining = Math.Max(0, request.TimeoutMilliseconds - (int)_time.GetElapsedTime(started).TotalMilliseconds);
+                    int acquireTimeout = !request.WaitForNewFrame && session.Capture.HasImage ? 0 : Math.Min(16, remaining);
+                    fresh = session.Capture.UpdateFrame(acquireTimeout);
                     ct.ThrowIfCancellationRequested();
+                    if (session.Capture.HasImage && (fresh || !request.WaitForNewFrame)) break;
                 }
-
-                int retryCount  = 0;
-                const int maxRetries = 6;
-
-                while (frame == null && retryCount < maxRetries)
+                catch (Exception ex) when (ex is DesktopDuplicationException or ObjectDisposedException)
                 {
-                    ct.ThrowIfCancellationRequested();
-                    try
-                    {
-                        frame = duplicator.GetLatestFrame();
-                        if (frame?.DesktopImage == null)
-                        {
-                            frame?.Dispose();
-                            frame = null;
-                            retryCount++;
-                            _logger.LogWarning(
-                                "DesktopCaptureService: Kein Bild in Versuch {Attempt}/{Max} (Monitor {MonitorIndex})",
-                                retryCount, maxRetries, monitorIdx);
-                            await Task.Delay(16, ct).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        if (!frame.IsFresh)
-                        {
-                            cachedFallbackFrame?.Dispose();
-                            cachedFallbackFrame = frame;
-                            frame = null;
-                            retryCount++;
-                            _logger.LogDebug(
-                                "DesktopCaptureService: Gecachten Frame in Versuch {Attempt}/{Max} erhalten, warte auf frischen Frame (Monitor {MonitorIndex})",
-                                retryCount, maxRetries, monitorIdx);
-                            await Task.Delay(16, ct).ConfigureAwait(false);
-                        }
-                    }
-                    catch (Exception ex) when (retryCount < maxRetries - 1)
-                    {
-                        retryCount++;
-                        frame?.Dispose();
-                        frame = null;
-                        _logger.LogWarning(ex,
-                            "DesktopCaptureService: Capture fehlgeschlagen in Versuch {Attempt}/{Max} (Monitor {MonitorIndex})",
-                            retryCount, maxRetries, monitorIdx);
-
-                        if (ex is ObjectDisposedException || ex is DesktopDuplicationException)
-                        {
-                            duplicator = RecreateDuplicator(monitorIdx);
-                            await Task.Delay(100, ct).ConfigureAwait(false);
-                        }
-
-                        await Task.Delay(50, ct).ConfigureAwait(false);
-                    }
+                    Reset(session);
+                    if (++recoveries > 2) throw;
+                    _logger.LogDebug(ex, "Desktop capture session lost; recreating monitor session (attempt {Attempt}).", recoveries);
                 }
-
-                if (frame == null && cachedFallbackFrame != null)
-                {
-                    frame = cachedFallbackFrame;
-                    cachedFallbackFrame = null;
-                    _logger.LogWarning(
-                        "DesktopCaptureService: Kein frischer Frame nach {Max} Versuchen, verwende letzten gecachten Frame (Monitor {MonitorIndex})",
-                        maxRetries, monitorIdx);
-                }
-                else
-                {
-                    cachedFallbackFrame?.Dispose();
-                }
-
-                if (frame?.DesktopImage == null)
-                {
-                    frame?.Dispose();
-                    throw new InvalidOperationException(
-                        $"Kein Desktop-Bild nach {maxRetries} Versuchen für Monitor {monitorIdx}.");
-                }
-
-                using (frame)
-                {
-                    // Eigentumsübertragung: frame.DesktopImage wird direkt übernommen.
-                    var bitmap = frame.DesktopImage;
-                    frame.DesktopImage = null;
-
-                    var screenBounds = ScreenHelper.GetDesktopBounds(monitorIdx);
-                    var offset       = new System.Drawing.Point(screenBounds.Left, screenBounds.Top);
-
-                    if (captureCursor)
-                        OverlayCursor(bitmap, screenBounds);
-
-                    _logger.LogInformation(
-                        "DesktopCaptureService: Aufgenommen {W}x{H} bei Offset ({X},{Y})",
-                        bitmap.Width, bitmap.Height, offset.X, offset.Y);
-
-                    return new CaptureFrame
-                    {
-                        Image       = bitmap,
-                        Bounds      = screenBounds.ToPixelRegion(),
-                        Offset      = offset.ToPixelPoint(),
-                        IsFresh     = frame.IsFresh,
-                        CaptureTimestampUtc = frame.CaptureTimestampUtc == DateTime.MinValue
-                            ? DateTime.UtcNow
-                            : frame.CaptureTimestampUtc
-                    };
-                }
+                int delayBudget = request.TimeoutMilliseconds - (int)_time.GetElapsedTime(started).TotalMilliseconds;
+                if (delayBudget > 0)
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(4, delayBudget)), _time, ct).ConfigureAwait(false);
             }
-            finally
+            ct.ThrowIfCancellationRequested();
+            if (session.Capture?.HasImage != true || (!fresh && request.WaitForNewFrame && !request.AllowCachedFallback))
+                throw new TimeoutException("No suitable desktop image was available within the capture time limit.");
+
+            using var frame = session.Capture.CopyFrame(request.CaptureCursor);
+            if (frame.DesktopImage == null || frame.DesktopImage.Width != frame.Bounds.Width || frame.DesktopImage.Height != frame.Bounds.Height)
             {
-                frame?.Dispose();
-                cachedFallbackFrame?.Dispose();
-                sem.Release();
+                Reset(session);
+                throw new DesktopDuplicationException("The desktop image and monitor bounds do not match.");
             }
-        }
-
-        private DesktopDuplicator CreateDuplicator(int monitorIdx)
-        {
-            _logger.LogDebug(
-                "DesktopCaptureService: Erstelle DesktopDuplicator fÃ¼r Monitor {MonitorIndex}", monitorIdx);
-
-            var duplicator = new DesktopDuplicator(monitorIdx);
-            duplicator.SetFrameTimeout(16);
-            return duplicator;
-        }
-
-        private DesktopDuplicator RecreateDuplicator(int monitorIdx)
-        {
-            if (_duplicators.TryRemove(monitorIdx, out var oldDuplicator))
+            ct.ThrowIfCancellationRequested();
+            var result = new CaptureFrame
             {
-                try { oldDuplicator.Dispose(); } catch { /* best-effort */ }
-            }
-
-            _logger.LogWarning(
-                "DesktopCaptureService: DesktopDuplicator fÃ¼r Monitor {MonitorIndex} wird neu erstellt.",
-                monitorIdx);
-
-            var duplicator = CreateDuplicator(monitorIdx);
-            _duplicators[monitorIdx] = duplicator;
-            return duplicator;
+                Image = frame.DesktopImage,
+                Bounds = frame.Bounds.ToPixelRegion(),
+                Offset = frame.Bounds.Location.ToPixelPoint(),
+                IsFresh = fresh,
+                CaptureTimestampUtc = frame.CaptureTimestampUtc,
+                FrameVersion = frame.FrameVersion,
+                FrameTimestamp = frame.FrameTimestamp
+            };
+            frame.DesktopImage = null;
+            return result;
         }
+        finally { session.Gate.Release(); }
+    }
 
-        public void Dispose()
+    private void Reset(MonitorSession session)
+    {
+        var capture = session.Capture;
+        session.Capture = null;
+        try { capture?.Dispose(); }
+        catch (Exception ex) { _logger.LogDebug(ex, "Failed to dispose a desktop capture session."); }
+    }
+
+    public void Dispose()
+    {
+        lock (_lifetime)
         {
-            foreach (var d in _duplicators.Values)
-                try { d.Dispose(); } catch { /* best-effort */ }
-            foreach (var s in _semaphores.Values)
-                try { s.Dispose(); } catch { /* best-effort */ }
-            _duplicators.Clear();
-            _semaphores.Clear();
+            if (_disposed) return;
+            _disposed = true;
+        }
+        _shutdown.Cancel();
+        lock (_lifetime)
+        {
+            while (_activeCaptures > 0) Monitor.Wait(_lifetime);
+            foreach (var session in _sessions.Values)
+            {
+                try { Reset(session); }
+                finally { session.Gate.Dispose(); }
+            }
+            _sessions.Clear();
+            _shutdown.Dispose();
         }
     }
 }

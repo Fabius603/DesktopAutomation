@@ -12,6 +12,215 @@ namespace TaskAutomation.Tests.Logging;
 public sealed class StructuredLoggingTests
 {
     [Fact]
+    public async Task AlternatingBranches_BoundSummaryRangesAndKeepExactCounts()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = new LogRepository(directory.Path);
+        var id = Guid.NewGuid();
+        repository.SaveRun(new LogRun
+        {
+            Id = id,
+            StartedAt = DateTimeOffset.UtcNow,
+            Steps = [new("step", "ShowText", 1, "Main", true)]
+        });
+        for (var iteration = 1; iteration <= 1000; iteration++)
+            repository.Append(new LogEvent
+            {
+                Context = new(id, StepId: "step", StepExecutionId: Guid.NewGuid()),
+                Phase = "Main",
+                Iteration = iteration,
+                Code = LogCodes.StepSkipped,
+                Parameters = new() { ["Reason"] = iteration % 2 == 0 ? "Disabled" : "InactiveBranch" }
+            });
+        await repository.FlushAsync();
+        var details = (await new LogQueryService(repository).RunAsync(id))!;
+        Assert.Equal(2, details.Steps.Count);
+        Assert.Equal(1000, details.StepCounts![StepLogOutcome.Skipped]);
+        Assert.All(details.Run.StepSummaries, summary =>
+        {
+            Assert.Equal(500, summary.Count);
+            Assert.Equal(256, summary.Iterations.Count);
+            Assert.False(summary.IterationCoverageComplete);
+        });
+        Assert.Equal(2, repository.QueryAll(new(RunId: id)).Entries.Count);
+    }
+
+    [Fact]
+    public async Task RepeatedSteps_KeepWarningAndCancellationDetailsAndExportSanitizedSummaries()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = new LogRepository(directory.Path);
+        repository.Privacy.RegisterSecrets(["private-value"]);
+        var id = Guid.NewGuid();
+        repository.SaveRun(new LogRun
+        {
+            Id = id,
+            StartedAt = DateTimeOffset.UtcNow,
+            Steps = [new("step", "ShowText", 1, "Main", true)]
+        });
+        for (var iteration = 1; iteration <= 4; iteration++)
+        {
+            var context = new LogContext(id, StepId: "step", StepExecutionId: Guid.NewGuid());
+            repository.Append(new LogEvent { Context = context, Phase = "Main", Iteration = iteration, Code = LogCodes.StepStarted });
+            if (iteration == 2)
+                repository.Append(new LogEvent
+                {
+                    Context = context,
+                    Phase = "Main",
+                    Iteration = iteration,
+                    Level = ExecutionLogLevel.Warning,
+                    Code = LogCodes.Message,
+                    ProblemId = Guid.NewGuid()
+                });
+            repository.Append(new LogEvent
+            {
+                Context = context,
+                Phase = "Main",
+                Iteration = iteration,
+                Code = LogCodes.StepPaths,
+                Paths = [new("TargetFile", @"C:\private-value\output.png")]
+            });
+            repository.Append(new LogEvent
+            {
+                Context = context,
+                Phase = "Main",
+                Iteration = iteration,
+                Code = iteration == 4 ? LogCodes.StepCancelled : LogCodes.StepCompleted,
+                DurationMs = 10
+            });
+        }
+        var run = repository.ReadRuns().Single();
+        repository.SaveRun(run with { EndedAt = DateTimeOffset.UtcNow, Outcome = LogOutcome.Stopped });
+        await repository.FlushAsync();
+        var queries = new LogQueryService(repository);
+        var details = (await queries.RunAsync(id))!;
+        Assert.Equal(3, details.Steps.Count);
+        Assert.Equal(2, details.StepCounts![StepLogOutcome.Successful]);
+        Assert.Equal(1, details.StepCounts[StepLogOutcome.Warning]);
+        Assert.Equal(1, details.StepCounts[StepLogOutcome.Cancelled]);
+        Assert.Equal(1, details.Run.WarningCount);
+        var summary = Assert.Single(details.Run.StepSummaries);
+        Assert.Equal(20, summary.TotalDurationMs);
+        Assert.Equal(new[] { new LogIterationRange(1, 1), new(3, 3) }, summary.Iterations);
+        Assert.Contains("[redacted]", Assert.Single(summary.LastEvent.Paths).Value);
+        var events = repository.QueryAll(new(RunId: id)).Entries;
+        Assert.DoesNotContain(events, entry => entry.Iteration == 3);
+        Assert.Single(events, entry => entry.Iteration == 2 && entry.Code == LogCodes.StepStarted);
+        Assert.Single(events, entry => entry.Iteration == 4 && entry.Code == LogCodes.StepStarted);
+        Assert.NotNull(await queries.EventDetailsAsync(summary.LastEvent.Id));
+        var target = Path.Combine(directory.Path, "summaries.zip");
+        Assert.True((await new LogExportService(repository, queries).ExportAsync(new(RunId: id), target, "test")).IsComplete);
+        using var zip = ZipFile.OpenRead(target);
+        using var reader = new StreamReader(zip.GetEntry("runs.json")!.Open());
+        var json = reader.ReadToEnd();
+        Assert.DoesNotContain("private-value", json);
+        Assert.Equal(2, Assert.Single(JsonSerializer.Deserialize<LogRun[]>(json, LogRepository.JsonOptions)!).StepSummaries.Single().Count);
+    }
+
+    [Fact]
+    public async Task LargeRun_RepetitionsAreSummarizedWithoutLosingCountsOnRestart()
+    {
+        using var directory = new TemporaryDirectory();
+        var id = Guid.NewGuid();
+        const int count = 12000;
+        using (var repository = new LogRepository(directory.Path))
+        {
+            repository.SaveRun(new LogRun
+            {
+                Id = id,
+                StartedAt = DateTimeOffset.UtcNow,
+                Steps = [new("step", "ShowText", 1, "Main", true)]
+            });
+            var executions = Enumerable.Range(0, count / 2).Select(_ => Guid.NewGuid()).ToArray();
+            for (var index = 0; index < count; index++)
+                repository.Append(new LogEvent
+                {
+                    Context = new(id, StepId: "step", StepExecutionId: executions[index / 2]),
+                    Code = index % 2 == 0 ? LogCodes.StepStarted : LogCodes.StepCompleted,
+                    Phase = "Main",
+                    Iteration = index / 2,
+                    Message = "step observation"
+                });
+            var checkpoint = repository.SnapshotSequence;
+            repository.Append(new LogEvent { Context = new(id), Message = "later" });
+            var run = repository.ReadRuns().Single();
+            repository.SaveRun(run with { EndedAt = DateTimeOffset.UtcNow, Outcome = LogOutcome.Successful });
+            await repository.FlushAsync();
+            var frozen = repository.QueryAll(new(RunId: id, SnapshotSequence: checkpoint));
+            Assert.Equal(2, frozen.Entries.Count);
+            Assert.Equal(2, frozen.Entries.Select(entry => entry.Id).Distinct().Count());
+            Assert.DoesNotContain(frozen.Entries, entry => entry.Message == "later");
+            Assert.Null(frozen.NextBeforeSequence);
+            Assert.True(repository.ReadRuns().Single().IsComplete);
+            var steps = (await new LogQueryService(repository).RunAsync(id))!.Steps;
+            var step = Assert.Single(steps);
+            Assert.Equal(StepLogOutcome.Successful, step.Outcome);
+            Assert.Equal(count / 2, step.Summary!.Count);
+            Assert.Equal(new LogIterationRange(0, count / 2 - 1), Assert.Single(step.Summary.Iterations));
+            Assert.Equal(count / 2, (await new LogQueryService(repository).RunAsync(id))!.StepCounts![StepLogOutcome.Successful]);
+        }
+        using var restored = new LogRepository(directory.Path);
+        Assert.Equal(3, restored.QueryAll(new(RunId: id)).Entries.Count);
+        Assert.Equal(count / 2, Assert.Single(restored.ReadRuns().Single().StepSummaries).Count);
+        Assert.Equal(LogReadState.Available, (await new LogQueryService(restored).RunAsync(id))!.State);
+    }
+
+    [Fact]
+    public async Task HistoricalStorageLoss_DoesNotMakeUnrelatedCompleteRunPartial()
+    {
+        using var directory = new TemporaryDirectory();
+        File.WriteAllText(Path.Combine(directory.Path, "health.json"),
+            "{\"Sequence\":0,\"Issues\":[\"storage.overload\",\"storage.write-failed\"],\"Counters\":{}}");
+        using var repository = new LogRepository(directory.Path);
+        var complete = repository.SaveRun(new LogRun
+        {
+            Id = Guid.NewGuid(),
+            StartedAt = DateTimeOffset.UtcNow,
+            EndedAt = DateTimeOffset.UtcNow,
+            Outcome = LogOutcome.Successful
+        });
+        var damaged = repository.SaveRun(new LogRun
+        {
+            Id = Guid.NewGuid(),
+            StartedAt = DateTimeOffset.UtcNow,
+            EndedAt = DateTimeOffset.UtcNow,
+            Outcome = LogOutcome.Successful,
+            IsComplete = false,
+            LostEntries = 5
+        });
+        repository.Append(new LogEvent { Context = new(complete.Id) });
+        repository.Append(new LogEvent { Context = new(damaged.Id) });
+        await repository.FlushAsync();
+        var queries = new LogQueryService(repository);
+        var details = await queries.RunAsync(complete.Id);
+        Assert.Equal(LogReadState.Available, details!.State);
+        Assert.Empty(details.Issues);
+        Assert.False(LogQueryService.IsProblem(details.Run));
+        var missing = await queries.RunAsync(damaged.Id);
+        Assert.Equal(LogReadState.Partial, missing!.State);
+        Assert.Contains("run.incomplete", missing.Issues);
+        Assert.Contains("storage.overload", repository.Query(new()).Issues);
+    }
+
+    [Fact]
+    public async Task RetainedReadCache_ObservesFileAppendReplacementAndDeletion()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = new LogRepository(directory.Path);
+        repository.Append(new LogEvent { Message = "original" });
+        await repository.FlushAsync();
+        Assert.Single(repository.QueryAll(new()).Entries);
+        var path = Directory.GetFiles(directory.Path, "*.events.jsonl").Single();
+        var appended = new LogEvent { Sequence = repository.SnapshotSequence, Message = "appended" };
+        File.AppendAllText(path, JsonSerializer.Serialize(appended, LogRepository.JsonOptions) + "\n");
+        Assert.Equal(2, repository.QueryAll(new()).Entries.Count);
+        File.WriteAllText(path, JsonSerializer.Serialize(appended, LogRepository.JsonOptions) + "\n");
+        Assert.Equal("appended", Assert.Single(repository.QueryAll(new()).Entries).Message);
+        File.Delete(path);
+        Assert.Empty(repository.QueryAll(new()).Entries);
+    }
+
+    [Fact]
     public async Task Retention_ExpiresOldEvidenceButPreservesExecutionCounter()
     {
         using var directory = new TemporaryDirectory();

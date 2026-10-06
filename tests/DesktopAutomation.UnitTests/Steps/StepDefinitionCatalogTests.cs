@@ -18,6 +18,34 @@ namespace TaskAutomation.Tests.Steps;
 
 public sealed class StepDefinitionCatalogTests
 {
+    [Fact]
+    public void MovementThreshold_IsAdvancedDefaultsToTenAndSurvivesEditing()
+    {
+        var definition = new KlickOnPoint3DStepDefinition();
+        var field = Assert.Single(definition.Descriptor.Fields,
+            field => field.Id == KlickOnPoint3DStepDefinition.MovementThresholdFieldId);
+        Assert.True(field.Advanced);
+        Assert.Equal(10, field.DefaultValue!.GetValue<int>());
+        var draft = definition.CreateDraft();
+        Assert.Equal(10, draft.Values[field.Id]!.GetValue<int>());
+        draft.Values[field.Id] = JsonValue.Create(17);
+        var step = Assert.IsType<KlickOnPoint3DStep>(definition.ApplyDraft(draft));
+        Assert.Equal(17, step.Settings.MovementThresholdPixels);
+        Assert.Equal(17, definition.CreateDraft(step).Values[field.Id]!.GetValue<int>());
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("1.5")]
+    [InlineData("2147483648")]
+    public void MovementThreshold_RejectsInvalidPixelValues(string json)
+    {
+        var definition = new KlickOnPoint3DStepDefinition();
+        var draft = definition.CreateDraft();
+        draft.Values[KlickOnPoint3DStepDefinition.MovementThresholdFieldId] = JsonNode.Parse(json);
+        Assert.Contains(definition.ValidateDraft(draft), issue => issue.FieldId == KlickOnPoint3DStepDefinition.MovementThresholdFieldId);
+    }
+
     [Theory]
     [InlineData("0")]
     [InlineData("999")]
@@ -3755,12 +3783,13 @@ public sealed class StepDefinitionCatalogTests
 
         Assert.True(monitor.UsesMonitorPicker);
         Assert.False(monitor.UsesTextInput);
-        monitor.IntegerValue = 3;
+        editor.ApplyMonitorSelection(monitor, 3, "DISPLAY-A");
         cursor.BooleanValue = true;
 
         Assert.True(editor.TryCreateStep(out var created));
         var capture = Assert.IsType<DesktopDuplicationStep>(created);
         Assert.Equal(3, capture.Settings.DesktopIdx);
+        Assert.Equal("DISPLAY-A", capture.Settings.MonitorDeviceName);
         Assert.True(capture.Settings.CaptureCursor);
     }
 

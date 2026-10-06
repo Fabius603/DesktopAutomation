@@ -14,8 +14,7 @@ public static class MakroTimeline
         {
             elapsed = checked(elapsed + Math.Max(0, command.DelayBeforeMicroseconds ?? 0));
             result.Add(new MakroTimelineEntry(command, elapsed));
-            if (command is TimeoutBefehl timeout)
-                elapsed = checked(elapsed + timeout.Duration * 1_000L);
+            elapsed = checked(elapsed + MakroCommandRules.DurationMicroseconds(command));
         }
 
         return result;
@@ -27,6 +26,6 @@ public static class MakroTimeline
         if (timeline.Count == 0) return 0;
         var last = timeline[^1];
         return checked(last.ExecutionTimeMicroseconds
-            + (last.Command is TimeoutBefehl timeout ? timeout.Duration * 1_000L : 0));
+            + MakroCommandRules.DurationMicroseconds(last.Command));
     }
 }

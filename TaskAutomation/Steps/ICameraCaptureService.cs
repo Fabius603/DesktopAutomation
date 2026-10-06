@@ -14,7 +14,12 @@ public sealed record CameraCaptureOptions(
     double FramesPerSecond = 0,
     string PixelFormat = "");
 
-public sealed record CameraCaptureFrame(Bitmap Image, DateTime CaptureTimestampUtc);
+public sealed record CameraCaptureFrame(Bitmap Image, DateTime CaptureTimestampUtc)
+{
+    public long FrameVersion { get; init; }
+    /// <summary>Frame receipt time in Stopwatch ticks; not a camera presentation acknowledgement.</summary>
+    public long FrameTimestamp { get; init; }
+}
 
 public interface ICameraCaptureService : IDisposable
 {

@@ -7,6 +7,25 @@ namespace TaskAutomation.Tests.Organization;
 public sealed class LibraryOrganizationServiceTests
 {
     [Fact]
+    public async Task ForeignParentIsRepairedWithoutLosingFolderOrItem()
+    {
+        using var directory = new TemporaryDirectory();
+        var foreign = new LibraryFolder { Kind = LibraryItemKind.Makro, Name = "Macros" };
+        var folder = new LibraryFolder { Kind = LibraryItemKind.Job, ParentId = foreign.Id, Name = "Jobs" };
+        var itemId = Guid.NewGuid();
+        var path = Path.Combine(directory.Path, "LibraryLayout.json");
+        await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(new LibraryLayout
+        {
+            Folders = [foreign, folder],
+            Placements = [new() { Kind = LibraryItemKind.Job, ItemId = itemId, FolderId = folder.Id }]
+        }));
+        using var service = new LibraryOrganizationService(path);
+        var layout = await service.LoadAsync();
+        Assert.Null(Assert.Single(layout.Folders, candidate => candidate.Id == folder.Id).ParentId);
+        Assert.Equal(folder.Id, Assert.Single(layout.Placements).FolderId);
+    }
+
+    [Fact]
     public async Task MissingLayout_StartsWithEmptyRoot()
     {
         using var directory = new TemporaryDirectory();

@@ -78,6 +78,7 @@ public sealed class JobSerializationTests
             restored.Settings.OriginCoordinateSpace);
         Assert.Equal(1.25, restored.Settings.EffectiveMovementFactorX);
         Assert.Equal(1.25, restored.Settings.EffectiveMovementFactorY);
+        Assert.Equal(10, restored.Settings.MovementThresholdPixels);
     }
 
     [Fact]
@@ -92,7 +93,8 @@ public sealed class JobSerializationTests
                 OriginMonitorIndex = 2,
                 OriginCoordinateSpace = KlickOnPoint3DSettings.MonitorLocalCoordinates,
                 MovementFactorX = 1.5,
-                MovementFactorY = 0.75
+                MovementFactorY = 0.75,
+                MovementThresholdPixels = 23
             }
         };
 
@@ -105,6 +107,7 @@ public sealed class JobSerializationTests
         Assert.Equal((960, 540), (restored.Settings.OriginX, restored.Settings.OriginY));
         Assert.Equal(1.5, restored.Settings.EffectiveMovementFactorX);
         Assert.Equal(0.75, restored.Settings.EffectiveMovementFactorY);
+        Assert.Equal(23, restored.Settings.MovementThresholdPixels);
     }
 
     [Fact]

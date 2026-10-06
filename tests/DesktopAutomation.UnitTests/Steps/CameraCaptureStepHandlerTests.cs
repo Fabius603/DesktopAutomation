@@ -15,7 +15,7 @@ public sealed class CameraCaptureStepHandlerTests
         using var bitmap = new Bitmap(8, 6);
         var timestamp = DateTime.UtcNow.AddMilliseconds(-10);
         var service = new RecordingCameraCaptureService(
-            new CameraCaptureFrame(bitmap, timestamp));
+            new CameraCaptureFrame(bitmap, timestamp) { FrameVersion = 23, FrameTimestamp = 654321 });
         var context = new PipelineContextStub { CameraCaptureService = service };
         var step = new CameraCaptureStep
         {
@@ -47,6 +47,8 @@ public sealed class CameraCaptureStepHandlerTests
         Assert.Equal(Point.Empty, result.Offset);
         Assert.True(result.IsFresh);
         Assert.Equal(timestamp, result.CaptureTimestampUtc);
+        Assert.Equal(23, result.FrameVersion);
+        Assert.Equal(654321, result.FrameTimestamp);
         Assert.Same(result, context.Results.GetRaw("camera"));
     }
 

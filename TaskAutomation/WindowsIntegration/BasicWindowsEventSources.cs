@@ -1,6 +1,8 @@
 using System.Management;
 using System.Net.NetworkInformation;
 using Microsoft.Win32;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace TaskAutomation.WindowsIntegration;
 
@@ -65,7 +67,8 @@ public sealed class NativeWindowsEventSource : IWindowsEventSource
         var power = System.Windows.Forms.SystemInformation.PowerStatus;
         var data = new Dictionary<string, string?>
         {
-            ["mode"] = e.Mode.ToString(), ["power_line"] = power.PowerLineStatus.ToString(),
+            ["mode"] = e.Mode.ToString(),
+            ["power_line"] = power.PowerLineStatus.ToString(),
             ["charging"] = power.BatteryChargeStatus.HasFlag(System.Windows.Forms.BatteryChargeStatus.Charging).ToString(),
             ["battery_percentage"] = Math.Round(power.BatteryLifePercent * 100d, 1).ToString(System.Globalization.CultureInfo.InvariantCulture)
         };
@@ -89,10 +92,14 @@ public sealed class NativeWindowsEventSource : IWindowsEventSource
     {
         var concrete = e.Reason switch
         {
-            SessionSwitchReason.SessionLock => "session.locked", SessionSwitchReason.SessionUnlock => "session.unlocked",
-            SessionSwitchReason.SessionLogon => "session.logged_on", SessionSwitchReason.SessionLogoff => "session.logged_off",
-            SessionSwitchReason.RemoteConnect => "session.remote_connected", SessionSwitchReason.RemoteDisconnect => "session.remote_disconnected",
-            SessionSwitchReason.ConsoleConnect => "session.console_connected", SessionSwitchReason.ConsoleDisconnect => "session.console_disconnected",
+            SessionSwitchReason.SessionLock => "session.locked",
+            SessionSwitchReason.SessionUnlock => "session.unlocked",
+            SessionSwitchReason.SessionLogon => "session.logged_on",
+            SessionSwitchReason.SessionLogoff => "session.logged_off",
+            SessionSwitchReason.RemoteConnect => "session.remote_connected",
+            SessionSwitchReason.RemoteDisconnect => "session.remote_disconnected",
+            SessionSwitchReason.ConsoleConnect => "session.console_connected",
+            SessionSwitchReason.ConsoleDisconnect => "session.console_disconnected",
             _ => "session.state.changed"
         };
         EmitBoth("session.state.changed", concrete, WindowsEventCategory.Session, new() { ["reason"] = e.Reason.ToString() });
@@ -129,12 +136,18 @@ public sealed class NativeWindowsEventSource : IWindowsEventSource
     {
         var concrete = e.Category switch
         {
-            UserPreferenceCategory.Locale => "system.settings.locale_changed", UserPreferenceCategory.Color => "system.settings.colors_changed",
-            UserPreferenceCategory.Desktop => "system.settings.desktop_changed", UserPreferenceCategory.General => "system.settings.general_changed",
-            UserPreferenceCategory.Icon => "system.settings.icons_changed", UserPreferenceCategory.Keyboard => "system.settings.keyboard_changed",
-            UserPreferenceCategory.Menu => "system.settings.menu_changed", UserPreferenceCategory.Mouse => "system.settings.mouse_changed",
-            UserPreferenceCategory.Power => "system.settings.power_changed", UserPreferenceCategory.Screensaver => "system.settings.screensaver_changed",
-            UserPreferenceCategory.Window => "system.settings.window_changed", _ => "system.settings.changed"
+            UserPreferenceCategory.Locale => "system.settings.locale_changed",
+            UserPreferenceCategory.Color => "system.settings.colors_changed",
+            UserPreferenceCategory.Desktop => "system.settings.desktop_changed",
+            UserPreferenceCategory.General => "system.settings.general_changed",
+            UserPreferenceCategory.Icon => "system.settings.icons_changed",
+            UserPreferenceCategory.Keyboard => "system.settings.keyboard_changed",
+            UserPreferenceCategory.Menu => "system.settings.menu_changed",
+            UserPreferenceCategory.Mouse => "system.settings.mouse_changed",
+            UserPreferenceCategory.Power => "system.settings.power_changed",
+            UserPreferenceCategory.Screensaver => "system.settings.screensaver_changed",
+            UserPreferenceCategory.Window => "system.settings.window_changed",
+            _ => "system.settings.changed"
         };
         EmitBoth("system.settings.changed", concrete, WindowsEventCategory.SystemSettings, new() { ["category"] = e.Category.ToString() });
     }
@@ -150,6 +163,9 @@ public sealed class NativeWindowsEventSource : IWindowsEventSource
 
 public sealed class ProcessTraceWindowsEventSource : IWindowsEventSource
 {
+    private readonly ILogger<ProcessTraceWindowsEventSource> _logger;
+    public ProcessTraceWindowsEventSource(ILogger<ProcessTraceWindowsEventSource>? logger = null)
+        => _logger = logger ?? NullLogger<ProcessTraceWindowsEventSource>.Instance;
     private ManagementEventWatcher? _start;
     private ManagementEventWatcher? _stop;
     public event Action<WindowsSystemEvent>? EventReceived;
@@ -157,8 +173,13 @@ public sealed class ProcessTraceWindowsEventSource : IWindowsEventSource
     public Task StartAsync(CancellationToken cancellationToken)
     {
         if (_start is not null) return Task.CompletedTask;
-        _start = Watch("Win32_ProcessStartTrace", "process.started");
-        _stop = Watch("Win32_ProcessStopTrace", "process.exited");
+        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            _start = Watch(true, "process.started");
+            _stop = Watch(false, "process.exited");
+        }
+        catch { StopAsync(CancellationToken.None).GetAwaiter().GetResult(); throw; }
         return Task.CompletedTask;
     }
 
@@ -169,16 +190,17 @@ public sealed class ProcessTraceWindowsEventSource : IWindowsEventSource
         return Task.CompletedTask;
     }
 
-    private ManagementEventWatcher Watch(string trace, string eventType)
+    private ManagementEventWatcher Watch(bool started, string eventType)
     {
-        var watcher = new ManagementEventWatcher(new WqlEventQuery($"SELECT * FROM {trace}"));
-        watcher.EventArrived += (_, e) => EventReceived?.Invoke(new WindowsSystemEvent(eventType, WindowsEventCategory.Process,
-            DateTimeOffset.Now, e.NewEvent.Properties["ProcessID"]?.Value?.ToString(), new Dictionary<string, string?>
+        return ProcessEventWatcher.Start(started, (_, e) =>
+        {
+            var process = ProcessEventWatcher.Process(e);
+            EventReceived?.Invoke(new WindowsSystemEvent(eventType, WindowsEventCategory.Process,
+            DateTimeOffset.Now, process.Properties["ProcessID"]?.Value?.ToString(), new Dictionary<string, string?>
             {
-                ["name"] = e.NewEvent.Properties["ProcessName"]?.Value?.ToString(),
-                ["process_id"] = e.NewEvent.Properties["ProcessID"]?.Value?.ToString()
+                ["name"] = ProcessEventWatcher.Name(process),
+                ["process_id"] = process.Properties["ProcessID"]?.Value?.ToString()
             }));
-        watcher.Start();
-        return watcher;
+        }, () => _logger.LogInformation("Prozessereignisse verwenden die WMI-Rückfallabfrage mit einem Abfrageintervall von einer Sekunde."));
     }
 }

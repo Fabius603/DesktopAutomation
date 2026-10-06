@@ -37,24 +37,24 @@ namespace TaskAutomation.Jobs
     [JsonDerivedType(typeof(JobExecutionStep), "job_execution")]
     [JsonDerivedType(typeof(YOLODetectionStep), "yolo_detection")]
     [JsonDerivedType(typeof(TimeoutStep), "timeout")]
-    [JsonDerivedType(typeof(IfStep),       "if")]
-    [JsonDerivedType(typeof(ElseIfStep),   "else_if")]
-    [JsonDerivedType(typeof(ElseStep),     "else")]
-    [JsonDerivedType(typeof(EndIfStep),    "end_if")]
-    [JsonDerivedType(typeof(EndJobStep),   "end_job")]
+    [JsonDerivedType(typeof(IfStep), "if")]
+    [JsonDerivedType(typeof(ElseIfStep), "else_if")]
+    [JsonDerivedType(typeof(ElseStep), "else")]
+    [JsonDerivedType(typeof(EndIfStep), "end_if")]
+    [JsonDerivedType(typeof(EndJobStep), "end_job")]
     [JsonDerivedType(typeof(ContinueJobStep), "continue_job")]
     [JsonDerivedType(typeof(BlockInputStep), "block_input")]
     [JsonDerivedType(typeof(UnblockInputStep), "unblock_input")]
     [JsonDerivedType(typeof(ActiveProcessStep), "active_process")]
-    [JsonDerivedType(typeof(GetProcessStep),    "get_process")]
-    [JsonDerivedType(typeof(StartProcessStep),  "start_process")]
+    [JsonDerivedType(typeof(GetProcessStep), "get_process")]
+    [JsonDerivedType(typeof(StartProcessStep), "start_process")]
     [JsonDerivedType(typeof(TerminateProcessStep), "terminate_process")]
-    [JsonDerivedType(typeof(FocusProcessStep),   "focus_process")]
-    [JsonDerivedType(typeof(ShowTextStep),         "show_text")]
-    [JsonDerivedType(typeof(UserChoiceStep),       "user_choice")]
-    [JsonDerivedType(typeof(ActiveWindowStep),     "active_window")]
+    [JsonDerivedType(typeof(FocusProcessStep), "focus_process")]
+    [JsonDerivedType(typeof(ShowTextStep), "show_text")]
+    [JsonDerivedType(typeof(UserChoiceStep), "user_choice")]
+    [JsonDerivedType(typeof(ActiveWindowStep), "active_window")]
     [JsonDerivedType(typeof(KeyPointMatchingStep), "keypoint_matching")]
-    [JsonDerivedType(typeof(PointComparisonStep),  "point_comparison")]
+    [JsonDerivedType(typeof(PointComparisonStep), "point_comparison")]
     [JsonDerivedType(typeof(DynamicRoiStep), "dynamic_roi")]
     [JsonDerivedType(typeof(WindowsStateQueryStep), "windows_state_query")]
     [JsonDerivedType(typeof(WindowsSettingChangeStep), "windows_setting_change")]
@@ -329,11 +329,25 @@ namespace TaskAutomation.Jobs
 
     public sealed class DesktopDuplicationSettings
     {
+        public const int DefaultTimeoutMilliseconds = 250;
+        public const int MaximumTimeoutMilliseconds = 60000;
         [JsonPropertyName("desktop_idx")]
         public int DesktopIdx { get; set; } = 0;
 
         [JsonPropertyName("capture_cursor")]
         public bool CaptureCursor { get; set; } = false;
+
+        [JsonPropertyName("monitor_device_name")]
+        public string MonitorDeviceName { get; set; } = string.Empty;
+
+        [JsonPropertyName("wait_for_new_frame")]
+        public bool WaitForNewFrame { get; set; } = true;
+
+        [JsonPropertyName("timeout_ms")]
+        public int TimeoutMilliseconds { get; set; } = DefaultTimeoutMilliseconds;
+
+        [JsonPropertyName("allow_cached_fallback")]
+        public bool AllowCachedFallback { get; set; } = true;
     }
 
     // ---- CameraCapture ----
@@ -617,6 +631,10 @@ namespace TaskAutomation.Jobs
     {
         public const string LegacyGlobalCoordinates = "legacy_global";
         public const string MonitorLocalCoordinates = "monitor_local";
+        public const int DefaultMovementThresholdPixels = 10;
+
+        [JsonPropertyName("movement_threshold_px")]
+        public int MovementThresholdPixels { get; set; } = DefaultMovementThresholdPixels;
 
         [JsonPropertyName("double_click")]
         public bool DoubleClick { get; set; } = false;

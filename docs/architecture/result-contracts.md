@@ -40,6 +40,40 @@ Step result behaviour is owned by the backend.
   missing-reference states, sensitive-value masking, and compatible job-variable
   creation. Step editors configure only their stable input-contract ID.
 
+## Capture provenance and consecutive 3D movements
+
+Capture results expose `frame_version` and `frame_timestamp` (monotonic Stopwatch/QPC
+ticks, zero when unavailable). Desktop versions advance only for an actual DXGI
+desktop-image update; cached and pointer-only frames preserve the image version,
+presentation timestamp and UTC timestamp. Camera timestamps describe receipt, not
+the camera's exposure or processing of application input. Versions are runtime
+identities within their capture producer, not persisted or cross-source ordering.
+
+Detection and prediction results preserve `source_frame_version` and
+`source_frame_timestamp`, including misses. Consumers obtain provenance through
+the existing result binding, without a second image binding.
+
+`KlickOnPoint3DStepHandler` owns consecutive-movement suppression. The job-run
+context retains the last successfully sent integer X/Y offset for each step ID
+across result resets. Offsets within `movement_threshold_px` on both axes after
+scaling and rounding suppress both movement and click and report `movement_blocked`.
+The advanced setting defaults to 10 pixels (also for existing jobs); zero restores
+exact equality. The boundary is inclusive and differences use widened arithmetic.
+Only a successfully sent offset outside this range replaces the remembered movement;
+blocked offsets cannot gradually shift the comparison baseline. Missing, stale, timed-out, failed or
+cancelled actions do not clear it. Each new job context starts empty. This is
+duplicate suppression, not confirmation that a target application processed input.
+
+The same handler retains the QPC timestamp immediately after each successful input
+macro. A detection with a known source-frame timestamp at or before that boundary
+suppresses movement and click even if its offset differs and its capture is fresh.
+Suppression does not advance either state; only successful input does. Unknown
+timestamps (zero) retain legacy behavior. This adds a temporal ordering check without
+a delay or an image dependency in the input step. A later presentation still does not
+prove that the target application processed the input; camera receipt times provide
+an even weaker ordering guarantee. Diagnostic summaries retain frame identity and
+timestamps so subsequent runs can be checked against the input boundary.
+
 ## Adding a fixed-result step
 
 1. Create a focused record derived from `StepResultBase`.

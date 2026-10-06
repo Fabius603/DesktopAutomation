@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -10,12 +10,15 @@ namespace ImageCapture.DesktopDuplication
     public class DesktopFrame : IDisposable
     {
         public Bitmap DesktopImage { get; set; }
+        public Rectangle Bounds { get; set; }
         public MovedRegion[] MovedRegions { get; set; }
         public Rectangle[] UpdatedRegions { get; set; }
         public bool CursorVisible { get; set; }
         public Point CursorLocation { get; set; }
         public bool IsFresh { get; set; }
         public DateTime CaptureTimestampUtc { get; set; }
+        public long FrameVersion { get; set; }
+        public long FrameTimestamp { get; set; }
 
         public void Dispose()
         {
@@ -31,12 +34,15 @@ namespace ImageCapture.DesktopDuplication
             return new DesktopFrame
             {
                 DesktopImage = DesktopImage != null ? new Bitmap(DesktopImage) : null, // Create a proper copy
+                Bounds = Bounds,
                 MovedRegions = MovedRegions != null ? (MovedRegion[])MovedRegions.Clone() : null,
                 UpdatedRegions = UpdatedRegions != null ? (Rectangle[])UpdatedRegions.Clone() : null,
                 CursorVisible = CursorVisible,
                 CursorLocation = CursorLocation,
                 IsFresh = IsFresh,
-                CaptureTimestampUtc = CaptureTimestampUtc
+                CaptureTimestampUtc = CaptureTimestampUtc,
+                FrameVersion = FrameVersion,
+                FrameTimestamp = FrameTimestamp
             };
         }
     }

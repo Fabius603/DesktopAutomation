@@ -213,12 +213,12 @@ public sealed class LibraryOrganizationService : ILibraryOrganizationService, ID
             .GroupBy(folder => folder.Id)
             .Select(group => group.First())
             .ToList();
-        var folderIds = layout.Folders.Select(folder => folder.Id).ToHashSet();
+        var folderIndex = layout.Folders.ToDictionary(folder => folder.Id);
         foreach (var folder in layout.Folders)
         {
             folder.Name = folder.Name.Trim();
             if (folder.ParentId == folder.Id ||
-                folder.ParentId.HasValue && !folderIds.Contains(folder.ParentId.Value))
+                folder.ParentId.HasValue && (!folderIndex.TryGetValue(folder.ParentId.Value, out var parent) || parent.Kind != folder.Kind))
                 folder.ParentId = null;
         }
         foreach (var folder in layout.Folders)
@@ -232,7 +232,7 @@ public sealed class LibraryOrganizationService : ILibraryOrganizationService, ID
                     folder.ParentId = null;
                     break;
                 }
-                parentId = layout.Folders.FirstOrDefault(candidate => candidate.Id == parentId.Value)?.ParentId;
+                parentId = folderIndex.GetValueOrDefault(parentId.Value)?.ParentId;
             }
         }
         var validFolders = layout.Folders.ToDictionary(folder => folder.Id);

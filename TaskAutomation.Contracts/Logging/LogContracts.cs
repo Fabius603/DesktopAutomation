@@ -6,6 +6,14 @@ public enum LogSource { Job, Automation, Application, Makro }
 public enum LogOutcome { Running, Paused, Successful, WithWarnings, WithErrors, Failed, Stopped, Interrupted, Unknown }
 public enum StepLogOutcome { Running, Successful, Warning, Failed, Skipped, Cancelled, NotExecuted, Pending, Unknown }
 public enum LogReadState { Available, Empty, Partial, Unavailable }
+public enum LogArea { General, Execution, Automation, FileAccess, Capture, Detection, Process, Script, Video, Windows }
+
+public sealed record LogTriggerSnapshot(string Kind, string? EventKind, string? WatchedDirectory,
+    Guid? TargetId, string TargetKind, string? TargetName);
+public sealed record LogPath(string Kind, string Value);
+public sealed record LogFlowEffect(string Kind);
+public sealed record LogStepCause(string StepId, Guid? ExecutionId, string Reason, string Phase, int? Iteration);
+public sealed record LogText(string Key, IReadOnlyDictionary<string, string?> Arguments);
 
 public static class LogCodes
 {
@@ -13,6 +21,7 @@ public static class LogCodes
     public const string RunStarted = "run.started";
     public const string RunCompleted = "run.completed";
     public const string RunState = "run.state";
+    public const string IterationCompleted = "run.iteration-completed";
     public const string StartRejected = "run.start-rejected";
     public const string StepStarted = "step.started";
     public const string StepCompleted = "step.completed";
@@ -20,6 +29,7 @@ public static class LogCodes
     public const string StepSkipped = "step.skipped";
     public const string StepCancelled = "step.cancelled";
     public const string StepOutput = "step.output";
+    public const string StepPaths = "step.paths";
     public const string StepBackgroundStarted = "step.background-started";
     public const string StepBackgroundCompleted = "step.background-completed";
     public const string StepBackgroundFailed = "step.background-failed";
@@ -58,6 +68,11 @@ public sealed record LogEvent
     public long? DurationMs { get; init; }
     public Dictionary<string, string?> Parameters { get; init; } = new();
     public LogBranchDecision? BranchDecision { get; init; }
+    public LogTriggerSnapshot? Trigger { get; init; }
+    public IReadOnlyList<LogPath> Paths { get; init; } = [];
+    public LogFlowEffect? FlowEffect { get; init; }
+    public LogArea Category { get; init; }
+    public IReadOnlyList<Guid> RelatedInstanceIds { get; init; } = [];
 }
 
 public sealed record LogConditionOutcome(int Position, string State, string Operator);
@@ -65,6 +80,13 @@ public sealed record LogBranchDecision(bool ParentActive, bool BranchActive, str
     string? MatchMode, IReadOnlyList<LogConditionOutcome> Conditions);
 
 public sealed record LogStepSnapshot(string Id, string TypeId, int Position, string Phase, bool Enabled);
+public sealed record LogIterationRange(int First, int Last);
+public sealed record LogStepSummary(string StepId, string Phase, string Code, string? Reason, long Count,
+    long TotalDurationMs, IReadOnlyList<LogIterationRange> Iterations, LogEvent LastEvent, bool IterationCoverageComplete = true)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public double? AverageDurationMs => Count > 0 && LastEvent.DurationMs.HasValue ? TotalDurationMs / (double)Count : null;
+}
 public sealed record LogRun
 {
     public long CatalogSequence { get; init; }
@@ -85,11 +107,15 @@ public sealed record LogRun
     public Guid? OriginId { get; init; }
     public LogContext Context { get; init; } = new();
     public IReadOnlyList<LogStepSnapshot> Steps { get; init; } = [];
+    public IReadOnlyList<LogStepSummary> StepSummaries { get; init; } = [];
+    public long CompletedIterations { get; init; }
+    public long IterationDurationMs { get; init; }
     public int ErrorCount { get; init; }
     public int WarningCount { get; init; }
     public Guid? PrimaryProblemId { get; init; }
     public long LostEntries { get; init; }
     public bool IsComplete { get; init; } = true;
+    public LogTriggerSnapshot? Trigger { get; init; }
 }
 
 public sealed record LogQuery(LogSource? Source = null, Guid? SourceId = null, Guid? RunId = null,
@@ -97,12 +123,13 @@ public sealed record LogQuery(LogSource? Source = null, Guid? SourceId = null, G
     ExecutionLogLevel MinimumLevel = ExecutionLogLevel.Debug, string? Search = null,
     string? Area = null, bool OnlyProblems = false, int PageSize = 100,
     long BeforeSequence = long.MaxValue, long SnapshotSequence = long.MaxValue,
-    long AfterSequence = 0, Guid? TriggerId = null);
+    long AfterSequence = 0, Guid? TriggerId = null, LogArea? Category = null);
 public sealed record LogPage(IReadOnlyList<LogEvent> Entries, long? NextBeforeSequence,
     long SnapshotSequence, int MatchCount, int AvailableCount, LogReadState State,
     IReadOnlyList<string> Issues);
 public sealed record LogStepExecution(LogStepSnapshot Step, Guid? ExecutionId, string Phase, int? Iteration,
-    StepLogOutcome Outcome, string? Reason, long? DurationMs, IReadOnlyList<LogEvent> Events);
+    StepLogOutcome Outcome, string? Reason, long? DurationMs, IReadOnlyList<LogEvent> Events,
+    LogStepCause? Cause = null, LogStepSummary? Summary = null);
 public sealed record LogAction(string Kind, Guid? RunId = null, string? StepId = null, string? Path = null);
 public sealed record LogDiagnostic(string Code, string CauseKey, string HelpKey, IReadOnlyList<LogAction> Actions);
 public sealed record AutomationTriggerContext(Guid AutomationId, Guid TriggerId, DateTimeOffset ObservedAt,

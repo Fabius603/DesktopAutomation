@@ -61,6 +61,8 @@ namespace TaskAutomation.Makros
     [JsonDerivedType(typeof(KeyDownBefehl), "key_down")]
     [JsonDerivedType(typeof(KeyUpBefehl), "key_up")]
     [JsonDerivedType(typeof(TimeoutBefehl), "timeout")]
+    [JsonDerivedType(typeof(TextInputBefehl), "text_input")]
+    [JsonDerivedType(typeof(KeyCombinationBefehl), "key_combination")]
     public abstract class MakroBefehl : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -114,7 +116,8 @@ namespace TaskAutomation.Makros
         private long? _delayBeforeMicroseconds;
 
         [JsonIgnore] public bool HasPreciseDelay => DelayBeforeMicroseconds.HasValue;
-        [JsonIgnore] public string DelayBeforeDisplay => DelayBeforeMicroseconds.HasValue
+        [JsonIgnore]
+        public string DelayBeforeDisplay => DelayBeforeMicroseconds.HasValue
             ? MakroTimeFormatter.FormatMicroseconds(DelayBeforeMicroseconds.Value, includePrefix: true)
             : string.Empty;
 
@@ -146,6 +149,9 @@ namespace TaskAutomation.Makros
 
         [JsonPropertyName("recordKeyboard")]
         public bool RecordKeyboard { get; set; } = true;
+
+        [JsonPropertyName("combineKeyboardInputs")]
+        public bool CombineKeyboardInputs { get; set; }
 
         [JsonPropertyName("recordMouseButtons")]
         public bool RecordMouseButtons { get; set; } = true;
@@ -226,6 +232,18 @@ namespace TaskAutomation.Makros
     public sealed class KeyUpBefehl : MakroBefehl
     {
         [JsonPropertyName("key")] public string Key { get; set; } = string.Empty;
+    }
+
+    public sealed class TextInputBefehl : MakroBefehl
+    {
+        [JsonPropertyName("text")] public string Text { get; set; } = string.Empty;
+        [JsonPropertyName("durationUs")] public long DurationMicroseconds { get; set; }
+    }
+
+    public sealed class KeyCombinationBefehl : MakroBefehl
+    {
+        [JsonPropertyName("keys")] public List<string> Keys { get; set; } = [];
+        [JsonPropertyName("durationUs")] public long DurationMicroseconds { get; set; }
     }
 
     public sealed class TimeoutBefehl : MakroBefehl

@@ -30,6 +30,17 @@ Native event filters are matched case-insensitively against event data. `filesys
 
 All automation events are push-based. The sources use .NET system notifications, Core Audio callbacks, a Win32 message window, window-event hooks, `FileSystemWatcher`, process traces, spooler change notifications, global input hooks with one-shot threshold timers, and Windows Event Log subscriptions. The event hub contains no state polling loop. All subscriptions share the same hub and support per-subscription debouncing.
 
+`ProcessEventWatcher` owns WMI process registration for the event hub source and the legacy
+process automation provider. Prefer `Win32_ProcessStartTrace`/`StopTrace`; on denied access or
+an unavailable trace class, subscribe to intrinsic creation/deletion events for `Win32_Process`
+with a one-second WMI sampling interval. This fallback requires no privilege elevation, but may
+miss processes that start and exit between samples. Consumers still receive pushed WMI events;
+the application introduces no polling loop. A successful fallback is informational. If both
+registrations fail, report unavailable process monitoring as a warning, preserving other app
+features. Dispose failed and partially registered watchers before returning. Both consumers
+retain separate subscriptions because the legacy provider additionally resolves window titles;
+query selection and native event normalization have only this shared owner.
+
 Legacy `*.changed` IDs remain available and are emitted together with more specific IDs such as `device.usb.connected`, `filesystem.deleted`, `window.focused`, `audio.volume.muted`, `printer.job.added`, and `windows_update.installed`.
 
 The native WLAN source additionally exposes association, authentication, connect/disconnect, roaming, radio, signal, scan, adapter, network-availability, and profile events. A completed WLAN connection is classified as connected only when its native reason code reports success. Bluetooth exposes the reliable generic device-list change notification; old persisted Bluetooth subevent IDs are mapped to it. Session, power, display, clipboard, printer, storage, system-setting, and lifecycle notifications are classified into concrete event IDs whenever the Windows callback contains enough information. Windows Update listens to both the provider's System and Operational channels. Unclassified provider-specific records still use their category's `*.changed` fallback.

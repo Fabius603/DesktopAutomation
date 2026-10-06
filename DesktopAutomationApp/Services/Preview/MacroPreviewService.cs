@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -76,6 +76,23 @@ namespace DesktopAutomationApp.Services.Preview
                     t += cmd.DelayBeforeMicroseconds.Value / 1_000_000d;
                 switch (cmd)
                 {
+                    case TextInputBefehl text:
+                        timed.Add(new KeyItem($"text_{nodeIdx++}", text.Text, virtualBounds.Left + virtualBounds.Width / 2,
+                            virtualBounds.Bottom - 100, t, t + Math.Max(0.35, text.DurationMicroseconds / 1_000_000d))
+                        { Transform = tr });
+                        t += MakroCommandRules.DurationMicroseconds(text) / 1_000_000d;
+                        break;
+                    case KeyCombinationBefehl keys:
+                        timed.Add(new KeyItem($"combination_{nodeIdx++}", string.Join(" + ", keys.Keys), virtualBounds.Left + virtualBounds.Width / 2,
+                            virtualBounds.Bottom - 100, t, t + Math.Max(0.35, keys.DurationMicroseconds / 1_000_000d))
+                        { Transform = tr });
+                        t += MakroCommandRules.DurationMicroseconds(keys) / 1_000_000d;
+                        break;
+                    case MouseWheelBefehl wheel:
+                        timed.Add(new KeyItem($"wheel_{nodeIdx++}", $"ΔX {wheel.DeltaX}, ΔY {wheel.DeltaY}", virtualBounds.Left + virtualBounds.Width / 2,
+                            virtualBounds.Bottom - 100, t, t + 0.35)
+                        { Transform = tr });
+                        break;
                     case MouseMoveAbsoluteBefehl m:
                         {
                             var p = ((float)m.X, (float)m.Y);
@@ -90,10 +107,10 @@ namespace DesktopAutomationApp.Services.Preview
                     case MouseMoveRelativeBefehl mr:
                         {
                             // Relative Bewegung von letzter Position
-                            var p = lastPos.HasValue 
+                            var p = lastPos.HasValue
                                 ? ((float)(lastPos.Value.Item1 + mr.DeltaX), (float)(lastPos.Value.Item2 + mr.DeltaY))
                                 : ((float)mr.DeltaX, (float)mr.DeltaY);
-                            
+
                             mousePositions.Add((p, t));
                             nodeIdx++;
 
@@ -329,10 +346,10 @@ namespace DesktopAutomationApp.Services.Preview
                     timed.Add(badge);
                 }
             }
-            var totalSeconds = Math.Max(
+            var totalSeconds = Math.Max(0.35, Math.Max(
             t,
             mousePositions.Count > 0 ? mousePositions[^1].t : 0.0
-            );
+            ));
 
             return new PreviewResult(stat, timed, totalSeconds);
         }

@@ -47,7 +47,7 @@ public static class VisualOverlayResolver
             if (resolved.IsSuccess)
                 detectionGroups.Add(resolved.Values);
             else
-                logger.LogWarning(
+                logger.Log(ResultBindingResolver.IsExpectedEmpty(resolved.Status) ? LogLevel.Information : LogLevel.Warning,
                     "Overlay: Erkennungsergebnis {SourceStepId}/{PropertyPath} ist nicht verfügbar und wird übersprungen.",
                     binding.SourceStepId, binding.PropertyPath);
         }
@@ -58,7 +58,7 @@ public static class VisualOverlayResolver
             var resolved = ResultBindingResolver.Resolve<object>(results, entry.Result);
             if (!resolved.IsSuccess || resolved.Values.Count == 0)
             {
-                logger.LogWarning(
+                logger.Log(ResultBindingResolver.IsExpectedEmpty(resolved.Status) ? LogLevel.Information : LogLevel.Warning,
                     "Overlay: Textergebnis {SourceStepId}/{PropertyPath} ist nicht verfügbar und wird übersprungen.",
                     entry.Result.SourceStepId, entry.Result.PropertyPath);
                 continue;

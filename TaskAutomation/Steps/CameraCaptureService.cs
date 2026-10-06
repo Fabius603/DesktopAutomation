@@ -12,6 +12,7 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
 {
     private readonly CameraCaptureSessionPool _sessions = new();
     private bool _disposed;
+    private long _frameVersion;
 
     public IReadOnlyList<CameraDeviceInfo> GetAvailableCameras()
     {
@@ -181,7 +182,15 @@ public sealed class CameraCaptureService(ILogger<CameraCaptureService> logger) :
             if (session.Capture!.Read(frame) && !frame.Empty())
             {
                 if (!openedNow || attempt >= 1)
-                    return new CameraCaptureFrame(BitmapConverter.ToBitmap(frame), DateTime.UtcNow);
+                {
+                    var receivedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                    var receivedAtUtc = DateTime.UtcNow;
+                    return new CameraCaptureFrame(BitmapConverter.ToBitmap(frame), receivedAtUtc)
+                    {
+                        FrameVersion = Interlocked.Increment(ref _frameVersion),
+                        FrameTimestamp = receivedAt
+                    };
+                }
             }
             Thread.Sleep(50);
         }

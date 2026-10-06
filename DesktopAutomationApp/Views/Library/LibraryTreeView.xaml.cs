@@ -17,6 +17,32 @@ public partial class LibraryTreeView : UserControl
         PreviewMouseLeftButtonDown += (_, eventArgs) => _dragStart = eventArgs.GetPosition(this);
     }
 
+    private void Folder_Select(object sender, MouseButtonEventArgs e)
+    {
+        if (FindAncestor<Button>(e.OriginalSource as DependencyObject) != null) return;
+        if (sender is FrameworkElement { DataContext: LibraryTreeNodeViewModel node } && DataContext is LibraryTreeViewModel vm)
+            vm.SelectedFolderId = node.Id;
+    }
+
+    private void Folder_Expand(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: LibraryTreeNodeViewModel node }) node.IsExpanded = !node.IsExpanded;
+        e.Handled = true;
+    }
+
+    private void ItemMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not DependencyObject button) return;
+        for (var current = button; current != null; current = System.Windows.Media.VisualTreeHelper.GetParent(current))
+        {
+            if (current is not Border { Tag: LibraryTreeViewModel, ContextMenu: { } menu } row) continue;
+            menu.PlacementTarget = row;
+            menu.IsOpen = true;
+            e.Handled = true;
+            break;
+        }
+    }
+
     private void Node_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (FindAncestor<Button>(e.OriginalSource as DependencyObject) != null) return;
@@ -103,7 +129,7 @@ public partial class LibraryTreeView : UserControl
                 return;
         }
 
-        var selected = LibraryNodes.SelectedItem as LibraryTreeNodeViewModel;
+        var selected = (FolderList.IsKeyboardFocusWithin ? FolderList.SelectedItem : LibraryNodes.SelectedItem) as LibraryTreeNodeViewModel;
         if (AppShortcutGestures.Matches(e, AppShortcutGestures.NewFolder))
             Execute(viewModel.NewFolderCommand, null, e);
         else if (AppShortcutGestures.Matches(e, AppShortcutGestures.NewItem))
@@ -138,6 +164,8 @@ public partial class LibraryTreeView : UserControl
         var target = FindNode(e.OriginalSource as DependencyObject);
         if (target != null)
             viewModel.SetDropTarget(target);
+        else if (FindAncestor<ListBox>(e.OriginalSource as DependencyObject) == LibraryNodes && viewModel.SelectedFolderId.HasValue)
+            viewModel.SetDropTarget(viewModel.FolderNodes.FirstOrDefault(node => node.Id == viewModel.SelectedFolderId));
         else
             viewModel.SetRootDropTarget();
         e.Effects = DragDropEffects.Move;
@@ -171,6 +199,7 @@ public partial class LibraryTreeView : UserControl
             return;
         var target = FindNode(e.OriginalSource as DependencyObject);
         var targetFolderId = target?.Folder?.Id ?? target?.FolderId;
+        if (target == null && FindAncestor<ListBox>(e.OriginalSource as DependencyObject) == LibraryNodes) targetFolderId = viewModel.SelectedFolderId;
         await viewModel.MoveNodeAsync(source, targetFolderId);
         viewModel.SetDropTarget(null);
         e.Handled = true;

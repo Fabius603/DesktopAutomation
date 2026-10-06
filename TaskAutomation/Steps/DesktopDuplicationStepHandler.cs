@@ -13,9 +13,11 @@ namespace TaskAutomation.Steps
             ctx.Logger.LogDebug(
                 "DesktopDuplicationStepHandler: Capturing monitor {MonitorIndex}", step.Settings.DesktopIdx);
 
+            var settings = step.Settings;
             var result = await ctx.DesktopCaptureService.CaptureAsync(
-                                step.Settings.DesktopIdx, ct,
-                                captureCursor: step.Settings.CaptureCursor)
+                                new DesktopCaptureRequest(settings.DesktopIdx, settings.MonitorDeviceName,
+                                    settings.CaptureCursor, settings.WaitForNewFrame, settings.TimeoutMilliseconds,
+                                    settings.AllowCachedFallback), ct)
                             .ConfigureAwait(false);
 
             if (result.HasImage)
@@ -33,8 +35,14 @@ namespace TaskAutomation.Steps
 
             return new DesktopDuplicationResult
             {
-                WasExecuted = true, Image = result.Image, Bounds = result.Bounds, Offset = result.Offset,
-                IsFresh = result.IsFresh, CaptureTimestampUtc = result.CaptureTimestampUtc
+                WasExecuted = true,
+                Image = result.Image,
+                Bounds = result.Bounds,
+                Offset = result.Offset,
+                IsFresh = result.IsFresh,
+                CaptureTimestampUtc = result.CaptureTimestampUtc,
+                FrameVersion = result.FrameVersion,
+                FrameTimestamp = result.FrameTimestamp
             };
         }
 

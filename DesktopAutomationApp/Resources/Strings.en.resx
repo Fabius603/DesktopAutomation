@@ -573,6 +573,12 @@
   <data name="Ui.Step.Settings.MovementFactorY" xml:space="preserve">
     <value>Movement factor Y</value>
   </data>
+  <data name="Ui.Step.Settings.MovementThresholdPixels" xml:space="preserve">
+    <value>Movement tolerance (px)</value>
+  </data>
+  <data name="Ui.Step.Settings.MovementThresholdHelp" xml:space="preserve">
+    <value>Blocks movement and click when both axes differ from the last sent offset by at most this value. Comparison uses scaled and rounded offsets. 0 blocks only exactly equal offsets; default: 10 px.</value>
+  </data>
   <data name="Ui.Step.Generated.ScreenPoint" xml:space="preserve">
     <value>Monitor {0}  ·  X {1} px  ·  Y {2} px</value>
   </data>
@@ -3294,4 +3300,332 @@ Move anyway?</value></data>
   <data name="Log.Help.LOG-ACCESS-001" xml:space="preserve"><value>Check the access permissions for the specified resource.</value></data>
   <data name="Log.Cause.LOG-UNEXPECTED-001" xml:space="preserve"><value>An unexpected error occurred. Its cause has not yet been established.</value></data>
   <data name="Log.Help.LOG-UNEXPECTED-001" xml:space="preserve"><value>Open the technical details or export the relevant events for further investigation.</value></data>
+  <data name="Log.Title.LOG-FILE-004" xml:space="preserve"><value>File or folder unavailable</value></data>
+  <data name="Log.Title.LOG-ACCESS-001" xml:space="preserve"><value>Access denied</value></data>
+  <data name="Log.Title.LOG-UNEXPECTED-001" xml:space="preserve"><value>Unexpected error</value></data>
+  <data name="Log.Event.StepStarted" xml:space="preserve"><value>Step started</value></data>
+  <data name="Log.Event.StepCompleted" xml:space="preserve"><value>Step completed</value></data>
+  <data name="Log.Event.StepFailed" xml:space="preserve"><value>Step failed</value></data>
+  <data name="Log.Event.StepCancelled" xml:space="preserve"><value>Step cancelled</value></data>
+  <data name="Log.Event.StepSkipped" xml:space="preserve"><value>Step skipped</value></data>
+  <data name="Log.Event.ScriptOutput" xml:space="preserve"><value>Script output received</value></data>
+  <data name="Log.Event.Trigger" xml:space="preserve"><value>Trigger observed</value></data>
+  <data name="Log.Event.AutomationDecision" xml:space="preserve"><value>Automation decision</value></data>
+  <data name="Log.Event.RunStarted" xml:space="preserve"><value>Execution started</value></data>
+  <data name="Log.Event.RunCompleted" xml:space="preserve"><value>Execution ended</value></data>
+  <data name="Log.Event.Technical" xml:space="preserve"><value>Technical event</value></data>
+  <data name="Log.Event.UnknownStep" xml:space="preserve"><value>Unknown step type</value></data>
+  <data name="Log.Summary.Failed" xml:space="preserve"><value>The step failed.</value></data>
+  <data name="Log.Summary.Cancelled" xml:space="preserve"><value>The step was cancelled.</value></data>
+  <data name="Log.Summary.Skipped" xml:space="preserve"><value>The step was skipped.</value></data>
+  <data name="Log.Summary.NoInput" xml:space="preserve"><value>No input value is available; the action was skipped.</value></data>
+  <data name="Log.Summary.CachedCapture" xml:space="preserve"><value>The detection comes from a cached image; the input was skipped.</value></data>
+  <data name="Log.Summary.BranchSelected" xml:space="preserve"><value>This conditional branch was selected.</value></data>
+  <data name="Log.Summary.BranchInactive" xml:space="preserve"><value>This conditional branch is inactive.</value></data>
+  <data name="Log.Summary.ScriptOutput" xml:space="preserve"><value>Received script output containing {CharacterCount} characters. Its content is not logged.</value></data>
+  <data name="Log.Summary.Dispatched" xml:space="preserve"><value>Start was requested. Completion is recorded separately.</value></data>
+  <data name="Log.Summary.Unsuccessful" xml:space="preserve"><value>The action or query could not complete successfully.</value></data>
+  <data name="Log.Summary.ImageSaved" xml:space="preserve"><value>An image measuring {Width} × {Height} pixels was saved.</value></data>
+  <data name="Log.Summary.Captured" xml:space="preserve"><value>An image measuring {Width} × {Height} pixels was captured.</value></data>
+  <data name="Log.Summary.Ocr" xml:space="preserve"><value>Recognized {WordCount} words. Recognized text is not logged.</value></data>
+  <data name="Log.Summary.Files" xml:space="preserve"><value>Processed {AffectedCount} filesystem entries.</value></data>
+  <data name="Log.Summary.Exists" xml:space="preserve"><value>The checked resource exists.</value></data>
+  <data name="Log.Summary.Missing" xml:space="preserve"><value>The checked resource does not exist.</value></data>
+  <data name="Log.Summary.Found" xml:space="preserve"><value>The search found a result.</value></data>
+  <data name="Log.Summary.NotFound" xml:space="preserve"><value>The search found no result.</value></data>
+  <data name="Log.Summary.Completed" xml:space="preserve"><value>The step completed.</value></data>
+  <data name="Log.Summary.Technical" xml:space="preserve"><value>Additional information is available in the technical details.</value></data>
+  <data name="Log.Summary.Running" xml:space="preserve"><value>The step is running.</value></data>
+  <data name="Log.Summary.Successful" xml:space="preserve"><value>The step completed successfully.</value></data>
+  <data name="Log.Summary.Warning" xml:space="preserve"><value>Warnings were recorded for this step.</value></data>
+  <data name="Log.Summary.NotExecuted" xml:space="preserve"><value>The step was not executed.</value></data>
+  <data name="Log.Summary.Pending" xml:space="preserve"><value>The step has not executed yet.</value></data>
+  <data name="Log.Summary.Unknown" xml:space="preserve"><value>The step status is unknown because evidence is missing.</value></data>
+  <data name="Log.Impact.Prevented" xml:space="preserve"><value>Execution of this step was prevented by step {Position}.</value></data>
+  <data name="Log.Automation.Started" xml:space="preserve"><value>Execution started</value></data>
+  <data name="Log.Automation.Requested" xml:space="preserve"><value>Start requested</value></data>
+  <data name="Log.Automation.AlreadyRunning" xml:space="preserve"><value>Not started: target is already running</value></data>
+  <data name="Log.Automation.Cooldown" xml:space="preserve"><value>Cooldown still active</value></data>
+  <data name="Log.Automation.OutsideWindow" xml:space="preserve"><value>Outside the permitted time window</value></data>
+  <data name="Log.Automation.Paused" xml:space="preserve"><value>Automations are paused</value></data>
+  <data name="Log.Automation.Disabled" xml:space="preserve"><value>Automation is disabled</value></data>
+  <data name="Log.Automation.StopRequested" xml:space="preserve"><value>Stop requested</value></data>
+  <data name="Log.Automation.Rejected" xml:space="preserve"><value>Start rejected</value></data>
+  <data name="Log.Automation.Failed" xml:space="preserve"><value>Automation failed</value></data>
+  <data name="Log.Automation.Cancelled" xml:space="preserve"><value>Trigger cancelled</value></data>
+  <data name="Log.Automation.Unknown" xml:space="preserve"><value>Decision unavailable</value></data>
+  <data name="Log.Area.General" xml:space="preserve"><value>General</value></data>
+  <data name="Log.Area.Execution" xml:space="preserve"><value>Execution</value></data>
+  <data name="Log.Area.Automation" xml:space="preserve"><value>Automations</value></data>
+  <data name="Log.Area.FileAccess" xml:space="preserve"><value>File access</value></data>
+  <data name="Log.Area.Capture" xml:space="preserve"><value>Image capture</value></data>
+  <data name="Log.Area.Detection" xml:space="preserve"><value>Detection</value></data>
+  <data name="Log.Area.Process" xml:space="preserve"><value>Processes</value></data>
+  <data name="Log.Area.Script" xml:space="preserve"><value>Scripts</value></data>
+  <data name="Log.Area.Video" xml:space="preserve"><value>Video recording</value></data>
+  <data name="Log.Area.Windows" xml:space="preserve"><value>Windows</value></data>
+  <data name="Log.Impact.Stopped" xml:space="preserve"><value>Step {Position} ended further execution of this phase.</value></data>
+  <data name="Log.Summary.UserCancelled" xml:space="preserve"><value>The choice was cancelled. This does not automatically stop the job.</value></data>
+  <data name="Log.Summary.Disabled" xml:space="preserve"><value>The step is disabled.</value></data>
+  <data name="Log.Summary.EndPhaseSuppressed" xml:space="preserve"><value>The cleanup phase was explicitly skipped.</value></data>
+  <data name="Log.Summary.InvalidControlFlow" xml:space="preserve"><value>The control flow structure is invalid.</value></data>
+  <data name="Log.Summary.ConditionUnavailable" xml:space="preserve"><value>The condition could not be evaluated because a value was unavailable.</value></data>
+  <data name="Logs.Ui.Tab.Overview" xml:space="preserve"><value>Overview</value></data>
+  <data name="Logs.Ui.Tab.Jobs" xml:space="preserve"><value>Executions</value></data>
+  <data name="Logs.Ui.Tab.Automations" xml:space="preserve"><value>Automations</value></data>
+  <data name="Logs.Ui.Tab.Application" xml:space="preserve"><value>Application</value></data>
+  <data name="Logs.Ui.Title.Overview" xml:space="preserve"><value>Logs</value></data>
+  <data name="Logs.Ui.Title.Jobs" xml:space="preserve"><value>Executions</value></data>
+  <data name="Logs.Ui.Title.Automations" xml:space="preserve"><value>Automation history</value></data>
+  <data name="Logs.Ui.Title.Application" xml:space="preserve"><value>Application diagnostics</value></data>
+  <data name="Logs.Ui.Subtitle.Overview" xml:space="preserve"><value>Executions and events at a glance.</value></data>
+  <data name="Logs.Ui.Subtitle.Jobs" xml:space="preserve"><value>Browse executions and understand their results.</value></data>
+  <data name="Logs.Ui.Subtitle.Automations" xml:space="preserve"><value>Understand when and why a job was started.</value></data>
+  <data name="Logs.Ui.Subtitle.Application" xml:space="preserve"><value>Browse technical events and prepare support reports.</value></data>
+  <data name="Logs.Ui.AllResults" xml:space="preserve"><value>All results</value></data>
+  <data name="Logs.Ui.Macros" xml:space="preserve"><value>Macros</value></data>
+  <data name="Logs.Ui.AllRuns" xml:space="preserve"><value>Jobs and macros</value></data>
+  <data name="Logs.Ui.AllAreas" xml:space="preserve"><value>All areas</value></data>
+  <data name="Logs.Ui.Range.Today" xml:space="preserve"><value>Today</value></data>
+  <data name="Logs.Ui.Range.Week" xml:space="preserve"><value>Last 7 days</value></data>
+  <data name="Logs.Ui.Range.Month" xml:space="preserve"><value>Last 30 days</value></data>
+  <data name="Logs.Ui.Range.All" xml:space="preserve"><value>All history</value></data>
+  <data name="Logs.Ui.Range.Custom" xml:space="preserve"><value>Custom period</value></data>
+  <data name="Logs.Ui.Level.Debug" xml:space="preserve"><value>All events</value></data>
+  <data name="Logs.Ui.Level.Information" xml:space="preserve"><value>Information, warnings and errors</value></data>
+  <data name="Logs.Ui.Level.Warning" xml:space="preserve"><value>Warnings and errors</value></data>
+  <data name="Logs.Ui.Level.Error" xml:space="preserve"><value>Errors only</value></data>
+  <data name="Logs.Ui.Outcome.Running" xml:space="preserve"><value>Running</value></data>
+  <data name="Logs.Ui.Outcome.Paused" xml:space="preserve"><value>Paused</value></data>
+  <data name="Logs.Ui.Outcome.Successful" xml:space="preserve"><value>Successful</value></data>
+  <data name="Logs.Ui.Outcome.WithWarnings" xml:space="preserve"><value>With warnings</value></data>
+  <data name="Logs.Ui.Outcome.WithErrors" xml:space="preserve"><value>With errors</value></data>
+  <data name="Logs.Ui.Outcome.Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Logs.Ui.Outcome.Stopped" xml:space="preserve"><value>Stopped</value></data>
+  <data name="Logs.Ui.Outcome.Interrupted" xml:space="preserve"><value>Interrupted</value></data>
+  <data name="Logs.Ui.Outcome.Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Logs.Ui.StepOutcome.Running" xml:space="preserve"><value>Running</value></data>
+  <data name="Logs.Ui.StepOutcome.Successful" xml:space="preserve"><value>Successful</value></data>
+  <data name="Logs.Ui.StepOutcome.Warning" xml:space="preserve"><value>With warning</value></data>
+  <data name="Logs.Ui.StepOutcome.Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Logs.Ui.StepOutcome.Skipped" xml:space="preserve"><value>Skipped</value></data>
+  <data name="Logs.Ui.StepOutcome.Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="Logs.Ui.StepOutcome.NotExecuted" xml:space="preserve"><value>Not executed</value></data>
+  <data name="Logs.Ui.StepOutcome.Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Logs.Ui.StepOutcome.Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Logs.Ui.Phase.Start" xml:space="preserve"><value>On start</value></data>
+  <data name="Logs.Ui.Phase.Main" xml:space="preserve"><value>Main sequence</value></data>
+  <data name="Logs.Ui.Phase.Run" xml:space="preserve"><value>Main sequence</value></data>
+  <data name="Logs.Ui.Phase.End" xml:space="preserve"><value>On finish</value></data>
+  <data name="Logs.Ui.Iteration" xml:space="preserve"><value>Iteration {0}</value></data>
+  <data name="Logs.Ui.Counts" xml:space="preserve"><value>{0} of {1} executions loaded</value></data>
+  <data name="Logs.Ui.EventCounts" xml:space="preserve"><value>{1} matches · {2} events available · {0} loaded</value></data>
+  <data name="Logs.Ui.Attention" xml:space="preserve"><value>{0} executions with new problems</value></data>
+  <data name="Logs.Ui.Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Logs.Ui.Export" xml:space="preserve"><value>Export report</value></data>
+  <data name="Logs.Ui.CancelExport" xml:space="preserve"><value>Cancel export</value></data>
+  <data name="Logs.Ui.Search" xml:space="preserve"><value>Search jobs, automations or events</value></data>
+  <data name="Logs.Ui.Period" xml:space="preserve"><value>Period</value></data>
+  <data name="Logs.Ui.Severity" xml:space="preserve"><value>Severity</value></data>
+  <data name="Logs.Ui.From" xml:space="preserve"><value>From</value></data>
+  <data name="Logs.Ui.Until" xml:space="preserve"><value>Until inclusive</value></data>
+  <data name="Logs.Ui.ViewProblems" xml:space="preserve"><value>View new problems</value></data>
+  <data name="Logs.Ui.RecentRuns" xml:space="preserve"><value>Recent executions</value></data>
+  <data name="Logs.Ui.OnlyProblems" xml:space="preserve"><value>Problems only</value></data>
+  <data name="Logs.Ui.AllJobs" xml:space="preserve"><value>All jobs and macros</value></data>
+  <data name="Logs.Ui.Job" xml:space="preserve"><value>Job / macro</value></data>
+  <data name="Logs.Ui.Result" xml:space="preserve"><value>Result</value></data>
+  <data name="Logs.Ui.Origin" xml:space="preserve"><value>Origin</value></data>
+  <data name="Logs.Ui.Start" xml:space="preserve"><value>Start</value></data>
+  <data name="Logs.Ui.Duration" xml:space="preserve"><value>Duration</value></data>
+  <data name="Logs.Ui.More" xml:space="preserve"><value>Load more</value></data>
+  <data name="Logs.Ui.RecentAutomations" xml:space="preserve"><value>Automations · recent events</value></data>
+  <data name="Logs.Ui.AllEvents" xml:space="preserve"><value>Show all events →</value></data>
+  <data name="Logs.Ui.Timeline" xml:space="preserve"><value>Execution timeline</value></data>
+  <data name="Logs.Ui.AllAutomations" xml:space="preserve"><value>All automations</value></data>
+  <data name="Logs.Ui.Events" xml:space="preserve"><value>Events</value></data>
+  <data name="Logs.Ui.Time" xml:space="preserve"><value>Time</value></data>
+  <data name="Logs.Ui.Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Logs.Ui.Event" xml:space="preserve"><value>Event</value></data>
+  <data name="Logs.Ui.Impact" xml:space="preserve"><value>Impact</value></data>
+  <data name="Logs.Ui.Help" xml:space="preserve"><value>What you can do</value></data>
+  <data name="Logs.Ui.OpenStep" xml:space="preserve"><value>Open step</value></data>
+  <data name="Logs.Ui.OpenCause" xml:space="preserve"><value>Show cause in timeline</value></data>
+  <data name="Logs.Ui.OpenJob" xml:space="preserve"><value>Open job</value></data>
+  <data name="Logs.Ui.OpenOrigin" xml:space="preserve"><value>Open origin</value></data>
+  <data name="Logs.Ui.CheckPath" xml:space="preserve"><value>Check file or folder</value></data>
+  <data name="Logs.Ui.RelatedRun" xml:space="preserve"><value>Related execution</value></data>
+  <data name="Logs.Ui.OpenAutomation" xml:space="preserve"><value>Open automation</value></data>
+  <data name="Logs.Ui.Technical" xml:space="preserve"><value>Technical details</value></data>
+  <data name="Logs.Ui.Copy" xml:space="preserve"><value>Copy details</value></data>
+  <data name="Logs.Ui.Privacy" xml:space="preserve"><value>Known confidential values are masked in the report.</value></data>
+  <data name="Logs.Ui.Live" xml:space="preserve"><value>Live updates</value></data>
+  <data name="Logs.Ui.Paused" xml:space="preserve"><value>Live updates paused</value></data>
+  <data name="Logs.Ui.CaptureContinues" xml:space="preserve"><value>Capture continues when updates are paused.</value></data>
+  <data name="Logs.Ui.New" xml:space="preserve"><value>Show {0} new entries</value></data>
+  <data name="Logs.Ui.SelectEvent" xml:space="preserve"><value>Select an event</value></data>
+  <data name="Logs.Ui.SelectStep" xml:space="preserve"><value>Select a step</value></data>
+  <data name="Logs.Ui.RunUnavailable" xml:space="preserve"><value>This execution is unavailable.</value></data>
+  <data name="Logs.Ui.JobDeleted" xml:space="preserve"><value>The job was deleted. The saved execution remains visible.</value></data>
+  <data name="Logs.Ui.StepDeleted" xml:space="preserve"><value>The step was deleted and cannot be opened.</value></data>
+  <data name="Logs.Ui.DefinitionChanged" xml:space="preserve"><value>The job has changed since this execution.</value></data>
+  <data name="Logs.Ui.Deleted" xml:space="preserve"><value>Definition deleted</value></data>
+  <data name="Logs.Ui.Read.Partial" xml:space="preserve"><value>History is incomplete. Some events are missing.</value></data>
+  <data name="Logs.Ui.Read.Unavailable" xml:space="preserve"><value>History is unavailable.</value></data>
+  <data name="Logs.Ui.EmptyRuns" xml:space="preserve"><value>No executions match these filters.</value></data>
+  <data name="Logs.Ui.InvalidRange" xml:space="preserve"><value>The end of the period must be after its start.</value></data>
+  <data name="Logs.Ui.LoadFailed" xml:space="preserve"><value>Logs could not be loaded. Please try again.</value></data>
+  <data name="Logs.Ui.Exported" xml:space="preserve"><value>The report was exported.</value></data>
+  <data name="Logs.Ui.ExportPartial" xml:space="preserve"><value>The report was exported and includes notes about missing data.</value></data>
+  <data name="Logs.Ui.ExportFailed" xml:space="preserve"><value>Export failed. Choose a new file name and check access permissions.</value></data>
+  <data name="Logs.Ui.ExportCancelled" xml:space="preserve"><value>Export cancelled.</value></data>
+  <data name="Logs.Ui.ZipFilter" xml:space="preserve"><value>Log report (*.zip)|*.zip</value></data>
+  <data name="Logs.Ui.CopyFailed" xml:space="preserve"><value>The clipboard is currently unavailable. Please try again.</value></data>
+  <data name="Logs.Ui.PathUnavailable" xml:space="preserve"><value>The path is unavailable: {0}</value></data>
+  <data name="Logs.Ui.PathOpenFailed" xml:space="preserve"><value>The path could not be opened.</value></data>
+  <data name="Logs.Ui.Seconds" xml:space="preserve"><value>{0:0.0} s</value></data>
+  <data name="Logs.Ui.Minutes" xml:space="preserve"><value>{0} min {1} s</value></data>
+  <data name="Logs.Ui.AutomationContext" xml:space="preserve"><value>Watching: {0} · Target: {1}</value></data>
+  <data name="Logs.Ui.Eligible" xml:space="preserve"><value>Earliest start: {0}</value></data>
+  <data name="Logs.Ui.FileDetected" xml:space="preserve"><value>File detected: {0}</value></data>
+  <data name="Logs.Ui.StepPosition" xml:space="preserve"><value>Step {0}</value></data>
+  <data name="Logs.Ui.AutomationImpact.Existing" xml:space="preserve"><value>The running execution continued. No additional job was started.</value></data>
+  <data name="Logs.Ui.AutomationImpact.Started" xml:space="preserve"><value>An execution was started. Open it to see its progress.</value></data>
+  <data name="Logs.Ui.AutomationImpact.NoConfirmedRun" xml:space="preserve"><value>No new execution is confirmed for this event.</value></data>
+  <data name="Logs.Ui.AllSources" xml:space="preserve"><value>All sources</value></data>
+  <data name="Logs.Ui.Source.Job" xml:space="preserve"><value>Jobs</value></data>
+  <data name="Logs.Ui.Source.Makro" xml:space="preserve"><value>Macros</value></data>
+  <data name="Logs.Ui.Source.Automation" xml:space="preserve"><value>Automations</value></data>
+  <data name="Logs.Ui.Source.Application" xml:space="preserve"><value>Application</value></data>
+  <data name="Logs.Ui.AdvancedFilters" xml:space="preserve"><value>More filters and repeated events</value></data>
+  <data name="Logs.Ui.GroupedEvents" xml:space="preserve"><value>Repeated events</value></data>
+  <data name="Logs.Ui.GroupOpen" xml:space="preserve"><value>View event group</value></data>
+  <data name="Logs.Ui.NoEvents" xml:space="preserve"><value>No events match these filters.</value></data>
+  <data name="Log.Automation.AlreadyRunning.Detail" xml:space="preserve"><value>The trigger was detected. The target job “{Target}” was already running.</value></data>
+  <data name="Log.Automation.Started.Detail" xml:space="preserve"><value>The target job “{Target}” was started. Open the linked execution to see its progress.</value></data>
+  <data name="Log.Automation.Requested.Detail" xml:space="preserve"><value>A start was requested for “{Target}”. A new execution is not yet confirmed.</value></data>
+  <data name="Log.Automation.Cooldown.Detail" xml:space="preserve"><value>The waiting period was still active. A new start was only permitted after it ended.</value></data>
+  <data name="Log.Automation.OutsideWindow.Detail" xml:space="preserve"><value>The trigger was outside the permitted time window.</value></data>
+  <data name="Log.Automation.Paused.Detail" xml:space="preserve"><value>The automation was paused at that time.</value></data>
+  <data name="Log.Automation.Disabled.Detail" xml:space="preserve"><value>The automation was disabled at that time.</value></data>
+  <data name="Log.Automation.StopRequested.Detail" xml:space="preserve"><value>A stop was requested for a running execution. Its final state is recorded in the execution history.</value></data>
+  <data name="Log.Automation.Rejected.Detail" xml:space="preserve"><value>The start was rejected. Technical details contain the recorded evidence.</value></data>
+  <data name="Log.Automation.Failed.Detail" xml:space="preserve"><value>Processing the trigger failed.</value></data>
+  <data name="Log.Automation.Cancelled.Detail" xml:space="preserve"><value>Processing the trigger was cancelled.</value></data>
+  <data name="Log.Automation.Unknown.Detail" xml:space="preserve"><value>The retained data is insufficient to determine the decision.</value></data>
+  <data name="Logs.Ui.AutomationUnavailable" xml:space="preserve"><value>This automation is no longer available.</value></data>
+  <data name="Logs.Ui.AllSteps" xml:space="preserve"><value>All steps</value></data>
+  <data name="Logs.Ui.TechnicalHeader" xml:space="preserve"><value>Code: {0}
+Time: {1}
+Source: {2}
+{10}
+
+{3}
+
+{4}
+
+{5}
+
+Event: {6}
+Execution: {7}
+Step: {8} / {9}</value></data>
+  <data name="Logs.Ui.TodayDate" xml:space="preserve"><value>Today · {0}</value></data>
+  <data name="Logs.Ui.Severity.Debug" xml:space="preserve"><value>Debug</value></data>
+  <data name="Logs.Ui.Severity.Information" xml:space="preserve"><value>Information</value></data>
+  <data name="Logs.Ui.Severity.Warning" xml:space="preserve"><value>Warning</value></data>
+  <data name="Logs.Ui.Severity.Error" xml:space="preserve"><value>Error</value></data>
+  <data name="Logs.Ui.MarkAllSeen" xml:space="preserve"><value>Mark all as seen</value></data>
+  <data name="Logs.Ui.OnlyNewProblems" xml:space="preserve"><value>Only new problems</value></data>
+  <data name="Logs.Ui.MarkSeen" xml:space="preserve"><value>Mark as seen</value></data>
+  <data name="Logs.Ui.ResolveProblem" xml:space="preserve"><value>Mark as resolved</value></data>
+  <data name="Logs.Ui.ReopenProblem" xml:space="preserve"><value>Mark as new again</value></data>
+  <data name="Logs.Ui.AttentionState.New" xml:space="preserve"><value>New · not viewed yet</value></data>
+  <data name="Logs.Ui.AttentionState.Seen" xml:space="preserve"><value>Seen · retained in history</value></data>
+  <data name="Logs.Ui.AttentionState.Resolved" xml:space="preserve"><value>Marked as resolved</value></data>
+  <data name="Logs.Ui.AttentionSummary" xml:space="preserve"><value>Additional problems or incomplete evidence: acknowledge this execution notice explicitly.</value></data>
+  <data name="Logs.Ui.AttentionSaveFailed" xml:space="preserve"><value>The acknowledgement could not be saved. The previous state is unchanged.</value></data>
+  <data name="Logs.Ui.AttentionLoadFailed" xml:space="preserve"><value>Saved acknowledgements are unavailable. Problems are shown as new.</value></data>
+  <data name="Logs.Ui.NextProblem" xml:space="preserve"><value>View another new problem</value></data>
+  <data name="Ui.Library.Folders" xml:space="preserve"><value>Folders</value></data>
+  <data name="Ui.Library.AllItems" xml:space="preserve"><value>All {0}</value></data>
+  <data name="Ui.Library.SearchIn" xml:space="preserve"><value>Search in {0}</value></data>
+  <data name="Ui.Library.ItemCount" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Ui.Library.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Ui.Library.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Ui.Library.Actions" xml:space="preserve"><value>More actions</value></data>
+  <data name="Ui.Library.ExpandFolder" xml:space="preserve"><value>Expand or collapse folder</value></data>
+  <data name="Ui.Library.JobsDescription" xml:space="preserve"><value>Manage jobs and organize them in folders.</value></data>
+  <data name="Ui.Library.MakrosDescription" xml:space="preserve"><value>Manage macros and organize them in folders.</value></data>
+  <data name="Ui.Library.AutomationsDescription" xml:space="preserve"><value>Manage automations and organize them in folders.</value></data>
+  <data name="Ui.Library.Explorer" xml:space="preserve"><value>Open in Explorer</value></data>
+  <data name="Ui.Library.MakrosTitle" xml:space="preserve"><value>Macros</value></data>
+  <data name="Ui.Library.PathSeparator" xml:space="preserve"><value>/</value></data>
+
+  <data name="Macro.Step.Type.TextInput" xml:space="preserve"><value>Enter text</value></data>
+  <data name="Macro.Step.Type.KeyCombination" xml:space="preserve"><value>Key combination</value></data>
+  <data name="Ui.Macro.StepEditor.Description.TextInput" xml:space="preserve"><value>Enters Unicode text in the active application.</value></data>
+  <data name="Ui.Macro.StepEditor.Description.KeyCombination" xml:space="preserve"><value>Presses the selected keys together, then releases them.</value></data>
+  <data name="Ui.Macro.StepEditor.Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Ui.Macro.Recording.CombineKeyboard" xml:space="preserve"><value>Combine text and key combinations</value></data>
+  <data name="Ui.Macro.Recording.CombineKeyboard.Help" xml:space="preserve"><value>Unambiguous sequences are saved as new steps. Ambiguous input, dead keys and IME remain individual key steps.</value></data>
+  <data name="Ui.Macro.Editor.Back" xml:space="preserve"><value>Back to macros</value></data>
+  <data name="Ui.Macro.Editor.Unsaved" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="Ui.Macro.Editor.Discard" xml:space="preserve"><value>Discard</value></data>
+  <data name="Ui.Macro.Editor.OpenFile" xml:space="preserve"><value>Open macro file</value></data>
+  <data name="Ui.Macro.Editor.Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Ui.Macro.Editor.Redo" xml:space="preserve"><value>Redo</value></data>
+  <data name="Ui.Macro.Editor.Group" xml:space="preserve"><value>Group</value></data>
+  <data name="Ui.Macro.Editor.Number" xml:space="preserve"><value>#</value></data>
+  <data name="Ui.Macro.Editor.Step" xml:space="preserve"><value>Step</value></data>
+  <data name="Ui.Macro.Editor.Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Ui.Macro.Editor.EditStep" xml:space="preserve"><value>Edit step</value></data>
+  <data name="Ui.Macro.Editor.SelectStep" xml:space="preserve"><value>Select a single step to edit its settings.</value></data>
+  <data name="Ui.Macro.Editor.Preview" xml:space="preserve"><value>Sequence preview</value></data>
+  <data name="Ui.Macro.Editor.Preview.Help" xml:space="preserve"><value>Shows the sequence on screen without executing input.</value></data>
+  <data name="Ui.Macro.Editor.Preview.Start" xml:space="preserve"><value>Start preview</value></data>
+  <data name="Ui.Macro.Editor.Preview.Stop" xml:space="preserve"><value>Stop preview</value></data>
+  <data name="Ui.Macro.Editor.Preview.Speed" xml:space="preserve"><value>Speed</value></data>
+  <data name="Ui.Common.Execute" xml:space="preserve"><value>Run</value></data>
+
+  <data name="Ui.Macro.Editor.AddStep" xml:space="preserve"><value>Add step</value></data>
+  <data name="Ui.Macro.Editor.Steps" xml:space="preserve"><value>Steps</value></data>
+  <data name="Ui.Macro.Editor.GroupSelection" xml:space="preserve"><value>Group selection</value></data>
+  <data name="Ui.Macro.Editor.GroupSummary" xml:space="preserve"><value>{0} · {1} steps</value></data>
+
+  <data name="Ui.Macro.Validation.TextRequired" xml:space="preserve"><value>Enter some text.</value></data>
+  <data name="Ui.Macro.Validation.KeyCombinationInvalid" xml:space="preserve"><value>Choose at least one modifier and a valid main key, for example Ctrl+S.</value></data>
+  <data name="Ui.Macro.StepEditor.NumberInvalid" xml:space="preserve"><value>Enter a valid number.</value></data>
+
+  <data name="Ui.Macro.StepEditor.X1" xml:space="preserve"><value>Extra mouse button 1</value></data>
+  <data name="Ui.Macro.StepEditor.X2" xml:space="preserve"><value>Extra mouse button 2</value></data>
+<data name="Ui.Macro.Recording.Nav.Recording" xml:space="preserve"><value>Recording</value></data>
+<data name="Ui.Macro.Recording.Nav.Inputs" xml:space="preserve"><value>Inputs</value></data>
+<data name="Ui.Macro.Recording.Nav.Precision" xml:space="preserve"><value>Precision</value></data>
+<data name="Ui.Macro.Recording.Nav.Recording.Help" xml:space="preserve"><value>Recording mode and hotkey</value></data>
+<data name="Ui.Macro.Recording.Inputs.Help" xml:space="preserve"><value>Choose which inputs to capture during recording.</value></data>
+<data name="Ui.Macro.Recording.Summary.Both" xml:space="preserve"><value>Keyboard and mouse</value></data>
+<data name="Ui.Macro.Recording.Summary.Keyboard" xml:space="preserve"><value>Keyboard</value></data>
+<data name="Ui.Macro.Recording.Summary.Mouse" xml:space="preserve"><value>Mouse</value></data>
+<data name="Ui.Macro.Recording.Summary.None" xml:space="preserve"><value>No keyboard or mouse buttons</value></data>
+<data name="Ui.Macro.Recording.Summary.Precision" xml:space="preserve"><value>{0:0.###} ms · {1} pixels</value></data>
+<data name="Ui.Macro.Recording.Interval.Invalid" xml:space="preserve"><value>The recording interval must be between 0 and 1,000 ms.</value></data>
+<data name="Ui.Macro.Recording.Distance.Invalid" xml:space="preserve"><value>Minimum movement must be between 0 and 10,000 pixels.</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.FrameVersion" xml:space="preserve"><value>Frame version</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.FrameTimestamp" xml:space="preserve"><value>Frame timestamp (monotonic ticks)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.SourceFrameVersion" xml:space="preserve"><value>Source frame version</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.SourceFrameTimestamp" xml:space="preserve"><value>Source frame timestamp (monotonic ticks)</value></data>
+  <data name="Ui.Job.Steps.ResultProperty.MovementBlocked" xml:space="preserve"><value>Consecutive movement blocked</value></data>
+  <data name="Log.Summary.Aggregated" xml:space="preserve"><value>{Count} repetitions summarized.</value></data>
+  <data name="Logs.Ui.AggregatedCount" xml:space="preserve"><value>{0} repetitions</value></data>
+  <data name="Logs.Ui.AggregatedDuration" xml:space="preserve"><value>{0} total · Avg {1:0.##} ms</value></data>
+  <data name="Logs.Ui.AggregatedLast" xml:space="preserve"><value>The details show the last summarized execution.</value></data>
+  <data name="Logs.Ui.CompletedIterations" xml:space="preserve"><value>{0} completed iterations</value></data>
+  <data name="Ui.Step.Capture.WaitForNewFrame" xml:space="preserve"><value>Wait for a new image</value></data>
+  <data name="Ui.Step.Capture.Timeout" xml:space="preserve"><value>Time limit (ms)</value></data>
+  <data name="Ui.Step.Capture.AllowCachedFallback" xml:space="preserve"><value>Use the last image on timeout</value></data>
+  <data name="Ui.Step.Capture.MonitorIdentity" xml:space="preserve"><value>Monitor identity</value></data>
+  <data name="Ui.Step.Capture.MonitorIdentityHelp" xml:space="preserve"><value>Monitor selection stores this identity. Leave empty to use the monitor index; a disconnected monitor causes an error.</value></data>
+  <data name="Ui.Step.Capture.Advanced" xml:space="preserve"><value>Advanced capture settings</value></data>
+  <data name="Logs.Ui.AttentionCleanupFailed" xml:space="preserve"><value>Old acknowledgement entries could not be cleaned up. Cleanup will be retried.</value></data>
+  <data name="Ui.Step.Capture.TimeoutHelp" xml:space="preserve"><value>Limits waiting and retries. Monitor initialization and image processing can take additional time.</value></data>
 </root>

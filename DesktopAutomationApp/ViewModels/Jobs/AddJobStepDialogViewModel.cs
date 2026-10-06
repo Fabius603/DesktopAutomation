@@ -1327,9 +1327,13 @@ namespace DesktopAutomationApp.ViewModels
             if (field is null || !field.UsesMonitorPicker) return;
             try
             {
-                int selectedMonitorIndex = ShowMonitorSelectionOverlay();
-                if (selectedMonitorIndex >= 0)
-                    field.IntegerValue = selectedMonitorIndex;
+                var selectedMonitor = ShowMonitorSelection();
+                if (selectedMonitor.Index >= 0)
+                {
+                    if (GeneratedEditor != null)
+                        GeneratedEditor.ApplyMonitorSelection(field, selectedMonitor.Index, selectedMonitor.DeviceName);
+                    else field.IntegerValue = selectedMonitor.Index;
+                }
             }
             catch (Exception ex)
             {
@@ -1339,7 +1343,9 @@ namespace DesktopAutomationApp.ViewModels
         }
 
 
-        private int ShowMonitorSelectionOverlay()
+        private int ShowMonitorSelectionOverlay() => ShowMonitorSelection().Index;
+
+        private (int Index, string DeviceName) ShowMonitorSelection()
         {
             var screens = ImageHelperMethods.ScreenHelper.GetScreens();
             var overlays = new List<System.Windows.Window>();
@@ -1421,7 +1427,7 @@ namespace DesktopAutomationApp.ViewModels
                     System.Threading.Thread.Sleep(50);
                 }
 
-                return selectedIndex;
+                return (selectedIndex, selectedIndex >= 0 ? screens[selectedIndex].DeviceName : string.Empty);
             }
             finally
             {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing.Imaging;
 using System.IO;
 using SharpDX;
@@ -14,7 +14,7 @@ using ImageHelperMethods;
 
 namespace ImageCapture.DesktopDuplication
 {
-    public class DesktopDuplicator : IDisposable
+    public class DesktopDuplicator : IDesktopDuplicationSession
     {
         #region propertiers
         private Device mDevice;
@@ -27,7 +27,7 @@ namespace ImageCapture.DesktopDuplication
         private Bitmap _currentCachedBitmap = null;
         private int _currentCachedBitmapWidth = 0;
         private int _currentCachedBitmapHeight = 0;
-        private DateTime _currentCachedBitmapTimestampUtc = DateTime.MinValue;
+        private readonly DesktopFrameMetadata _cachedFrameMetadata = new DesktopFrameMetadata();
 
         private OutputDuplicateFrameInformation frameInfo = new OutputDuplicateFrameInformation();
         private int mWhichOutputDevice = -1;
@@ -35,9 +35,21 @@ namespace ImageCapture.DesktopDuplication
         private bool disposed = false;
         private readonly PointerInfo sharedPointerInfo = new PointerInfo();
         private int aquireFrameTimeout { get; set; } = 0;
+        private DesktopFrame _lastFrame = new DesktopFrame();
+        public Rectangle Bounds => ToRectangle(mOutputDesc.DesktopBounds);
+        public bool HasImage => _currentCachedBitmap != null;
         #endregion
 
-        public DesktopDuplicator(int screenIdx)
+        public DesktopDuplicator(int screenIdx) : this(ResolveDeviceName(screenIdx)) { }
+
+        private static string ResolveDeviceName(int index)
+        {
+            var screens = ScreenHelper.GetScreens();
+            if (index < 0 || index >= screens.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            return screens[index].DeviceName;
+        }
+
+        public DesktopDuplicator(string deviceName)
         {
             Factory1 factory = null;
             Adapter1 adapter = null;
@@ -47,15 +59,16 @@ namespace ImageCapture.DesktopDuplication
 
             var screens = ScreenHelper.GetScreens();
 
-            if (screens == null || screenIdx < 0 || screenIdx >= screens.Length)
+            var screen = Array.Find(screens, s => string.Equals(s.DeviceName, deviceName, StringComparison.OrdinalIgnoreCase));
+            if (screen == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(screenIdx), "Invalid screen index specified.");
+                throw new DesktopDuplicationException("The selected capture monitor is not connected.");
             }
 
-            var idx = ScreenHelper.GetAdapterAndOutputIndex(screens[screenIdx]);
+            var idx = ScreenHelper.GetAdapterAndOutputIndex(screen);
             if (idx == null)
             {
-                throw new DesktopDuplicationException($"Could not find the specified graphics card adapter or output device for screen index {screenIdx}.");
+                throw new DesktopDuplicationException("Could not find the specified graphics card adapter or output device.");
             }
             mWhichOutputDevice = idx.Value.outputIdx;
 
@@ -131,6 +144,36 @@ namespace ImageCapture.DesktopDuplication
 
         public DesktopFrame GetLatestFrame()
         {
+            UpdateFrame(aquireFrameTimeout);
+            return CopyFrame(false);
+        }
+
+        public DesktopFrame CopyFrame(bool captureCursor)
+        {
+            if (disposed) throw new ObjectDisposedException(nameof(DesktopDuplicator));
+            var frame = _lastFrame.Clone();
+            frame.Bounds = Bounds;
+            frame.CaptureTimestampUtc = _cachedFrameMetadata.CaptureTimestampUtc;
+            frame.FrameVersion = _cachedFrameMetadata.FrameVersion;
+            frame.FrameTimestamp = _cachedFrameMetadata.FrameTimestamp;
+            try
+            {
+                if (_currentCachedBitmap != null)
+                {
+                    frame.DesktopImage = (Bitmap)_currentCachedBitmap.Clone();
+                    frame.DesktopImage.RotateFlip(DesktopImageRotation.ToRotateFlip(mOutputDesc.Rotation));
+                    if (captureCursor && sharedPointerInfo.Visible && sharedPointerInfo.PtrShapeBuffer != null)
+                        DesktopPointerRenderer.Draw(frame.DesktopImage, frame.CursorLocation,
+                            sharedPointerInfo.PtrShapeBuffer, sharedPointerInfo.ShapeInfo);
+                }
+                return frame;
+            }
+            catch { frame.Dispose(); throw; }
+        }
+
+        public bool UpdateFrame(int timeoutMilliseconds)
+        {
+            SetFrameTimeout(timeoutMilliseconds);
             if (disposed)
                 throw new ObjectDisposedException(nameof(DesktopDuplicator));
 
@@ -140,36 +183,25 @@ namespace ImageCapture.DesktopDuplication
 
             try
             {
-                bool retrievalTimedOut = RetrieveFrameInternal(out desktopResource);
-
-                frameSuccessfullyAcquiredFromDxgi = !retrievalTimedOut;
+                bool retrievalTimedOut = RetrieveFrameInternal(out desktopResource, out frameSuccessfullyAcquiredFromDxgi);
 
                 frame = new DesktopFrame();
                 RetrieveFrameMetadata(frame);
                 RetrieveCursorMetadata(frame);
 
-                bool frameWasUpdated = (desktopResource != null || frameInfo.LastPresentTime > 0 || frameInfo.AccumulatedFrames > 0);
-                frame.IsFresh = !retrievalTimedOut && frameWasUpdated;
-
+                bool frameWasUpdated = !retrievalTimedOut && desktopResource != null
+                    && frameInfo.LastPresentTime > 0
+                    && frameInfo.LastPresentTime > _cachedFrameMetadata.FrameTimestamp;
                 if (frameWasUpdated)
                 {
                     ProcessFrameIntoInternalBitmap();
-                    _currentCachedBitmapTimestampUtc = DateTime.UtcNow;
+                    if (_currentCachedBitmap != null)
+                        frame.IsFresh = _cachedFrameMetadata.Update(frameInfo.LastPresentTime);
                 }
 
-                if (_currentCachedBitmap != null)
-                {
-                    frame.DesktopImage = (Bitmap)_currentCachedBitmap.Clone();
-                    frame.CaptureTimestampUtc = _currentCachedBitmapTimestampUtc == DateTime.MinValue
-                        ? DateTime.UtcNow
-                        : _currentCachedBitmapTimestampUtc;
-                }
-                else
-                {
-                    frame.DesktopImage = null;
-                }
-
-                return frame;
+                _lastFrame.Dispose();
+                _lastFrame = frame;
+                return frame.IsFresh;
             }
             catch (SharpDXException ex)
             {
@@ -177,7 +209,6 @@ namespace ImageCapture.DesktopDuplication
                     ex.ResultCode.Code == SharpDX.DXGI.ResultCode.DeviceRemoved.Result.Code ||
                     ex.ResultCode.Code == SharpDX.DXGI.ResultCode.DeviceReset.Result.Code)
                 {
-                    Dispose();
                     throw new DesktopDuplicationException("Desktop Duplication session became invalid (Access Lost/Device Removed/Device Reset). Please recreate DesktopDuplicator.", ex);
                 }
                 frame?.DesktopImage?.Dispose();
@@ -196,10 +227,7 @@ namespace ImageCapture.DesktopDuplication
                     }
                     catch (SharpDXException ex)
                     {
-                        if (ex.ResultCode.Failure)
-                        {
-                            Debug.WriteLine($"Failed to release frame: {ex.Message}");
-                        }
+                        throw new DesktopDuplicationException("Failed to release the acquired desktop frame.", ex);
                     }
                 }
             }
@@ -208,44 +236,28 @@ namespace ImageCapture.DesktopDuplication
         #endregion
 
         #region private methods
-        private bool RetrieveFrameInternal(out SharpDX.DXGI.Resource desktopResourceOut)
+        private bool RetrieveFrameInternal(out SharpDX.DXGI.Resource desktopResourceOut, out bool acquired)
         {
             if (disposed)
                 throw new ObjectDisposedException(nameof(DesktopDuplicator));
 
             desktopResourceOut = null;
-
-            // Ensure desktopImageTexture (the staging buffer) is correctly sized.
-            // This might change if screen resolution changes.
-            int currentOutputWidth = GetWidth(mOutputDesc.DesktopBounds);
-            int currentOutputHeight = GetHeight(mOutputDesc.DesktopBounds);
-
-            if (desktopImageTexture == null || mTextureDesc.Width != currentOutputWidth || mTextureDesc.Height != currentOutputHeight)
-            {
-                desktopImageTexture?.Dispose(); // Dispose old texture if size changed
-                mTextureDesc.Width = currentOutputWidth;
-                mTextureDesc.Height = currentOutputHeight;
-                // Handle invalid dimensions defensively
-                if (currentOutputWidth <= 0 || currentOutputHeight <= 0)
-                {
-                    throw new DesktopDuplicationException($"Invalid output dimensions: Width={currentOutputWidth}, Height={currentOutputHeight}");
-                }
-                desktopImageTexture = new Texture2D(mDevice, mTextureDesc);
-            }
+            acquired = false;
 
             // Re-initialize frameInfo struct for each attempt
             frameInfo = new OutputDuplicateFrameInformation();
 
             try
             {
-                Result res = mDeskDupl.TryAcquireNextFrame(aquireFrameTimeout, out frameInfo, out desktopResourceOut); 
+                Result res = mDeskDupl.TryAcquireNextFrame(aquireFrameTimeout, out frameInfo, out desktopResourceOut);
                 if (res.Code == SharpDX.DXGI.ResultCode.WaitTimeout.Result.Code)
                 {
                     desktopResourceOut?.Dispose();
                     desktopResourceOut = null;
-                    return true; 
+                    return true;
                 }
-                res.CheckError(); 
+                res.CheckError();
+                acquired = true;
             }
             catch (SharpDXException ex)
             {
@@ -253,18 +265,27 @@ namespace ImageCapture.DesktopDuplication
                 desktopResourceOut = null;
                 if (ex.ResultCode.Failure)
                 {
-                    throw; 
+                    throw;
                 }
             }
 
-            if (desktopResourceOut != null)
+            if (desktopResourceOut != null && frameInfo.LastPresentTime > 0)
             {
                 using (var tempTexture = desktopResourceOut.QueryInterface<Texture2D>())
                 {
+                    var description = tempTexture.Description;
+                    // Rotated outputs have an unrotated DXGI surface; size from the resource, not desktop bounds.
+                    if (desktopImageTexture == null || description.Width != mTextureDesc.Width || description.Height != mTextureDesc.Height)
+                    {
+                        desktopImageTexture?.Dispose();
+                        mTextureDesc.Width = description.Width;
+                        mTextureDesc.Height = description.Height;
+                        desktopImageTexture = new Texture2D(mDevice, mTextureDesc);
+                    }
                     mDevice.ImmediateContext.CopyResource(tempTexture, desktopImageTexture);
                 }
             }
-            return false; 
+            return false;
         }
 
 
@@ -453,7 +474,7 @@ namespace ImageCapture.DesktopDuplication
                 // In case of error, consider the cached bitmap invalid for this frame
                 _currentCachedBitmap?.Dispose();
                 _currentCachedBitmap = null;
-                // Optionally re-throw or handle as a non-fatal error for the frame.
+                throw;
             }
             finally
             {
@@ -475,6 +496,7 @@ namespace ImageCapture.DesktopDuplication
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -492,6 +514,7 @@ namespace ImageCapture.DesktopDuplication
 
                 _currentCachedBitmap?.Dispose(); // Dispose the internally managed Bitmap
                 _currentCachedBitmap = null;
+                _lastFrame.Dispose();
 
                 mDevice?.Dispose();
                 mDevice = null;

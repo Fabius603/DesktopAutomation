@@ -1,6 +1,7 @@
 using System.IO;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Jobs;
+using TaskAutomation.Logging;
 
 namespace TaskAutomation.Steps;
 
@@ -25,6 +26,19 @@ public sealed class FileSystemOperationStepHandler
         var target = settings.Operation is FileSystemOperation.Copy or FileSystemOperation.Move
             ? ResolvePath(settings.TargetMode, settings.TargetPath, settings.TargetResult, context)
             : string.Empty;
+
+        if (context.ExecutionLogSession is { } session)
+            context.ExecutionLogService.Record(session, new LogEvent
+            {
+                Code = LogCodes.StepPaths,
+                Context = LogAmbient.Current,
+                Category = LogArea.FileAccess,
+                Phase = StepLogScope.CurrentPhase,
+                Iteration = StepLogScope.CurrentIteration,
+                Paths = new[] { new LogPath("Source", source), new LogPath("Target", target) }
+                    .Where(path => StepLogPaths.Normalize(path.Value) is not null)
+                    .Select(path => path with { Value = StepLogPaths.Normalize(path.Value)! }).ToArray()
+            });
 
         EnsureSourceExists(source);
         var summary = settings.Operation switch

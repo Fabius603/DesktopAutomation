@@ -12,6 +12,30 @@
              PreviewKeyDown="LibraryTree_PreviewKeyDown"
              GiveFeedback="LibraryTree_GiveFeedback">
     <UserControl.Resources>
+        <Style x:Key="LibraryRow" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/></Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/></Trigger>
+                            <DataTrigger Binding="{Binding IsDragging}" Value="True"><Setter TargetName="Row" Property="Opacity" Value="0.45"/></DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <ContextMenu x:Key="LibraryFolderContextMenu">
             <MenuItem Header="{Binding PlacementTarget.Tag.NewItemLabel, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       InputGestureText="{loc:Translate Key=Shortcut.CtrlN}"
@@ -36,6 +60,10 @@
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
         </ContextMenu>
         <ContextMenu x:Key="LibraryItemContextMenu">
+            <MenuItem Header="{loc:Translate Key=Ui.Library.ExecuteOrStop}"
+                      Command="{Binding PlacementTarget.Tag.ExecuteNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+            <Separator/>
             <MenuItem Header="{loc:Translate Key=Ui.Common.Open}"
                       InputGestureText="{loc:Translate Key=Shortcut.Enter}"
                       Command="{Binding PlacementTarget.Tag.OpenNodeCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -58,343 +86,162 @@
     </UserControl.Resources>
 
     <Grid>
-        <Border AllowDrop="True">
-            <Border.Style>
-                <Style TargetType="Border" BasedOn="{StaticResource TableCardStyle}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsRootDropTarget}" Value="True">
-                            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                            <Setter Property="BorderThickness" Value="2"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
-                <Border Padding="14,12"
-                        Background="{DynamicResource App.Brush.Surface}"
-                        BorderBrush="{DynamicResource App.Brush.CardBorder}"
-                        BorderThickness="0,0,0,1">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid Width="420" MaxWidth="520" HorizontalAlignment="Left">
-                            <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     MinHeight="36"
-                                     Padding="34,6,34,6"
-                                     controls:TextBoxHelper.Watermark="{loc:Translate Key=Ui.Library.Search}"/>
-                            <iconPacks:PackIconMaterial Kind="Magnify"
-                                                       Width="16" Height="16"
-                                                       Margin="10,0,0,0"
-                                                       HorizontalAlignment="Left"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource App.Brush.TextMuted}"
-                                                       IsHitTestVisible="False"/>
-                            <Button Style="{StaticResource ButtonIcon}"
-                                    Command="{Binding ClearSearchCommand}"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,4,0"
-                                    ToolTip="{loc:Translate Key=Ui.Library.ClearSearch}"
-                                    Visibility="{Binding HasSearchText, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <iconPacks:PackIconMaterial Kind="Close" Width="13" Height="13"/>
-                            </Button>
-                        </Grid>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding SearchResultText}"
-                                   Margin="14,0,2,0"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource App.Brush.TextMuted}"
-                                   FontSize="12"
-                                   Visibility="{Binding HasSearchText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" MinWidth="180" MaxWidth="360"/>
+            <ColumnDefinition Width="14"/>
+            <ColumnDefinition Width="*" MinWidth="300"/>
+        </Grid.ColumnDefinitions>
+        <Border Style="{StaticResource TableCardStyle}">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Padding="16,14" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1">
+                    <TextBlock Text="{loc:Translate Key=Ui.Library.Folders}" FontSize="16" FontWeight="SemiBold"/>
                 </Border>
-
-                <Grid Grid.Row="1" Background="Transparent">
-                    <ListBox x:Name="LibraryNodes" ItemsSource="{Binding VisibleNodes}"
-                             Padding="8"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             AllowDrop="True"
-                             ScrollViewer.CanContentScroll="True"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             VirtualizingPanel.IsVirtualizing="True"
-                             VirtualizingPanel.VirtualizationMode="Recycling"
-                             VirtualizingPanel.ScrollUnit="Pixel">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="Margin" Value="0"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="AllowDrop" Value="True"/>
-                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <EventSetter Event="PreviewMouseMove" Handler="Node_PreviewMouseMove"/>
-                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="Node_PreviewMouseRightButtonDown"/>
-                                <EventSetter Event="MouseDoubleClick" Handler="Node_MouseDoubleClick"/>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border MinHeight="42"
-                                        Padding="9,6"
-                                        Margin="2,1"
-                                        BorderThickness="{Binding DropBorderThickness}"
-                                        CornerRadius="7"
-                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        MouseLeftButtonUp="Node_MouseLeftButtonUp">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Cursor" Value="Hand"/>
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="BorderBrush" Value="Transparent"/>
-                                            <Setter Property="ContextMenu" Value="{StaticResource LibraryItemContextMenu}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                    <Setter Property="ContextMenu" Value="{StaticResource LibraryFolderContextMenu}"/>
-                                                </DataTrigger>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                                        <Condition Binding="{Binding DataContext.IsDragActive, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
-                                                    </MultiDataTrigger.Conditions>
-                                                    <Setter Property="Background" Value="{DynamicResource App.Brush.SurfaceHover}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.BorderSubtle}"/>
-                                                </MultiDataTrigger>
-                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.SelectionBorder}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                                    <Setter Property="Opacity" Value="0.45"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDropGroupMember}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="{Binding Indent}"/>
-                                            <ColumnDefinition Width="20"/>
-                                            <ColumnDefinition Width="24"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <iconPacks:PackIconMaterial Grid.Column="1"
-                                                                    Width="14" Height="14"
-                                                                    VerticalAlignment="Center">
+                <Button DockPanel.Dock="Top" Command="{Binding ShowAllCommand}"
+                        AutomationProperties.AutomationId="Library.AllItems" Margin="8,12,8,4" HorizontalContentAlignment="Left">
+                    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ButtonToolbar}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedFolderId}" Value="{x:Null}"><Setter Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/></DataTrigger>
+                            <DataTrigger Binding="{Binding IsRootDropTarget}" Value="True"><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="BorderThickness" Value="1"/></DataTrigger>
+                        </Style.Triggers>
+                    </Style></Button.Style>
+                    <StackPanel Orientation="Horizontal"><iconPacks:PackIconMaterial Kind="FolderMultipleOutline" Width="18" Height="18" Margin="8,0,10,0"/><TextBlock Text="{Binding AllItemsLabel}"/></StackPanel>
+                </Button>
+                <ListBox x:Name="FolderList" Foreground="{DynamicResource App.Brush.TextPrimary}" ItemsSource="{Binding FolderNodes}" SelectedItem="{Binding SelectedFolderNode, Mode=TwoWay}" BorderThickness="0" Background="Transparent" Padding="6"
+                         AutomationProperties.AutomationId="Library.Folders" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource LibraryRow}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <EventSetter Event="PreviewMouseMove" Handler="Node_PreviewMouseMove"/>
+                            <EventSetter Event="PreviewMouseRightButtonDown" Handler="Node_PreviewMouseRightButtonDown"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border MinHeight="44" Padding="5" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    ContextMenu="{StaticResource LibraryFolderContextMenu}" BorderThickness="{Binding DropBorderThickness}" CornerRadius="5"
+                                    MouseLeftButtonUp="Folder_Select">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource App.Brush.SelectionBackground}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDropGroupMember}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDragging}" Value="True"><Setter Property="Opacity" Value="0.45"/></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="{Binding Indent}"/><ColumnDefinition Width="24"/><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <Button Grid.Column="1" Style="{StaticResource ButtonIcon}" Width="22" Height="28" Click="Folder_Expand"
+                                            AutomationProperties.AutomationId="Library.ExpandFolder" ToolTip="{loc:Translate Key=Ui.Library.ExpandFolder}">
+                                        <iconPacks:PackIconMaterial Width="14" Height="14">
                                             <iconPacks:PackIconMaterial.Style>
-                                                <Style TargetType="iconPacks:PackIconMaterial">
-                                                    <Setter Property="Kind" Value="ChevronRight"/>
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextMuted}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                                                            <Setter Property="Kind" Value="ChevronDown"/>
-                                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
+                                                <Style TargetType="iconPacks:PackIconMaterial"><Setter Property="Kind" Value="ChevronRight"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding IsExpanded}" Value="True"><Setter Property="Kind" Value="ChevronDown"/></DataTrigger></Style.Triggers>
                                                 </Style>
                                             </iconPacks:PackIconMaterial.Style>
                                         </iconPacks:PackIconMaterial>
-
-                                        <Border Grid.Column="2"
-                                                Width="22" Height="22"
-                                                VerticalAlignment="Center">
-                                            <iconPacks:PackIconMaterial Width="17" Height="17"
-                                                                        HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center">
-                                                <iconPacks:PackIconMaterial.Style>
-                                                    <Style TargetType="iconPacks:PackIconMaterial">
-                                                        <Setter Property="Kind" Value="FileDocumentOutline"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                                <Setter Property="Kind" Value="Folder"/>
-                                                                <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
-                                                            </DataTrigger>
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding IsFolder}" Value="True"/>
-                                                                    <Condition Binding="{Binding IsExpanded}" Value="True"/>
-                                                                </MultiDataTrigger.Conditions>
-                                                                <Setter Property="Kind" Value="FolderOpen"/>
-                                                            </MultiDataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </iconPacks:PackIconMaterial.Style>
-                                            </iconPacks:PackIconMaterial>
-                                        </Border>
-
-                                        <TextBlock Grid.Column="3" Text="{Binding Name}"
-                                                   Margin="8,0,12,0"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="FontWeight" Value="Normal"/>
-                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                            <Setter Property="FontWeight" Value="SemiBold"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-
-                                        <Border Grid.Column="4"
-                                                MinWidth="26"
-                                                Padding="7,2"
-                                                CornerRadius="9"
-                                                Background="{DynamicResource App.Brush.SurfaceHover}"
-                                                VerticalAlignment="Center"
-                                                ToolTip="{loc:Translate Key=Ui.Library.ContainedItems}"
-                                                Visibility="{Binding IsFolder, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <TextBlock Text="{Binding ContainedItemCount}"
-                                                       HorizontalAlignment="Center"
-                                                       FontSize="10"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                                        </Border>
-
-                                        <StackPanel Grid.Column="4" Orientation="Horizontal">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding IsItem}" Value="True"/>
-                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </MultiDataTrigger>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding IsItem}" Value="True"/>
-                                                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </MultiDataTrigger>
-                                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
-                                            <Button Style="{StaticResource ButtonIcon}"
-                                                    Command="{Binding DataContext.OpenNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{loc:Translate Key=Ui.Common.Open}">
-                                                <iconPacks:PackIconMaterial Kind="OpenInNew" Width="14" Height="14"/>
-                                            </Button>
-                                            <Button Style="{StaticResource ButtonIcon}"
-                                                    Width="30" Height="30" Margin="2,0,0,0"
-                                                    Command="{Binding DataContext.ExecuteNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{loc:Translate Key=Ui.Library.ExecuteOrStop}">
-                                                <iconPacks:PackIconMaterial Width="13" Height="13">
-                                                    <iconPacks:PackIconMaterial.Style>
-                                                        <Style TargetType="iconPacks:PackIconMaterial">
-                                                            <Setter Property="Kind" Value="Play"/>
-                                                            <Setter Property="Foreground" Value="{DynamicResource App.Brush.Accent}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                                    <Setter Property="Kind" Value="Stop"/>
-                                                                    <Setter Property="Foreground" Value="{DynamicResource App.Brush.Danger}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </iconPacks:PackIconMaterial.Style>
-                                                </iconPacks:PackIconMaterial>
-                                            </Button>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <StackPanel HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                MaxWidth="430"
-                                Margin="24"
-                                Visibility="{Binding HasItems, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <Border Width="58" Height="58"
-                                Margin="0,0,0,14"
-                                CornerRadius="14"
-                                Background="{DynamicResource App.Brush.AccentSubtle}">
-                            <iconPacks:PackIconMaterial Kind="FolderOpen"
-                                                        Width="27" Height="27"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        Foreground="{DynamicResource App.Brush.Accent}"/>
-                        </Border>
-                        <TextBlock Text="{Binding EmptyTitle}"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center"
-                                   FontSize="17"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding EmptyDescription}"
-                                   Margin="0,6,0,16"
-                                   HorizontalAlignment="Center"
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    Visibility="{Binding HasSearchText, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                            <Button Content="{Binding NewItemLabel}"
-                                    Command="{Binding NewItemCommand}"
-                                    Style="{StaticResource ButtonPrimary}"/>
-                            <Button Command="{Binding NewFolderCommand}"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Margin="8,0,0,0">
-                                <StackPanel Orientation="Horizontal">
-                                    <iconPacks:PackIconMaterial Kind="FolderPlus" Width="14" Height="14" Margin="0,0,6,0"/>
-                                    <TextBlock Text="{loc:Translate Key=Ui.Library.NewFolder}"/>
-                                </StackPanel>
-                            </Button>
+                                    </Button>
+                                    <iconPacks:PackIconMaterial Grid.Column="2" Kind="FolderOutline" Width="20" Height="20" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextSecondary}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Name}" Foreground="{DynamicResource App.Brush.TextPrimary}" VerticalAlignment="Center" Margin="4,0,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" Background="Transparent"
+                      AutomationProperties.AutomationId="Library.FolderWidth"/>
+        <Border Grid.Column="2" Style="{StaticResource TableCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <ItemsControl ItemsSource="{Binding Breadcrumbs}" Margin="16,12,16,6" AutomationProperties.AutomationId="Library.Breadcrumbs">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Button controls:ControlsHelper.ContentCharacterCasing="Normal" Content="{Binding Name}" Style="{StaticResource ButtonToolbar}" FontSize="16" Padding="4,6"
+                                    Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Library.PathSeparator}" Margin="7,0" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" Visibility="{Binding IsLast, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                         </StackPanel>
-                        <Button Content="{loc:Translate Key=Ui.Library.ResetSearch}"
-                                Command="{Binding ClearSearchCommand}"
-                                HorizontalAlignment="Center"
-                                Style="{StaticResource ButtonSecondary}"
-                                Visibility="{Binding HasSearchText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </StackPanel>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid Grid.Row="1" Margin="16,4,16,16">
+                    <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=160}"
+                             AutomationProperties.AutomationId="Library.Search" MinHeight="40" Padding="36,7,32,7"
+                             controls:TextBoxHelper.Watermark="{Binding SearchWatermark}"/>
+                    <iconPacks:PackIconMaterial Kind="Magnify" Width="19" Height="19" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                    <Button Command="{Binding ClearSearchCommand}" Style="{StaticResource ButtonIcon}" HorizontalAlignment="Right" Margin="0,0,4,0"
+                            ToolTip="{loc:Translate Key=Ui.Library.ClearSearch}" Visibility="{Binding HasSearchText, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <iconPacks:PackIconMaterial Kind="Close" Width="14" Height="14"/>
+                    </Button>
                 </Grid>
+                <Border Grid.Row="2" Padding="18,8" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,1">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="168"/></Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource ButtonToolbar}" Command="{Binding SortCommand}" HorizontalAlignment="Left" Padding="4,4" AutomationProperties.AutomationId="Library.SortName">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="{loc:Translate Key=Ui.Library.Name}" FontWeight="SemiBold"/>
+                                <iconPacks:PackIconMaterial Kind="{Binding SortIcon}" Width="12" Height="12" Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.Accent}"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Grid.Column="1" Text="{loc:Translate Key=Ui.Library.Description}" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" FontWeight="SemiBold"/>
+                    </Grid>
+                </Border>
+                <ListBox Grid.Row="3" x:Name="LibraryNodes" Foreground="{DynamicResource App.Brush.TextPrimary}" ItemsSource="{Binding ContentNodes}" BorderThickness="0" Background="Transparent" Padding="0"
+                         AutomationProperties.AutomationId="Library.Items" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource LibraryRow}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0"/>
+                            <EventSetter Event="PreviewMouseMove" Handler="Node_PreviewMouseMove"/>
+                            <EventSetter Event="PreviewMouseRightButtonDown" Handler="Node_PreviewMouseRightButtonDown"/>
+                            <EventSetter Event="MouseDoubleClick" Handler="Node_MouseDoubleClick"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate><DataTemplate>
+                        <Border MinHeight="58" Padding="18,8" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1"
+                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" ContextMenu="{StaticResource LibraryItemContextMenu}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="168"/></Grid.ColumnDefinitions>
+                                <Grid Margin="0,0,12,0"><Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <iconPacks:PackIconMaterial Kind="FileDocumentOutline" Width="22" Height="22" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextPrimary}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource App.Brush.TextPrimary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+                                </Grid>
+                                <TextBlock Grid.Column="1" Text="{Binding Subtitle}" Foreground="{DynamicResource App.Brush.TextMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0" ToolTip="{Binding Subtitle}"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Button Style="{StaticResource ButtonSecondary}" BorderBrush="{DynamicResource App.Brush.Accent}" Background="{DynamicResource App.Brush.AccentSubtle}" Padding="10,6" Margin="0,0,8,0"
+                                            Command="{Binding DataContext.OpenNodeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                        <Button.Visibility><Binding Path="IsSelected" RelativeSource="{RelativeSource AncestorType=ListBoxItem}" Converter="{StaticResource BooleanToVisibilityConverter}"/></Button.Visibility>
+                                        <StackPanel Orientation="Horizontal"><iconPacks:PackIconMaterial Kind="OpenInNew" Width="14" Height="14" Margin="0,0,6,0" Foreground="{DynamicResource App.Brush.Accent}"/><TextBlock Text="{loc:Translate Key=Ui.Common.Open}"/></StackPanel>
+                                    </Button>
+                                    <Button Style="{StaticResource ButtonIcon}" Click="ItemMenu_Click" ToolTip="{loc:Translate Key=Ui.Library.Actions}" AutomationProperties.AutomationId="Library.ItemActions">
+                                        <iconPacks:PackIconMaterial Kind="DotsHorizontal" Width="20" Height="20"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" MaxWidth="400" Visibility="{Binding HasContent, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <iconPacks:PackIconMaterial Kind="FolderOpenOutline" Width="38" Height="38" Margin="0,0,0,14" Foreground="{DynamicResource App.Brush.Accent}"/>
+                    <TextBlock Text="{Binding EmptyTitle}" TextAlignment="Center" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding EmptyDescription}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,16" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                    <Button Content="{Binding NewItemLabel}" Command="{Binding NewItemCommand}" Style="{StaticResource ButtonPrimary}" Visibility="{Binding HasSearchText, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                    <Button Content="{loc:Translate Key=Ui.Library.ResetSearch}" Command="{Binding ClearSearchCommand}" Style="{StaticResource ButtonSecondary}" Visibility="{Binding HasSearchText, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+                <Border Grid.Row="4" Padding="18,12" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0">
+                    <TextBlock Text="{Binding ContentCountText}" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+                </Border>
             </Grid>
         </Border>
-
-        <Canvas Panel.ZIndex="100"
+        <Canvas Grid.ColumnSpan="3" Panel.ZIndex="100"
                 ClipToBounds="True"
                 IsHitTestVisible="False"
                 Visibility="{Binding IsDragActive, Converter={StaticResource BooleanToVisibilityConverter}}">

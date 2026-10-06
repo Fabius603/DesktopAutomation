@@ -322,7 +322,7 @@ namespace TaskAutomation.Hotkeys
                             // ----- RECORDING: KeyDown protokollieren, kein Matching -----
                             if (_isHotkeyRecording)
                             {
-                                AddRecordedEvent(new KeyDownCaptured(vk));
+                                AddRecordedEvent(new KeyDownCaptured(vk) { Text = CapturePrintableText(vk, (uint)Marshal.ReadInt32(lParam, 4)) });
                                 break;
                             }
 
@@ -366,6 +366,31 @@ namespace TaskAutomation.Hotkeys
                 }
             }
             return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+        [DllImport("user32.dll")] private static extern IntPtr GetKeyboardLayout(uint threadId);
+        [DllImport("user32.dll")] private static extern bool GetKeyboardState(byte[] state);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern int ToUnicodeEx(uint key, uint scan, byte[] state, System.Text.StringBuilder text, int size, uint flags, IntPtr layout);
+
+        private bool _recordedTextIsUnambiguous = true;
+        private string? CapturePrintableText(uint key, uint scan)
+        {
+            // Conservative conversion only: modifiers, dead keys and IME remain raw key events.
+            if (!_recordingSettings.CombineKeyboardInputs || !_recordedTextIsUnambiguous
+                || GetCurrentModifiers() != KeyModifiers.None || _downKeys.Any(IsModifierVk) || IsModifierVk(key)) return null;
+            var state = new byte[256];
+            if (!GetKeyboardState(state)) return null;
+            foreach (var down in _downKeys) if (down < state.Length) state[down] |= 0x80;
+            state[key] |= 0x80;
+            var buffer = new System.Text.StringBuilder(8);
+            var thread = GetWindowThreadProcessId(GetForegroundWindow(), out _);
+            var count = ToUnicodeEx(key, scan, state, buffer, buffer.Capacity, 4, GetKeyboardLayout(thread));
+            if (count < 0 || key == 0xE5) { _recordedTextIsUnambiguous = false; return null; }
+            var text = count > 0 ? buffer.ToString(0, count) : null;
+            return text is not null && !text.Any(char.IsControl) ? text : null;
         }
 
         private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -529,6 +554,7 @@ namespace TaskAutomation.Hotkeys
             {
                 if (_isHotkeyRecording) return;
                 _recordingSettings = (settings ?? new MakroRecordingSettings()).Clone();
+                _recordedTextIsUnambiguous = true;
                 _recordBuffer = new List<CapturedInputEvent>(256);
                 _recordSw = Stopwatch.StartNew();
                 _lastMouseTimestampMicroseconds = 0;

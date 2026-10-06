@@ -11,6 +11,7 @@ public interface IInputController
     void MouseButton(string button, bool down);
     void MouseWheel(int deltaX, int deltaY);
     void Key(VirtualKeyCode key, bool down);
+    void Text(string text);
 }
 
 public sealed class WindowsInputController : IInputController
@@ -55,4 +56,6 @@ public sealed class WindowsInputController : IInputController
         if (down) _simulator.Keyboard.KeyDown(key);
         else _simulator.Keyboard.KeyUp(key);
     }
+
+    public void Text(string text) => _simulator.Keyboard.TextEntry(text);
 }

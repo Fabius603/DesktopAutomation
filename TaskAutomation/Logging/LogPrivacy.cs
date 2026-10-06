@@ -27,6 +27,8 @@ public sealed partial class LogPrivacy
         Message = Sanitize(entry.Message) ?? "",
         Details = Sanitize(entry.Details),
         SourceName = Sanitize(entry.SourceName) ?? "",
+        Trigger = Sanitize(entry.Trigger),
+        Paths = entry.Paths.Select(path => path with { Value = Sanitize(path.Value) ?? "" }).ToArray(),
         Parameters = entry.Parameters.ToDictionary(pair => pair.Key,
             pair => SensitiveKey().IsMatch(pair.Key) ? "[redacted]" : Sanitize(pair.Value))
     };
@@ -37,7 +39,18 @@ public sealed partial class LogPrivacy
         OriginName = Sanitize(run.OriginName),
         CompletionReason = Sanitize(run.CompletionReason),
         Origin = Sanitize(run.Origin) ?? "Unknown",
-        Steps = run.Steps.ToArray()
+        Trigger = Sanitize(run.Trigger),
+        Steps = run.Steps.ToArray(),
+        StepSummaries = run.StepSummaries.Select(summary => summary with
+        { Reason = Sanitize(summary.Reason), LastEvent = Sanitize(summary.LastEvent), Iterations = summary.Iterations.ToArray() }).ToArray()
+    };
+
+    public LogTriggerSnapshot? Sanitize(LogTriggerSnapshot? trigger) => trigger is null ? null : trigger with
+    {
+        WatchedDirectory = Sanitize(trigger.WatchedDirectory),
+        TargetName = Sanitize(trigger.TargetName),
+        Kind = Sanitize(trigger.Kind) ?? "Unknown",
+        EventKind = Sanitize(trigger.EventKind)
     };
 
     [GeneratedRegex(@"(?i)((?:password|passwd|secret|token|api[-_]?key|authorization)\s*[=:]\s*)(?:""[^""]*""|'[^']*'|[^\s;,]+)")]

@@ -72,6 +72,12 @@ namespace TaskAutomation.Steps
         public Dictionary<string, ActiveWindowCacheEntry> ActiveWindowCache { get; } =
             new(StringComparer.OrdinalIgnoreCase);
 
+        public IDictionary<string, TaskAutomation.Contracts.Geometry.PixelPoint> Last3DMovements { get; } =
+            new Dictionary<string, TaskAutomation.Contracts.Geometry.PixelPoint>(StringComparer.OrdinalIgnoreCase);
+
+        public IDictionary<string, long> Last3DInputTimestamps { get; } =
+            new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+
         // ── Konstruktor ────────────────────────────────────────────────────────
 
         public StepPipelineContext(

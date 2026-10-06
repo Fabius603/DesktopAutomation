@@ -81,4 +81,17 @@ public sealed class LogRulesTests
         Assert.Equal(LogCodes.Unexpected, result.Code);
         Assert.DoesNotContain(result.Actions, action => action.Kind == "CheckPath");
     }
+
+    [Fact]
+    public void PathActions_ExposeCapturedAbsolutePathsAndRejectInvalidOrMaskedValues()
+    {
+        var actions = LogDiagnostics.PathActions(new LogEvent
+        {
+            Paths = [new("TargetFile", "C:\\output\\image.png"),
+            new("TargetDirectory", "C:\\output"), new("Source", "[redacted]"), new("Other", "relative\\file"), new("Other", "C:\\bad\0path")]
+        });
+        Assert.Equal(2, actions.Count);
+        Assert.All(actions, action => Assert.Equal("CheckPath", action.Kind));
+        Assert.Contains(actions, action => action.Path == "C:\\output\\image.png");
+    }
 }

@@ -11,6 +11,8 @@ public enum MakroValidationError
     RecordingSettingsInvalid,
     CommandTimingInvalid,
     GroupStructureInvalid,
+    TextRequired,
+    KeyCombinationInvalid,
     UnknownCommand
 }
 
@@ -29,6 +31,8 @@ public static class MakroValidation
         MakroValidationError.RecordingSettingsInvalid => "Die Aufnahmeeinstellungen sind ungueltig.",
         MakroValidationError.CommandTimingInvalid => "Die Befehlsverzoegerung darf nicht negativ sein.",
         MakroValidationError.GroupStructureInvalid => "Die Makrogruppen sind ungueltig.",
+        MakroValidationError.TextRequired => "Text input is required.",
+        MakroValidationError.KeyCombinationInvalid => "The key combination is invalid.",
         MakroValidationError.UnknownCommand => "Das Makro enthaelt einen unbekannten Befehl.",
         _ => string.Empty
     };
@@ -91,21 +95,27 @@ public static class MakroValidation
         var error = command.DelayBeforeMicroseconds < 0
             ? MakroValidationError.CommandTimingInvalid
             : command switch
-        {
-            MouseMoveAbsoluteBefehl => MakroValidationError.None,
-            MouseMoveRelativeBefehl => MakroValidationError.None,
-            MouseWheelBefehl s when s.DeltaX != 0 || s.DeltaY != 0 => MakroValidationError.None,
-            MouseWheelBefehl => MakroValidationError.UnknownCommand,
-            MouseDownBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
-            MouseUpBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
-            MouseDownBefehl or MouseUpBefehl => MakroValidationError.MouseButtonInvalid,
-            KeyDownBefehl s when !string.IsNullOrWhiteSpace(s.Key) => MakroValidationError.None,
-            KeyUpBefehl s when !string.IsNullOrWhiteSpace(s.Key) => MakroValidationError.None,
-            KeyDownBefehl or KeyUpBefehl => MakroValidationError.KeyRequired,
-            TimeoutBefehl s when s.Duration >= 0 => MakroValidationError.None,
-            TimeoutBefehl => MakroValidationError.DurationInvalid,
-            _ => MakroValidationError.UnknownCommand
-        };
+            {
+                MouseMoveAbsoluteBefehl => MakroValidationError.None,
+                TextInputBefehl s when !string.IsNullOrEmpty(s.Text) && s.DurationMicroseconds >= 0 => MakroValidationError.None,
+                KeyCombinationBefehl s when MakroCommandRules.TryParseCombination(s.Keys, out _) && s.DurationMicroseconds >= 0 => MakroValidationError.None,
+                TextInputBefehl s when s.DurationMicroseconds < 0 => MakroValidationError.CommandTimingInvalid,
+                KeyCombinationBefehl s when s.DurationMicroseconds < 0 => MakroValidationError.CommandTimingInvalid,
+                TextInputBefehl => MakroValidationError.TextRequired,
+                KeyCombinationBefehl => MakroValidationError.KeyCombinationInvalid,
+                MouseMoveRelativeBefehl => MakroValidationError.None,
+                MouseWheelBefehl s when s.DeltaX != 0 || s.DeltaY != 0 => MakroValidationError.None,
+                MouseWheelBefehl => MakroValidationError.UnknownCommand,
+                MouseDownBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
+                MouseUpBefehl s when IsMouseButton(s.Button) => MakroValidationError.None,
+                MouseDownBefehl or MouseUpBefehl => MakroValidationError.MouseButtonInvalid,
+                KeyDownBefehl s when !string.IsNullOrWhiteSpace(s.Key) => MakroValidationError.None,
+                KeyUpBefehl s when !string.IsNullOrWhiteSpace(s.Key) => MakroValidationError.None,
+                KeyDownBefehl or KeyUpBefehl => MakroValidationError.KeyRequired,
+                TimeoutBefehl s when s.Duration >= 0 => MakroValidationError.None,
+                TimeoutBefehl => MakroValidationError.DurationInvalid,
+                _ => MakroValidationError.UnknownCommand
+            };
         return new(command, error == MakroValidationError.None, error);
     }
 

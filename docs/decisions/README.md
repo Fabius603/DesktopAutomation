@@ -9,6 +9,8 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-06 — Summarize successful step repetitions](2026-10-06-summarize-successful-step-repetitions.md)
+
 - [2026-10-05 — Use structured user logs (proposed)](2026-10-05-use-structured-user-logs.md)
 
 - [2026-10-05 — Retain coordinate inputs and use themed focus markers](2026-10-05-retain-coordinate-inputs-and-use-themed-focus-markers.md)
@@ -35,3 +37,7 @@ history to make an old decision look current.
 - [2026-09-29 — Treat step enums as stable closed tokens](2026-09-29-treat-step-enums-as-stable-closed-tokens.md)
 
 - [2026-10-01 — Choose step-value and resource policies (proposed)](2026-10-01-choose-step-value-and-resource-policies.md)
+
+- [2026-10-06 — Capture log UI facts at their owner (proposed)](2026-10-06-capture-log-ui-facts-at-their-owner.md)
+
+- [2026-10-06 — Store log attention separately](2026-10-06-store-log-attention-separately.md)

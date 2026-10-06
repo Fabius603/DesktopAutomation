@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -96,10 +96,7 @@ namespace DesktopAutomationApp.ViewModels
         private readonly ListMakrosViewModel _listMakros;
         private readonly ListJobsViewModel _listJobs;
         private readonly ListAutomationsViewModel _listAutomations;
-        private readonly ExecutionLogsViewModel _executionLogs;
         private readonly LogsHomeViewModel _logsHome;
-        private readonly AutomationLogsViewModel _automationLogs;
-        private readonly ApplicationLogsViewModel _applicationLogs;
         private readonly SettingsViewModel _settings;
 
         private static string GetAppVersion()
@@ -138,16 +135,13 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         /// <summary>Returns true for singleton VMs that are kept alive across navigations.</summary>
-            private bool IsPersistedViewModel(object vm)
-            => ReferenceEquals(vm, _start)
-            || ReferenceEquals(vm, _listMakros)
-            || ReferenceEquals(vm, _listJobs)
-            || ReferenceEquals(vm, _listAutomations)
-            || ReferenceEquals(vm, _executionLogs)
-            || ReferenceEquals(vm, _logsHome)
-            || ReferenceEquals(vm, _automationLogs)
-            || ReferenceEquals(vm, _applicationLogs)
-            || ReferenceEquals(vm, _settings);
+        private bool IsPersistedViewModel(object vm)
+        => ReferenceEquals(vm, _start)
+        || ReferenceEquals(vm, _listMakros)
+        || ReferenceEquals(vm, _listJobs)
+        || ReferenceEquals(vm, _listAutomations)
+        || ReferenceEquals(vm, _logsHome)
+        || ReferenceEquals(vm, _settings);
 
         public string CurrentContentName
         {
@@ -173,10 +167,7 @@ namespace DesktopAutomationApp.ViewModels
             ListMakrosViewModel listMakrosViewModel,
             ListJobsViewModel listJobsViewModel,
             ListAutomationsViewModel listAutomationsViewModel,
-            ExecutionLogsViewModel executionLogsViewModel,
             LogsHomeViewModel logsHomeViewModel,
-            AutomationLogsViewModel automationLogsViewModel,
-            ApplicationLogsViewModel applicationLogsViewModel,
             SettingsViewModel settingsViewModel)
         {
             _viewModelFactory = viewModelFactory;
@@ -198,10 +189,7 @@ namespace DesktopAutomationApp.ViewModels
             _listMakros = listMakrosViewModel;
             _listJobs = listJobsViewModel;
             _listAutomations = listAutomationsViewModel;
-            _executionLogs = executionLogsViewModel;
             _logsHome = logsHomeViewModel;
-            _automationLogs = automationLogsViewModel;
-            _applicationLogs = applicationLogsViewModel;
             _settings = settingsViewModel;
 
             // Events für Job-Fehler abonnieren
@@ -217,14 +205,18 @@ namespace DesktopAutomationApp.ViewModels
             // Navigation aus der Automationsliste in die Details:
             _listAutomations.RequestOpenAutomation += OpenAutomationDetails;
 
-            ShowStart         = new RelayCommand(async () => await NavigateAsync(_start, _start.RefreshAsync));
-            ShowListMakros    = new RelayCommand(async () => await NavigateAsync(_listMakros, _listMakros.RefreshAsync));
-            ShowListJobs      = new RelayCommand(async () => await NavigateAsync(_listJobs, _listJobs.RefreshAsync));
+            ShowStart = new RelayCommand(async () => await NavigateAsync(_start, _start.RefreshAsync));
+            ShowListMakros = new RelayCommand(async () => await NavigateAsync(_listMakros, _listMakros.RefreshAsync));
+            ShowListJobs = new RelayCommand(async () => await NavigateAsync(_listJobs, _listJobs.RefreshAsync));
             ShowListAutomations = new RelayCommand(async () => await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync));
-            _logsHome.RequestOpen += OpenLogPage;
-            _executionLogs.RequestBack += OpenLogsHome;
-            _automationLogs.RequestBack += OpenLogsHome;
-            _applicationLogs.RequestBack += OpenLogsHome;
+            _logsHome.RequestOpenJob += (job, stepId) => _ = OpenJobDetailsAsync(job, stepId, true);
+            _logsHome.RequestOpenAutomation += async id =>
+            {
+                await _listAutomations.RefreshAllAsync();
+                var item = _listAutomations.Items.FirstOrDefault(value => value.Id == id);
+                if (item is not null) await OpenAutomationDetailsAsync(item, true);
+                else _dialogService.ShowError(Loc.Get("Logs.Ui.AutomationUnavailable"), Loc.Get("Logs.Title"));
+            };
             ShowExecutionLogs = new RelayCommand(async () => await NavigateAsync(_logsHome));
             ShowSettings = new RelayCommand(async () => await NavigateAsync(_settings));
             ShowShortcutHelpCommand = new RelayCommand(() =>
@@ -391,7 +383,7 @@ namespace DesktopAutomationApp.ViewModels
             ListMakrosViewModel or MakroStepsViewModel => nameof(ListMakrosViewModel),
             ListJobsViewModel or JobStepsViewModel => nameof(ListJobsViewModel),
             ListAutomationsViewModel or AutomationDetailViewModel => nameof(ListAutomationsViewModel),
-            LogsHomeViewModel or ExecutionLogsViewModel or AutomationLogsViewModel or ApplicationLogsViewModel => nameof(ExecutionLogsViewModel),
+            LogsHomeViewModel => nameof(LogsHomeViewModel),
             SettingsViewModel => nameof(SettingsViewModel),
             _ => string.Empty
         };
@@ -423,7 +415,7 @@ namespace DesktopAutomationApp.ViewModels
         private void OpenJobDetails(Job job)
             => _ = OpenJobDetailsAsync(job);
 
-        private async Task OpenJobDetailsAsync(Job job)
+        private async Task OpenJobDetailsAsync(Job job, string? stepId = null, bool fromLogs = false)
         {
             if (IsNavigating || !await CheckNavigationGuardAsync()) return;
             StartNavigationProgress();
@@ -431,9 +423,11 @@ namespace DesktopAutomationApp.ViewModels
             {
                 await Dispatcher.Yield(DispatcherPriority.Render);
                 var detailsVm = _viewModelFactory.CreateJobStepsViewModel(job);
+                if (stepId is not null) detailsVm.SelectedStep = detailsVm.AllJobSteps.FirstOrDefault(step => step.Id == stepId);
                 detailsVm.RequestBack += async () =>
                 {
-                    await NavigateAsync(_listJobs, _listJobs.RefreshAsync);
+                    if (fromLogs) await NavigateAsync(_logsHome);
+                    else await NavigateAsync(_listJobs, _listJobs.RefreshAsync);
                 };
                 CurrentContent = detailsVm;
             }
@@ -469,7 +463,7 @@ namespace DesktopAutomationApp.ViewModels
         private void OpenAutomationDetails(EditableAutomation automation)
             => _ = OpenAutomationDetailsAsync(automation);
 
-        private async Task OpenAutomationDetailsAsync(EditableAutomation automation)
+        private async Task OpenAutomationDetailsAsync(EditableAutomation automation, bool fromLogs = false)
         {
             if (IsNavigating || !await CheckNavigationGuardAsync()) return;
             StartNavigationProgress();
@@ -479,33 +473,14 @@ namespace DesktopAutomationApp.ViewModels
                 var detailsVm = _viewModelFactory.CreateAutomationDetailViewModel(automation);
                 detailsVm.RequestBack += async () =>
                 {
-                    await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync);
+                    if (fromLogs) await NavigateAsync(_logsHome);
+                    else await NavigateAsync(_listAutomations, _listAutomations.RefreshAllAsync);
                 };
                 CurrentContent = detailsVm;
             }
             finally
             {
                 await CompleteNavigationProgressAsync();
-            }
-        }
-
-        private void OpenLogPage(LogPageKind page) => _ = OpenLogPageAsync(page);
-
-        private void OpenLogsHome() => _ = NavigateAsync(_logsHome);
-
-        private async Task OpenLogPageAsync(LogPageKind page)
-        {
-            switch (page)
-            {
-                case LogPageKind.Jobs:
-                    await NavigateAsync(_executionLogs, _executionLogs.RefreshAsync);
-                    break;
-                case LogPageKind.Automations:
-                    await NavigateAsync(_automationLogs, _automationLogs.RefreshAsync);
-                    break;
-                case LogPageKind.Application:
-                    await NavigateAsync(_applicationLogs, _applicationLogs.RefreshAsync);
-                    break;
             }
         }
 
@@ -545,7 +520,7 @@ namespace DesktopAutomationApp.ViewModels
             var r = await _dialogService.ConfirmWithCancelAsync(
                 Loc.Get("Dialog.Unsaved.Message"),
                 Loc.Get("Dialog.Unsaved.Title"));
-            if (r == true)  { await guard.SaveAsync(); return true; }
+            if (r == true) { await guard.SaveAsync(); return true; }
             if (r == false) { guard.DiscardChanges(); return true; }
             return false; // Cancel
         }

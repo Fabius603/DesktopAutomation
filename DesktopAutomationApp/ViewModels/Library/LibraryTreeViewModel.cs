@@ -187,6 +187,8 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     private readonly LibraryItemKind _kind;
     private IReadOnlyList<LibraryItemDescriptor> _items = [];
     private LibraryLayout _layout = new();
+    private LibraryBrowserIndex _browserIndex = new(new LibraryLayout(), LibraryItemKind.Job);
+    private Dictionary<Guid, LibraryItemDescriptor> _itemsById = [];
     private string _searchText = string.Empty;
     private bool _isDragActive;
     private bool _isRootDropTarget;
@@ -210,6 +212,9 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         _preferences = preferences;
         _kind = kind;
         NewItemLabel = newItemLabel;
+        ShowAllCommand = new RelayCommand(() => { SelectedFolderId = null; RebuildBrowser(); });
+        NavigateCommand = new RelayCommand<LibraryBreadcrumb?>(crumb => { SelectedFolderId = crumb?.Id; RebuildBrowser(); });
+        SortCommand = new RelayCommand(() => { _sortDescending = !_sortDescending; RebuildBrowser(); });
 
         OpenNodeCommand = new RelayCommand<LibraryTreeNodeViewModel?>(node => node?.OpenOrToggle());
         ExecuteNodeCommand = new RelayCommand<LibraryTreeNodeViewModel?>(node =>
@@ -241,7 +246,59 @@ public sealed class LibraryTreeViewModel : ViewModelBase
     }
 
     public ObservableCollection<LibraryTreeNodeViewModel> VisibleNodes => _visibleNodes;
-    public Guid? SelectedFolderId { get; set; }
+    private Guid? _selectedFolderId;
+    private bool _sortDescending;
+    public Guid? SelectedFolderId
+    {
+        get => _selectedFolderId;
+        set
+        {
+            if (_selectedFolderId == value) return;
+            _selectedFolderId = value;
+            OnPropertyChanged();
+            RebuildBrowser();
+        }
+    }
+    public ObservableCollection<LibraryTreeNodeViewModel> FolderNodes { get; } = new ResettableObservableCollection<LibraryTreeNodeViewModel>();
+    public ObservableCollection<LibraryTreeNodeViewModel> ContentNodes { get; } = new ResettableObservableCollection<LibraryTreeNodeViewModel>();
+    public ObservableCollection<LibraryBreadcrumb> Breadcrumbs { get; } = new ResettableObservableCollection<LibraryBreadcrumb>();
+    public string RootLabel => Loc.Get(_kind switch
+    {
+        LibraryItemKind.Job => "Ui.Job.List.Jobs",
+        LibraryItemKind.Makro => "Ui.Library.MakrosTitle",
+        _ => "Ui.Automation.List.Automations"
+    });
+    public string AllItemsLabel => Loc.Format("Ui.Library.AllItems", RootLabel);
+    public string SearchWatermark => Loc.Format("Ui.Library.SearchIn", Breadcrumbs.LastOrDefault()?.Name ?? RootLabel);
+    public string ContentCountText => Loc.Format("Ui.Library.ItemCount", ContentNodes.Count, RootLabel);
+    public bool HasContent => ContentNodes.Count > 0;
+    public LibraryTreeNodeViewModel? SelectedFolderNode
+    {
+        get => FolderNodes.FirstOrDefault(node => node.Id == SelectedFolderId);
+        set { if (value != null) SelectedFolderId = value.Id; }
+    }
+    public string SortIcon => _sortDescending ? "ChevronDown" : "ChevronUp";
+    public ICommand ShowAllCommand { get; }
+    public ICommand NavigateCommand { get; }
+    public ICommand SortCommand { get; }
+    private void RebuildBrowser()
+    {
+        var index = _browserIndex;
+        var valid = index.ExistingFolder(_selectedFolderId);
+        if (valid != _selectedFolderId) { _selectedFolderId = valid; OnPropertyChanged(nameof(SelectedFolderId)); }
+        var items = _itemsById;
+        var ids = index.Query(_items.Select(item => new LibraryBrowserItem(item.Id, item.Name, item.Subtitle)), SelectedFolderId, SearchText, _sortDescending);
+        ((ResettableObservableCollection<LibraryTreeNodeViewModel>)ContentNodes).ReplaceAll(ids.Select(id =>
+            new LibraryTreeNodeViewModel(this, items[id], index.ContainingFolder(id), 0)));
+        var path = new[] { new LibraryBreadcrumb(null, RootLabel) }
+            .Concat(index.PathTo(SelectedFolderId).Select(folder => new LibraryBreadcrumb(folder.Id, folder.Name))).ToArray();
+        ((ResettableObservableCollection<LibraryBreadcrumb>)Breadcrumbs).ReplaceAll(
+            path.Select((crumb, position) => crumb with { IsLast = position == path.Length - 1 }));
+        SearchResultCount = ids.Count;
+        OnPropertyChanged(nameof(SearchResultCount));
+        OnPropertyChanged(nameof(SearchResultText));
+        foreach (var property in new[] { nameof(SelectedFolderNode), nameof(HasContent), nameof(ContentCountText), nameof(AllItemsLabel), nameof(SearchWatermark), nameof(SortIcon) }) OnPropertyChanged(property);
+    }
     public string NewItemLabel { get; }
     public event Func<Guid?, Task>? RequestCreateItem;
     public ICommand OpenNodeCommand { get; }
@@ -310,7 +367,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasSearchText));
             OnPropertyChanged(nameof(EmptyTitle));
             OnPropertyChanged(nameof(EmptyDescription));
-            Rebuild();
+            RebuildBrowser();
         }
     }
 
@@ -323,7 +380,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
 
     public void RefreshItemStates()
     {
-        foreach (var node in VisibleNodes)
+        foreach (var node in VisibleNodes.Concat(ContentNodes))
             node.RefreshState();
         (ExecuteNodeCommand as RelayCommand<LibraryTreeNodeViewModel?>)?.RaiseCanExecuteChanged();
         (StartNodeCommand as RelayCommand<LibraryTreeNodeViewModel?>)?.RaiseCanExecuteChanged();
@@ -449,7 +506,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
 
     internal void OnExpansionChanged(LibraryTreeNodeViewModel node)
     {
-        if (node.Folder == null || !string.IsNullOrWhiteSpace(SearchText)) return;
+        if (node.Folder == null) return;
         var expanded = GetExpandedFolderIds();
         if (node.IsExpanded) expanded.Add(node.Folder.Id);
         else expanded.Remove(node.Folder.Id);
@@ -471,7 +528,13 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         try
         {
             var folder = await _organization.CreateFolderAsync(_kind, parentId, name);
-            GetExpandedFolderIds().Add(folder.ParentId ?? Guid.Empty);
+            if (folder.ParentId.HasValue)
+            {
+                var expanded = GetExpandedFolderIds();
+                expanded.Add(folder.ParentId.Value);
+                _preferences.Current.ExpandedLibraryFolders[_kind.ToString()] = expanded.ToList();
+                await _preferences.SaveAsync();
+            }
             _layout = await _organization.LoadAsync();
             Rebuild();
         }
@@ -554,25 +617,18 @@ public sealed class LibraryTreeViewModel : ViewModelBase
 
     private void Rebuild()
     {
-        var query = SearchText.Trim();
         var expanded = GetExpandedFolderIds();
         var folders = _layout.Folders.Where(folder => folder.Kind == _kind).ToList();
-        var foldersById = folders.ToDictionary(folder => folder.Id);
+        _browserIndex = new LibraryBrowserIndex(_layout, _kind);
         var foldersByParent = folders
             .GroupBy(folder => FolderKey(folder.ParentId))
             .ToDictionary(group => group.Key, group =>
                 group.OrderBy(folder => folder.Name, StringComparer.CurrentCultureIgnoreCase).ToList());
-        var placements = _layout.Placements.Where(placement => placement.Kind == _kind)
-            .ToDictionary(placement => placement.ItemId, placement => placement);
         static Guid FolderKey(Guid? folderId) => folderId ?? Guid.Empty;
         var itemsByFolder = new Dictionary<Guid, List<LibraryItemDescriptor>>();
         foreach (var item in _items)
         {
-            var folderId = placements.TryGetValue(item.Id, out var placement) &&
-                           placement.FolderId.HasValue &&
-                           foldersById.ContainsKey(placement.FolderId.Value)
-                ? placement.FolderId
-                : null;
+            var folderId = _browserIndex.ContainingFolder(item.Id);
             var key = FolderKey(folderId);
             if (!itemsByFolder.TryGetValue(key, out var items))
             {
@@ -597,24 +653,6 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             return count;
         }
 
-        bool Matches(LibraryItemDescriptor item) =>
-            query.Length == 0 ||
-            item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
-            item.Subtitle.Contains(query, StringComparison.CurrentCultureIgnoreCase);
-
-        var folderMatchCache = new Dictionary<Guid, bool>();
-        bool FolderHasMatch(Guid folderId)
-        {
-            if (folderMatchCache.TryGetValue(folderId, out var cached))
-                return cached;
-            var matches = foldersById[folderId].Name.Contains(
-                              query, StringComparison.CurrentCultureIgnoreCase) ||
-                          itemsByFolder.GetValueOrDefault(folderId)?.Any(Matches) == true ||
-                          foldersByParent.GetValueOrDefault(folderId)?.Any(child => FolderHasMatch(child.Id)) == true;
-            folderMatchCache[folderId] = matches;
-            return matches;
-        }
-
         var result = new List<LibraryTreeNodeViewModel>();
         void AddLevel(Guid? parentId, int depth)
         {
@@ -622,8 +660,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             {
                 foreach (var folder in childFolders)
                 {
-                    if (query.Length > 0 && !FolderHasMatch(folder.Id)) continue;
-                    var isExpanded = query.Length > 0 || expanded.Contains(folder.Id);
+                    var isExpanded = expanded.Contains(folder.Id);
                     result.Add(new LibraryTreeNodeViewModel(
                         this, folder, depth, isExpanded, CountContainedItems(folder.Id)));
                     if (isExpanded) AddLevel(folder.Id, depth + 1);
@@ -631,7 +668,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             }
 
             if (!itemsByFolder.TryGetValue(FolderKey(parentId), out var levelItems)) return;
-            foreach (var item in levelItems.Where(Matches))
+            foreach (var item in levelItems)
                 result.Add(new LibraryTreeNodeViewModel(this, item, parentId, depth));
         }
 
@@ -643,9 +680,9 @@ public sealed class LibraryTreeViewModel : ViewModelBase
                 _visibleFolderIndexes[folder.Id] = index;
         }
         _visibleNodes.ReplaceAll(result);
-        SearchResultCount = query.Length == 0
-            ? TotalItemCount
-            : result.Count;
+        _itemsById = _items.ToDictionary(item => item.Id);
+        ((ResettableObservableCollection<LibraryTreeNodeViewModel>)FolderNodes).ReplaceAll(result.Where(node => node.IsFolder));
+        RebuildBrowser();
         OnPropertyChanged(nameof(HasItems));
         OnPropertyChanged(nameof(EmptyText));
         OnPropertyChanged(nameof(TotalItemCount));
@@ -655,3 +692,5 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         OnPropertyChanged(nameof(SearchResultText));
     }
 }
+
+public sealed record LibraryBreadcrumb(Guid? Id, string Name, bool IsLast = false);

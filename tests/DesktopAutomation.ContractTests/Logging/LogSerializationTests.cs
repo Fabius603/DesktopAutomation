@@ -6,6 +6,31 @@ namespace TaskAutomation.Tests.Logging;
 public sealed class LogSerializationTests
 {
     [Fact]
+    public void StepSummaries_RoundTripAndOlderRunsDefaultToNoSummaries()
+    {
+        var entry = new LogEvent
+        {
+            Context = new(StepId: "step", StepExecutionId: Guid.NewGuid()),
+            Iteration = 8,
+            Code = LogCodes.StepCompleted,
+            Parameters = new() { ["Found"] = "False" }
+        };
+        var run = new LogRun
+        {
+            StepSummaries = [new("step", "Main", LogCodes.StepCompleted, "Completed", 8, 120,
+            [new(1, 8)], entry)]
+        };
+        var restored = JsonSerializer.Deserialize<LogRun>(JsonSerializer.Serialize(run, LogRepository.JsonOptions), LogRepository.JsonOptions)!;
+        var summary = Assert.Single(restored.StepSummaries);
+        Assert.Equal(8, summary.Count);
+        Assert.Equal(120, summary.TotalDurationMs);
+        Assert.Equal(entry.Context, summary.LastEvent.Context);
+        Assert.Equal(run.StepSummaries[0].Iterations, summary.Iterations);
+        Assert.True(summary.IterationCoverageComplete);
+        Assert.Empty(JsonSerializer.Deserialize<LogRun>("{\"SchemaVersion\":2}", LogRepository.JsonOptions)!.StepSummaries);
+    }
+
+    [Fact]
     public void EventRoundTrip_PreservesIdentityCorrelationAndMultilineDetails()
     {
         var entry = new LogEvent

@@ -3,18 +3,6 @@ namespace TaskAutomation.Tests.DesktopAutomationApp;
 public sealed class LibraryTreeViewResourceTests
 {
     [Fact]
-    public void LibraryItems_ShowNamesWithoutAdditionalInformation()
-    {
-        var xaml = File.ReadAllText(Path.Combine(
-            RepositoryRoot(), "DesktopAutomationApp", "Views", "Library", "LibraryTreeView.xaml"));
-
-        Assert.Contains("Text=\"{Binding Name}\"", xaml);
-        Assert.DoesNotContain("Text=\"{Binding Subtitle}\"", xaml);
-        Assert.DoesNotContain("Key=Ui.Library.Running", xaml);
-        Assert.DoesNotContain("Key=Ui.Library.Inactive", xaml);
-    }
-
-    [Fact]
     public void LibraryList_UsesTheSharedVerticalPixelScroller()
     {
         var xaml = File.ReadAllText(Path.Combine(

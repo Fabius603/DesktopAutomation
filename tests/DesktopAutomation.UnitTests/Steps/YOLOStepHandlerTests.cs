@@ -50,6 +50,8 @@ public sealed class YOLOStepHandlerTests
         var result = Assert.IsType<YOLODetectionResult>(await new YOLOStepHandler().ExecuteAsync(step, context, default));
         Assert.False(result.Found);
         Assert.Equal("model", Assert.Single(manager.EnsureCalls).Model);
+        Assert.Equal(42, result.SourceFrameVersion);
+        Assert.Equal(123456, result.SourceFrameTimestamp);
         var call = Assert.Single(manager.DetectCalls);
         Assert.Equal("person", call.ClassName);
         Assert.Same(bitmap, call.Image);
@@ -86,6 +88,8 @@ public sealed class YOLOStepHandlerTests
         Assert.Equal(.91, result.Confidence, 3);
         Assert.False(result.SourceCaptureIsFresh);
         Assert.Equal(capturedAt, result.SourceCaptureTimestampUtc);
+        Assert.Equal(42, result.SourceFrameVersion);
+        Assert.Equal(123456, result.SourceFrameTimestamp);
         var item = Assert.Single(result.AllDetections);
         Assert.Equal(new Point(107, 208), item.Center);
         Assert.Equal(new Rectangle(102, 203, 10, 11), item.BoundingBox);
@@ -127,7 +131,9 @@ public sealed class YOLOStepHandlerTests
             Bounds = new Rectangle(0, 0, bitmap.Width, bitmap.Height),
             Offset = offset ?? Point.Empty,
             CaptureTimestampUtc = capturedAt ?? DateTime.UtcNow,
-            IsFresh = fresh
+            IsFresh = fresh,
+            FrameVersion = 42,
+            FrameTimestamp = 123456
         }, "capture");
         return context;
     }

@@ -19,10 +19,17 @@ namespace TaskAutomation.Steps
             var logger = ctx.Logger;
             var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = input.Capture;
+            var captureResult = new ColorDetectionResult
+            {
+                SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
+                SourceFrameVersion = capture.FrameVersion,
+                SourceFrameTimestamp = capture.FrameTimestamp
+            };
             if (input.Image is null)
             {
                 logger.LogInformation("ColorDetectionStepHandler: Kein Bild verfuegbar, Step wird uebersprungen.");
-                return new ColorDetectionResult { WasExecuted = true, Found = false };
+                return captureResult with { WasExecuted = true, Found = false };
             }
 
             var detector = ctx.ColorDetector ??= new ColorDetector();
@@ -41,7 +48,7 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "ColorDetectionStepHandler: Kein Treffer ueber Threshold {Threshold:F2} gefunden.",
                     step.Settings.ConfidenceThreshold);
-                return new ColorDetectionResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
+                return captureResult with { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = new PixelPoint(
@@ -83,7 +90,7 @@ namespace TaskAutomation.Steps
                 "ColorDetectionStepHandler: Treffer bei ({X},{Y}), Confidence {Confidence:F3}.",
                 globalPoint.X, globalPoint.Y, rawResult.Confidence);
 
-            return new ColorDetectionResult
+            return captureResult with
             {
                 WasExecuted = true,
                 Found = true,
@@ -93,7 +100,9 @@ namespace TaskAutomation.Steps
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
                 AllDetections = allDetections
-                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
+                ,
+                AppliedRoi = dynamicRoi,
+                UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

@@ -12,10 +12,17 @@ public sealed class OcrStepHandler(IOcrService ocrService) : JobStepHandler<OcrS
         CancellationToken cancellationToken)
     {
         var input = ResultBindingResolver.ResolveCapture(context.Results, step.Settings.ImageSource);
-        if (input.Image is null)
-            return new OcrResult { WasExecuted = true };
-
         var capture = input.Capture;
+        var captureResult = new OcrResult
+        {
+            SourceCaptureIsFresh = capture.IsFresh,
+            SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
+            SourceFrameVersion = capture.FrameVersion,
+            SourceFrameTimestamp = capture.FrameTimestamp
+        };
+        if (input.Image is null)
+            return captureResult with { WasExecuted = true };
+
         var dynamicRoi = DynamicRoiResolver.Resolve(
             step.Settings.DynamicRoiSource,
             capture,
@@ -57,7 +64,7 @@ public sealed class OcrStepHandler(IOcrService ocrService) : JobStepHandler<OcrS
             .ToArray();
         var boundingBox = Union(words.Select(word => word.BoundingBox));
 
-        return new OcrResult
+        return captureResult with
         {
             WasExecuted = true,
             Found = words.Length > 0,

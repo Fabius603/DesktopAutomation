@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,11 @@ namespace TaskAutomation.Steps
 {
     public sealed class KlickOnPoint3DStepHandler : JobStepHandler<KlickOnPoint3DStep, KlickOnPoint3DResult>
     {
+        private readonly Func<long> _getTimestamp;
+
+        public KlickOnPoint3DStepHandler() : this(Stopwatch.GetTimestamp) { }
+
+        internal KlickOnPoint3DStepHandler(Func<long> getTimestamp) => _getTimestamp = getTimestamp;
 
         protected override async Task<KlickOnPoint3DResult> ExecuteCoreAsync(
             KlickOnPoint3DStep step, IStepPipelineContext ctx, CancellationToken ct)
@@ -32,7 +38,13 @@ namespace TaskAutomation.Steps
                     step.Settings.PointsSource.SourceStepId,
                     resolved.SourceResult?.WasExecuted == true,
                     detection?.Found == true);
-                return new KlickOnPoint3DResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
+                return new KlickOnPoint3DResult
+                {
+                    WasExecuted = true,
+                    Success = false,
+                    ErrorMessage = "No detection point available",
+                    SkipReason = ResultBindingResolver.IsExpectedEmpty(resolved.Status) ? "NoInput" : null
+                };
             }
 
             if (detection is not null && !detection.SourceCaptureIsFresh)
@@ -41,7 +53,7 @@ namespace TaskAutomation.Steps
                     "KlickOnPoint3DStepHandler: Detection came from a cached capture frame, skipping. SourceStepId={SourceStepId}, Confidence={Confidence:F3}",
                     step.Settings.PointsSource.SourceStepId,
                     detection.Confidence);
-                return new KlickOnPoint3DResult { WasExecuted = true, Success = false, ErrorMessage = "Detection came from a cached capture frame" };
+                return new KlickOnPoint3DResult { WasExecuted = true, Success = false, ErrorMessage = "Detection came from a cached capture frame", SkipReason = "CachedCapture" };
             }
 
             var stepKey = $"KlickOnPoint3D_{step.Id}";
@@ -69,6 +81,50 @@ namespace TaskAutomation.Steps
                 step.Settings.EffectiveMovementFactorX,
                 step.Settings.EffectiveMovementFactorY);
 
+            var movement = new PixelPoint(appliedDelta.X, appliedDelta.Y);
+            // A newly acquired DXGI frame may still have been presented before the
+            // previous input completed. IsFresh alone does not establish this order.
+            if (detection is not null && detection.SourceFrameTimestamp > 0
+                && ctx.Last3DInputTimestamps.TryGetValue(step.Id, out var inputTimestamp)
+                && detection.SourceFrameTimestamp <= inputTimestamp)
+            {
+                logger.LogDebug(
+                    "KlickOnPoint3DStepHandler: Pre-input frame blocked. FrameVersion={FrameVersion}, FrameTimestamp={FrameTimestamp}, InputTimestamp={InputTimestamp}",
+                    detection.SourceFrameVersion, detection.SourceFrameTimestamp, inputTimestamp);
+                return new KlickOnPoint3DResult
+                {
+                    WasExecuted = true,
+                    Success = true,
+                    MovementBlocked = true,
+                    DeltaX = delta.X,
+                    DeltaY = delta.Y,
+                    MovementFactorX = step.Settings.EffectiveMovementFactorX,
+                    MovementFactorY = step.Settings.EffectiveMovementFactorY
+                };
+            }
+
+            if (step.Settings.MovementThresholdPixels < 0)
+                throw new InvalidOperationException("Movement threshold must be non-negative.");
+
+            if (ctx.Last3DMovements.TryGetValue(step.Id, out var previous)
+                && Math.Abs((long)previous.X - movement.X) <= step.Settings.MovementThresholdPixels
+                && Math.Abs((long)previous.Y - movement.Y) <= step.Settings.MovementThresholdPixels)
+            {
+                logger.LogDebug(
+                    "KlickOnPoint3DStepHandler: Similar consecutive movement blocked (dx:{DX}, dy:{DY}), threshold={Threshold}px.",
+                    movement.X, movement.Y, step.Settings.MovementThresholdPixels);
+                return new KlickOnPoint3DResult
+                {
+                    WasExecuted = true,
+                    Success = true,
+                    MovementBlocked = true,
+                    DeltaX = delta.X,
+                    DeltaY = delta.Y,
+                    MovementFactorX = step.Settings.EffectiveMovementFactorX,
+                    MovementFactorY = step.Settings.EffectiveMovementFactorY
+                };
+            }
+
             logger.LogInformation(
                 "KlickOnPoint3DStepHandler: Pixel delta (dx:{DX}, dy:{DY}), movement factors=(x:{FactorX:F3}, y:{FactorY:F3}), applied mouse delta (dx:{AppliedDX}, dy:{AppliedDY}), global origin=({OriginX},{OriginY}), target=({X},{Y}), confidence={Confidence:F3}, offset=({OffsetX},{OffsetY}), click='{Click}'",
                 delta.X, delta.Y, step.Settings.EffectiveMovementFactorX,
@@ -78,7 +134,13 @@ namespace TaskAutomation.Steps
 
             var macro = CreateClickMacro(step.Settings, appliedDelta);
             await ctx.MakroExecutor.ExecuteMakro(macro, ctx.DxgiResources, ct);
+            var completedTimestamp = _getTimestamp();
+            ctx.Last3DMovements[step.Id] = movement;
+            ctx.Last3DInputTimestamps[step.Id] = completedTimestamp;
             ctx.StepTimeouts[stepKey] = DateTime.Now;
+            logger.LogDebug(
+                "KlickOnPoint3DStepHandler: Input sent. FrameVersion={FrameVersion}, FrameTimestamp={FrameTimestamp}, InputTimestamp={InputTimestamp}",
+                detection?.SourceFrameVersion ?? 0, detection?.SourceFrameTimestamp ?? 0, completedTimestamp);
 
             return new KlickOnPoint3DResult
             {
@@ -165,15 +227,15 @@ namespace TaskAutomation.Steps
             if (settings.DoubleClick)
             {
                 commands.Add(new MouseDownBefehl { Button = settings.ClickType });
-                commands.Add(new MouseUpBefehl   { Button = settings.ClickType });
-                commands.Add(new TimeoutBefehl   { Duration = 50 });
+                commands.Add(new MouseUpBefehl { Button = settings.ClickType });
+                commands.Add(new TimeoutBefehl { Duration = 50 });
                 commands.Add(new MouseDownBefehl { Button = settings.ClickType });
-                commands.Add(new MouseUpBefehl   { Button = settings.ClickType });
+                commands.Add(new MouseUpBefehl { Button = settings.ClickType });
             }
             else
             {
                 commands.Add(new MouseDownBefehl { Button = settings.ClickType });
-                commands.Add(new MouseUpBefehl   { Button = settings.ClickType });
+                commands.Add(new MouseUpBefehl { Button = settings.ClickType });
             }
 
             return new Makro { Name = $"TempClick_{DateTime.Now:HHmmss}", Befehle = commands };

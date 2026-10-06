@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
+using TaskAutomation.WindowsIntegration;
 using Common.JsonRepository;
 using Microsoft.Extensions.Logging;
 using TaskAutomation.Hotkeys;
@@ -220,6 +221,10 @@ namespace TaskAutomation.Automations
             using var triggerScope = LogAmbient.Push(new(TriggerId: triggerContext.TriggerId, AutomationId: automationId));
             if (!_automations.TryGetValue(automationId, out var automation))
                 return;
+            var triggerSnapshot = new LogTriggerSnapshot(automation.Trigger.Kind.ToString(), triggerContext.Kind,
+                StepLogPaths.Normalize((automation.Trigger as FileSystemAutomationTrigger)?.DirectoryPath),
+                automation.Action.JobId ?? automation.Action.MakroId,
+                automation.Action.ActionType.ToString(), automation.Action.Name);
 
             _automationLogs.Record(automationId, new LogEvent
             {
@@ -227,6 +232,8 @@ namespace TaskAutomation.Automations
                 Message = "Trigger erkannt.",
                 Context = LogAmbient.Current,
                 Timestamp = triggerContext.ObservedAt,
+                Trigger = triggerSnapshot,
+                Category = LogArea.Automation,
                 Parameters = new(triggerContext.Parameters ?? [])
                 {
                     ["TriggerKind"] = automation.Trigger.Kind.ToString(),
@@ -278,7 +285,7 @@ namespace TaskAutomation.Automations
                     return;
                 }
 
-                var actionResult = ExecuteAction(automation);
+                var actionResult = ExecuteAction(automation, triggerSnapshot);
                 RecordDecision(automationId, actionResult.Reason,
                     actionResult.Reason switch
                     {
@@ -326,7 +333,7 @@ namespace TaskAutomation.Automations
         }
 
         private sealed record ActionResult(string Reason, Guid? InstanceId = null, Guid[]? RelatedInstances = null);
-        private ActionResult ExecuteAction(AutomationDefinition automation)
+        private ActionResult ExecuteAction(AutomationDefinition automation, LogTriggerSnapshot triggerSnapshot)
         {
             var action = automation.Action;
             var isMakro = action.ActionType == AutomationActionTarget.Makro;
@@ -341,7 +348,7 @@ namespace TaskAutomation.Automations
             else if (running && automation.RunPolicy.AlreadyRunningBehavior != AutomationAlreadyRunningBehavior.StartParallel)
                 return new("AlreadyRunning", RelatedInstances: related);
             var context = new JobStartContext(JobStartSource.Automation, automation.Name, automation.Id,
-                TriggerId: LogAmbient.Current.TriggerId);
+                TriggerId: LogAmbient.Current.TriggerId, Trigger: triggerSnapshot);
             var instance = isMakro ? _dispatcher.StartMakroWithContext(targetId, context) : _dispatcher.StartJob(targetId, context);
             return new(instance == Guid.Empty ? "StartRejected" : running
                 ? automation.RunPolicy.AlreadyRunningBehavior == AutomationAlreadyRunningBehavior.Restart ? "RestartRequested" : "ParallelStartRequested"
@@ -356,6 +363,8 @@ namespace TaskAutomation.Automations
                 Message = message,
                 Details = details,
                 Context = LogAmbient.Current with { InstanceId = instanceId },
+                Category = LogArea.Automation,
+                RelatedInstanceIds = relatedInstances ?? [],
                 Parameters = new()
                 {
                     ["Reason"] = reason,
@@ -635,17 +644,13 @@ namespace TaskAutomation.Automations
 
             try
             {
-                _startWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace"));
-                _stopWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStopTrace"));
-                _startWatcher.EventArrived += OnProcessStarted;
-                _stopWatcher.EventArrived += OnProcessExited;
-                _startWatcher.Start();
-                _stopWatcher.Start();
+                _startWatcher = ProcessEventWatcher.Start(true, OnProcessStarted, LogProcessFallback);
+                _stopWatcher = ProcessEventWatcher.Start(false, OnProcessExited, LogProcessFallback);
                 _log.LogInformation("Windows-Prozessereignisse für Automationen registriert.");
             }
             catch (Exception ex)
             {
-                _log.LogError(ex, "Windows-Prozessereignisse konnten nicht registriert werden.");
+                _log.LogWarning(ex, "Prozessüberwachung ist nicht verfügbar; Prozess-Automationen können nicht ausgelöst werden.");
                 DisposeWatchers();
                 _cts.Dispose();
                 _cts = null;
@@ -685,8 +690,9 @@ namespace TaskAutomation.Automations
             if (!token.HasValue || token.Value.IsCancellationRequested) return;
             try
             {
-                var processId = Convert.ToUInt32(args.NewEvent.Properties["ProcessID"].Value);
-                var processName = NormalizeProcessName(Convert.ToString(args.NewEvent.Properties["ProcessName"].Value));
+                var observed = ProcessEventWatcher.Process(args);
+                var processId = Convert.ToUInt32(observed.Properties["ProcessID"].Value);
+                var processName = NormalizeProcessName(ProcessEventWatcher.Name(observed));
                 var info = new ProcessInfo(processName, string.Empty);
                 _processes[processId] = info;
                 _ = HandleStartedProcessAsync(processId, info, token.Value);
@@ -703,8 +709,9 @@ namespace TaskAutomation.Automations
             if (!token.HasValue || token.Value.IsCancellationRequested) return;
             try
             {
-                var processId = Convert.ToUInt32(args.NewEvent.Properties["ProcessID"].Value);
-                var eventName = NormalizeProcessName(Convert.ToString(args.NewEvent.Properties["ProcessName"].Value));
+                var observed = ProcessEventWatcher.Process(args);
+                var processId = Convert.ToUInt32(observed.Properties["ProcessID"].Value);
+                var eventName = NormalizeProcessName(ProcessEventWatcher.Name(observed));
                 if (!_processes.TryRemove(processId, out var process))
                     process = new ProcessInfo(eventName, string.Empty);
 
@@ -849,5 +856,8 @@ namespace TaskAutomation.Automations
                 _stopWatcher = null;
             }
         }
+
+        private void LogProcessFallback() => _log.LogInformation(
+            "Prozess-Automationen verwenden die WMI-Rückfallabfrage mit einem Abfrageintervall von einer Sekunde.");
     }
 }

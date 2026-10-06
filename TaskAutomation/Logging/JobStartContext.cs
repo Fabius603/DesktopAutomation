@@ -15,7 +15,8 @@ public sealed record JobStartContext(
     Guid? SourceId = null,
     Guid? InstanceId = null,
     Guid? TriggerId = null,
-    Guid? ParentRunId = null)
+    Guid? ParentRunId = null,
+    LogTriggerSnapshot? Trigger = null)
 {
     public static JobStartContext Manual { get; } = new(JobStartSource.Manual);
     public static JobStartContext Unknown { get; } = new(JobStartSource.Unknown);

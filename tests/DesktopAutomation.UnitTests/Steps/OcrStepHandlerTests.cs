@@ -21,7 +21,9 @@ public sealed class OcrStepHandlerTests
             Image = bitmap,
             Bounds = new PixelRegion(10, 20, 20, 20),
             Offset = new PixelPoint(10, 20),
-            CaptureTimestampUtc = timestamp
+            CaptureTimestampUtc = timestamp,
+            FrameVersion = 42,
+            FrameTimestamp = 123456
         }, "capture");
         var service = new RecordingOcrService(new OcrRecognition(
             "Ready",
@@ -47,6 +49,8 @@ public sealed class OcrStepHandlerTests
         Assert.Equal("eng", service.Options!.Languages);
         Assert.Equal(OcrPageLayout.TextLine, service.Options.PageLayout);
         Assert.True(result.Found);
+        Assert.Equal(42, result.SourceFrameVersion);
+        Assert.Equal(123456, result.SourceFrameTimestamp);
         Assert.Equal("Ready", result.Text);
         Assert.Equal(.92, result.Confidence);
         Assert.Equal(.92, result.MinimumConfidence);

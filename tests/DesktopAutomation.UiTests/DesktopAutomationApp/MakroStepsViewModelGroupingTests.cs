@@ -338,6 +338,101 @@ public sealed class MakroStepsViewModelGroupingTests
         Assert.True(viewModel.HasUnsavedChanges);
     }
 
+    internal static IGlobalHotkeyService CreateRenderHotkeys() => new HotkeyServiceStub();
+
+    internal static MakroStepsViewModel CreateRenderViewModel(Makro macro) => new(macro,
+        NullLogger<MakroStepsViewModel>.Instance, new MacroPreviewService(), new MacroApplicationServiceStub(),
+        new DialogServiceStub(), new HotkeyServiceStub(), new RecordingJobDispatcher());
+
+    [Fact]
+    public async Task Inspector_ApplyIsUndoableAndPreservesStepIdentityGroupAndPrecision()
+    {
+        var group = new MakroGruppe { Id = "group", Title = "Input" };
+        var macro = new Makro
+        {
+            Name = "editor",
+            Gruppen = new([group]),
+            Befehle = new([
+            new TextInputBefehl { Id = "text", GroupId = group.Id, Text = "old", DelayBeforeMicroseconds = 875, DurationMicroseconds = 125 }])
+        };
+        using var vm = CreateViewModel(macro);
+        vm.SelectedStep = vm.Steps[0];
+        vm.StepEditor!.Text = "new";
+        Assert.True(vm.HasUnsavedChanges);
+        Assert.Equal("old", ((TextInputBefehl)vm.Steps[0]).Text);
+        Assert.True(vm.ApplySelectedStepEdits());
+        var text = Assert.IsType<TextInputBefehl>(vm.Steps[0]);
+        Assert.Equal(("text", "group", "new", 875L, 125L), (text.Id, text.GroupId, text.Text, text.DelayBeforeMicroseconds!.Value, text.DurationMicroseconds));
+        vm.UndoCommand.Execute(null);
+        await vm.WaitForDirtyStateAsync();
+        Assert.Equal("old", ((TextInputBefehl)vm.Steps[0]).Text);
+        Assert.False(vm.HasUnsavedChanges);
+        vm.RedoCommand.Execute(null);
+        Assert.Equal("new", ((TextInputBefehl)vm.Steps[0]).Text);
+    }
+
+    [Fact]
+    public async Task Inspector_InvalidDraftSurvivesSelectionChangeAndBlocksSave()
+    {
+        using var vm = CreateViewModel(new Makro
+        {
+            Name = "editor",
+            Befehle = new([
+            new TextInputBefehl { Text = "old" }, new TimeoutBefehl { Duration = 500 }])
+        });
+        vm.SelectedStep = vm.Steps[0];
+        vm.StepEditor!.Text = "";
+        vm.SelectedStep = vm.Steps[1];
+        await vm.SaveAsync();
+        Assert.Same(vm.Steps[0], vm.SelectedStep);
+        Assert.Equal("", vm.StepEditor!.Text);
+        Assert.True(vm.StepEditor.HasValidationError);
+        Assert.Equal("old", ((TextInputBefehl)vm.Steps[0]).Text);
+        Assert.True(vm.HasUnsavedChanges);
+        vm.DiscardChanges();
+        Assert.False(vm.HasPendingStepEdits);
+    }
+
+    [Fact]
+    public async Task Inspector_SaveCommitsPendingDraftsAndDisablesRunUntilSaved()
+    {
+        using var vm = CreateViewModel(new Makro { Name = "editor", Befehle = new([new TextInputBefehl { Text = "old" }]) });
+        vm.SelectedStep = vm.Steps[0];
+        vm.StepEditor!.Text = "saved";
+        Assert.False(vm.StartMakroCommand.CanExecute(null));
+        await vm.SaveAsync();
+        await vm.WaitForDirtyStateAsync();
+        Assert.Equal("saved", ((TextInputBefehl)vm.Steps[0]).Text);
+        Assert.False(vm.HasUnsavedChanges);
+        Assert.True(vm.StartMakroCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void Inspector_MultipleSelectionDisablesEditingWithoutLosingPendingDraft()
+    {
+        using var vm = CreateViewModel(new Makro { Name = "editor", Befehle = new([new TextInputBefehl { Text = "old" }, new TimeoutBefehl()]) });
+        var text = vm.Steps[0];
+        vm.SelectedStep = text;
+        vm.StepEditor!.Text = "draft";
+        vm.SetSelectedSteps(vm.Steps.Cast<object>());
+        Assert.Null(vm.StepEditor);
+        vm.SetSelectedSteps([text]);
+        Assert.Equal("draft", vm.StepEditor!.Text);
+    }
+
+    [Fact]
+    public void KeyboardFilter_IncludesBothNewCommandTypes()
+    {
+        using var vm = CreateViewModel(new Makro
+        {
+            Name = "editor",
+            Befehle = new([
+            new TextInputBefehl { Text = "hi" }, new KeyCombinationBefehl { Keys = ["Ctrl", "S"] }, new TimeoutBefehl()])
+        });
+        vm.SelectedStepTypeFilter = vm.StepTypeFilterOptions.Single(filter => filter.Id == "keyboard");
+        Assert.Equal(2, vm.VisibleItems.Count);
+    }
+
     private static Makro CreateMacro(MakroGruppe group) => new()
     {
         Name = "Macro",
@@ -410,7 +505,7 @@ public sealed class MakroStepsViewModelGroupingTests
         public IReadOnlyList<CapturedInputEvent> StopRecordHotkeys() => [];
         public void SetRecordingHotkey(KeyModifiers modifiers, uint virtualKeyCode) { }
         public void ClearRecordingHotkey() { }
-        public string FormatKey(KeyModifiers mods, uint vk) => vk.ToString();
+        public string FormatKey(KeyModifiers mods, uint vk) => HotkeyTextFormatter.Format(mods, vk, "+");
         public string FormatMouseButton(MouseButtons button) => button.ToString();
         public void SetPaused(bool paused) { }
     }

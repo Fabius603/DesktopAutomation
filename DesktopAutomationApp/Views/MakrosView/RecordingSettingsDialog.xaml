@@ -1,180 +1,39 @@
 <mah:MetroWindow x:Class="DesktopAutomationApp.Views.RecordingSettingsDialog"
-                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                 xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
-                 xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-                 xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-                 Title="{loc:Translate Key=Ui.Macro.Recording.Settings}"
-                 Width="680" Height="720" MinWidth="620" MinHeight="650"
-                 WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
-                 ShowInTaskbar="False" Style="{StaticResource DialogWindowStyle}">
-    <mah:MetroWindow.Resources>
-        <Style x:Key="SectionTitle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/>
-        </Style>
-        <Style x:Key="Description" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-        </Style>
-        <Style x:Key="ModeCard" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource App.Brush.WindowBackground}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="14,12"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-        </Style>
-        <Style x:Key="OptionCard" TargetType="Border" BasedOn="{StaticResource ModeCard}">
-            <Setter Property="Margin" Value="0,0,0,7"/>
-            <Setter Property="Padding" Value="12,10"/>
-        </Style>
-    </mah:MetroWindow.Resources>
-
-    <Grid Margin="24,20,24,18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-
-        <Grid Margin="0,0,0,18">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <Border Width="36" Height="36" CornerRadius="8" Background="{DynamicResource App.Brush.AccentSubtle}">
-                <iconPacks:PackIconMaterial Kind="RecordRec" Width="19" Height="19"
-                                            Foreground="{DynamicResource App.Brush.Accent}"
-                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Settings}" FontSize="20" FontWeight="SemiBold"/>
-                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Settings.Help}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-            </StackPanel>
-        </Grid>
-
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="0,0,8,0">
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
-                    <StackPanel>
-                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Mode}" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
-
-                        <Border>
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource ModeCard}">
-                                    <Style.Triggers><DataTrigger Binding="{Binding IsScreenAccurate}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <RadioButton GroupName="Mode" IsChecked="{Binding IsScreenAccurate}">
-                                <Grid Margin="6,0,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <iconPacks:PackIconMaterial Kind="MonitorScreenshot" Width="20" Height="20" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ScreenAccurate}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ScreenAccurate.Help}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-                                    </StackPanel>
-                                </Grid>
-                            </RadioButton>
-                        </Border>
-
-                        <Border>
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource ModeCard}">
-                                    <Style.Triggers><DataTrigger Binding="{Binding IsMotionFaithful}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <RadioButton GroupName="Mode" IsChecked="{Binding IsMotionFaithful}">
-                                <Grid Margin="6,0,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <iconPacks:PackIconMaterial Kind="CursorMove" Width="20" Height="20" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MotionFaithful}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MotionFaithful.Help}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-                                    </StackPanel>
-                                </Grid>
-                            </RadioButton>
-                        </Border>
-
-                        <Border>
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource ModeCard}">
-                                    <Setter Property="Margin" Value="0"/>
-                                    <Style.Triggers><DataTrigger Binding="{Binding IsClicksOnly}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <RadioButton GroupName="Mode" IsChecked="{Binding IsClicksOnly}">
-                                <Grid Margin="6,0,0,0">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                    <iconPacks:PackIconMaterial Kind="CursorDefaultClick" Width="20" Height="20" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ClicksOnly}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ClicksOnly.Help}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-                                    </StackPanel>
-                                </Grid>
-                            </RadioButton>
-                        </Border>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,12">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <iconPacks:PackIconMaterial Kind="TuneVariant" Width="18" Height="18" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,0,9,0"/>
-                            <StackPanel>
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Precision}" Style="{StaticResource SectionTitle}"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Recommendation}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,10">
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.IntervalMs}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Interval.Help}" Style="{StaticResource Description}" Margin="0,2,0,0"/>
-                            </StackPanel>
-                            <mah:NumericUpDown Grid.Column="1" Value="{Binding MinimumIntervalMilliseconds}" Minimum="0" Maximum="1000" Interval="0.25" StringFormat="{}{0:0.###}" Margin="0,0,0,10"/>
-                            <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,0,16,0">
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Distance}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Distance.Help}" Style="{StaticResource Description}" Margin="0,2,0,0"/>
-                            </StackPanel>
-                            <mah:NumericUpDown Grid.Row="1" Grid.Column="1" Value="{Binding MinimumDistancePixels}" Minimum="0" Maximum="10000" Interval="1"/>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <Border Style="{StaticResource CardBorderStyle}" Margin="0">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <iconPacks:PackIconMaterial Kind="KeyboardSettingsOutline" Width="18" Height="18" Foreground="{DynamicResource App.Brush.Accent}" Margin="0,0,9,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Inputs}" Style="{StaticResource SectionTitle}"/>
-                        </StackPanel>
-                        <Border Style="{StaticResource OptionCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Hotkey}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding HotkeyDisplay}" Foreground="{DynamicResource App.Brush.Accent}" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,0"/>
-                                    <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Hotkey.Help}" Style="{StaticResource Description}" Margin="0,3,0,0"/>
-                                </StackPanel>
-                                <Button Grid.Column="1" Content="{loc:Translate Key=Ui.Macro.Recording.Hotkey.Capture}"
-                                        Style="{StaticResource ButtonSecondary}" Click="CaptureHotkey_Click" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-                        <Border Style="{StaticResource OptionCard}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Keyboard}" VerticalAlignment="Center"/><CheckBox Grid.Column="1" IsChecked="{Binding RecordKeyboard}" VerticalAlignment="Center"/></Grid></Border>
-                        <Border Style="{StaticResource OptionCard}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MouseButtons}" VerticalAlignment="Center"/><CheckBox Grid.Column="1" IsChecked="{Binding RecordMouseButtons}" VerticalAlignment="Center"/></Grid></Border>
-                        <Border Style="{StaticResource OptionCard}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,16,0"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.AutoGroups}"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.AutoGroups.Help}" Style="{StaticResource Description}" Margin="0,2,0,0"/></StackPanel><CheckBox Grid.Column="1" IsChecked="{Binding AutomaticMovementGroups}" VerticalAlignment="Center"/></Grid></Border>
-                        <Border Style="{StaticResource OptionCard}" Margin="0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,16,0"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.RemoveStop}"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.RemoveStop.Help}" Style="{StaticResource Description}" Margin="0,2,0,0"/></StackPanel><CheckBox Grid.Column="1" IsChecked="{Binding RemoveStopGesture}" VerticalAlignment="Center"/></Grid></Border>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
-
-        <Grid Grid.Row="2" Margin="0,18,0,0">
-            <Border Height="1" Background="{DynamicResource App.Brush.CardBorder}" VerticalAlignment="Top"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                <Button Content="{loc:Translate Key=Ui.Common.Cancel}" Style="{StaticResource ButtonSecondary}" Click="Cancel_Click" IsCancel="True" MinWidth="96" Margin="0,0,8,0"/>
-                <Button Content="{loc:Translate Key=Common.Apply}" Style="{StaticResource ButtonPrimary}" Click="Apply_Click" IsDefault="True" MinWidth="110"/>
-            </StackPanel>
-        </Grid>
-    </Grid>
-</mah:MetroWindow>
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" xmlns:icons="http://metro.mahapps.com/winfx/xaml/iconpacks"
+ Title="{loc:Translate Key=Ui.Macro.Recording.Settings}" Width="960" Height="820" MinWidth="820" MinHeight="650"
+ WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip" ShowInTaskbar="False" TitleCharacterCasing="Normal"
+ Style="{StaticResource DialogWindowStyle}" WindowTitleBrush="{DynamicResource App.Brush.Surface}" NonActiveWindowTitleBrush="{DynamicResource App.Brush.Surface}" TitleForeground="{DynamicResource App.Brush.TextPrimary}">
+ <mah:MetroWindow.Resources>
+  <Style x:Key="Help" TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource App.Brush.TextSecondary}"/><Setter Property="FontSize" Value="14"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
+  <Style x:Key="Heading" TargetType="TextBlock"><Setter Property="FontSize" Value="19"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
+  <Style x:Key="Nav" TargetType="RadioButton"><Setter Property="Foreground" Value="{DynamicResource App.Brush.TextPrimary}"/><Setter Property="Margin" Value="10,0,8,10"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton"><Border x:Name="Surface" Background="Transparent" CornerRadius="7" Padding="14,18"><ContentPresenter/></Border><ControlTemplate.Triggers>
+    <Trigger Property="IsChecked" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="4,0,0,0"/></Trigger>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter TargetName="Surface" Property="BorderThickness" Value="1"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource App.Brush.FocusBorder}"/><Setter TargetName="Surface" Property="BorderThickness" Value="1"/></Trigger>
+   </ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </mah:MetroWindow.Resources>
+ <Grid Background="{DynamicResource App.Brush.SurfaceRaised}"><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="270"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+ <Border Background="{DynamicResource App.Brush.WindowBackground}" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,1,0"><StackPanel Margin="0,22,0,0">
+<RadioButton Style="{StaticResource Nav}" GroupName="Sections" IsChecked="{Binding IsRecordingSection}" AutomationProperties.AutomationId="Macro.Recording.Nav.Recording"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="MonitorScreenshot" Width="24" Height="24" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.Accent}"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Recording}" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Recording.Help}" Style="{StaticResource Help}" FontSize="12" Margin="0,5,0,0"/></StackPanel></Grid></RadioButton><RadioButton Style="{StaticResource Nav}" GroupName="Sections" IsChecked="{Binding IsInputsSection}" AutomationProperties.AutomationId="Macro.Recording.Nav.Inputs"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="KeyboardOutline" Width="24" Height="24" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.Accent}"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Inputs}" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding InputsSummary}" Style="{StaticResource Help}" FontSize="12" Margin="0,5,0,0"/></StackPanel></Grid></RadioButton><RadioButton Style="{StaticResource Nav}" GroupName="Sections" IsChecked="{Binding IsPrecisionSection}" AutomationProperties.AutomationId="Macro.Recording.Nav.Precision"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="TuneVariant" Width="24" Height="24" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.Accent}"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Precision}" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{Binding PrecisionSummary}" Style="{StaticResource Help}" FontSize="12" Margin="0,5,0,0"/></StackPanel></Grid></RadioButton></StackPanel></Border><ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Grid Margin="30,34,28,28">
+ <StackPanel Visibility="{Binding IsRecordingSection, Converter={StaticResource BooleanToVisibilityConverter}}">
+ <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Recording}" FontSize="30" FontWeight="SemiBold"/>
+ <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Settings.Help}" Style="{StaticResource Help}" Margin="0,8,0,24"/>
+ <Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0" Padding="0,22,0,0"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Mode}" Style="{StaticResource Heading}" Margin="0,0,0,16"/></Border>
+<Border Padding="8,16" Margin="-8,0,-8,6" CornerRadius="5"><Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/><Setter Property="BorderThickness" Value="0,0,0,1"/><Style.Triggers><DataTrigger Binding="{Binding IsScreenAccurate}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers></Style></Border.Style>
+ <RadioButton GroupName="Mode" Foreground="{DynamicResource App.Brush.TextPrimary}" Background="Transparent" IsChecked="{Binding IsScreenAccurate}" AutomationProperties.AutomationId="Macro.Recording.IsScreenAccurate"><Grid Margin="12,0,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="MonitorScreenshot" Width="23" Height="23" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ScreenAccurate}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ScreenAccurate.Help}" Style="{StaticResource Help}" Margin="0,6,0,0"/></StackPanel></Grid></RadioButton></Border><Border Padding="8,16" Margin="-8,0,-8,6" CornerRadius="5"><Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/><Setter Property="BorderThickness" Value="0,0,0,1"/><Style.Triggers><DataTrigger Binding="{Binding IsMotionFaithful}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers></Style></Border.Style>
+ <RadioButton GroupName="Mode" Foreground="{DynamicResource App.Brush.TextPrimary}" Background="Transparent" IsChecked="{Binding IsMotionFaithful}" AutomationProperties.AutomationId="Macro.Recording.IsMotionFaithful"><Grid Margin="12,0,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="CursorMove" Width="23" Height="23" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MotionFaithful}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MotionFaithful.Help}" Style="{StaticResource Help}" Margin="0,6,0,0"/></StackPanel></Grid></RadioButton></Border><Border Padding="8,16" Margin="-8,0,-8,6" CornerRadius="5"><Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.CardBorder}"/><Setter Property="BorderThickness" Value="0,0,0,1"/><Style.Triggers><DataTrigger Binding="{Binding IsClicksOnly}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Background" Value="{DynamicResource App.Brush.AccentSubtle}"/></DataTrigger></Style.Triggers></Style></Border.Style>
+ <RadioButton GroupName="Mode" Foreground="{DynamicResource App.Brush.TextPrimary}" Background="Transparent" IsChecked="{Binding IsClicksOnly}" AutomationProperties.AutomationId="Macro.Recording.IsClicksOnly"><Grid Margin="12,0,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><icons:PackIconMaterial Kind="CursorDefaultClick" Width="23" Height="23" Foreground="{DynamicResource App.Brush.Accent}" VerticalAlignment="Center"/><StackPanel Grid.Column="1"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ClicksOnly}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.ClicksOnly.Help}" Style="{StaticResource Help}" Margin="0,6,0,0"/></StackPanel></Grid></RadioButton></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0" Padding="0,22,0,0" Margin="0,20,0,0"><StackPanel>
+ <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Hotkey}" Style="{StaticResource Heading}"/>
+ <TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Hotkey.Help}" Style="{StaticResource Help}" Margin="0,14,0,14"/>
+ <StackPanel Orientation="Horizontal"><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1" CornerRadius="4" Padding="14,9" MinWidth="170" Margin="0,0,12,0"><TextBlock Text="{Binding HotkeyDisplay}" FontSize="14"/></Border><Button mah:ControlsHelper.ContentCharacterCasing="Normal" Content="{loc:Translate Key=Ui.Macro.Recording.Hotkey.Capture}" Style="{StaticResource ButtonSecondary}" Click="CaptureHotkey_Click" AutomationProperties.AutomationId="Macro.Recording.Capture"/></StackPanel>
+ </StackPanel></Border></StackPanel>
+ <StackPanel Visibility="{Binding IsInputsSection, Converter={StaticResource BooleanToVisibilityConverter}}"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Inputs}" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Inputs.Help}" Style="{StaticResource Help}" Margin="0,8,0,22"/>
+<Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1" Padding="0,18" Margin="0,0,0,0"><StackPanel><CheckBox Foreground="{DynamicResource App.Brush.TextPrimary}" IsChecked="{Binding RecordKeyboard}" AutomationProperties.AutomationId="Macro.Recording.RecordKeyboard"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Keyboard}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></CheckBox></StackPanel></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1" Padding="0,18" Margin="24,0,0,0"><StackPanel><CheckBox Foreground="{DynamicResource App.Brush.TextPrimary}" IsChecked="{Binding CombineKeyboardInputs}" AutomationProperties.AutomationId="Macro.Recording.CombineKeyboardInputs"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.CombineKeyboard}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></CheckBox><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.CombineKeyboard.Help}" Style="{StaticResource Help}" Margin="26,8,0,0"/></StackPanel></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1" Padding="0,18" Margin="0,0,0,0"><StackPanel><CheckBox Foreground="{DynamicResource App.Brush.TextPrimary}" IsChecked="{Binding RecordMouseButtons}" AutomationProperties.AutomationId="Macro.Recording.RecordMouseButtons"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.MouseButtons}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></CheckBox></StackPanel></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1" Padding="0,18" Margin="0,0,0,0"><StackPanel><CheckBox Foreground="{DynamicResource App.Brush.TextPrimary}" IsChecked="{Binding AutomaticMovementGroups}" AutomationProperties.AutomationId="Macro.Recording.AutomaticMovementGroups"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.AutoGroups}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></CheckBox><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.AutoGroups.Help}" Style="{StaticResource Help}" Margin="26,8,0,0"/></StackPanel></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,0,0,1" Padding="0,18" Margin="0,0,0,0"><StackPanel><CheckBox Foreground="{DynamicResource App.Brush.TextPrimary}" IsChecked="{Binding RemoveStopGesture}" AutomationProperties.AutomationId="Macro.Recording.RemoveStopGesture"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.RemoveStop}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/></CheckBox><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.RemoveStop.Help}" Style="{StaticResource Help}" Margin="26,8,0,0"/></StackPanel></Border></StackPanel><StackPanel Visibility="{Binding IsPrecisionSection, Converter={StaticResource BooleanToVisibilityConverter}}"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Nav.Precision}" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Recommendation}" Style="{StaticResource Help}" Margin="0,8,0,28"/>
+<Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0" Padding="0,24"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.IntervalMs}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Interval.Help}" Style="{StaticResource Help}" Margin="0,8,0,0"/></StackPanel><mah:NumericUpDown Grid.Column="1" Style="{StaticResource AppNumericUpDownStyle}" VerticalAlignment="Top" Value="{Binding MinimumIntervalMilliseconds, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Maximum="1000" Interval="0.25" StringFormat="{}{0:0.###}" AutomationProperties.AutomationId="Macro.Recording.MinimumIntervalMilliseconds"/></Grid></Border><Border BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0" Padding="0,24"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,20,0"><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Distance}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Key=Ui.Macro.Recording.Distance.Help}" Style="{StaticResource Help}" Margin="0,8,0,0"/></StackPanel><mah:NumericUpDown Grid.Column="1" Style="{StaticResource AppNumericUpDownStyle}" VerticalAlignment="Top" Value="{Binding MinimumDistancePixels, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Maximum="10000" Interval="1" StringFormat="{}{0:0.###}" AutomationProperties.AutomationId="Macro.Recording.MinimumDistancePixels"/></Grid></Border></StackPanel></Grid></ScrollViewer>
+ <Border Grid.Row="1" Grid.ColumnSpan="2" Background="{DynamicResource App.Brush.SurfaceRaised}" BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="0,1,0,0" Padding="22,18"><StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+ <Button mah:ControlsHelper.ContentCharacterCasing="Normal" Content="{loc:Translate Key=Ui.Common.Cancel}" Style="{StaticResource ButtonSecondary}" Click="Cancel_Click" IsCancel="True" MinWidth="110" Margin="0,0,10,0" AutomationProperties.AutomationId="Macro.Recording.Cancel"/>
+ <Button mah:ControlsHelper.ContentCharacterCasing="Normal" Content="{loc:Translate Key=Common.Apply}" Style="{StaticResource ButtonPrimary}" Click="Apply_Click" IsDefault="True" MinWidth="120" AutomationProperties.AutomationId="Macro.Recording.Apply"/>
+ </StackPanel></Border></Grid></mah:MetroWindow>

@@ -1,37 +1,46 @@
-<UserControl x:Class="DesktopAutomationApp.Views.LogsHomeView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
-             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-             Style="{StaticResource ContentViewBase}">
-    <StackPanel>
-        <DockPanel>
-            <Button DockPanel.Dock="Right" Command="{Binding OpenLogFolderCommand}" Style="{StaticResource ButtonSecondary}" ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}"><iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14"/></Button>
-            <TextBlock Text="{loc:Translate Key=Logs.Title}" Style="{StaticResource PageTitle}"/>
-        </DockPanel>
-        <TextBlock Text="{loc:Translate Key=Logs.ChooseDescription}" Foreground="{DynamicResource App.Brush.TextMuted}" Margin="0,6,0,22"/>
-        <UniformGrid Columns="3">
-            <Button Command="{Binding OpenJobLogsCommand}" Style="{StaticResource ButtonSecondary}" Padding="20" Margin="0,0,12,0" HorizontalContentAlignment="Stretch">
-                <StackPanel>
-                    <iconPacks:PackIconMaterial Kind="PlaylistPlay" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
-                    <TextBlock Text="{loc:Translate Key=Ui.Logs.JobLogs}" Style="{StaticResource Heading2}" Margin="0,16,0,6"/>
-                    <TextBlock Text="{loc:Translate Key=Logs.JobDescription}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"/>
+<UserControl x:Class="DesktopAutomationApp.Views.LogsHomeView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" xmlns:views="clr-namespace:DesktopAutomationApp.Views" xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels" xmlns:icon="http://metro.mahapps.com/winfx/xaml/iconpacks" Style="{StaticResource ContentViewBase}" Loaded="OnLoaded" Unloaded="OnUnloaded">
+    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <Button Content="{loc:Translate Key=Ui.Common.Back}" Command="{Binding BackCommand}" Style="{StaticResource LogButton}" HorizontalAlignment="Left" Margin="0,0,0,16" Visibility="{Binding IsRunDetail, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.AutomationId="Logs.Back"/>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Command="{Binding RefreshCommand}" Style="{StaticResource LogButton}" Margin="0,0,8,0" ToolTip="{loc:Translate Key=Logs.Ui.Refresh}" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.Refresh}" AutomationProperties.AutomationId="Logs.Refresh"><icon:PackIconMaterial Kind="Refresh" Width="18" Height="18"/></Button>
+                    <Button Command="{Binding ExportCommand}" Style="{StaticResource LogButton}" AutomationProperties.AutomationId="Logs.Export"><StackPanel Orientation="Horizontal"><icon:PackIconMaterial Kind="Download" Width="18" Height="18" Margin="0,0,12,0" Foreground="{DynamicResource App.Brush.Accent}"/><TextBlock Text="{loc:Translate Key=Logs.Ui.Export}"/></StackPanel></Button>
+                    <Button Content="{loc:Translate Key=Logs.Ui.CancelExport}" Command="{Binding CancelExportCommand}" Style="{StaticResource LogButton}" Margin="8,0,0,0" Visibility="{Binding IsExporting, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
-            </Button>
-            <Button Command="{Binding OpenAutomationLogsCommand}" Style="{StaticResource ButtonSecondary}" Padding="20" Margin="0,0,12,0" HorizontalContentAlignment="Stretch">
-                <StackPanel>
-                    <iconPacks:PackIconMaterial Kind="CalendarClock" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
-                    <TextBlock Text="{loc:Translate Key=Logs.AutomationLogs}" Style="{StaticResource Heading2}" Margin="0,16,0,6"/>
-                    <TextBlock Text="{loc:Translate Key=Logs.AutomationDescription}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                </StackPanel>
-            </Button>
-            <Button Command="{Binding OpenApplicationLogsCommand}" Style="{StaticResource ButtonSecondary}" Padding="20" HorizontalContentAlignment="Stretch">
-                <StackPanel>
-                    <iconPacks:PackIconMaterial Kind="ApplicationBracesOutline" Width="30" Height="30" Foreground="{DynamicResource App.Brush.Accent}"/>
-                    <TextBlock Text="{loc:Translate Key=Logs.ApplicationLogs}" Style="{StaticResource Heading2}" Margin="0,16,0,6"/>
-                    <TextBlock Text="{loc:Translate Key=Logs.ApplicationDescription}" TextWrapping="Wrap" Foreground="{DynamicResource App.Brush.TextMuted}"/>
-                </StackPanel>
-            </Button>
-        </UniformGrid>
-    </StackPanel>
+                <WrapPanel><TextBlock Text="{Binding Title}" Style="{StaticResource PageTitle}" FontSize="40" Margin="0,0,16,0"/><TextBlock Text="{Binding RunNumber}" Style="{StaticResource LogMuted}" VerticalAlignment="Center" Margin="0,0,18,0"/><TextBlock Text="{Binding RunOutcome}" Tag="{Binding RunTone}" Style="{StaticResource LogTone}" VerticalAlignment="Center"/></WrapPanel>
+            </DockPanel>
+            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource LogMuted}" FontSize="18" Margin="0,6,0,20"/>
+        </StackPanel>
+        <Border Grid.Row="1" Visibility="{Binding IsRunDetail, Converter={StaticResource InverseBooleanToVisibilityConverter}}" BorderBrush="{DynamicResource App.Brush.BorderSubtle}" BorderThickness="0,0,0,1" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{loc:Translate Key=Logs.Ui.Tab.Overview}" Style="{StaticResource LogTab}" IsChecked="{Binding IsOverview, Mode=OneWay}" Command="{Binding ChangePageCommand}" CommandParameter="{x:Static vm:LogPageKind.Overview}" AutomationProperties.AutomationId="Logs.Tab.Overview"/>
+                <RadioButton Content="{loc:Translate Key=Logs.Ui.Tab.Jobs}" Style="{StaticResource LogTab}" IsChecked="{Binding IsJobs, Mode=OneWay}" Command="{Binding ChangePageCommand}" CommandParameter="{x:Static vm:LogPageKind.Jobs}" AutomationProperties.AutomationId="Logs.Tab.Jobs"/>
+                <RadioButton Content="{loc:Translate Key=Logs.Ui.Tab.Automations}" Style="{StaticResource LogTab}" IsChecked="{Binding IsAutomation, Mode=OneWay}" Command="{Binding ChangePageCommand}" CommandParameter="{x:Static vm:LogPageKind.Automations}" AutomationProperties.AutomationId="Logs.Tab.Automations"/>
+                <RadioButton Content="{loc:Translate Key=Logs.Ui.Tab.Application}" Style="{StaticResource LogTab}" IsChecked="{Binding IsApplication, Mode=OneWay}" Command="{Binding ChangePageCommand}" CommandParameter="{x:Static vm:LogPageKind.Application}" AutomationProperties.AutomationId="Logs.Tab.Application"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="2">
+            <Grid Visibility="{Binding ShowMainFilters, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="2.1*"/><ColumnDefinition Width="1*"/><ColumnDefinition Width="1*"/></Grid.ColumnDefinitions>
+                <Grid Margin="0,0,12,0"><TextBox FontSize="16" MinHeight="48" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=350}" Padding="40,10,12,10" ToolTip="{loc:Translate Key=Logs.Ui.Search}" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.Search}" AutomationProperties.AutomationId="Logs.Search"/><icon:PackIconMaterial Kind="Magnify" Width="19" Height="19" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/><TextBlock Text="{loc:Translate Key=Logs.Ui.Search}" Margin="40,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource App.Brush.TextMuted}" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Grid>
+                <ComboBox Style="{StaticResource LogCombo}" Grid.Column="1" ItemsSource="{Binding Ranges}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Range}" Margin="0,0,12,0" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.Period}" AutomationProperties.AutomationId="Logs.Range"/>
+                <ComboBox Style="{StaticResource LogCombo}" Grid.Column="2" ItemsSource="{Binding Outcomes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Outcome}" Visibility="{Binding IsRunList, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.AllResults}" AutomationProperties.AutomationId="Logs.Outcome"/>
+                <ComboBox Style="{StaticResource LogCombo}" Grid.Column="2" ItemsSource="{Binding Levels}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Level}" Visibility="{Binding IsApplication, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.Severity}" AutomationProperties.AutomationId="Logs.Level"/>
+                <ComboBox Style="{StaticResource LogCombo}" Grid.Column="2" ItemsSource="{Binding AutomationChoices}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedAutomation}" Visibility="{Binding IsAutomation, Converter={StaticResource BooleanToVisibilityConverter}}" ToolTip="{loc:Translate Key=Logs.Ui.AllAutomations}" AutomationProperties.Name="{loc:Translate Key=Logs.Ui.AllAutomations}" AutomationProperties.AutomationId="Logs.Automation"/>
+            </Grid>
+            <WrapPanel Visibility="{Binding CustomRange, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                <TextBlock Text="{loc:Translate Key=Logs.Ui.From}" Style="{StaticResource LogMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/><DatePicker SelectedDate="{Binding FromDate}" Width="155" AutomationProperties.AutomationId="Logs.From"/>
+                <TextBlock Text="{loc:Translate Key=Logs.Ui.Until}" Style="{StaticResource LogMuted}" VerticalAlignment="Center" Margin="16,0,8,0"/><DatePicker SelectedDate="{Binding UntilDate}" Width="155" AutomationProperties.AutomationId="Logs.Until"/>
+            </WrapPanel>
+        </StackPanel>
+        <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="12"><TextBlock Text="{Binding Status}" Style="{StaticResource LogText}" AutomationProperties.AutomationId="Logs.Status"/></Border>
+        <ProgressBar Grid.Row="3" Height="2" IsIndeterminate="True" Foreground="{DynamicResource App.Brush.Accent}" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,6" AutomationProperties.Name="{loc:Translate Key=Execution.LogsLoading}"/>
+        <Grid Grid.Row="4">
+            <views:LogRunListView Visibility="{Binding IsRunList, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <views:ExecutionLogsView Visibility="{Binding IsRunDetail, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <views:AutomationLogsView Visibility="{Binding IsAutomation, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            <views:ApplicationLogsView Visibility="{Binding IsApplication, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+    </Grid>
 </UserControl>

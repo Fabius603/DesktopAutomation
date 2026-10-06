@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -27,7 +27,13 @@ namespace TaskAutomation.Steps
             if (!resolved.IsSuccess)
             {
                 logger.LogInformation("KlickOnPointStepHandler: No detection point available, skipping click");
-                return new KlickOnPointResult { WasExecuted = true, Success = false, ErrorMessage = "No detection point available" };
+                return new KlickOnPointResult
+                {
+                    WasExecuted = true,
+                    Success = false,
+                    ErrorMessage = "No detection point available",
+                    SkipReason = ResultBindingResolver.IsExpectedEmpty(resolved.Status) ? "NoInput" : null
+                };
             }
 
             // Timeout-Check

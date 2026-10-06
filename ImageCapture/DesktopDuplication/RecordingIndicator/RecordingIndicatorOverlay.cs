@@ -1,4 +1,4 @@
-﻿using DesktopOverlay.OverlayItems;
+using DesktopOverlay.OverlayItems;
 using DesktopOverlay;
 using System;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace ImageCapture.DesktopDuplication.RecordingIndicator
         private readonly string _labelId = "rec_label";
 
         private Overlay _overlay;
-        
+
         public bool IsRunning { get; private set; }
 
         // P/Invoke: Overlay von Aufnahme ausschließen
@@ -26,9 +26,11 @@ namespace ImageCapture.DesktopDuplication.RecordingIndicator
 
         public void Build(Rectangle virtualBounds, Rectangle overlayBounds, RecordingIndicatorOptions? options = null)
         {
+            options ??= new RecordingIndicatorOptions();
             var overlayLocal = new Rectangle(0, 0, overlayBounds.Width, overlayBounds.Height);
             var tr = OverlayTransform.FromVirtualToOverlayLocal(virtualBounds, overlayLocal);
-            var monitorBounds = ScreenHelper.GetDesktopBounds(options.MonitorIndex);
+            var monitorBounds = new DesktopDuplicationSessionFactory()
+                .ResolveMonitor(options.MonitorIndex, options.MonitorDeviceName).Bounds;
             _overlay.ClearItems();
 
             switch (options.Mode)

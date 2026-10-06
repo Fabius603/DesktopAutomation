@@ -26,6 +26,8 @@ public sealed class PredictMovementStepHandlerTests
         var result = await Execute(step, context);
         Assert.False(result.Found);
         Assert.True(context.PredictMovementStates.ContainsKey(step.Id));
+        Assert.Equal(42, result.SourceFrameVersion);
+        Assert.Equal(123456, result.SourceFrameTimestamp);
     }
 
     [Fact]
@@ -43,6 +45,8 @@ public sealed class PredictMovementStepHandlerTests
         }
         Assert.True(result.Found);
         Assert.True(result.IsPredicted);
+        Assert.Equal(42, result.SourceFrameVersion);
+        Assert.Equal(123456, result.SourceFrameTimestamp);
         Assert.NotNull(result.Point);
         Assert.NotNull(result.BoundingBox);
         Assert.True(result.Confidence > 0);
@@ -96,6 +100,8 @@ public sealed class PredictMovementStepHandlerTests
             BoundingBox = box,
             Confidence = confidence,
             SourceCaptureTimestampUtc = timestamp,
+            SourceFrameVersion = 42,
+            SourceFrameTimestamp = 123456,
             AllDetections = [new DetectionItem { Center = point, BoundingBox = box, Confidence = confidence }]
         }, "source");
     private static async Task<PredictMovementResult> Execute(PredictMovementStep step, PipelineContextStub context) =>

@@ -28,6 +28,10 @@ internal static class StepListRenderHost
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-desktop-capture") return DesktopCaptureEditorRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-macro-editor") return MacroEditorRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-library") return LibraryBrowserRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-logs") return LogScreenRenderHost.Run(args[1]);
         if (args.Length != 2 || args[0] != "--render-step-list") return 0;
         try { Render(args[1]); return 0; }
         catch (Exception exception) { Console.Error.WriteLine(exception); return 1; }
@@ -50,7 +54,7 @@ internal static class StepListRenderHost
         return false;
     }
 
-    private static void Render(string directory)
+    internal static System.Windows.Application LoadResources(string directory)
     {
         SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("de-DE");
@@ -79,6 +83,12 @@ internal static class StepListRenderHost
         foreach (var resource in new[] { "Styles/Themes/Black.xaml", "Styles/Accents/Cyan.xaml" })
             app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/DesktopAutomationApp;component/" + resource) });
         Directory.CreateDirectory(directory);
+        return app;
+    }
+
+    private static void Render(string directory)
+    {
+        var app = LoadResources(directory);
         var reports = new List<StepListRenderReport>();
         foreach (var scenario in new[] { "branches", "nested", "collapsed", "drag-snapped", "drag-free", "invalid-nested", "invalid-draft", "consecutive-closures", "empty-block", "empty-branches", "collapsed-alternative", "moved-block" })
         {

@@ -108,6 +108,12 @@ namespace TaskAutomation.Steps
         /// <summary>Timeout-Tracking pro Step-ID (verhindert zu schnelle Wiederholungen).</summary>
         Dictionary<string, DateTime> StepTimeouts { get; }
 
+        /// <summary>Last successfully sent relative movement per 3D step, retained across iterations.</summary>
+        IDictionary<string, TaskAutomation.Contracts.Geometry.PixelPoint> Last3DMovements { get; }
+
+        /// <summary>QPC timestamp after the last successful 3D input, retained across iterations.</summary>
+        IDictionary<string, long> Last3DInputTimestamps { get; }
+
         /// <summary>Bewegungshistorie pro PredictMovement-Step-ID.</summary>
         Dictionary<string, PredictMovementState> PredictMovementStates { get; }
 

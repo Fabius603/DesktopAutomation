@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -13,7 +13,24 @@ namespace DesktopAutomationApp.ViewModels
         public sealed record TimeUnitOption(string Label, double Microseconds);
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnChange([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
+        private void OnChange([CallerMemberName] string? p = null)
+        {
+            if (_validationError != null && p is not nameof(ValidationError) and not nameof(HasValidationError))
+            {
+                _validationError = null;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValidationError)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasValidationError)));
+            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
+        }
+        public void RefreshLocalization()
+        {
+            OnChange(nameof(SelectedStepDisplayName));
+            OnChange(nameof(SelectedStepCategory));
+            OnChange(nameof(StepTypeDescription));
+            OnChange(nameof(DialogTitle));
+            OnChange(nameof(ConfirmButtonText));
+        }
 
         private readonly IGlobalHotkeyService _capture;
         private CancellationTokenSource? _captureCts;
@@ -28,7 +45,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public ICommand CaptureKeyCommand { get; }
 
-        public string[] StepTypes { get; } = { "MouseMoveAbsolute", "MouseMoveRelative", "MouseWheel", "MouseDown", "MouseUp", "KeyDown", "KeyUp", "Timeout" };
+        public IReadOnlyList<string> StepTypes => MakroCommandRules.Types;
 
         private string _selectedType = "MouseMoveAbsolute";
         public string SelectedType
@@ -42,6 +59,7 @@ namespace DesktopAutomationApp.ViewModels
                 OnChange(nameof(ShowMouseDelta));
                 OnChange(nameof(ShowMouseButton));
                 OnChange(nameof(ShowKey));
+                OnChange(nameof(ShowText));
                 OnChange(nameof(ShowDuration));
                 OnChange(nameof(SelectedStepDisplayName));
                 OnChange(nameof(SelectedStepCategory));
@@ -65,7 +83,7 @@ namespace DesktopAutomationApp.ViewModels
         {
             "MouseMoveAbsolute" or "MouseMoveRelative" => "Ui.Macro.StepEditor.Category.Movement",
             "MouseWheel" or "MouseDown" or "MouseUp" => "Ui.Macro.StepEditor.Category.Mouse",
-            "KeyDown" or "KeyUp" => "Ui.Macro.StepEditor.Category.Keyboard",
+            "KeyDown" or "KeyUp" or "TextInput" or "KeyCombination" => "Ui.Macro.StepEditor.Category.Keyboard",
             _ => "Ui.Macro.StepEditor.Category.Timing"
         });
         public string StepTypeDescription => Loc.Get($"Ui.Macro.StepEditor.Description.{SelectedType}");
@@ -74,7 +92,11 @@ namespace DesktopAutomationApp.ViewModels
         public bool ShowMouseXY => SelectedType is "MouseMoveAbsolute";
         public bool ShowMouseDelta => SelectedType is "MouseMoveRelative" or "MouseWheel";
         public bool ShowMouseButton => SelectedType is "MouseDown" or "MouseUp";
-        public bool ShowKey => SelectedType is "KeyDown" or "KeyUp";
+        public bool ShowKey => SelectedType is "KeyDown" or "KeyUp" or "KeyCombination";
+        public bool ShowText => SelectedType is "TextInput";
+        private string _text = string.Empty;
+        public string Text { get => _text; set { _text = value; OnChange(); } }
+        public long CommandDurationMicroseconds { get; set; }
         public bool ShowDuration => SelectedType is "Timeout";
 
         // Eingabefelder
@@ -139,6 +161,28 @@ namespace DesktopAutomationApp.ViewModels
             ? "Ui.Macro.StepEditor.Capture.Running"
             : "Ui.Macro.StepEditor.Capture.Start");
 
+        private readonly Dictionary<string, string> _numericInputs = new();
+        private string NumericInput(string name, object? value) => _numericInputs.TryGetValue(name, out var input) ? input : Convert.ToString(value, System.Globalization.CultureInfo.CurrentCulture) ?? "";
+        private void SetNumericInput(string name, string value, Action<double?> apply, bool integer = false, bool optional = false)
+        {
+            _numericInputs[name] = value;
+            if (optional && string.IsNullOrWhiteSpace(value)) apply(null);
+            else if (integer && int.TryParse(value, out var whole)) apply(whole);
+            else if (!integer && double.TryParse(value, out var number) && double.IsFinite(number)) apply(number);
+            OnChange(name + "Input");
+        }
+        public string XInput { get => NumericInput(nameof(X), X); set => SetNumericInput(nameof(X), value, number => _x = (int)number!.Value, integer: true); }
+        public string YInput { get => NumericInput(nameof(Y), Y); set => SetNumericInput(nameof(Y), value, number => _y = (int)number!.Value, integer: true); }
+        public string DeltaXInput { get => NumericInput(nameof(DeltaX), DeltaX); set => SetNumericInput(nameof(DeltaX), value, number => _deltaX = (int)number!.Value, integer: true); }
+        public string DeltaYInput { get => NumericInput(nameof(DeltaY), DeltaY); set => SetNumericInput(nameof(DeltaY), value, number => _deltaY = (int)number!.Value, integer: true); }
+        public string DurationValueInput { get => NumericInput(nameof(DurationValue), DurationValue); set => SetNumericInput(nameof(DurationValue), value, number => _durationValue = number!.Value); }
+        public string DelayBeforeValueInput { get => NumericInput(nameof(DelayBeforeValue), DelayBeforeValue); set => SetNumericInput(nameof(DelayBeforeValue), value, number => _delayBeforeValue = number, optional: true); }
+        public bool HasInvalidNumericInput =>
+            (ShowMouseXY && (!int.TryParse(XInput, out _) || !int.TryParse(YInput, out _)))
+            || (ShowMouseDelta && (!int.TryParse(DeltaXInput, out _) || !int.TryParse(DeltaYInput, out _)))
+            || (ShowDuration && (!double.TryParse(DurationValueInput, out var duration) || !double.IsFinite(duration)))
+            || (!string.IsNullOrWhiteSpace(DelayBeforeValueInput) && (!double.TryParse(DelayBeforeValueInput, out var delay) || !double.IsFinite(delay)));
+
         public MakroBefehl? CreatedStep { get; private set; }
 
         public void CancelCapture()
@@ -158,6 +202,8 @@ namespace DesktopAutomationApp.ViewModels
                 "KeyDown" => new KeyDownBefehl { Key = Key },
                 "KeyUp" => new KeyUpBefehl { Key = Key },
                 "Timeout" => new TimeoutBefehl { Duration = Duration },
+                "TextInput" => new TextInputBefehl { Text = Text, DurationMicroseconds = CommandDurationMicroseconds },
+                "KeyCombination" => new KeyCombinationBefehl { Keys = Key.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(), DurationMicroseconds = CommandDurationMicroseconds },
                 _ => null
             };
             if (CreatedStep is not null)
@@ -166,6 +212,7 @@ namespace DesktopAutomationApp.ViewModels
 
         public bool CanConfirm()
         {
+            if (HasInvalidNumericInput) { ValidationError = Loc.Get("Ui.Macro.StepEditor.NumberInvalid"); return false; }
             try { CreateStep(); }
             catch (OverflowException)
             {
@@ -173,8 +220,29 @@ namespace DesktopAutomationApp.ViewModels
                 return false;
             }
             var result = CreatedStep == null ? null : MakroValidation.ValidateCommand(CreatedStep);
-            ValidationError = result == null || result.IsValid ? null : MakroValidation.Describe(result.Error);
+            ValidationError = result == null || result.IsValid ? null : MacroValidationErrorLocalizer.Localize(result.Error);
             return result?.IsValid == true;
+        }
+
+        public void Load(MakroBefehl step)
+        {
+            _numericInputs.Clear();
+            SelectedType = MakroCommandRules.TypeId(step);
+            DelayBeforeMicroseconds = step.DelayBeforeMicroseconds;
+            CommandDurationMicroseconds = MakroCommandRules.DurationMicroseconds(step);
+            switch (step)
+            {
+                case MouseMoveAbsoluteBefehl move: X = move.X; Y = move.Y; break;
+                case MouseMoveRelativeBefehl move: DeltaX = move.DeltaX; DeltaY = move.DeltaY; break;
+                case MouseWheelBefehl wheel: DeltaX = wheel.DeltaX; DeltaY = wheel.DeltaY; break;
+                case MouseDownBefehl mouse: MouseButton = mouse.Button; break;
+                case MouseUpBefehl mouse: MouseButton = mouse.Button; break;
+                case KeyDownBefehl key: Key = key.Key; break;
+                case KeyUpBefehl key: Key = key.Key; break;
+                case TimeoutBefehl wait: Duration = wait.Duration; break;
+                case TextInputBefehl text: Text = text.Text; break;
+                case KeyCombinationBefehl keys: Key = string.Join("+", keys.Keys ?? []); break;
+            }
         }
 
         private void SetDelay(long? microseconds)
@@ -219,7 +287,7 @@ namespace DesktopAutomationApp.ViewModels
             try
             {
                 var (mods, vk) = await _capture.CaptureNextAsync(_captureCts.Token);
-                Key = _capture.FormatKey(mods, vk);
+                Key = SelectedType == "KeyCombination" ? _capture.FormatKey(mods, vk) : ((WindowsInput.Native.VirtualKeyCode)vk).ToString();
             }
             catch (OperationCanceledException)
             {

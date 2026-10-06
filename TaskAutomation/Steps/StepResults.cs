@@ -54,6 +54,11 @@ public interface ICaptureStepResult
     bool IsFresh { get; }
     [ResultProperty("capture_timestamp_utc")]
     DateTime CaptureTimestampUtc { get; }
+    [ResultProperty("frame_version")]
+    long FrameVersion { get; }
+    /// <summary>Monotonic presentation timestamp in Stopwatch ticks; zero if unavailable.</summary>
+    [ResultProperty("frame_timestamp")]
+    long FrameTimestamp { get; }
 }
 
 /// <summary>Internal detection data contract. The concrete result still belongs to one step type.</summary>
@@ -71,6 +76,10 @@ public interface IDetectionStepResult
     bool SourceCaptureIsFresh { get; }
     [ResultProperty("source_capture_timestamp_utc")]
     DateTime SourceCaptureTimestampUtc { get; }
+    [ResultProperty("source_frame_version")]
+    long SourceFrameVersion { get; }
+    [ResultProperty("source_frame_timestamp")]
+    long SourceFrameTimestamp { get; }
     [ResultProperty("all_detections")]
     IReadOnlyList<DetectionItem> AllDetections { get; }
 }
@@ -80,6 +89,7 @@ public interface IActionExecutionResult
 {
     [ResultHidden] bool Success { get; }
     [ResultHidden] string? ErrorMessage { get; }
+    [ResultHidden] string? SkipReason => null;
 }
 
 /// <summary>Common output contract for steps that identify or operate on one process/window.</summary>
@@ -96,6 +106,8 @@ public sealed record DesktopDuplicationResult : StepResultBase, ICaptureStepResu
     public PixelPoint Offset { get; init; }
     public bool IsFresh { get; init; } = true;
     public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long FrameVersion { get; init; }
+    public long FrameTimestamp { get; init; }
     [ResultProperty("has_image")]
     public bool HasImage => Image is not null;
     public static readonly DesktopDuplicationResult Default = new();
@@ -108,6 +120,8 @@ public sealed record CameraCaptureResult : StepResultBase, ICaptureStepResult
     public PixelPoint Offset { get; init; }
     public bool IsFresh { get; init; } = true;
     public DateTime CaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long FrameVersion { get; init; }
+    public long FrameTimestamp { get; init; }
     [ResultProperty("has_image")]
     public bool HasImage => Image is not null;
     public static readonly CameraCaptureResult Default = new();
@@ -142,9 +156,14 @@ public sealed record FileSystemOperationResult : StepResultBase
 
 public sealed record TemplateMatchingResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
-    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public bool Found { get; init; }
+    public PixelPoint? Point { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+    public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long SourceFrameVersion { get; init; }
+    public long SourceFrameTimestamp { get; init; }
     [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
@@ -205,14 +224,23 @@ public sealed record OcrResult : StepResultBase
     public bool SourceCaptureIsFresh { get; init; } = true;
     [ResultProperty("source_capture_timestamp_utc")]
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    [ResultProperty("source_frame_version")]
+    public long SourceFrameVersion { get; init; }
+    [ResultProperty("source_frame_timestamp")]
+    public long SourceFrameTimestamp { get; init; }
     public static readonly OcrResult Default = new();
 }
 
 public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
-    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public bool Found { get; init; }
+    public PixelPoint? Point { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+    public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long SourceFrameVersion { get; init; }
+    public long SourceFrameTimestamp { get; init; }
     [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
@@ -221,9 +249,14 @@ public sealed record ColorDetectionResult : StepResultBase, IDetectionStepResult
 
 public sealed record YOLODetectionResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
-    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public bool Found { get; init; }
+    public PixelPoint? Point { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+    public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long SourceFrameVersion { get; init; }
+    public long SourceFrameTimestamp { get; init; }
     [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
@@ -232,9 +265,14 @@ public sealed record YOLODetectionResult : StepResultBase, IDetectionStepResult
 
 public sealed record KeyPointMatchingResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
-    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public bool Found { get; init; }
+    public PixelPoint? Point { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+    public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long SourceFrameVersion { get; init; }
+    public long SourceFrameTimestamp { get; init; }
     [ResultProperty("applied_roi")] public PixelRegion? AppliedRoi { get; init; }
     [ResultProperty("used_dynamic_roi")] public bool UsedDynamicRoi { get; init; }
     public IReadOnlyList<DetectionItem> AllDetections { get; init; } = Array.Empty<DetectionItem>();
@@ -243,9 +281,14 @@ public sealed record KeyPointMatchingResult : StepResultBase, IDetectionStepResu
 
 public sealed record PredictMovementResult : StepResultBase, IDetectionStepResult
 {
-    public bool Found { get; init; } public PixelPoint? Point { get; init; } public PixelRegion? BoundingBox { get; init; }
-    public double Confidence { get; init; } public bool SourceCaptureIsFresh { get; init; } = true;
+    public bool Found { get; init; }
+    public PixelPoint? Point { get; init; }
+    public PixelRegion? BoundingBox { get; init; }
+    public double Confidence { get; init; }
+    public bool SourceCaptureIsFresh { get; init; } = true;
     public DateTime SourceCaptureTimestampUtc { get; init; } = DateTime.UtcNow;
+    public long SourceFrameVersion { get; init; }
+    public long SourceFrameTimestamp { get; init; }
     [ResultProperty("is_predicted")]
     public bool IsPredicted { get; init; }
     [ResultProperty("predicted_for_utc")]
@@ -254,11 +297,12 @@ public sealed record PredictMovementResult : StepResultBase, IDetectionStepResul
     public static readonly PredictMovementResult Default = new();
 }
 
-public sealed record KlickOnPointResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly KlickOnPointResult Default = new(); }
+public sealed record KlickOnPointResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } [ResultHidden] public string? SkipReason { get; init; } public static readonly KlickOnPointResult Default = new(); }
 public sealed record KlickOnPoint3DResult : StepResultBase, IActionExecutionResult
 {
     public bool Success { get; init; }
     public string? ErrorMessage { get; init; }
+    [ResultHidden] public string? SkipReason { get; init; }
     [ResultProperty("click_on_point_3d.delta_x")]
     public int? DeltaX { get; init; }
     [ResultProperty("click_on_point_3d.delta_y")]
@@ -271,6 +315,8 @@ public sealed record KlickOnPoint3DResult : StepResultBase, IActionExecutionResu
     public int? AppliedDeltaX { get; init; }
     [ResultProperty("click_on_point_3d.applied_delta_y")]
     public int? AppliedDeltaY { get; init; }
+    [ResultProperty("click_on_point_3d.movement_blocked")]
+    public bool MovementBlocked { get; init; }
     public static readonly KlickOnPoint3DResult Default = new();
 }
 public sealed record MakroExecutionResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly MakroExecutionResult Default = new(); }
@@ -341,7 +387,7 @@ public sealed record UserChoiceResult : StepResultBase
     public bool WasCancelled { get; init; }
     public static readonly UserChoiceResult Default = new();
 }
-public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowImageResult Default = new(); }
+public sealed record ShowImageResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } [ResultHidden] public string? SkipReason { get; init; } public static readonly ShowImageResult Default = new(); }
 public sealed record ShowOnDesktopResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly ShowOnDesktopResult Default = new(); }
 public sealed record VideoCreationResult : StepResultBase, IActionExecutionResult { public bool Success { get; init; } public string? ErrorMessage { get; init; } public static readonly VideoCreationResult Default = new(); }
 

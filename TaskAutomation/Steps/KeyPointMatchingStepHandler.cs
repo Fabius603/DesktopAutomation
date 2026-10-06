@@ -28,10 +28,17 @@ namespace TaskAutomation.Steps
 
             var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = input.Capture;
+            var captureResult = new KeyPointMatchingResult
+            {
+                SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
+                SourceFrameVersion = capture.FrameVersion,
+                SourceFrameTimestamp = capture.FrameTimestamp
+            };
             if (input.Image is null)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Kein Bild verfügbar, Step wird übersprungen.");
-                return new KeyPointMatchingResult { WasExecuted = true, Found = false };
+                return captureResult with { WasExecuted = true, Found = false };
             }
 
             // Lazy-create / re-use the matcher (one per job context)
@@ -51,7 +58,7 @@ namespace TaskAutomation.Steps
                 step.Settings.EnableROI ? step.Settings.ROI : null);
             ctx.KeyPointMatcher.SetROI((dynamicRoi ?? step.Settings.ROI).ToOpenCvRect());
             if (dynamicRoi.HasValue || step.Settings.EnableROI) ctx.KeyPointMatcher.EnableROI();
-            else                         ctx.KeyPointMatcher.DisableROI();
+            else ctx.KeyPointMatcher.DisableROI();
 
             ctx.KeyPointMatcher.SetTemplate(step.Settings.TemplatePath);
 
@@ -60,7 +67,7 @@ namespace TaskAutomation.Steps
             if (!rawResult.Success)
             {
                 logger.LogInformation("KeyPointMatchingStepHandler: Keine ausreichend guten Matches gefunden.");
-                return new KeyPointMatchingResult { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
+                return captureResult with { WasExecuted = true, Found = false, AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue };
             }
 
             var globalPoint = new PixelPoint(
@@ -93,17 +100,19 @@ namespace TaskAutomation.Steps
             if (allDetections.Count == 0)
                 allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new KeyPointMatchingResult
+            return captureResult with
             {
-                WasExecuted    = true,
-                Found          = true,
-                Point          = globalPoint,
-                BoundingBox    = globalBoundingBox,
-                Confidence     = rawResult.Confidence,
+                WasExecuted = true,
+                Found = true,
+                Point = globalPoint,
+                BoundingBox = globalBoundingBox,
+                Confidence = rawResult.Confidence,
                 SourceCaptureIsFresh = capture.IsFresh,
                 SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
-                AllDetections  = allDetections
-                ,AppliedRoi = dynamicRoi, UsedDynamicRoi = dynamicRoi.HasValue
+                AllDetections = allDetections
+                ,
+                AppliedRoi = dynamicRoi,
+                UsedDynamicRoi = dynamicRoi.HasValue
             };
         }
 

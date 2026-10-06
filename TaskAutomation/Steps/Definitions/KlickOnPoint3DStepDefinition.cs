@@ -16,6 +16,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
     public const string OffsetYFieldId = "offset_y";
     public const string TimeoutFieldId = "timeout_ms";
     public const string DoubleClickFieldId = "double_click";
+    public const string MovementThresholdFieldId = "movement_threshold_px";
 
     private static readonly string[] ClickTypes = ["left", "right", "middle", "none"];
 
@@ -42,16 +43,20 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
             new(OffsetYFieldId, "Ui.Step.Settings.YOffsetPixels", StepValueKind.Integer, DefaultValue: JsonValue.Create(0), Advanced: true, Order: 6),
             new(TimeoutFieldId, "Ui.Step.Settings.TimeoutMs", StepValueKind.Duration, DefaultValue: JsonValue.Create(0),
                 Constraints: new(Minimum: 0), Advanced: true, Order: 7),
-            new(DoubleClickFieldId, "Ui.Step.Settings.DoubleClick", StepValueKind.Boolean, DefaultValue: JsonValue.Create(false), Advanced: true, Order: 8)
+            new(DoubleClickFieldId, "Ui.Step.Settings.DoubleClick", StepValueKind.Boolean, DefaultValue: JsonValue.Create(false), Advanced: true, Order: 8),
+            new(MovementThresholdFieldId, "Ui.Step.Settings.MovementThresholdPixels", StepValueKind.Integer,
+                DefaultValue: JsonValue.Create(KlickOnPoint3DSettings.DefaultMovementThresholdPixels),
+                DescriptionKey: "Ui.Step.Settings.MovementThresholdHelp", Constraints: new(Minimum: 0, Maximum: int.MaxValue),
+                Advanced: true, Order: 9)
         ],
         new([
                 new("general", null, [PointsSourceFieldId, OriginFieldId, ClickTypeFieldId]),
                 new("advanced", "Ui.Step.Settings.Advanced", [MovementFactorXFieldId, MovementFactorYFieldId,
-                    OffsetXFieldId, OffsetYFieldId, TimeoutFieldId, DoubleClickFieldId], 1, true, false)
+                    OffsetXFieldId, OffsetYFieldId, TimeoutFieldId, DoubleClickFieldId, MovementThresholdFieldId], 1, true, false)
             ],
             [new(PointsSourceFieldId), new(ClickTypeFieldId)],
             [PointsSourceFieldId, OriginFieldId, ClickTypeFieldId, MovementFactorXFieldId, MovementFactorYFieldId,
-                OffsetXFieldId, OffsetYFieldId, TimeoutFieldId, DoubleClickFieldId]));
+                OffsetXFieldId, OffsetYFieldId, TimeoutFieldId, DoubleClickFieldId, MovementThresholdFieldId]));
 
     public override KlickOnPoint3DStep CreateDefaultStep() => new()
     {
@@ -73,6 +78,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         draft.Values[OffsetYFieldId] = JsonValue.Create(s.OffsetY);
         draft.Values[TimeoutFieldId] = JsonValue.Create(s.TimeoutMs);
         draft.Values[DoubleClickFieldId] = JsonValue.Create(s.DoubleClick);
+        draft.Values[MovementThresholdFieldId] = JsonValue.Create(s.MovementThresholdPixels);
         return draft;
     }
 
@@ -93,6 +99,7 @@ public sealed class KlickOnPoint3DStepDefinition : StepDefinition<KlickOnPoint3D
         s.OffsetY = DefinitionValueReader.Integer(draft, OffsetYFieldId);
         s.TimeoutMs = DefinitionValueReader.Integer(draft, TimeoutFieldId);
         s.DoubleClick = DefinitionValueReader.Boolean(draft, DoubleClickFieldId);
+        s.MovementThresholdPixels = DefinitionValueReader.Integer(draft, MovementThresholdFieldId);
     }
 
     protected override IReadOnlyList<StepValidationIssue> ValidateCustomDraft(StepDraft draft)

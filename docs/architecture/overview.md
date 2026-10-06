@@ -36,6 +36,8 @@ defaults and persistence. The current audit evidence is maintained in the
 
 Detailed contracts:
 
+- [Desktop capture](desktop-capture.md)
+
 - [Structured user logs](logging.md)
 
 - [Step result contracts](result-contracts.md)

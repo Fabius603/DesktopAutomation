@@ -38,11 +38,15 @@ public sealed class ApplicationLogService : IApplicationLogService, ILogEventSin
             if (logEvent.Properties.TryGetValue(key, out var value) && value is ScalarValue scalar)
                 parameters[key] = Convert.ToString(scalar.Value, CultureInfo.InvariantCulture);
         var source = logEvent.Properties.TryGetValue("SourceContext", out var sourceValue) ? sourceValue.ToString().Trim('"') : "Application";
+        var category = LogPresentation.Category(new LogEvent { DiagnosticCode = logEvent.Exception is { } exception ? LogDiagnostics.Code(exception) : null, Source = LogSource.Application, Parameters = parameters });
+        if (category == LogArea.General && context.StepId is not null && StepLogScope.CurrentCategory is { } stepCategory)
+            category = stepCategory;
         _repository.Append(new LogEvent
         {
             Source = LogSource.Application,
             SourceName = source,
             Area = source,
+            Category = category,
             Timestamp = logEvent.Timestamp,
             Context = context,
             Phase = context.StepId is not null ? StepLogScope.CurrentPhase : null,

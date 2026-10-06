@@ -17,7 +17,7 @@
                  TitleForeground="{DynamicResource App.Brush.TextPrimary}"
                  BorderBrush="Transparent"
                  BorderThickness="0"
-                 GlowBrush="Transparent"
+                 GlowBrush="{x:Null}"
                  WindowStartupLocation="CenterScreen">
     <mah:MetroWindow.InputBindings>
         <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateJobs}" Command="{Binding ShowListJobs}"/>
@@ -201,7 +201,7 @@
 
                     <!-- Logs -->
                     <Button Command="{Binding ShowExecutionLogs}"
-                            Tag="ExecutionLogsViewModel"
+                            Tag="LogsHomeViewModel"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="TextBoxSearchOutline" Width="18" Height="18"

@@ -18,7 +18,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" Style="{StaticResource PageTitle}"/>
-                    <TextBlock Text="{Binding Library.SummaryText}" Style="{StaticResource CaptionText}"/>
+                    <TextBlock Text="{loc:Translate Key=Ui.Library.JobsDescription}" Style="{StaticResource CaptionText}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Style="{StaticResource ButtonPrimary}" Command="{Binding CreateNewJobCommand}">
@@ -27,15 +27,15 @@
                         <TextBlock Text="{loc:Translate Key=Ui.Job.List.NewJob}"/>
                     </StackPanel>
                 </Button>
-                    <Button Style="{StaticResource ButtonToolbar}" Command="{Binding Library.NewFolderCommand}" Margin="8,0,0,0">
+                    <Button Style="{StaticResource ButtonSecondary}" Command="{Binding Library.NewFolderCommand}" Margin="8,0,0,0">
                         <StackPanel Orientation="Horizontal">
                             <iconPacks:PackIconMaterial Kind="FolderPlus" Width="14" Height="14" Margin="0,0,6,0"/>
                             <TextBlock Text="{loc:Translate Key=Ui.Library.NewFolder}"/>
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ButtonIcon}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0"
+                    <Button Style="{StaticResource ButtonSecondary}" Command="{Binding OpenFolderCommand}" Margin="8,0,0,0"
                         ToolTip="{loc:Translate Key=Ui.Common.OpenFolderInExplorer}">
-                        <iconPacks:PackIconMaterial Kind="FolderOpen" Width="14" Height="14"/>
+                        <StackPanel Orientation="Horizontal"><iconPacks:PackIconMaterial Kind="OpenInNew" Width="14" Height="14" Margin="0,0,6,0"/><TextBlock Text="{loc:Translate Key=Ui.Library.Explorer}"/></StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>

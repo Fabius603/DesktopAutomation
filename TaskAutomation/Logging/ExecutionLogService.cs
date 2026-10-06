@@ -37,6 +37,7 @@ public sealed class ExecutionLogService : IExecutionLogService, IDisposable
                 Origin = startContext.Source.ToString(),
                 OriginName = startContext.SourceName,
                 OriginId = startContext.SourceId,
+                Trigger = startContext.Trigger,
                 Context = new(id, startContext.InstanceId ?? id, startContext.TriggerId,
                     startContext.Source == JobStartSource.Automation ? startContext.SourceId : null,
                     ParentRunId: startContext.ParentRunId)
@@ -143,7 +144,7 @@ public sealed class ExecutionLogService : IExecutionLogService, IDisposable
     private ExecutionLogSession FromRun(LogRun run) => new(run.Id, ExecutionLogKind.Job, run.SourceId, run.Name,
         Path.Combine(_repository.DirectoryPath, $"{run.Id:N}.run.json"), run.StartedAt, run.EndedAt, run.ExecutionNumber,
         new JobStartContext(Enum.TryParse<JobStartSource>(run.Origin, out var origin) ? origin : JobStartSource.Unknown,
-            run.OriginName, run.OriginId, run.InstanceId, run.Context.TriggerId), run.DurationMs)
+            run.OriginName, run.OriginId, run.InstanceId, run.Context.TriggerId, run.Context.ParentRunId, run.Trigger), run.DurationMs)
     { Outcome = run.Outcome };
     private static ExecutionLogEntry ToEntry(LogEvent entry) => new()
     {

@@ -29,10 +29,17 @@ namespace TaskAutomation.Steps
 
             var input = ResultBindingResolver.ResolveCapture(ctx.Results, step.Settings.ImageSource);
             var capture = input.Capture;
+            var captureResult = new YOLODetectionResult
+            {
+                SourceCaptureIsFresh = capture.IsFresh,
+                SourceCaptureTimestampUtc = capture.CaptureTimestampUtc,
+                SourceFrameVersion = capture.FrameVersion,
+                SourceFrameTimestamp = capture.FrameTimestamp
+            };
             if (input.Image is null)
             {
                 logger.LogInformation("YOLOStepHandler: Kein Bild verfügbar, Step wird übersprungen");
-                return new YOLODetectionResult { WasExecuted = true, Found = false };
+                return captureResult with { WasExecuted = true, Found = false };
             }
 
             await ctx.YoloManager.EnsureModelAsync(step.Settings.Model, ct);
@@ -59,7 +66,7 @@ namespace TaskAutomation.Steps
                 logger.LogInformation(
                     "YOLOStepHandler: No '{ClassName}' found above threshold {T}",
                     step.Settings.ClassName, step.Settings.ConfidenceThreshold);
-                return new YOLODetectionResult
+                return captureResult with
                 {
                     WasExecuted = true,
                     Found = false,
@@ -98,7 +105,7 @@ namespace TaskAutomation.Steps
             if (allDetections.Count == 0)
                 allDetections.Add(new DetectionItem { Center = globalPoint, BoundingBox = globalBoundingBox, Confidence = rawResult.Confidence });
 
-            return new YOLODetectionResult
+            return captureResult with
             {
                 WasExecuted = true,
                 Found = true,

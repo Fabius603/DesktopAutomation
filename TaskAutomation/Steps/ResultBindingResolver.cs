@@ -32,6 +32,9 @@ public sealed record ResolvedResultValue<T>(
 /// <summary>Single execution-time implementation for every persisted result-property binding.</summary>
 public static class ResultBindingResolver
 {
+    public static bool IsExpectedEmpty(ResultResolutionStatus status) => status is
+        ResultResolutionStatus.ValueIsNull or ResultResolutionStatus.EmptyCollection;
+
     public static ResolvedResultValue<T> Resolve<T>(IJobResultStore results, ResultBinding? binding)
     {
         if (binding?.IsConfigured != true)

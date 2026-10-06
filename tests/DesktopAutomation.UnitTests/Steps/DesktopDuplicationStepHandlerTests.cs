@@ -20,17 +20,34 @@ public sealed class DesktopDuplicationStepHandlerTests
             Bounds = new(10, 20, 4, 3),
             Offset = new(10, 20),
             IsFresh = false,
-            CaptureTimestampUtc = timestamp
+            CaptureTimestampUtc = timestamp,
+            FrameVersion = 17,
+            FrameTimestamp = 123456
         });
         var context = new PipelineContextStub { DesktopCaptureService = capture };
-        var step = new DesktopDuplicationStep { Id = "capture", Settings = new() { DesktopIdx = 2, CaptureCursor = true } };
+        var step = new DesktopDuplicationStep
+        {
+            Id = "capture",
+            Settings = new()
+            {
+                DesktopIdx = 2,
+                CaptureCursor = true,
+                MonitorDeviceName = "DISPLAY-A",
+                WaitForNewFrame = false,
+                TimeoutMilliseconds = 1234,
+                AllowCachedFallback = false
+            }
+        };
         var result = Assert.IsType<DesktopDuplicationResult>(await new DesktopDuplicationStepHandler().ExecuteAsync(step, context, default));
         Assert.Equal((2, true), Assert.Single(capture.Calls));
+        Assert.Equal(new DesktopCaptureRequest(2, "DISPLAY-A", true, false, 1234, false), capture.LastRequest);
         Assert.Same(bitmap, result.Image);
         Assert.Equal(new Rectangle(10, 20, 4, 3), result.Bounds);
         Assert.Equal(new Point(10, 20), result.Offset);
         Assert.False(result.IsFresh);
         Assert.Equal(timestamp, result.CaptureTimestampUtc);
+        Assert.Equal(17, result.FrameVersion);
+        Assert.Equal(123456, result.FrameTimestamp);
         Assert.Same(result, context.Results.GetRaw("capture"));
     }
 
@@ -59,8 +76,13 @@ public sealed class DesktopDuplicationStepHandlerTests
     private sealed class RecordingCaptureService(CaptureFrame? frame, Exception? error = null) : IDesktopCaptureService
     {
         public List<(int Monitor, bool Cursor)> Calls { get; } = [];
-        public Task<CaptureFrame> CaptureAsync(int monitorIdx, CancellationToken ct, bool captureCursor = false)
-        { Calls.Add((monitorIdx, captureCursor)); return error is null ? Task.FromResult(frame!) : Task.FromException<CaptureFrame>(error); }
+        public DesktopCaptureRequest? LastRequest { get; private set; }
+        public Task<CaptureFrame> CaptureAsync(DesktopCaptureRequest request, CancellationToken ct)
+        {
+            LastRequest = request;
+            Calls.Add((request.MonitorIndex, request.CaptureCursor));
+            return error is null ? Task.FromResult(frame!) : Task.FromException<CaptureFrame>(error);
+        }
         public void Dispose() { }
     }
 }
