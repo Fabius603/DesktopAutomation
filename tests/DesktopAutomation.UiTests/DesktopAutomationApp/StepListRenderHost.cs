@@ -28,6 +28,7 @@ internal static class StepListRenderHost
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-start-page") return StartPageRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-desktop-capture") return DesktopCaptureEditorRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-macro-editor") return MacroEditorRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-library") return LibraryBrowserRenderHost.Run(args[1]);
