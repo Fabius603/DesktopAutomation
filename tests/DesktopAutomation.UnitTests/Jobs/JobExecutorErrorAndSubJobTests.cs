@@ -2,9 +2,11 @@ using TaskAutomation.Jobs;
 using TaskAutomation.Orchestration;
 using TaskAutomation.Tests.TestDoubles;
 using DesktopAutomationApp.Localization;
+using TaskAutomation.Tests.Localization;
 
 namespace TaskAutomation.Tests.Jobs;
 
+[Collection(ApplicationLocalizationCollection.Name)]
 public sealed class JobExecutorErrorAndSubJobTests
 {
     [Fact]
