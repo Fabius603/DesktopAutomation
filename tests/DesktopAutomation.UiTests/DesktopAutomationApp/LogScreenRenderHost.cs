@@ -178,7 +178,13 @@ internal static class LogScreenRenderHost
         bool opened = false;
         vm.RequestOpenJob += (job, id) => opened = job.Id == jobs.Job.Id && id == steps[3].Id;
         ExecuteAndWait(vm.OpenStepCommand); Wait(() => opened);
-        vm.Activate(false); vm.Activate(true);
+        vm.Activate(false);
+        // Deliver a storage notification while the editor is open, before the return refresh.
+        retentionClock.Advance(TimeSpan.FromHours(1));
+        var editorMaintenance = repository.FlushAsync();
+        Wait(() => editorMaintenance.IsCompleted);
+        editorMaintenance.GetAwaiter().GetResult();
+        vm.Activate(true);
         Wait(() => !vm.IsLoading && vm.CanOpenStep);
         var reloads = 0;
         System.ComponentModel.PropertyChangedEventHandler loadingChanged = (_, args) => { if (args.PropertyName == nameof(vm.IsLoading) && vm.IsLoading) reloads++; };
@@ -188,6 +194,16 @@ internal static class LogScreenRenderHost
         vm.PropertyChanged -= loadingChanged;
         Ensure(reloads == 0, "Returning from Open Step must not replay the loading indicator on each timer tick.");
         Ensure(vm.SelectedStep?.Display.Execution.Step.Id == steps[3].Id, "Returning from the editor must preserve step selection.");
+        vm.PropertyChanged += loadingChanged;
+        retentionClock.Advance(TimeSpan.FromHours(1));
+        var liveMaintenance = repository.FlushAsync();
+        Wait(() => liveMaintenance.IsCompleted && reloads > 0 && !vm.IsLoading && vm.CanOpenStep);
+        liveMaintenance.GetAwaiter().GetResult();
+        idle.Restart();
+        Wait(() => idle.Elapsed > TimeSpan.FromSeconds(2.2));
+        vm.PropertyChanged -= loadingChanged;
+        Ensure(reloads == 1, "A new storage notification must refresh the details once without replaying loading on later ticks.");
+        Ensure(vm.SelectedStep?.Display.Execution.Step.Id == steps[3].Id, "Storage refresh must preserve step selection.");
         vm.StepProblems = true; Ensure(vm.Steps.Count() == 2, "Problems filter must retain failed and prevented steps.");
         vm.StepProblems = false;
         vm.BackCommand.Execute(null); Wait(() => !vm.IsLoading && vm.IsOverview);

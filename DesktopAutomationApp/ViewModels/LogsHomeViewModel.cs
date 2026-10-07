@@ -347,6 +347,10 @@ public sealed class LogsHomeViewModel : ViewModelBase
     {
         if (_disposed) return;
         Interlocked.Exchange(ref _pendingRefresh, 0);
+        // This query includes storage changes already reported; only later notifications
+        // should schedule another refresh, including while the live view is paused.
+        Interlocked.Exchange(ref _pendingStorageRefresh, 0);
+        _storageDirty = false;
         if (more) { _catalogFrozen = true; if (IsApplication) Live = false; }
         else if (!preserveSnapshot) _catalogFrozen = false;
         _load?.Cancel(); _load?.Dispose(); _load = new(); var ct = _load.Token;
