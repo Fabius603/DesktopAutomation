@@ -125,7 +125,11 @@ internal static class MacroEditorRenderHost
         Ensure(vm.StepEditor!.SelectedStepDisplayName == "Enter text" && vm.RecordButtonText != "Aufnahme starten", "Locale changes must refresh inspector and recording controls.");
         Capture(window, directory, "english.png");
         var invalidCommand = new TextInputBefehl();
-        vm.Steps.Add(invalidCommand); Pump();
+        vm.Steps.Add(invalidCommand);
+        var invalidRow = vm.VisibleItems.OfType<MacroStepListItem>().Single(row => row.Step == invalidCommand);
+        stepList.ScrollIntoView(invalidRow);
+        stepList.UpdateLayout();
+        WaitUntil(() => stepList.ItemContainerGenerator.ContainerFromItem(invalidRow) is ListBoxItem);
         Ensure(!invalidCommand.IsValid && Descendants(view).OfType<Grid>().Any(grid =>
             grid.DataContext is MacroStepListItem row && row.Step == invalidCommand
             && grid.Background is SolidColorBrush brush && brush.Color.R == 255 && brush.Color.A == 48),

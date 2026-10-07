@@ -165,18 +165,19 @@ internal static class LogScreenRenderHost
         Wait(() => vm.AttentionProblemState.Contains("erledigt", StringComparison.Ordinal));
         vm.ReopenProblemCommand.Execute(null);
         Wait(() => vm.AttentionProblemState.StartsWith("Neu", StringComparison.Ordinal));
-        vm.RefreshCommand.Execute(null); Wait(() => !vm.IsLoading && vm.HasAttentionProblem);
+        ExecuteAndWait(vm.RefreshCommand); Wait(() => !vm.IsLoading && vm.HasAttentionProblem);
         Ensure(vm.AttentionProblemState.StartsWith("Neu", StringComparison.Ordinal), "Background refreshing must not immediately acknowledge an explicitly reopened problem.");
         Ensure(vm.AllSteps.Count == 5 && vm.AllSteps.Last().Display.Execution.Cause is not null, "Unexecuted step must show its causal link.");
         vm.SelectedStep = vm.AllSteps.Last();
-        Pump();
+        Wait(() => vm.HasCause && vm.CanOpenStep);
         Ensure(vm.HasCause, "Cause action must be available.");
         Ensure(vm.CanOpenStep, "A retained unexecuted step must still navigate to its current definition.");
         vm.OpenCauseCommand.Execute(null);
+        Wait(() => vm.SelectedStep?.Display.Execution.Step.Id == steps[3].Id && vm.CanOpenStep);
         Ensure(vm.SelectedStep?.Display.Execution.Step.Id == steps[3].Id, "Cause action must select the exact causing observation.");
         bool opened = false;
         vm.RequestOpenJob += (job, id) => opened = job.Id == jobs.Job.Id && id == steps[3].Id;
-        Wait(() => vm.CanOpenStep); vm.OpenStepCommand.Execute(null); Wait(() => opened);
+        ExecuteAndWait(vm.OpenStepCommand); Wait(() => opened);
         vm.Activate(false); vm.Activate(true);
         Wait(() => !vm.IsLoading && vm.CanOpenStep);
         var reloads = 0;
@@ -345,11 +346,22 @@ internal static class LogScreenRenderHost
         var task = attention.ScopeAsync(query); Wait(() => task.IsCompleted); return task.GetAwaiter().GetResult();
     }
     private static void Ensure(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+    private static void ExecuteAndWait(System.Windows.Input.ICommand command)
+    {
+        Wait(() => command.CanExecute(null));
+        command.Execute(null);
+        if (command is AsyncRelayCommand asyncCommand) Wait(() => !asyncCommand.IsExecuting);
+    }
     private static void Wait(Func<bool> predicate)
     {
         var watch = Stopwatch.StartNew();
-        while (!predicate()) { if (watch.Elapsed > TimeSpan.FromSeconds(15)) throw new TimeoutException("Log UI state did not settle."); Pump(); Thread.Sleep(10); }
-        Pump();
+        while (true)
+        {
+            Pump();
+            if (predicate()) return;
+            if (watch.Elapsed > TimeSpan.FromSeconds(15)) throw new TimeoutException("Log UI state did not settle.");
+            Thread.Sleep(10);
+        }
     }
     private static void Pump() { var frame = new DispatcherFrame(); Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => frame.Continue = false)); Dispatcher.PushFrame(frame); }
     private static void Capture(FrameworkElement view, string directory, string name)

@@ -3,6 +3,7 @@ using System.Text.Json;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
+[Collection(DesktopRenderingCollection.Name)]
 public sealed class StepListRenderingTests
 {
     [Fact]

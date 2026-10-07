@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
+[Collection(DesktopRenderingCollection.Name)]
 public sealed class DistributionSettingsTests
 {
     [Fact]

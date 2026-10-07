@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
+[Collection(DesktopRenderingCollection.Name)]
 public sealed class LibraryBrowserRenderingTests
 {
     [Fact]

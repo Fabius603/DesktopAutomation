@@ -11,6 +11,7 @@ using TaskAutomation.Steps.Definitions;
 
 namespace TaskAutomation.Tests.DesktopAutomationApp;
 
+[Collection(DesktopRenderingCollection.Name)]
 public sealed class DesktopCaptureEditorRenderingTests
 {
     [Fact]
