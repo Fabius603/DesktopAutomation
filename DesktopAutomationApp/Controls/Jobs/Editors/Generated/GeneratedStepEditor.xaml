@@ -1,7 +1,7 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Generated.GeneratedStepEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:conditions="clr-namespace:DesktopAutomationApp.Controls.Jobs.Conditions"
@@ -28,8 +28,11 @@
         <generated:GeneratedStepFieldTemplateSelector x:Key="InlineStepValueTemplateSelector" IgnoreInputReference="True"/>
         <Style x:Key="VirtualizedCompoundEditorItem" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                <Border x:Name="SelectionBorder" BorderBrush="Transparent" BorderThickness="2" CornerRadius="6"><ContentPresenter/></Border>
+                <ControlTemplate.Triggers><Trigger Property="IsSelected" Value="True"><Setter TargetName="SelectionBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/></Trigger></ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
         </Style>
         <DataTemplate x:Key="TextFieldTemplate">
             <TextBox MinWidth="0" HorizontalAlignment="Stretch"
@@ -333,7 +336,7 @@
         </DataTemplate>
         <DataTemplate x:Key="UserChoiceOptionsFieldTemplate">
             <StackPanel>
-                <ListBox ItemsSource="{Binding UserChoiceOptionsEditor.Options}" MaxHeight="560"
+                <ListBox context:ContextActions.Profile="Answers" SelectionMode="Extended" ItemsSource="{Binding UserChoiceOptionsEditor.Options}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
                          ScrollViewer.VerticalScrollBarVisibility="Hidden"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -358,18 +361,8 @@
                                         VerticalAlignment="Center"
                                         Style="{StaticResource ButtonIcon}"
                                         ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"
-                                        Click="OpenButtonContextMenu_Click">
-                                    <Button.ContextMenu>
-                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-                                            <MenuItem Header="{loc:Translate Key=Ui.UserChoice.MoveUp}"
-                                                      Command="{Binding MoveUpCommand}"/>
-                                            <MenuItem Header="{loc:Translate Key=Ui.UserChoice.MoveDown}"
-                                                      Command="{Binding MoveDownCommand}"/>
-                                            <Separator/>
-                                            <MenuItem Header="{loc:Translate Key=Ui.UserChoice.RemoveAnswer}"
-                                                      Command="{Binding RemoveCommand}"/>
-                                        </ContextMenu>
-                                    </Button.ContextMenu>
+                                        context:ContextActions.IsMenuButton="True">
+
                                     <iconPacks:PackIconMaterial Kind="DotsVertical" Width="15" Height="15"/>
                                 </Button>
                             </controls:ResponsiveActionPanel>
@@ -387,7 +380,7 @@
         </DataTemplate>
         <DataTemplate x:Key="PointEntryListFieldTemplate">
             <StackPanel>
-                <ListBox ItemsSource="{Binding PointEntryListEditor.Points}" MaxHeight="560"
+                <ListBox context:ContextActions.Profile="Points" SelectionMode="Extended" ItemsSource="{Binding PointEntryListEditor.Points}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
                          ScrollViewer.VerticalScrollBarVisibility="Hidden"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -403,7 +396,7 @@
         </DataTemplate>
         <DataTemplate x:Key="AxisExpressionListFieldTemplate">
             <StackPanel>
-                <ListBox ItemsSource="{Binding AxisExpressionListEditor.Expressions}" MaxHeight="560"
+                <ListBox context:ContextActions.Profile="Expressions" SelectionMode="Extended" ItemsSource="{Binding AxisExpressionListEditor.Expressions}" MaxHeight="560"
                          BorderThickness="0" Background="Transparent" ScrollViewer.CanContentScroll="True"
                          ScrollViewer.VerticalScrollBarVisibility="Hidden"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"

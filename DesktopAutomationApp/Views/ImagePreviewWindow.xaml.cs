@@ -17,6 +17,22 @@ namespace DesktopAutomationApp.Views
         {
             InitializeComponent();
             Title = title;
+            var menu = DesktopAutomationApp.Controls.ActionMenus.Create(PreviewImage);
+            DesktopAutomationApp.Controls.ActionMenus.Add(menu, "Ui.Context.CopyImage", new DesktopAutomationApp.ViewModels.RelayCommand(
+                () => { if (_wbm is not null) System.Windows.Clipboard.SetImage(_wbm.Clone()); }, () => _wbm is not null));
+            DesktopAutomationApp.Controls.ActionMenus.Add(menu, "Ui.Context.SaveImage", new DesktopAutomationApp.ViewModels.RelayCommand(SaveImage, () => _wbm is not null));
+            PreviewImage.ContextMenu = menu;
+        }
+
+        private void SaveImage()
+        {
+            if (_wbm is null) return;
+            var dialog = new Microsoft.Win32.SaveFileDialog { Filter = DesktopAutomationApp.Localization.Loc.Get("Ui.Context.ImageFilter"), DefaultExt = ".png" };
+            if (dialog.ShowDialog(this) != true) return;
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(_wbm.Clone()));
+            using var file = System.IO.File.Create(dialog.FileName);
+            encoder.Save(file);
         }
 
         /// <summary>

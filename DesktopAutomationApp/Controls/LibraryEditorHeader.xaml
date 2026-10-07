@@ -1,6 +1,6 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.LibraryEditorHeader"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" context:ContextActions.Profile="Header" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              x:Name="Root">
@@ -67,6 +67,9 @@
                 <iconPacks:PackIconMaterial Kind="DotsVertical" Width="16" Height="16"/>
                 <Button.ContextMenu>
                     <ContextMenu>
+                        <MenuItem Header="{loc:Translate Key=Ui.Common.Save}" Command="{Binding PlacementTarget.Tag.SaveCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="{loc:Translate Key=Ui.Common.Discard}" Command="{Binding PlacementTarget.Tag.DiscardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <Separator/>
                         <MenuItem Header="{loc:Translate Key=Ui.Common.Rename}"
                                   InputGestureText="{loc:Translate Key=Shortcut.F2}"
                                   Command="{Binding PlacementTarget.Tag.RenameCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

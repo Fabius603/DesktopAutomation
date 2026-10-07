@@ -5,6 +5,7 @@ namespace TaskAutomation.Jobs;
 
 public static class ConditionRules
 {
+    public const int MinimumConditions = 1;
     public static StepInputDescriptor ComparisonInputContract(
         StepInputDescriptor contract, ResultPropertyDescriptor property) =>
         property.DataType == ResultValueKind.Enum

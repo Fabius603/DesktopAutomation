@@ -10,6 +10,50 @@ namespace TaskAutomation.Tests.Organization;
 
 public sealed class LibraryTreeViewModelTests
 {
+    [Theory]
+    [InlineData(LibraryItemKind.Job)]
+    [InlineData(LibraryItemKind.Makro)]
+    [InlineData(LibraryItemKind.Automation)]
+    public async Task BothPanesExposeFilesAndFoldersAndRootShowsOnlyDirectContents(LibraryItemKind kind)
+    {
+        using var directory = new TemporaryDirectory();
+        using var organization = new LibraryOrganizationService(Path.Combine(directory.Path, "library.json"));
+        var parent = await organization.CreateFolderAsync(kind, null, "Parent");
+        var child = await organization.CreateFolderAsync(kind, parent.Id, "Child");
+        var rootItem = CreateItem("Root file");
+        var nestedItem = CreateItem("Nested file");
+        await organization.PlaceItemAsync(kind, nestedItem.Id, parent.Id);
+        var vm = new LibraryTreeViewModel(organization, new TestDialogService(), new TestPreferencesService(), kind, "New");
+        await vm.SetItemsAsync([rootItem, nestedItem]);
+
+        Assert.Equal(vm.RootLabel, vm.AllItemsLabel);
+        Assert.Equal([parent.Id, rootItem.Id], vm.ContentNodes.Select(node => node.Id));
+        Assert.DoesNotContain(vm.VisibleNodes, node => node.Id == nestedItem.Id);
+        vm.OpenNodeCommand.Execute(vm.ContentNodes.Single(node => node.Id == parent.Id));
+        Assert.Equal([child.Id, nestedItem.Id], vm.ContentNodes.Select(node => node.Id));
+        Assert.Contains(vm.VisibleNodes, node => node.Id == nestedItem.Id);
+        vm.NavigateCommand.Execute(vm.Breadcrumbs[0]);
+        Assert.Null(vm.SelectedFolderId);
+        Assert.Equal([parent.Id, rootItem.Id], vm.ContentNodes.Select(node => node.Id));
+    }
+
+    [Fact]
+    public async Task CapturedBatchMove_RemainsScopedWhenSelectionChanges()
+    {
+        using var directory = new TemporaryDirectory();
+        using var organization = new LibraryOrganizationService(Path.Combine(directory.Path, "LibraryLayout.json"));
+        var folder = await organization.CreateFolderAsync(LibraryItemKind.Job, null, "Target");
+        var vm = new LibraryTreeViewModel(organization, new TestDialogService(), new TestPreferencesService(), LibraryItemKind.Job, "New job");
+        var ids = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+        await vm.SetItemsAsync(ids.Select((id, index) => new LibraryItemDescriptor { Id = id, Name = index.ToString(), Model = new object(), Open = () => { } }));
+        var targets = vm.ContentNodes.Where(node => ids.Take(2).Contains(node.Id)).ToArray();
+        vm.SetSelectedNodes(vm.ContentNodes.Where(node => node.Id == ids[2]));
+        await vm.MoveSelectionAsync(folder.Id, targets);
+        var layout = await organization.LoadAsync();
+        Assert.All(ids.Take(2), id => Assert.Contains(layout.Placements, placement => placement.ItemId == id && placement.FolderId == folder.Id));
+        Assert.DoesNotContain(layout.Placements, placement => placement.ItemId == ids[2] && placement.FolderId == folder.Id);
+    }
+
     [Fact]
     public async Task CreatingSubfolderExpandsParentAndPreservesTheChosenFolder()
     {

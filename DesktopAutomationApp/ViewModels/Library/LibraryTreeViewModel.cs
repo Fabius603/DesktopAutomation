@@ -37,6 +37,11 @@ public sealed class LibraryItemDescriptor
     public Func<bool>? CanExecute { get; init; }
     public Func<Task>? RenameAsync { get; init; }
     public Func<Task<bool>>? DeleteAsync { get; init; }
+    public Func<Task<bool>>? DeleteConfirmedAsync { get; init; }
+    public Func<Task>? DuplicateAsync { get; init; }
+    public Action? OpenFile { get; init; }
+    public Func<bool, Task>? SetActiveAsync { get; init; }
+    public Func<bool>? IsActive { get; init; }
 }
 
 public sealed class LibraryTreeNodeViewModel : ViewModelBase
@@ -84,7 +89,7 @@ public sealed class LibraryTreeNodeViewModel : ViewModelBase
     public string Name => Folder?.Name ?? Item?.Name ?? string.Empty;
     public string Subtitle => Item?.Subtitle ?? string.Empty;
     public int Depth { get; }
-    public double Indent => Depth * 22d;
+    public double Indent => (Depth + 1) * 22d;
     public bool HasParent => Depth > 0;
     public int ContainedItemCount { get; }
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
@@ -163,7 +168,7 @@ public sealed class LibraryTreeNodeViewModel : ViewModelBase
         if (Folder != null)
         {
             _owner.SelectedFolderId = Folder.Id;
-            IsExpanded = !IsExpanded;
+            IsExpanded = true;
         }
         else
         {
@@ -212,6 +217,7 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         _preferences = preferences;
         _kind = kind;
         NewItemLabel = newItemLabel;
+        ToggleRootExpansionCommand = new RelayCommand(() => IsRootExpanded = !IsRootExpanded);
         ShowAllCommand = new RelayCommand(() => { SelectedFolderId = null; RebuildBrowser(); });
         NavigateCommand = new RelayCommand<LibraryBreadcrumb?>(crumb => { SelectedFolderId = crumb?.Id; RebuildBrowser(); });
         SortCommand = new RelayCommand(() => { _sortDescending = !_sortDescending; RebuildBrowser(); });
@@ -245,7 +251,69 @@ public sealed class LibraryTreeViewModel : ViewModelBase
             node => node?.CanMoveUpOneLevel == true);
     }
 
+
+    public IReadOnlyList<LibraryTreeNodeViewModel> SelectedNodes { get; private set; } = [];
+    public void SetSelectedNodes(IEnumerable<LibraryTreeNodeViewModel> nodes)
+        => SelectedNodes = nodes.Where(node => node.IsItem).DistinctBy(node => node.Id).ToArray();
+    public IReadOnlyList<LibraryFolder> MoveDestinations => _layout.Folders.Where(folder => folder.Kind == _kind).ToArray();
+    public Guid? ItemFolder(Guid id) => _layout.Placements.FirstOrDefault(item => item.Kind == _kind && item.ItemId == id)?.FolderId;
+
+    public Task DeleteSelectionAsync() => DeleteSelectionAsync(SelectedNodes.ToArray());
+    public async Task DeleteSelectionAsync(IReadOnlyList<LibraryTreeNodeViewModel> targets)
+    {
+        var selected = targets.ToArray();
+        if (selected.Length == 0) return;
+        if (!await _dialogs.ConfirmAsync(Loc.Format("Ui.Context.DeleteSelection", selected.Length), Loc.Get("Dialog.Delete.Title"))) return;
+        foreach (var node in selected)
+        {
+            var deletion = node.Item?.DeleteConfirmedAsync;
+            if (deletion is null || !await deletion()) continue;
+            await _organization.RemoveItemAsync(_kind, node.Id);
+            _items = _items.Where(item => item.Id != node.Id).ToArray();
+        }
+        _layout = await _organization.LoadAsync();
+        Rebuild();
+    }
+
+    public Task DuplicateSelectionAsync() => DuplicateSelectionAsync(SelectedNodes.ToArray());
+    public async Task DuplicateSelectionAsync(IReadOnlyList<LibraryTreeNodeViewModel> targets)
+    {
+        var selected = targets.ToArray();
+        foreach (var node in selected)
+            if (node.Item?.DuplicateAsync is { } duplicate) await duplicate();
+    }
+
+    public Task MoveSelectionAsync(Guid? folderId) => MoveSelectionAsync(folderId, SelectedNodes.ToArray());
+    public async Task MoveSelectionAsync(Guid? folderId, IReadOnlyList<LibraryTreeNodeViewModel> targets)
+    {
+        var selected = targets.ToArray();
+        foreach (var node in selected) await _organization.PlaceItemAsync(_kind, node.Id, folderId);
+        _layout = await _organization.LoadAsync();
+        Rebuild();
+    }
+
+    public Task SetSelectionActiveAsync(bool active) => SetSelectionActiveAsync(active, SelectedNodes.ToArray());
+    public async Task SetSelectionActiveAsync(bool active, IReadOnlyList<LibraryTreeNodeViewModel> targets)
+    {
+        var selected = targets.ToArray();
+        foreach (var node in selected)
+            if (node.Item?.SetActiveAsync is { } setActive) await setActive(active);
+        RefreshItemStates();
+    }
+
     public ObservableCollection<LibraryTreeNodeViewModel> VisibleNodes => _visibleNodes;
+    private bool _isRootExpanded = true;
+    public bool IsRootExpanded
+    {
+        get => _isRootExpanded;
+        set
+        {
+            if (_isRootExpanded == value) return;
+            _isRootExpanded = value;
+            OnPropertyChanged();
+        }
+    }
+    public ICommand ToggleRootExpansionCommand { get; }
     private Guid? _selectedFolderId;
     private bool _sortDescending;
     public Guid? SelectedFolderId
@@ -268,14 +336,14 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         LibraryItemKind.Makro => "Ui.Library.MakrosTitle",
         _ => "Ui.Automation.List.Automations"
     });
-    public string AllItemsLabel => Loc.Format("Ui.Library.AllItems", RootLabel);
+    public string AllItemsLabel => RootLabel;
     public string SearchWatermark => Loc.Format("Ui.Library.SearchIn", Breadcrumbs.LastOrDefault()?.Name ?? RootLabel);
-    public string ContentCountText => Loc.Format("Ui.Library.ItemCount", ContentNodes.Count, RootLabel);
+    public string ContentCountText => Loc.Format("Ui.Library.ContentCount", ContentNodes.Count(node => node.IsFolder), ContentNodes.Count(node => node.IsItem));
     public bool HasContent => ContentNodes.Count > 0;
     public LibraryTreeNodeViewModel? SelectedFolderNode
     {
         get => FolderNodes.FirstOrDefault(node => node.Id == SelectedFolderId);
-        set { if (value != null) SelectedFolderId = value.Id; }
+        set { if (value?.IsFolder == true) SelectedFolderId = value.Id; }
     }
     public string SortIcon => _sortDescending ? "ChevronDown" : "ChevronUp";
     public ICommand ShowAllCommand { get; }
@@ -288,13 +356,15 @@ public sealed class LibraryTreeViewModel : ViewModelBase
         if (valid != _selectedFolderId) { _selectedFolderId = valid; OnPropertyChanged(nameof(SelectedFolderId)); }
         var items = _itemsById;
         var ids = index.Query(_items.Select(item => new LibraryBrowserItem(item.Id, item.Name, item.Subtitle)), SelectedFolderId, SearchText, _sortDescending);
-        ((ResettableObservableCollection<LibraryTreeNodeViewModel>)ContentNodes).ReplaceAll(ids.Select(id =>
-            new LibraryTreeNodeViewModel(this, items[id], index.ContainingFolder(id), 0)));
+        var folders = index.QueryFolders(SelectedFolderId, SearchText, _sortDescending);
+        ((ResettableObservableCollection<LibraryTreeNodeViewModel>)ContentNodes).ReplaceAll(
+            folders.Select(folder => new LibraryTreeNodeViewModel(this, folder, 0, false, 0))
+                .Concat(ids.Select(id => new LibraryTreeNodeViewModel(this, items[id], index.ContainingFolder(id), 0))));
         var path = new[] { new LibraryBreadcrumb(null, RootLabel) }
             .Concat(index.PathTo(SelectedFolderId).Select(folder => new LibraryBreadcrumb(folder.Id, folder.Name))).ToArray();
         ((ResettableObservableCollection<LibraryBreadcrumb>)Breadcrumbs).ReplaceAll(
             path.Select((crumb, position) => crumb with { IsLast = position == path.Length - 1 }));
-        SearchResultCount = ids.Count;
+        SearchResultCount = ContentNodes.Count;
         OnPropertyChanged(nameof(SearchResultCount));
         OnPropertyChanged(nameof(SearchResultText));
         foreach (var property in new[] { nameof(SelectedFolderNode), nameof(HasContent), nameof(ContentCountText), nameof(AllItemsLabel), nameof(SearchWatermark), nameof(SortIcon) }) OnPropertyChanged(property);

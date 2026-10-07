@@ -27,7 +27,7 @@ public sealed class UserChoiceOptionEditorViewModel : INotifyPropertyChanged
         MoveUpCommand = new RelayCommand(MoveUp, () => _owner.IndexOf(this) > 0);
         MoveDownCommand = new RelayCommand(MoveDown, () =>
             _owner.IndexOf(this) >= 0 && _owner.IndexOf(this) < _owner.Count - 1);
-        RemoveCommand = new RelayCommand(() => _owner.Remove(this), () => _owner.Count > 2);
+        RemoveCommand = new RelayCommand(() => _owner.Remove(this), () => _owner.Count > TaskAutomation.Steps.Definitions.UserChoiceStepDefinition.MinimumOptions);
         _owner.CollectionChanged += (_, _) => RefreshCommands();
     }
 
@@ -71,6 +71,7 @@ public sealed class UserChoiceOptionEditorViewModel : INotifyPropertyChanged
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
     public ICommand RemoveCommand { get; }
+    public ICommand? DuplicateCommand { get; set; }
 
     public UserChoiceOption ToOption() => new() { Id = Id, Label = Label, Value = Value };
 

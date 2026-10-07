@@ -21,7 +21,18 @@ public partial class PathPickerField : UserControl
     public static readonly DependencyProperty IsReadOnlyProperty = DependencyProperty.Register(
         nameof(IsReadOnly), typeof(bool), typeof(PathPickerField));
 
-    public PathPickerField() => InitializeComponent();
+    public PathPickerField()
+    {
+        InitializeComponent();
+        var menu = DesktopAutomationApp.Controls.ActionMenus.Create(this);
+        DesktopAutomationApp.Controls.ActionMenus.Add(menu, "Ui.Context.CopyPath", new DesktopAutomationApp.ViewModels.RelayCommand(() => System.Windows.Clipboard.SetText(PathValue ?? ""), () => !string.IsNullOrEmpty(PathValue)));
+        DesktopAutomationApp.Controls.ActionMenus.Add(menu, "Ui.Common.OpenFolderInExplorer", new DesktopAutomationApp.ViewModels.RelayCommand(() =>
+        {
+            if (System.IO.Directory.Exists(PathValue)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(PathValue) { UseShellExecute = true });
+            else if (System.IO.File.Exists(PathValue)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe") { ArgumentList = { "/select,", PathValue } });
+        }, () => System.IO.File.Exists(PathValue) || System.IO.Directory.Exists(PathValue)));
+        ContextMenu = menu;
+    }
 
     public string PathValue { get => (string)GetValue(PathValueProperty); set => SetValue(PathValueProperty, value); }
     public ICommand? BrowseCommand { get => (ICommand?)GetValue(BrowseCommandProperty); set => SetValue(BrowseCommandProperty, value); }

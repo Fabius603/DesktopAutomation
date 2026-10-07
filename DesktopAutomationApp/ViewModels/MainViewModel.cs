@@ -196,6 +196,32 @@ namespace DesktopAutomationApp.ViewModels
             _jobDispatcher.JobErrorOccurred += OnJobErrorOccurred;
             _jobDispatcher.JobStepErrorOccurred += OnJobStepErrorOccurred;
 
+            _start.RequestOpenDefinition += async (id, macro) =>
+            {
+                if (macro)
+                {
+                    await _listMakros.RefreshAsync();
+                    if (_listMakros.Items.FirstOrDefault(item => item.Id == id) is { } definition) OpenMakroDetails(definition);
+                }
+                else
+                {
+                    await _listJobs.RefreshAsync();
+                    if (_listJobs.Items.FirstOrDefault(item => item.Id == id) is { } job) OpenJobDetails(job);
+                }
+            };
+            _start.RequestOpenAutomation += async id =>
+            {
+                await _listAutomations.RefreshAllAsync();
+                if (_listAutomations.Items.FirstOrDefault(item => item.Id == id) is { } definition) OpenAutomationDetails(definition);
+            };
+            _start.RequestOpenLogs += async (id, macro) =>
+            {
+                _logsHome.Page = LogPageKind.Jobs;
+                _logsHome.Source = macro ? TaskAutomation.Logging.LogSource.Makro : TaskAutomation.Logging.LogSource.Job;
+                _logsHome.SourceId = id;
+                await NavigateAsync(_logsHome);
+            };
+
             // Navigation aus der Jobliste in die Details:
             _listJobs.RequestOpenJob += OpenJobDetails;
 

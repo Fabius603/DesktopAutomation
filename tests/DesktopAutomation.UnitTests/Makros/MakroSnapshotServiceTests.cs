@@ -5,6 +5,16 @@ namespace TaskAutomation.Tests.Makros;
 public sealed class MakroSnapshotServiceTests
 {
     [Fact]
+    public void CloneMakro_CreatesIndependentDefinitionAndRetainsCommandGroupReferences()
+    {
+        var source = new Makro { Name = "source" };
+        var copy = MakroSnapshotService.CloneMakro(source, "copy");
+        Assert.NotEqual(source.Id, copy.Id);
+        Assert.Equal("copy", copy.Name);
+        Assert.NotSame(source, copy);
+    }
+
+    [Fact]
     public void CloneCommand_PreservesPersistedMeaningAndCreatesIndependentObject()
     {
         var source = new TimeoutBefehl

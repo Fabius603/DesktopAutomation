@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -3637,4 +3637,41 @@ Step: {8} / {9}</value></data>
   <data name="Settings.Updates.LocalBuild" xml:space="preserve"><value>Local build: rebuild the application or use an official installation to update.</value></data>
   <data name="Settings.Updates.MsixManaged" xml:space="preserve"><value>Updates for this MSIX installation are managed by Microsoft Store or package deployment.</value></data>
   <data name="Settings.Updates.ExternalDescription" xml:space="preserve"><value>The update method depends on how the application was installed.</value></data>
+  <data name="Ui.Context.SelectedAction" xml:space="preserve"><value>{0} ({1} selected)</value></data>
+  <data name="Ui.Context.CopyName" xml:space="preserve"><value>Copy name</value></data>
+  <data name="Ui.Context.Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Ui.Context.OpenStep" xml:space="preserve"><value>Open step in editor</value></data>
+  <data name="Ui.Context.OpenRelatedRun" xml:space="preserve"><value>Open related execution</value></data>
+  <data name="Ui.Context.OpenDefinition" xml:space="preserve"><value>Open definition</value></data>
+  <data name="Ui.Context.Run" xml:space="preserve"><value>Run</value></data>
+  <data name="Ui.Context.Duplicate" xml:space="preserve"><value>Duplicate</value></data>
+  <data name="Ui.Context.Enable" xml:space="preserve"><value>Enable</value></data>
+  <data name="Ui.Context.Disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="Ui.Context.MoveTo" xml:space="preserve"><value>Move to …</value></data>
+  <data name="Ui.Context.LibraryRoot" xml:space="preserve"><value>Library root</value></data>
+  <data name="Ui.Context.DeleteSelection" xml:space="preserve"><value>Delete {0} selected items?</value></data>
+  <data name="Ui.Context.CopyTitle" xml:space="preserve"><value>{0} – Copy</value></data>
+  <data name="Ui.Context.Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Ui.Context.Debug" xml:space="preserve"><value>Start debugging</value></data>
+  <data name="Ui.Context.ExpandCollapse" xml:space="preserve"><value>Expand/collapse</value></data>
+  <data name="Shortcut.CtrlV" xml:space="preserve"><value>Ctrl+V</value></data>
+  <data name="Ui.Context.CopyImage" xml:space="preserve"><value>Copy image</value></data>
+  <data name="Ui.Context.SaveImage" xml:space="preserve"><value>Save image as …</value></data>
+  <data name="Ui.Context.ImageFilter" xml:space="preserve"><value>PNG image|*.png</value></data>
+  <data name="Ui.Context.CopyPath" xml:space="preserve"><value>Copy path</value></data>
+  <data name="Ui.Context.SetBreakpoints" xml:space="preserve"><value>Set breakpoints</value></data>
+  <data name="Ui.Context.RemoveBreakpoints" xml:space="preserve"><value>Remove breakpoints</value></data>
+  <data name="Ui.Context.Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Ui.Context.CopyIdentifier" xml:space="preserve"><value>Copy identifier</value></data>
+  <data name="Ui.Context.OpenLogs" xml:space="preserve"><value>Show logs</value></data>
+  <data name="Ui.Context.StopInstances" xml:space="preserve"><value>Stop all instances</value></data>
+  <data name="Ui.Context.VariablesInUse" xml:space="preserve"><value>At least one selected variable is still in use. The selection was not deleted.</value></data>
+  <data name="Tray.StopAllMakros" xml:space="preserve"><value>Stop all macros</value></data>
+  <data name="Ui.Context.EditStep" xml:space="preserve"><value>Edit step</value></data>
+  <data name="Ui.Context.MoveUp" xml:space="preserve"><value>Move up</value></data>
+  <data name="Ui.Context.MoveDown" xml:space="preserve"><value>Move down</value></data>
+  <data name="Ui.Context.DeleteStep" xml:space="preserve"><value>Delete step</value></data>
+  <data name="Ui.Context.Group" xml:space="preserve"><value>Group</value></data>
+  <data name="Ui.Library.ResizePanes" xml:space="preserve"><value>Drag to resize panes</value></data>
+  <data name="Ui.Library.ContentCount" xml:space="preserve"><value>{0} folders · {1} files</value></data>
 </root>

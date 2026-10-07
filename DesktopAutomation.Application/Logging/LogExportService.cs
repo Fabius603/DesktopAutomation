@@ -5,6 +5,8 @@ using TaskAutomation.Logging;
 
 namespace DesktopAutomation.Application.Logging;
 
+public sealed record LogExportSelection(IReadOnlyList<Guid> RunIds, IReadOnlyList<Guid> EventIds, long SnapshotSequence);
+
 public sealed record LogExportResult(string Path, int EventCount, bool IsComplete, IReadOnlyList<string> Issues);
 
 public sealed class LogExportService(ILogRepository repository, LogQueryService queries)
@@ -18,8 +20,12 @@ public sealed class LogExportService(ILogRepository repository, LogQueryService 
         CancellationToken ct = default) => ExportCoreAsync(query, null, destination, applicationVersion, ct);
     public Task<LogExportResult> ExportRunsAsync(RunQuery query, string destination, string applicationVersion,
         CancellationToken ct = default) => ExportCoreAsync(new(), query, destination, applicationVersion, ct);
+    public Task<LogExportResult> ExportSelectionAsync(LogExportSelection selection, string destination,
+        string applicationVersion, CancellationToken ct = default)
+        => ExportCoreAsync(new(SnapshotSequence: selection.SnapshotSequence), null, destination, applicationVersion, ct, selection);
+
     private async Task<LogExportResult> ExportCoreAsync(LogQuery query, RunQuery? runQuery, string destination,
-        string applicationVersion, CancellationToken ct)
+        string applicationVersion, CancellationToken ct, LogExportSelection? selection = null)
     {
         destination = Path.GetFullPath(destination);
         var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
@@ -40,11 +46,16 @@ public sealed class LogExportService(ILogRepository repository, LogQueryService 
                 }
                 var retained = queries.ReadAll(query, ct, out _, out var readIssues);
                 var ids = selected?.Select(run => run.Id).ToHashSet();
+                var selectedRuns = selection?.RunIds.ToHashSet();
+                var selectedEvents = selection?.EventIds.ToHashSet();
                 var entries = retained.Where(entry => ids is null || entry.Context.RunId is { } id && ids.Contains(id))
+                    .Where(entry => selection is null || selectedEvents!.Contains(entry.Id) || entry.Context.RunId is { } runId && selectedRuns!.Contains(runId))
                     .Select(repository.Privacy.Sanitize).ToArray();
                 issues.AddRange(readIssues);
                 var runs = (selected ?? repository.ReadRuns().Where(run => entries.Any(entry => entry.Context.RunId == run.Id)
-                    || query.RunId == run.Id).ToArray()).Select(repository.Privacy.Sanitize).ToArray();
+                    || query.RunId == run.Id || selectedRuns != null && selectedRuns.Contains(run.Id)).ToArray()).Select(repository.Privacy.Sanitize).ToArray();
+                if (selectedEvents is not null && selectedEvents.Except(entries.Select(entry => entry.Id)).Any()) issues.Add("selection.events-unavailable");
+                if (selectedRuns is not null && selectedRuns.Except(runs.Select(run => run.Id)).Any()) issues.Add("selection.runs-unavailable");
                 if (runs.Any(run => !run.IsComplete)) issues.Add("run.incomplete");
                 using (var file = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write))
                 using (var archive = new ZipArchive(file, ZipArchiveMode.Create))
@@ -59,6 +70,7 @@ public sealed class LogExportService(ILogRepository repository, LogQueryService 
                         Query = query with { Search = repository.Privacy.Sanitize(query.Search) },
                         RunQuery = runQuery is null ? null : runQuery with { Search = repository.Privacy.Sanitize(runQuery.Search) },
                         RunIds = runs.Select(run => run.Id).ToArray(),
+                        Selection = selection,
                         LastExportedSequence = entries.LastOrDefault()?.Sequence,
                         ActiveRuns = runs.Where(run => run.EndedAt is null).Select(run => run.Id).ToArray(),
                         EventCount = entries.Length,

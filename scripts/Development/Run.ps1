@@ -53,7 +53,14 @@ try {
                         Write-Host "Build fehlgeschlagen (Exitcode $LASTEXITCODE)."
                         break
                     }
-                    $executable = Join-Path $repositoryRoot "DesktopAutomationApp\bin\$configuration\net8.0-windows\DesktopAutomationApp.exe"
+                    $targetPath = & dotnet msbuild $projectPath --nologo "-property:Configuration=$configuration" -getProperty:TargetPath
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Der Build-Ausgabepfad konnte nicht ermittelt werden (Exitcode $LASTEXITCODE)."
+                    }
+                    $executable = [IO.Path]::ChangeExtension(([string]$targetPath).Trim(), '.exe')
+                    if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+                        throw "Die gerade gebaute App wurde nicht gefunden: $executable"
+                    }
                     $appProcess = Start-Process -FilePath $executable -WorkingDirectory $repositoryRoot -PassThru
                     Write-Host "$appName gestartet (PID $($appProcess.Id))."
                 }

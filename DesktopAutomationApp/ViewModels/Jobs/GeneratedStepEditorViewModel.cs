@@ -1691,8 +1691,8 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
         if (value is not null && values.Count < 2) _malformedValue = value.DeepClone();
         if (values.Any(item => item is null)) { _malformedValue = value?.DeepClone(); values = []; }
         foreach (var option in values) Add(option);
-        while (Options.Count < 2) Add();
-        AddCommand = new RelayCommand(() => Add(), () => Options.Count < 18);
+        while (Options.Count < UserChoiceStepDefinition.MinimumOptions) Add();
+        AddCommand = new RelayCommand(() => Add(), () => Options.Count < UserChoiceStepDefinition.MaximumOptions);
         _initializing = false;
     }
 
@@ -1716,6 +1716,14 @@ public sealed class GeneratedUserChoiceOptionsEditorViewModel : IGeneratedValueE
             : new UserChoiceOptionEditorViewModel(Options, value.Id, value.Label, value.Value);
         if (_nestedInputResolver is not null)
             item.ConfigureNestedInputs($"{_inputKeyPrefix}.{Options.Count}", _nestedInputResolver);
+        item.DuplicateCommand = new RelayCommand(() =>
+        {
+            Add(new StepUserChoiceOptionValue(Guid.NewGuid().ToString("N"), item.Label, item.Value));
+            var copy = Options[^1];
+            ContextFieldCopies.Copy(item.LabelField, copy.LabelField);
+            ContextFieldCopies.Copy(item.ValueField, copy.ValueField);
+            Options.Move(Options.Count - 1, Options.IndexOf(item) + 1);
+        }, () => AddCommand?.CanExecute(null) != false);
         Options.Add(item);
     }
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -1811,6 +1819,15 @@ public sealed class GeneratedPointEntryListEditorViewModel : IGeneratedValueEdit
         }
         if (_nestedInputResolver is not null)
             item.ConfigureNestedInputs($"{_inputKeyPrefix}.{Points.Count}", _nestedInputResolver);
+        item.DuplicateCommand = new RelayCommand(() =>
+        {
+            Add(new StepPointEntryValue(item.SourceToken, item.ManualX, item.ManualY, JsonSerializer.SerializeToNode(item.WholeValueSource.ToBinding())));
+            var copy = Points[^1];
+            ContextFieldCopies.Copy(item.ManualXField, copy.ManualXField);
+            ContextFieldCopies.Copy(item.ManualYField, copy.ManualYField);
+            copy.WholeValueSource.Load(item.WholeValueSource.ToBinding(), item.WholeValueSource.UsesReference);
+            Points.Move(Points.Count - 1, Points.IndexOf(item) + 1);
+        });
         Points.Add(item);
     }
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -1860,6 +1877,11 @@ public sealed class GeneratedAxisExpressionListEditorViewModel : IGeneratedValue
             Value = value.Value
         });
         if (value is not null) item.LoadOperatorToken(value.Operator);
+        item.DuplicateCommand = new RelayCommand(() =>
+        {
+            Add(new StepAxisExpressionValue(item.Axis, item.OperatorToken, item.Value));
+            Expressions.Move(Expressions.Count - 1, Expressions.IndexOf(item) + 1);
+        });
         Expressions.Add(item);
     }
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

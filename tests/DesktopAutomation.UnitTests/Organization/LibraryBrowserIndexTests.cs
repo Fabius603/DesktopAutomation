@@ -19,10 +19,14 @@ public sealed class LibraryBrowserIndexTests
             Placements = [new() { Kind = kind, ItemId = items[0].Id, FolderId = parent.Id }, new() { Kind = kind, ItemId = items[1].Id, FolderId = child.Id }]
         }, kind);
 
-        Assert.Equal([items[1].Id, items[2].Id, items[0].Id], index.Query(items, null, "", false));
+        Assert.Equal([items[2].Id], index.Query(items, null, "", false));
+        Assert.Equal([parent.Id], index.QueryFolders(null, "", false).Select(folder => folder.Id));
+        Assert.Equal([child.Id], index.QueryFolders(parent.Id, "INVOICE", false).Select(folder => folder.Id));
+        Assert.Empty(index.QueryFolders(child.Id, "", false));
+        Assert.Empty(index.QueryFolders(null, "Invoices", false));
         Assert.Equal([items[0].Id], index.Query(items, parent.Id, "pdf", false));
         Assert.Empty(index.Query(items, child.Id, "pdf", false));
-        Assert.Equal([items[0].Id, items[2].Id, items[1].Id], index.Query(items, null, "", true));
+        Assert.Equal([items[2].Id], index.Query(items, null, "", true));
         Assert.Equal([parent.Id, child.Id], index.PathTo(child.Id).Select(folder => folder.Id));
         Assert.Null(index.ExistingFolder(Guid.NewGuid()));
         Assert.Null(index.ContainingFolder(items[2].Id));

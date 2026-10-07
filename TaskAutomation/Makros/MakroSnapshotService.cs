@@ -5,6 +5,15 @@ namespace TaskAutomation.Makros;
 
 public static class MakroSnapshotService
 {
+    public static Makro CloneMakro(Makro source, string name)
+    {
+        var copy = JsonSerializer.Deserialize<Makro>(Serialize(source), Options)
+            ?? throw new JsonException("Macro copy could not be materialized.");
+        copy.Id = Guid.NewGuid();
+        copy.Name = name;
+        return copy;
+    }
+
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = false,

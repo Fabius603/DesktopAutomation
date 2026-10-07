@@ -315,10 +315,13 @@ public sealed class JobStepsViewResourceTests
             RepositoryRoot(), "DesktopAutomationApp", "Controls", "Jobs", "Editors", "Output",
             "VisualOverlayEditor.xaml"));
 
-        Assert.Contains("<ItemsControl ItemsSource=\"{Binding OverlayDetectionRows}\">", xaml);
-        Assert.Contains("<ItemsControl ItemsSource=\"{Binding OverlayTextRows}\">", xaml);
+        var document = System.Xml.Linq.XDocument.Parse(xaml);
+        System.Xml.Linq.XNamespace ui = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        var hosts = document.Descendants(ui + "ListBox").Where(element => element.Attribute("ItemsSource")?.Value.StartsWith("{Binding Overlay", StringComparison.Ordinal) == true).ToArray();
+        Assert.Equal(2, hosts.Length);
+        Assert.All(hosts, host => Assert.Equal("False", host.Attribute("VirtualizingPanel.IsVirtualizing")?.Value));
+        Assert.All(hosts, host => Assert.Equal("Extended", host.Attribute("SelectionMode")?.Value));
         Assert.DoesNotContain("VirtualizedOverlayItem", xaml);
-        Assert.DoesNotContain("<ListBox ItemsSource=\"{Binding Overlay", xaml);
     }
 
     [Fact]
@@ -484,8 +487,8 @@ public sealed class JobStepsViewResourceTests
             "<ScrollViewer VerticalScrollBarVisibility=\"Auto\" HorizontalScrollBarVisibility=\"Disabled\">",
             jobStepsXaml);
         Assert.Contains("AutomationProperties.AutomationId=\"InspectorResizeGrip\"", jobStepsXaml);
-        Assert.Contains("Style=\"{StaticResource InspectorGridSplitterStyle}\"", jobStepsXaml);
-        Assert.Contains("x:Name=\"ResizeGrip\"", jobStepsXaml);
+        Assert.Contains("Style=\"{StaticResource PaneGridSplitterStyle}\"", jobStepsXaml);
+        Assert.Contains("x:Name=\"ResizeGrip\"", File.ReadAllText(Path.Combine(RepositoryRoot(), "DesktopAutomationApp", "Styles", "Controls.xaml")));
         Assert.Contains("BasedOn=\"{StaticResource StepInspectorScrollBarStyle}\"", jobStepsXaml);
     }
 

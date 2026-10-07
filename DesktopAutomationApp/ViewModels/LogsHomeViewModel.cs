@@ -250,6 +250,86 @@ public sealed class LogsHomeViewModel : ViewModelBase
     public string DiagnosticCode => _eventDetails?.Display.Diagnostic?.Code ?? "";
     public string DiagnosticTitle => _eventDetails is null ? IsAutomation ? SelectedTrigger?.Title ?? "" : SelectedStep?.Result ?? "" : LogUiText.Text(_eventDetails.Display.Title);
 
+
+    public void CopySelection(IReadOnlyList<object> rows)
+    {
+        var events = ContextEvents(rows).DistinctBy(entry => entry.Id).Select(_repository.Privacy.Sanitize);
+        var text = string.Join("\n\n", events.Select(LogUiText.Technical));
+        if (text.Length == 0)
+            text = string.Join("\n", rows.OfType<LogRunRow>().Select(row => row.Name + " " + row.Number + " · " + row.Result));
+        RequestCopy?.Invoke(text);
+    }
+
+    public async Task OpenContextStepAsync(LogStepRow row)
+    {
+        var runId = _details?.Run.Id;
+        if (runId is null) return;
+        var stepId = row.Display.Execution.Step.Id;
+        await _jobs.ReloadAsync();
+        if (_disposed) return;
+        var navigation = _queries.Navigation(runId.Value, stepId, _jobs.Jobs.Values);
+        if (navigation.CanOpenStep && _jobs.Jobs.Values.FirstOrDefault(job => job.Id == navigation.JobId) is { } job)
+            RequestOpenJob?.Invoke(job, navigation.StepId);
+    }
+
+    public void OpenContextCause(LogStepRow row)
+    {
+        if (row.Display.Execution.Cause is not { } cause) return;
+        SelectedStep = AllSteps.FirstOrDefault(item => item.Display.Execution.Step.Id == cause.StepId
+            && (!cause.ExecutionId.HasValue || item.Display.Execution.ExecutionId == cause.ExecutionId));
+    }
+
+    public async Task OpenContextRunAsync(object row)
+    {
+        if (row is LogEventRow eventRow)
+        {
+            var details = await _queries.EventDetailsAsync(eventRow.Event.Id);
+            if (details?.Run?.RunId is { } id)
+                await OpenRunAsync(id, eventRow.Event.Context.StepExecutionId, eventRow.Event.Context.StepId, problemEventId: eventRow.Event.Id);
+            else Status = Loc.Get("Logs.Ui.RunUnavailable");
+        }
+        else if (row is LogAutomationRow trigger && trigger.Item.StartedRuns.FirstOrDefault(link => link.RunId.HasValue)?.RunId is { } id)
+            await OpenRunAsync(id);
+    }
+
+    private static IEnumerable<LogEvent> ContextEvents(IEnumerable<object> rows) => rows.SelectMany(row => row switch
+    {
+        LogEventRow entry => new[] { entry.Event },
+        LogStepRow step => step.Display.Execution.Events,
+        LogAutomationRow trigger => trigger.Item.Events,
+        _ => []
+    });
+
+    public async Task ExportSelectionAsync(IReadOnlyList<object> rows)
+    {
+        if (IsExporting || ChooseExportPath is null || rows.Count == 0) return;
+        var runs = rows.OfType<LogRunRow>().Select(row => row.Run.Id).Distinct().ToArray();
+        var events = ContextEvents(rows).Select(entry => entry.Id).Distinct().ToArray();
+        var selection = new LogExportSelection(runs, events, Math.Min(_checkpoint, _repository.SnapshotSequence));
+        var destination = await ChooseExportPath();
+        if (destination is null) return;
+        _export?.Dispose(); _export = new(); IsExporting = true;
+        try
+        {
+            var result = await _exports.ExportSelectionAsync(selection, destination,
+                typeof(LogsHomeViewModel).Assembly.GetName().Version?.ToString() ?? "", _export.Token);
+            Status = Loc.Get(result.IsComplete ? "Logs.Ui.Exported" : "Logs.Ui.ExportPartial");
+        }
+        catch (OperationCanceledException) { Status = Loc.Get("Logs.Ui.ExportCancelled"); }
+        catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException) { Status = Loc.Get("Logs.Ui.ExportFailed"); }
+        finally { IsExporting = false; }
+    }
+
+    public async Task ChangeSelectionAttentionAsync(IReadOnlyList<object> rows, LogAttentionState state)
+    {
+        var runIds = rows.OfType<LogRunRow>().Select(row => row.Run.Id).ToHashSet();
+        var eventIds = ContextEvents(rows).Select(entry => entry.Id).ToHashSet();
+        var problems = await _attentionService.ScopeAsync(new RunQuery(SnapshotSequence: Math.Min(_checkpoint, _repository.SnapshotSequence)));
+        var selected = problems.Where(problem => runIds.Contains(problem.RunId) || problem.EventId is { } id && eventIds.Contains(id)).ToArray();
+        if (!await _attentionService.ChangeAsync(selected, state)) Status = Loc.Get("Logs.Ui.AttentionSaveFailed");
+        else await RefreshAsync(preserveSnapshot: true);
+    }
+
     public void Activate(bool active) { _active = active; if (active) { _lastViewedEventId = null; _timer.Start(); _ = RefreshAsync(); } else { _navigationVersion++; _detailEventId = null; _timer.Stop(); _load?.Cancel(); } }
     private void Reset() { _catalogFrozen = false; _checkpoint = long.MaxValue; _nextOffset = null; _before = null; _dirty = true; if (_active && !_disposed) _ = RefreshAsync(); }
     private (DateTimeOffset? From, DateTimeOffset? Until) Dates() => Range switch

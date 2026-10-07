@@ -1,5 +1,7 @@
 # Windows desktop UI
 
+Context and overflow menu coverage must follow `context-menus.md` in this directory.
+
 The application shell is WPF. Use WPF, MVVM, resource dictionaries, dependency properties,
 commands, and UI Automation peers for normal application work. Use Windows Forms only when an
 existing interop boundary or explicit requirement calls for it.

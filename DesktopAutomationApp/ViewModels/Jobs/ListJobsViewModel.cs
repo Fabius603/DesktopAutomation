@@ -246,6 +246,9 @@ namespace DesktopAutomationApp.ViewModels
             Stop = () => _dispatcher.CancelJobsByDefinition(job.Id),
             IsRunning = () => RunningJobIds.Contains(job.Id),
             RenameAsync = () => RenameJobFromLibraryAsync(job),
+            DeleteConfirmedAsync = () => DeleteJobFromLibraryAsync(job, false),
+            DuplicateAsync = () => DuplicateJobFromLibraryAsync(job),
+            OpenFile = () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_jobAppService.GetStoragePath()) { UseShellExecute = true }),
             DeleteAsync = () => DeleteJobFromLibraryAsync(job)
         };
 
@@ -258,14 +261,27 @@ namespace DesktopAutomationApp.ViewModels
             await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
         }
 
-        private async Task<bool> DeleteJobFromLibraryAsync(Job job)
+        private async Task<bool> DeleteJobFromLibraryAsync(Job job, bool confirm = true)
         {
-            if (!await _dialogService.ConfirmAsync(
+            if (confirm && !await _dialogService.ConfirmAsync(
                     Loc.Format("Job.Delete.One", job.Name),
                     Loc.Get("Dialog.Delete.Title"))) return false;
             Items.Remove(job);
             await _jobAppService.DeleteJobAsync(job.Id);
             return true;
+        }
+
+        private async Task DuplicateJobFromLibraryAsync(Job job)
+        {
+            var name = Loc.Format("Ui.Context.CopyTitle", job.Name);
+            var initial = name;
+            for (var suffix = 2; Items.Any(item => item.Name == name); suffix++) name = initial + " (" + suffix + ")";
+            var copy = TaskAutomation.Jobs.JobStepsSnapshotService.CloneJob(job, name);
+            await _jobAppService.SaveJobAsync(copy);
+            Items.Add(copy);
+            if (Library.ItemFolder(job.Id) is { } folder)
+                await _libraryOrganization.PlaceItemAsync(DesktopAutomation.Application.Organization.LibraryItemKind.Job, copy.Id, folder);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
         }
 
     }

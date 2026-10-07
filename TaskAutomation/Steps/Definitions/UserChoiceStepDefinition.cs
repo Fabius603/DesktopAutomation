@@ -7,6 +7,8 @@ namespace TaskAutomation.Steps.Definitions;
 
 public sealed class UserChoiceStepDefinition : StepDefinition<UserChoiceStep>
 {
+    public const int MinimumOptions = 2;
+    public const int MaximumOptions = 18;
     public const string TitleFieldId = "title";
     public const string QuestionFieldId = "question";
     public const string DescriptionFieldId = "description";
@@ -23,7 +25,7 @@ public sealed class UserChoiceStepDefinition : StepDefinition<UserChoiceStep>
             new(DesktopIndexFieldId, "Ui.Step.Settings.DesktopIndex", StepValueKind.Integer, DefaultValue: JsonValue.Create(0),
                 EditorHint: StepEditorHints.MonitorPicker, Constraints: new(Minimum: 0), Order: 3),
             new(OptionsFieldId, "Ui.UserChoice.Answers", StepValueKind.Collection, true,
-                EditorHint: StepEditorHints.UserChoiceOptions, Constraints: new(MinimumLength: 2, MaximumLength: 18), Order: 4)
+                EditorHint: StepEditorHints.UserChoiceOptions, Constraints: new(MinimumLength: MinimumOptions, MaximumLength: MaximumOptions), Order: 4)
         ],
         new([new("general", null, [TitleFieldId, QuestionFieldId, DescriptionFieldId, DesktopIndexFieldId, OptionsFieldId])],
             [new(QuestionFieldId, StepSummaryValueFormat.ShortText), new(OptionsFieldId)],

@@ -61,6 +61,8 @@ public sealed class CredentialsSettingsViewModel : ViewModelBase
         }
     }
 
+    public System.Windows.Input.ICommand CopyNameCommand => new RelayCommand(() => System.Windows.Clipboard.SetText(SelectedSecret?.Name ?? ""), () => SelectedSecret is not null);
+
     public SecretListItemViewModel? SelectedSecret
     {
         get => _selectedSecret;

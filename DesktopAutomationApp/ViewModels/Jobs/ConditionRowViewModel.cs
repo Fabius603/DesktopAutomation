@@ -154,6 +154,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     }
 
     public ICommand RemoveCommand { get; }
+    public ICommand DuplicateCommand { get; }
     public IReadOnlyList<ConditionSelectionNode> SelectionTree => _selectionTree ??=
         BuildSelectionTree(_availableSourceSteps, _availableVariables, IsConditionProperty);
     public IReadOnlyList<ConditionSelectionNode> ComparisonSelectionTree => _comparisonSelectionTree ??=
@@ -307,7 +308,7 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
     public bool ShowBooleanValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Boolean;
     public bool ShowEnumValue => ShowLiteralComparisonValue && SelectedProperty?.DataType == ResultValueKind.Enum;
     public bool IsIntegerValue => SelectedProperty?.DataType == ResultValueKind.Integer;
-    public bool CanRemove => _owner.Count > 1;
+    public bool CanRemove => _owner.Count > ConditionRules.MinimumConditions;
     public string SelectedPath => SelectedProperty is null
         ? Loc.Get("Ui.Step.IfEditor.SelectValue")
         : $"{SelectedSourceStep.DisplayName}  →  {SelectedProperty.DisplayName}";
@@ -360,8 +361,17 @@ public sealed class ConditionRowViewModel : INotifyPropertyChanged
         _comparisonInputKey = comparisonInputKey;
         _nestedInputResolver = nestedInputResolver;
         RemoveCommand = new RelayCommand(
-            () => { if (owner.Count > 1) owner.Remove(this); },
-            () => owner.Count > 1);
+            () => { if (owner.Count > ConditionRules.MinimumConditions) owner.Remove(this); },
+            () => owner.Count > ConditionRules.MinimumConditions);
+        DuplicateCommand = new RelayCommand(() =>
+        {
+            var copy = new ConditionRowViewModel(owner, sources, variables, providerSources,
+                comparisonInputKey + ".copy." + Guid.NewGuid().ToString("N"), nestedInputResolver, sourceCatalog);
+            var condition = System.Text.Json.JsonSerializer.Deserialize<StepCondition>(System.Text.Json.JsonSerializer.Serialize(ToCondition()))!;
+            copy.LoadFrom(condition);
+            ContextFieldCopies.Copy(ComparisonField, copy.ComparisonField);
+            owner.Insert(owner.IndexOf(this) + 1, copy);
+        }, () => IsValid);
         _availableSourceSteps = sourceCatalog?.Sources ?? sources;
         _jobVariables = sourceCatalog?.JobVariables ?? (variables ?? []).Where(variable => variable.Id != Guid.Empty)
             .ToDictionary(variable => JobValueSources.Key(JobValueSources.ProviderFor(variable), variable.Id.ToString("D")), StringComparer.Ordinal);

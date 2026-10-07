@@ -30,7 +30,7 @@ if (-not $SdkBin) {
         Where-Object { Test-Path (Join-Path $_ 'makeappx.exe') } | Select-Object -First 1
 }
 if (-not $SdkBin) { throw 'Windows SDK with MakeAppx is required.' }
-$outputRoot = [IO.Path]::GetFullPath($OutputDirectory)
+$outputRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 New-Item -ItemType Directory -Force $outputRoot | Out-Null
 $stage = Join-Path $outputRoot ('stage-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory $stage | Out-Null

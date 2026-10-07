@@ -32,12 +32,23 @@ public sealed class LibraryBrowserIndex
         return path;
     }
 
-    // All items includes nested folders; selecting a folder shows its direct contents.
+    public IReadOnlyList<LibraryFolder> QueryFolders(Guid? folderId, string search, bool descending)
+    {
+        folderId = ExistingFolder(folderId);
+        var query = search.Trim();
+        var matches = _folders.Values.Where(folder => ExistingFolder(folder.ParentId) == folderId &&
+            (query.Length == 0 || folder.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
+        return (descending
+            ? matches.OrderByDescending(folder => folder.Name, StringComparer.CurrentCultureIgnoreCase).ThenBy(folder => folder.Id)
+            : matches.OrderBy(folder => folder.Name, StringComparer.CurrentCultureIgnoreCase).ThenBy(folder => folder.Id)).ToArray();
+    }
+
+    // Every location, including the root, shows its direct contents.
     public IReadOnlyList<Guid> Query(IEnumerable<LibraryBrowserItem> items, Guid? folderId, string search, bool descending)
     {
         folderId = ExistingFolder(folderId);
         var query = search.Trim();
-        var matches = items.Where(item => (!folderId.HasValue || ContainingFolder(item.Id) == folderId) &&
+        var matches = items.Where(item => ContainingFolder(item.Id) == folderId &&
             (query.Length == 0 || item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
              item.Description.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
         return (descending

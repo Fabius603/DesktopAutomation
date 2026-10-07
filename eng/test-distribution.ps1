@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $metadata = Get-Content -LiteralPath $MsixMetadata -Raw | ConvertFrom-Json
 if ($metadata.identity -notlike 'DesktopAutomation.LocalTest*') { throw 'Installed tests require an isolated development package identity.' }
 if (Get-AppxPackage -Name $metadata.identity) { throw 'Refusing to replace a pre-existing test package.' }
-$outputRoot = [IO.Path]::GetFullPath($OutputDirectory)
+$outputRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 New-Item -ItemType Directory -Force $outputRoot | Out-Null
 $profile = 'deployment-' + [Guid]::NewGuid().ToString('N')
 $executables = @((Join-Path (Resolve-Path $PublishDirectory).Path 'DesktopAutomationApp.exe'))
@@ -39,6 +39,8 @@ function Start-Probe([string]$Executable, [string]$Result, [int]$Hold = 0) {
     if ($package -and $Executable.StartsWith($package.InstallLocation, [StringComparison]::OrdinalIgnoreCase)) {
         $activatedPid = [DesktopAutomationMsixActivation]::Launch(($package.PackageFamilyName + '!App'), $arguments)
         $process = [Diagnostics.Process]::GetProcessById($activatedPid)
+        # Retain the process handle before it exits; PowerShell 5.1 otherwise loses its exit code.
+        $null = $process.Handle
     } else {
         $process = Start-Process -FilePath $Executable -ArgumentList $arguments -WindowStyle Hidden -PassThru
     }
@@ -47,7 +49,7 @@ function Start-Probe([string]$Executable, [string]$Result, [int]$Hold = 0) {
 }
 function Wait-Probe([Diagnostics.Process]$Process, [string]$Result, [string]$ExpectedKind) {
     if (-not $Process.WaitForExit(30000)) { throw 'Deployment probe timed out.' }
-    if ($Process.ExitCode -ne 0) { throw "Deployment probe failed: $Result" }
+    if ($Process.ExitCode -ne 0) { throw "Deployment probe failed (exit code '$($Process.ExitCode)', process $($Process.Id)): $Result" }
     $report = Get-Content -LiteralPath $Result -Raw | ConvertFrom-Json
     if ($report.installation -ne $ExpectedKind) { throw "Expected $ExpectedKind, received $($report.installation)." }
     foreach ($check in $report.checks.PSObject.Properties) { if ($check.Value -ne 'Passed') { throw "$($check.Name): $($check.Value)" } }

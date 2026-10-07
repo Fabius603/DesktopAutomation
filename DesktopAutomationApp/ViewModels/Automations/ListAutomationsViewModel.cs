@@ -193,10 +193,15 @@ namespace DesktopAutomationApp.ViewModels
                 automation.DisplayTrigger,
                 automation.DisplayAction),
             Model = automation,
+            IsActive = () => automation.Active,
+            SetActiveAsync = async active => { automation.Active = active; await _automationAppService.SaveAsync(automation.ToDomain()); await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor)); },
             Open = () => RequestOpenAutomation?.Invoke(automation),
             Execute = () => _ = RunAutomationFromLibraryAsync(automation),
             CanExecute = () => automation.Active,
             RenameAsync = () => RenameAutomationFromLibraryAsync(automation),
+            DeleteConfirmedAsync = () => DeleteAutomationFromLibraryAsync(automation, false),
+            DuplicateAsync = () => DuplicateAutomationFromLibraryAsync(automation),
+            OpenFile = () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_automationAppService.GetStoragePath()) { UseShellExecute = true }),
             DeleteAsync = () => DeleteAutomationFromLibraryAsync(automation)
         };
 
@@ -215,9 +220,9 @@ namespace DesktopAutomationApp.ViewModels
             await RefreshAllAsync();
         }
 
-        private async Task<bool> DeleteAutomationFromLibraryAsync(EditableAutomation automation)
+        private async Task<bool> DeleteAutomationFromLibraryAsync(EditableAutomation automation, bool confirm = true)
         {
-            if (!await _dialogService.ConfirmAsync(
+            if (confirm && !await _dialogService.ConfirmAsync(
                     Loc.Format("Automation.Delete.One", automation.Name),
                     Loc.Get("Dialog.Delete.Title"))) return false;
             Items.Remove(automation);
@@ -235,5 +240,19 @@ namespace DesktopAutomationApp.ViewModels
             }
             base.Dispose(disposing);
         }
+        private async Task DuplicateAutomationFromLibraryAsync(EditableAutomation automation)
+        {
+            var name = Loc.Format("Ui.Context.CopyTitle", automation.Name);
+            var initial = name;
+            for (var suffix = 2; Items.Any(item => item.Name == name); suffix++) name = initial + " (" + suffix + ")";
+            var domain = TaskAutomation.Automations.AutomationCopies.Clone(automation.ToDomain(), name);
+            await _automationAppService.SaveAsync(domain);
+            var copy = EditableAutomation.FromDomain(domain);
+            Items.Add(copy);
+            if (Library.ItemFolder(automation.Id) is { } folder)
+                await _libraryOrganization.PlaceItemAsync(DesktopAutomation.Application.Organization.LibraryItemKind.Automation, copy.Id, folder);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
+
     }
 }

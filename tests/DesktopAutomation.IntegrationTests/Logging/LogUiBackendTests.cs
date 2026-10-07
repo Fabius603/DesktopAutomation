@@ -12,6 +12,30 @@ namespace TaskAutomation.Tests.Logging;
 
 public sealed class LogUiBackendTests
 {
+    [Fact]
+    public async Task SelectedExport_ExcludesUnselectedAndLaterEventsAndReportsMissingSelections()
+    {
+        using var directory = new TemporaryDirectory();
+        using var repository = new LogRepository(directory.Path);
+        var selected = repository.Append(new LogEvent { Message = "selected" });
+        repository.Append(new LogEvent { Message = "unselected" });
+        await repository.FlushAsync();
+        var checkpoint = repository.SnapshotSequence;
+        repository.Append(new LogEvent { Message = "later" });
+        var path = Path.Combine(directory.Path, "selection.zip");
+        var result = await new LogExportService(repository, new LogQueryService(repository)).ExportSelectionAsync(
+            new([], [selected.Id, Guid.NewGuid()], checkpoint), path, "test");
+        Assert.Equal(1, result.EventCount);
+        Assert.False(result.IsComplete);
+        Assert.Contains("selection.events-unavailable", result.Issues);
+        using var archive = ZipFile.OpenRead(path);
+        using var reader = new StreamReader(archive.GetEntry("events.jsonl")!.Open());
+        var content = await reader.ReadToEndAsync();
+        Assert.Contains("selected", content);
+        Assert.DoesNotContain("unselected", content);
+        Assert.DoesNotContain("later", content);
+    }
+
     private static LogRun SaveRun(LogRepository repository, LogSource source, string name, LogOutcome outcome, Guid? instance = null)
     {
         var id = Guid.NewGuid();

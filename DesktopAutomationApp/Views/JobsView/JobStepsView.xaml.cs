@@ -1,3 +1,4 @@
+using DesktopAutomationApp.Controls;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -270,41 +271,55 @@ namespace DesktopAutomationApp.Views
         {
             var multiple = vm.SelectedSteps.Count > 1 && vm.SelectedSteps.Contains(step);
             var count = multiple ? vm.SelectedSteps.Count : 1;
+            var captured = multiple ? vm.SelectedSteps.ToArray() : [step];
+            ICommand SelectionCommand(ICommand command) => new RelayCommand(() =>
+            {
+                vm.SetSelectedSteps(captured);
+                command.Execute(null);
+            }, () => command.CanExecute(null));
 
-            var menu = new ContextMenu { PlacementTarget = target };
-            if (step.CanBeDisabled)
-                AddMenuItem(menu, multiple
-                    ? Loc.Format("Ui.Job.Steps.ToggleSelected", count)
-                    : Loc.Get(step.IsEnabled ? "Ui.Job.Steps.DisableStep" : "Ui.Job.Steps.EnableStep"),
-                    vm.ToggleStepEnabledCommand, step, Loc.Get("Shortcut.Space"));
-            AddMenuItem(menu, multiple
-                    ? Loc.Format("Ui.Job.Debug.ToggleBreakpoints", count)
-                    : Loc.Get("Ui.Job.Debug.ToggleBreakpoint"),
-                vm.ToggleBreakpointCommand, step, Loc.Get("Shortcut.CtrlB"));
+            var menu = ActionMenus.Create(target);
+            if (!multiple)
+            {
+                ActionMenus.Add(menu, "Ui.Common.EditStep", vm.EditStepCommand, step);
+                ActionMenus.Add(menu, "Ui.Context.Debug", SelectionCommand(vm.DebugStepCommand));
+                if (step is TaskAutomation.Jobs.IfStep or TaskAutomation.Jobs.ElseIfStep or TaskAutomation.Jobs.ElseStep)
+                    ActionMenus.Add(menu, "Ui.Context.ExpandCollapse", vm.ToggleBlockCommand, step);
+            }
+            ActionMenus.Add(menu, "Ui.Context.Paste", SelectionCommand(vm.PasteCommand), gesture: "Shortcut.CtrlV");
+            var enabledTargets = multiple ? vm.SelectedSteps.Where(selected => selected.CanBeDisabled).ToArray() : step.CanBeDisabled ? [step] : Array.Empty<JobStep>();
+            if (enabledTargets.Length > 0)
+            {
+                ActionMenus.Add(menu, "Ui.Context.Enable", new AsyncRelayCommand(() => vm.SetSelectionEnabledAsync(step, true), () => !vm.IsDebugActive && !vm.IsMutationBusy), count: enabledTargets.Length);
+                ActionMenus.Add(menu, "Ui.Context.Disable", new AsyncRelayCommand(() => vm.SetSelectionEnabledAsync(step, false), () => !vm.IsDebugActive && !vm.IsMutationBusy), count: enabledTargets.Length);
+            }
+            ActionMenus.Add(menu, "Ui.Context.SetBreakpoints", new AsyncRelayCommand(() => vm.SetSelectionBreakpointsAsync(step, true), () => !vm.IsMutationBusy), count: count);
+            ActionMenus.Add(menu, "Ui.Context.RemoveBreakpoints", new AsyncRelayCommand(() => vm.SetSelectionBreakpointsAsync(step, false), () => !vm.IsMutationBusy), count: count);
             menu.Items.Add(new Separator());
             AddMenuItem(menu, multiple ? Loc.Format("Ui.Common.CopySelected", count) : Loc.Get("Ui.Common.Copy"),
-                vm.CopyCommand, null, Loc.Get("Shortcut.CtrlC"));
+                "Ui.Common.Copy", SelectionCommand(vm.CopyCommand), null, Loc.Get("Shortcut.CtrlC"));
             AddMenuItem(menu, multiple ? Loc.Format("Ui.Common.DuplicateSelected", count) : Loc.Get("Ui.Macro.Steps.DuplicateStep"),
-                vm.DuplicateStepCommand, null, Loc.Get("Shortcut.CtrlD"));
-            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), vm.MoveStepUpCommand, step, Loc.Get("Shortcut.AltUp"));
-            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), vm.MoveStepDownCommand, step, Loc.Get("Shortcut.AltDown"));
+                "Ui.Macro.Steps.DuplicateStep", SelectionCommand(vm.DuplicateStepCommand), null, Loc.Get("Shortcut.CtrlD"));
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepUp"), "Ui.Common.MoveStepUp", vm.MoveStepUpCommand, step, Loc.Get("Shortcut.AltUp"));
+            AddMenuItem(menu, Loc.Get("Ui.Common.MoveStepDown"), "Ui.Common.MoveStepDown", vm.MoveStepDownCommand, step, Loc.Get("Shortcut.AltDown"));
             menu.Items.Add(new Separator());
-            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToStart"), vm.MoveToStartSectionCommand, step);
-            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToRun"), vm.MoveToRunSectionCommand, step);
-            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToEnd"), vm.MoveToEndSectionCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToStart"), "Ui.Job.Steps.MoveToStart", vm.MoveToStartSectionCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToRun"), "Ui.Job.Steps.MoveToRun", vm.MoveToRunSectionCommand, step);
+            AddMenuItem(menu, Loc.Get("Ui.Job.Steps.MoveToEnd"), "Ui.Job.Steps.MoveToEnd", vm.MoveToEndSectionCommand, step);
             if (vm.AddElseIfCommand.CanExecute(step) || vm.AddElseCommand.CanExecute(step))
             {
                 menu.Items.Add(new Separator());
-                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElseIf"), vm.AddElseIfCommand, step);
-                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), vm.AddElseCommand, step);
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElseIf"), "Ui.Job.Steps.AddElseIf", vm.AddElseIfCommand, step);
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.AddElse"), "Ui.Job.Steps.AddElse", vm.AddElseCommand, step);
             }
             if (vm.RemoveConditionCommand.CanExecute(step))
-                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.RemoveCondition"), vm.RemoveConditionCommand, step);
+                AddMenuItem(menu, Loc.Get("Ui.Job.Steps.RemoveCondition"), "Ui.Job.Steps.RemoveCondition", vm.RemoveConditionCommand, step);
             menu.Items.Add(new Separator());
             AddMenuItem(menu, multiple
                     ? Loc.Format("Ui.Common.DeleteSelected", count)
                     : Loc.Get("Ui.Job.Steps.DeleteStep"),
-                multiple ? vm.DeleteSelectedCommand : vm.DeleteStepCommand,
+                "Ui.Job.Steps.DeleteStep",
+                multiple ? SelectionCommand(vm.DeleteSelectedCommand) : vm.DeleteStepCommand,
                 multiple ? null : step,
                 Loc.Get("Shortcut.Delete"));
             return menu;
@@ -313,17 +328,20 @@ namespace DesktopAutomationApp.Views
         private static void AddMenuItem(
             ItemsControl menu,
             string header,
+            string identity,
             ICommand command,
             object? parameter = null,
             string? inputGestureText = null)
         {
-            menu.Items.Add(new MenuItem
+            var item = new MenuItem
             {
                 Header = header,
                 Command = command,
                 CommandParameter = parameter,
                 InputGestureText = inputGestureText
-            });
+            };
+            ActionMenus.Decorate(item, identity);
+            menu.Items.Add(item);
         }
 
         private IEnumerable<ListBox> AllStepLists()

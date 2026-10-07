@@ -34,6 +34,7 @@ internal static class StepListRenderHost
         if (args.Length == 2 && args[0] == "--render-macro-editor") return MacroEditorRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-library") return LibraryBrowserRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-logs") return LogScreenRenderHost.Run(args[1]);
+        if (args.Length == 2 && args[0] == "--render-context-menus") return ContextMenuRenderHost.Run(args[1]);
         if (args.Length != 2 || args[0] != "--render-step-list") return 0;
         try { Render(args[1]); return 0; }
         catch (Exception exception) { Console.Error.WriteLine(exception); return 1; }

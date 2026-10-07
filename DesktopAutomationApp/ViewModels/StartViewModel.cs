@@ -20,6 +20,22 @@ namespace DesktopAutomationApp.ViewModels
         private readonly IAutomationApplicationService _automationService;
         private readonly DispatcherTimer _relativeTimeTimer;
 
+        public event Action<Guid, bool>? RequestOpenDefinition;
+        public event Action<Guid>? RequestOpenAutomation;
+        public event Action<Guid, bool>? RequestOpenLogs;
+        public ICommand OpenDefinitionCommand => new RelayCommand<GroupedRunningItem>(item => { if (item is not null) RequestOpenDefinition?.Invoke(item.Id, item.IsMakro); });
+        public ICommand OpenLogsCommand => new RelayCommand<GroupedRunningItem>(item => { if (item is not null) RequestOpenLogs?.Invoke(item.Id, item.IsMakro); });
+        public ICommand OpenAutomationCommand => new RelayCommand<AutomationDashboardInfo>(item => { if (item is not null) RequestOpenAutomation?.Invoke(item.Id); });
+        public ICommand DisableAutomationCommand => new AsyncRelayCommand<AutomationDashboardInfo>(item => item is null ? Task.CompletedTask : DisableAutomationAsync(item));
+        public async Task DisableAutomationAsync(AutomationDashboardInfo item)
+        {
+            var definition = (await _automationService.LoadAllAsync()).FirstOrDefault(value => value.Id == item.Id);
+            if (definition is null) return;
+            definition.Active = false;
+            await _automationService.SaveAsync(definition);
+            await RefreshAutomationsAsync();
+        }
+
         // --- Stat cards ---
         private int _totalJobCount;
         public int TotalJobCount { get => _totalJobCount; private set => SetProperty(ref _totalJobCount, value); }
@@ -129,6 +145,7 @@ namespace DesktopAutomationApp.ViewModels
             {
                 ActiveAutomations.Add(new AutomationDashboardInfo
                 {
+                    Id = automation.Id,
                     Name = automation.Name,
                     Trigger = AutomationDisplayFormatter.Trigger(automation.Trigger),
                     Action = AutomationDisplayFormatter.Action(automation.Action),
@@ -208,9 +225,9 @@ namespace DesktopAutomationApp.ViewModels
 
         private void OnRunningMakrosChanged()
         {
-            var runningIds  = _dispatcher.RunningMakroIds;
-            var allMakros   = _executor.AllMakros;
-            var makroItems  = runningIds
+            var runningIds = _dispatcher.RunningMakroIds;
+            var allMakros = _executor.AllMakros;
+            var makroItems = runningIds
                 .Select(id => allMakros.Values.FirstOrDefault(m => m.Id == id))
                 .Where(m => m is not null)
                 .Select(m => new RunningJobInfo { Id = m!.Id, Name = m.Name })
@@ -224,7 +241,7 @@ namespace DesktopAutomationApp.ViewModels
                 RunningMakros.Clear();
                 foreach (var m in makroItems) RunningMakros.Add(m);
                 RunningMakroCount = RunningMakros.Count;
-                RunningJobCount   = jobTotal;
+                RunningJobCount = jobTotal;
                 RunningItems = grouped
                     .Concat(RunningMakros.Select(m => CreateMakroItem(m.Id, m.Name)))
                     .ToList();
@@ -286,6 +303,7 @@ namespace DesktopAutomationApp.ViewModels
 
     public sealed class AutomationDashboardInfo : ViewModelBase
     {
+        public Guid Id { get; init; }
         public string Name { get; init; } = string.Empty;
         public string Trigger { get; init; } = string.Empty;
         public string Action { get; init; } = string.Empty;

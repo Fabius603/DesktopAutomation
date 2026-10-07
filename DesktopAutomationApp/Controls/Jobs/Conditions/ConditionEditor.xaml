@@ -1,7 +1,7 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Conditions.ConditionEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
@@ -19,11 +19,14 @@
         </Style>
         <Style x:Key="VirtualizedConditionItem" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Focusable" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <ContentPresenter/>
+                        <Border x:Name="SelectionBorder" BorderBrush="Transparent" BorderThickness="2" CornerRadius="6"><ContentPresenter/></Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True"><Setter TargetName="SelectionBorder" Property="BorderBrush" Value="{DynamicResource App.Brush.Accent}"/></Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -54,7 +57,7 @@
             </StackPanel>
         </Border>
 
-        <ListBox ItemsSource="{Binding Conditions, ElementName=Root}" AlternationCount="1000"
+        <ListBox context:ContextActions.Profile="Conditions" SelectionMode="Extended" ItemsSource="{Binding Conditions, ElementName=Root}" AlternationCount="1000"
                  MaxHeight="560" BorderThickness="0" Background="Transparent"
                  ScrollViewer.CanContentScroll="True"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"

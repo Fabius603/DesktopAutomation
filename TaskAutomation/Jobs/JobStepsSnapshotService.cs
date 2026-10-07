@@ -16,6 +16,15 @@ public sealed record JobStepGraph(IReadOnlyList<JobStep> Steps, IReadOnlyList<Lo
 
 public static class JobStepsSnapshotService
 {
+    public static Job CloneJob(Job source, string name)
+    {
+        var copy = JsonSerializer.Deserialize<Job>(JsonSerializer.Serialize(source))
+            ?? throw new JsonException("Job copy could not be materialized.");
+        copy.Id = Guid.NewGuid();
+        copy.Name = name;
+        return copy;
+    }
+
     public static Task<JobStepGraph> CaptureGraphAsync(Job job, IReadOnlyList<JobStep> steps,
         CancellationToken cancellationToken = default) => Task.Run(() =>
     {

@@ -74,8 +74,34 @@ internal static class LibraryBrowserRenderHost
                 vm.ClearSearchCommand.Execute(null);
                 vm.SortCommand.Execute(null);
                 Assert.Equal("Rechnungsablage", vm.ContentNodes[0].Name);
-                vm.NavigateCommand.Execute(vm.Breadcrumbs[1]); Assert.Empty(vm.ContentNodes);
-                vm.ShowAllCommand.Execute(null); Assert.Equal(3, vm.ContentNodes.Count);
+                vm.NavigateCommand.Execute(vm.Breadcrumbs[1]); Assert.Equal(2, vm.ContentNodes.Count);
+                Assert.All(vm.ContentNodes, node => Assert.True(node.IsFolder));
+                window.UpdateLayout(); Save(view, Path.Combine(directory, kind + "-folders.png"));
+                var childNode = vm.ContentNodes.Single(node => node.Id == folder.Id);
+                var childRow = (ListBoxItem)list.ItemContainerGenerator.ContainerFromItem(childNode);
+                var folderSurface = Descendants<Border>(childRow).First(border => border.Tag is LibraryTreeViewModel);
+                folderSurface.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left)
+                { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+                Assert.Equal(folder.Id, vm.SelectedFolderId);
+                Assert.Equal(3, vm.ContentNodes.Count);
+                vm.OpenNodeCommand.Execute(childNode);
+                Assert.Contains(folder.Id, preferences.Current.ExpandedLibraryFolders[kind.ToString()]);
+                window.UpdateLayout();
+                Assert.Contains(((ListBox)library.FindName("FolderList")).Items.Cast<LibraryTreeNodeViewModel>(), node => node.IsItem);
+                var splitter = Descendants<GridSplitter>(view).Single();
+                Assert.True(splitter.ActualHeight > 50);
+                Assert.True(((Border)splitter.Template.FindName("ResizeGrip", splitter)).ActualHeight >= 52);
+                vm.ShowAllCommand.Execute(null); Assert.Equal(2, vm.ContentNodes.Count);
+                Assert.Equal(vm.RootLabel, vm.AllItemsLabel);
+                var tree = (ListBox)library.FindName("FolderList");
+                var expandRoot = Descendants<Button>(library).Single(button => AutomationProperties.GetAutomationId(button) == "Library.ExpandRoot");
+                expandRoot.Command.Execute(expandRoot.CommandParameter);
+                window.UpdateLayout();
+                Assert.False(tree.IsVisible);
+                Assert.Equal(2, list.Items.Count);
+                expandRoot.Command.Execute(expandRoot.CommandParameter);
+                window.UpdateLayout();
+                Assert.True(tree.IsVisible);
                 vm.SelectedFolderId = folder.Id;
                 if (kind == LibraryItemKind.Job)
                 {

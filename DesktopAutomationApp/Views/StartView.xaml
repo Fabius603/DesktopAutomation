@@ -1,6 +1,6 @@
 <UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.StartView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -94,7 +94,7 @@
                                 <TextBlock Text="{Binding ActiveAutomationCount}" Foreground="{DynamicResource App.Brush.Accent}" FontSize="13"/>
                             </Border>
                         </StackPanel>
-                        <DataGrid ItemsSource="{Binding ActiveAutomations}" AutoGenerateColumns="False"
+                        <DataGrid context:ContextActions.Profile="DashboardAutomations" SelectionMode="Extended" SelectionUnit="FullRow" ItemsSource="{Binding ActiveAutomations}" AutoGenerateColumns="False"
                                   CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True"
                                   HeadersVisibility="Column" MaxHeight="240">
                             <DataGrid.Columns>
@@ -147,8 +147,8 @@
                         </DockPanel>
 
                         <!-- Kombinierte Liste: Jobs und Makros gleich dargestellt -->
-                        <ItemsControl ItemsSource="{Binding RunningItems}">
-                            <ItemsControl.ItemTemplate>
+                        <ListBox SelectionMode="Extended" Background="Transparent" BorderThickness="0" context:ContextActions.Profile="Running" ItemsSource="{Binding RunningItems}">
+                            <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardBox}" Margin="0,0,0,4">
                                         <DockPanel Margin="12,8">
@@ -207,8 +207,8 @@
                                         </DockPanel>
                                     </Border>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
 
                         <!-- Fallback wenn nichts läuft -->
                         <TextBlock Text="{loc:Translate Key=Ui.Dashboard.NoActiveJobMacro}"

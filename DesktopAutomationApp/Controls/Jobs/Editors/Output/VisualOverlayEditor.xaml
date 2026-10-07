@@ -1,6 +1,6 @@
 <UserControl x:Class="DesktopAutomationApp.Controls.Jobs.Editors.Output.VisualOverlayEditor"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
              xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
              xmlns:jobs="clr-namespace:DesktopAutomationApp.Controls.Jobs"
@@ -20,8 +20,8 @@
                     Command="{Binding AddOverlayDetectionCommand}"
                     Style="{StaticResource ButtonSecondary}"/>
         </controls:ResponsiveActionPanel>
-        <ItemsControl ItemsSource="{Binding OverlayDetectionRows}">
-            <ItemsControl.ItemTemplate>
+        <ListBox VirtualizingPanel.IsVirtualizing="False" SelectionMode="Extended" Background="Transparent" BorderThickness="0" context:ContextActions.Profile="OverlayRows" ItemsSource="{Binding OverlayDetectionRows}">
+            <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource GeometryCard}">
                         <controls:ResponsiveActionPanel MinPrimaryWidth="220"
@@ -36,8 +36,8 @@
                         </controls:ResponsiveActionPanel>
                     </Border>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <controls:ResponsiveActionPanel Margin="0,8,0,8"
                                         MinPrimaryWidth="220"
@@ -50,8 +50,8 @@
                     Command="{Binding AddOverlayTextCommand}"
                     Style="{StaticResource ButtonSecondary}"/>
         </controls:ResponsiveActionPanel>
-        <ItemsControl ItemsSource="{Binding OverlayTextRows}">
-            <ItemsControl.ItemTemplate>
+        <ListBox VirtualizingPanel.IsVirtualizing="False" SelectionMode="Extended" Background="Transparent" BorderThickness="0" context:ContextActions.Profile="OverlayRows" ItemsSource="{Binding OverlayTextRows}">
+            <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource GeometryCard}">
                         <StackPanel>
@@ -106,7 +106,7 @@
                         </StackPanel>
                     </Border>
                 </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </StackPanel>
 </UserControl>

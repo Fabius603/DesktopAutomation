@@ -64,6 +64,17 @@ internal static class MacroEditorRenderHost
             Thread.Sleep(10);
         }
         var view = Descendants(window).OfType<MakroStepsView>().Single();
+        var stepList = (ListBox)view.FindName("StepsList");
+        var contextRow = stepList.Items.OfType<MacroStepListItem>().Single(item => item.Step == vm.Steps[3]);
+        var contextTarget = (ListBoxItem)stepList.ItemContainerGenerator.ContainerFromItem(contextRow);
+        var contextMenu = view.CreateStepMenu(contextTarget, contextRow);
+        global::DesktopAutomationApp.Controls.ActionMenus.Prepare(contextMenu);
+        contextMenu.IsOpen = true; Pump(); contextMenu.UpdateLayout();
+        var popupBitmap = new RenderTargetBitmap((int)Math.Ceiling(contextMenu.ActualWidth), (int)Math.Ceiling(contextMenu.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        popupBitmap.Render(contextMenu);
+        var popupEncoder = new PngBitmapEncoder(); popupEncoder.Frames.Add(BitmapFrame.Create(popupBitmap));
+        using (var popupFile = File.Create(Path.Combine(directory, "context-menu.png"))) popupEncoder.Save(popupFile);
+        contextMenu.IsOpen = false; Pump();
         var back = Find<Button>(view, "Macro.Back")!;
         var title = Find<TextBlock>(view, "Macro.Title")!;
         var backPosition = back.TransformToAncestor(view).Transform(new Point());

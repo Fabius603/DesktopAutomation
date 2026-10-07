@@ -9,6 +9,8 @@ history to make an old decision look current.
 
 ## Records
 
+- [2026-10-07 — Share context and overflow menus](2026-10-07-share-context-and-overflow-menus.md)
+
 - [2026-10-06 — Support Velopack and MSIX](2026-10-06-support-velopack-and-msix.md)
 
 - [2026-10-06 — Summarize successful step repetitions](2026-10-06-summarize-successful-step-repetitions.md)

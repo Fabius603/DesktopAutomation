@@ -102,6 +102,7 @@ namespace DesktopAutomationApp.ViewModels
         }
 
         public ICommand RemoveCommand { get; }
+        public ICommand? DuplicateCommand { get; set; }
 
         public PointEntryViewModel(
             ObservableCollection<PointEntryViewModel> owner,

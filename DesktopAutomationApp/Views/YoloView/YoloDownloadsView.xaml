@@ -1,6 +1,6 @@
 <UserControl xmlns:loc="clr-namespace:DesktopAutomationApp.Localization" x:Class="DesktopAutomationApp.Views.YoloDownloadsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:context="clr-namespace:DesktopAutomationApp.Behaviors" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:DesktopAutomationApp.ViewModels"
              xmlns:conv="clr-namespace:DesktopAutomationApp.Converters"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
@@ -44,8 +44,8 @@
         <!-- Modelliste -->
         <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding Models}">
-                    <ItemsControl.ItemTemplate>
+                <ListBox SelectionMode="Extended" Background="Transparent" BorderThickness="0" context:ContextActions.Profile="Models" ItemsSource="{Binding Models}">
+                    <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource ItemCardStyle}">
                                 <Grid>
@@ -128,8 +128,8 @@
                                 </Grid>
                             </Border>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </ScrollViewer>
         </Border>
     </Grid>

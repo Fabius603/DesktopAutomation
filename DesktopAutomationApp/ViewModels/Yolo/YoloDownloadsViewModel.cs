@@ -136,6 +136,15 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
+        public async Task DownloadSelectionAsync(IReadOnlyList<YoloModelEntry> selected)
+        {
+            foreach (var model in selected) if (CanDownload(model)) await DownloadModelAsync(model);
+        }
+        public async Task UninstallSelectionAsync(IReadOnlyList<YoloModelEntry> selected)
+        {
+            foreach (var model in selected) if (CanUninstall(model)) await UninstallModelAsync(model);
+        }
+
         private async Task DownloadModelAsync(YoloModelEntry? model)
         {
             if (model == null || model.IsInstalled || model.IsDownloading || model.IsLocal)
@@ -246,7 +255,8 @@ namespace DesktopAutomationApp.ViewModels
             }
         }
 
-        private static long TryGetFileSize(string path)        {
+        private static long TryGetFileSize(string path)
+        {
             try { return new FileInfo(path).Length; }
             catch { return 0L; }
         }

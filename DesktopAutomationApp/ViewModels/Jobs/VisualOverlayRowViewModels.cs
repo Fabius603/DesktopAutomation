@@ -37,6 +37,9 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
                 JsonValue.Create(string.Empty), Source));
         Source.ReferenceChanged += (_, _) => PropertyChanged?.Invoke(this, new(nameof(Source)));
         if (binding is not null) Source.Load(binding);
+        DuplicateCommand = new RelayCommand(() => owner.Insert(owner.IndexOf(this) + 1,
+            new DetectionOverlayRowViewModel(owner, sources, inputContract, variables, providerSources,
+                Source.ToBinding(), pickerContext, sourceCatalog)));
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
         MoveUpCommand = new RelayCommand(() => Move(-1));
         MoveDownCommand = new RelayCommand(() => Move(1));
@@ -45,6 +48,7 @@ public sealed class DetectionOverlayRowViewModel : INotifyPropertyChanged
     public ValueReferencePickerViewModel Source { get; }
     public GeneratedStepFieldViewModel SourceField { get; }
     public ICommand RemoveCommand { get; }
+    public ICommand DuplicateCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -146,6 +150,14 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
                 inputReferenceEditor: new GeneratedResultBindingEditorViewModel(
                     JsonValue.Create(string.Empty), Source));
         }
+        DuplicateCommand = new RelayCommand(() =>
+        {
+            var copy = new TextOverlayRowViewModel(owner, sources, inputContract, chooseMonitor, variables, providerSources,
+                ToSettings(), pickerContext, inputKeyPrefix + ".copy." + Guid.NewGuid().ToString("N"), nestedInputResolver, sourceCatalog);
+            copy._id = Guid.NewGuid();
+            foreach (var pair in NestedFields.Zip(copy.NestedFields)) ContextFieldCopies.Copy(pair.First, pair.Second);
+            owner.Insert(owner.IndexOf(this) + 1, copy);
+        });
         RemoveCommand = new RelayCommand(() => owner.Remove(this));
         MoveUpCommand = new RelayCommand(() => Move(-1));
         MoveDownCommand = new RelayCommand(() => Move(1));
@@ -155,6 +167,7 @@ public sealed class TextOverlayRowViewModel : INotifyPropertyChanged
     public ValueReferencePickerViewModel Source { get; }
     public GeneratedStepFieldViewModel? TextSourceField { get; }
     public ICommand RemoveCommand { get; }
+    public ICommand DuplicateCommand { get; }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
     public ICommand ChooseMonitorCommand { get; }

@@ -989,7 +989,9 @@ namespace DesktopAutomationApp.ViewModels
             ScheduleValidation();
         }
 
-        private async Task DeleteVariableAsync(JobVariableEditorViewModel? editor)
+        private Task DeleteVariableAsync(JobVariableEditorViewModel? editor) => DeleteVariableAsync(editor, true);
+
+        private async Task DeleteVariableAsync(JobVariableEditorViewModel? editor, bool confirm)
         {
             if (editor == null) return;
             var workingJob = ReferenceJob();
@@ -1013,7 +1015,7 @@ namespace DesktopAutomationApp.ViewModels
                 return;
             }
             var message = Loc.Format("Ui.Job.Variables.Delete.Message", editor.Name);
-            if (!await _dialogService.ConfirmAsync(message, Loc.Get("Ui.Job.Variables.Delete.Title"))) return;
+            if (confirm && !await _dialogService.ConfirmAsync(message, Loc.Get("Ui.Job.Variables.Delete.Title"))) return;
 
             var oldIndex = JobVariables.IndexOf(editor);
             if (_variableDraftSessionActive)
@@ -1168,6 +1170,32 @@ namespace DesktopAutomationApp.ViewModels
             _variableDraftSessionActive = false;
             ResetVariableEditors(Job.Variables);
             NotifyVariableDraftStateChanged();
+        }
+
+        public async Task DeleteVariableSelectionAsync(IReadOnlyList<JobVariableEditorViewModel> selected)
+        {
+            if (IsDebugActive || IsMutationBusy || selected.Count == 0) return;
+            var working = ReferenceJob();
+            if (selected.Any(editor => ValueReferenceUsageInspector.Find(working, ValueProviderIds.JobVariable, editor.Model.Id.ToString("D")).Count > 0))
+            {
+                _dialogService.ShowError(Loc.Get("Ui.Context.VariablesInUse"), Loc.Get("Ui.Job.Variables.Delete.Title"));
+                return;
+            }
+            if (!await _dialogService.ConfirmAsync(Loc.Format("Ui.Context.DeleteSelection", selected.Count), Loc.Get("Ui.Job.Variables.Delete.Title"))) return;
+            foreach (var editor in selected) await DeleteVariableAsync(editor, false);
+        }
+
+        public void DuplicateVariableSelection(IReadOnlyList<JobVariableEditorViewModel> selected)
+        {
+            foreach (var editor in selected) if (DuplicateVariableCommand.CanExecute(editor)) DuplicateVariable(editor);
+        }
+
+        public bool ApplyVariableSelection(IReadOnlyList<JobVariableEditorViewModel> selected)
+        {
+            if (!ValidateVariableDrafts(selected)) return false;
+            foreach (var editor in selected.Where(editor => editor.IsDirty)) CommitVariableDraft(editor);
+            CompleteVariableDraftCommit();
+            return true;
         }
 
         private bool ApplySelectedVariableDraft()
@@ -1448,11 +1476,13 @@ namespace DesktopAutomationApp.ViewModels
             NotifyDebugStateChanged();
         }
 
-        private async Task ToggleBreakpointsAsync(JobStep? step)
+        private Task ToggleBreakpointsAsync(JobStep? step)
+            => SetSelectionBreakpointsAsync(step, GetOrderedSelection(step).Any(target => !target.IsBreakpoint));
+
+        public async Task SetSelectionBreakpointsAsync(JobStep? step, bool enable)
         {
             var targets = GetOrderedSelection(step);
-            if (targets.Count == 0) return;
-            var enable = targets.Any(target => !target.IsBreakpoint);
+            if (IsMutationBusy || targets.Count == 0) return;
             await RunMutationAsync(async () =>
             {
                 await PushUndoAsync();
@@ -1465,11 +1495,13 @@ namespace DesktopAutomationApp.ViewModels
             });
         }
 
-        private async Task ToggleSelectedStepsEnabledAsync(JobStep? step)
+        private Task ToggleSelectedStepsEnabledAsync(JobStep? step)
+            => SetSelectionEnabledAsync(step, GetOrderedSelection(step).Any(target => target.CanBeDisabled && !target.IsEnabled));
+
+        public async Task SetSelectionEnabledAsync(JobStep? step, bool enable)
         {
             var targets = GetOrderedSelection(step).Where(target => target.CanBeDisabled).ToList();
-            if (targets.Count == 0) return;
-            var enable = targets.Any(target => !target.IsEnabled);
+            if (IsDebugActive || IsMutationBusy || targets.Count == 0) return;
             await RunMutationAsync(async () =>
             {
                 await PushUndoAsync();

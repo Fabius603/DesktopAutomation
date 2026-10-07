@@ -116,6 +116,7 @@ namespace DesktopAutomationApp
         private App(InstallationContext installation)
         {
             InitializeComponent();
+            EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent, new RoutedEventHandler((sender, _) => DesktopAutomationApp.Controls.ActionMenus.Prepare((System.Windows.Controls.ContextMenu)sender)));
             GlobalScrollBehavior.Initialize();
 
             AppPaths.MigrateLegacyData();
@@ -389,58 +390,30 @@ namespace DesktopAutomationApp
             var dispatcher = _host.Services.GetRequiredService<IJobDispatcher>();
             var automationEngine = _host.Services.GetRequiredService<IAutomationEngine>();
 
-            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-
-            var openItem = contextMenu.Items.Add(Loc.Get("Tray.Open"));
-            openItem.Click += (_, _) => ShowMainWindow(mainWindow);
-
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-
-            var stopJobsItem = new System.Windows.Forms.ToolStripMenuItem(Loc.Get("Tray.StopAllJobs"));
-            stopJobsItem.Click += (_, _) =>
+            _trayIcon = new System.Windows.Forms.NotifyIcon { Text = "DesktopAutomation" };
+            _trayIcon.MouseUp += (_, args) =>
             {
-                Log.Information("Alle Jobs wurden über das Tray-Menü gestoppt.");
-                dispatcher.CancelAllJobs();
-            };
-            contextMenu.Items.Add(stopJobsItem);
-
-            var toggleAutomationsItem = new System.Windows.Forms.ToolStripMenuItem();
-            toggleAutomationsItem.Click += async (_, _) =>
-            {
-                try
+                if (args.Button != System.Windows.Forms.MouseButtons.Right) return;
+                Dispatcher.Invoke(() =>
                 {
-                    await automationEngine.SetPausedAsync(!automationEngine.IsPaused);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Automationen konnten nicht pausiert oder fortgesetzt werden.");
-                }
-            };
-            contextMenu.Items.Add(toggleAutomationsItem);
-
-            contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-
-            var exitItem = contextMenu.Items.Add(Loc.Get("Tray.Exit"));
-            exitItem.Click += (_, _) => Shutdown();
-
-            contextMenu.Opening += (_, _) =>
-            {
-                var hasRunningJobs = dispatcher.RunningJobIds.Count > 0;
-                stopJobsItem.Visible = hasRunningJobs;
-                toggleAutomationsItem.Text = automationEngine.IsPaused ? Loc.Get("Tray.ResumeAutomations") : Loc.Get("Tray.PauseAutomations");
-            };
-            LocalizationService.Instance.CultureChanged += (_, _) =>
-            {
-                openItem.Text = Loc.Get("Tray.Open");
-                stopJobsItem.Text = Loc.Get("Tray.StopAllJobs");
-                exitItem.Text = Loc.Get("Tray.Exit");
-                toggleAutomationsItem.Text = automationEngine.IsPaused ? Loc.Get("Tray.ResumeAutomations") : Loc.Get("Tray.PauseAutomations");
-            };
-
-            _trayIcon = new System.Windows.Forms.NotifyIcon
-            {
-                Text = "DesktopAutomation",
-                ContextMenuStrip = contextMenu,
+                    var menu = Controls.ActionMenus.Create(mainWindow);
+                    menu.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
+                    Controls.ActionMenus.Add(menu, "Tray.Open", new RelayCommand(() => ShowMainWindow(mainWindow)));
+                    menu.Items.Add(new System.Windows.Controls.Separator());
+                    Controls.ActionMenus.Add(menu, "Tray.StopAllJobs", new RelayCommand(() => dispatcher.CancelAllJobs(), () => dispatcher.RunningJobIds.Count > 0));
+                    Controls.ActionMenus.Add(menu, "Tray.StopAllMakros", new RelayCommand(() =>
+                    {
+                        foreach (var id in dispatcher.RunningMakroIds.ToArray()) dispatcher.CancelMakro(id);
+                    }, () => dispatcher.RunningMakroIds.Count > 0));
+                    Controls.ActionMenus.Add(menu, automationEngine.IsPaused ? "Tray.ResumeAutomations" : "Tray.PauseAutomations", new AsyncRelayCommand(async () =>
+                    {
+                        try { await automationEngine.SetPausedAsync(!automationEngine.IsPaused); }
+                        catch (Exception error) { Log.Error(error, "Automationen konnten nicht pausiert oder fortgesetzt werden."); }
+                    }));
+                    menu.Items.Add(new System.Windows.Controls.Separator());
+                    Controls.ActionMenus.Add(menu, "Tray.Exit", new RelayCommand(() => Shutdown()));
+                    menu.IsOpen = true;
+                });
             };
 
             _trayIcon.Visible = true;

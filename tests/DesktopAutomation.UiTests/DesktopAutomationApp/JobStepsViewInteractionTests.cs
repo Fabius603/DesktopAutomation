@@ -17,6 +17,7 @@ public sealed class JobStepsViewInteractionTests
         {
             try
             {
+                SynchronizationContext.SetSynchronizationContext(new System.Windows.Threading.DispatcherSynchronizationContext(System.Windows.Threading.Dispatcher.CurrentDispatcher));
                 var previous = new TimeoutStep();
                 var clicked = new TimeoutStep();
                 using var vm = JobStepsViewModelExecutionTests.CreateRenderViewModel(new Job { Steps = [previous, clicked] });
@@ -25,8 +26,18 @@ public sealed class JobStepsViewInteractionTests
                 var actions = menu.Items.OfType<MenuItem>().ToArray();
                 var delete = Assert.Single(actions, item => ReferenceEquals(item.Command, vm.DeleteStepCommand));
                 Assert.Same(clicked, delete.CommandParameter);
-                var toggle = Assert.Single(actions, item => ReferenceEquals(item.Command, vm.ToggleBreakpointCommand));
-                Assert.Same(clicked, toggle.CommandParameter);
+                var toggle = Assert.Single(actions, item => System.Windows.Automation.AutomationProperties.GetAutomationId(item) == "Context.Ui.Context.SetBreakpoints");
+                Assert.True(toggle.Command.CanExecute(toggle.CommandParameter));
+                var mutation = vm.SetSelectionBreakpointsAsync(clicked, true);
+                var frame = new System.Windows.Threading.DispatcherFrame();
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(10) };
+                timer.Tick += (_, _) => { if (mutation.IsCompleted) frame.Continue = false; };
+                timer.Start();
+                System.Windows.Threading.Dispatcher.PushFrame(frame);
+                timer.Stop();
+                mutation.GetAwaiter().GetResult();
+                Assert.True(clicked.IsBreakpoint);
+                Assert.False(previous.IsBreakpoint);
                 Assert.Same(previous, vm.SelectedStep);
             }
             catch (Exception exception) { error = exception; }

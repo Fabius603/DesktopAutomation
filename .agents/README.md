@@ -12,6 +12,8 @@ the root `AGENTS.md` before using them.
 
 ## Skill routing
 
+Context-menu, overflow-menu, and selection changes also require `instructions/context-menus.md`.
+
 - WPF UI or MVVM work: `skills/wpf-development/SKILL.md`
 - Windows Forms interop or WinForms work: `skills/winforms-development/SKILL.md`
 - Architecture boundaries, shared rules, or duplicate implementations:

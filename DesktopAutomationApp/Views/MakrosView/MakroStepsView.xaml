@@ -58,27 +58,7 @@
  <ListBox Grid.Row="1" x:Name="StepsList" ItemsSource="{Binding VisibleItems}" SelectionMode="Extended" Background="Transparent" BorderThickness="0" Padding="0"
  Foreground="{DynamicResource App.Brush.TextPrimary}" ItemContainerStyle="{StaticResource QuietRow}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel"
  SelectionChanged="StepsList_SelectionChanged" PreviewMouseRightButtonDown="StepsList_PreviewMouseRightButtonDown" behaviors:StepDragDrop.MoveCommand="{Binding ReorderStepCommand}" AutomationProperties.AutomationId="Macro.Steps">
-<ListBox.ContextMenu>
-                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
-                                     Opened="StepsContextMenu_Opened">
-                            <MenuItem x:Name="GroupToggleMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Toggle}"
-                                      Command="{Binding ToggleGroupCommand}"
-                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                            <MenuItem x:Name="GroupRenameMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Rename}"
-                                      Command="{Binding RenameGroupCommand}"
-                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                            <MenuItem x:Name="GroupDissolveMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Dissolve}"
-                                      Command="{Binding DissolveGroupCommand}"
-                                      CommandParameter="{Binding PlacementTarget.SelectedItem.GroupId, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
 
-                            <MenuItem x:Name="StepCreateGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.Create}" InputGestureText="{loc:Translate Key=Shortcut.CtrlG}" Command="{Binding CreateGroupCommand}"/>
-                            <MenuItem x:Name="StepRemoveGroupMenuItem" Header="{loc:Translate Key=Ui.Macro.Group.RemoveSelected}" InputGestureText="{loc:Translate Key=Shortcut.CtrlShiftG}" Command="{Binding RemoveFromGroupCommand}"/>
-                            <Separator x:Name="StepContextSeparator"/>
-                            <MenuItem x:Name="StepCopyMenuItem" Header="{loc:Translate Key=Ui.Common.Copy}" InputGestureText="{loc:Translate Key=Shortcut.CtrlC}" Command="{Binding CopyCommand}"/>
-                            <MenuItem x:Name="StepDuplicateMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}" InputGestureText="{loc:Translate Key=Shortcut.CtrlD}" Command="{Binding DuplicateStepCommand}" CommandParameter="{Binding SelectedStep}"/>
-                            <MenuItem x:Name="StepDeleteMenuItem" Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}" InputGestureText="{loc:Translate Key=Shortcut.Delete}" Command="{Binding DeleteSelectedCommand}"/>
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
 
                     <ListBox.InputBindings>
                         <KeyBinding Gesture="{x:Static input:AppShortcutGestures.AddStep}" Command="{Binding AddStepCommand}"/>
@@ -106,13 +86,7 @@
  <TextBlock Grid.Column="3" Text="{Binding Parameters}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Parameters}" Foreground="{DynamicResource App.Brush.TextSecondary}" Margin="0,0,10,0"/>
  <TextBlock Grid.Column="4" Text="{Binding DelayDisplay}" VerticalAlignment="Center"/>
  <Button mah:ControlsHelper.ContentCharacterCasing="Normal" Grid.Column="5" Style="{StaticResource ButtonIcon}" Click="MoreButton_Click" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}" ToolTip="{loc:Translate Key=Ui.Common.Ellipsis}"><iconPacks:PackIconMaterial Kind="DotsVertical"/>
- <Button.ContextMenu><ContextMenu>
-<MenuItem Header="{loc:Translate Key=Ui.Common.EditStep}" Command="{Binding PlacementTarget.Tag.EditStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-<MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepUp}" Command="{Binding PlacementTarget.Tag.MoveStepUpCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-<MenuItem Header="{loc:Translate Key=Ui.Common.MoveStepDown}" Command="{Binding PlacementTarget.Tag.MoveStepDownCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-<MenuItem Header="{loc:Translate Key=Ui.Macro.Steps.DuplicateStep}" Command="{Binding PlacementTarget.Tag.DuplicateStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-<MenuItem Header="{loc:Translate Key=Ui.Macro.Steps.DeleteStep}" Command="{Binding PlacementTarget.Tag.DeleteStepCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext.Step, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-</ContextMenu></Button.ContextMenu></Button>
+ </Button>
  </Grid></DataTemplate>
  <DataTemplate DataType="{x:Type vm:MacroGroupListItem}">
  <Border Background="{DynamicResource App.Brush.Surface}" Padding="16,10"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

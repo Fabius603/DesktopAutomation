@@ -19,6 +19,7 @@ public sealed class UserChoiceEditorBindingTests
         XNamespace controls = "clr-namespace:DesktopAutomationApp.Controls";
         XNamespace generated = "clr-namespace:DesktopAutomationApp.Controls.Jobs.Editors.Generated";
         XNamespace iconPacks = "http://metro.mahapps.com/winfx/xaml/iconpacks";
+        XNamespace context = "clr-namespace:DesktopAutomationApp.Behaviors";
         var optionsTemplate = document.Descendants()
             .Single(element => element.Attribute(x + "Key")?.Value == "UserChoiceOptionsFieldTemplate");
         var sourceInputs = optionsTemplate.Descendants(generated + "GeneratedValueSourceInput")
@@ -36,14 +37,14 @@ public sealed class UserChoiceEditorBindingTests
         var menuButton = Assert.Single(optionsTemplate.Descendants(presentation + "Button"), button =>
             button.Descendants(iconPacks + "PackIconMaterial")
                 .Any(icon => icon.Attribute("Kind")?.Value == "DotsVertical"));
-        Assert.Equal("OpenButtonContextMenu_Click", menuButton.Attribute("Click")?.Value);
+        Assert.Equal("True", menuButton.Attribute(context + "ContextActions.IsMenuButton")?.Value);
+        var optionList = Assert.Single(optionsTemplate.Descendants(presentation + "ListBox"));
+        Assert.Equal("Answers", optionList.Attribute(context + "ContextActions.Profile")?.Value);
+        Assert.Equal("Extended", optionList.Attribute("SelectionMode")?.Value);
         Assert.Equal(controls + "ResponsiveActionPanel", menuButton.Parent?.Name);
         Assert.Equal("Right", menuButton.Attribute("HorizontalAlignment")?.Value);
         Assert.Equal("Center", menuButton.Attribute("VerticalAlignment")?.Value);
-        var menuCommands = menuButton.Descendants(presentation + "MenuItem")
-            .Select(item => item.Attribute("Command")?.Value)
-            .ToArray();
-        Assert.Equal(["{Binding MoveUpCommand}", "{Binding MoveDownCommand}", "{Binding RemoveCommand}"], menuCommands);
+        Assert.Empty(menuButton.Descendants(presentation + "MenuItem"));
 
         var optionViewModel = File.ReadAllText(Path.Combine(
             RepositoryRoot(), "DesktopAutomationApp", "ViewModels", "Jobs", "UserChoiceOptionEditorViewModel.cs"));

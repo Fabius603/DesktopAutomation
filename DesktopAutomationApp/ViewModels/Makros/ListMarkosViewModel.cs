@@ -215,6 +215,9 @@ namespace DesktopAutomationApp.ViewModels
             Stop = () => _dispatcher.CancelMakro(makro.Id),
             IsRunning = () => RunningMakroIds.Contains(makro.Id),
             RenameAsync = () => RenameMakroFromLibraryAsync(makro),
+            DeleteConfirmedAsync = () => DeleteMakroFromLibraryAsync(makro, false),
+            DuplicateAsync = () => DuplicateMakroFromLibraryAsync(makro),
+            OpenFile = () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(_makroAppService.GetStoragePath()) { UseShellExecute = true }),
             DeleteAsync = () => DeleteMakroFromLibraryAsync(makro)
         };
 
@@ -227,14 +230,27 @@ namespace DesktopAutomationApp.ViewModels
             await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
         }
 
-        private async Task<bool> DeleteMakroFromLibraryAsync(Makro makro)
+        private async Task<bool> DeleteMakroFromLibraryAsync(Makro makro, bool confirm = true)
         {
-            if (!await _dialogService.ConfirmAsync(
+            if (confirm && !await _dialogService.ConfirmAsync(
                     Loc.Format("Macro.Delete.One", makro.Name),
                     Loc.Get("Dialog.Delete.Title"))) return false;
             Items.Remove(makro);
             await _makroAppService.DeleteMakroAsync(makro.Id);
             return true;
         }
+        private async Task DuplicateMakroFromLibraryAsync(Makro makro)
+        {
+            var name = Loc.Format("Ui.Context.CopyTitle", makro.Name);
+            var initial = name;
+            for (var suffix = 2; Items.Any(item => item.Name == name); suffix++) name = initial + " (" + suffix + ")";
+            var copy = TaskAutomation.Makros.MakroSnapshotService.CloneMakro(makro, name);
+            await _makroAppService.SaveMakroAsync(copy);
+            Items.Add(copy);
+            if (Library.ItemFolder(makro.Id) is { } folder)
+                await _libraryOrganization.PlaceItemAsync(DesktopAutomation.Application.Organization.LibraryItemKind.Makro, copy.Id, folder);
+            await Library.SetItemsAsync(Items.Select(CreateLibraryDescriptor));
+        }
+
     }
 }

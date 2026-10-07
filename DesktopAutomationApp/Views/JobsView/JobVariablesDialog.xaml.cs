@@ -18,26 +18,6 @@ public partial class JobVariablesDialog : MetroWindow
         Loaded += (_, _) => CenterOnOwnerOnce();
     }
 
-    private void MenuButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { ContextMenu: { } menu } button) return;
-        menu.PlacementTarget = button;
-        menu.IsOpen = true;
-    }
-
-    private void VariableList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is not ListBox listBox || e.OriginalSource is not DependencyObject source) return;
-        if (ItemsControl.ContainerFromElement(listBox, source) is ListBoxItem item)
-        {
-            item.IsSelected = true;
-            item.Focus();
-            return;
-        }
-
-        e.Handled = true;
-    }
-
     private void Find_Executed(object sender, ExecutedRoutedEventArgs e)
     {
         VariableSearchBox.Focus();
@@ -53,6 +33,21 @@ public partial class JobVariablesDialog : MetroWindow
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (VariableList.IsKeyboardFocusWithin && Keyboard.FocusedElement is not TextBoxBase
+            && DataContext is JobStepsViewModel selectionOwner)
+        {
+            var targets = VariableList.SelectedItems.OfType<JobVariableEditorViewModel>().ToArray();
+            if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                if (targets.All(item => selectionOwner.DuplicateVariableCommand.CanExecute(item))) selectionOwner.DuplicateVariableSelection(targets);
+                e.Handled = true; return;
+            }
+            if (e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                new AsyncRelayCommand(() => selectionOwner.DeleteVariableSelectionAsync(targets)).Execute(null);
+                e.Handled = true; return;
+            }
+        }
         if (e.Key != Key.Delete || Keyboard.Modifiers != ModifierKeys.None
             || Keyboard.FocusedElement is TextBoxBase or ComboBox
             || DataContext is not JobStepsViewModel viewModel
