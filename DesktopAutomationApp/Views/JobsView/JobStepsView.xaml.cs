@@ -31,12 +31,27 @@ namespace DesktopAutomationApp.Views
     {
         private JobStepsViewModel? _vm;
         private bool _syncingSelection;
+        private GridLength _expandedInspectorWidth = new(1, GridUnitType.Star);
+        private bool _inspectorCollapsed;
 
         public JobStepsView()
         {
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             PreviewKeyDown += OnPreviewKeyDown;
+            SizeChanged += (_, _) => _vm?.InspectorPane.UpdateWidth(ActualWidth);
+            Loaded += (_, _) =>
+            {
+                if (_vm is null) return;
+                _vm.InspectorPane.PropertyChanged -= OnInspectorStateChanged;
+                _vm.InspectorPane.PropertyChanged += OnInspectorStateChanged;
+                _vm.InspectorPane.UpdateWidth(ActualWidth);
+                ApplyInspectorLayout();
+            };
+            Unloaded += (_, _) =>
+            {
+                if (_vm is not null) _vm.InspectorPane.PropertyChanged -= OnInspectorStateChanged;
+            };
         }
 
         private void SelectedJobStepTabs_Loaded(object sender, RoutedEventArgs e) =>
@@ -159,9 +174,34 @@ namespace DesktopAutomationApp.Views
         // ── VM → View: react when SelectedStep changes programmatically (delete, paste, undo …) ──
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (_vm != null) _vm.PropertyChanged -= OnVmPropertyChanged;
+            if (_vm != null)
+            {
+                _vm.PropertyChanged -= OnVmPropertyChanged;
+                _vm.InspectorPane.PropertyChanged -= OnInspectorStateChanged;
+            }
             _vm = e.NewValue as JobStepsViewModel;
-            if (_vm != null) _vm.PropertyChanged += OnVmPropertyChanged;
+            if (_vm != null)
+            {
+                _vm.PropertyChanged += OnVmPropertyChanged;
+                _vm.InspectorPane.PropertyChanged += OnInspectorStateChanged;
+                _vm.InspectorPane.UpdateWidth(ActualWidth);
+            }
+            ApplyInspectorLayout();
+        }
+
+        private void OnInspectorStateChanged(object? sender, PropertyChangedEventArgs e) => ApplyInspectorLayout();
+
+        private void ApplyInspectorLayout()
+        {
+            var collapsed = _vm?.InspectorPane.IsCollapsed == true;
+            if (collapsed == _inspectorCollapsed) return;
+            if (collapsed) _expandedInspectorWidth = DebugInspectorColumn.Width;
+            _inspectorCollapsed = collapsed;
+            DebugInspectorColumn.MinWidth = collapsed ? CollapsiblePaneState.InspectorPeekWidth : 360;
+            DebugInspectorColumn.Width = collapsed ? new GridLength(CollapsiblePaneState.InspectorPeekWidth) : _expandedInspectorWidth;
+            // Keep keyboard navigation on the visible opening/closing control.
+            if (InspectorSurface.IsKeyboardFocusWithin || ExpandInspectorButton.IsKeyboardFocusWithin)
+                Dispatcher.BeginInvoke(() => (collapsed ? ExpandInspectorButton : CollapseInspectorButton).Focus());
         }
 
         private void OnVmPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -196,14 +236,6 @@ namespace DesktopAutomationApp.Views
                 }
             }
             finally { _syncingSelection = false; }
-        }
-
-        private void DebugInspector_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (DebugInspectorColumn == null) return;
-            DebugInspectorColumn.Width = e.NewValue is true
-                ? new GridLength(360)
-                : new GridLength(0);
         }
 
         // ── View → VM: sync multi-selection to VM ──
@@ -375,8 +407,8 @@ namespace DesktopAutomationApp.Views
                 return;
 
             var valid = IsPointerOverHeader(expander, e)
-                ? StepDragDrop.ShowSectionStartTarget(list)
-                : StepDragDrop.ShowSectionTarget(list);
+                ? StepDragDrop.ShowSectionStartTarget(list, e.GetPosition(list))
+                : StepDragDrop.ShowSectionTarget(list, e.GetPosition(list));
             e.Effects = valid ? DragDropEffects.Move : DragDropEffects.None;
             e.Handled = true;
         }
@@ -392,6 +424,7 @@ namespace DesktopAutomationApp.Views
                 return;
 
             var list = AllStepLists().FirstOrDefault(candidate => ReferenceEquals(candidate.ItemsSource, expander.Tag));
+            if (list is not null && StepDragDrop.KeepStationaryPreview(list, e.GetPosition(list))) return;
             StepDragDrop.ClearTargetPreview(list);
         }
 
@@ -403,6 +436,13 @@ namespace DesktopAutomationApp.Views
                 || DataContext is not JobStepsViewModel vm)
                 return;
 
+            var list = AllStepLists().FirstOrDefault(candidate => ReferenceEquals(candidate.ItemsSource, target));
+            if (list is not null && StepDragDrop.DropRetainedTarget(list, e.GetPosition(list), e.Data) is { } retainedEffect)
+            {
+                e.Effects = retainedEffect;
+                e.Handled = true;
+                return;
+            }
             var request = new StepDragDrop.MoveRequest(
                 payload.Source,
                 payload.SourceIndex,

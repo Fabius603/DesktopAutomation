@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel;
 using System.Windows;
 using MahApps.Metro.Controls;
@@ -12,12 +12,33 @@ namespace DesktopAutomationApp
     public partial class MainWindow : MetroWindow
     {
         private bool _allowClose;
+        public static readonly DependencyProperty NavigationPaneProperty = DependencyProperty.Register(
+            nameof(NavigationPane), typeof(CollapsiblePaneState), typeof(MainWindow));
+        public CollapsiblePaneState NavigationPane
+        {
+            get => (CollapsiblePaneState)GetValue(NavigationPaneProperty);
+            private set => SetValue(NavigationPaneProperty, value);
+        }
 
         public MainWindow()
         {
+            NavigationPane = new CollapsiblePaneState(CollapsiblePaneState.NavigationCollapseWidth);
             InitializeComponent();
+            NavigationPane.PropertyChanged += OnNavigationPaneChanged;
+            SizeChanged += (_, _) => NavigationPane.UpdateWidth(ActualWidth);
+            DataContextChanged += (_, e) =>
+            {
+                NavigationPane.PropertyChanged -= OnNavigationPaneChanged;
+                NavigationPane = (e.NewValue as MainViewModel)?.NavigationPane ?? new CollapsiblePaneState(CollapsiblePaneState.NavigationCollapseWidth);
+                NavigationPane.PropertyChanged += OnNavigationPaneChanged;
+                NavigationPane.UpdateWidth(ActualWidth);
+                UpdateNavigationWidth();
+            };
             PreviewKeyDown += OnPreviewKeyDown;
         }
+
+        private void OnNavigationPaneChanged(object? sender, PropertyChangedEventArgs e) => UpdateNavigationWidth();
+        private void UpdateNavigationWidth() => NavigationColumn.Width = new GridLength(NavigationPane.IsCollapsed ? 72 : 268);
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {

@@ -7,9 +7,10 @@
                  xmlns:loc="clr-namespace:DesktopAutomationApp.Localization"
                  xmlns:controls="clr-namespace:DesktopAutomationApp.Controls"
                  xmlns:input="clr-namespace:DesktopAutomationApp.Input"
+                 xmlns:local="clr-namespace:DesktopAutomationApp"
                  Title="{Binding WindowTitle}"
                  Icon="Assets/App.ico"
-                 MinWidth="1360" MinHeight="840"
+                 MinWidth="1160" MinHeight="840"
                  Width="{Binding MinWidth, RelativeSource={RelativeSource Self}}" Height="{Binding MinHeight, RelativeSource={RelativeSource Self}}" TitleBarHeight="42" FontSize="14"
                  Background="{DynamicResource App.Brush.WindowBackground}"
                  WindowTitleBrush="{DynamicResource App.Brush.Surface}"
@@ -19,10 +20,32 @@
                  BorderThickness="0"
                  GlowBrush="{x:Null}"
                  WindowStartupLocation="CenterScreen">
+    <mah:MetroWindow.Resources>
+        <Style x:Key="NavigationLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NavigationPane.IsCollapsed, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NavigationIcon" TargetType="iconPacks:PackIconMaterial">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NavigationPane.IsCollapsed, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Value="True">
+                    <Setter Property="Margin" Value="3,0,0,0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </mah:MetroWindow.Resources>
     <mah:MetroWindow.InputBindings>
-        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateJobs}" Command="{Binding ShowListJobs}"/>
-        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateMacros}" Command="{Binding ShowListMakros}"/>
-        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateAutomations}" Command="{Binding ShowListAutomations}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateJobs}" Command="{Binding ShowListJobs}" AutomationProperties.AutomationId="Navigation.Jobs" AutomationProperties.Name="{loc:Translate Key=Ui.Job.List.Jobs}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateMacros}" Command="{Binding ShowListMakros}" AutomationProperties.AutomationId="Navigation.Macros" AutomationProperties.Name="{loc:Translate Key=Ui.Dashboard.Makros}"/>
+        <KeyBinding Gesture="{x:Static input:AppShortcutGestures.NavigateAutomations}" Command="{Binding ShowListAutomations}" AutomationProperties.AutomationId="Navigation.Automations" AutomationProperties.Name="{loc:Translate Key=Ui.Automation.List.Automations}"/>
         <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelp}" Command="{Binding ShowShortcutHelpCommand}"/>
         <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelpQuestion}" Command="{Binding ShowShortcutHelpCommand}"/>
         <KeyBinding Gesture="{x:Static input:AppShortcutGestures.ShowHelpQuestionAlternate}" Command="{Binding ShowShortcutHelpCommand}"/>
@@ -36,7 +59,7 @@
     </mah:MetroWindow.TitleTemplate>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="268"/>
+            <ColumnDefinition x:Name="NavigationColumn" Width="268"/>
             <ColumnDefinition Width="1"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
@@ -44,30 +67,61 @@
         <!-- ═══ Sidebar ═══ -->
         <Border Background="{DynamicResource App.Brush.SidebarBackground}">
             <DockPanel>
-                <!-- App Branding -->
-                <StackPanel DockPanel.Dock="Top" Margin="20,20,20,28">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Width="24" Height="24"
-                               Source="{Binding Icon, RelativeSource={RelativeSource AncestorType={x:Type mah:MetroWindow}}}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,10,0"/>
-                        <TextBlock Text="{loc:Translate Key=Ui.App.Title}"
-                                   FontSize="17"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource App.Brush.Accent}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </StackPanel>
-
+                <Grid DockPanel.Dock="Top" Margin="12,12,12,20" MinHeight="36">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Image Grid.Column="0" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center"
+                           Source="{Binding Icon, RelativeSource={RelativeSource AncestorType={x:Type mah:MetroWindow}}}"
+                           Visibility="{Binding NavigationPane.IsExpanded, RelativeSource={RelativeSource AncestorType=local:MainWindow}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <TextBlock x:Name="NavigationBrandTitle" Grid.Column="1" Text="{loc:Translate Key=Ui.App.Title}"
+                               FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="{DynamicResource App.Brush.Accent}"
+                               Visibility="{Binding NavigationPane.IsExpanded, RelativeSource={RelativeSource AncestorType=local:MainWindow}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button x:Name="NavigationPaneToggle" Width="32" Height="32" Padding="0"
+                            Command="{Binding NavigationPane.ToggleCommand, RelativeSource={RelativeSource AncestorType=local:MainWindow}}"
+                            AutomationProperties.AutomationId="Navigation.Toggle">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ButtonIcon}">
+                            <Setter Property="Grid.Column" Value="2"/>
+                            <Setter Property="ToolTip" Value="{loc:Translate Key=Ui.Navigation.Collapse}"/>
+                            <Setter Property="AutomationProperties.Name" Value="{loc:Translate Key=Ui.Navigation.Collapse}"/>
+                            <Style.Triggers><DataTrigger Binding="{Binding NavigationPane.IsCollapsed, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Value="True">
+                                <Setter Property="ToolTip" Value="{loc:Translate Key=Ui.Navigation.Expand}"/>
+                                <Setter Property="AutomationProperties.Name" Value="{loc:Translate Key=Ui.Navigation.Expand}"/>
+                                <Setter Property="Grid.Column" Value="0"/>
+                                <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                            </DataTrigger></Style.Triggers>
+                        </Style></Button.Style>
+                        <controls:PaneToggleIcon Width="20" Height="20" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
+                </Grid>
                 <!-- Update-Notification (nur sichtbar wenn neue Version vorhanden) -->
+                <Button DockPanel.Dock="Bottom" Padding="0" Command="{Binding NavigationPane.ToggleCommand, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Margin="12,0,12,16"
+                        AutomationProperties.AutomationId="Navigation.Update" AutomationProperties.Name="{loc:Translate Key=Ui.App.UpdateAvailable}"
+                        ToolTip="{loc:Translate Key=Ui.App.UpdateAvailable}">
+                    <Button.Style><Style TargetType="Button" BasedOn="{StaticResource ButtonSecondary}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding HasUpdate}" Value="True"/>
+                            <Condition Binding="{Binding NavigationPane.IsCollapsed, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Value="True"/>
+                        </MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers>
+                    </Style></Button.Style>
+                    <iconPacks:PackIconMaterial Kind="ArrowUpCircleOutline" Width="22" Height="22"/>
+                </Button>
                 <Border DockPanel.Dock="Bottom"
-                        Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Background="{DynamicResource App.Brush.AccentSubtle}"
                         BorderBrush="{DynamicResource App.Brush.Accent}"
                         BorderThickness="1"
                         CornerRadius="6"
                         Margin="12,0,12,16"
                         Padding="12,10">
+                    <Border.Style><Style TargetType="Border">
+                        <Setter Property="Visibility" Value="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding NavigationPane.IsCollapsed, RelativeSource={RelativeSource AncestorType=local:MainWindow}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                    </Style></Border.Style>
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <iconPacks:PackIconMaterial Kind="ArrowUpCircleOutline"
@@ -139,74 +193,68 @@
 
                 <!-- Sekundäres Ziel bleibt unabhängig von der Hauptnavigation am unteren Rand. -->
                 <Button DockPanel.Dock="Bottom"
-                        Command="{Binding ShowSettings}"
+                        Command="{Binding ShowSettings}" AutomationProperties.AutomationId="Navigation.Settings" ToolTip="{loc:Translate Key=Navigation.Settings}" AutomationProperties.Name="{loc:Translate Key=Navigation.Settings}"
                         Tag="SettingsViewModel"
                         Margin="0,0,0,8"
                         Style="{DynamicResource SidebarNavButton}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconMaterial Kind="CogOutline" Width="18" Height="18"
-                                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
-                        <TextBlock Text="{loc:Translate Navigation.Settings}" VerticalAlignment="Center" FontSize="14"/>
+                        <iconPacks:PackIconMaterial Kind="CogOutline" Style="{StaticResource NavigationIcon}"/>
+                        <TextBlock Text="{loc:Translate Navigation.Settings}" Style="{StaticResource NavigationLabel}"/>
                     </StackPanel>
                 </Button>
 
                 <!-- Navigation -->
                 <StackPanel Margin="0,0,0,0">
                     <!-- Start -->
-                    <Button Command="{Binding ShowStart}"
+                    <Button Command="{Binding ShowStart}" AutomationProperties.AutomationId="Navigation.Home" ToolTip="{loc:Translate Key=Ui.App.Home}" AutomationProperties.Name="{loc:Translate Key=Ui.App.Home}"
                             Tag="StartViewModel"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="Home" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.App.Home}" VerticalAlignment="Center" FontSize="14"/>
+                            <iconPacks:PackIconMaterial Kind="HomeOutline" Style="{StaticResource NavigationIcon}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.App.Home}" Style="{StaticResource NavigationLabel}"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Automationen -->
-                    <Button Command="{Binding ShowListAutomations}"
+                    <Button Command="{Binding ShowListAutomations}" AutomationProperties.AutomationId="Navigation.Automations" AutomationProperties.Name="{loc:Translate Key=Ui.Automation.List.Automations}"
                             Tag="ListAutomationsViewModel"
-                            ToolTip="{loc:Translate Key=Shortcut.NavigateAutomations}"
+                            ToolTip="{loc:Translate Key=Ui.Automation.List.Automations}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="CalendarClock" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.Automation.List.Automations}" VerticalAlignment="Center" FontSize="14"/>
+                            <iconPacks:PackIconMaterial Kind="CalendarClockOutline" Style="{StaticResource NavigationIcon}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Automation.List.Automations}" Style="{StaticResource NavigationLabel}"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Makros -->
-                    <Button Command="{Binding ShowListMakros}"
+                    <Button Command="{Binding ShowListMakros}" AutomationProperties.AutomationId="Navigation.Macros" AutomationProperties.Name="{loc:Translate Key=Ui.Dashboard.Makros}"
                             Tag="ListMakrosViewModel"
-                            ToolTip="{loc:Translate Key=Shortcut.NavigateMacros}"
+                            ToolTip="{loc:Translate Key=Ui.Dashboard.Makros}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="RepeatVariant" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Makros}" VerticalAlignment="Center" FontSize="14"/>
+                            <iconPacks:PackIconMaterial Kind="GestureTapButton" Style="{StaticResource NavigationIcon}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Dashboard.Makros}" Style="{StaticResource NavigationLabel}"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Jobs -->
-                    <Button Command="{Binding ShowListJobs}"
+                    <Button Command="{Binding ShowListJobs}" AutomationProperties.AutomationId="Navigation.Jobs" AutomationProperties.Name="{loc:Translate Key=Ui.Job.List.Jobs}"
                             Tag="ListJobsViewModel"
-                            ToolTip="{loc:Translate Key=Shortcut.NavigateJobs}"
+                            ToolTip="{loc:Translate Key=Ui.Job.List.Jobs}"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="PlaylistPlay" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" VerticalAlignment="Center" FontSize="14"/>
+                            <iconPacks:PackIconMaterial Kind="FileTreeOutline" Style="{StaticResource NavigationIcon}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.Job.List.Jobs}" Style="{StaticResource NavigationLabel}"/>
                         </StackPanel>
                     </Button>
 
                     <!-- Logs -->
-                    <Button Command="{Binding ShowExecutionLogs}"
+                    <Button Command="{Binding ShowExecutionLogs}" AutomationProperties.AutomationId="Navigation.Logs" ToolTip="{loc:Translate Key=Ui.App.Logs}" AutomationProperties.Name="{loc:Translate Key=Ui.App.Logs}"
                             Tag="LogsHomeViewModel"
                             Style="{DynamicResource SidebarNavButton}">
                         <StackPanel Orientation="Horizontal">
-                            <iconPacks:PackIconMaterial Kind="TextBoxSearchOutline" Width="18" Height="18"
-                                                        VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="{loc:Translate Key=Ui.App.Logs}" VerticalAlignment="Center" FontSize="14"/>
+                            <iconPacks:PackIconMaterial Kind="ClipboardTextClockOutline" Style="{StaticResource NavigationIcon}"/>
+                            <TextBlock Text="{loc:Translate Key=Ui.App.Logs}" Style="{StaticResource NavigationLabel}"/>
                         </StackPanel>
                     </Button>
 

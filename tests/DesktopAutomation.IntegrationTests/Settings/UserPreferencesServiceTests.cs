@@ -12,6 +12,8 @@ public sealed class UserPreferencesServiceTests
         var path = Path.Combine(directory.Path, "settings.json");
         var writer = new UserPreferencesService(path);
         writer.Current.Culture = "en-US";
+        writer.Current.NavigationCollapsed = true;
+        writer.Current.StepInspectorCollapsed = true;
         writer.Current.ExpandedLibraryFolders["jobs"] = [Guid.Parse("b94d42e5-f10a-4991-a3d8-f02bf4b148df")];
 
         await writer.SaveAsync();
@@ -19,6 +21,8 @@ public sealed class UserPreferencesServiceTests
         await reader.LoadAsync();
 
         Assert.Equal("en-US", reader.Current.Culture);
+        Assert.True(reader.Current.NavigationCollapsed);
+        Assert.True(reader.Current.StepInspectorCollapsed);
         Assert.Single(reader.Current.ExpandedLibraryFolders["jobs"]);
         Assert.False(File.Exists(path + ".tmp"));
     }

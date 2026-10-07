@@ -628,6 +628,8 @@ namespace DesktopAutomationApp.ViewModels
 
         public event Action? RequestBack;
 
+        public CollapsiblePaneState InspectorPane { get; }
+
         public JobStepsViewModel(
             Job job,
             IJobExecutor jobExecutionContext,
@@ -636,8 +638,15 @@ namespace DesktopAutomationApp.ViewModels
             IJobDispatcher dispatcher,
             ICameraCaptureService cameraCaptureService,
             IStepDefinitionCatalog? stepDefinitionCatalog = null,
-            ISecretStore? secretStore = null)
+            ISecretStore? secretStore = null,
+            DesktopAutomation.Application.Settings.IUserPreferencesService? preferences = null)
         {
+            InspectorPane = new CollapsiblePaneState(CollapsiblePaneState.InspectorCollapseWidth, preferences?.Current.StepInspectorCollapsed ?? false, async collapsed =>
+            {
+                if (preferences is null) return;
+                preferences.Current.StepInspectorCollapsed = collapsed;
+                await preferences.SaveAsync();
+            });
             Job = job ?? throw new ArgumentNullException(nameof(job));
             Job.Variables ??= [];
             Job.LocalValues ??= [];

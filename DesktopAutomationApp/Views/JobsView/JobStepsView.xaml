@@ -1003,7 +1003,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" MinWidth="460"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto" MinWidth="12"/>
                 <ColumnDefinition x:Name="DebugInspectorColumn" Width="*" MinWidth="360"/>
             </Grid.ColumnDefinitions>
         <Border Grid.Column="0" Background="Transparent" BorderThickness="0" Padding="0">
@@ -1227,15 +1227,35 @@
             </StackPanel>
             </ScrollViewer>
         </Border>
-            <GridSplitter Grid.Column="1" Margin="2,0"
+            <GridSplitter x:Name="InspectorSplitter" Grid.Column="1" Margin="2,0"
                           AutomationProperties.AutomationId="InspectorResizeGrip"
+                          Visibility="{Binding InspectorPane.IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}"
                           Style="{StaticResource PaneGridSplitterStyle}"/>
 
-            <Border Grid.Column="2" MinWidth="360"
+            <Border x:Name="InspectorPeekSurface" Grid.Column="2" VerticalAlignment="Stretch"
+                    Visibility="{Binding InspectorPane.IsCollapsed, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Background="{DynamicResource App.Brush.SurfaceRaised}" CornerRadius="8,0,0,8"
+                    BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1,1,0,1"
+                    AutomationProperties.AutomationId="Inspector.Peek">
+                <Button x:Name="ExpandInspectorButton" Width="32" Height="32" Margin="0,8,0,0" Padding="0" VerticalAlignment="Top" Style="{StaticResource ButtonIcon}"
+                        Command="{Binding InspectorPane.ToggleCommand}" ToolTip="{loc:Translate Key=Ui.Job.Steps.Inspector.Expand}"
+                        AutomationProperties.Name="{loc:Translate Key=Ui.Job.Steps.Inspector.Expand}" AutomationProperties.AutomationId="Inspector.Expand">
+                    <controls:PaneToggleIcon IsRightPane="True" Width="20" Height="20" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </Button>
+            </Border>
+            <Border x:Name="InspectorSurface" Grid.Column="2" MinWidth="360"
+                    Visibility="{Binding InspectorPane.IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Margin="0" Padding="16" CornerRadius="8"
                     AutomationProperties.AutomationId="SelectedJobStepInspector"
                     Background="{DynamicResource App.Brush.CardBackground}"
                     BorderBrush="{DynamicResource App.Brush.CardBorder}" BorderThickness="1">
+                <DockPanel>
+                    <Button x:Name="CollapseInspectorButton" DockPanel.Dock="Top" HorizontalAlignment="Right" Width="32" Height="32" Padding="0" Margin="0,-8,-8,4"
+                            Style="{StaticResource ButtonSecondary}" Command="{Binding InspectorPane.ToggleCommand}"
+                            ToolTip="{loc:Translate Key=Ui.Job.Steps.Inspector.Collapse}" AutomationProperties.Name="{loc:Translate Key=Ui.Job.Steps.Inspector.Collapse}"
+                            AutomationProperties.AutomationId="Inspector.Collapse">
+                        <controls:PaneToggleIcon IsRightPane="True" Width="20" Height="20" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
                 <Grid>
                     <Grid Visibility="{Binding HasSingleSelectedStep, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="280">
@@ -1539,6 +1559,7 @@
                     </Grid>
                 </Grid>
                 </Grid>
+                </DockPanel>
             </Border>
         </Grid>
     </Grid>

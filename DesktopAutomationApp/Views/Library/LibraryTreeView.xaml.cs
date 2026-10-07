@@ -2,6 +2,7 @@ using DesktopAutomationApp.Controls;
 using DesktopAutomationApp.Localization;
 using DesktopAutomationApp.ViewModels;
 using System.Windows;
+using DesktopAutomationApp.Behaviors;
 using System.Windows.Controls;
 using System.Windows.Input;
 using DesktopAutomationApp.ViewModels.Library;
@@ -193,6 +194,7 @@ public partial class LibraryTreeView : UserControl
         UpdateDragPreviewPosition(position);
         try
         {
+            using var scrolling = new DragScrollSession(this, RefreshDragPreviewFromCursor);
             DragDrop.DoDragDrop(this, node, DragDropEffects.Move);
         }
         finally
@@ -307,6 +309,9 @@ public partial class LibraryTreeView : UserControl
     }
 
     private void LibraryTree_GiveFeedback(object sender, GiveFeedbackEventArgs e)
+        => RefreshDragPreviewFromCursor();
+
+    private void RefreshDragPreviewFromCursor()
     {
         if (DataContext is LibraryTreeViewModel { IsDragActive: true })
         {

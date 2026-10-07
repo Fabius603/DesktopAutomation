@@ -3778,4 +3778,8 @@ Step: {8} / {9}</value></data>
   <data name="Ui.Context.Group" xml:space="preserve"><value>Gruppieren</value></data>
   <data name="Ui.Library.ResizePanes" xml:space="preserve"><value>Bereiche durch Ziehen vergrößern oder verkleinern</value></data>
   <data name="Ui.Library.ContentCount" xml:space="preserve"><value>{0} Ordner · {1} Dateien</value></data>
+  <data name="Ui.Navigation.Collapse" xml:space="preserve"><value>Navigation einklappen</value></data>
+  <data name="Ui.Navigation.Expand" xml:space="preserve"><value>Navigation ausklappen</value></data>
+  <data name="Ui.Job.Steps.Inspector.Collapse" xml:space="preserve"><value>Step-Inspektor einklappen</value></data>
+  <data name="Ui.Job.Steps.Inspector.Expand" xml:space="preserve"><value>Step-Inspektor ausklappen</value></data>
 </root>

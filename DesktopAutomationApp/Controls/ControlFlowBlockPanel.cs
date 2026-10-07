@@ -159,7 +159,9 @@ public sealed class ControlFlowBlockPanel : VirtualizingStackPanel
         start ??= realized[0];
         end ??= realized[^1];
 
-        var left = StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation;
+        // VirtualizingStackPanel offsets its children during horizontal scrolling; drawings
+        // in the panel itself must use the same content origin as the measured cards.
+        var left = StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation - HorizontalOffset;
         var width = projection.Width(block.Depth, owner.ActualWidth);
         var first = start.GetValueOrDefault();
         var last = end.GetValueOrDefault();
@@ -224,7 +226,7 @@ public sealed class ControlFlowBlockPanel : VirtualizingStackPanel
             var order = closures.ToList().FindIndex(candidate => candidate.StartIndex == block.StartIndex);
             var icon = GetIconRect(owner, block.StartIndex);
             var exitX = icon is { } measured ? measured.Left + measured.Width / 2
-                : StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation + 57;
+                : StepListProjection.GutterWidth + block.Depth * StepListProjection.Indentation + 57 - HorizontalOffset;
             return order < 0 ? null : new Point(exitX, (GetEmptyBranchRect(owner, index)?.Bottom ?? row.Bottom) + 12 + order * 24);
         }
         return null;

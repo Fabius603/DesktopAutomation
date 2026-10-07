@@ -15,6 +15,8 @@ public sealed class UserPreferencesTests
         Assert.Equal(AppThemeMode.System, preferences.ThemeMode);
         Assert.Equal(UserPreferences.DefaultForceStopVirtualKey, preferences.ForceStopVirtualKey);
         Assert.NotNull(preferences.ExpandedLibraryFolders);
+        Assert.False(preferences.NavigationCollapsed);
+        Assert.False(preferences.StepInspectorCollapsed);
     }
 
     [Fact]
@@ -24,7 +26,9 @@ public sealed class UserPreferencesTests
         {
             Culture = "en-US",
             ThemeMode = AppThemeMode.Black,
-            ForceStopVirtualKey = 0x7A
+            ForceStopVirtualKey = 0x7A,
+            NavigationCollapsed = true,
+            StepInspectorCollapsed = true
         });
 
         var preferences = JsonSerializer.Deserialize<UserPreferences>(json);
@@ -33,5 +37,7 @@ public sealed class UserPreferencesTests
         Assert.Equal("en-US", preferences.Culture);
         Assert.Equal(AppThemeMode.Black, preferences.ThemeMode);
         Assert.Equal(0x7Au, preferences.ForceStopVirtualKey);
+        Assert.True(preferences.NavigationCollapsed);
+        Assert.True(preferences.StepInspectorCollapsed);
     }
 }

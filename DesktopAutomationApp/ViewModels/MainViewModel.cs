@@ -15,6 +15,7 @@ using TaskAutomation.Makros;
 using TaskAutomation.Orchestration;
 using DesktopAutomationApp.Views;
 using DesktopAutomationApp.Localization;
+using DesktopAutomation.Application.Settings;
 
 namespace DesktopAutomationApp.ViewModels
 {
@@ -155,6 +156,7 @@ namespace DesktopAutomationApp.ViewModels
         public ICommand ShowListAutomations { get; }
         public ICommand ShowExecutionLogs { get; }
         public ICommand ShowSettings { get; }
+        public CollapsiblePaneState NavigationPane { get; }
         public ICommand StopAllJobsCommand { get; }
         public ICommand ShowShortcutHelpCommand { get; }
 
@@ -168,8 +170,15 @@ namespace DesktopAutomationApp.ViewModels
             ListJobsViewModel listJobsViewModel,
             ListAutomationsViewModel listAutomationsViewModel,
             LogsHomeViewModel logsHomeViewModel,
-            SettingsViewModel settingsViewModel)
+            SettingsViewModel settingsViewModel,
+            IUserPreferencesService? preferences = null)
         {
+            NavigationPane = new CollapsiblePaneState(CollapsiblePaneState.NavigationCollapseWidth, preferences?.Current.NavigationCollapsed ?? false, async collapsed =>
+            {
+                if (preferences is null) return;
+                preferences.Current.NavigationCollapsed = collapsed;
+                await preferences.SaveAsync();
+            });
             _viewModelFactory = viewModelFactory;
             _jobDispatcher = jobDispatcher;
             _updateService = updateService;

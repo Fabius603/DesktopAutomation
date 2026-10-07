@@ -28,6 +28,7 @@ internal static class StepListRenderHost
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Length == 2 && args[0] == "--render-collapsible-panes") return CollapsiblePanesRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-distribution") return DistributionSettingsRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-start-page") return StartPageRenderHost.Run(args[1]);
         if (args.Length == 2 && args[0] == "--render-desktop-capture") return DesktopCaptureEditorRenderHost.Run(args[1]);
@@ -158,6 +159,7 @@ internal static class StepListRenderHost
                     if (phaseList.Items.Contains(selected)) phaseList.SelectedItem = selected;
             view.UpdateLayout();
             VerifyFreshFlowDrawing(view);
+            if (scenario == "nested") VerifyScrolledFlowDrawing(view, decorator, directory);
             if (scenario == "moved-block")
             {
                 var move = (AsyncRelayCommand<StepDragDrop.MoveRequest>)vm.ReorderStepCommand;
@@ -370,6 +372,7 @@ internal static class StepListRenderHost
         File.WriteAllText(Path.Combine(directory, "layout.json"), JsonSerializer.Serialize(reports));
         StepDialogRenderChecks.Verify(directory);
         VerifyPickerInteractions();
+        DragScrollRenderChecks.Verify(directory);
         Console.WriteLine("Picker interactions verified");
         app.Shutdown();
     }
@@ -446,6 +449,62 @@ internal static class StepListRenderHost
                     throw new InvalidOperationException("A sequence arrow must end directly above the measured step icon.");
             }
         }
+    }
+
+    private static void VerifyScrolledFlowDrawing(JobStepsView view, AdornerDecorator decorator, string directory)
+    {
+        var width = view.Width;
+        var height = view.Height;
+        void Arrange()
+        {
+            decorator.Width = view.Width;
+            decorator.Height = view.Height;
+            decorator.Measure(new Size(view.Width, view.Height));
+            decorator.Arrange(new Rect(0, 0, view.Width, view.Height));
+            view.UpdateLayout();
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+        }
+        view.Width = 900;
+        view.Height = 480;
+        Arrange();
+        var list = (ListBox)view.FindName("StepsList");
+        var panel = Descendants(list).OfType<global::DesktopAutomationApp.Controls.ControlFlowBlockPanel>().Single();
+        var scroller = Descendants(list).OfType<ScrollViewer>().First();
+        if (scroller.ScrollableWidth < 60) throw new InvalidOperationException("The narrow fixture must require horizontal scrolling.");
+        Rect[] Bounds() => GeometryDrawings(VisualTreeHelper.GetDrawing(panel)!).Select(shape => shape.Bounds).ToArray();
+        var initial = Bounds();
+        var vertical = Descendants(view).OfType<ScrollViewer>().First(candidate => Descendants(candidate).Contains(list));
+        if (vertical.ScrollableHeight < 150) throw new InvalidOperationException("The short fixture must require vertical scrolling.");
+        foreach (var offset in new[] { 30d, 60.5d, 0d })
+        {
+            scroller.ScrollToHorizontalOffset(offset);
+            vertical.ScrollToVerticalOffset(offset > 60 ? 150 : 0);
+            Arrange();
+            VerifyFreshFlowDrawing(view);
+            VerifyArrowPorts(view);
+            var current = Bounds();
+            if (initial.Length != current.Length) throw new InvalidOperationException("Scrolling must preserve flow geometry.");
+            for (var index = 0; index < initial.Length; index++)
+            {
+                var expected = initial[index];
+                expected.Offset(-scroller.HorizontalOffset, 0);
+                if (Math.Abs(expected.Left - current[index].Left) > 0.01 || Math.Abs(expected.Top - current[index].Top) > 0.01
+                    || Math.Abs(expected.Width - current[index].Width) > 0.01 || Math.Abs(expected.Height - current[index].Height) > 0.01)
+                    throw new InvalidOperationException("Block surfaces, scope rails and arrows must scroll together with the step cards.");
+            }
+            if (offset > 60)
+            {
+                var bitmap = new RenderTargetBitmap((int)view.Width, (int)view.Height, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(decorator);
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                using var file = File.Create(Path.Combine(directory, "nested-scrolled.png"));
+                encoder.Save(file);
+            }
+        }
+        view.Width = width;
+        view.Height = height;
+        Arrange();
     }
 
     private static void VerifyFreshFlowDrawing(FrameworkElement view)

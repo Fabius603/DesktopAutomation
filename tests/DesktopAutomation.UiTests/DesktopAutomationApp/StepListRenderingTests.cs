@@ -24,6 +24,9 @@ public sealed class StepListRenderingTests
         var reports = JsonSerializer.Deserialize<List<StepListRenderReport>>(File.ReadAllText(Path.Combine(directory, "layout.json")))!;
         Assert.Equal(12, reports.Count);
         Assert.Contains("Picker interactions verified", await stdout);
+        Assert.Contains("Drag scrolling interactions verified", await stdout);
+        Assert.Contains("Step drag exit and re-entry verified", await stdout);
+        Assert.Contains("Stationary drag target retention verified", await stdout);
         Assert.Contains("Step and variable dialog interactions verified", await stdout);
         foreach (var image in new[] { "add-step-dialog.png", "add-step-empty.png", "add-step-compact.png", "job-variables-dialog.png", "job-variables-compact.png" })
             Assert.True(File.Exists(Path.Combine(directory, image)));

@@ -46,17 +46,23 @@ internal static class GlobalScrollBehavior
             return;
 
         var horizontal = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
-        var scroller = FindScrollableAncestor(source, horizontal, e.Delta);
-        if (scroller == null)
-            return;
+        e.Handled = TryScroll(source, horizontal, e.Delta);
+    }
 
-        var distance = e.Delta * WheelScrollFactor;
+    internal static bool TryScroll(DependencyObject source, bool horizontal, int delta)
+    {
+        if (delta == 0) return false;
+        var scroller = FindScrollableAncestor(source, horizontal, delta);
+        if (scroller == null)
+            return false;
+
+        var distance = delta * WheelScrollFactor;
         if (horizontal)
             scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - distance);
         else
             scroller.ScrollToVerticalOffset(scroller.VerticalOffset - distance);
 
-        e.Handled = true;
+        return true;
     }
 
     private static ScrollViewer? FindScrollableAncestor(

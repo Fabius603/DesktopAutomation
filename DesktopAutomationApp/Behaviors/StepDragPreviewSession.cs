@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -17,22 +16,20 @@ namespace DesktopAutomationApp.Behaviors;
 /// </summary>
 internal sealed class StepDragPreviewSession : IDisposable
 {
-    private readonly StepDragDrop.DragPayload _payload;
     private readonly FrameworkElement _root;
     private readonly Dictionary<FrameworkElement, double> _sourceOpacities = [];
     private readonly Dictionary<FrameworkElement, Transform> _gapTransforms = [];
     private readonly AdornerLayer? _layer;
     private readonly DragCardAdorner _adorner;
     private readonly DispatcherTimer _timer;
-    private readonly Stopwatch _clock = Stopwatch.StartNew();
     private ListBox? _target;
     private ListBox? _tracking;
     private int _index = -1;
     private StepDragDrop.InsertionPlacement? _placement;
     private double _originalMinHeight;
     private double _originalHeight;
-    private double _lastTick;
     private bool _disposed;
+    private Point? _targetPointer;
 
     internal ListBox? Target => _target;
     internal int TargetIndex => _index;
@@ -42,7 +39,6 @@ internal sealed class StepDragPreviewSession : IDisposable
 
     internal StepDragPreviewSession(ListBox source, StepDragDrop.DragPayload payload, bool startTimer = true)
     {
-        _payload = payload;
         _root = FindRoot(source);
         var images = payload.SourceIndices.Select(index => source.ItemContainerGenerator.ContainerFromIndex(index))
             .OfType<ListBoxItem>().Where(item => item.Visibility == Visibility.Visible && item.ActualHeight > 0).ToArray();
@@ -65,11 +61,23 @@ internal sealed class StepDragPreviewSession : IDisposable
         }
         _timer = new DispatcherTimer(DispatcherPriority.Render, source.Dispatcher) { Interval = TimeSpan.FromMilliseconds(16) };
         _timer.Tick += OnTick;
-        _lastTick = _clock.Elapsed.TotalSeconds;
         if (startTimer) _timer.Start();
     }
 
-    internal void UpdatePointer(Point rootPoint) { PointerPosition = rootPoint; _adorner.Pointer = rootPoint; }
+    internal void UpdatePointer(Point rootPoint)
+    {
+        if (_disposed) return;
+        PointerPosition = rootPoint;
+        _adorner.Pointer = rootPoint;
+        RefreshSnapBounds();
+    }
+
+    private void RefreshSnapBounds()
+    {
+        if (_target is not { } target || _placement is not { } placement) return;
+        _adorner.Snap = new Rect(target.TranslatePoint(new Point(placement.X, placement.Y + 4), _root), new Size(placement.Width, 64));
+        _adorner.InvalidateVisual();
+    }
     internal Point PointerRelativeTo(FrameworkElement element) => _root.TranslatePoint(PointerPosition, element);
     internal Point PointerPosition { get; private set; }
 
@@ -99,16 +107,47 @@ internal sealed class StepDragPreviewSession : IDisposable
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetCursorPos(out ScreenPoint point);
 
+    internal void ReleasePointerRetention() => _targetPointer = null;
+
+    internal bool TryRetainStationaryTarget(out ListBox list)
+    {
+        list = _target!;
+        if (_disposed || _target is null || _targetPointer is not { } anchor) return false;
+        var inGap = Math.Abs(PointerPosition.X - anchor.X) <= 6
+            && _placement is { } placement && PointerRelativeTo(_target) is var pointer
+            && pointer.X >= placement.X && pointer.X <= placement.X + placement.Width
+            && pointer.Y >= placement.Y && pointer.Y <= placement.Y + StepDragPreviewPolicy.GapHeight;
+        if (!inGap && (PointerPosition - anchor).Length > 6) return false;
+        // The preview can move a list boundary. The surrounding viewport remains the drag region.
+        FrameworkElement region = Ancestors(_target).OfType<ScrollViewer>().FirstOrDefault() ?? (FrameworkElement)_target;
+        var point = PointerRelativeTo(region);
+        return point.X >= 0 && point.Y >= 0 && point.X <= region.ActualWidth && point.Y <= region.ActualHeight;
+    }
+
     internal StepDragDrop.InsertionPlacement RetainTarget(ListBox list, Point pointer, StepDragDrop.InsertionPlacement candidate)
-        => ReferenceEquals(_target, list) && _placement is { } previous && Math.Abs(previous.X - candidate.X) < 20
-           && StepDragPreviewPolicy.CanSnap(Math.Abs(pointer.Y - previous.Y), retainingTarget: true)
-            ? previous with { Distance = Math.Abs(pointer.Y - previous.Y), Width = candidate.Width } : candidate;
+    {
+        if (!ReferenceEquals(_target, list) || _placement is not { } previous) return candidate;
+        if (TryRetainStationaryTarget(out _)) return previous with { Distance = 0, Width = candidate.Width };
+        var distance = Math.Max(previous.Y - pointer.Y, pointer.Y - previous.Y - StepDragPreviewPolicy.GapHeight);
+        return _targetPointer is not null && Math.Abs(previous.X - candidate.X) < 20
+            && StepDragPreviewPolicy.CanSnap(Math.Max(0, distance), retainingTarget: true)
+                ? previous with { Distance = Math.Max(0, distance), Width = candidate.Width } : candidate;
+    }
+
+    internal Point WithoutPreviewGap(ListBox list, Point pointer)
+    {
+        if (_targetPointer is null || !ReferenceEquals(_target, list) || _placement is not { } placement || pointer.Y <= placement.Y) return pointer;
+        // Rows are resolved in their undisplaced coordinates. Map the pointer to that same
+        // space: the open gap has no logical height, and rows below it moved by GapHeight.
+        return new Point(pointer.X, Math.Max(placement.Y, pointer.Y - StepDragPreviewPolicy.GapHeight));
+    }
 
     internal bool UpdateTarget(ListBox list, StepDragDrop.InsertionPlacement placement, bool valid, bool force = false)
     {
+        if (_disposed) return false;
         _tracking = list;
         var retaining = ReferenceEquals(_target, list) && _index == placement.Index;
-        if (!valid || !force && !StepDragPreviewPolicy.CanSnap(placement.Distance, retaining))
+        if (!valid || !force && !StepDragPreviewPolicy.CanSnap(placement.Distance, ReferenceEquals(_target, list)))
         {
             ClearTarget();
             _tracking = list;
@@ -116,12 +155,19 @@ internal sealed class StepDragPreviewSession : IDisposable
         }
         if (!retaining)
         {
-            ClearGap();
-            _target = list;
+            if (ReferenceEquals(_target, list))
+                ClearGapTransforms();
+            else
+            {
+                ClearGap();
+                _target = list;
+                _originalMinHeight = list.MinHeight;
+                _originalHeight = list.ActualHeight;
+            }
             _index = placement.Index;
-            _originalMinHeight = list.MinHeight;
-            _originalHeight = list.ActualHeight;
+            _targetPointer = PointerPosition;
         }
+        _targetPointer ??= PointerPosition;
         ApplyGap();
         list.UpdateLayout();
         // Reserving the gap can reveal the outer scrollbar and reduce the list viewport.
@@ -130,8 +176,7 @@ internal sealed class StepDragPreviewSession : IDisposable
         var width = measured is { Width: var currentWidth } && double.IsFinite(currentWidth)
             ? currentWidth : double.IsFinite(placement.Width) ? placement.Width : Math.Max(160, list.ActualWidth - placement.X - 36);
         _placement = placement with { Width = width };
-        _adorner.Snap = new Rect(list.TranslatePoint(new Point(placement.X, placement.Y + 4), _root), new Size(width, 64));
-        _adorner.InvalidateVisual();
+        RefreshSnapBounds();
         return true;
     }
 
@@ -162,7 +207,7 @@ internal sealed class StepDragPreviewSession : IDisposable
         InvalidatePanel(_target);
     }
 
-    private void ClearGap()
+    private void ClearGapTransforms()
     {
         foreach (var (item, transform) in _gapTransforms)
         {
@@ -170,44 +215,29 @@ internal sealed class StepDragPreviewSession : IDisposable
             StepDragDrop.SetPreviewDisplacement(item, 0);
         }
         _gapTransforms.Clear();
-        if (_target is { } target)
+    }
+
+    private void ClearGap()
+    {
+        ClearGapTransforms();
+        var target = _target;
+        _target = null;
+        _index = -1;
+        _placement = null;
+        _targetPointer = null;
+        _adorner.Snap = null;
+        if (target is not null)
         {
             target.SetCurrentValue(FrameworkElement.MinHeightProperty, _originalMinHeight);
             InvalidatePanel(target);
             target.UpdateLayout();
         }
-        _target = null;
-        _index = -1;
-        _placement = null;
     }
 
     private void OnTick(object? sender, EventArgs args)
     {
         if (_disposed) return;
         RefreshPointer();
-        var now = _clock.Elapsed.TotalSeconds;
-        var elapsed = Math.Min(0.05, Math.Max(0, now - _lastTick));
-        _lastTick = now;
-        if (_tracking is not { } list) return;
-        var viewer = Ancestors(list).OfType<ScrollViewer>().FirstOrDefault() ?? Descendants(list).OfType<ScrollViewer>().FirstOrDefault();
-        if (viewer is null) return;
-        var point = PointerRelativeTo(viewer);
-        if (point.X < 0 || point.X > viewer.ViewportWidth) return;
-        var velocity = StepDragPreviewPolicy.ScrollVelocity(point.Y, viewer.ViewportHeight);
-        var horizontal = Descendants(list).OfType<ScrollViewer>().FirstOrDefault();
-        var horizontalVelocity = horizontal is { ScrollableWidth: > 0 }
-            ? StepDragPreviewPolicy.ScrollVelocity(PointerRelativeTo(horizontal).X, horizontal.ViewportWidth) : 0;
-        if (velocity != 0) viewer.ScrollToVerticalOffset(Math.Clamp(viewer.VerticalOffset + velocity * elapsed, 0, viewer.ScrollableHeight));
-        if (horizontalVelocity != 0) horizontal!.ScrollToHorizontalOffset(Math.Clamp(horizontal.HorizontalOffset + horizontalVelocity * elapsed, 0, horizontal.ScrollableWidth));
-        if (velocity == 0 && horizontalVelocity == 0) return;
-        viewer.UpdateLayout();
-        var listPoint = PointerRelativeTo(list);
-        var placement = StepDragDrop.GetPlacementResolver(list)?.Invoke(list, listPoint);
-        if (placement is not null)
-        {
-            placement = RetainTarget(list, listPoint, placement);
-            UpdateTarget(list, placement, StepDragDrop.CanAcceptDrop(list, _payload, placement.Index));
-        }
     }
 
     public void Dispose()

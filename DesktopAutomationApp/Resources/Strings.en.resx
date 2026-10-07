@@ -3674,4 +3674,8 @@ Step: {8} / {9}</value></data>
   <data name="Ui.Context.Group" xml:space="preserve"><value>Group</value></data>
   <data name="Ui.Library.ResizePanes" xml:space="preserve"><value>Drag to resize panes</value></data>
   <data name="Ui.Library.ContentCount" xml:space="preserve"><value>{0} folders · {1} files</value></data>
+  <data name="Ui.Navigation.Collapse" xml:space="preserve"><value>Collapse navigation</value></data>
+  <data name="Ui.Navigation.Expand" xml:space="preserve"><value>Expand navigation</value></data>
+  <data name="Ui.Job.Steps.Inspector.Collapse" xml:space="preserve"><value>Collapse step inspector</value></data>
+  <data name="Ui.Job.Steps.Inspector.Expand" xml:space="preserve"><value>Expand step inspector</value></data>
 </root>
